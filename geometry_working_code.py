@@ -8,14 +8,14 @@ if answer == "y":
     num1 = int(input("points: "))
     num2 = int(input("lines: "))
     num3 = int(input("surfaces: "))
-    lc = float(input("Enter the mesh size(with base 10): "))
+    lc = float(input("Enter the me sh size(with base 10): "))
     print("Entered values:", num1, num2, num3, "lc=", lc)
 elif answer == "n":
     num1 = num2 = 5
     num3 = 2
     lc = 1e-1
     # Print the integers entered by user
-    print("*Default value s*")
+    print("*Default values*")
     print("Max #ofpoints:",num1, "Max #oflines:", num2, "Max #ofsurfaces:", num3, "lc=", lc)
 else:
     # handle invalid input
