@@ -18,6 +18,7 @@ class Curve:
         self.l4 = l4
 
 def make_geometry(points, np, lc, lines, nl, curves, nc):
+
     for i in range(np):
         p = [points[i].x, points[i].y, points[i].z, lc]
         create_point(p)
