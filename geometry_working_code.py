@@ -15,7 +15,7 @@ elif answer == "n":
     num3 = 2
     lc = 1e-1
     # Print the integers entered by user
-    print("*Default values*")
+    print("*Default value s*")
     print("Max #ofpoints:",num1, "Max #oflines:", num2, "Max #ofsurfaces:", num3, "lc=", lc)
 else:
     # handle invalid input
