@@ -8,7 +8,7 @@ if answer == "y":
     num1 = int(input("points: "))
     num2 = int(input("lines: "))
     num3 = int(input("surfaces: "))
-    lc = float(input("Enter the me sh size(with base 10): "))
+    lc = float(input("Enter the mesh size(with base 10): "))
     print("Entered values:", num1, num2, num3, "lc=", lc)
 elif answer == "n":
     num1 = num2 = 5
