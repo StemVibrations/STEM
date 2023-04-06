@@ -1,5 +1,7 @@
 # Soil and Track System Modeling Tool
 
+![Tests](https://github.com/StemVibrations/STEM/actions/workflows/tests.yml/badge.svg)
+
 This software tool is designed to create and analyze models of soil and track systems. The tool provides a set of commands for creating the geometry of the model, defining the soil and track properties, setting the boundary conditions and loads, generating the mesh, and performing post-processing on the results.
 
 ## Installation
@@ -64,7 +66,7 @@ The following commands can be used to set the settings for the train track:
 - integration scheme
 - damping parameters
 - time parameters
-- etc 
+- etc
 
 ## stages
 
@@ -76,7 +78,7 @@ The following commands can be used to set the settings for the train track:
 
 The following commands can be used to post process the results of the train track simulation:
 
-- local data 
+- local data
     -- coordinate
     -- parameter type
 - field data
@@ -97,7 +99,7 @@ The following commands can be used to create the model for the train track:
 
 - generate mesh
 
-- dump input 
+- dump input
 
 - initialisation
 - run
