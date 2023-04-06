@@ -1,0 +1,7 @@
+.vscode
+.idea
+__pycache__
+venv/*
+pytest_cache/*
+build/*
+STEM.egg-info/*
