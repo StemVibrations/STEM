@@ -5,3 +5,5 @@ venv/*
 pytest_cache/*
 build/*
 STEM.egg-info/*
+.coverage
+.tox/*
