@@ -54,6 +54,7 @@ def make_geometry(points, point_pairs, lc, gmsh_model):
     for i in range(len(point_pairs)):
         l = [point_pairs[i][0], point_pairs[i][1]]
         line_lists.append(i + 1)
+        #print("l=",l)
         create_line(l, gmsh_model)
 
     create_surface(line_lists, gmsh_model)
@@ -85,6 +86,11 @@ def extract_mesh_data(shape):
         if i % 3 == 0:
             coord.append([nodeCoords[i], nodeCoords[i + 1], nodeCoords[i + 2]])
 
+    nodetag1D = []
+    for i in range(int(len(elemNodeTags[0]))):
+        if i % 2 == 0:
+            nodetag1D.append([elemNodeTags[0][i], elemNodeTags[0][i+1]])
+
     nodetag2D = []
     print(elemNodeTags)
     for i in range(int(len(elemNodeTags[1]))): # elemNodeTags[1] means 2D element node tags
@@ -96,7 +102,7 @@ def extract_mesh_data(shape):
                 nodetag2D.append([elemNodeTags[1][i], elemNodeTags[1][i + 1], elemNodeTags[1][i + 2],\
                                   elemNodeTags[1][i + 3]])
 
-    return coord, nodeTags, elemTypes, elemTags, nodetag2D
+    return coord, nodeTags, elemTypes, elemTags, nodetag2D, nodetag1D
 
 
 def submit_callback(points, point_pairs):
@@ -113,7 +119,7 @@ def submit_callback(points, point_pairs):
     if mesh_type == "quad":
         shape = 4
     # extract mesh data
-    node_coords, node_tags, elem_types, elemTags, elem_node_tags = extract_mesh_data(shape)
+    node_coords, node_tags, elem_types, elemTags, elem_node_tags, nodetag1D = extract_mesh_data(shape)
 
     # print some mesh data for demonstration
     print("Node coordinates:")
@@ -126,7 +132,9 @@ def submit_callback(points, point_pairs):
     print("element tags 1D:", elemTags[0])
     print("element tags 2D:", elemTags[1])
     print("element tags 0D:", elemTags[2])
-    print("Elem Node Tags")
+    print("Elem Node Tags 1D = lines")
+    print(nodetag1D)
+    print("Elem Node Tags 2D = Elements")
     print(elem_node_tags)
 
     gmsh.write("geometry.msh")
@@ -150,5 +158,6 @@ if __name__ == '__main__':
         point_pairs.append(point_pair)
 
     point_pairs.append([len(points), 1])
+    print("point_pairs=",point_pairs)
 
     submit_callback(points, point_pairs)
