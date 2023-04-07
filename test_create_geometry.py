@@ -1,8 +1,8 @@
 import gmsh
 import sys
 import pytest
-from create_geometry_mesh_data import make_geometry
-from create_geometry_mesh_data import extract_mesh_data
+from create_geometry_3D import make_geometry_2D
+from create_geometry_3D import extract_mesh_data
 
 
 def test_make_geometry():
@@ -18,13 +18,14 @@ def test_make_geometry():
     point_pairs.append([len(points), 1])
     gmsh.initialize()
 
-    make_geometry(points, point_pairs, lc, gmsh.model)
+    make_geometry_2D(points, point_pairs, lc)
     gmsh.model.geo.synchronize()
     gmsh.model.mesh.generate(2)
-    node_coords, node_tags, elem_types, elemTags, elem_node_tags, nodetag1D = extract_mesh_data(3)
+    node_coords, node_tags, elem_types, elemTags, nodetag1D, nodetag2D  = extract_mesh_data(3)
 
     assert node_coords != [] # check if node_coords is not empty
     assert node_tags != [] # check if node_tags is not empty
     assert elem_types != [] # check if elem_types is not empty
     assert elemTags != [] # check if elemTags is not empty
-    assert elem_node_tags != [] # check if elem_node_tags is not empty
+    assert nodetag1D != [] # check if elem_node_tags is not empty
+    assert nodetag2D != [] # check if elem_node_tags is not empty
