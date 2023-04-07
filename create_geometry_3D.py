@@ -2,95 +2,102 @@ import gmsh
 import sys
 
 
-class Point:
-    def __init__(self, x, y, z):
-        self.x = x
-        self.y = y
-        self.z = z
-
-
-class Line:
-    def __init__(self, p1, p2):
-        self.p1 = p1
-        self.p2 = p2
-
-
-class Curve:
-    def __init__(self, *args):
-        for i, arg in enumerate(args):
-            setattr(self, f'l{i + 1}', arg)
-
-
-# gmsh functions
-def create_point(input,gmsh_model):
+def create_point(input):
+    """
+    creates points in gmsh
+    :param input: gets points coordinates in order and mesh size from user
+    :return: -
+    """
     x = input[0]
     y = input[1]
     z = input[2]
     lc = input[3]
-    gmsh_model.geo.addPoint(x, y, z, lc)
+    gmsh.model.geo.addPoint(x, y, z, lc)
 
 
-def create_line(input, gmsh_model):
+def create_line(input):
+    """
+    Creates lines in gmsh
+    :param input: gets point tags in order
+    :return: -
+    """
     point1 = input[0]
     point2 = input[1]
-    l = gmsh_model.geo.addLine(point1, point2)
-    return l
+    gmsh.model.geo.addLine(point1, point2)
 
 
-def create_surface(shape, gmsh_model):
-    gmsh_model.geo.addCurveLoop(shape, 1)
-    s = gmsh_model.geo.addPlaneSurface([1], 1)
-    gmsh_model.setPhysicalName(2, s, "Soil layer")  # set a name label for the surface
+def create_surface(line_list):
+    """
+    Creates curve and then surface in gmsh by using line tags
+    :param line_list: gets line tags in order
+    :return: returns the surface tag
+    """
+    gmsh.model.geo.addCurveLoop(line_list, 1)
+    s = gmsh.model.geo.addPlaneSurface([1], 1)
+    gmsh.model.setPhysicalName(2, s, "Soil layer")  # set a name label for the surface
     return s
 
 
-def create_volume(s, depth, gmsh_model):
-    gmsh_model.geo.extrude([(2, s)], 0, 0, depth)
+def create_volume(s, depth):
+    """
+    Creates volume by extruding 2D surface
+    :param s: surface tag
+    :param depth: depth of 3D geometry
+    :return: -
+    """
+    gmsh.model.geo.extrude([(2, s)], 0, 0, depth)
 
-# for creating 3D geometries
-def make_geometry_3D(points, point_pairs, lc, depth, gmsh_model):
+
+def make_geometry_3D(points, point_pairs, lc, depth):
+    """
+    Creates 3D geometries
+    :param points: geometry points coordinates
+    :param point_pairs: points paired for lines
+    :param lc: mesh size
+    :param depth: depth of 3D geometry
+    :return: -
+    """
     for i in range(len(points)):
         p = [points[i][0], points[i][1], points[i][2], lc]
-        create_point(p, gmsh_model)
+        create_point(p)
+
+    line_lists = []
+    for i in range(len(point_pairs)):
+        l = [point_pairs[i][0], point_pairs[i][1]] # begin and end of line with point tag
+        line_lists.append(i + 1)
+        create_line(l)
+
+    s = create_surface(line_lists)
+    create_volume(s, depth)
+
+
+def make_geometry_2D(points, point_pairs, lc):
+    """
+    Creates 2D geometries
+    :param points: geometry points coordinates
+    :param point_pairs: points paired for lines
+    :param lc: mesh size
+    :return: -
+    """
+    for i in range(len(points)):
+        p = [points[i][0], points[i][1], points[i][2], lc]
+        create_point(p)
 
     line_lists = []
     for i in range(len(point_pairs)):
         l = [point_pairs[i][0], point_pairs[i][1]]
         line_lists.append(i + 1)
-        create_line(l, gmsh_model)
+        create_line(l)
 
-    s = create_surface(line_lists, gmsh_model)
-    create_volume(s, depth, gmsh_model)
-
-# for creating 2D geometries
-def make_geometry_2D(points, point_pairs, lc, gmsh_model):
-    for i in range(len(points)):
-        p = [points[i][0], points[i][1], points[i][2], lc]
-        create_point(p, gmsh_model)
-
-    line_lists = []
-    for i in range(len(point_pairs)):
-        l = [point_pairs[i][0], point_pairs[i][1]]
-        line_lists.append(i + 1)
-        create_line(l, gmsh_model)
-
-    create_surface(line_lists, gmsh_model)
+    create_surface(line_lists)
 
 
-def extract_mesh_data(shape):
-    # entities = gmsh.model.getEntities()
-    # print("entities", entities)
-    # for e in entities:
-    #     # Dimension and tag of the entity:
-    #     # print("e=", e)
-    #     dim = e[0]
-    #     tag = e[1]
-    #     # print("dim=", dim)
-    #     # print("tag=", tag)
-    #     nodeTags, nodeCoords, nodeParams  = gmsh.model.mesh.getNodes(dim, tag)
-    #     print(nodeCoords)
-    #     type = gmsh.model.getType(dim, tag)
-    #     print(type)
+def extract_mesh_data(mesh_shape):
+    """
+    Gets gmsh output data
+    :param mesh_shape: for mesh_type 'triangular': 'mesh_shape=3' , 'quad': 'mesh_shape=4'
+    :return: Geometry and Mesh data: node tags, node coordinates, element types, element tags 0D, 1D, 2D, 3D
+    """
 
     nodeTags, nodeCoords, nodeParams = gmsh.model.mesh.getNodes()  # nodes, elements
     elemTypes, elemTags, elemNodeTags = gmsh.model.mesh.getElements()
@@ -111,32 +118,42 @@ def extract_mesh_data(shape):
     nodetag2D = []
     print(elemNodeTags)
     for i in range(int(len(elemNodeTags[1]))): # elemNodeTags[1] means 2D element node tags
-        if shape == 3:
-            if i % shape == 0:
+        if mesh_shape == 3:
+            if i % mesh_shape == 0:
                 nodetag2D.append([elemNodeTags[1][i], elemNodeTags[1][i + 1], elemNodeTags[1][i + 2]])
-        if shape == 4:
-            if i % shape == 0:
+        if mesh_shape == 4:
+            if i % mesh_shape == 0:
                 nodetag2D.append([elemNodeTags[1][i], elemNodeTags[1][i + 1], elemNodeTags[1][i + 2],\
                                   elemNodeTags[1][i + 3]])
 
-    return coord, nodeTags, elemTypes, elemTags, nodetag2D, nodetag1D
+    return coord, nodeTags, elemTypes, elemTags, nodetag1D, nodetag2D
 
 
 def submit_callback_3D(points, point_pairs, depth, lc, dims):
+
+    """
+    Initialize main and output for 3D geometries
+    :param points: geometry points coordinates
+    :param point_pairs: points paired for lines
+    :param depth: depth of 3D geometry
+    :param lc: mesh size
+    :param dims: geometry dimension (2=2D or 3=3D)
+    :return: saves mesh data and opens GMsh interface
+    """
+
     gmsh.initialize()
     gmsh.model.add("geometry")
-    gmsh_model = gmsh.model
-    make_geometry_3D(points, point_pairs, lc, depth, gmsh_model)
+    make_geometry_3D(points, point_pairs, lc, depth)
 
     gmsh.model.geo.synchronize()
     gmsh.model.mesh.generate(dims)
 
     if mesh_type == "triangular":
-        shape = 3
+        mesh_shape = 3
     if mesh_type == "quad":
-        shape = 4
+        mesh_shape = 4
     # extract mesh data
-    node_coords, node_tags, elem_types, elemTags, elem_node_tags, nodetag1D = extract_mesh_data(shape)
+    node_coords, node_tags, elem_types, elemTags, nodetag1D, nodetag2D = extract_mesh_data(mesh_shape)
 
     # print some mesh data for demonstration
     print("Node coordinates:")
@@ -152,30 +169,41 @@ def submit_callback_3D(points, point_pairs, depth, lc, dims):
     print("Elem Node Tags 1D = lines")
     print(nodetag1D)
     print("Elem Node Tags 2D = Elements")
-    print(elem_node_tags)
+    print(nodetag2D)
 
+    # mesh file output
     gmsh.write("geometry.msh")
-
+    # opens gmsh
     if '-nopopup' not in sys.argv:
         gmsh.fltk.run()
     gmsh.finalize()
 
 
 def submit_callback_2D(points, point_pairs, lc, dims):
+
+    """
+    Initialize main and output for 2D geometries
+    :param points: geometry points coordinates
+    :param point_pairs: points paired for lines
+    :param lc: mesh size
+    :param dims: geometry dimension (2=2D or 3=3D)
+    :return: saves mesh data and opens GMsh interface
+    """
+
     gmsh.initialize()
     gmsh.model.add("geometry")
     gmsh_model = gmsh.model
-    make_geometry_2D(points, point_pairs, lc, gmsh_model)
+    make_geometry_2D(points, point_pairs, lc)
 
     gmsh.model.geo.synchronize()
     gmsh.model.mesh.generate(dims)
 
     if mesh_type == "triangular":
-        shape = 3
+        mesh_shape = 3
     if mesh_type == "quad":
-        shape = 4
+        mesh_shape = 4
     # extract mesh data
-    node_coords, node_tags, elem_types, elemTags, elem_node_tags, nodetag1D = extract_mesh_data(shape)
+    node_coords, node_tags, elem_types, elemTags, nodetag1D, nodetag2D  = extract_mesh_data(mesh_shape)
 
     # print some mesh data for demonstration
     print("Node coordinates:")
@@ -191,10 +219,11 @@ def submit_callback_2D(points, point_pairs, lc, dims):
     print("Elem Node Tags 1D = lines")
     print(nodetag1D)
     print("Elem Node Tags 2D = Elements")
-    print(elem_node_tags)
+    print(nodetag2D)
 
+    # mesh file output
     gmsh.write("geometry.msh")
-
+    #opens gmsh
     if '-nopopup' not in sys.argv:
         gmsh.fltk.run()
     gmsh.finalize()
@@ -202,9 +231,9 @@ def submit_callback_2D(points, point_pairs, lc, dims):
 
 if __name__ == '__main__':
     # define the points as a list of tuples
-    points = [(0, 0, 0), (1, 0, 0), (1, 3, 0), (0, 3, 0)]#(0, 3, 1), (1, 3, 1), (1, 0, 1), (0, 0, 1)]
+    points = [(0, 0, 0), (1, 0, 0), (1, 3, 0), (0, 3, 0)]
     # define the mesh size
-    lc = 1e-1
+    lc = 1
     # define mesh type
     mesh_type = "triangular"
     # define geometry dimension; input 3 for 3D, input 2 for 2D
@@ -215,14 +244,14 @@ if __name__ == '__main__':
     # initialize an empty list for pairs of consecutive points
     point_pairs = []
     for i in range(len(points) - 1):
-        # select two consecutive points and store them in an array
-        point_pair = [i + 1, i + 2]
+        # select two consecutive points and store their tags in an array
+        point_pair = [i + 1, i + 2] # creates point pairs by point tags
         point_pairs.append(point_pair)
-
+    # make a pair that connects last point to first point
     point_pairs.append([len(points), 1])
     print("point_pairs=",point_pairs)
 
-
+    # dimension of geometry
     if dims == 3:
         extrude_depth = depth
         submit_callback_3D(points, point_pairs, extrude_depth, lc, dims)
