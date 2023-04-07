@@ -54,7 +54,6 @@ def make_geometry(points, point_pairs, lc, gmsh_model):
     for i in range(len(point_pairs)):
         l = [point_pairs[i][0], point_pairs[i][1]]
         line_lists.append(i + 1)
-        #print("l=",l)
         create_line(l, gmsh_model)
 
     create_surface(line_lists, gmsh_model)

@@ -1,22 +1,7 @@
 import gmsh
 import sys
 from points_input import points, lc
-"""
-test points
-p1 = [0, 0, 0, lc]
-p2 = [1, 0, 0, lc]
-p3 = [1, 3, 0, lc]
-p4 = [0, 3, 0, lc]
 
-test lines
-l1 = create_line(1, 2)
-l2 = create_line(2, 3)
-l3 = create_line(3, 4)
-l4 = create_line(4, 1)
-
-test surface
-s = [1, 2, 3, 4]
-"""
 
 # #define the points as a list of tuples
 # points = [(0, 0, 0), (1, 0, 0), (1, 3, 0), (0, 3, 0), (-1, 1.5, 0)]
