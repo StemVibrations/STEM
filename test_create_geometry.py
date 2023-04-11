@@ -21,7 +21,7 @@ def test_make_geometry():
     make_geometry_2D(points, point_pairs, lc)
     gmsh.model.geo.synchronize()
     gmsh.model.mesh.generate(2)
-    node_coords, node_tags, elem_types, elemTags, nodetag1D, nodetag2D  = extract_mesh_data(3)
+    node_coords, node_tags, elem_types, elemTags, nodetag1D, nodetag2D  = extract_mesh_data(3, 2)
 
     assert node_coords != [] # check if node_coords is not empty
     assert node_tags != [] # check if node_tags is not empty

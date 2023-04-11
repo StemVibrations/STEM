@@ -1,6 +1,8 @@
 import gmsh
 import sys
 
+import numpy as np
+
 
 def create_point(input):
     """
@@ -92,7 +94,7 @@ def make_geometry_2D(points, point_pairs, lc):
     create_surface(line_lists)
 
 
-def extract_mesh_data(mesh_shape):
+def extract_mesh_data(mesh_shape, dims):
     """
     Gets gmsh output data
     :param mesh_shape: for mesh_type 'triangular': 'mesh_shape=3' , 'quad': 'mesh_shape=4'
@@ -104,6 +106,7 @@ def extract_mesh_data(mesh_shape):
     numElem = sum(len(i) for i in elemTags)
     print(" - Mesh has " + str(len(nodeTags)) + " nodes and " + str(numElem) +
           " elements")
+    #print(elemNodeTags)
 
     coord = []
     for i in range(len(nodeCoords)):
@@ -116,7 +119,6 @@ def extract_mesh_data(mesh_shape):
             nodetag1D.append([elemNodeTags[0][i], elemNodeTags[0][i+1]])
 
     nodetag2D = []
-    print(elemNodeTags)
     for i in range(int(len(elemNodeTags[1]))): # elemNodeTags[1] means 2D element node tags
         if mesh_shape == 3:
             if i % mesh_shape == 0:
@@ -126,8 +128,16 @@ def extract_mesh_data(mesh_shape):
                 nodetag2D.append([elemNodeTags[1][i], elemNodeTags[1][i + 1], elemNodeTags[1][i + 2],\
                                   elemNodeTags[1][i + 3]])
 
-    return coord, nodeTags, elemTypes, elemTags, nodetag1D, nodetag2D
+    if dims == 3:
+        nodetag3D = []
+        for i in range(int(len(elemNodeTags[2]))): # elemNodeTags[2] means 3D element node tags
+            if i % 4 == 0:
+                nodetag3D.append([elemNodeTags[2][i], elemNodeTags[2][i + 1], elemNodeTags[2][i + 2],\
+                                  elemNodeTags[2][i + 3]])
 
+        return coord, nodeTags, elemTypes, elemTags, nodetag1D, nodetag2D, nodetag3D
+    if dims == 2:
+        return coord, nodeTags, elemTypes, elemTags, nodetag1D, nodetag2D
 
 def submit_callback_3D(points, point_pairs, depth, lc, dims):
 
@@ -153,23 +163,43 @@ def submit_callback_3D(points, point_pairs, depth, lc, dims):
     if mesh_type == "quad":
         mesh_shape = 4
     # extract mesh data
-    node_coords, node_tags, elem_types, elemTags, nodetag1D, nodetag2D = extract_mesh_data(mesh_shape)
+    node_coords, node_tags, elem_types, elemTags, nodetag1D, nodetag2D, nodetag3D = extract_mesh_data(mesh_shape, dims)
 
     # print some mesh data for demonstration
-    print("Node coordinates:")
-    print(node_coords)
-    print("Node tags:")
-    print(node_tags)
-    print("Element types:")
-    print(elem_types)
-    print("Element tags:")
-    print("element tags 1D:", elemTags[0])
-    print("element tags 2D:", elemTags[1])
-    print("element tags 0D:", elemTags[2])
-    print("Elem Node Tags 1D = lines")
-    print(nodetag1D)
-    print("Elem Node Tags 2D = Elements")
-    print(nodetag2D)
+    # print("Node coordinates:")
+    # print(node_coords)
+    # print("Node tags:")
+    # print(node_tags)
+    # print("Element types:")
+    # print(elem_types)
+    # print("Element tags:")
+    # print("element tags 1D:", elemTags[0])
+    # print("element tags 2D:", elemTags[1])
+    # print("element tags 3D:", elemTags[2])
+    # print("element tags 0D:", elemTags[3])
+    # print("Elem Node Tags 1D = lines")
+    # print(nodetag1D)
+    # print("Elem Node Tags 2D = Surfaces")
+    # print(nodetag2D)
+    # print("Elem Node Tags 3D = Volumes")
+    # print(nodetag3D)
+    nodes = []
+    for i in range (int(len(node_tags))):
+        nodes.append([node_tags[i], node_coords[i][0], node_coords[i][1], node_coords[i][2]])
+    lines = []
+    for i in range (int(len(elemTags[0]))):
+        lines.append([elemTags[0][i], nodetag1D[i][0], nodetag1D[i][1]])
+    surfaces = []
+    for i in range(int(len(elemTags[1]))):
+        surfaces.append([elemTags[1][i], nodetag2D[i][0], nodetag2D[i][1], nodetag2D[i][1]])
+    volumes = []
+    for i in range (int(len(elemTags[2]))):
+        volumes.append([elemTags[2][i], nodetag3D[i][0], nodetag3D[i][1], nodetag3D[i][2], nodetag3D[i][3]])
+
+    np.savetxt('0.nodes.mdpa', nodes, delimiter=' ')
+    np.savetxt('1.lines.mdpa', lines, delimiter=' ')
+    np.savetxt('2.surfaces.mdpa', surfaces, delimiter=' ')
+    np.savetxt('3.volumes.mdpa', volumes, delimiter=' ')
 
     # mesh file output
     gmsh.write("geometry.msh")
@@ -203,7 +233,7 @@ def submit_callback_2D(points, point_pairs, lc, dims):
     if mesh_type == "quad":
         mesh_shape = 4
     # extract mesh data
-    node_coords, node_tags, elem_types, elemTags, nodetag1D, nodetag2D  = extract_mesh_data(mesh_shape)
+    node_coords, node_tags, elem_types, elemTags, nodetag1D, nodetag2D  = extract_mesh_data(mesh_shape, dims)
 
     # print some mesh data for demonstration
     print("Node coordinates:")
@@ -233,7 +263,7 @@ if __name__ == '__main__':
     # define the points as a list of tuples
     points = [(0, 0, 0), (1, 0, 0), (1, 3, 0), (0, 3, 0)]
     # define the mesh size
-    lc = 1
+    lc = 2
     # define mesh type
     mesh_type = "triangular"
     # define geometry dimension; input 3 for 3D, input 2 for 2D
@@ -249,7 +279,7 @@ if __name__ == '__main__':
         point_pairs.append(point_pair)
     # make a pair that connects last point to first point
     point_pairs.append([len(points), 1])
-    print("point_pairs=",point_pairs)
+    #print("point_pairs=",point_pairs)
 
     # dimension of geometry
     if dims == 3:
