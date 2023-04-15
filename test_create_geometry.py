@@ -2,6 +2,10 @@ from create_geometry import generate_gmsh_mesh
 
 
 def test_make_geometry():
+    """
+    checks whether mesh data generated for 2D and 3D geometries is not empty
+    :return: -
+    """
     # define the points of the surface as a list of tuples
     input_points = [(0, 0, 0), (1, 0, 0), (1, 3, 0), (0, 3, 0), (-1, 1.5, 0)]
     # define the mesh size
