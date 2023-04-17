@@ -1,7 +1,7 @@
 from create_geometry import generate_gmsh_mesh
 
 
-def test_make_geometry():
+def test_generate_mesh_2D():
     """
     checks whether mesh data generated for 2D and 3D geometries is not empty
     :return: -
