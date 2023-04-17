@@ -38,6 +38,23 @@ def test_make_geometry():
     assert node_tag_1D != []  # check if elem_node_tags is not empty
     assert node_tag_2D != []  # check if elem_node_tags is not empty
 
+
+def test_generate_mesh_3D():
+    """
+    checks whether mesh data generated for 2D and 3D geometries is not empty
+    :return: -
+    """
+    
+     # define the points of the surface as a list of tuples
+    input_points = [(0, 0, 0), (1, 0, 0), (1, 3, 0), (0, 3, 0), (-1, 1.5, 0)]
+    # define the mesh size
+    mesh_size = 0.1
+    # set a name label for the surface
+    name_label = "Soil Layer"
+    # if True, saves mesh data to separate mdpa files
+    save_file = False
+    # if True, opens gmsh interface
+    gmsh_interface = False
     # test 3D geometry
     # define geometry dimension; input "3" for 3D to extrude the 2D surface
     dims = 3
