@@ -166,6 +166,9 @@ def get_num_nodes_from_elem_type(elem_type):
     # 4 node tetrahedron
     if elem_type == 4:
         return 4  # number of nodes needed for 4-node tetrahedron
+        # 1 node
+    if elem_type == 15:
+        return 1  # number of nodes needed for 1-node
 
 
 def generate_gmsh_mesh(point_coordinates, depth, mesh_size, dims, save_file, name_label, mesh_output_name,
