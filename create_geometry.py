@@ -122,7 +122,9 @@ def extract_mesh_data(dims):
     """
     node_tags, node_coords, node_params = gmsh.model.mesh.getNodes()  # nodes, elements
     elem_types, elem_tags, elem_node_tags = gmsh.model.mesh.getElements()
-    node_shape = get_num_nodes_from_elem_type(elem_types)
+
+    # get number of nodes per element type
+    node_shape = [get_num_nodes_from_elem_type(elem_type) for elem_type in elem_types]
     num_elem = sum(len(i) for i in elem_tags)
     print(" - Mesh has " + str(len(node_tags)) + " nodes and " + str(num_elem) +
           " elements")
@@ -148,23 +150,22 @@ def extract_mesh_data(dims):
 def get_num_nodes_from_elem_type(elem_type):
     """
     gets number of nodes from element types
-    :param elem_type: array of numbers that defines type of elements
+    :param elem_type: int that defines type of elements
     :return: number of nodes needed for a type of element
     """
-    mesh_shape = []
+
     # 2 node line
-    if elem_type[0] == 1:
-        mesh_shape.append(2)  # number of nodes needed for 2-node line
+    if elem_type == 1:
+        return 2  # number of nodes needed for 2-node line
     # 3 node triangle
-    if elem_type[1] == 2:
-        mesh_shape.append(3)  # number of nodes needed for 3-node triangle
-    # 4 node tetrahedron
-    if elem_type[2] == 4:
-        mesh_shape.append(4)  # number of nodes needed for 4-node tetrahedron
+    if elem_type == 2:
+        return 3  # number of nodes needed for 3-node triangle
     # 4 node quadrangle
-    if elem_type[2] == 3:
-        mesh_shape.append(4)  # number of nodes needed for 4-node quadrangle
-    return mesh_shape
+    if elem_type == 3:
+        return 4  # number of nodes needed for 4-node quadrangle
+    # 4 node tetrahedron
+    if elem_type == 4:
+        return 4  # number of nodes needed for 4-node tetrahedron
 
 
 def generate_gmsh_mesh(point_coordinates, depth, mesh_size, dims, save_file, name_label, mesh_output_name,
@@ -204,7 +205,7 @@ def generate_gmsh_mesh(point_coordinates, depth, mesh_size, dims, save_file, nam
         nodes, lines, surfaces = get_data_for_kratos(node_coords, node_tags, elem_tags, node_tag_1D, node_tag_2D)
         volumes = np.concatenate((elem_tags[2][:, None], np.array(node_tag_3D)), axis=1)
 
-    if dims == 2:
+    elif dims == 2:
         make_geometry_2D(point_coordinates, point_pairs, mesh_size, name_label)
         gmsh.model.geo.synchronize()
         gmsh.model.mesh.generate(dims)
