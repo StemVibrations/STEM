@@ -1,5 +1,5 @@
-from create_geometry import generate_gmsh_mesh
-
+from stem.create_geometry import generate_gmsh_mesh
+from pathlib import Path
 
 def test_generate_mesh_2D():
     """
@@ -37,6 +37,9 @@ def test_generate_mesh_2D():
     assert elem_tags != []  # check if elemTags is not empty
     assert node_tag_1D != []  # check if elem_node_tags is not empty
     assert node_tag_2D != []  # check if elem_node_tags is not empty
+
+    # cleanup
+    Path.unlink(Path(mesh_output_name + ".msh"))
 
 
 def test_generate_mesh_3D():
@@ -78,3 +81,6 @@ def test_generate_mesh_3D():
     assert node_tag_1D != []  # check if elem_node_tags is not empty
     assert node_tag_2D != []  # check if elem_node_tags is not empty
     assert node_tag_3D != []  # check if elem_node_tags is not empty
+
+    # cleanup
+    Path.unlink(Path(mesh_output_name + ".msh"))
