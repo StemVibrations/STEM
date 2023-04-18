@@ -170,7 +170,7 @@ class GmshIO:
         return num_nodes
 
     def generate_gmsh_mesh(self, point_coordinates, depth, mesh_size, dims, name_label, mesh_output_name,
-                           save_file, open_gmsh_interface=False):
+                           save_file=False, open_gmsh_interface=False):
         """
         crates point pairs by storing point tags of two consecutive points in an array then
         generates mesh for geometries in gmsh
@@ -202,12 +202,10 @@ class GmshIO:
         elif dims == 2:
             self.make_geometry_2D(point_coordinates, point_pairs, mesh_size, name_label)
 
-        mesh_data = self.extract_mesh_data(gmsh.model.mesh, dims)
         gmsh.model.geo.synchronize()
         gmsh.model.mesh.generate(dims)
-            # extract mesh data
-            # node_coords, node_tags, elem_types, elem_tags, node_tag_1D, node_tag_2D = extract_mesh_data(dims)
-            # nodes, lines, surfaces = get_data_for_kratos(node_coords, node_tags, elem_tags, node_tag_1D, node_tag_2D)
+
+        mesh_data = self.extract_mesh_data(gmsh.model.mesh, dims)
 
         if save_file:
             # writes mesh file output in .msh format
@@ -249,7 +247,7 @@ class GmshIO:
         # get number of nodes per element type
         node_shape = [self.get_num_nodes_from_elem_type(elem_type) for elem_type in elem_types]
         num_elem = sum(len(i) for i in elem_tags)
-        print(" - Mesh has " + str(len(self.node_ids)) + " nodes and " + str(num_elem) +
+        print(" - Mesh has " + str(len(node_tags)) + " nodes and " + str(num_elem) +
               " elements")
 
         # get 1D elements

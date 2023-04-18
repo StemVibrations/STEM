@@ -16,32 +16,6 @@ class Geometry:
         pass
 
 
-
-def init():
-    """
-    gets user input
-    :return: input_points, depth, mesh_size, dims, save_file, name_label, mesh_output_name, gmsh_interface
-    """
-    # define the points of the surface as a list of tuples
-    input_points = [(0, 0, 0), (1, 0, 0), (1, 3, 0), (0, 3, 0), (-1, 1.5, 0)]
-    # define the mesh size
-    mesh_size = 2
-    # define geometry dimension; input "3" for 3D to extrude the 2D surface, input "2" for 2D
-    dims = 3
-    # if 3D, input depth of geometry to be extruded from 2D surface
-    depth = 2
-    # set a name label for the surface
-    name_label = "Soil Layer"
-    # if "True", saves mesh data to separate mdpa files; otherwise "False"
-    save_file = True
-    # if "True", opens gmsh interface; otherwise "False"
-    gmsh_interface = True
-    # set a name for mesh output file
-    mesh_output_name = "geometry"
-
-    return input_points, depth, mesh_size, dims, save_file, name_label, mesh_output_name, gmsh_interface
-
-
 def get_data_for_kratos(node_coords, node_tags, elem_tags, node_tag_1D, node_tag_2D, node_tag_3D = None):
     """
     gets mesh data for Kratos
