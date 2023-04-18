@@ -37,7 +37,6 @@ class KratosIO:
     def __write_input_processes(self):
         pass
 
-
     def write_project_parameters(self):
 
         self.__write_problem_data()
