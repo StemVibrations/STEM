@@ -40,7 +40,6 @@ def test_generate_mesh_2D():
         assert value["element_nodes"].size > 0
 
 
-
 def test_generate_mesh_3D():
     """
     checks whether mesh data generated for 2D and 3D geometries is not empty
