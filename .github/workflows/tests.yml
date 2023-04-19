@@ -22,7 +22,7 @@ jobs:
     steps:
     - name: Install libGLU library on Ubuntu
     - ${{ if contains(matrix.os,'ubuntu') }}:
-      - run: sudo apt-get install -y libglu1-mesa
+      run: sudo apt-get install -y libglu1-mesa
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
