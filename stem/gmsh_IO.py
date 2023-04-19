@@ -179,11 +179,6 @@ class GmshIO:
         volumes = []
         if dims == 3:
             self.make_geometry_3D(point_coordinates, point_pairs, mesh_size, depth, name_label)
-            # # extract mesh data
-            # node_coords, node_tags, elem_types, elem_tags, node_tag_1D, node_tag_2D, node_tag_3D = extract_mesh_data(
-            #     dims)
-            # nodes, lines, surfaces = get_data_for_kratos(node_coords, node_tags, elem_tags, node_tag_1D, node_tag_2D)
-            # volumes = np.concatenate((elem_tags[2][:, None], np.array(node_tag_3D)), axis=1)
 
         elif dims == 2:
             self.make_geometry_2D(point_coordinates, point_pairs, mesh_size, name_label)
