@@ -4,6 +4,8 @@ import numpy as np
 from enum import Enum
 import re
 
+#todo Put this file in its own package, e.g. GmshUtils
+
 class ElementType(Enum):
     """
     Enum of the element types as present in Gmsh, where the enum value corresponds to the element type number in gmsh
@@ -249,6 +251,7 @@ class GmshIO:
         # get all elemental information
         elem_types, elem_tags, elem_node_tags = gmsh_mesh.getElements()
 
+        # todo, this is unhandy for the future and the connection to kratos, handier would be to group elements by physical group
         for elem_type, elem_tag, elem_node_tag in zip(elem_types, elem_tags, elem_node_tags):
             element_dict = self.extract_element_data(elem_type, elem_tag, elem_node_tag)
             mesh_data["elements"].update(element_dict)
@@ -257,7 +260,4 @@ class GmshIO:
 
 
 if __name__ == '__main__':
-
-    element_name = ElementType(19).name
-    re.findall(r'\d+', element_name)
-    [int(s) for s in element_name.split() if s.isdigit()]
+    pass

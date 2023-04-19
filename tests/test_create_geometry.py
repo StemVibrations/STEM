@@ -1,5 +1,4 @@
 from stem.gmsh_IO import GmshIO
-from pathlib import Path
 
 def test_generate_mesh_2D():
     """

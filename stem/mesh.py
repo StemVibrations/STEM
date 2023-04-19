@@ -1,5 +1,7 @@
 import numpy as np
 
+# todo create GmshIO its own package
+from stem.gmsh_IO import GmshIO
 from stem.kratos_IO import KratosIO
 
 class Node:
@@ -27,44 +29,38 @@ class Mesh:
         self.elements = None
         self.conditions = None
 
-
-        self.elements_1d = None
-        self.elements_2d = None
-        self.elements_3d = None
-
         pass
 
-    def prepare_data_for_kratos(self, node_coords, node_tags, elem_tags, node_tag_1D, node_tag_2D, node_tag_3D = None):
+    def prepare_data_for_kratos(self, mesh_data):
         """
         gets mesh data for Kratos
-        :param node_coords: node coordinates
-        :param node_tags: node tags
-        :param elem_tags: all element tags in an array separated by element type
-        :param node_tag_1D: node tags of start and end of line
-        :param node_tag_2D: node tags of surface
-        :return: node tag followed by node coordinates and element tag followed by node tags in an array
+        :param mesh_data: dictionary of mesh data
+        :return: node id followed by node coordinates and element id followed by node id in an array
         """
-        nodes = np.concatenate((node_tags[:, None], np.array(node_coords)), axis=1)
-        elements_1d = np.concatenate((elem_tags[0][:, None], np.array(node_tag_1D)), axis=1)
-        elements_2d = np.concatenate((elem_tags[1][:, None], np.array(node_tag_2D)), axis=1)
 
-        if node_tag_3D is not None:
-            elements_3d = np.concatenate((elem_tags[2][:, None], np.array(node_tag_3D)), axis=1)
-        else:
-            elements_3d = None
+        # create array of nodes where each row is represented by [id, x,y,z]
+        nodes = np.concatenate((mesh_data["nodes"]["ids"][:, None], mesh_data["nodes"]["coordinates"]), axis=1)
 
-        return nodes, elements_1d, elements_2d, elements_3d
+        all_elements=[]
+        # create array of elements where each row is represented by [id, node connectivities]
+        for v in mesh_data["elements"].values():
+            all_elements.append(np.concatenate((v["element_ids"][:, None], v["element_nodes"]), axis=1))
+
+        return nodes, all_elements
 
 
-    def write_mesh_to_kratos_structure(self, filename):
+    def write_mesh_to_kratos_structure(self, mesh_data, filename):
+        """
+        Writes mesh data to the structure which can be read by Kratos
 
-        self.prepare_data_for_kratos()
+        :param mesh_data: dictionary of mesh data
+        :param filename: filename of the kratos mesh file
+        :return:
+        """
+        nodes, elements = self.prepare_data_for_kratos(mesh_data)
 
         kratos_io = KratosIO()
-
-        kratos_io.
-
-        kratos_io.write_mesh_to_mdpa()
+        kratos_io.write_mesh_to_mdpa(nodes, elements, filename)
 
 
 

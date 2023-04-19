@@ -3,8 +3,11 @@ from typing import List
 from model_part import ModelPart, BodyModelPart
 
 
-
 class Model:
+    """
+    Main model
+
+    """
     def __init__(self):
 
         self.project_parameters = None
