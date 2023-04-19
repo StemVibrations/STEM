@@ -35,22 +35,6 @@ class ElementType(Enum):
 class GmshIO:
 
     def __init__(self):
-        self.node_coordinates = None
-        self.node_ids = None
-
-        self.node_ids_1d_elements = None
-        self.node_ids_2d_elements = None
-        self.node_ids_3d_elements = None
-
-        self.element_ids_1d = None
-        self.element_ids_2d = None
-        self.element_ids_3d = None
-
-        self.element_type_1d = None
-        self.element_type_2d = None
-        self.element_type_3d = None
-
-    def initialise_mesh(self):
         pass
 
     def create_point(self, coordinates, mesh_size):
