@@ -1,4 +1,4 @@
-from stem.create_geometry import generate_gmsh_mesh
+from stem.gmsh_IO import GmshIO
 from pathlib import Path
 
 def test_generate_mesh_2D():
@@ -25,21 +25,20 @@ def test_generate_mesh_2D():
     # input depth of geometry if 3D
     depth = 0
 
-    coord, node_tags, elem_types, elem_tags, node_tag_1D, node_tag_2D = generate_gmsh_mesh(input_points, depth,
-                                                                                           mesh_size, dims, save_file,
-                                                                                           name_label,
-                                                                                           mesh_output_name,
-                                                                                           gmsh_interface)
+    gmsh_io = GmshIO()
+    mesh_data = gmsh_io.generate_gmsh_mesh(input_points, depth,mesh_size, dims, name_label, mesh_output_name,save_file,
+                                           gmsh_interface)
 
-    assert coord != []  # check if node_coords is not empty
-    assert node_tags != []  # check if node_tags is not empty
-    assert elem_types != []  # check if elem_types is not empty
-    assert elem_tags != []  # check if elemTags is not empty
-    assert node_tag_1D != []  # check if elem_node_tags is not empty
-    assert node_tag_2D != []  # check if elem_node_tags is not empty
+    assert mesh_data["nodes"]["coordinates"].size > 0  # check if node_coords is not empty
+    assert mesh_data["nodes"]["ids"].size > 0  # check if node_tags is not empty
+    assert list(mesh_data["elements"].keys()) == ["LINE_2N", "TRIANGLE_3N",
+                                                  "POINT_1N"]  # check if correct elements are present
 
-    # cleanup
-    Path.unlink(Path(mesh_output_name + ".msh"))
+    # check each element type contains ids and nodes
+    for value in mesh_data["elements"].values():
+        assert value["element_ids"].size > 0
+        assert value["element_nodes"].size > 0
+
 
 
 def test_generate_mesh_3D():
@@ -66,21 +65,20 @@ def test_generate_mesh_3D():
     # set a name for mesh output file
     mesh_output_name = "test_3D"
 
-    coord, node_tags, elem_types, elem_tags, node_tag_1D, node_tag_2D, node_tag_3D = generate_gmsh_mesh(input_points,
-                                                                                                        depth,
-                                                                                                        mesh_size, dims,
-                                                                                                        save_file,
-                                                                                                        name_label,
-                                                                                                        mesh_output_name,
-                                                                                                        gmsh_interface)
+    gmsh_io = GmshIO()
 
-    assert coord != []  # check if node_coords is not empty
-    assert node_tags != []  # check if node_tags is not empty
-    assert elem_types != []  # check if elem_types is not empty
-    assert elem_tags != []  # check if elemTags is not empty
-    assert node_tag_1D != []  # check if elem_node_tags is not empty
-    assert node_tag_2D != []  # check if elem_node_tags is not empty
-    assert node_tag_3D != []  # check if elem_node_tags is not empty
+    mesh_data = gmsh_io.generate_gmsh_mesh(input_points, depth, mesh_size, dims, name_label, mesh_output_name,
+                                           save_file,
+                                           gmsh_interface)
 
-    # cleanup
-    Path.unlink(Path(mesh_output_name + ".msh"))
+    assert mesh_data["nodes"]["coordinates"].size > 0  # check if node_coords is not empty
+    assert mesh_data["nodes"]["ids"].size > 0  # check if node_tags is not empty
+    assert list(mesh_data["elements"].keys()) == ["LINE_2N", "TRIANGLE_3N", "TETRAHEDRON_4N",
+                                                  "POINT_1N"]  # check if correct elements are present
+
+    # check each element type contains ids and nodes
+    for value in mesh_data["elements"].values():
+        assert value["element_ids"].size > 0
+        assert value["element_nodes"].size > 0
+
+

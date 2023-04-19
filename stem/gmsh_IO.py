@@ -221,6 +221,26 @@ class GmshIO:
 
         return mesh_data
 
+    def extract_element_data(self,elem_type, elem_tags, elem_node_tags):
+        """
+        Gets gmsh data belonging to a single element
+
+        :param elem_type: gmsh id for element type
+        :param elem_tag:  gmsh id for element number
+        :param elem_node_tags: gmsh node ids which belong the the element
+
+        :return: dictionary of element data
+        """
+
+        element_name = ElementType(elem_type).name
+        n_nodes_per_element = self.get_num_nodes_from_elem_type(elem_type)
+        num_elements = len(elem_tags)
+        element_node_ids = np.reshape(elem_node_tags, (num_elements, n_nodes_per_element))
+
+        return {element_name: {"element_ids": elem_tags,
+                               "element_nodes": element_node_ids}}
+
+
     def extract_mesh_data(self, gmsh_mesh, dims):
         """
         gets gmsh output data
@@ -228,6 +248,9 @@ class GmshIO:
         :param dims: geometry dimension (2=2D or 3=3D)
         :return: geometry and mesh data: node tags, node coordinates, element types, element tags 0D, 1D, 2D, 3D
         """
+
+        mesh_data = {"nodes": {},
+                     "elements": {}}
 
         # get nodal information
         node_tags, node_coords, node_params = gmsh_mesh.getNodes()  # nodes, elements
@@ -237,46 +260,15 @@ class GmshIO:
         num_nodes = len(node_tags)
         node_coordinates = np.reshape(node_coords, (num_nodes, 3))
 
-        # get elemental information
+        mesh_data["nodes"]["coordinates"] = node_coordinates
+        mesh_data["nodes"]["ids"] = node_tags
+
+        # get all elemental information
         elem_types, elem_tags, elem_node_tags = gmsh_mesh.getElements()
 
-        element_name_1d = ElementType(elem_types[0]).name
-        element_name_2d = ElementType(elem_types[1]).name
-        element_name_3d = ElementType(elem_types[2]).name
-
-        # get number of nodes per element type
-        node_shape = [self.get_num_nodes_from_elem_type(elem_type) for elem_type in elem_types]
-        num_elem = sum(len(i) for i in elem_tags)
-        print(" - Mesh has " + str(len(node_tags)) + " nodes and " + str(num_elem) +
-              " elements")
-
-        # get 1D elements
-        num_1d_elements = len(elem_tags[0])
-        node_tag_1D = np.reshape(elem_node_tags[0], (num_1d_elements, node_shape[0]))
-
-        # get 2D elements
-        num_2d_elements = len(elem_tags[1])
-        node_tag_2D = np.reshape(elem_node_tags[1], (num_2d_elements, node_shape[1]))
-
-        node_tag_3D = None
-        if dims == 3:
-            # get 3D elements
-            num_3d_elements = len(elem_tags[2])
-            node_tag_3D = np.reshape(elem_node_tags[2], (num_3d_elements, node_shape[2]))
-
-        mesh_data = {"nodes": {"coordinates": node_coordinates,
-                               "ids": node_tags},
-                     "elements": {"elements_1d": {"element_type": element_name_1d,
-                                                  "element_ids": elem_tags[0],
-                                                  "element_nodes": node_tag_1D},
-                                  "elements_2d": {"element_type": element_name_2d,
-                                                  "element_ids": elem_tags[1],
-                                                  "element_nodes": node_tag_2D},
-                                  "elements_3d": {"element_type": element_name_3d,
-                                                  "element_ids": elem_tags[2],
-                                                  "element_nodes": node_tag_3D}
-                                  }
-                     }
+        for elem_type, elem_tag, elem_node_tag in zip(elem_types, elem_tags, elem_node_tags):
+            element_dict = self.extract_element_data(elem_type, elem_tag, elem_node_tag)
+            mesh_data["elements"].update(element_dict)
 
         return mesh_data
 
