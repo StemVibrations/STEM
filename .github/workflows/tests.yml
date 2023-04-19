@@ -21,7 +21,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     - name: Install libGLU library on Ubuntu
-    - ${{ if contains(matrix.os,'ubuntu') }}
+    - ${{ if contains(matrix.os,'ubuntu') }}:
       - run: sudo apt-get install -y libglu1-mesa
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
