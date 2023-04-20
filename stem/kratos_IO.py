@@ -15,6 +15,7 @@ class KratosIO:
 
         :param nodes: node tag followed by node coordinates in an array
         :param elements: list of all elements per element type # todo, should be per physical group
+        :param filename: filename of mdpa file
 
         :return: -
         """
