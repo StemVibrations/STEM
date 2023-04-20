@@ -4,6 +4,8 @@ import numpy as np
 from enum import Enum
 import re
 
+from typing import Dict
+
 #todo Put this file in its own package, e.g. GmshUtils
 
 class ElementType(Enum):
@@ -230,8 +232,8 @@ class GmshIO:
         :return: dictionary which contains nodal and elemental information
         """
 
-        mesh_data: dict = {"nodes": {},
-                           "elements": {}}
+        mesh_data: Dict[str, dict] = {"nodes": {},
+                                      "elements": {}}
 
         # get nodal information
         node_tags, node_coords, node_params = gmsh_mesh.getNodes()  # nodes, elements
