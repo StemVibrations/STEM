@@ -1,6 +1,6 @@
 from typing import List
 
-from model_part import ModelPart, BodyModelPart
+from stem.model_part import ModelPart, BodyModelPart
 
 
 class Model:
