@@ -23,7 +23,9 @@ jobs:
     - name: Install libGLU library on Ubuntu
       run: |
             if [ "$RUNNER_OS" == "Linux" ]; then
-            sudo apt-get install -y libglu1-mesa
+                sudo apt-get install -y libglu1-mesa
+            fi
+      shell: bash
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
