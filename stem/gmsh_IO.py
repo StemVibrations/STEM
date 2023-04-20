@@ -230,8 +230,8 @@ class GmshIO:
         :return: dictionary which contains nodal and elemental information
         """
 
-        mesh_data = {"nodes": {},
-                     "elements": {}}
+        mesh_data: dict = {"nodes": {},
+                           "elements": {}}
 
         # get nodal information
         node_tags, node_coords, node_params = gmsh_mesh.getNodes()  # nodes, elements
