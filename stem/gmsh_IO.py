@@ -39,7 +39,11 @@ class ElementType(Enum):
 class GmshIO:
 
     def __init__(self):
-        pass
+        self.__mesh_data = {}
+
+    @property
+    def mesh_data(self):
+        return self.__mesh_data
 
     def create_point(self, coordinates, mesh_size):
         """
@@ -157,30 +161,30 @@ class GmshIO:
 
         return num_nodes
 
-    def generate_gmsh_mesh(self, point_coordinates, depth, mesh_size, dims, name_label, mesh_output_name,
-                           save_file=False, open_gmsh_interface=False):
+    def generate_gmsh_mesh(self, point_coordinates, extrusion_length, mesh_size, dims, name_label, mesh_name,
+                           mesh_output_dir, save_file=False, open_gmsh_gui=False):
         """
         crates point pairs by storing point tags of two consecutive points in an array then
         generates mesh for geometries in gmsh
         :param point_coordinates: user input points of the surface as a list of tuples
-        :param depth: depth of 3D geometry
+        :param extrusion_length: depth of 3D geometry
         :param mesh_size: mesh size
         :param dims: geometry dimension (2=2D or 3=3D)
         :param name_label: surface name label from user input
-        :param mesh_output_name: name of mesh output file
+        :param mesh_name: name of gmsh model and mesh output file
+        :param mesh_output_dir: output_directory of mesh file
         :param save_file: if True saves mesh data to gmsh msh file
-        :param open_gmsh_interface: user indicates whether to open gmsh interface
+        :param open_gmsh_gui: user indicates whether to open gmsh interface
         :return: saves mesh data and opens gmsh interface
         """
 
         point_pairs = self.generate_point_pairs(point_coordinates)
 
         gmsh.initialize()
-        gmsh.model.add(mesh_output_name)
+        gmsh.model.add(mesh_name)
 
-        volumes = []
         if dims == 3:
-            self.make_geometry_3D(point_coordinates, point_pairs, mesh_size, depth, name_label)
+            self.make_geometry_3D(point_coordinates, point_pairs, mesh_size, extrusion_length, name_label)
 
         elif dims == 2:
             self.make_geometry_2D(point_coordinates, point_pairs, mesh_size, name_label)
@@ -188,21 +192,19 @@ class GmshIO:
         gmsh.model.geo.synchronize()
         gmsh.model.mesh.generate(dims)
 
-        mesh_data = self.extract_mesh_data(gmsh.model.mesh)
+        self.__mesh_data = self.extract_mesh_data(gmsh.model.mesh)
 
         if save_file:
             # writes mesh file output in .msh format
             file_extension = ".msh"
-            mesh_output_file = mesh_output_name + file_extension
+            mesh_output_file = mesh_name + file_extension
             gmsh.write(mesh_output_file)
 
         # opens GMsh interface
-        if open_gmsh_interface:
+        if open_gmsh_gui:
             gmsh.fltk.run()
 
         gmsh.finalize()
-
-        return mesh_data
 
     def extract_element_data(self,elem_type, elem_tags, elem_node_tags):
         """
@@ -257,4 +259,9 @@ class GmshIO:
 
 
 if __name__ == '__main__':
+
+    line = Line()
+    # line.coordinates = 2
+    line.point_ids = 2
+    a=1+1
     pass

@@ -1,4 +1,7 @@
 
+
+#todo group input into geometry, settings, ...
+
 from stem.gmsh_IO import GmshIO
 
 # define the points of the surface as a list of tuples
@@ -8,20 +11,24 @@ mesh_size = 2
 # define geometry dimension; input "3" for 3D to extrude the 2D surface, input "2" for 2D
 dims = 3
 # if 3D, input depth of geometry to be extruded from 2D surface
-depth = 2
+extrusion_length = 2
 # set a name label for the surface
 name_label = "Soil Layer"
 # if "True", saves mesh data to separate mdpa files; otherwise "False"
-save_file = True
+save_file = False
 # if "True", opens gmsh interface; otherwise "False"
-gmsh_interface = True
+open_gmsh_gui = False
 # set a name for mesh output file
-mesh_output_name = "geometry"
+mesh_name = "geometry"
+# set output directory
+mesh_output_dir = "./"
+
+
 
 gmsh_io = GmshIO()
 
-mesh_data = gmsh_io.generate_gmsh_mesh(input_points, depth, mesh_size, dims, name_label, mesh_output_name, save_file,
-                                       gmsh_interface)
+gmsh_io.generate_gmsh_mesh(input_points, extrusion_length, mesh_size, dims, name_label, mesh_name, mesh_output_dir,
+                           save_file, open_gmsh_gui)
 
+mesh_data = gmsh_io.mesh_data
 
-a=1+1
