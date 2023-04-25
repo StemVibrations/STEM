@@ -101,7 +101,7 @@ class GmshIO:
         """
 
         gmsh.model.geo.addCurveLoop(line_ids, 1)
-        surface_id = gmsh.model.geo.addPlaneSurface([1], 1)
+        surface_id: int = gmsh.model.geo.addPlaneSurface([1], 1)
 
         surface_ndim = 2
         gmsh.model.setPhysicalName(surface_ndim, surface_id, name_label)
@@ -124,15 +124,15 @@ class GmshIO:
         gmsh.model.geo.extrude([(surface_ndim, surface_id)], extrusion_length[0], extrusion_length[1],
                                extrusion_length[2])
 
-    def make_geometry_2D(self, point_coordinates: Union[List[float], npt.NDArray[float]],
-                         point_pairs: Union[List[List[int]], npt.NDArray[npt.NDArray[int]]],
+    def make_geometry_2D(self, point_coordinates: Union[List[float], npt.NDArray[npt.NDArray[np.float64]]],
+                         point_pairs: Union[List[List[int]], npt.NDArray[npt.NDArray[np.int_]]],
                          element_size: float, name_label: str) -> int:
         """
         Takes point_pairs and puts their tags as the beginning and end of line in gmsh to create line,
         then creates surface to make 2D geometry.
 
         Args:
-            point_coordinates (Union[List[float], npt.NDArray[float]]): A list of point coordinates.
+            point_coordinates (Union[List[float], npt.NDArray[npt.NDArray[np.float64]]]): A list of point coordinates.
             point_pairs (Union[List[List[int]], npt.NDArray[npt.NDArray[int]]]): A list of point tags of two
                 consecutive points in an array.
             element_size (float): The mesh size provided by user.
@@ -153,7 +153,7 @@ class GmshIO:
             line_lists.append(i + 1)
             self.create_line(line)
 
-        surface_id = self.create_surface(line_lists, name_label)
+        surface_id: int = self.create_surface(line_lists, name_label)
         return surface_id
 
     def make_geometry_3D(self, point_coordinates: Union[List[float], npt.NDArray[float]],
@@ -271,7 +271,8 @@ class GmshIO:
 
         gmsh.finalize()
 
-    def extract_element_data(self, elem_type: int, elem_tags: List[int], element_connectivities: List[int]) -> dict:
+    def extract_element_data(self, elem_type: int, elem_tags: List[int], element_connectivities: List[int]) -> \
+            Dict[str, object]:
         """
         Extracts element data from gmsh mesh
 
