@@ -27,9 +27,11 @@ def test_generate_mesh_2D():
     extrusion_length = [0, 0, 0]
 
     gmsh_io = GmshIO()
-    mesh_data = gmsh_io.generate_gmsh_mesh(input_points, extrusion_length, mesh_size, dims, name_label,
-                                           mesh_output_name, mesh_output_dir, save_file,
-                                           gmsh_interface)
+    gmsh_io.generate_gmsh_mesh(input_points, extrusion_length, mesh_size, dims, name_label,
+                               mesh_output_name, mesh_output_dir, save_file,
+                               gmsh_interface)
+
+    mesh_data = gmsh_io.mesh_data
 
     assert mesh_data["nodes"]["coordinates"].size > 0  # check if node_coords is not empty
     assert mesh_data["nodes"]["ids"].size > 0  # check if node_tags is not empty
@@ -70,9 +72,11 @@ def test_generate_mesh_3D():
 
     gmsh_io = GmshIO()
 
-    mesh_data = gmsh_io.generate_gmsh_mesh(input_points, extrusion_length, element_size, dims, name_label,
-                                           mesh_output_name, mesh_output_dir, save_file,
-                                           gmsh_interface)
+    gmsh_io.generate_gmsh_mesh(input_points, extrusion_length, element_size, dims, name_label,
+                               mesh_output_name, mesh_output_dir, save_file,
+                               gmsh_interface)
+
+    mesh_data = gmsh_io.mesh_data
 
     assert mesh_data["nodes"]["coordinates"].size > 0  # check if node_coords is not empty
     assert mesh_data["nodes"]["ids"].size > 0  # check if node_tags is not empty
@@ -82,6 +86,6 @@ def test_generate_mesh_3D():
     # check each element type contains ids and nodes
     for value in mesh_data["elements"].values():
         assert value["element_ids"].size > 0
-        assert value["connectivies"].size > 0
+        assert value["connectivities"].size > 0
 
 
