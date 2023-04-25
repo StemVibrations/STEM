@@ -88,7 +88,7 @@ class GmshIO:
         gmsh.model.geo.addLine(point1, point2)
 
 
-    def create_surface(self, line_ids: Union[List[int], npt.NDArray[int]], name_label: str) -> int:
+    def create_surface(self, line_ids: Union[List[int], npt.NDArray[np.int_]], name_label: str) -> int:
         """
         Creates curve and then surface in gmsh by using line tags.
 
@@ -108,7 +108,7 @@ class GmshIO:
         return surface_id
 
     def create_volume_by_extruding_surface(self, surface_id: int,
-                                           extrusion_length: Union[List[float], npt.NDArray[float]]) -> None:
+                                           extrusion_length: Union[List[float], npt.NDArray[np.float64]]) -> None:
         """
         Creates volume by extruding a 2D surface
 
@@ -124,15 +124,15 @@ class GmshIO:
         gmsh.model.geo.extrude([(surface_ndim, surface_id)], extrusion_length[0], extrusion_length[1],
                                extrusion_length[2])
 
-    def make_geometry_2D(self, point_coordinates: Union[List[float], npt.NDArray[npt.NDArray[np.float64]]],
-                         point_pairs: Union[List[List[int]], npt.NDArray[npt.NDArray[np.int_]]],
+    def make_geometry_2D(self, point_coordinates: Union[List[List[float]], npt.NDArray[np.float64]],
+                         point_pairs: Union[List[List[int]], npt.NDArray[np.int_]],
                          element_size: float, name_label: str) -> int:
         """
         Takes point_pairs and puts their tags as the beginning and end of line in gmsh to create line,
         then creates surface to make 2D geometry.
 
         Args:
-            point_coordinates (Union[List[float], npt.NDArray[npt.NDArray[np.float64]]]): A list of point coordinates.
+            point_coordinates (Union[List[float], npt.NDArray[np.float64]]): A list of point coordinates.
             point_pairs (Union[List[List[int]], npt.NDArray[npt.NDArray[int]]]): A list of point tags of two
                 consecutive points in an array.
             element_size (float): The mesh size provided by user.
@@ -156,10 +156,10 @@ class GmshIO:
         surface_id: int = self.create_surface(line_lists, name_label)
         return surface_id
 
-    def make_geometry_3D(self, point_coordinates: Union[List[float], npt.NDArray[float]],
-                         point_pairs: Union[List[List[int]], npt.NDArray[npt.NDArray[int]]],
+    def make_geometry_3D(self, point_coordinates: Union[List[List[float]], npt.NDArray[np.float64]],
+                         point_pairs: Union[List[List[int]], npt.NDArray[np.int_]],
                          mesh_size: float, extrusion_length: Union[List[float],
-                                                                   npt.NDArray[float]], name_label: str) -> None:
+                                                                   npt.NDArray[np.float64]], name_label: str) -> None:
         """
         Creates 3D geometries by extruding the 2D surface
 
@@ -178,12 +178,12 @@ class GmshIO:
         surfaces = self.make_geometry_2D(point_coordinates, point_pairs, mesh_size, name_label)
         self.create_volume_by_extruding_surface(surfaces, extrusion_length)
 
-    def generate_point_pairs(self, point_coordinates: Union[List[float], npt.NDArray[float]]) -> List[List[int]]:
+    def generate_point_pairs(self, point_coordinates: Union[List[List[float]], npt.NDArray[float]]) -> List[List[int]]:
         """
         Generates pairs of point IDs which form a line
 
         Args:
-            point_coordinates (Union[List[float], npt.NDArray[float]]): A list of geometry points coordinates.
+            point_coordinates (Union[List[List[float]], npt.NDArray[float]]): A list of geometry points coordinates.
 
         Returns:
             List[List[int]]: A list of pairs of point IDs which create a line.
@@ -217,8 +217,8 @@ class GmshIO:
 
         return num_nodes
 
-    def generate_gmsh_mesh(self, point_coordinates: Union[List[float], npt.NDArray[float]],
-                           extrusion_length: Union[List[float], npt.NDArray[float]], mesh_size: float, dims: int,
+    def generate_gmsh_mesh(self, point_coordinates: Union[List[List[float]], npt.NDArray[np.float64]],
+                           extrusion_length: Union[List[float], npt.NDArray[np.float64]], mesh_size: float, dims: int,
                            name_label: str, mesh_name: str, mesh_output_dir: str, save_file: bool = False,
                            open_gmsh_gui: bool = False) -> None:
         """
@@ -226,8 +226,8 @@ class GmshIO:
         then generates mesh for geometries in gmsh.
 
         Args:
-            point_coordinates (Union[List[float], npt.NDArray[float]]): User input points of the surface as a list or
-                ndarray.
+            point_coordinates (Union[List[List[float]], npt.NDArray[np.float64]]): User input points of the surface as
+                a list or ndarray.
             extrusion_length (Union[List[float], npt.NDArray[float]]): The depth of 3D geometry.
             mesh_size (float): The mesh size provided by user.
             dims (int): The dimension of geometry (2=2D or 3=3D).

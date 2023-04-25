@@ -1,6 +1,7 @@
-from typing import Dict
+from typing import Dict, List, Union, Any
 
 import numpy as np
+import numpy.typing as npt
 
 # todo create GmshIO its own package
 from stem.gmsh_IO import GmshIO
@@ -26,13 +27,13 @@ class Element:
     Attributes:
         id (int): element id
         element_type (str): element type
-        node_ids (np.array): node ids
+        node_ids (Union[List[int], npt.NDArray[np.int_]]): node ids
 
     """
-    def __init__(self, id, element_type, node_ids):
-        self.id = id
-        self.element_type =  element_type
-        self.node_ids = node_ids
+    def __init__(self, id: int, element_type: str, node_ids: Union[List[int], npt.NDArray[np.int_]]):
+        self.id: int = id
+        self.element_type: str = element_type
+        self.node_ids: Union[List[int], npt.NDArray[np.int_]] = node_ids
 
 class Condition:
     """
@@ -41,13 +42,13 @@ class Condition:
     Attributes:
         id (int): condition id
         element_type (str): element type
-        node_ids (np.array): node ids
+        node_ids (Union[List[int], npt.NDArray[np.int_]]): node ids
 
     """
-    def __init__(self, id, element_type, node_ids):
-        self.id = id
-        self.element_type = element_type
-        self.node_ids = node_ids
+    def __init__(self, id: int, element_type: str, node_ids: Union[List[int], npt.NDArray[np.int_]]):
+        self.id: int = id
+        self.element_type: str = element_type
+        self.node_ids: Union[List[int], npt.NDArray[np.int_]] = node_ids
 
 class Mesh:
     """
@@ -70,7 +71,8 @@ class Mesh:
 
         pass
 
-    def prepare_data_for_kratos(self, mesh_data) -> (np.ndarray, np.ndarray):
+    def prepare_data_for_kratos(self, mesh_data: Dict[str, Any]) \
+            -> (npt.NDArray[np.float64], npt.NDArray[np.int_]):
         """
         Prepares mesh data for Kratos
 
@@ -79,8 +81,8 @@ class Mesh:
 
 
         Returns:
-            nodes (np.array): node id followed by node coordinates in an array
-            elements (np.array): element id followed by connectivities in an array
+            nodes (npt.NDArray[np.float64]): node id followed by node coordinates in an array
+            elements (npt.NDArray[np.int_]): element id followed by connectivities in an array
 
         """
 
@@ -95,7 +97,7 @@ class Mesh:
         return nodes, all_elements
 
 
-    def write_mesh_to_kratos_structure(self, mesh_data, filename):
+    def write_mesh_to_kratos_structure(self, mesh_data: Dict[str,object], filename: str) -> None:
         """
         Writes mesh data to the structure which can be read by Kratos
 
