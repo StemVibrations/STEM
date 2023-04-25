@@ -91,12 +91,12 @@ class Mesh:
         # create array of nodes where each row is represented by [id, x,y,z]
         nodes = np.concatenate((mesh_data["nodes"]["ids"][:, None], mesh_data["nodes"]["coordinates"]), axis=1)
 
-        all_elements = []
+        all_elements_list = []
         # create array of elements where each row is represented by [id, node connectivities]
         for v in mesh_data["elements"].values():
-            all_elements.append(np.concatenate((v["element_ids"][:, None], v["element_nodes"]), axis=1))
+            all_elements_list.append(np.concatenate((v["element_ids"][:, None], v["element_nodes"]), axis=1))
 
-        all_elements = np.array(all_elements)
+        all_elements = np.array(all_elements_list).astype(int)
 
         return nodes, all_elements
 
