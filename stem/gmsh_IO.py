@@ -1,9 +1,10 @@
-from typing import Dict, Iterable, List, Tuple, Sized, Container, Union
+from typing import Dict, List, Union, Type
 from enum import Enum
 import re
 
 import gmsh
 import numpy as np
+import numpy.typing as npt
 
 
 #todo Put this file in its own package, e.g. GmshUtils
@@ -54,12 +55,12 @@ class GmshIO:
 
         return self.__mesh_data
 
-    def create_point(self, coordinates: Union[List, np.ndarray], element_size: float) -> None:
+    def create_point(self, coordinates: Union[List[float], npt.NDArray[float]], element_size: float) -> None:
         """
         Creates points in gmsh.
 
         Args:
-            coordinates (Union[List, np.ndarray]): An Iterable of point x,y,z coordinates.
+            coordinates (Union[List[float], npt.NDArray[float]]): An Iterable of point x,y,z coordinates.
             mesh_size (float): The element size.
 
         Returns
@@ -71,12 +72,12 @@ class GmshIO:
         z = coordinates[2]
         gmsh.model.geo.addPoint(x, y, z, element_size)
 
-    def create_line(self, point_ids: Union[List, np.ndarray]) -> None:
+    def create_line(self, point_ids: Union[List[int], npt.NDArray[int]]) -> None:
         """
         Creates lines in gmsh.
 
         Args:
-            point_ids (Union[List, np.ndarray]): A list of point tags in order.
+            point_ids (Union[List[int], npt.NDArray[int]]): A list of point tags in order.
 
         Returns:
             None
@@ -87,12 +88,12 @@ class GmshIO:
         gmsh.model.geo.addLine(point1, point2)
 
 
-    def create_surface(self, line_ids: Union[List, np.ndarray], name_label: str) -> int:
+    def create_surface(self, line_ids: Union[List[int], npt.NDArray[int]], name_label: str) -> int:
         """
         Creates curve and then surface in gmsh by using line tags.
 
         Args:
-            line_ids (Union[List, np.ndarray]): A list of line tags in order.
+            line_ids (Union[List[int], npt.NDArray[int]]): A list of line tags in order.
             name_label (str): The surface name label provided by user input.
 
         Returns:
@@ -106,13 +107,14 @@ class GmshIO:
         gmsh.model.setPhysicalName(surface_ndim, surface_id, name_label)
         return surface_id
 
-    def create_volume_by_extruding_surface(self, surface_id: int, extrusion_length: Union[List, np.ndarray]) -> None:
+    def create_volume_by_extruding_surface(self, surface_id: int,
+                                           extrusion_length: Union[List[float], npt.NDArray[float]]) -> None:
         """
         Creates volume by extruding a 2D surface
 
         Args:
             surface_id (int): The surface tag.
-            extrusion_length (Union[List, np.ndarray]): The extrusion length in x, y and z direction.
+            extrusion_length (Union[List[float], npt.NDArray[float]]): The extrusion length in x, y and z direction.
 
         Returns:
             None
@@ -122,15 +124,17 @@ class GmshIO:
         gmsh.model.geo.extrude([(surface_ndim, surface_id)], extrusion_length[0], extrusion_length[1],
                                extrusion_length[2])
 
-    def make_geometry_2D(self, point_coordinates: Union[List, np.ndarray], point_pairs: Union[List, np.ndarray],
+    def make_geometry_2D(self, point_coordinates: Union[List[float], npt.NDArray[float]],
+                         point_pairs: Union[List[List[int]], npt.NDArray[npt.NDArray[int]]],
                          element_size: float, name_label: str) -> int:
         """
         Takes point_pairs and puts their tags as the beginning and end of line in gmsh to create line,
         then creates surface to make 2D geometry.
 
         Args:
-            point_coordinates (Union[List, np.ndarray]): A list of point coordinates.
-            point_pairs (Union[List, np.ndarray]): A list of point tags of two consecutive points in an array.
+            point_coordinates (Union[List[float], npt.NDArray[float]]): A list of point coordinates.
+            point_pairs (Union[List[List[int]], npt.NDArray[npt.NDArray[int]]]): A list of point tags of two
+                consecutive points in an array.
             element_size (float): The mesh size provided by user.
             name_label (str): The surface name label provided by user input.
 
@@ -152,16 +156,19 @@ class GmshIO:
         surface_id = self.create_surface(line_lists, name_label)
         return surface_id
 
-    def make_geometry_3D(self, point_coordinates: Union[List, np.ndarray], point_pairs: Union[List, np.ndarray],
-                         mesh_size: float, extrusion_length: Union[List, np.ndarray], name_label: str) -> None:
+    def make_geometry_3D(self, point_coordinates: Union[List[float], npt.NDArray[float]],
+                         point_pairs: Union[List[List[int]], npt.NDArray[npt.NDArray[int]]],
+                         mesh_size: float, extrusion_length: Union[List[float],
+                                                                   npt.NDArray[float]], name_label: str) -> None:
         """
         Creates 3D geometries by extruding the 2D surface
 
         Args:
-            point_coordinates (Union[List, np.ndarray]): Geometry points coordinates.
-            point_pairs (Union[List, np.ndarray]): A list of point tags of two consecutive points in an array.
+            point_coordinates (Union[List[float], npt.NDArray[float]]): Geometry points coordinates.
+            point_pairs (Union[List[List[int]], npt.NDArray[npt.NDArray[int]]]): A list of point tags of two consecutive
+                points in an array.
             mesh_size (float): Mesh size.
-            extrusion_length (Union[List, np.ndarray]): The extrusion length in x, y and z direction.
+            extrusion_length (Union[List[float], npt.NDArray[float]]): The extrusion length in x, y and z direction.
             name_label (str): surface name label from user input.
 
         Returns:
@@ -171,15 +178,15 @@ class GmshIO:
         surfaces = self.make_geometry_2D(point_coordinates, point_pairs, mesh_size, name_label)
         self.create_volume_by_extruding_surface(surfaces, extrusion_length)
 
-    def generate_point_pairs(self, point_coordinates: Union[List, np.ndarray]) -> List:
+    def generate_point_pairs(self, point_coordinates: Union[List[float], npt.NDArray[float]]) -> List[List[int]]:
         """
         Generates pairs of point IDs which form a line
 
         Args:
-            point_coordinates (Union[List, np.ndarray]): A list of geometry points coordinates.
+            point_coordinates (Union[List[float], npt.NDArray[float]]): A list of geometry points coordinates.
 
         Returns:
-            List[List[int,int]]: A list of pairs of point IDs which create a line.
+            List[List[int]]: A list of pairs of point IDs which create a line.
         """
 
         # puts two consecutive points tags as the beginning and end of line in an array
@@ -210,16 +217,18 @@ class GmshIO:
 
         return num_nodes
 
-    def generate_gmsh_mesh(self, point_coordinates: Union[List, np.ndarray],
-                           extrusion_length: List, mesh_size: float, dims: int, name_label: str,
-                           mesh_name: str, mesh_output_dir: str, save_file: bool = False, open_gmsh_gui: bool = False):
+    def generate_gmsh_mesh(self, point_coordinates: Union[List[float], npt.NDArray[float]],
+                           extrusion_length: Union[List[float], npt.NDArray[float]], mesh_size: float, dims: int,
+                           name_label: str, mesh_name: str, mesh_output_dir: str, save_file: bool = False,
+                           open_gmsh_gui: bool = False) -> None:
         """
         Creates point pairs by storing point tags of two consecutive points in an array,
         then generates mesh for geometries in gmsh.
 
         Args:
-            point_coordinates (Union[List, np.ndarray][float]): User input points of the surface as a list or ndarray.
-            extrusion_length (List[float,float,float]): The depth of 3D geometry.
+            point_coordinates (Union[List[float], npt.NDArray[float]]): User input points of the surface as a list or
+                ndarray.
+            extrusion_length (Union[List[float], npt.NDArray[float]]): The depth of 3D geometry.
             mesh_size (float): The mesh size provided by user.
             dims (int): The dimension of geometry (2=2D or 3=3D).
             name_label (str): The surface name label provided by user input.
@@ -247,6 +256,7 @@ class GmshIO:
         gmsh.model.geo.synchronize()
         gmsh.model.mesh.generate(dims)
 
+        # extracts mesh data from gmsh
         self.__mesh_data = self.extract_mesh_data(gmsh.model.mesh)
 
         if save_file:
@@ -261,7 +271,7 @@ class GmshIO:
 
         gmsh.finalize()
 
-    def extract_element_data(self,elem_type: int, elem_tags: List[int], element_connectivities: List[int]) -> dict:
+    def extract_element_data(self, elem_type: int, elem_tags: List[int], element_connectivities: List[int]) -> dict:
         """
         Extracts element data from gmsh mesh
 
@@ -283,7 +293,7 @@ class GmshIO:
                                "connectivities": connectivities}}
 
 
-    def extract_mesh_data(self, gmsh_mesh: gmsh.model.mesh):
+    def extract_mesh_data(self, gmsh_mesh: Type[gmsh.model.mesh]):
         """
         Gets gmsh output data
 
