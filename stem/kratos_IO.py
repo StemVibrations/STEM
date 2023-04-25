@@ -2,22 +2,29 @@ import numpy as np
 
 
 class KratosIO:
+    """
+    Class containing methods to write mesh and problem data to Kratos
+
+    Attributes:
+        -
+
+    """
 
     def __init__(self):
         pass
 
     def write_mesh_to_mdpa(self, nodes, elements, filename):
         """
-        saves mesh data to mdpa file
+        Saves mesh data to mdpa file
 
-        todo improve this, such that it can be read by Kratos, also do checks if lines, surfaces, volumes are
-        available. Don't write if they are not
+        Args:
+            nodes (np.array): node id followed by node coordinates in an array
+            elements (np.array): element id followed by connectivities in an array
+            filename (str): filename of mdpa file
 
-        :param nodes: node tag followed by node coordinates in an array
-        :param elements: list of all elements per element type # todo, should be per physical group
-        :param filename: filename of mdpa file
+        Returns:
+            -
 
-        :return: -
         """
 
         #todo improve this such that nodes and elements are written in the same mdpa file, where the elements are split per physical group
