@@ -44,7 +44,7 @@ class GmshIO:
         self.__mesh_data = {}
 
     @property
-    def mesh_data(self) -> Dict:
+    def mesh_data(self) -> Dict[str, object]:
         """
         Returns the mesh data dictionary
 
@@ -55,7 +55,7 @@ class GmshIO:
 
         return self.__mesh_data
 
-    def create_point(self, coordinates: Union[List[float], npt.NDArray[float]], element_size: float) -> None:
+    def create_point(self, coordinates: Union[List[float], npt.NDArray[np.float64]], element_size: float) -> None:
         """
         Creates points in gmsh.
 
@@ -72,7 +72,7 @@ class GmshIO:
         z = coordinates[2]
         gmsh.model.geo.addPoint(x, y, z, element_size)
 
-    def create_line(self, point_ids: Union[List[int], npt.NDArray[int]]) -> None:
+    def create_line(self, point_ids: Union[List[int], npt.NDArray[np.int_]]) -> None:
         """
         Creates lines in gmsh.
 
