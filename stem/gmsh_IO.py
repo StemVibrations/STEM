@@ -178,7 +178,8 @@ class GmshIO:
         surfaces = self.make_geometry_2D(point_coordinates, point_pairs, mesh_size, name_label)
         self.create_volume_by_extruding_surface(surfaces, extrusion_length)
 
-    def generate_point_pairs(self, point_coordinates: Union[List[List[float]], npt.NDArray[float]]) -> List[List[int]]:
+    def generate_point_pairs(self, point_coordinates: Union[List[List[float]], npt.NDArray[np.float64]]) \
+            -> List[List[int]]:
         """
         Generates pairs of point IDs which form a line
 

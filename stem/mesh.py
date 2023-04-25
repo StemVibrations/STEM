@@ -1,4 +1,4 @@
-from typing import Dict, List, Union, Any
+from typing import Dict, List, Tuple, Union, Any
 
 import numpy as np
 import numpy.typing as npt
@@ -35,6 +35,7 @@ class Element:
         self.element_type: str = element_type
         self.node_ids: Union[List[int], npt.NDArray[np.int_]] = node_ids
 
+
 class Condition:
     """
     Class containing information about a condition
@@ -49,6 +50,7 @@ class Condition:
         self.id: int = id
         self.element_type: str = element_type
         self.node_ids: Union[List[int], npt.NDArray[np.int_]] = node_ids
+
 
 class Mesh:
     """
@@ -72,7 +74,7 @@ class Mesh:
         pass
 
     def prepare_data_for_kratos(self, mesh_data: Dict[str, Any]) \
-            -> (npt.NDArray[np.float64], npt.NDArray[np.int_]):
+            -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.int_]]:
         """
         Prepares mesh data for Kratos
 
@@ -93,6 +95,8 @@ class Mesh:
         # create array of elements where each row is represented by [id, node connectivities]
         for v in mesh_data["elements"].values():
             all_elements.append(np.concatenate((v["element_ids"][:, None], v["element_nodes"]), axis=1))
+
+        all_elements = np.array(all_elements)
 
         return nodes, all_elements
 
