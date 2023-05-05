@@ -2,9 +2,10 @@ from typing import Dict, List, Tuple, Union, Any
 
 import numpy as np
 import numpy.typing as npt
+from gmsh_utils.gmsh_IO import GmshIO
 
 # todo create GmshIO its own package
-from stem.gmsh_IO import GmshIO
+
 from stem.kratos_IO import KratosIO
 
 class Node:

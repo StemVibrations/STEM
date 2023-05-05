@@ -1,6 +1,6 @@
 import numpy as np
+from gmsh_utils.gmsh_IO import GmshIO
 
-from stem.gmsh_IO import GmshIO
 from stem.kratos_IO import KratosIO
 
 
