@@ -1,4 +1,14 @@
+import json
+
 import numpy as np
+
+from stem.material import (Material,
+                           LinearElastic2D,
+                           LinearElastic3D,
+                           SmallStrainUmat2DLaw,
+                           SmallStrainUmat3DLaw,
+                           SmallStrainUdsm2DLaw,
+                           SmallStrainUdsm3DLaw)
 
 
 class KratosIO:
@@ -57,6 +67,67 @@ class KratosIO:
         # todo write Projectparameters.json
         pass
 
+
+    def __create_umat_material_dict(self, material):
+        material_dict = material.__dict__
+
+        material_dict["UDSM_NAME"] = material_dict["UMAT_NAME"].pop()
+        material_dict["IS_FORTRAN_UDSM"] = material_dict["IS_FORTRAN_UMAT"].pop()
+
+        return material_dict
+
+    def __create_udsm_material_dict(self, material):
+        material_dict = material.__dict__
+
+        material_dict["UMAT_PARAMETERS"] = material_dict["UDSM_PARAMETERS"].pop()
+
+        return material_dict
+
+
+    def __create_material_dict(self, material):
+
+        material_dict = {"model_part_name": material.name,
+                         "properties_id": material.id,
+                         "Material": {"constitutive_law": {"name": ""},
+                                      "Variables": {}},
+                         "Tables": {}
+                        }
+
+        if isinstance(material.material_parameters, LinearElastic2D):
+            material_dict["Material"]["constitutive_law"]["name"] = "GeoLinearElasticPlaneStrain2DLaw"
+            material_dict["Material"]["Variables"] = material.material_parameters.__dict__
+        elif isinstance(material.material_parameters, LinearElastic3D):
+            material_dict["Material"]["constitutive_law"]["name"] = "GeoLinearElastic3DLaw"
+            material_dict["Material"]["Variables"] = material.material_parameters.__dict__
+        elif isinstance(material.material_parameters, SmallStrainUmat2DLaw):
+            material_dict["Material"]["constitutive_law"]["name"] = "SmallStrainUMAT2DPlaneStrainLaw"
+            material_dict["Material"]["Variables"] = self.__create_umat_material_dict(material)
+        elif isinstance(material.material_parameters, SmallStrainUmat3DLaw):
+            material_dict["Material"]["constitutive_law"]["name"] = "SmallStrainUMAT3DLaw"
+            material_dict["Material"]["Variables"] = self.__create_umat_material_dict(material)
+        elif isinstance(material.material_parameters, SmallStrainUdsm2DLaw):
+            material_dict["Material"]["constitutive_law"]["name"] = "SmallStrainUDSM2DPlaneStrainLaw"
+            material_dict["Material"]["Variables"] = self.__create_udsm_material_dict(material)
+        elif isinstance(material.material_parameters, SmallStrainUdsm3DLaw):
+            material_dict["Material"]["constitutive_law"]["name"] = "SmallStrainUDSM3DLaw"
+            material_dict["Material"]["Variables"] = self.__create_udsm_material_dict(material)
+
+        # get retention parameters
+        retention_law = material.retention_parameters.__name__
+        retention_parameters = material.retention_parameters.__dict__
+
+        material_dict["Material"]["Variables"]["RETENTION_LAW"] = retention_law
+        material_dict["Material"]["Variables"].update(retention_parameters)
+
+        return material_dict
+
     def write_material_parameters_json(self, materials, filename):
-        pass
+
+        materials_dict = {"properties": []}
+
+        for material in materials:
+            materials_dict["properties"].append(self.__create_material_dict(material))
+
+        json.dump(materials_dict, open(filename, 'w'), indent=4)
+
 
