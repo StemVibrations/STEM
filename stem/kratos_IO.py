@@ -4,6 +4,8 @@ from typing import Dict,List, Any
 import numpy as np
 
 from stem.material import (Material,
+                           SoilMaterial2D,
+                           SoilMaterial3D,
                            LinearElastic2D,
                            LinearElastic3D,
                            SmallStrainUmat2DLaw,
@@ -80,10 +82,11 @@ class KratosIO:
         Returns: Dict[str, Any]: dictionary containing the material parameters
 
         """
-        material_dict = material.__dict__
+        material_dict = material.material_parameters.__dict__
 
-        material_dict["UDSM_NAME"] = material_dict["UMAT_NAME"].pop()
-        material_dict["IS_FORTRAN_UDSM"] = material_dict["IS_FORTRAN_UMAT"].pop()
+        material_dict["UDSM_NAME"] = material_dict.pop("UMAT_NAME")
+        material_dict["IS_FORTRAN_UDSM"] = material_dict.pop("IS_FORTRAN_UMAT")
+        material_dict["NUMBER_OF_UMAT_PARAMETERS"] = len(material_dict["UMAT_PARAMETERS"])
 
         return material_dict
 
@@ -97,9 +100,9 @@ class KratosIO:
         Returns: Dict[str, Any]: dictionary containing the material parameters
 
         """
-        material_dict = material.__dict__
+        material_dict = material.material_parameters.__dict__
 
-        material_dict["UMAT_PARAMETERS"] = material_dict["UDSM_PARAMETERS"].pop()
+        material_dict["UMAT_PARAMETERS"] = material_dict.pop("UDSM_PARAMETERS")
 
         return material_dict
 
@@ -143,13 +146,17 @@ class KratosIO:
             material_dict["Material"]["constitutive_law"]["name"] = "SmallStrainUDSM3DLaw"
             material_dict["Material"]["Variables"] = self.__create_udsm_material_dict(material)
 
-        # get retention parameters
-        retention_law = material.retention_parameters.__name__
-        retention_parameters = material.retention_parameters.__dict__
+        # add retention parameters to dictionary if material is a soil material
+        if (isinstance(material.material_parameters, SoilMaterial2D) or
+            isinstance(material.material_parameters, SoilMaterial3D)):
 
-        # add retention parameters to dictionary
-        material_dict["Material"]["Variables"]["RETENTION_LAW"] = retention_law
-        material_dict["Material"]["Variables"].update(retention_parameters)
+            # get retention parameters
+            retention_law = material.retention_parameters.__class__.__name__
+            retention_parameters = material.retention_parameters.__dict__
+
+            # add retention parameters to dictionary
+            material_dict["Material"]["Variables"]["RETENTION_LAW"] = retention_law
+            material_dict["Material"]["Variables"].update(retention_parameters)
 
         return material_dict
 

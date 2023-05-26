@@ -2,7 +2,7 @@ from typing import Union, List, Dict, Any
 from dataclasses import dataclass, field
 from abc import ABC
 
-from retention_law import RetentionLawABC, SaturatedBelowPhreaticLevelLaw
+from stem.retention_law import RetentionLawABC, SaturatedBelowPhreaticLevelLaw
 
 
 @dataclass
@@ -121,7 +121,6 @@ class SmallStrainUmat2DLaw(SoilMaterial2D):
     """
     UMAT_NAME: str = ""
     IS_FORTRAN_UMAT: bool = False
-    NUMBER_OF_UMAT_PARAMETERS: int = 0
     UMAT_PARAMETERS: list = field(default_factory=list)
     STATE_VARIABLES: list = field(default_factory=list)
 
@@ -133,14 +132,12 @@ class SmallStrainUmat3DLaw(SoilMaterial3D):
     :Attributes:
         UMAT_NAME (str): The name and location of the umat .dll or .so file.
         IS_FORTRAN_UMAT (bool): A boolean to indicate whether the umat is written in Fortran.
-        NUMBER_OF_UMAT_PARAMETERS (int): The number of parameters in the umat.
         UMAT_PARAMETERS (list): The parameters of the umat.
         STATE_VARIABLES (list): The state variables of the umat.
 
     """
     UMAT_NAME: str = ""
     IS_FORTRAN_UMAT: bool = False
-    NUMBER_OF_UMAT_PARAMETERS: int = 0
     UMAT_PARAMETERS: list = field(default_factory=list)
     STATE_VARIABLES: list = field(default_factory=list)
 
@@ -193,9 +190,9 @@ class Material:
 
     """
 
-    def __init__(self, name: str, material_parameters):
+    def __init__(self, name: str, material_parameters: MaterialParametersABC, id: int = 0):
 
-        self.id = 0
+        self.id = id
         self.name: str = name
         self.material_parameters: MaterialParametersABC = material_parameters
         self.retention_parameters: RetentionLawABC = SaturatedBelowPhreaticLevelLaw()
