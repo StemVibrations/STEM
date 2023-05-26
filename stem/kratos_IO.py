@@ -1,4 +1,5 @@
 import json
+from typing import Dict,List, Any
 
 import numpy as np
 
@@ -68,7 +69,17 @@ class KratosIO:
         pass
 
 
-    def __create_umat_material_dict(self, material):
+    def __create_umat_material_dict(self, material: Material) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the material parameters for a UMAT material. The UMAT_NAME and IS_FORTRAN_UMAT
+        keys are moved to the UDSM_NAME and IS_FORTRAN_UDSM keys, as this can be recognized by Kratos.
+
+        Args:
+            material (Material): material object
+
+        Returns: Dict[str, Any]: dictionary containing the material parameters
+
+        """
         material_dict = material.__dict__
 
         material_dict["UDSM_NAME"] = material_dict["UMAT_NAME"].pop()
@@ -76,7 +87,16 @@ class KratosIO:
 
         return material_dict
 
-    def __create_udsm_material_dict(self, material):
+    def __create_udsm_material_dict(self, material: Material) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the material parameters for a UDSM material. The UDSM parameters are moved to
+        the UMAT_PARAMETERS key, as this can be recognized by Kratos.
+        Args:
+            material (Material): material object
+
+        Returns: Dict[str, Any]: dictionary containing the material parameters
+
+        """
         material_dict = material.__dict__
 
         material_dict["UMAT_PARAMETERS"] = material_dict["UDSM_PARAMETERS"].pop()
@@ -84,8 +104,18 @@ class KratosIO:
         return material_dict
 
 
-    def __create_material_dict(self, material):
+    def __create_material_dict(self, material: Material) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the material parameters
 
+        Args:
+            material (Material): material object
+
+        Returns:  Dict[str, Any]: dictionary containing the material parameters
+
+        """
+
+        # initialize material dictionary
         material_dict = {"model_part_name": material.name,
                          "properties_id": material.id,
                          "Material": {"constitutive_law": {"name": ""},
@@ -93,6 +123,7 @@ class KratosIO:
                          "Tables": {}
                         }
 
+        # add material parameters to dictionary based on material type.
         if isinstance(material.material_parameters, LinearElastic2D):
             material_dict["Material"]["constitutive_law"]["name"] = "GeoLinearElasticPlaneStrain2DLaw"
             material_dict["Material"]["Variables"] = material.material_parameters.__dict__
@@ -116,12 +147,21 @@ class KratosIO:
         retention_law = material.retention_parameters.__name__
         retention_parameters = material.retention_parameters.__dict__
 
+        # add retention parameters to dictionary
         material_dict["Material"]["Variables"]["RETENTION_LAW"] = retention_law
         material_dict["Material"]["Variables"].update(retention_parameters)
 
         return material_dict
 
-    def write_material_parameters_json(self, materials, filename):
+    def write_material_parameters_json(self, materials: List[Material], filename: str):
+        """
+        Writes the material parameters to a json file
+
+        Args:
+            materials (List[Material]): list of material objects
+            filename: filename of the output json file
+
+        """
 
         materials_dict = {"properties": []}
 
