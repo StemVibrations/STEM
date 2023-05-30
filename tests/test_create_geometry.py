@@ -1,4 +1,4 @@
-from stem.gmsh_IO import GmshIO
+from gmsh_utils.gmsh_IO import GmshIO
 
 def test_generate_mesh_2D():
     """

@@ -2,7 +2,7 @@
 
 #todo group input into geometry, settings, ...
 
-from stem.gmsh_IO import GmshIO
+from gmsh_utils.gmsh_IO import GmshIO
 
 # define the points of the surface as a list of tuples
 input_points = [(0, 0, 0), (1, 0, 0), (1, 3, 0), (0, 3, 0), (-1, 1.5, 0)]
