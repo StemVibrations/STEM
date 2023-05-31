@@ -1,4 +1,3 @@
-from typing import Union, List, Dict, Any
 from dataclasses import dataclass, field
 from abc import ABC
 
@@ -223,6 +222,14 @@ class SpringDamperLaw(MaterialParametersABC):
 
 @dataclass
 class NodalConcentratedLaw(MaterialParametersABC):
+    """
+    Class containing the material parameters for a nodal concentrated element
+
+    :Attributes:
+        NODAL_DISPLACEMENT_STIFFNESS (float): The stiffness of the spring [N/m].
+        NODAL_MASS (float): The mass of the concentrated element [kg].
+        NODAL_DAMPING_COEFFICIENT (float): The damping coefficient of the spring [Ns/m].
+    """
     NODAL_DISPLACEMENT_STIFFNESS: float = 0.0
     NODAL_MASS: float = 0.0
     NODAL_DAMPING_COEFFICIENT: float = 0.0
@@ -241,6 +248,14 @@ class Material:
     """
 
     def __init__(self, name: str, material_parameters: MaterialParametersABC, id: int = 0):
+        """
+        Constructor of the material class
+
+        Args:
+            name (str): name of the material
+            material_parameters (MaterialParametersABC): class containing material parameters
+            id (int): unique id of the material
+        """
 
         self.id = id
         self.name: str = name
