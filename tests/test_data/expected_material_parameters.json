@@ -1,0 +1,79 @@
+{
+    "properties": [
+        {
+            "model_part_name": "test_umat_material",
+            "properties_id": 0,
+            "Material": {
+                "constitutive_law": {
+                    "name": "SmallStrainUMAT3DLaw"
+                },
+                "Variables": {
+                    "DENSITY_SOLID": 1.0,
+                    "DENSITY_WATER": 1000,
+                    "POROSITY": 0.3,
+                    "BULK_MODULUS_SOLID": 1e+16,
+                    "BULK_MODULUS_FLUID": 2e-30,
+                    "PERMEABILITY_XX": 4.5e-30,
+                    "PERMEABILITY_YY": 4.5e-30,
+                    "PERMEABILITY_ZZ": 4.5e-30,
+                    "PERMEABILITY_XY": 0,
+                    "PERMEABILITY_YZ": 0,
+                    "PERMEABILITY_ZX": 0,
+                    "DYNAMIC_VISCOSITY": 0.001,
+                    "IGNORE_UNDRAINED": true,
+                    "BIOT_COEFFICIENT": 1.0,
+                    "UMAT_PARAMETERS": [
+                        1,
+                        5.6,
+                        false
+                    ],
+                    "STATE_VARIABLES": [],
+                    "UDSM_NAME": "test_name",
+                    "IS_FORTRAN_UDSM": false,
+                    "NUMBER_OF_UMAT_PARAMETERS": 3,
+                    "RETENTION_LAW": "SaturatedBelowPhreaticLevelLaw",
+                    "SATURATED_SATURATION": 1.0,
+                    "RESIDUAL_SATURATION": 1e-10
+                }
+            },
+            "Tables": {}
+        },
+        {
+            "model_part_name": "test_udsm_material",
+            "properties_id": 0,
+            "Material": {
+                "constitutive_law": {
+                    "name": "SmallStrainUDSM3DLaw"
+                },
+                "Variables": {
+                    "DENSITY_SOLID": 2650,
+                    "DENSITY_WATER": 1.0,
+                    "POROSITY": 0.3,
+                    "BULK_MODULUS_SOLID": 1e+16,
+                    "BULK_MODULUS_FLUID": 2e-30,
+                    "PERMEABILITY_XX": 4.5e-30,
+                    "PERMEABILITY_YY": 4.5e-30,
+                    "PERMEABILITY_ZZ": 4.5e-30,
+                    "PERMEABILITY_XY": 0,
+                    "PERMEABILITY_YZ": 0,
+                    "PERMEABILITY_ZX": 0,
+                    "DYNAMIC_VISCOSITY": 0.001,
+                    "IGNORE_UNDRAINED": true,
+                    "BIOT_COEFFICIENT": 1.0,
+                    "UDSM_NAME": "test_name",
+                    "UDSM_NUMBER": 0,
+                    "IS_FORTRAN_UDSM": false,
+                    "UMAT_PARAMETERS": [
+                        1,
+                        5.6,
+                        false
+                    ],
+                    "RETENTION_LAW": "SaturatedBelowPhreaticLevelLaw",
+                    "SATURATED_SATURATION": 1.0,
+                    "RESIDUAL_SATURATION": 1e-10
+                }
+            },
+            "Tables": {}
+        }
+    ]
+}
