@@ -1,3 +1,4 @@
+from typing import List, Dict, Any
 from dataclasses import dataclass, field
 from abc import ABC
 
@@ -126,8 +127,8 @@ class SmallStrainUmat2DLaw(SoilMaterial2D):
     """
     UMAT_NAME: str = ""
     IS_FORTRAN_UMAT: bool = False
-    UMAT_PARAMETERS: list = field(default_factory=list)
-    STATE_VARIABLES: list = field(default_factory=list)
+    UMAT_PARAMETERS: List[Any] = field(default_factory=list)
+    STATE_VARIABLES: List[Any] = field(default_factory=list)
 
 
 @dataclass
@@ -144,8 +145,8 @@ class SmallStrainUmat3DLaw(SoilMaterial3D):
     """
     UMAT_NAME: str = ""
     IS_FORTRAN_UMAT: bool = False
-    UMAT_PARAMETERS: list = field(default_factory=list)
-    STATE_VARIABLES: list = field(default_factory=list)
+    UMAT_PARAMETERS: List[Any] = field(default_factory=list)
+    STATE_VARIABLES: List[Any] = field(default_factory=list)
 
 
 @dataclass
@@ -164,7 +165,7 @@ class SmallStrainUdsm2DLaw(SoilMaterial2D):
     UDSM_NAME: str = ""
     UDSM_NUMBER: int = 0
     IS_FORTRAN_UDSM: bool = False
-    UDSM_PARAMETERS: list = field(default_factory=list)
+    UDSM_PARAMETERS: List[Any] = field(default_factory=list)
 
 
 @dataclass
@@ -182,7 +183,7 @@ class SmallStrainUdsm3DLaw(SoilMaterial3D):
     UDSM_NAME: str = ""
     UDSM_NUMBER: int = 0
     IS_FORTRAN_UDSM: bool = False
-    UDSM_PARAMETERS: list = field(default_factory=list)
+    UDSM_PARAMETERS: List[Any] = field(default_factory=list)
 
 
 @dataclass

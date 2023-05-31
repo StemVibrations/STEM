@@ -86,7 +86,7 @@ class KratosIO:
             Dict[str, Any]: dictionary containing the material parameters
 
         """
-        material_dict = material.material_parameters.__dict__
+        material_dict: Dict[str, Any] = material.material_parameters.__dict__
 
         material_dict["UDSM_NAME"] = material_dict.pop("UMAT_NAME")
         material_dict["IS_FORTRAN_UDSM"] = material_dict.pop("IS_FORTRAN_UMAT")
@@ -106,7 +106,7 @@ class KratosIO:
             Dict[str, Any]: dictionary containing the material parameters
 
         """
-        material_dict = material.material_parameters.__dict__
+        material_dict: Dict[str, Any] = material.material_parameters.__dict__
 
         material_dict["UMAT_PARAMETERS"] = material_dict.pop("UDSM_PARAMETERS")
 
@@ -124,7 +124,7 @@ class KratosIO:
         Returns:
             Dict[str, Any]: dictionary containing the material parameters
         """
-        material_dict = material.material_parameters.__dict__
+        material_dict: Dict[str, Any] = material.material_parameters.__dict__
 
         # Change naming of coefficient to ratio as this is the (incorrect) naming in Kratos
         material_dict["NODAL_DAMPING_RATIO"] = material_dict.pop("NODAL_DAMPING_COEFFICIENT")
@@ -142,7 +142,7 @@ class KratosIO:
         Returns:
             Dict[str, Any]: dictionary containing the material parameters
         """
-        material_dict = material.material_parameters.__dict__
+        material_dict: Dict[str, Any] = material.material_parameters.__dict__
 
         # Change naming of coefficient to ratio as this is the (incorrect) naming in Kratos
         material_dict["NODAL_DAMPING_RATIO"] = material_dict.pop("NODAL_DAMPING_COEFFICIENT")
@@ -160,12 +160,12 @@ class KratosIO:
         """
 
         # initialize material dictionary
-        material_dict = {"model_part_name": material.name,
-                         "properties_id": material.id,
-                         "Material": {"constitutive_law": {"name": ""},
-                                      "Variables": {}},
-                         "Tables": {}
-                        }
+        material_dict: Dict[str, Any] = {"model_part_name": material.name,
+                                         "properties_id": material.id,
+                                         "Material": {"constitutive_law": {"name": ""},
+                                                      "Variables": {}},
+                                         "Tables": {}
+                                        }
 
         # add material parameters to dictionary based on material type.
         if isinstance(material.material_parameters, LinearElastic2D):
@@ -201,7 +201,7 @@ class KratosIO:
 
             # get retention parameters
             retention_law = material.retention_parameters.__class__.__name__
-            retention_parameters = material.retention_parameters.__dict__
+            retention_parameters: Dict[str, Any] = material.retention_parameters.__dict__
 
             # add retention parameters to dictionary
             material_dict["Material"]["Variables"]["RETENTION_LAW"] = retention_law
@@ -219,7 +219,7 @@ class KratosIO:
 
         """
 
-        materials_dict = {"properties": []}
+        materials_dict: Dict[str, Any] = {"properties": []}
 
         for material in materials:
             materials_dict["properties"].append(self.__create_material_dict(material))
