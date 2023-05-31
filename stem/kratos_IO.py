@@ -13,7 +13,8 @@ from stem.material import (Material,
                            SmallStrainUdsm2DLaw,
                            SmallStrainUdsm3DLaw,
                            BeamLaw,
-                           SpringDamperLaw)
+                           SpringDamperLaw,
+                           NodalConcentratedLaw)
 
 
 class KratosIO:
@@ -116,6 +117,13 @@ class KratosIO:
         material_dict["NODAL_ROTATIONAL_DAMPING_RATIO"] = material_dict.pop("NODAL_ROTATIONAL_DAMPING_COEFFICIENT")
         return material_dict
 
+    def __create_nodal_concentrated_dict(self, material: Material) -> Dict[str, Any]:
+        material_dict = material.material_parameters.__dict__
+
+        # Change naming of coefficient to ratio as this is the (incorrect) naming in Kratos
+        material_dict["NODAL_DAMPING_RATIO"] = material_dict.pop("NODAL_DAMPING_COEFFICIENT")
+        return material_dict
+
     def __create_material_dict(self, material: Material) -> Dict[str, Any]:
         """
         Creates a dictionary containing the material parameters
@@ -160,7 +168,8 @@ class KratosIO:
             material_dict["Material"]["Variables"] = material.material_parameters.__dict__
         elif isinstance(material.material_parameters, SpringDamperLaw):
             material_dict.update(self.__create_spring_damper_dict(material))
-
+        elif isinstance(material.material_parameters, NodalConcentratedLaw):
+            material_dict.update(self.__create_nodal_concentrated_dict(material))
 
         # add retention parameters to dictionary if material is a soil material
         if (isinstance(material.material_parameters, SoilMaterial2D) or

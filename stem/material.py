@@ -221,6 +221,12 @@ class SpringDamperLaw(MaterialParametersABC):
     NODAL_DAMPING_COEFFICIENT: float = 0.0
     NODAL_ROTATIONAL_DAMPING_COEFFICIENT: float = 0.0
 
+@dataclass
+class NodalConcentratedLaw(MaterialParametersABC):
+    NODAL_DISPLACEMENT_STIFFNESS: float = 0.0
+    NODAL_MASS: float = 0.0
+    NODAL_DAMPING_COEFFICIENT: float = 0.0
+
 
 class Material:
     """
