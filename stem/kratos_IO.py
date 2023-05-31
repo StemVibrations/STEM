@@ -82,7 +82,8 @@ class KratosIO:
         Args:
             material (Material): material object
 
-        Returns: Dict[str, Any]: dictionary containing the material parameters
+        Returns:
+            Dict[str, Any]: dictionary containing the material parameters
 
         """
         material_dict = material.material_parameters.__dict__
@@ -97,10 +98,12 @@ class KratosIO:
         """
         Creates a dictionary containing the material parameters for a UDSM material. The UDSM parameters are moved to
         the UMAT_PARAMETERS key, as this can be recognized by Kratos.
+
         Args:
             material (Material): material object
 
-        Returns: Dict[str, Any]: dictionary containing the material parameters
+        Returns:
+            Dict[str, Any]: dictionary containing the material parameters
 
         """
         material_dict = material.material_parameters.__dict__
@@ -110,6 +113,17 @@ class KratosIO:
         return material_dict
 
     def __create_spring_damper_dict(self, material: Material) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the material parameters for a spring damper material. The
+        NODAL_DAMPING_COEFFICIENT and NODAL_ROTATIONAL_DAMPING_COEFFICIENT keys are moved to the NODAL_DAMPING_RATIO
+        and NODAL_ROTATIONAL_DAMPING_RATIO keys, as this can be recognized by Kratos.
+
+        Args:
+            material (Material): material object
+
+        Returns:
+            Dict[str, Any]: dictionary containing the material parameters
+        """
         material_dict = material.material_parameters.__dict__
 
         # Change naming of coefficient to ratio as this is the (incorrect) naming in Kratos
@@ -118,6 +132,16 @@ class KratosIO:
         return material_dict
 
     def __create_nodal_concentrated_dict(self, material: Material) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the material parameters for a nodal concentrated material. The
+        NODAL_DAMPING_COEFFICIENT key is moved to the NODAL_DAMPING_RATIO key, as this can be recognized by Kratos.
+
+        Args:
+            material (Material): material object
+
+        Returns:
+            Dict[str, Any]: dictionary containing the material parameters
+        """
         material_dict = material.material_parameters.__dict__
 
         # Change naming of coefficient to ratio as this is the (incorrect) naming in Kratos

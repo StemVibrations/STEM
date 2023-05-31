@@ -11,6 +11,7 @@ class MaterialParametersABC(ABC):
     """
     pass
 
+
 @dataclass
 class SoilMaterial2D(MaterialParametersABC):
     """
@@ -42,6 +43,7 @@ class SoilMaterial2D(MaterialParametersABC):
     THICKNESS: float = 1.0
     IGNORE_UNDRAINED: bool = True
     BIOT_COEFFICIENT: float = 1.0
+
 
 @dataclass
 class SoilMaterial3D(MaterialParametersABC):
@@ -108,6 +110,7 @@ class LinearElastic3D(SoilMaterial3D):
     YOUNG_MODULUS: float = 1e9
     POISSON_RATIO: float = 0.0
 
+
 @dataclass
 class SmallStrainUmat2DLaw(SoilMaterial2D):
     """
@@ -126,6 +129,7 @@ class SmallStrainUmat2DLaw(SoilMaterial2D):
     UMAT_PARAMETERS: list = field(default_factory=list)
     STATE_VARIABLES: list = field(default_factory=list)
 
+
 @dataclass
 class SmallStrainUmat3DLaw(SoilMaterial3D):
     """
@@ -142,6 +146,7 @@ class SmallStrainUmat3DLaw(SoilMaterial3D):
     IS_FORTRAN_UMAT: bool = False
     UMAT_PARAMETERS: list = field(default_factory=list)
     STATE_VARIABLES: list = field(default_factory=list)
+
 
 @dataclass
 class SmallStrainUdsm2DLaw(SoilMaterial2D):
@@ -220,6 +225,7 @@ class SpringDamperLaw(MaterialParametersABC):
     NODAL_DAMPING_COEFFICIENT: float = 0.0
     NODAL_ROTATIONAL_DAMPING_COEFFICIENT: float = 0.0
 
+
 @dataclass
 class NodalConcentratedLaw(MaterialParametersABC):
     """
@@ -257,7 +263,7 @@ class Material:
             id (int): unique id of the material
         """
 
-        self.id = id
+        self.id: int = id
         self.name: str = name
         self.material_parameters: MaterialParametersABC = material_parameters
         self.retention_parameters: RetentionLawABC = SaturatedBelowPhreaticLevelLaw()
