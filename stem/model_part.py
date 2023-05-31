@@ -1,3 +1,4 @@
+from typing import Optional
 
 from stem.material import Material
 
@@ -42,4 +43,4 @@ class BodyModelPart(ModelPart):
     def __init__(self):
         super().__init__()
 
-        self.material = Material()
+        self.material: Optional[Material] = None
