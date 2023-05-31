@@ -11,7 +11,9 @@ from stem.material import (Material,
                            SmallStrainUmat2DLaw,
                            SmallStrainUmat3DLaw,
                            SmallStrainUdsm2DLaw,
-                           SmallStrainUdsm3DLaw)
+                           SmallStrainUdsm3DLaw,
+                           BeamLaw,
+                           SpringDamperLaw)
 
 
 class KratosIO:
@@ -106,6 +108,13 @@ class KratosIO:
 
         return material_dict
 
+    def __create_spring_damper_dict(self, material: Material) -> Dict[str, Any]:
+        material_dict = material.material_parameters.__dict__
+
+        # Change naming of coefficient to ratio as this is the (incorrect) naming in Kratos
+        material_dict["NODAL_DAMPING_RATIO"] = material_dict.pop("NODAL_DAMPING_COEFFICIENT")
+        material_dict["NODAL_ROTATIONAL_DAMPING_RATIO"] = material_dict.pop("NODAL_ROTATIONAL_DAMPING_COEFFICIENT")
+        return material_dict
 
     def __create_material_dict(self, material: Material) -> Dict[str, Any]:
         """
@@ -145,10 +154,17 @@ class KratosIO:
         elif isinstance(material.material_parameters, SmallStrainUdsm3DLaw):
             material_dict["Material"]["constitutive_law"]["name"] = "SmallStrainUDSM3DLaw"
             material_dict["Material"]["Variables"] = self.__create_udsm_material_dict(material)
+        elif isinstance(material.material_parameters, BeamLaw):
+            material_dict["Material"]["constitutive_law"]["name"] = \
+                "KratosMultiphysics.StructuralMechanicsApplication.BeamConstitutiveLaw"
+            material_dict["Material"]["Variables"] = material.material_parameters.__dict__
+        elif isinstance(material.material_parameters, SpringDamperLaw):
+            material_dict.update(self.__create_spring_damper_dict(material))
+
 
         # add retention parameters to dictionary if material is a soil material
         if (isinstance(material.material_parameters, SoilMaterial2D) or
-            isinstance(material.material_parameters, SoilMaterial3D)):
+                isinstance(material.material_parameters, SoilMaterial3D)):
 
             # get retention parameters
             retention_law = material.retention_parameters.__class__.__name__

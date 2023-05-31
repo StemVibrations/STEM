@@ -9,12 +9,9 @@ class TestKratosIO:
 
     def test_write_material_to_json(self):
         """
-        Test writing a material to json
-        Returns:
+        Test writing a material list to json. In this test, the material list contains a UMAT and a UDSM material.
 
         """
-
-
 
         # Define material parameters
         umat_material_parameters = SmallStrainUmat3DLaw(DENSITY_SOLID=1.0, UMAT_PARAMETERS=[1,5.6,False],

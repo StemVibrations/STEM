@@ -7,6 +7,9 @@ from stem.retention_law import RetentionLawABC, SaturatedBelowPhreaticLevelLaw
 
 @dataclass
 class MaterialParametersABC(ABC):
+    """
+    Abstract base class for material parameters
+    """
     pass
 
 @dataclass
@@ -176,6 +179,47 @@ class SmallStrainUdsm3DLaw(SoilMaterial3D):
     UDSM_NUMBER: int = 0
     IS_FORTRAN_UDSM: bool = False
     UDSM_PARAMETERS: list = field(default_factory=list)
+
+
+@dataclass
+class BeamLaw(MaterialParametersABC):
+    """
+    Class containing the material parameters for beam material
+
+    :Attributes:
+        YOUNG_MODULUS (float): The Young's modulus [Pa].
+        POISSON_RATIO (float): The Poisson's ratio [-].
+        DENSITY (float): The density [kg/m3].
+        CROSS_AREA (float): The cross-sectional area [m2].
+        I22 (float): The second moment of area about the y-axis [m4].
+        I33 (float): The second moment of area about the z-axis [m4].
+        TORSIONAL_INERTIA (float): The torsional inertia [m4].
+    """
+
+    YOUNG_MODULUS: float = 1e9
+    POISSON_RATIO: float = 0.0
+    DENSITY: float = 2650
+    CROSS_AREA: float = 1.0
+    I22: float = 1.0
+    I33: float = 1.0
+    TORSIONAL_INERTIA: float = 1.0
+
+
+@dataclass
+class SpringDamperLaw(MaterialParametersABC):
+    """
+    Class containing the material parameters for a spring-damper material
+
+    :Attributes:
+        NODAL_DISPLACEMENT_STIFFNESS (float): The stiffness of the spring [N/m].
+        NODAL_ROTATIONAL_STIFFNESS (float): The stiffness of the rotational spring [Nm/rad].
+        NODAL_DAMPING_COEFFICIENT (float): The damping coefficient of the spring [Ns/m].
+        NODAL_ROTATIONAL_DAMPING_COEFFICIENT (float): The damping coefficient of the rotational spring [Ns/rad].
+    """
+    NODAL_DISPLACEMENT_STIFFNESS: float = 1e9
+    NODAL_ROTATIONAL_STIFFNESS: float = 1e9
+    NODAL_DAMPING_COEFFICIENT: float = 0.0
+    NODAL_ROTATIONAL_DAMPING_COEFFICIENT: float = 0.0
 
 
 class Material:
