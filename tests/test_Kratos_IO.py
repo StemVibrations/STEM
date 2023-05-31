@@ -36,7 +36,7 @@ class TestKratosIO:
         # read generated json file and expected json file
 
         written_material_parameters_json = json.load(open("test_write_MaterialParameters.json"))
-        expected_material_parameters_json = json.load(open("test_data/expected_material_parameters.json"))
+        expected_material_parameters_json = json.load(open("tests/test_data/expected_material_parameters.json"))
 
         # compare json files using custom dictionary comparison
         TestUtils.assert_dictionary_almost_equal(written_material_parameters_json, expected_material_parameters_json)
@@ -69,7 +69,7 @@ class TestKratosIO:
         # read generated json file and expected json file
 
         written_material_parameters_json = json.load(open("test_write_structural_MaterialParameters.json"))
-        expected_material_parameters_json = json.load(open("test_data/expected_structural_material_parameters.json"))
+        expected_material_parameters_json = json.load(open("tests/test_data/expected_structural_material_parameters.json"))
 
         # compare json files using custom dictionary comparison
         TestUtils.assert_dictionary_almost_equal(written_material_parameters_json, expected_material_parameters_json)
