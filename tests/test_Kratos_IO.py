@@ -26,7 +26,7 @@ class TestKratosIO:
         # write dictionary for the load(s)
         kratos_io = KratosIO()
         test_dictionary = kratos_io.create_loads_process_dictionary(
-            all_loads, "test_write_MaterialParameters.json"
+            all_loads
         )
 
         # load expected dictionary from the json
