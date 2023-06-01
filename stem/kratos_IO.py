@@ -52,17 +52,10 @@ class KratosIO:
     def __write_input_processes(self):
         pass
 
-    def write_project_parameters_json(self, filename):
-
-        self.__write_problem_data()
-        self.__write_solver_settings()
-        self.__write_output_processes()
-        self.__write_input_processes()
-
-        # todo write Projectparameters.json
+    def __write_constraints(self):
         pass
 
-    def write_material_parameters_json(self, materials, filename):
+    def __write_loads(self):
         pass
 
     def __create_load_dict(self, load: Load) -> Dict[str, Any]:
@@ -104,13 +97,14 @@ class KratosIO:
 
         return load_dict
 
-    def create_loads_process_dictionary(self, loads: List[Load], filename: str):
+    def create_loads_process_dictionary(self, loads: List[Load]) -> Dict[str, Any]:
         """
-        Writes the project parameters to a json file
+        Creates a dictionary containing the load_process_list (list of
+        dictionaries to specify the loads for the model)
         Args:
-            constraints (List[Constraint]): list of contraint
-            loads (List[Material]): list of material objects
-            filename: filename of the output json file
+            loads (List[Material]): list of load objects
+        Returns:
+            loads_dict (Dict): dictionary of a list containing the load properties
         """
 
         loads_dict: Dict[str, Any] = {"loads_process_list": []}
@@ -119,3 +113,17 @@ class KratosIO:
             loads_dict["loads_process_list"].append(self.__create_load_dict(load))
 
         return loads_dict
+
+    def write_project_parameters_json(self, filename):
+
+        self.__write_problem_data()
+        self.__write_solver_settings()
+        self.__write_output_processes()
+        self.__write_input_processes()
+        self.__write_constraints()
+        self.__write_loads()
+        # todo write Projectparameters.json
+        pass
+
+    def write_material_parameters_json(self, materials, filename):
+        pass

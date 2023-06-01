@@ -2,6 +2,7 @@ from typing import List, Dict, Any
 from dataclasses import dataclass, field
 from abc import ABC
 
+
 @dataclass
 class LoadParametersABC(ABC):
     """
@@ -15,9 +16,8 @@ class PointLoad(LoadParametersABC):
     """
     Class containing the load parameters for a point load
     :Attributes:
-        DENSITY_SOLID (float): The density of the solid [kg/m3].
-        DENSITY_WATER (float): The density of the water [kg/m3].
-        POROSITY (float): The porosity [-].
+        active (List[bool]): Activate/deactivate load for each direction.
+        value (List[float]): Entity of the load in the 3 directions [N].
     """
 
     active: List[bool] = field(default_factory=lambda: [True, True, True])
@@ -26,22 +26,19 @@ class PointLoad(LoadParametersABC):
 
 class Load:
     """
-    Class containing load information acting on a body part, e.g. a soil layer or track
-    components
+    Class containing load information acting on a body part
     Attributes:
         name (str): name of the load
-        material_parameters (MaterialParametersABC): class containing load parameters
+        load_parameters (LoadParametersABC): class containing load parameters
     """
 
     def __init__(self, name: str, load_parameters: LoadParametersABC):
         """
-        Constructor of the material class
+        Constructor of the load class
         Args:
-            name (str): name of the material
-            load_parameters (MaterialParametersABC): class containing load
-            parameters
+            name (str): name of the load
+            load_parameters (LoadParametersABC): class containing load parameters
         """
 
-        # self.id: int = id
         self.name: str = name
         self.load_parameters: LoadParametersABC = load_parameters
