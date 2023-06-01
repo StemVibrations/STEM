@@ -1,6 +1,8 @@
 from typing import Optional
 
 from stem.material import Material
+from stem.geometry import Geometry
+from stem.mesh import Mesh
 
 class ModelPart:
     """
@@ -18,13 +20,9 @@ class ModelPart:
     def __init__(self):
         self.name = None
 
-        self.nodes = None
-        self.elements = None
-        self.conditions = None
         self.parameters = {}
-
-        pass
-
+        self.geometry: Optional[Geometry] = None
+        self.mesh: Optional[Mesh] = None
 
 class BodyModelPart(ModelPart):
     """
@@ -44,3 +42,5 @@ class BodyModelPart(ModelPart):
         super().__init__()
 
         self.material: Optional[Material] = None
+
+
