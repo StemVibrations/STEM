@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Union, Optional
 from dataclasses import dataclass, field
 from abc import ABC
 
@@ -22,6 +22,22 @@ class PointLoad(LoadParametersABC):
 
     active: List[bool] = field(default_factory=lambda: [True, True, True])
     value: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+
+
+@dataclass
+class MovingLoad(LoadParametersABC):
+    """
+    Class containing the load parameters for a moving load
+    :Attributes:
+        active (List[bool]): Activate/deactivate load for each direction.
+        value (List[float]): Entity of the load in the 3 directions [N].
+    """
+
+    load: Union[List[float], List[str]] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+    direction: List[float] = field(default_factory=lambda: [1.0, 1.0, 1.0])
+    velocity: Union[str, float] = 0.0
+    origin: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+    offset: float = 0.0
 
 
 class Load:

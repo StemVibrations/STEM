@@ -2,7 +2,7 @@
 import json
 
 from stem.kratos_IO import KratosIO
-from stem.load import (PointLoad, Load)
+from stem.load import (PointLoad, MovingLoad, Load)
 
 from tests.utils import TestUtils
 
@@ -18,10 +18,21 @@ class TestKratosIO:
         point_load_parameters = PointLoad(active=[True, True, True],
                                           value=[1000, 0, 0] )
 
+        moving_point_load_parameters = MovingLoad(
+            origin=[1, 1, 1],
+            load=[1000, 0, -300],
+            direction=[1.0, 0.0, -1],
+            velocity="2.0*t"
+
+        )
+
         # create Load objects and store in the list
         point_load = Load(name="test_name", load_parameters=point_load_parameters)
 
-        all_loads = [point_load]
+        moving_point_load = Load(name="test_name_moving",
+                                 load_parameters=point_load_parameters)
+
+        all_loads = [point_load, moving_point_load]
 
         # write dictionary for the load(s)
         kratos_io = KratosIO()
