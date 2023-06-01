@@ -58,51 +58,57 @@ class KratosIO:
     def __write_loads(self):
         pass
 
-    def __create_load_dict(self, load: Load) -> Dict[str, Any]:
+    @staticmethod
+    def __create_point_load_dict(load: Load) -> Dict[str, Any]:
         """
-        Creates a dictionary containing the load parameters
+        Creates a dictionary containing the point load parameters
+
         Args:
-            load (Load): load object
-        Returns:  Dict[str, Any]: dictionary containing the load parameters
+            load (PointLoad): point load object
+
+        Returns:
+            Dict[str, Any]: dictionary containing the load parameters
         """
 
         # initialize load dictionary
         load_dict: Dict[str, Any] = {
-            "python_module": None,
-            "kratos_module": None,
-            "process_name": None,
-            "Parameters": {},
+            "python_module": "apply_vector_constraint_table_process",
+            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+            "process_name": "ApplyVectorConstraintTableProcess",
+            "Parameters": load.load_parameters.__dict__
         }
+
+        load_dict["Parameters"]["model_part_name"] = f"PorousDomain.{load.name}"
+        load_dict["Parameters"]["variable_name"] = "POINT_LOAD"
+        load_dict["Parameters"]["table"] = [0, 0, 0]
+
+        return load_dict
+
+    def __create_load_dict(self, load: Load) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the load parameters
+
+        Args:
+            load (Load): load object
+
+        Returns:
+            Dict[str, Any]: dictionary containing the load parameters
+        """
 
         # add load parameters to dictionary based on load type.
         if isinstance(load.load_parameters, PointLoad):
-            load_dict.update(
-                {
-                    "python_module": "apply_vector_constraint_table_process",
-                    "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
-                    "process_name": "ApplyVectorConstraintTableProcess",
-                }
-            )
-            load_dict.update(
-                {
-                    "Parameters": {
-                        "model_part_name": f"PorousDomain.{load.name}",
-                        "variable_name": "POINT_LOAD",
-                        "active": load.load_parameters.active,
-                        "value": load.load_parameters.value,
-                        "table": [0, 0, 0],
-                    }
-                }
-            )
-
-        return load_dict
+            return KratosIO.__create_point_load_dict(load=load)
+        else:
+            raise NotImplementedError
 
     def create_loads_process_dictionary(self, loads: List[Load]) -> Dict[str, Any]:
         """
         Creates a dictionary containing the load_process_list (list of
         dictionaries to specify the loads for the model)
+
         Args:
             loads (List[Material]): list of load objects
+
         Returns:
             loads_dict (Dict): dictionary of a list containing the load properties
         """
