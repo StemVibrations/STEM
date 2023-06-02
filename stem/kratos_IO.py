@@ -90,7 +90,7 @@ class KratosIO:
         Creates a dictionary containing the moving load parameters
 
         Args:
-            load (PointLoad): moving load object
+            load (Load): moving load object
 
         Returns:
             Dict[str, Any]: dictionary containing the load parameters
@@ -106,8 +106,6 @@ class KratosIO:
 
         load_dict["Parameters"]["model_part_name"] = f"PorousDomain.{load.name}"
         load_dict["Parameters"]["variable_name"] = "POINT_LOAD"
-        # TODO: is the table required?
-        # load_dict["Parameters"]["table"] = [0, 0, 0]
 
         return load_dict
 
@@ -135,7 +133,7 @@ class KratosIO:
         dictionaries to specify the loads for the model)
 
         Args:
-            loads (List[Material]): list of load objects
+            loads (List[Load]): list of load objects
 
         Returns:
             loads_dict (Dict): dictionary of a list containing the load properties
