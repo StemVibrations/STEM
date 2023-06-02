@@ -9,6 +9,7 @@ class TestUtils:
     def assert_dictionary_almost_equal(expected: Dict[Any, Any], actual: Dict[Any, Any]):
         """
         Checks whether two dictionaries are equal.
+
         Args:
             expected: Expected dictionary.
             actual: Actual dictionary.

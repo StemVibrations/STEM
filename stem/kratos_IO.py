@@ -1,8 +1,8 @@
-import json
+from typing import List, Dict, Any
 
 import numpy as np
+
 from stem.load import Load, PointLoad
-from typing import List, Dict, Any
 
 
 class KratosIO:
@@ -64,7 +64,7 @@ class KratosIO:
         Creates a dictionary containing the point load parameters
 
         Args:
-            load (PointLoad): point load object
+            load (Load): point load object
 
         Returns:
             Dict[str, Any]: dictionary containing the load parameters
@@ -84,7 +84,35 @@ class KratosIO:
 
         return load_dict
 
-    def __create_load_dict(self, load: Load) -> Dict[str, Any]:
+    @staticmethod
+    def __create_moving_load_dict(load: Load) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the moving load parameters
+
+        Args:
+            load (PointLoad): moving load object
+
+        Returns:
+            Dict[str, Any]: dictionary containing the load parameters
+        """
+
+        # initialize load dictionary
+        load_dict: Dict[str, Any] = {
+            "python_module": "set_moving_load_process",
+            "kratos_module": "StructuralMechanicsApplication",
+            "process_name": "SetMovingLoadProcess",
+            "Parameters": load.load_parameters.__dict__
+        }
+
+        load_dict["Parameters"]["model_part_name"] = f"PorousDomain.{load.name}"
+        load_dict["Parameters"]["variable_name"] = "POINT_LOAD"
+        # TODO: is the table required?
+        # load_dict["Parameters"]["table"] = [0, 0, 0]
+
+        return load_dict
+
+    @staticmethod
+    def __create_load_dict(load: Load) -> Dict[str, Any]:
         """
         Creates a dictionary containing the load parameters
 
