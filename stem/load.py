@@ -8,6 +8,7 @@ class LoadParametersABC(ABC):
     """
     Abstract base class for load parameters
     """
+
     pass
 
 
@@ -28,15 +29,21 @@ class PointLoad(LoadParametersABC):
 @dataclass
 class MovingLoad(LoadParametersABC):
     """
-    Class containing the load parameters for a moving load
-    :Attributes:
-        active (List[bool]): Activate/deactivate load for each direction.
-        value (List[float]): Entity of the load in the 3 directions [N].
+    Class containing the load parameters for a moving load.
+
+    Attributes:
+        load (Union[List[float], List[str]]): Entity of the load [N] in the 3
+         directions. Can be defined as strings (when function of time) or as float.
+         Mixed types are not accepted.
+        direction (List[float]):  Direction of the moving load.
+        velocity (Union[float, str]): Velocity of the moving load [m/s].
+        origin (List[float]): Starting coordinates of the moving load [m].
+        offset (float): Offset of the moving load.
     """
 
     load: Union[List[float], List[str]] = field(default_factory=lambda: [0.0, 0.0, 0.0])
     direction: List[float] = field(default_factory=lambda: [1.0, 1.0, 1.0])
-    velocity: Union[str, float] = 0.0
+    velocity: Union[float, str] = 0.0
     origin: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
     offset: float = 0.0
 
