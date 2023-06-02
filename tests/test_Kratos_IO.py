@@ -1,12 +1,14 @@
 import json
 
 from stem.kratos_IO import KratosIO
-from stem.material import (SmallStrainUmat3DLaw,
-                           SmallStrainUdsm3DLaw,
-                           BeamLaw,
-                           SpringDamperLaw,
-                           NodalConcentratedLaw,
-                           Material)
+from stem.material import (SmallStrainUmatLaw,
+SmallStrainUdsmLaw,
+LinearElasticSoil,
+EulerBeam2D,
+EulerBeam3D,
+ElasticSpringDamper,
+NodalConcentrated,
+                           DrainedSoil, UndrainedSoil, TwoPhaseSoil2D, TwoPhaseSoil3D)
 
 from tests.utils import TestUtils
 
@@ -18,10 +20,14 @@ class TestKratosIO:
 
         """
 
+        soil_type = DrainedSoil(DENSITY_SOLID=2650,POROSITY=0.3, BULK_MODULUS_SOLID=1E16)
+
         # Define material parameters
-        umat_material_parameters = SmallStrainUmat3DLaw(DENSITY_SOLID=1.0, UMAT_PARAMETERS=[1,5.6,False],
-                                                        UMAT_NAME="test_name")
-        udsm_material_parameters = SmallStrainUdsm3DLaw(DENSITY_WATER=1.0, UDSM_PARAMETERS=[1,5.6,False],
+        umat_material_parameters = SmallStrainUmatLaw(UMAT_PARAMETERS=[1,5.6,False], UMAT_NAME="test_name",
+                                                      IS_FORTRAN_UMAT=False, STATE_VARIABLES=[], SOIL_TYPE=soil_type)
+
+
+        udsm_material_parameters = SmallStrainUdsmLaw(DENSITY_WATER=1.0, UDSM_PARAMETERS=[1,5.6,False],
                                                         UDSM_NAME="test_name")
 
         umat_material = Material("test_umat_material", material_parameters=umat_material_parameters)
@@ -49,7 +55,7 @@ class TestKratosIO:
         """
 
         # Define material parameters
-        beam_material_parameters = BeamLaw(DENSITY=1.0, YOUNG_MODULUS=1.0, POISSON_RATIO=0.2)
+        beam_material_parameters = EulerBeam2D(DENSITY=1.0, YOUNG_MODULUS=1.0, POISSON_RATIO=0.2)
         spring_damper_material_parameters = SpringDamperLaw(NODAL_DISPLACEMENT_STIFFNESS=1.0,
                                                             NODAL_DAMPING_COEFFICIENT=0.2)
         nodal_concentrated_material_parameters = NodalConcentratedLaw( NODAL_MASS=1.0, NODAL_DAMPING_COEFFICIENT=0.2)

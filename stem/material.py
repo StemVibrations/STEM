@@ -5,12 +5,6 @@ from abc import ABC
 from stem.retention_law import RetentionLawABC, SaturatedBelowPhreaticLevelLaw
 
 
-@dataclass
-class SoilParametersABC(ABC):
-    """
-    Abstract base class for material parameters
-    """
-    pass
 
 
 @dataclass
@@ -51,12 +45,15 @@ class DrainedSoil(SoilTypeParametersABC):
 
     Attributes:
         DENSITY_SOLID (float): The density of the solid material [kg/m^3].
+        POROSITY (float): The porosity of the soil [-].
         BULK_MODULUS_SOLID (float): The bulk modulus of the solid material [Pa].
         BIOT_COEFFICIENT (float): The Biot coefficient [-].
     """
     DENSITY_SOLID: float
+    POROSITY: float
     BULK_MODULUS_SOLID: float
     BIOT_COEFFICIENT: Optional[float] = None
+
 
 @dataclass
 class UndrainedSoil(SoilTypeParametersABC):
@@ -65,7 +62,7 @@ class UndrainedSoil(SoilTypeParametersABC):
 
     Attributes:
         DENSITY_SOLID (float): The density of the solid material [kg/m^3].
-        POROSITY (float): The porosity of the solid material [-].
+        POROSITY (float): The porosity of the soil [-].
         BULK_MODULUS_SOLID (float): The bulk modulus of the solid material [Pa].
         BIOT_COEFFICIENT (float): The Biot coefficient [-].
 
@@ -83,7 +80,7 @@ class TwoPhaseSoil2D(SoilTypeParametersABC):
 
     Attributes:
         DENSITY_SOLID (float): The density of the solid material [kg/m^3].
-        POROSITY (float): The porosity of the solid material [-].
+        POROSITY (float): The porosity of the soil [-].
         BULK_MODULUS_SOLID (float): The bulk modulus of the solid material [Pa].
         PERMEABILITY_XX (float): The permeability in the x-direction [m^2].
         PERMEABILITY_YY (float): The permeability in the y-direction [m^2].
@@ -107,7 +104,7 @@ class TwoPhaseSoil3D(SoilTypeParametersABC):
 
     Attributes:
         DENSITY_SOLID (float): The density of the solid material [kg/m^3].
-        POROSITY (float): The porosity of the solid material [-].
+        POROSITY (float): The porosity of the soil [-].
         BULK_MODULUS_SOLID (float): The bulk modulus of the solid material [Pa].
         PERMEABILITY_XX (float): The permeability in the x-direction [m^2].
         PERMEABILITY_YY (float): The permeability in the y-direction [m^2].
@@ -129,6 +126,16 @@ class TwoPhaseSoil3D(SoilTypeParametersABC):
     BIOT_COEFFICIENT: Optional[float] = None
 
 @dataclass
+class SoilParametersABC(ABC):
+    """
+    Abstract base class for material parameters
+    """
+    SOIL_TYPE: SoilTypeParametersABC
+    #RETENTION_PARAMETERS: RetentionLawABC
+    pass
+
+
+@dataclass
 class LinearElasticSoil(SoilParametersABC):
     """
     Class containing the material parameters for a 2D linear elastic material
@@ -141,7 +148,6 @@ class LinearElasticSoil(SoilParametersABC):
     """
     YOUNG_MODULUS: float
     POISSON_RATIO: float
-    SOIL_TYPE: Union[DrainedSoil, UndrainedSoil, TwoPhaseSoil2D, TwoPhaseSoil3D]
     RETENTION_PARAMETERS: RetentionLawABC = SaturatedBelowPhreaticLevelLaw()
 
 
@@ -162,7 +168,6 @@ class SmallStrainUmatLaw(SoilParametersABC):
     IS_FORTRAN_UMAT: bool
     UMAT_PARAMETERS: List[Any]
     STATE_VARIABLES: List[Any]
-    SOIL_TYPE: Union[DrainedSoil, UndrainedSoil, TwoPhaseSoil2D, TwoPhaseSoil3D]
     RETENTION_PARAMETERS: RetentionLawABC = SaturatedBelowPhreaticLevelLaw()
 
 
