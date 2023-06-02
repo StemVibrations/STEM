@@ -15,7 +15,8 @@ class LoadParametersABC(ABC):
 class PointLoad(LoadParametersABC):
     """
     Class containing the load parameters for a point load
-    :Attributes:
+
+    Attributes:
         active (List[bool]): Activate/deactivate load for each direction.
         value (List[float]): Entity of the load in the 3 directions [N].
     """
@@ -43,6 +44,7 @@ class MovingLoad(LoadParametersABC):
 class Load:
     """
     Class containing load information acting on a body part
+
     Attributes:
         name (str): name of the load
         load_parameters (LoadParametersABC): class containing load parameters
@@ -51,6 +53,7 @@ class Load:
     def __init__(self, name: str, load_parameters: LoadParametersABC):
         """
         Constructor of the load class
+
         Args:
             name (str): name of the load
             load_parameters (LoadParametersABC): class containing load parameters
