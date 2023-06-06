@@ -12,8 +12,10 @@ class TestKratosIO:
         ProjectParameters.json file
         """
         # define load(s) parameters
+        # point load
         point_load_parameters = PointLoad(active=[True, True, True], value=[1000, 0, 0])
 
+        # moving (point) load
         moving_point_load_parameters = MovingLoad(
             origin=[0.0, 1.0, 0.0],
             load=[0.0, -10.0, 0.0],
