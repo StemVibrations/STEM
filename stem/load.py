@@ -33,8 +33,8 @@ class MovingLoad(LoadParametersABC):
 
     Attributes:
         load (Union[List[float], List[str]]): Entity of the load [N] in the 3
-         directions. Can be defined as strings (when function of time) or as float.
-         Mixed types are not accepted.
+             directions. Can be defined as strings (when function of time) or as float.
+             Mixed types are not accepted.
         direction (List[float]):  Direction of the moving load.
         velocity (Union[float, str]): Velocity of the moving load [m/s].
         origin (List[float]): Starting coordinates of the moving load [m].
