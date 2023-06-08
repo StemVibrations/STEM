@@ -235,15 +235,16 @@ class ElasticSpringDamper(StructuralParametersABC):
     Class containing the constitutive parameters for an elastic spring-damper
 
     Attributes:
-        NODAL_DISPLACEMENT_STIFFNESS (float): The stiffness of the spring [N/m].
-        NODAL_ROTATIONAL_STIFFNESS (float): The stiffness of the rotational spring [Nm/rad].
-        NODAL_DAMPING_COEFFICIENT (float): The damping coefficient of the spring [Ns/m].
-        NODAL_ROTATIONAL_DAMPING_COEFFICIENT (float): The damping coefficient of the rotational spring [Ns/rad].
+        NODAL_DISPLACEMENT_STIFFNESS (List[float]): The stiffness of the spring in x,y,z direction [N/m].
+        NODAL_ROTATIONAL_STIFFNESS (List[float]): The stiffness of the rotational spring around x,y,z axis [Nm/rad].
+        NODAL_DAMPING_COEFFICIENT (List[float]): The damping coefficient of the spring in x,y,z direction [Ns/m].
+        NODAL_ROTATIONAL_DAMPING_COEFFICIENT (List[float]): The damping coefficient of the rotational spring
+            around x,y,z axis [Ns/rad].
     """
-    NODAL_DISPLACEMENT_STIFFNESS: float
-    NODAL_ROTATIONAL_STIFFNESS: float
-    NODAL_DAMPING_COEFFICIENT: float
-    NODAL_ROTATIONAL_DAMPING_COEFFICIENT: float
+    NODAL_DISPLACEMENT_STIFFNESS: List[float]
+    NODAL_ROTATIONAL_STIFFNESS: List[float]
+    NODAL_DAMPING_COEFFICIENT: List[float]
+    NODAL_ROTATIONAL_DAMPING_COEFFICIENT: List[float]
 
 
 @dataclass
@@ -252,13 +253,13 @@ class NodalConcentrated(StructuralParametersABC):
     Class containing the material parameters for a nodal concentrated element
 
     Attributes:
-        NODAL_DISPLACEMENT_STIFFNESS (float): The stiffness of the spring [N/m].
+        NODAL_DISPLACEMENT_STIFFNESS (List[float]): The stiffness of the spring in x,y,z direction [N/m].
         NODAL_MASS (float): The mass of the concentrated element [kg].
-        NODAL_DAMPING_COEFFICIENT (float): The damping coefficient of the spring [Ns/m].
+        NODAL_DAMPING_COEFFICIENT (List[float]): The damping coefficient of the spring in x,y,z direction [Ns/m].
     """
-    NODAL_DISPLACEMENT_STIFFNESS: float
+    NODAL_DISPLACEMENT_STIFFNESS: List[float]
     NODAL_MASS: float
-    NODAL_DAMPING_COEFFICIENT: float
+    NODAL_DAMPING_COEFFICIENT: List[float]
 
 
 @dataclass

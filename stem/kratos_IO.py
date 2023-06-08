@@ -116,9 +116,10 @@ class KratosIO:
 
         return material_dict
 
-    def __create_spring_damper_dict(self, material: Material) -> Dict[str, Any]:
+
+    def __create_elastic_spring_damper_dict(self, material: Material) -> Dict[str, Any]:
         """
-        Creates a dictionary containing the material parameters for a spring damper material. The
+        Creates a dictionary containing the material parameters for an elastic spring damper material. The
         NODAL_DAMPING_COEFFICIENT and NODAL_ROTATIONAL_DAMPING_COEFFICIENT keys are moved to the NODAL_DAMPING_RATIO
         and NODAL_ROTATIONAL_DAMPING_RATIO keys, as this can be recognized by Kratos.
 
@@ -127,7 +128,9 @@ class KratosIO:
 
         Returns:
             Dict[str, Any]: dictionary containing the material parameters
+
         """
+
         material_dict: Dict[str, Any] = material.material_parameters.__dict__
 
         # Change naming of coefficient to ratio as this is the (incorrect) naming in Kratos
@@ -324,9 +327,10 @@ class KratosIO:
         Creates a dictionary containing the euler beam parameters
 
         Args:
-            material:
+            material: Material object containing the material parameters
 
         Returns:
+            euler_beam_parameters_dict: Dictionary containing the euler beam parameters
 
         """
 
@@ -352,14 +356,10 @@ class KratosIO:
             # add material parameters to dictionary based on material type.
             if isinstance(material.material_parameters, EulerBeam2D) or isinstance(material.material_parameters, EulerBeam3D):
                 structural_material_dict.update(self.__create_euler_beam_dict(material))
-
-            #     structural_material_dict.update(self.__create_linear_elastic_dict(material))
-            # elif isinstance(material.material_parameters, NonLinearElastic):
-            #     structural_material_dict.update(self.__create_non_linear_elastic_dict(material))
-            elif isinstance(material.material_parameters, SmallStrainUmatLaw):
-                structural_material_dict.update(self.__create_umat_dict(material))
-            elif isinstance(material.material_parameters, SmallStrainUdsmLaw):
-                structural_material_dict.update(self.__create_udsm_dict(material))
+            elif isinstance(material.material_parameters, ElasticSpringDamper):
+                structural_material_dict["Variables"] = self.__create_elastic_spring_damper_dict(material)
+            elif isinstance(material.material_parameters, NodalConcentrated):
+                structural_material_dict["Variables"] = self.__create_nodal_concentrated_dict(material)
 
             return structural_material_dict
 
@@ -385,18 +385,7 @@ class KratosIO:
         if isinstance(material.material_parameters, SoilParametersABC):
             material_dict["Material"].update(self.__create_soil_material_dict(material))
         elif isinstance(material.material_parameters, StructuralParametersABC):
-            pass
-
-        #
-        # elif isinstance(material.material_parameters, BeamLaw):
-        #     material_dict["Material"]["constitutive_law"]["name"] = \
-        #         "KratosMultiphysics.StructuralMechanicsApplication.BeamConstitutiveLaw"
-        #     material_dict["Material"]["Variables"] = material.material_parameters.__dict__
-        # elif isinstance(material.material_parameters, SpringDamperLaw):
-        #     material_dict.update(self.__create_spring_damper_dict(material))
-        # elif isinstance(material.material_parameters, NodalConcentratedLaw):
-        #     material_dict.update(self.__create_nodal_concentrated_dict(material))
-
+            material_dict["Material"].update(self.__create_structural_material_dict(material))
 
         return material_dict
 
