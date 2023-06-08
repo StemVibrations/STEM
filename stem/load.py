@@ -38,7 +38,7 @@ class MovingLoad(LoadParametersABC):
         direction (List[float]):  Direction of the moving load.
         velocity (Union[float, str]): Velocity of the moving load [m/s].
         origin (List[float]): Starting coordinates of the moving load [m].
-        offset (float): Offset of the moving load.
+        offset (float): Offset of the moving load [m].
     """
 
     load: Union[List[float], List[str]] = field(default_factory=lambda: [0.0, 0.0, 0.0])
