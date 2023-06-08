@@ -1,6 +1,8 @@
 from typing import Dict, Any
 
 import numpy.testing as npt
+
+
 class TestUtils:
 
     @staticmethod
