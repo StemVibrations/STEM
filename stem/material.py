@@ -34,7 +34,7 @@ class FluidProperties:
         BULK_MODULUS_FLUID (float): The bulk modulus of water [Pa].
     """
     DENSITY_WATER: float = 1000
-    DYNAMIC_VISCOSITY: float = 1e-3
+    DYNAMIC_VISCOSITY: float = 1.3e-3
     BULK_MODULUS_FLUID: float = 2e-30
 
 
@@ -131,9 +131,7 @@ class SoilParametersABC(ABC):
     Abstract base class for material parameters
     """
     SOIL_TYPE: SoilTypeParametersABC
-    #RETENTION_PARAMETERS: RetentionLawABC
-    pass
-
+    RETENTION_PARAMETERS: RetentionLawABC
 
 @dataclass
 class LinearElasticSoil(SoilParametersABC):
@@ -148,7 +146,6 @@ class LinearElasticSoil(SoilParametersABC):
     """
     YOUNG_MODULUS: float
     POISSON_RATIO: float
-    RETENTION_PARAMETERS: RetentionLawABC = SaturatedBelowPhreaticLevelLaw()
 
 
 @dataclass
@@ -168,7 +165,6 @@ class SmallStrainUmatLaw(SoilParametersABC):
     IS_FORTRAN_UMAT: bool
     UMAT_PARAMETERS: List[Any]
     STATE_VARIABLES: List[Any]
-    RETENTION_PARAMETERS: RetentionLawABC = SaturatedBelowPhreaticLevelLaw()
 
 
 @dataclass
@@ -188,7 +184,6 @@ class SmallStrainUdsmLaw(SoilParametersABC):
     UDSM_NUMBER: int
     IS_FORTRAN_UDSM: bool
     UDSM_PARAMETERS: List[Any]
-    RETENTION_PARAMETERS: RetentionLawABC = SaturatedBelowPhreaticLevelLaw()
 
 
 

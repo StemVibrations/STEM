@@ -307,9 +307,15 @@ class KratosIO:
         retention_law = material.material_parameters.RETENTION_PARAMETERS.__class__.__name__
         retention_parameters: Dict[str, Any] = material.material_parameters.RETENTION_PARAMETERS.__dict__
 
+        soil_material_dict["Variables"].pop("RETENTION_PARAMETERS")
+
         # add retention parameters to dictionary
         soil_material_dict["Variables"]["RETENTION_LAW"] = retention_law
         soil_material_dict["Variables"].update(retention_parameters)
+
+        # add fluid parameters to dictionary
+        fluid_parameters: Dict[str, Any] = material.fluid_properties.__dict__
+        soil_material_dict["Variables"].update(fluid_parameters)
 
         return soil_material_dict
 
