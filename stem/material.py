@@ -1,5 +1,5 @@
 from typing import List, Any, Optional, Union
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from abc import ABC
 
 from stem.retention_law import RetentionLawABC, SaturatedBelowPhreaticLevelLaw
@@ -277,5 +277,5 @@ class Material:
     id: int
     name: str
     material_parameters: Union[SoilParametersABC, StructuralParametersABC]
-    fluid_properties: FluidProperties = FluidProperties()
+    fluid_properties: FluidProperties = field(default_factory=FluidProperties)
 
