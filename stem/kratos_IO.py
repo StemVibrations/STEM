@@ -116,7 +116,6 @@ class KratosIO:
 
         return material_dict
 
-
     def __create_elastic_spring_damper_dict(self, material: Material) -> Dict[str, Any]:
         """
         Creates a dictionary containing the material parameters for an elastic spring damper material. The
@@ -144,7 +143,7 @@ class KratosIO:
         NODAL_DAMPING_COEFFICIENT key is moved to the NODAL_DAMPING_RATIO key, as this can be recognized by Kratos.
 
         Args:
-            material (Material): material object
+            material (Material): material object containing the material parameters for the nodal concentrated material.
 
         Returns:
             Dict[str, Any]: dictionary containing the material parameters
@@ -156,6 +155,17 @@ class KratosIO:
         return material_dict
 
     def __create_linear_elastic_soil_dict(self, material: Material) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the material parameters for a linear elastic soil material. The constitutive law
+        is set to the correct law for the dimension of the problem.
+
+        Args:
+            material (Material): material object containing the material parameters for the linear elastic soil
+
+        Returns:
+            Dict[str, Any]: dictionary containing the material parameters
+
+        """
 
         # initialize material dictionary
         material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""},
@@ -171,6 +181,17 @@ class KratosIO:
         return material_dict
 
     def __create_umat_soil_dict(self, material: Material) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the material parameters for a UMAT soil material. The constitutive law is set to
+        the correct law for the dimension of the problem.
+
+        Args:
+            material (Material): material object containing the material parameters for the UMAT soil
+
+        Returns:
+            Dict[str, Any]: dictionary containing the material parameters
+
+        """
 
         # initialize material dictionary
         material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""},
@@ -186,6 +207,17 @@ class KratosIO:
         return material_dict
 
     def __create_udsm_soil_dict(self, material: Material) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the material parameters for a UDSM soil material. The constitutive law is set to
+        the correct law for the dimension of the problem.
+
+        Args:
+            material (Material): material object containing the material parameters for the UDSM soil
+
+        Returns:
+            Dict[str, Any]: dictionary containing the material parameters
+
+        """
 
         # initialize material dictionary
         material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""},
@@ -201,33 +233,47 @@ class KratosIO:
         return material_dict
 
     def __add_soil_type_parameters_to_material_dict(self, variables_dict: Dict[str, Any],
-                                                    material_parameters: SoilParametersABC):
+                                                    soil_type_parameters: SoilParametersABC):
+        """
+        Adds the soil type parameters to the material dictionary. The soil type parameters are different for drained
+        , undrained and two phase soil. The correct parameters are added to the material dictionary based on the soil
+        type.
 
-        if isinstance(material_parameters.SOIL_TYPE, DrainedSoil):
+        Args:
+            variables_dict (Dict[str, Any]): dictionary containing the material parameters
+            soil_type_parameters (SoilParametersABC): soil parameters object containing the soil type
+
+        Returns:
+            None
+
+        """
+
+        if isinstance(soil_type_parameters.SOIL_TYPE, DrainedSoil):
             drained_soil_parameters_dict = self.__create_drained_soil_parameters_dict(
-                material_parameters.SOIL_TYPE)
+                soil_type_parameters.SOIL_TYPE)
             variables_dict.update(drained_soil_parameters_dict)
-        elif isinstance(material_parameters.SOIL_TYPE, UndrainedSoil):
+        elif isinstance(soil_type_parameters.SOIL_TYPE, UndrainedSoil):
             undrained_soil_parameters_dict = self.__create_undrained_soil_parameters_dict(
-                material_parameters.SOIL_TYPE)
+                soil_type_parameters.SOIL_TYPE)
             variables_dict.update(undrained_soil_parameters_dict)
-        elif isinstance(material_parameters.SOIL_TYPE, TwoPhaseSoil2D) or isinstance(
-                material_parameters.SOIL_TYPE, TwoPhaseSoil3D):
+        elif isinstance(soil_type_parameters.SOIL_TYPE, TwoPhaseSoil2D) or isinstance(
+                soil_type_parameters.SOIL_TYPE, TwoPhaseSoil3D):
             two_phase_soil_parameters_dict = self.__create_two_phase_soil_parameters_dict(
-                material_parameters.SOIL_TYPE)
+                soil_type_parameters.SOIL_TYPE)
             variables_dict.update(two_phase_soil_parameters_dict)
 
         variables_dict.pop("SOIL_TYPE")
 
     def __create_drained_soil_parameters_dict(self, drained_soil_parameters: DrainedSoil) -> Dict[str, Any]:
         """
-        Creates a dictionary containing the drained soil parameters
+        Creates a dictionary containing the drained soil parameters. For drained soil, the permeability is set to near
+        zero and undrained behaviour is ignored. Biot coefficient is added if it is not None.
 
         Args:
-            drained_soil_parameters:
+            drained_soil_parameters (DrainedSoil): Drained soil parameters object.
 
         Returns:
-
+            Dict[str, Any]: dictionary containing the drained soil parameters
 
         """
 
@@ -247,13 +293,14 @@ class KratosIO:
 
     def __create_undrained_soil_parameters_dict(self, undrained_soil_parameters: UndrainedSoil) -> Dict[str, Any]:
         """
-        Creates a dictionary containing the undrained soil parameters
+        Creates a dictionary containing the undrained soil parameters. For undrained soil, the permeability is set to
+        near zero and undrained behaviour is taken into account. Biot coefficient is added if it is not None.
 
         Args:
-            undrained_soil_parameters:
+            undrained_soil_parameters (UndrainedSoil): Undrained soil parameters object.
 
         Returns:
-
+            Dict[str, Any]: dictionary containing the undrained soil parameters
 
         """
 
@@ -271,14 +318,16 @@ class KratosIO:
 
         return undrained_soil_parameters_dict
 
-    def __create_two_phase_soil_parameters_dict(self, two_phase_soil_parameters: TwoPhaseSoil3D) -> Dict[str, Any]:
+    def __create_two_phase_soil_parameters_dict(self, two_phase_soil_parameters: Union[TwoPhaseSoil3D, TwoPhaseSoil2D]) -> Dict[str, Any]:
         """
-        Creates a dictionary containing the two phase soil parameters
+        Creates a dictionary containing the two phase soil parameters. For two phase soil, permeability is taken into
+        account and undrained behaviour is taken into account. Biot coefficient is added if it is not None.
 
         Args:
-            two_phase_soil_parameters:
+            two_phase_soil_parameters (Union[TwoPhaseSoil3D, TwoPhaseSoil2D]): Two phase soil parameters object.
 
         Returns:
+            Dict[str, Any]: dictionary containing the two phase soil parameters
 
         """
 
@@ -291,6 +340,18 @@ class KratosIO:
         return two_phase_soil_parameters_dict
 
     def __create_soil_material_dict(self, material: Material) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the soil material parameters. The soil material parameters are based on the
+        material type. The material parameters are added to the dictionary and the retention parameters are added to
+        the dictionary, lastly the fluid parameters are added to the dictionary.
+
+        Args:
+            material (Material): Material object.
+
+        Returns:
+            Dict[str, Any]: dictionary containing the soil material parameters
+
+        """
 
         soil_material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""},
                                               "Variables": {}}
@@ -349,19 +410,31 @@ class KratosIO:
         return euler_beam_parameters_dict
 
     def __create_structural_material_dict(self, material: Material) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the structural material parameters. The structural material parameters are based
+        on the material type. The material parameters are added to the dictionary.
 
-            structural_material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""},
-                                                        "Variables": {}}
+        Args:
+            material (Material): Material object.
 
-            # add material parameters to dictionary based on material type.
-            if isinstance(material.material_parameters, EulerBeam2D) or isinstance(material.material_parameters, EulerBeam3D):
-                structural_material_dict.update(self.__create_euler_beam_dict(material))
-            elif isinstance(material.material_parameters, ElasticSpringDamper):
-                structural_material_dict["Variables"] = self.__create_elastic_spring_damper_dict(material)
-            elif isinstance(material.material_parameters, NodalConcentrated):
-                structural_material_dict["Variables"] = self.__create_nodal_concentrated_dict(material)
+        Returns:
+            Dict[str, Any]: dictionary containing the structural material parameters
 
-            return structural_material_dict
+        """
+
+        structural_material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""},
+                                                    "Variables": {}}
+
+        # add material parameters to dictionary based on material type.
+        if isinstance(material.material_parameters, EulerBeam2D) or isinstance(material.material_parameters,
+                                                                               EulerBeam3D):
+            structural_material_dict.update(self.__create_euler_beam_dict(material))
+        elif isinstance(material.material_parameters, ElasticSpringDamper):
+            structural_material_dict["Variables"] = self.__create_elastic_spring_damper_dict(material)
+        elif isinstance(material.material_parameters, NodalConcentrated):
+            structural_material_dict["Variables"] = self.__create_nodal_concentrated_dict(material)
+
+        return structural_material_dict
 
     def __create_material_dict(self, material: Material) -> Dict[str, Any]:
         """
@@ -370,7 +443,8 @@ class KratosIO:
         Args:
             material (Material): material object
 
-        Returns:  Dict[str, Any]: dictionary containing the material parameters
+        Returns:
+            Dict[str, Any]: dictionary containing the material parameters
 
         """
 
@@ -382,6 +456,7 @@ class KratosIO:
                                          "Tables": {}
                                         }
 
+        # add material parameters to dictionary based on material type.
         if isinstance(material.material_parameters, SoilParametersABC):
             material_dict["Material"].update(self.__create_soil_material_dict(material))
         elif isinstance(material.material_parameters, StructuralParametersABC):
@@ -395,7 +470,7 @@ class KratosIO:
 
         Args:
             materials (List[Material]): list of material objects
-            filename: filename of the output json file
+            filename (str): filename of the output json file
 
         """
 
