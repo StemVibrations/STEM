@@ -2,7 +2,9 @@ from typing import List, Dict, Any
 
 import numpy as np
 
-from stem.load import Load, PointLoad
+from stem.load import Load, PointLoad, MovingLoad
+
+DOMAIN = "PorousDomain"
 
 
 class KratosIO:
@@ -75,10 +77,10 @@ class KratosIO:
             "python_module": "apply_vector_constraint_table_process",
             "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
             "process_name": "ApplyVectorConstraintTableProcess",
-            "Parameters": load.load_parameters.__dict__
+            "Parameters": load.load_parameters.__dict__,
         }
 
-        load_dict["Parameters"]["model_part_name"] = f"PorousDomain.{load.name}"
+        load_dict["Parameters"]["model_part_name"] = f"{DOMAIN}.{load.name}"
         load_dict["Parameters"]["variable_name"] = "POINT_LOAD"
         load_dict["Parameters"]["table"] = [0, 0, 0]
 
@@ -101,10 +103,10 @@ class KratosIO:
             "python_module": "set_moving_load_process",
             "kratos_module": "StructuralMechanicsApplication",
             "process_name": "SetMovingLoadProcess",
-            "Parameters": load.load_parameters.__dict__
+            "Parameters": load.load_parameters.__dict__,
         }
 
-        load_dict["Parameters"]["model_part_name"] = f"PorousDomain.{load.name}"
+        load_dict["Parameters"]["model_part_name"] = f"{DOMAIN}.{load.name}"
         load_dict["Parameters"]["variable_name"] = "POINT_LOAD"
 
         return load_dict
@@ -124,6 +126,8 @@ class KratosIO:
         # add load parameters to dictionary based on load type.
         if isinstance(load.load_parameters, PointLoad):
             return KratosIO.__create_point_load_dict(load=load)
+        elif isinstance(load.load_parameters, MovingLoad):
+            return KratosIO.__create_moving_load_dict(load=load)
         else:
             raise NotImplementedError
 
