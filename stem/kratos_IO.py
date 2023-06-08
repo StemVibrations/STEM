@@ -1,5 +1,5 @@
 import json
-from typing import Dict,List, Any,Union
+from typing import Dict, List, Any, Union
 
 import numpy as np
 
@@ -18,8 +18,8 @@ from stem.material import (Material,
                            ElasticSpringDamper,
                            NodalConcentrated)
 
-
 from stem.load import Load, PointLoad, MovingLoad
+
 
 DOMAIN = "PorousDomain"
 
