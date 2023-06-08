@@ -2,51 +2,51 @@
     "properties": [
         {
             "model_part_name": "test_beam_material",
-            "properties_id": 0,
+            "properties_id": 1,
             "Material": {
                 "constitutive_law": {
-                    "name": "KratosMultiphysics.StructuralMechanicsApplication.BeamConstitutiveLaw"
+                    "name": "LinearElastic2DBeamLaw"
                 },
                 "Variables": {
                     "YOUNG_MODULUS": 1.0,
                     "POISSON_RATIO": 0.2,
                     "DENSITY": 1.0,
                     "CROSS_AREA": 1.0,
-                    "I22": 1.0,
-                    "I33": 1.0,
-                    "TORSIONAL_INERTIA": 1.0
+                    "I33": 1.0
                 }
             },
             "Tables": {}
         },
         {
             "model_part_name": "test_spring_damper_material",
-            "properties_id": 0,
+            "properties_id": 2,
             "Material": {
                 "constitutive_law": {
                     "name": ""
                 },
-                "Variables": {}
+                "Variables": {
+                    "NODAL_DISPLACEMENT_STIFFNESS": [1,2,3],
+                    "NODAL_ROTATIONAL_STIFFNESS": [2,4,5],
+                    "NODAL_DAMPING_RATIO": [0,0.2,3],
+                    "NODAL_ROTATIONAL_DAMPING_RATIO": [0,0,9]
+                }
             },
-            "Tables": {},
-            "NODAL_DISPLACEMENT_STIFFNESS": 1.0,
-            "NODAL_ROTATIONAL_STIFFNESS": 1000000000.0,
-            "NODAL_DAMPING_RATIO": 0.2,
-            "NODAL_ROTATIONAL_DAMPING_RATIO": 0.0
+            "Tables": {}
+
         },
         {
             "model_part_name": "test_nodal_concentrated_material",
-            "properties_id": 0,
+            "properties_id": 3,
             "Material": {
                 "constitutive_law": {
                     "name": ""
                 },
-                "Variables": {}
-            },
-            "Tables": {},
-            "NODAL_DISPLACEMENT_STIFFNESS": 0.0,
+                "Variables": {"NODAL_DISPLACEMENT_STIFFNESS": [1,2,3],
             "NODAL_MASS": 1.0,
-            "NODAL_DAMPING_RATIO": 0.2
+            "NODAL_DAMPING_RATIO": [1,2,0.2]}
+            },
+            "Tables": {}
+
         }
     ]
 }
