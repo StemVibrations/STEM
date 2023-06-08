@@ -2,8 +2,9 @@ from typing import List, Dict, Any
 
 import numpy as np
 
-from stem import DOMAIN
 from stem.load import Load, PointLoad, MovingLoad
+
+DOMAIN = "PorousDomain"
 
 
 class KratosIO:

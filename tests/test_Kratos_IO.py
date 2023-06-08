@@ -13,14 +13,17 @@ class TestKratosIO:
         """
         # define load(s) parameters
         # point load
-        point_load_parameters = PointLoad(active=[True, True, True], value=[1000, 0, 0])
+        point_load_parameters = PointLoad(
+            active=[True, False, True], value=[1000, 0, 0]
+        )
 
         # moving (point) load
         moving_point_load_parameters = MovingLoad(
-            origin=[0.0, 1.0, 0.0],
+            origin=[0.0, 1.0, 2.0],
             load=[0.0, -10.0, 0.0],
-            direction=[1.0, 1.0, 1.0],
+            direction=[1.0, 0.0, -1.0],
             velocity=5.0,
+            offset=3.0
         )
 
         # create Load objects and store in the list
