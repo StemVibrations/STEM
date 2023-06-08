@@ -42,7 +42,7 @@ class MovingLoad(LoadParametersABC):
     """
 
     load: Union[List[float], List[str]] = field(default_factory=lambda: [0.0, 0.0, 0.0])
-    direction: List[float] = field(default_factory=lambda: [1.0, 1.0, 1.0])
+    direction: List[float] = field(default_factory=lambda: [1, 1, 1])
     velocity: Union[float, str] = 0.0
     origin: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
     offset: float = 0.0
