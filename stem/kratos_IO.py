@@ -1,8 +1,16 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
+
+from abc import ABC
 
 import numpy as np
 
 from stem.load import Load, PointLoad, MovingLoad
+from stem.output import (
+    OutputProcess,
+    GiDOutputParameters,
+    VtkOutputParameters,
+    JsonOutputParameters,
+)
 
 DOMAIN = "PorousDomain"
 
@@ -149,6 +157,128 @@ class KratosIO:
             loads_dict["loads_process_list"].append(self.__create_load_dict(load))
 
         return loads_dict
+
+    @staticmethod
+    def __create_gid_output_dict(output: OutputProcess) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the output parameters to produce outputs in GiD
+        format. To visualize the outputs, the software GiD is required.
+
+        Args:
+            output (OutputProcess): output process object
+
+        Returns:
+            Dict[str, Any]: dictionary containing the output parameters
+        """
+
+        # initialize output dictionary
+        output_dict: Dict[str, Any] = {
+            "python_module": "gid_output_process",
+            "kratos_module": "KratosMultiphysics",
+            "process_name": "GiDOutputProcess",
+            "Parameters": output.output_parameters.assemble_parameters(),
+        }
+
+        output_dict["Parameters"]["model_part_name"] = f"{DOMAIN}.{output.part_name}"
+        output_dict["Parameters"]["output_name"] = f"{output.output_name}"
+
+        return output_dict
+
+    @staticmethod
+    def __create_vtk_output_dict(output: OutputProcess) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the output parameters to produce outputs in vtk
+        format. The format can be visualized e.g., using Paraview.
+
+        Args:
+            output (OutputProcess): output process object
+
+        Returns:
+            Dict[str, Any]: dictionary containing the output parameters
+        """
+
+        # initialize load dictionary
+        output_dict: Dict[str, Any] = {
+            "python_module": "vtk_output_process",
+            "kratos_module": "KratosMultiphysics",
+            "process_name": "VtkOutputProcess",
+            "Parameters": output.output_parameters.assemble_parameters(),
+        }
+
+        output_dict["Parameters"]["model_part_name"] = f"{DOMAIN}.{output.part_name}"
+        output_dict["Parameters"]["output_path"] = f"{output.output_name}"
+        return output_dict
+
+    @staticmethod
+    def __create_json_output_dict(output: OutputProcess) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the output parameters to produce outputs in
+        JSON format.
+
+        Args:
+            output (OutputProcess): output process object
+
+        Returns:
+            output_dict (Dict[str, Any]): dictionary containing the output parameters
+        """
+
+        # initialize output dictionary
+        output_dict: Dict[str, Any] = {
+            "python_module": "json_output_process",
+            "kratos_module": "KratosMultiphysics",
+            "process_name": "JsonOutputProcess",
+            "Parameters": output.output_parameters.assemble_parameters(),
+        }
+
+        output_dict["Parameters"]["model_part_name"] = f"{DOMAIN}.{output.part_name}"
+        output_dict["Parameters"]["output_file_name"] = f"{output.output_name}"
+
+        return output_dict
+
+    def __create_output_dict(self, output: OutputProcess) -> Tuple[str, Dict[str, Any]]:
+        """
+        Creates a dictionary containing the output parameters for the desired format.
+        Allowed format are GiD, VTK and JSON.
+
+        Args:
+            output (OutputProcess): output process object
+
+        Returns:
+            str: string specifying the format of the output
+            Dict[str, Any]: dictionary containing the output parameters
+        """
+        # add output keys and parameters to dictionary based on output process type.
+        # TODO: check that keys are correct for VTK and JSON
+        if isinstance(output.output_parameters, GiDOutputParameters):
+            return "gid_output", KratosIO.__create_gid_output_dict(output=output)
+        elif isinstance(output.output_parameters, VtkOutputParameters):
+            return "vtk_output", KratosIO.__create_vtk_output_dict(output=output)
+        elif isinstance(output.output_parameters, JsonOutputParameters):
+            return "json_output", KratosIO.__create_json_output_dict(output=output)
+        else:
+            raise NotImplementedError
+
+    def create_output_process_dictionary(
+        self, outputs: List[OutputProcess]
+    ) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the output_processes, that specifies
+        which output to request Kratos and the type of output ('GiD', 'VTK',
+        'JSON')
+
+        Args:
+            outputs (List[OutputProcess]): list of output process objects
+
+        Returns:
+            output_dict (Dict): dictionary of a list containing the output properties
+        """
+        output_dict: Dict[str, Any] = {"output_processes": {}}
+
+        for output in outputs:
+            key_output, _parameters_output = self.__create_output_dict(output=output)
+            output_dict["output_processes"][key_output] = [_parameters_output]
+
+        return output_dict
 
     def write_project_parameters_json(self, filename):
 
