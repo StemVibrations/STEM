@@ -2,15 +2,13 @@ from typing import List, Any, Optional, Union
 from dataclasses import dataclass, field
 from abc import ABC
 
-from stem.retention_law import RetentionLawABC, SaturatedBelowPhreaticLevelLaw
-
-
+from stem.retention_law import RetentionLawABC
 
 
 @dataclass
 class SoilTypeParametersABC(ABC):
     """
-    Abstract base class for material parameters
+    Abstract base class for soil type parameters
     """
     pass
 
@@ -18,7 +16,7 @@ class SoilTypeParametersABC(ABC):
 @dataclass
 class StructuralParametersABC(ABC):
     """
-    Abstract base class for material parameters
+    Abstract base class for structural material parameters
     """
     pass
 
@@ -26,7 +24,7 @@ class StructuralParametersABC(ABC):
 @dataclass
 class FluidProperties:
     """
-    Class containing the parameters for a fluid
+    Class containing the parameters for a fluid. Default values are for water at 12 degrees Celsius.
 
     Attributes:
         DENSITY_WATER (float): The density of water [kg/m^3].
@@ -35,7 +33,7 @@ class FluidProperties:
     """
     DENSITY_WATER: float = 1000
     DYNAMIC_VISCOSITY: float = 1.3e-3
-    BULK_MODULUS_FLUID: float = 2e-30
+    BULK_MODULUS_FLUID: float = 2e9
 
 
 @dataclass
@@ -129,6 +127,10 @@ class TwoPhaseSoil3D(SoilTypeParametersABC):
 class SoilParametersABC(ABC):
     """
     Abstract base class for material parameters
+
+    Attributes:
+        SOIL_TYPE (SoilTypeParametersABC): The soil type parameters.
+        RETENTION_PARAMETERS (RetentionLawABC): The retention law parameters.
     """
     SOIL_TYPE: SoilTypeParametersABC
     RETENTION_PARAMETERS: RetentionLawABC
@@ -141,7 +143,6 @@ class LinearElasticSoil(SoilParametersABC):
     Attributes:
         YOUNG_MODULUS (float): The Young's modulus [Pa].
         POISSON_RATIO (float): The Poisson's ratio [-].
-        SOIL_TYPE (Union[DrainedSoil, UndrainedSoil, TwoPhaseSoil2D, TwoPhaseSoil3D]): The soil type.
 
     """
     YOUNG_MODULUS: float
@@ -178,7 +179,6 @@ class SmallStrainUdsmLaw(SoilParametersABC):
         IS_FORTRAN_UDSM (bool): A boolean to indicate whether the udsm is written in Fortran.
         UDSM_PARAMETERS (list): The parameters of the udsm.
 
-
     """
     UDSM_NAME: str
     UDSM_NUMBER: int
@@ -206,12 +206,13 @@ class EulerBeam2D(StructuralParametersABC):
     CROSS_AREA: float
     I33: float
 
+
 @dataclass
 class EulerBeam3D(StructuralParametersABC):
     """
     Class containing the constitutive parameters for an euler beam
 
-    :Attributes:
+    Attributes:
         YOUNG_MODULUS (float): The Young's modulus [Pa].
         POISSON_RATIO (float): The Poisson's ratio [-].
         DENSITY (float): The density [kg/m3].
@@ -228,6 +229,7 @@ class EulerBeam3D(StructuralParametersABC):
     I22: float
     I33: float
     TORSIONAL_INERTIA: float
+
 
 @dataclass
 class ElasticSpringDamper(StructuralParametersABC):

@@ -179,7 +179,6 @@ class KratosIO:
         # todo write Projectparameters.json
         pass
 
-
     def __create_umat_material_dict(self, material: Material) -> Dict[str, Any]:
         """
         Creates a dictionary containing the material parameters for a UMAT material. The UMAT_NAME and IS_FORTRAN_UMAT
@@ -420,7 +419,8 @@ class KratosIO:
 
         return undrained_soil_parameters_dict
 
-    def __create_two_phase_soil_parameters_dict(self, two_phase_soil_parameters: Union[TwoPhaseSoil3D, TwoPhaseSoil2D]) -> Dict[str, Any]:
+    def __create_two_phase_soil_parameters_dict(self, two_phase_soil_parameters: Union[TwoPhaseSoil3D, TwoPhaseSoil2D]) \
+            -> Dict[str, Any]:
         """
         Creates a dictionary containing the two phase soil parameters. For two phase soil, permeability is taken into
         account and undrained behaviour is taken into account. Biot coefficient is added if it is not None.
@@ -488,7 +488,6 @@ class KratosIO:
             return soil_material_dict
         else:
             raise ValueError("Material parameters are not of type SoilParametersABC")
-
 
     def __create_euler_beam_dict(self, material: Material) -> Dict[str, Any]:
         """

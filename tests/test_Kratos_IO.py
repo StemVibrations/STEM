@@ -21,24 +21,28 @@ class TestKratosIO:
 
         """
 
+        # create drained soil
         soil_type = DrainedSoil(DENSITY_SOLID=2650, POROSITY=0.3, BULK_MODULUS_SOLID=1E16)
 
-        # Define material parameters
+        # Define umat constitutive law parameters
         umat_material_parameters = SmallStrainUmatLaw(UMAT_PARAMETERS=[1, 5.6, False], UMAT_NAME="test_name",
                                                       IS_FORTRAN_UMAT=False, STATE_VARIABLES=[], SOIL_TYPE=soil_type,
                                                       RETENTION_PARAMETERS=SaturatedBelowPhreaticLevelLaw())
 
-
-
+        # Create undrained soil
         udsm_soil_type = UndrainedSoil(DENSITY_SOLID=2650, POROSITY=0.3, BULK_MODULUS_SOLID=1E16, BIOT_COEFFICIENT=0.5)
+
+        # Define retention law parameters
         udsm_retention_parameters = VanGenuchtenLaw(VAN_GENUCHTEN_AIR_ENTRY_PRESSURE=1, VAN_GENUCHTEN_GN=0.2,
                                                     VAN_GENUCHTEN_GL=0.5)
 
+        # Define udsm constitutive law parameters
         udsm_material_parameters = SmallStrainUdsmLaw(SOIL_TYPE=udsm_soil_type,
                                                       RETENTION_PARAMETERS=udsm_retention_parameters,
                                                       UDSM_PARAMETERS=[1,5.6,False], UDSM_NUMBER=2,
                                                       UDSM_NAME="test_name_UDSM", IS_FORTRAN_UDSM=True)
 
+        # Create materials
         umat_material = Material(id=0, name="test_umat_material", material_parameters=umat_material_parameters)
         udsm_material = Material(id=1, name="test_udsm_material", material_parameters=udsm_material_parameters)
 
@@ -63,13 +67,21 @@ class TestKratosIO:
         """
 
         # Define material parameters
+
+        # define eiler beam parameters
         beam_material_parameters = EulerBeam2D(DENSITY=1.0, YOUNG_MODULUS=1.0, POISSON_RATIO=0.2, CROSS_AREA=1.0, I33=1)
+
+        # define spring damper parameters
         spring_damper_material_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[1.0,2,3],
-                                                            NODAL_DAMPING_COEFFICIENT=[0,0.2,3], NODAL_ROTATIONAL_STIFFNESS=[2.0,4,5],
+                                                            NODAL_DAMPING_COEFFICIENT=[0,0.2,3],
+                                                                NODAL_ROTATIONAL_STIFFNESS=[2.0,4,5],
                                                                 NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0,0,9])
+
+        # define nodal concentrated parameters
         nodal_concentrated_material_parameters = NodalConcentrated( NODAL_MASS=1.0, NODAL_DAMPING_COEFFICIENT=[1,2,0.2],
                                                                     NODAL_DISPLACEMENT_STIFFNESS=[1,2,3])
 
+        # Create structural materials
         beam_material = Material(id=1, name="test_beam_material", material_parameters=beam_material_parameters)
         spring_damper_material = Material(id=2, name="test_spring_damper_material",
                                           material_parameters=spring_damper_material_parameters)
@@ -83,7 +95,6 @@ class TestKratosIO:
         kratos_io.write_material_parameters_json(all_materials, "test_write_structural_MaterialParameters.json")
 
         # read generated json file and expected json file
-
         written_material_parameters_json = json.load(open("test_write_structural_MaterialParameters.json"))
         expected_material_parameters_json = json.load(open("tests/test_data/expected_structural_material_parameters.json"))
 
