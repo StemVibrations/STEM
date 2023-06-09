@@ -153,8 +153,14 @@ class JsonOutputParameters(OutputParametersABC):
     Class containing the output parameters for JSON output
 
     Attributes:
-        time_frequency float: frequency of the time steps of the output [s].
-        output_variables List[str]: list of output variables required from the analysis.
+        sub_model_part_name (str):
+        time_frequency (float):
+        output_variables (List[str]):
+        gauss_points_output_variables (List[str]):
+        check_for_flag (str):
+        historical_value (bool):
+        resultant_solution (bool):
+        use_node_coordinates (bool):
     """
 
     sub_model_part_name: str = ""
