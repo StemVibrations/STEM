@@ -455,35 +455,40 @@ class KratosIO:
 
         """
 
-        soil_material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""},
-                                              "Variables": {}}
+        if isinstance(material.material_parameters, SoilParametersABC):
 
-        # add material parameters to dictionary based on material type.
-        if isinstance(material.material_parameters, LinearElasticSoil):
-            soil_material_dict.update(self.__create_linear_elastic_soil_dict(material))
-        elif isinstance(material.material_parameters, SmallStrainUmatLaw):
-            soil_material_dict.update(self.__create_umat_soil_dict(material))
-        elif isinstance(material.material_parameters, SmallStrainUdsmLaw):
-            soil_material_dict.update(self.__create_udsm_soil_dict(material))
+            soil_material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""},
+                                                  "Variables": {}}
 
-        self.__add_soil_type_parameters_to_material_dict(soil_material_dict["Variables"],
-                                                         material.material_parameters)
+            # add material parameters to dictionary based on material type.
+            if isinstance(material.material_parameters, LinearElasticSoil):
+                soil_material_dict.update(self.__create_linear_elastic_soil_dict(material))
+            elif isinstance(material.material_parameters, SmallStrainUmatLaw):
+                soil_material_dict.update(self.__create_umat_soil_dict(material))
+            elif isinstance(material.material_parameters, SmallStrainUdsmLaw):
+                soil_material_dict.update(self.__create_udsm_soil_dict(material))
 
-        # get retention parameters
-        retention_law = material.material_parameters.RETENTION_PARAMETERS.__class__.__name__
-        retention_parameters: Dict[str, Any] = material.material_parameters.RETENTION_PARAMETERS.__dict__
+            self.__add_soil_type_parameters_to_material_dict(soil_material_dict["Variables"],
+                                                             material.material_parameters)
 
-        soil_material_dict["Variables"].pop("RETENTION_PARAMETERS")
+            # get retention parameters
+            retention_law = material.material_parameters.RETENTION_PARAMETERS.__class__.__name__
+            retention_parameters: Dict[str, Any] = material.material_parameters.RETENTION_PARAMETERS.__dict__
 
-        # add retention parameters to dictionary
-        soil_material_dict["Variables"]["RETENTION_LAW"] = retention_law
-        soil_material_dict["Variables"].update(retention_parameters)
+            soil_material_dict["Variables"].pop("RETENTION_PARAMETERS")
 
-        # add fluid parameters to dictionary
-        fluid_parameters: Dict[str, Any] = material.fluid_properties.__dict__
-        soil_material_dict["Variables"].update(fluid_parameters)
+            # add retention parameters to dictionary
+            soil_material_dict["Variables"]["RETENTION_LAW"] = retention_law
+            soil_material_dict["Variables"].update(retention_parameters)
 
-        return soil_material_dict
+            # add fluid parameters to dictionary
+            fluid_parameters: Dict[str, Any] = material.fluid_properties.__dict__
+            soil_material_dict["Variables"].update(fluid_parameters)
+
+            return soil_material_dict
+        else:
+            raise ValueError("Material parameters are not of type SoilParametersABC")
+
 
     def __create_euler_beam_dict(self, material: Material) -> Dict[str, Any]:
         """
