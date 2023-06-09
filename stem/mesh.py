@@ -55,21 +55,29 @@ class Mesh:
     """
     Class containing information about the mesh
 
-    Attributes
-    ----------
-        ndim (int or None): number of dimensions of the mesh
+    Args:
+        ndim (int): number of dimensions of the mesh
+
+    Attributes:
+        ndim (int): number of dimensions of the mesh
         nodes (np.array or None): node id followed by node coordinates in an array
         elements (np.array or None): element id followed by connectivities in an array
         conditions (np.array or None): condition id followed by connectivities in an array
 
     """
-    def __init__(self):
+    def __init__(self, ndim: int):
 
-        self.ndim = None
+        self.ndim: int = ndim
         self.nodes = None
         self.elements = None
         self.conditions = None
 
+        pass
+
+    @classmethod
+    def read_mesh_from_gmsh(cls, mesh_file_name: str) -> None:
+        #todo implement this method to read mesh from gmsh file and create a mesh object with the data read from the
+        # file.
         pass
 
     def prepare_data_for_kratos(self, mesh_data: Dict[str, Any]) \
@@ -100,7 +108,7 @@ class Mesh:
         return nodes, all_elements
 
 
-    def write_mesh_to_kratos_structure(self, mesh_data: Dict[str,object], filename: str) -> None:
+    def write_mesh_to_kratos_structure(self, mesh_data: Dict[str,Any], filename: str) -> None:
         """
         Writes mesh data to the structure which can be read by Kratos
 
