@@ -1,5 +1,6 @@
 import json
 
+import pprint
 from stem.kratos_IO import KratosIO
 from stem.load import PointLoad, MovingLoad, Load
 from stem.output import (
@@ -62,21 +63,21 @@ class TestKratosIO:
         """
         # Nodal results
         nodal_results = [
-            "DISPLACEMENT",
-            "TOTAL_DISPLACEMENT",
-            "WATER_PRESSURE",
-            "VOLUME_ACCELERATION",
-        ]
+                "DISPLACEMENT",
+                "TOTAL_DISPLACEMENT",
+                "WATER_PRESSURE",
+                "VOLUME_ACCELERATION",
+            ]
         # gauss point results
         gauss_point_results = [
-            "GREEN_LAGRANGE_STRAIN_TENSOR",
-            "ENGINEERING_STRAIN_TENSOR",
-            "CAUCHY_STRESS_TENSOR",
-            "TOTAL_STRESS_TENSOR",
-            "VON_MISES_STRESS",
-            "FLUID_FLUX_VECTOR",
-            "HYDRAULIC_HEAD",
-        ]
+                "GREEN_LAGRANGE_STRAIN_TENSOR",
+                "ENGINEERING_STRAIN_TENSOR",
+                "CAUCHY_STRESS_TENSOR",
+                "TOTAL_STRESS_TENSOR",
+                "VON_MISES_STRESS",
+                "FLUID_FLUX_VECTOR",
+                "HYDRAULIC_HEAD",
+            ]
         # define output parameters
         # 1. GiD
         gid_output_parameters = GiDOutputParameters(
@@ -108,7 +109,7 @@ class TestKratosIO:
         json_output_parameters = JsonOutputParameters(
             time_frequency=0.002,
             output_variables=nodal_results,
-            gauss_points_output_variables=gauss_point_results,
+            gauss_points_output_variables=gauss_point_results
         )
 
         # create Load objects and store in the list
