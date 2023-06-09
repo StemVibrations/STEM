@@ -162,9 +162,9 @@ class JsonOutputParameters(OutputParametersABC):
     output_variables: List[str] = field(default_factory=lambda: [])
     gauss_points_output_variables: List[str] = field(default_factory=lambda: [])
     check_for_flag: str = ""
-    historical_value: str = True
-    resultant_solution: str = False
-    use_node_coordinates: str = False
+    historical_value: bool = True
+    resultant_solution: bool = False
+    use_node_coordinates: bool = False
 
     def assemble_parameters(self) -> Dict[str, Any]:
         """
