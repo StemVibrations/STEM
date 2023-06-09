@@ -107,7 +107,7 @@ class TestKratosIO:
         # 3. Json
         json_output_parameters = JsonOutputParameters(
             time_frequency=0.002,
-            output_variables=nodal_results + gauss_point_results,
+            output_variables=nodal_results,
             gauss_points_output_variables=gauss_point_results,
         )
 
