@@ -85,7 +85,7 @@ class KratosIO:
             "python_module": "apply_vector_constraint_table_process",
             "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
             "process_name": "ApplyVectorConstraintTableProcess",
-            "Parameters": load.load_parameters.__dict__,
+            "Parameters": deepcopy(load.load_parameters.__dict__),
         }
 
         load_dict["Parameters"]["model_part_name"] = f"{DOMAIN}.{load.name}"
@@ -111,7 +111,7 @@ class KratosIO:
             "python_module": "set_moving_load_process",
             "kratos_module": "StructuralMechanicsApplication",
             "process_name": "SetMovingLoadProcess",
-            "Parameters": load.load_parameters.__dict__,
+            "Parameters": deepcopy(load.load_parameters.__dict__),
         }
 
         load_dict["Parameters"]["model_part_name"] = f"{DOMAIN}.{load.name}"
@@ -175,7 +175,7 @@ class KratosIO:
         keys are moved to the UDSM_NAME and IS_FORTRAN_UDSM keys, as this can be recognized by Kratos.
 
         Args:
-            material (SoilConstitutiveLawABC): material object
+            material (SoilConstitutiveLawABC): soil constitutive law object containing the material parameters for UMAT
 
         Returns:
             Dict[str, Any]: dictionary containing the material parameters
@@ -195,7 +195,7 @@ class KratosIO:
         the UMAT_PARAMETERS key, as this can be recognized by Kratos.
 
         Args:
-            material (Material): material object
+            material (SoilConstitutiveLawABC): soil constitutive law object containing the material parameters for UDSM
 
         Returns:
             Dict[str, Any]: dictionary containing the material parameters
@@ -214,7 +214,8 @@ class KratosIO:
         and NODAL_ROTATIONAL_DAMPING_RATIO keys, as this can be recognized by Kratos.
 
         Args:
-            material (Material): material object
+            material (StructuralParametersABC): material object containing the material parameters for an elastic
+                spring damper material
 
         Returns:
             Dict[str, Any]: dictionary containing the material parameters
@@ -234,7 +235,8 @@ class KratosIO:
         NODAL_DAMPING_COEFFICIENT key is moved to the NODAL_DAMPING_RATIO key, as this can be recognized by Kratos.
 
         Args:
-            material (Material): material object containing the material parameters for the nodal concentrated material.
+            material (StructuralParametersABC): material object containing the material parameters for the nodal
+                concentrated material.
 
         Returns:
             Dict[str, Any]: dictionary containing the material parameters
@@ -251,7 +253,8 @@ class KratosIO:
         is set to the correct law for the dimension of the problem.
 
         Args:
-            material (Material): material object containing the material parameters for the linear elastic soil
+            material (SoilConstitutiveLawABC): soil constitutive law object containing the material parameters for a
+                linear elastic soil material
 
         Returns:
             Dict[str, Any]: dictionary containing the material parameters
@@ -277,7 +280,8 @@ class KratosIO:
         the correct law for the dimension of the problem.
 
         Args:
-            material (Material): material object containing the material parameters for the UMAT soil
+            material (SoilConstitutiveLawABC): soil constitutive law object containing the material parameters for a
+                UMAT soil material
 
         Returns:
             Dict[str, Any]: dictionary containing the material parameters
@@ -303,7 +307,8 @@ class KratosIO:
         the correct law for the dimension of the problem.
 
         Args:
-            material (Material): material object containing the material parameters for the UDSM soil
+            material (SoilConstitutiveLawABC): soil constitutive law object containing the material parameters for a
+                UDSM soil material
 
         Returns:
             Dict[str, Any]: dictionary containing the material parameters
@@ -332,7 +337,7 @@ class KratosIO:
 
         Args:
             variables_dict (Dict[str, Any]): dictionary containing the material parameters
-            soil_parameters (SoilMaterial): soil parameters object containing the soil type
+            soil_parameters (SoilMaterial): soil material object
 
         Returns:
             None
@@ -352,6 +357,7 @@ class KratosIO:
                 soil_parameters.soil_formulation)
             variables_dict.update(two_phase_soil_parameters_dict)
 
+        # Remove ndim as this is not a material parameter
         if "ndim" in variables_dict:
             variables_dict.pop("ndim")
 
@@ -378,8 +384,8 @@ class KratosIO:
         drained_soil_parameters_dict["PERMEABILITY_YZ"] = 0
         drained_soil_parameters_dict["PERMEABILITY_ZX"] = 0
 
-        if drained_soil_parameters_dict["BIOT_COEFFICIENT"] is None:
-            drained_soil_parameters_dict.pop("BIOT_COEFFICIENT")
+        # Create a new dictionary without None values
+        drained_soil_parameters_dict = {k: v for k, v in drained_soil_parameters_dict.items() if v is not None}
 
         return drained_soil_parameters_dict
 
@@ -405,8 +411,8 @@ class KratosIO:
         undrained_soil_parameters_dict["PERMEABILITY_YZ"] = 0
         undrained_soil_parameters_dict["PERMEABILITY_ZX"] = 0
 
-        if undrained_soil_parameters_dict["BIOT_COEFFICIENT"] is None:
-            undrained_soil_parameters_dict.pop("BIOT_COEFFICIENT")
+        # Create a new dictionary without None values
+        undrained_soil_parameters_dict = {k: v for k, v in undrained_soil_parameters_dict.items() if v is not None}
 
         return undrained_soil_parameters_dict
 
@@ -417,7 +423,7 @@ class KratosIO:
         account and undrained behaviour is taken into account. Biot coefficient is added if it is not None.
 
         Args:
-            two_phase_soil_parameters (Union[TwoPhaseSoil3D, TwoPhaseSoil2D]): Two phase soil parameters object.
+            two_phase_soil_parameters (TwoPhaseSoil): Two phase soil parameters object.
 
         Returns:
             Dict[str, Any]: dictionary containing the two phase soil parameters
@@ -439,7 +445,7 @@ class KratosIO:
         the dictionary, lastly the fluid parameters are added to the dictionary.
 
         Args:
-            material (Material): Material object.
+            material (SoilMaterial): Material object.
 
         Returns:
             Dict[str, Any]: dictionary containing the soil material parameters
@@ -501,6 +507,7 @@ class KratosIO:
         euler_beam_parameters_dict: Dict[str, Any] = {"constitutive_law": {"name": ""},
                                                       "Variables": material_parameters_dict}
 
+        # add constitutive law name to dictionary based on dimension
         if self.ndim == 2:
             euler_beam_parameters_dict["constitutive_law"]["name"] = "LinearElastic2DBeamLaw"
         elif self.ndim == 3:
@@ -517,7 +524,7 @@ class KratosIO:
         on the material type. The material parameters are added to the dictionary.
 
         Args:
-            material (Material): Material object.
+            material (StructuralMaterial): Material object.
 
         Returns:
             Dict[str, Any]: dictionary containing the structural material parameters
@@ -542,7 +549,7 @@ class KratosIO:
         Creates a dictionary containing the material parameters
 
         Args:
-            material (Material): material object
+            material (Union[SoilMaterial, StructuralMaterial]): material object
             material_id (int): material id
 
         Returns:
@@ -571,17 +578,19 @@ class KratosIO:
         Writes the material parameters to a json file
 
         Args:
-            materials (List[Material]): list of material objects
+            materials (List[Union[SoilMaterial, StructuralMaterial]): list of material objects
             filename (str): filename of the output json file
 
         """
 
         materials_dict: Dict[str, Any] = {"properties": []}
 
+        # create material dictionary for each material and assign a unique material id
         material_id = 1
         for material in materials:
             materials_dict["properties"].append(self.__create_material_dict(material, material_id))
             material_id += 1
 
+        # write material dictionary to json file
         json.dump(materials_dict, open(filename, 'w'), indent=4)
 
