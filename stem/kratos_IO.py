@@ -1,5 +1,6 @@
 import json
 from typing import Dict, List, Any, Union
+from copy import deepcopy
 
 import numpy as np
 
@@ -180,7 +181,7 @@ class KratosIO:
             Dict[str, Any]: dictionary containing the material parameters
 
         """
-        material_dict: Dict[str, Any] = material.__dict__
+        material_dict: Dict[str, Any] = deepcopy(material.__dict__)
 
         material_dict["UDSM_NAME"] = material_dict.pop("UMAT_NAME")
         material_dict["IS_FORTRAN_UDSM"] = material_dict.pop("IS_FORTRAN_UMAT")
@@ -200,7 +201,7 @@ class KratosIO:
             Dict[str, Any]: dictionary containing the material parameters
 
         """
-        material_dict: Dict[str, Any] = material.__dict__
+        material_dict: Dict[str, Any] = deepcopy(material.__dict__)
 
         material_dict["UMAT_PARAMETERS"] = material_dict.pop("UDSM_PARAMETERS")
 
@@ -220,7 +221,7 @@ class KratosIO:
 
         """
 
-        material_dict: Dict[str, Any] = material.__dict__
+        material_dict: Dict[str, Any] = deepcopy(material.__dict__)
 
         # Change naming of coefficient to ratio as this is the (incorrect) naming in Kratos
         material_dict["NODAL_DAMPING_RATIO"] = material_dict.pop("NODAL_DAMPING_COEFFICIENT")
@@ -238,7 +239,7 @@ class KratosIO:
         Returns:
             Dict[str, Any]: dictionary containing the material parameters
         """
-        material_dict: Dict[str, Any] = material.__dict__
+        material_dict: Dict[str, Any] = deepcopy(material.__dict__)
 
         # Change naming of coefficient to ratio as this is the (incorrect) naming in Kratos
         material_dict["NODAL_DAMPING_RATIO"] = material_dict.pop("NODAL_DAMPING_COEFFICIENT")
@@ -259,7 +260,7 @@ class KratosIO:
 
         # initialize material dictionary
         material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""},
-                                         "Variables": material.__dict__}
+                                         "Variables": deepcopy(material.__dict__)}
         if self.ndim == 2:
             material_dict["constitutive_law"]["name"] = "GeoLinearElasticPlaneStrain2DLaw"
 
@@ -368,7 +369,7 @@ class KratosIO:
 
         """
 
-        drained_soil_parameters_dict = drained_soil_parameters.__dict__
+        drained_soil_parameters_dict = deepcopy(drained_soil_parameters.__dict__)
         drained_soil_parameters_dict["IGNORE_UNDRAINED"] = True
         drained_soil_parameters_dict["PERMEABILITY_XX"] = 1e-30
         drained_soil_parameters_dict["PERMEABILITY_YY"] = 1e-30
@@ -395,7 +396,7 @@ class KratosIO:
 
         """
 
-        undrained_soil_parameters_dict = undrained_soil_parameters.__dict__
+        undrained_soil_parameters_dict = deepcopy(undrained_soil_parameters.__dict__)
         undrained_soil_parameters_dict["IGNORE_UNDRAINED"] = False
         undrained_soil_parameters_dict["PERMEABILITY_XX"] = 1e-30
         undrained_soil_parameters_dict["PERMEABILITY_YY"] = 1e-30
@@ -423,7 +424,7 @@ class KratosIO:
 
         """
 
-        two_phase_soil_parameters_dict = two_phase_soil_parameters.__dict__
+        two_phase_soil_parameters_dict = deepcopy(two_phase_soil_parameters.__dict__)
         two_phase_soil_parameters_dict["IGNORE_UNDRAINED"] = False
 
         # remove None values from dictionary
@@ -459,21 +460,20 @@ class KratosIO:
         elif isinstance(material.constitutive_law, SmallStrainUdsmLaw):
             soil_material_dict.update(self.__create_udsm_soil_dict(material.constitutive_law))
 
-        # soil_material_dict.pop("ndim")
-
-
         self.__add_soil_formulation_parameters_to_material_dict(soil_material_dict["Variables"], material)
 
         # get retention parameters
         retention_law = material.retention_parameters.__class__.__name__
-        retention_parameters: Dict[str, Any] = material.retention_parameters.__dict__
+        retention_parameters: Dict[str, Any] = deepcopy(material.retention_parameters.__dict__)
 
         # add retention parameters to dictionary
         soil_material_dict["Variables"]["RETENTION_LAW"] = retention_law
         soil_material_dict["Variables"].update(retention_parameters)
 
         # add fluid parameters to dictionary
-        fluid_parameters: Dict[str, Any] = material.fluid_properties.__dict__
+        fluid_parameters: Dict[str, Any] = deepcopy(material.fluid_properties.__dict__)
+        fluid_parameters["DENSITY_WATER"] = fluid_parameters.pop("DENSITY_FLUID")
+
         soil_material_dict["Variables"].update(fluid_parameters)
 
         return soil_material_dict
@@ -493,7 +493,7 @@ class KratosIO:
 
         # initialize material dictionary
         euler_beam_parameters_dict: Dict[str, Any] = {"constitutive_law": {"name": ""},
-                                                      "Variables": material_parameters.__dict__}
+                                                      "Variables": deepcopy(material_parameters.__dict__)}
 
         if self.ndim == 2:
             euler_beam_parameters_dict["constitutive_law"]["name"] = "LinearElastic2DBeamLaw"

@@ -37,11 +37,11 @@ class FluidProperties:
     Class containing the parameters for a fluid. Default values are for water at 12 degrees Celsius.
 
     Attributes:
-        DENSITY_WATER (float): The density of fluid [kg/m^3].
+        DENSITY_FLUID (float): The density of fluid [kg/m^3].
         DYNAMIC_VISCOSITY (float): The dynamic viscosity of fluid [Pa s].
         BULK_MODULUS_FLUID (float): The bulk modulus of fluid [Pa].
     """
-    DENSITY_WATER: float = 1000
+    DENSITY_FLUID: float = 1000
     DYNAMIC_VISCOSITY: float = 1.3e-3
     BULK_MODULUS_FLUID: float = 2e9
 
@@ -59,7 +59,7 @@ class DrainedSoil(SoilFormulationParametersABC):
     """
     DENSITY_SOLID: float
     POROSITY: float
-    BULK_MODULUS_SOLID: float = 70e9
+    BULK_MODULUS_SOLID: float = 50e9
     BIOT_COEFFICIENT: Optional[float] = None
 
 
@@ -122,13 +122,21 @@ class TwoPhaseSoil(SoilFormulationParametersABC):
         Returns:
 
         """
+        if self.ndim == 2:
+            # set permeability_yz and permeability_zx to None as they are not used in 2D
+            self.PERMEABILITY_YZ = None
+            self.PERMEABILITY_ZX = None
+
         if self.ndim == 3:
+            # Check if the permeability parameters are defined for 3D
             if self.PERMEABILITY_ZZ is None:
                 raise ValueError("The permeability in the z-direction is not defined.")
             if self.PERMEABILITY_YZ is None:
                 raise ValueError("The permeability in the yz-direction is not defined.")
             if self.PERMEABILITY_ZX is None:
                 raise ValueError("The permeability in the zx-direction is not defined.")
+
+
 @dataclass
 class LinearElasticSoil(SoilConstitutiveLawABC):
     """
@@ -153,7 +161,6 @@ class SmallStrainUmatLaw(SoilConstitutiveLawABC):
         IS_FORTRAN_UMAT (bool): A boolean to indicate whether the umat is written in Fortran.
         UMAT_PARAMETERS (list): The parameters of the umat.
         STATE_VARIABLES (list): The state variables of the umat.
-        SOIL_TYPE (Union[DrainedSoil, UndrainedSoil, TwoPhaseSoil2D, TwoPhaseSoil3D]): The soil type.
 
     """
     UMAT_NAME: str
@@ -165,7 +172,7 @@ class SmallStrainUmatLaw(SoilConstitutiveLawABC):
 @dataclass
 class SmallStrainUdsmLaw(SoilConstitutiveLawABC):
     """
-    Class containing the material parameters for a 2D small strain udsm material
+    Class containing the material parameters for small strain udsm material
 
     Attributes:
         UDSM_NAME (str): The name and location of the udsm .dll or .so file.
@@ -185,7 +192,7 @@ class SaturatedBelowPhreaticLevelLaw(RetentionLawABC):
     """
     Class containing the parameters for the retention law: saturated below phreatic level
 
-    Inheritance: RetentionLaw
+    Inheritance: RetentionLawABC
 
     Attributes:
         SATURATED_SATURATION (float): The saturation ratio below phreatic level [-].
@@ -195,12 +202,13 @@ class SaturatedBelowPhreaticLevelLaw(RetentionLawABC):
     SATURATED_SATURATION: float = 1.0
     RESIDUAL_SATURATION: float = 1e-10
 
+
 @dataclass
 class SaturatedLaw(RetentionLawABC):
     """
     Class containing the parameters for the retention law: saturated
 
-    Inheritance: RetentionLaw
+    Inheritance: RetentionLawABC
 
     Attributes:
         SATURATED_SATURATION (float): The saturation ratio [-].
@@ -214,7 +222,7 @@ class VanGenuchtenLaw(RetentionLawABC):
     """
     Class containing the parameters for a retention law
 
-    Inheritance: RetentionLaw
+    Inheritance: RetentionLawABC
 
     Attributes:
         VAN_GENUCHTEN_AIR_ENTRY_PRESSURE (float): The air entry pressure [Pa].
