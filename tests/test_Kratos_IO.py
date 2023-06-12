@@ -1,17 +1,12 @@
 import json
 
 from stem.kratos_IO import KratosIO
-from stem.material import (Material, SmallStrainUmatLaw,
-SmallStrainUdsmLaw,
-LinearElasticSoil,
-EulerBeam2D,
-EulerBeam3D,
-ElasticSpringDamper,
-NodalConcentrated, DrainedSoil, UndrainedSoil, TwoPhaseSoil2D, TwoPhaseSoil3D)
-from stem.retention_law import SaturatedBelowPhreaticLevelLaw, VanGenuchtenLaw
+from stem.soil_material import *
+from stem.structural_material import *
 
 from stem.load import PointLoad, MovingLoad, Load
 from tests.utils import TestUtils
+
 
 class TestKratosIO:
 
@@ -20,31 +15,38 @@ class TestKratosIO:
         Test writing a material list to json. In this test, the material list contains a UMAT and a UDSM material.
 
         """
+        ndim = 3
 
         # create drained soil
-        soil_type = DrainedSoil(DENSITY_SOLID=2650, POROSITY=0.3, BULK_MODULUS_SOLID=1E16)
+        umat_formulation = DrainedSoil(ndim=ndim, DENSITY_SOLID=2650, POROSITY=0.3, BULK_MODULUS_SOLID=1E16)
 
         # Define umat constitutive law parameters
-        umat_material_parameters = SmallStrainUmatLaw(UMAT_PARAMETERS=[1, 5.6, False], UMAT_NAME="test_name",
-                                                      IS_FORTRAN_UMAT=False, STATE_VARIABLES=[], SOIL_TYPE=soil_type,
-                                                      RETENTION_PARAMETERS=SaturatedBelowPhreaticLevelLaw())
+        umat_constitutive_parameters = SmallStrainUmatLaw(UMAT_PARAMETERS=[1, 5.6, False], UMAT_NAME="test_name",
+                                                          IS_FORTRAN_UMAT=False, STATE_VARIABLES=[])
+
+        umat_retention_parameters = SaturatedBelowPhreaticLevelLaw()
+
 
         # Create undrained soil
-        udsm_soil_type = UndrainedSoil(DENSITY_SOLID=2650, POROSITY=0.3, BULK_MODULUS_SOLID=1E16, BIOT_COEFFICIENT=0.5)
+        udsm_formulation = UndrainedSoil(ndim=ndim, DENSITY_SOLID=2650, POROSITY=0.3, BULK_MODULUS_SOLID=1E16, BIOT_COEFFICIENT=0.5)
 
         # Define retention law parameters
         udsm_retention_parameters = VanGenuchtenLaw(VAN_GENUCHTEN_AIR_ENTRY_PRESSURE=1, VAN_GENUCHTEN_GN=0.2,
                                                     VAN_GENUCHTEN_GL=0.5)
 
         # Define udsm constitutive law parameters
-        udsm_material_parameters = SmallStrainUdsmLaw(SOIL_TYPE=udsm_soil_type,
-                                                      RETENTION_PARAMETERS=udsm_retention_parameters,
-                                                      UDSM_PARAMETERS=[1,5.6,False], UDSM_NUMBER=2,
+        udsm_constitutive_parameters = SmallStrainUdsmLaw(
+                                                      UDSM_PARAMETERS=[1, 5.6, False], UDSM_NUMBER=2,
                                                       UDSM_NAME="test_name_UDSM", IS_FORTRAN_UDSM=True)
 
         # Create materials
-        umat_material = Material(id=0, name="test_umat_material", material_parameters=umat_material_parameters)
-        udsm_material = Material(id=1, name="test_udsm_material", material_parameters=udsm_material_parameters)
+        umat_material = SoilMaterial(name="test_umat_material", soil_formulation=umat_formulation,
+                                     constitutive_law=umat_constitutive_parameters,
+                                     retention_parameters=umat_retention_parameters)
+
+        udsm_material = SoilMaterial( name="test_udsm_material", soil_formulation=udsm_formulation,
+                                      constitutive_law=udsm_constitutive_parameters,
+                                      retention_parameters=udsm_retention_parameters)
 
         all_materials = [umat_material, udsm_material]
 
@@ -68,24 +70,24 @@ class TestKratosIO:
 
         # Define material parameters
 
-        # define eiler beam parameters
+        # define euler beam parameters
         beam_material_parameters = EulerBeam2D(DENSITY=1.0, YOUNG_MODULUS=1.0, POISSON_RATIO=0.2, CROSS_AREA=1.0, I33=1)
 
         # define spring damper parameters
-        spring_damper_material_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[1.0,2,3],
-                                                            NODAL_DAMPING_COEFFICIENT=[0,0.2,3],
-                                                                NODAL_ROTATIONAL_STIFFNESS=[2.0,4,5],
-                                                                NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0,0,9])
+        spring_damper_material_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[1.0, 2, 3],
+                                                                NODAL_DAMPING_COEFFICIENT=[0, 0.2, 3],
+                                                                NODAL_ROTATIONAL_STIFFNESS=[2.0, 4, 5],
+                                                                NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 9])
 
         # define nodal concentrated parameters
         nodal_concentrated_material_parameters = NodalConcentrated( NODAL_MASS=1.0, NODAL_DAMPING_COEFFICIENT=[1,2,0.2],
-                                                                    NODAL_DISPLACEMENT_STIFFNESS=[1,2,3])
+                                                                    NODAL_DISPLACEMENT_STIFFNESS=[1, 2, 3])
 
         # Create structural materials
-        beam_material = Material(id=1, name="test_beam_material", material_parameters=beam_material_parameters)
-        spring_damper_material = Material(id=2, name="test_spring_damper_material",
+        beam_material = StructuralMaterial(name="test_beam_material", material_parameters=beam_material_parameters)
+        spring_damper_material = StructuralMaterial(name="test_spring_damper_material",
                                           material_parameters=spring_damper_material_parameters)
-        nodal_concentrated_material = Material(id=3, name="test_nodal_concentrated_material",
+        nodal_concentrated_material = StructuralMaterial(name="test_nodal_concentrated_material",
                                                material_parameters=nodal_concentrated_material_parameters)
 
         all_materials = [beam_material, spring_damper_material, nodal_concentrated_material]

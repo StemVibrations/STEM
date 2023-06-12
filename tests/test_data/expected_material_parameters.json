@@ -2,7 +2,7 @@
     "properties": [
         {
             "model_part_name": "test_umat_material",
-            "properties_id": 0,
+            "properties_id": 1,
             "Material": {
                 "constitutive_law": {
                     "name": "SmallStrainUMAT3DLaw"
@@ -21,7 +21,6 @@
                     "PERMEABILITY_ZX": 0,
                     "DYNAMIC_VISCOSITY": 0.0013,
                     "IGNORE_UNDRAINED": true,
-                    "BIOT_COEFFICIENT": 1.0,
                     "UMAT_PARAMETERS": [
                         1,
                         5.6,
@@ -40,7 +39,7 @@
         },
         {
             "model_part_name": "test_udsm_material",
-            "properties_id": 1,
+            "properties_id": 2,
             "Material": {
                 "constitutive_law": {
                     "name": "SmallStrainUDSM3DLaw"
