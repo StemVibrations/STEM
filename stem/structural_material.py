@@ -19,7 +19,9 @@ class EulerBeam(StructuralParametersABC):
         POISSON_RATIO (float): The Poisson's ratio [-].
         DENSITY (float): The density [kg/m3].
         CROSS_AREA (float): The cross-sectional area [m2].
-        I33 (float): The second moment of area about the z-axis [m4].
+        I33 (float): The second moment of area around the z-axis [m4].
+        I22 (float): The second moment of area around the y-axis [m4].
+        TORSIONAL_INERTIA (float): The torsional inertia [m4].
     """
 
     ndim: int
@@ -29,6 +31,7 @@ class EulerBeam(StructuralParametersABC):
     CROSS_AREA: float
     I33: float
 
+    # Euler beam parameters for 3D
     I22: Optional[float] = None
     TORSIONAL_INERTIA: Optional[float] = None
 
@@ -41,9 +44,9 @@ class EulerBeam(StructuralParametersABC):
         """
         if self.ndim == 3:
             if self.I22 is None:
-                raise ValueError("The second moment of area about the y-axis is not defined.")
+                raise ValueError("The second moment of area around the y-axis (I22) is not defined.")
             if self.TORSIONAL_INERTIA is None:
-                raise ValueError("The torsional inertia is not defined.")
+                raise ValueError("The torsional inertia (TORSIONAL_INERTIA) is not defined.")
 
 
 @dataclass

@@ -127,14 +127,14 @@ class TwoPhaseSoil(SoilFormulationParametersABC):
             self.PERMEABILITY_YZ = None
             self.PERMEABILITY_ZX = None
 
-        if self.ndim == 3:
+        elif self.ndim == 3:
             # Check if the permeability parameters are defined for 3D
             if self.PERMEABILITY_ZZ is None:
-                raise ValueError("The permeability in the z-direction is not defined.")
+                raise ValueError("The permeability in the z-direction (PERMEABILITY_ZZ) is not defined.")
             if self.PERMEABILITY_YZ is None:
-                raise ValueError("The permeability in the yz-direction is not defined.")
+                raise ValueError("The permeability in the yz-direction (PERMEABILITY_YZ) is not defined.")
             if self.PERMEABILITY_ZX is None:
-                raise ValueError("The permeability in the zx-direction is not defined.")
+                raise ValueError("The permeability in the zx-direction (PERMEABILITY_ZX) is not defined.")
 
 
 @dataclass
