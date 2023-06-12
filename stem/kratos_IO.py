@@ -169,7 +169,8 @@ class KratosIO:
         # todo write Projectparameters.json
         pass
 
-    def __create_umat_material_dict(self, material: SoilConstitutiveLawABC) -> Dict[str, Any]:
+    @staticmethod
+    def __create_umat_material_dict(material: SoilConstitutiveLawABC) -> Dict[str, Any]:
         """
         Creates a dictionary containing the material parameters for a UMAT material. The UMAT_NAME and IS_FORTRAN_UMAT
         keys are moved to the UDSM_NAME and IS_FORTRAN_UDSM keys, as this can be recognized by Kratos.
@@ -189,7 +190,8 @@ class KratosIO:
 
         return material_dict
 
-    def __create_udsm_material_dict(self, material: SoilConstitutiveLawABC) -> Dict[str, Any]:
+    @staticmethod
+    def __create_udsm_material_dict(material: SoilConstitutiveLawABC) -> Dict[str, Any]:
         """
         Creates a dictionary containing the material parameters for a UDSM material. The UDSM parameters are moved to
         the UMAT_PARAMETERS key, as this can be recognized by Kratos.
@@ -207,7 +209,8 @@ class KratosIO:
 
         return material_dict
 
-    def __create_elastic_spring_damper_dict(self, material: StructuralParametersABC) -> Dict[str, Any]:
+    @staticmethod
+    def __create_elastic_spring_damper_dict(material: StructuralParametersABC) -> Dict[str, Any]:
         """
         Creates a dictionary containing the material parameters for an elastic spring damper material. The
         NODAL_DAMPING_COEFFICIENT and NODAL_ROTATIONAL_DAMPING_COEFFICIENT keys are moved to the NODAL_DAMPING_RATIO
@@ -229,7 +232,8 @@ class KratosIO:
         material_dict["NODAL_ROTATIONAL_DAMPING_RATIO"] = material_dict.pop("NODAL_ROTATIONAL_DAMPING_COEFFICIENT")
         return material_dict
 
-    def __create_nodal_concentrated_dict(self, material: StructuralParametersABC) -> Dict[str, Any]:
+    @staticmethod
+    def __create_nodal_concentrated_dict(material: StructuralParametersABC) -> Dict[str, Any]:
         """
         Creates a dictionary containing the material parameters for a nodal concentrated material. The
         NODAL_DAMPING_COEFFICIENT key is moved to the NODAL_DAMPING_RATIO key, as this can be recognized by Kratos.
@@ -362,7 +366,8 @@ class KratosIO:
             variables_dict.pop("ndim")
 
 
-    def __create_drained_soil_parameters_dict(self, drained_soil_parameters: DrainedSoil) -> Dict[str, Any]:
+    @staticmethod
+    def __create_drained_soil_parameters_dict(drained_soil_parameters: DrainedSoil) -> Dict[str, Any]:
         """
         Creates a dictionary containing the drained soil parameters. For drained soil, the permeability is set to near
         zero and undrained behaviour is ignored. Biot coefficient is added if it is not None.
@@ -389,7 +394,8 @@ class KratosIO:
 
         return drained_soil_parameters_dict
 
-    def __create_undrained_soil_parameters_dict(self, undrained_soil_parameters: UndrainedSoil) -> Dict[str, Any]:
+    @staticmethod
+    def __create_undrained_soil_parameters_dict(undrained_soil_parameters: UndrainedSoil) -> Dict[str, Any]:
         """
         Creates a dictionary containing the undrained soil parameters. For undrained soil, the permeability is set to
         near zero and undrained behaviour is taken into account. Biot coefficient is added if it is not None.
@@ -416,7 +422,8 @@ class KratosIO:
 
         return undrained_soil_parameters_dict
 
-    def __create_two_phase_soil_parameters_dict(self, two_phase_soil_parameters: TwoPhaseSoil) \
+    @staticmethod
+    def __create_two_phase_soil_parameters_dict(two_phase_soil_parameters: TwoPhaseSoil) \
             -> Dict[str, Any]:
         """
         Creates a dictionary containing the two phase soil parameters. For two phase soil, permeability is taken into
@@ -480,7 +487,6 @@ class KratosIO:
         soil_material_dict["Variables"].update(fluid_parameters)
 
         return soil_material_dict
-
 
     def __create_euler_beam_dict(self, material_parameters: StructuralParametersABC) -> Dict[str, Any]:
         """
