@@ -1,22 +1,25 @@
 from typing import List, Any, Optional, Union
 from dataclasses import dataclass, field
 from abc import ABC
+
+
 @dataclass
 class SoilFormulationParametersABC(ABC):
     """
-    Abstract base class for soil type parameters
+    Abstract base class for soil formulation parameters
 
     Attributes:
         ndim (int): The number of dimensions of the soil formulation (2 or 3)
     """
     ndim: int
 
+
+@dataclass
 class SoilConstitutiveLawABC(ABC):
     """
     Abstract base class for soil constitutive laws
     """
     pass
-
 
 
 @dataclass
@@ -27,15 +30,16 @@ class RetentionLawABC(ABC):
     """
     pass
 
+
 @dataclass
 class FluidProperties:
     """
     Class containing the parameters for a fluid. Default values are for water at 12 degrees Celsius.
 
     Attributes:
-        DENSITY_WATER (float): The density of water [kg/m^3].
-        DYNAMIC_VISCOSITY (float): The dynamic viscosity of water [Pa s].
-        BULK_MODULUS_FLUID (float): The bulk modulus of water [Pa].
+        DENSITY_WATER (float): The density of fluid [kg/m^3].
+        DYNAMIC_VISCOSITY (float): The dynamic viscosity of fluid [Pa s].
+        BULK_MODULUS_FLUID (float): The bulk modulus of fluid [Pa].
     """
     DENSITY_WATER: float = 1000
     DYNAMIC_VISCOSITY: float = 1.3e-3
@@ -55,7 +59,7 @@ class DrainedSoil(SoilFormulationParametersABC):
     """
     DENSITY_SOLID: float
     POROSITY: float
-    BULK_MODULUS_SOLID: float
+    BULK_MODULUS_SOLID: float = 70e9
     BIOT_COEFFICIENT: Optional[float] = None
 
 
