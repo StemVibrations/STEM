@@ -256,4 +256,4 @@ class SoilMaterial:
     soil_formulation: SoilFormulationParametersABC
     constitutive_law: SoilConstitutiveLawABC
     retention_parameters: RetentionLawABC
-    fluid_properties: FluidProperties = FluidProperties()
+    fluid_properties: FluidProperties = field(default_factory=FluidProperties)
