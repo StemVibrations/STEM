@@ -427,10 +427,8 @@ class KratosIO:
         two_phase_soil_parameters_dict = deepcopy(two_phase_soil_parameters.__dict__)
         two_phase_soil_parameters_dict["IGNORE_UNDRAINED"] = False
 
-        # remove None values from dictionary
-        for k in two_phase_soil_parameters_dict.keys():
-            if two_phase_soil_parameters_dict[k] is None:
-                two_phase_soil_parameters_dict.pop(k)
+        # Create a new dictionary without None values
+        two_phase_soil_parameters_dict = {k: v for k, v in two_phase_soil_parameters_dict.items() if v is not None}
 
         return two_phase_soil_parameters_dict
 
@@ -447,7 +445,6 @@ class KratosIO:
             Dict[str, Any]: dictionary containing the soil material parameters
 
         """
-
 
         soil_material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""},
                                               "Variables": {}}
@@ -491,9 +488,18 @@ class KratosIO:
 
         """
 
+        material_parameters_dict = deepcopy(material_parameters.__dict__)
+
+        # Create a new dictionary without None values
+        material_parameters_dict = {k: v for k, v in material_parameters_dict.items() if v is not None}
+
+        # remove ndim from dictionary
+        if "ndim" in material_parameters_dict.keys():
+            material_parameters_dict.pop("ndim")
+
         # initialize material dictionary
         euler_beam_parameters_dict: Dict[str, Any] = {"constitutive_law": {"name": ""},
-                                                      "Variables": deepcopy(material_parameters.__dict__)}
+                                                      "Variables": material_parameters_dict}
 
         if self.ndim == 2:
             euler_beam_parameters_dict["constitutive_law"]["name"] = "LinearElastic2DBeamLaw"
@@ -522,8 +528,7 @@ class KratosIO:
                                                     "Variables": {}}
 
         # add material parameters to dictionary based on material type.
-        if isinstance(material.material_parameters, EulerBeam2D) or isinstance(material.material_parameters,
-                                                                               EulerBeam3D):
+        if isinstance(material.material_parameters, EulerBeam):
             structural_material_dict.update(self.__create_euler_beam_dict(material.material_parameters))
         elif isinstance(material.material_parameters, ElasticSpringDamper):
             structural_material_dict["Variables"] = self.__create_elastic_spring_damper_dict(material.material_parameters)

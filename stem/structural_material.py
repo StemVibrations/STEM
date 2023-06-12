@@ -10,7 +10,7 @@ class StructuralParametersABC(ABC):
     pass
 
 @dataclass
-class EulerBeam2D(StructuralParametersABC):
+class EulerBeam(StructuralParametersABC):
     """
     Class containing the material parameters for beam material
 
@@ -22,35 +22,28 @@ class EulerBeam2D(StructuralParametersABC):
         I33 (float): The second moment of area about the z-axis [m4].
     """
 
+    ndim: int
     YOUNG_MODULUS: float
     POISSON_RATIO: float
     DENSITY: float
     CROSS_AREA: float
     I33: float
 
+    I22: Optional[float] = None
+    TORSIONAL_INERTIA: Optional[float] = None
 
-@dataclass
-class EulerBeam3D(StructuralParametersABC):
-    """
-    Class containing the constitutive parameters for an euler beam
+    def __post_init__(self):
+        """
+        Check if the second moment of area about the y-axis and the torsional inertia are defined for 3D
 
-    Attributes:
-        YOUNG_MODULUS (float): The Young's modulus [Pa].
-        POISSON_RATIO (float): The Poisson's ratio [-].
-        DENSITY (float): The density [kg/m3].
-        CROSS_AREA (float): The cross-sectional area [m2].
-        I22 (float): The second moment of area about the y-axis [m4].
-        I33 (float): The second moment of area about the z-axis [m4].
-        TORSIONAL_INERTIA (float): The torsional inertia [m4].
-    """
+        Returns:
 
-    YOUNG_MODULUS: float
-    POISSON_RATIO: float
-    DENSITY: float
-    CROSS_AREA: float
-    I22: float
-    I33: float
-    TORSIONAL_INERTIA: float
+        """
+        if self.ndim == 3:
+            if self.I22 is None:
+                raise ValueError("The second moment of area about the y-axis is not defined.")
+            if self.TORSIONAL_INERTIA is None:
+                raise ValueError("The torsional inertia is not defined.")
 
 
 @dataclass

@@ -68,10 +68,11 @@ class TestKratosIO:
 
         """
 
-        # Define material parameters
+        # define ndim
+        ndim=2
 
         # define euler beam parameters
-        beam_material_parameters = EulerBeam2D(DENSITY=1.0, YOUNG_MODULUS=1.0, POISSON_RATIO=0.2, CROSS_AREA=1.0, I33=1)
+        beam_material_parameters = EulerBeam(ndim=ndim, DENSITY=1.0, YOUNG_MODULUS=1.0, POISSON_RATIO=0.2, CROSS_AREA=1.0, I33=1)
 
         # define spring damper parameters
         spring_damper_material_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[1.0, 2, 3],
@@ -93,7 +94,7 @@ class TestKratosIO:
         all_materials = [beam_material, spring_damper_material, nodal_concentrated_material]
 
         # write json file
-        kratos_io = KratosIO(ndim=2)
+        kratos_io = KratosIO(ndim=ndim)
         kratos_io.write_material_parameters_json(all_materials, "test_write_structural_MaterialParameters.json")
 
         # read generated json file and expected json file
