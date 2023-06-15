@@ -79,18 +79,18 @@ class Boundary:
     Class containing boundary information acting on a body part
 
     Attributes:
-        name (str): name of the boundary
+        part_name (str): name of the boundary
         boundary_parameters (BoundaryParametersABC): class containing boundary parameters
     """
 
-    def __init__(self, name: str, boundary_parameters: BoundaryParametersABC):
+    def __init__(self, part_name: str, boundary_parameters: BoundaryParametersABC):
         """
         Constructor of the boundary class
 
         Args:
-            name (str): name of the boundary
+            part_name (str): name of the boundary
             boundary_parameters (BoundaryParametersABC): class containing boundary parameters
         """
 
-        self.name: str = name
+        self.part_name: str = part_name
         self.boundary_parameters: BoundaryParametersABC = boundary_parameters

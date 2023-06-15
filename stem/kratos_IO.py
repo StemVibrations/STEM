@@ -193,7 +193,7 @@ class KratosIO:
             "Parameters": boundary.boundary_parameters.__dict__,
         }
 
-        boundary_dict["Parameters"]["model_part_name"] = f"{DOMAIN}.{boundary.name}"
+        boundary_dict["Parameters"]["model_part_name"] = f"{DOMAIN}.{boundary.part_name}"
         boundary_dict["Parameters"]["variable_name"] = "DISPLACEMENT"
         boundary_dict["Parameters"]["table"] = [0, 0, 0]
 
@@ -219,7 +219,7 @@ class KratosIO:
             "Parameters": boundary.boundary_parameters.__dict__,
         }
 
-        boundary_dict["Parameters"]["model_part_name"] = f"{DOMAIN}.{boundary.name}"
+        boundary_dict["Parameters"]["model_part_name"] = f"{DOMAIN}.{boundary.part_name}"
         boundary_dict["Parameters"]["variable_name"] = "ROTATION"
         boundary_dict["Parameters"]["table"] = [0, 0, 0]
 
@@ -245,7 +245,7 @@ class KratosIO:
             "Parameters": boundary.boundary_parameters.__dict__,
         }
 
-        boundary_dict["Parameters"]["model_part_name"] = f"{DOMAIN}.{boundary.name}"
+        boundary_dict["Parameters"]["model_part_name"] = f"{DOMAIN}.{boundary.part_name}"
 
         return boundary_dict
 
@@ -287,8 +287,7 @@ class KratosIO:
             constraints_dict (Dict[str, Any]): dictionary of a list containing the
                 constraints acting on the model
             absorbing_boundaries_list (List[Dict[str, Any]]): dictionary of a list
-            containing
-                the absorbing boundaries of the model
+                containing the absorbing boundaries of the model
         """
 
         constraints_dict: Dict[str, Any] = {"constraints_process_list": []}
@@ -395,7 +394,6 @@ class KratosIO:
             Dict[str, Any]: dictionary containing the output parameters
         """
         # add output keys and parameters to dictionary based on output process type.
-        # TODO: check that keys are correct for VTK and JSON
         if isinstance(output.output_parameters, GiDOutputParameters):
             return "gid_output", KratosIO.__create_gid_output_dict(output=output)
         elif isinstance(output.output_parameters, VtkOutputParameters):
