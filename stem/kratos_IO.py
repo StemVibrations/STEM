@@ -430,11 +430,9 @@ class KratosIO:
         for output in outputs:
             output.output_parameters.validate()
             key_output, _parameters_output = self.__create_output_dict(output=output)
-            if isinstance(output.output_parameters, GiDOutputParameters) or isinstance(
-                output.output_parameters, VtkOutputParameters
-            ):
+            if output.output_parameters.is_output_process():
                 output_dict["output_processes"][key_output] = [_parameters_output]
-            elif isinstance(output.output_parameters, JsonOutputParameters):
+            else:
                 json_dict[key_output] = [_parameters_output]
 
         return output_dict, json_dict
