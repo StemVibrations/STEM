@@ -27,6 +27,38 @@ class PointLoad(LoadParametersABC):
 
 
 @dataclass
+class LineLoad(LoadParametersABC):
+    """
+    Class containing the load parameters for a line load
+
+    Attributes:
+        active (List[bool]): Activate/deactivate load for each direction.
+        value (List[float]): Entity of the load in the 3 directions [N].
+    """
+    active: List[bool] = field(default_factory=lambda: [True, True, True])
+    value: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+
+    def __int__(self):
+        raise NotImplementedError
+
+
+@dataclass
+class SurfaceLoad(LoadParametersABC):
+    """
+    Class containing the load parameters for a surface load
+
+    Attributes:
+        active (List[bool]): Activate/deactivate load for each direction.
+        value (List[float]): Entity of the load in the 3 directions [N].
+    """
+    active: List[bool] = field(default_factory=lambda: [True, True, True])
+    value: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+
+    def __int__(self):
+        raise NotImplementedError
+
+
+@dataclass
 class MovingLoad(LoadParametersABC):
     """
     Class containing the load parameters for a moving load.

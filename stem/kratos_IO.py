@@ -1,9 +1,15 @@
-from typing import List, Dict, Any, Tuple, Union
+from typing import List, Dict, Any, Tuple, Union, NewType
 
 from abc import ABC
 
 import numpy as np
 
+from stem.boundary import (
+    Boundary,
+    AbsorbingBoundary,
+    DisplacementConstraint,
+    RotationConstraint,
+)
 from stem.load import Load, PointLoad, MovingLoad
 from stem.output import (
     OutputProcess,
@@ -13,6 +19,11 @@ from stem.output import (
 )
 
 DOMAIN = "PorousDomain"
+
+ConstraintType = NewType(
+    "Constraint", Union[DisplacementConstraint, RotationConstraint]
+)
+BoundaryLoadType = NewType("BoundaryLoad", Union[AbsorbingBoundary])
 
 
 class KratosIO:
@@ -68,6 +79,8 @@ class KratosIO:
     def __write_loads(self):
         pass
 
+    # --------------------------- Loads -----------------------------------------------
+
     @staticmethod
     def __create_point_load_dict(load: Load) -> Dict[str, Any]:
         """
@@ -97,7 +110,7 @@ class KratosIO:
     @staticmethod
     def __create_moving_load_dict(load: Load) -> Dict[str, Any]:
         """
-        Creates a dictionary containing the moving load parameters
+        Creates a dictionary containing the absorbing boundary parameters
 
         Args:
             load (Load): moving load object
@@ -157,6 +170,140 @@ class KratosIO:
             loads_dict["loads_process_list"].append(self.__create_load_dict(load))
 
         return loads_dict
+
+    # --------------------- boundary conditions ----------------------------------------
+
+    @staticmethod
+    def __create_displacement_constraint_dict(boundary: Boundary) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the displacement constraint parameters
+
+        Args:
+            boundary (Boundary): displacement constraint object
+
+        Returns:
+            Dict[str, Any]: dictionary containing the boundary parameters
+        """
+
+        # initialize boundary dictionary
+        boundary_dict: Dict[str, Any] = {
+            "python_module": "apply_vector_constraint_table_process",
+            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+            "process_name": "ApplyVectorConstraintTableProcess",
+            "Parameters": boundary.boundary_parameters.__dict__,
+        }
+
+        boundary_dict["Parameters"]["model_part_name"] = f"{DOMAIN}.{boundary.name}"
+        boundary_dict["Parameters"]["variable_name"] = "DISPLACEMENT"
+        boundary_dict["Parameters"]["table"] = [0, 0, 0]
+
+        return boundary_dict
+
+    @staticmethod
+    def __create_rotation_constraint_dict(boundary: Boundary) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the rotation constraint parameters
+
+        Args:
+            boundary (Boundary): rotation constraint object
+
+        Returns:
+            Dict[str, Any]: dictionary containing the boundary parameters
+        """
+
+        # initialize boundary dictionary
+        boundary_dict: Dict[str, Any] = {
+            "python_module": "apply_vector_constraint_table_process",
+            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+            "process_name": "ApplyVectorConstraintTableProcess",
+            "Parameters": boundary.boundary_parameters.__dict__,
+        }
+
+        boundary_dict["Parameters"]["model_part_name"] = f"{DOMAIN}.{boundary.name}"
+        boundary_dict["Parameters"]["variable_name"] = "ROTATION"
+        boundary_dict["Parameters"]["table"] = [0, 0, 0]
+
+        return boundary_dict
+
+    @staticmethod
+    def __create_absorbing_boundary_dict(boundary: Boundary) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the absorbing boundary parameters
+
+        Args:
+            boundary (Boundary): absorbing boundary object
+
+        Returns:
+            Dict[str, Any]: dictionary containing the boundary parameters
+        """
+
+        # initialize boundary dictionary
+        boundary_dict: Dict[str, Any] = {
+            "python_module": "set_absorbing_boundary_parameters_process",
+            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+            "process_name": "SetAbsorbingBoundaryParametersProcess",
+            "Parameters": boundary.boundary_parameters.__dict__,
+        }
+
+        boundary_dict["Parameters"]["model_part_name"] = f"{DOMAIN}.{boundary.name}"
+
+        return boundary_dict
+
+    @staticmethod
+    def __create_boundary_dict(boundary: Boundary) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the boundary parameters
+
+        Args:
+            boundary (Load): boundary object
+
+        Returns:
+            Dict[str, Any]: dictionary containing the boundary parameters
+        """
+
+        # add boundary parameters to dictionary based on boundary type.
+
+        if isinstance(boundary.boundary_parameters, DisplacementConstraint):
+            return KratosIO.__create_displacement_constraint_dict(boundary=boundary)
+        elif isinstance(boundary.boundary_parameters, RotationConstraint):
+            return KratosIO.__create_rotation_constraint_dict(boundary=boundary)
+        elif isinstance(boundary.boundary_parameters, AbsorbingBoundary):
+            return KratosIO.__create_absorbing_boundary_dict(boundary=boundary)
+        else:
+            raise NotImplementedError
+
+    def create_dictionaries_for_boundaries(
+        self, boundaries: List[Boundary]
+    ) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
+        """
+        Creates a dictionary containing the `constraint_process_list` (list of
+        dictionaries to specify the constraints for the model) and a list of
+        dictionaries for the absorbing boundaries to be given to `load_process_list`
+
+        Args:
+            boundaries (List[Boundary]): list of load objects
+
+        Returns:
+            constraints_dict (Dict[str, Any]): dictionary of a list containing the
+                constraints acting on the model
+            absorbing_boundaries_list (List[Dict[str, Any]]): dictionary of a list
+            containing
+                the absorbing boundaries of the model
+        """
+
+        constraints_dict: Dict[str, Any] = {"constraints_process_list": []}
+        absorbing_boundaries_list: List[Dict[str, Any]] = []
+
+        for boundary in boundaries:
+            boundary_dict = self.__create_boundary_dict(boundary)
+            if boundary.boundary_parameters.is_constraint():
+                constraints_dict["constraints_process_list"].append(boundary_dict)
+            else:
+                absorbing_boundaries_list.append(boundary_dict)
+
+        return constraints_dict, absorbing_boundaries_list
+
+    # ------------------------- outputs ------------------------------------------------
 
     @staticmethod
     def __create_gid_output_dict(output: OutputProcess) -> Dict[str, Any]:
@@ -293,7 +440,6 @@ class KratosIO:
         return output_dict, json_dict
 
     def write_project_parameters_json(self, filename):
-
         self.__write_problem_data()
         self.__write_solver_settings()
         self.__write_output_processes()

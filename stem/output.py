@@ -85,6 +85,14 @@ class OutputParametersABC(ABC):
         """
         pass
 
+    @abstractmethod
+    def is_output_process(self):
+        """
+        Abstract method for checking whether an output is in the output process list
+        (True for GiD, TVK) or not (False for JSON) which is in `processes`
+        """
+        pass
+
 
 @dataclass
 class GiDOutputParameters(OutputParametersABC):
@@ -146,6 +154,8 @@ class GiDOutputParameters(OutputParametersABC):
     def validate(self):
         pass
 
+    def is_output_process(self):
+        return True
 
 @dataclass
 class VtkOutputParameters(OutputParametersABC):
@@ -181,6 +191,8 @@ class VtkOutputParameters(OutputParametersABC):
     def validate(self):
         detect_tensor_outputs(requested_outputs=self.gauss_point_variables_in_elements)
 
+    def is_output_process(self):
+        return True
 
 @dataclass
 class JsonOutputParameters(OutputParametersABC):
@@ -211,6 +223,9 @@ class JsonOutputParameters(OutputParametersABC):
 
     def validate(self):
         detect_tensor_outputs(requested_outputs=self.gauss_points_output_variables)
+
+    def is_output_process(self):
+        return False
 
 
 class OutputProcess:
