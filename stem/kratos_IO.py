@@ -278,7 +278,7 @@ class KratosIO:
                   placed under "processes".
         """
         output_dict: Dict[str, Any] = {"output_processes": {}}
-        json_dict = {"json_output": []}
+        json_dict: Dict[str, Any] = {"json_output": []}
 
         for output in outputs:
             output.output_parameters.validate()
