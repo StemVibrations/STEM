@@ -1,4 +1,4 @@
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Union
 
 from abc import ABC
 
@@ -260,7 +260,7 @@ class KratosIO:
 
     def create_output_process_dictionary(
         self, outputs: List[OutputProcess]
-    ) -> Dict[str, Any]:
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         """
         Creates a dictionary containing the output_processes, that specifies
         which output to request Kratos and the type of output ('GiD', 'VTK',
@@ -270,15 +270,27 @@ class KratosIO:
             outputs (List[OutputProcess]): list of output process objects
 
         Returns:
-            output_dict (Dict): dictionary of a list containing the output properties
+            Tuple[Dict[str, Any]]: Tuple of two dictionaries containing the output
+                properties.
+                - the first containing the "output_process" dictionary. This is a
+                  separate dictionary.
+                - the second containing the "json_output" dictionary. This is to be
+                  placed under "processes".
         """
         output_dict: Dict[str, Any] = {"output_processes": {}}
+        json_dict = {"json_output": []}
 
         for output in outputs:
+            output.output_parameters.validate()
             key_output, _parameters_output = self.__create_output_dict(output=output)
-            output_dict["output_processes"][key_output] = [_parameters_output]
+            if isinstance(output.output_parameters, GiDOutputParameters) or isinstance(
+                output.output_parameters, VtkOutputParameters
+            ):
+                output_dict["output_processes"][key_output] = [_parameters_output]
+            elif isinstance(output.output_parameters, JsonOutputParameters):
+                json_dict[key_output] = [_parameters_output]
 
-        return output_dict
+        return output_dict, json_dict
 
     def write_project_parameters_json(self, filename):
 

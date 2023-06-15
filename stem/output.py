@@ -1,6 +1,8 @@
+import warnings
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import List, Dict, Any
+from enum import Enum
 
 DEFAULT_GID_FLAGS = {
     "WriteDeformedMeshFlag": "WriteUndeformed",
@@ -8,6 +10,54 @@ DEFAULT_GID_FLAGS = {
     "GiDPostMode": "GiD_PostBinary",
     "MultiFileFlag": "SingleFile",
 }
+
+
+class NodalOutput(Enum):
+    DISPLACEMENT = 1
+    DISPLACEMENT_X = 11
+    DISPLACEMENT_Y = 12
+    DISPLACEMENT_Z = 13
+    TOTAL_DISPLACEMENT = 2
+    TOTAL_DISPLACEMENT_X = 21
+    TOTAL_DISPLACEMENT_Y = 22
+    TOTAL_DISPLACEMENT_Z = 23
+    WATER_PRESSURE = 3
+    VOLUME_ACCELERATION = 4
+    VOLUME_ACCELERATION_X = 41
+    VOLUME_ACCELERATION_Y = 42
+    VOLUME_ACCELERATION_Z = 43
+
+
+TENSOR_OUTPUTS = [
+    "GREEN_LAGRANGE_STRAIN",
+    "ENGINEERING_STRAIN",
+    "CAUCHY_STRESS",
+    "TOTAL_STRESS",
+]
+
+
+def detect_tensor_outputs(requested_outputs: List[str]):
+    """
+    Detects whether gauss point outputs are requested and warns the user
+
+    Args:
+        requested_outputs (List[st]): list of requested outputs (gauss point)
+    """
+    if len(requested_outputs) > 0:
+        detected_tensor_outputs = []
+        for requested_output in requested_outputs:
+            for tensor_output in TENSOR_OUTPUTS:
+                if tensor_output in requested_output:
+                    detected_tensor_outputs.append(tensor_output)
+                    break
+        if len(detected_tensor_outputs):
+            _fmt_list = "".join([f" - {outpt} \n" for outpt in detected_tensor_outputs])
+            _msg = (
+                f"\n[WARNING] tensor output detected:\n{_fmt_list}"
+                f"The outputs are incorrectly rendered for the selected output.\n"
+                f"If vector is selected and ignored if tensor is selected."
+            )
+            print(_msg)
 
 
 @dataclass
@@ -25,6 +75,13 @@ class OutputParametersABC(ABC):
     def assemble_parameters(self) -> Dict[str, Any]:
         """
         Abstract method for assembling the output properties into a nested dictionary
+        """
+        pass
+
+    @abstractmethod
+    def validate(self):
+        """
+        Abstract method for validating user inputs
         """
         pass
 
@@ -82,9 +139,12 @@ class GiDOutputParameters(OutputParametersABC):
                     nodal_results=self.nodal_results,
                     gauss_point_results=self.gauss_point_results,
                 ),
-                "point_data_configuration": [],
+                "point_data_configuration": self.point_data_configuration,
             }
         }
+
+    def validate(self):
+        pass
 
 
 @dataclass
@@ -97,20 +157,7 @@ class VtkOutputParameters(OutputParametersABC):
         output_precision (int):
         output_control_type (str): type of output control, either `step` or `time`.
         output_interval (float):
-        output_sub_model_parts (bool):
-        custom_name_prefix (str):
-        custom_name_postfix (str):
-        save_output_files_in_folder (bool):
-        write_deformed_configuration (bool):
-        write_ids (bool):
         nodal_solution_step_data_variables (List[str]):
-        nodal_data_value_variables (List[str]):
-        nodal_flags (List[str]):
-        element_data_value_variables (List[str]):
-        element_flags (List[str]):
-        condition_data_value_variables (List[str]):
-        condition_flags (List[str]):
-        gauss_point_variables_extrapolated_to_nodes (List[str]):
         gauss_point_variables_in_elements (List[str]):
     """
 
@@ -118,22 +165,7 @@ class VtkOutputParameters(OutputParametersABC):
     output_precision: int = 7
     output_control_type: str = "step"
     output_interval: float = 1.0
-    output_sub_model_parts: bool = False
-    custom_name_prefix: str = ""
-    custom_name_postfix: str = ""
-    save_output_files_in_folder: bool = True
-    write_deformed_configuration: bool = False
-    write_ids: bool = False
     nodal_solution_step_data_variables: List[str] = field(default_factory=lambda: [])
-    nodal_data_value_variables: List[str] = field(default_factory=lambda: [])
-    nodal_flags: List[str] = field(default_factory=lambda: [])
-    element_data_value_variables: List[str] = field(default_factory=lambda: [])
-    element_flags: List[str] = field(default_factory=lambda: [])
-    condition_data_value_variables: List[str] = field(default_factory=lambda: [])
-    condition_flags: List[str] = field(default_factory=lambda: [])
-    gauss_point_variables_extrapolated_to_nodes: List[str] = field(
-        default_factory=lambda: []
-    )
     gauss_point_variables_in_elements: List[str] = field(default_factory=lambda: [])
 
     def assemble_parameters(self) -> Dict[str, Any]:
@@ -146,6 +178,9 @@ class VtkOutputParameters(OutputParametersABC):
         """
         return self.__dict__
 
+    def validate(self):
+        detect_tensor_outputs(requested_outputs=self.gauss_point_variables_in_elements)
+
 
 @dataclass
 class JsonOutputParameters(OutputParametersABC):
@@ -153,24 +188,16 @@ class JsonOutputParameters(OutputParametersABC):
     Class containing the output parameters for JSON output
 
     Attributes:
-        sub_model_part_name (str):
         time_frequency (float):
         output_variables (List[str]):
         gauss_points_output_variables (List[str]):
-        check_for_flag (str):
-        historical_value (bool):
-        resultant_solution (bool):
-        use_node_coordinates (bool):
+        sub_model_part_name (str):
     """
 
-    sub_model_part_name: str = ""
     time_frequency: float = 1.0
     output_variables: List[str] = field(default_factory=lambda: [])
     gauss_points_output_variables: List[str] = field(default_factory=lambda: [])
-    check_for_flag: str = ""
-    historical_value: bool = True
-    resultant_solution: bool = False
-    use_node_coordinates: bool = False
+    sub_model_part_name: str = ""
 
     def assemble_parameters(self) -> Dict[str, Any]:
         """
@@ -181,6 +208,9 @@ class JsonOutputParameters(OutputParametersABC):
             Dict[str, Any]: dictionary of a list containing the output parameters
         """
         return self.__dict__
+
+    def validate(self):
+        detect_tensor_outputs(requested_outputs=self.gauss_points_output_variables)
 
 
 class OutputProcess:

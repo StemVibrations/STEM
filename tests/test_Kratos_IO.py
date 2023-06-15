@@ -96,13 +96,7 @@ class TestKratosIO:
             output_control_type="step",
             output_interval=100.0,
             nodal_solution_step_data_variables=nodal_results,
-            gauss_point_variables_in_elements=gauss_point_results,
-            output_sub_model_parts=True,
-            custom_name_prefix="prefix_test",
-            custom_name_postfix="postfix_test",
-            save_output_files_in_folder=False,
-            write_deformed_configuration=True,
-            write_ids=True,
+            gauss_point_variables_in_elements=gauss_point_results
         )
 
         # 3. Json
@@ -133,7 +127,11 @@ class TestKratosIO:
 
         # write dictionary for the output(s)
         kratos_io = KratosIO()
-        test_dictionary = kratos_io.create_output_process_dictionary(all_outputs)
+        test_dictionary, test_json = kratos_io.create_output_process_dictionary(
+            all_outputs)
+
+        # nest the json into the process dictionary, as it should!
+        test_dictionary["processes"] = test_json
 
         # load expected dictionary from the json
         expected_load_parameters_json = json.load(
