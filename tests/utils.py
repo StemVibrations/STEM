@@ -13,9 +13,11 @@ class TestUtils:
         Args:
             expected: Expected dictionary.
             actual: Actual dictionary.
+
         """
 
         for k, v in expected.items():
+
             assert k in actual
 
             if isinstance(v, dict):

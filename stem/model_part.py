@@ -1,5 +1,7 @@
+from typing import Optional, Union
 
-from stem.material import Material
+from stem.soil_material import SoilMaterial
+from stem.structural_material import StructuralMaterial
 
 class ModelPart:
     """
@@ -35,11 +37,11 @@ class BodyModelPart(ModelPart):
         elements (np.array or None): element id followed by connectivities in an array
         conditions (np.array or None): condition id followed by connectivities in an array
         parameters (dict): dictionary containing the model part parameters
-        material (Material): material of the model part
+        material (Union[SoilMaterial, StructuralMaterial]): material of the model part
 
     """
 
     def __init__(self):
         super().__init__()
 
-        self.material = Material()
+        self.material: Optional[Union[SoilMaterial, StructuralMaterial]] = None
