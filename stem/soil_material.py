@@ -45,39 +45,23 @@ class FluidProperties:
     DYNAMIC_VISCOSITY: float = 1.3e-3
     BULK_MODULUS_FLUID: float = 2e9
 
-
 @dataclass
-class DrainedSoil(SoilFormulationParametersABC):
-    """
-    Class containing the material parameters for a drained soil material
-
-    Attributes:
-        DENSITY_SOLID (float): The density of the solid material [kg/m^3].
-        POROSITY (float): The porosity of the soil [-].
-        BULK_MODULUS_SOLID (float): The bulk modulus of the solid material [Pa].
-        BIOT_COEFFICIENT (float): The Biot coefficient [-].
-    """
-    DENSITY_SOLID: float
-    POROSITY: float
-    BULK_MODULUS_SOLID: float = 50e9
-    BIOT_COEFFICIENT: Optional[float] = None
-
-
-@dataclass
-class UndrainedSoil(SoilFormulationParametersABC):
+class OnePhaseSoil(SoilFormulationParametersABC):
     """
     Class containing the material parameters for an undrained soil material
 
     Attributes:
+        IS_UNDRAINED (bool): Boolean indicating if the soil is undrained.
         DENSITY_SOLID (float): The density of the solid material [kg/m^3].
         POROSITY (float): The porosity of the soil [-].
         BULK_MODULUS_SOLID (float): The bulk modulus of the solid material [Pa].
         BIOT_COEFFICIENT (float): The Biot coefficient [-].
 
     """
+    IS_DRAINED: bool
     DENSITY_SOLID: float
     POROSITY: float
-    BULK_MODULUS_SOLID: float
+    BULK_MODULUS_SOLID: float = 50e9
     BIOT_COEFFICIENT: Optional[float] = None
 
 

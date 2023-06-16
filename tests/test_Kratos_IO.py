@@ -18,7 +18,8 @@ class TestKratosIO:
         ndim = 3
 
         # create drained soil
-        umat_formulation = DrainedSoil(ndim=ndim, DENSITY_SOLID=2650, POROSITY=0.3, BULK_MODULUS_SOLID=1E16)
+        umat_formulation = OnePhaseSoil(ndim=ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3,
+                                        BULK_MODULUS_SOLID=1E16)
 
         # Define umat constitutive law parameters
         umat_constitutive_parameters = SmallStrainUmatLaw(UMAT_PARAMETERS=[1, 5.6, False], UMAT_NAME="test_name",
@@ -28,7 +29,8 @@ class TestKratosIO:
 
 
         # Create undrained soil
-        udsm_formulation = UndrainedSoil(ndim=ndim, DENSITY_SOLID=2650, POROSITY=0.3, BULK_MODULUS_SOLID=1E16, BIOT_COEFFICIENT=0.5)
+        udsm_formulation = OnePhaseSoil(ndim=ndim, IS_DRAINED=False, DENSITY_SOLID=2650, POROSITY=0.3,
+                                        BULK_MODULUS_SOLID=1E16, BIOT_COEFFICIENT=0.5)
 
         # Define retention law parameters
         udsm_retention_parameters = VanGenuchtenLaw(VAN_GENUCHTEN_AIR_ENTRY_PRESSURE=1, VAN_GENUCHTEN_GN=0.2,

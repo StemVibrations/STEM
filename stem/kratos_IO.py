@@ -335,9 +335,8 @@ class KratosIO:
     def __add_soil_formulation_parameters_to_material_dict(self, variables_dict: Dict[str, Any],
                                                     soil_parameters: SoilMaterial):
         """
-        Adds the soil type parameters to the material dictionary. The soil type parameters are different for drained
-        , undrained and two phase soil. The correct parameters are added to the material dictionary based on the soil
-        type.
+        Adds the soil type parameters to the material dictionary. The soil type parameters are different for one phase
+        and two phase soil. The correct parameters are added to the material dictionary based on the soil type.
 
         Args:
             variables_dict (Dict[str, Any]): dictionary containing the material parameters
@@ -348,14 +347,10 @@ class KratosIO:
 
         """
 
-        if isinstance(soil_parameters.soil_formulation, DrainedSoil):
-            drained_soil_parameters_dict = self.__create_drained_soil_parameters_dict(
+        if isinstance(soil_parameters.soil_formulation, OnePhaseSoil):
+            one_phase_soil_parameters_dict = self.__create_one_phase_soil_parameters_dict(
                 soil_parameters.soil_formulation)
-            variables_dict.update(drained_soil_parameters_dict)
-        elif isinstance(soil_parameters.soil_formulation, UndrainedSoil):
-            undrained_soil_parameters_dict = self.__create_undrained_soil_parameters_dict(
-                soil_parameters.soil_formulation)
-            variables_dict.update(undrained_soil_parameters_dict)
+            variables_dict.update(one_phase_soil_parameters_dict)
         elif isinstance(soil_parameters.soil_formulation, TwoPhaseSoil) :
             two_phase_soil_parameters_dict = self.__create_two_phase_soil_parameters_dict(
                 soil_parameters.soil_formulation)
@@ -365,62 +360,33 @@ class KratosIO:
         if "ndim" in variables_dict:
             variables_dict.pop("ndim")
 
-
     @staticmethod
-    def __create_drained_soil_parameters_dict(drained_soil_parameters: DrainedSoil) -> Dict[str, Any]:
+    def __create_one_phase_soil_parameters_dict(soil_parameters: OnePhaseSoil) -> Dict[str, Any]:
         """
-        Creates a dictionary containing the drained soil parameters. For drained soil, the permeability is set to near
-        zero and undrained behaviour is ignored. Biot coefficient is added if it is not None.
+        Creates a dictionary containing the single phase soil parameters. For one phase soil, the permeability is set to
+        near zero. Biot coefficient is added if it is not None.
 
         Args:
-            drained_soil_parameters (DrainedSoil): Drained soil parameters object.
+            soil_parameters (OnePhaseSoil): one phase soil parameters object.
 
         Returns:
-            Dict[str, Any]: dictionary containing the drained soil parameters
+            Dict[str, Any]: dictionary containing the one phase soil parameters
 
         """
 
-        drained_soil_parameters_dict = deepcopy(drained_soil_parameters.__dict__)
-        drained_soil_parameters_dict["IGNORE_UNDRAINED"] = True
-        drained_soil_parameters_dict["PERMEABILITY_XX"] = 1e-30
-        drained_soil_parameters_dict["PERMEABILITY_YY"] = 1e-30
-        drained_soil_parameters_dict["PERMEABILITY_ZZ"] = 1e-30
-        drained_soil_parameters_dict["PERMEABILITY_XY"] = 0
-        drained_soil_parameters_dict["PERMEABILITY_YZ"] = 0
-        drained_soil_parameters_dict["PERMEABILITY_ZX"] = 0
+        soil_parameters_dict = deepcopy(soil_parameters.__dict__)
+        soil_parameters_dict["IGNORE_UNDRAINED"] = soil_parameters_dict.pop("IS_DRAINED")
+        soil_parameters_dict["PERMEABILITY_XX"] = 1e-30
+        soil_parameters_dict["PERMEABILITY_YY"] = 1e-30
+        soil_parameters_dict["PERMEABILITY_ZZ"] = 1e-30
+        soil_parameters_dict["PERMEABILITY_XY"] = 0
+        soil_parameters_dict["PERMEABILITY_YZ"] = 0
+        soil_parameters_dict["PERMEABILITY_ZX"] = 0
 
         # Create a new dictionary without None values
-        drained_soil_parameters_dict = {k: v for k, v in drained_soil_parameters_dict.items() if v is not None}
+        soil_parameters_dict = {k: v for k, v in soil_parameters_dict.items() if v is not None}
 
-        return drained_soil_parameters_dict
-
-    @staticmethod
-    def __create_undrained_soil_parameters_dict(undrained_soil_parameters: UndrainedSoil) -> Dict[str, Any]:
-        """
-        Creates a dictionary containing the undrained soil parameters. For undrained soil, the permeability is set to
-        near zero and undrained behaviour is taken into account. Biot coefficient is added if it is not None.
-
-        Args:
-            undrained_soil_parameters (UndrainedSoil): Undrained soil parameters object.
-
-        Returns:
-            Dict[str, Any]: dictionary containing the undrained soil parameters
-
-        """
-
-        undrained_soil_parameters_dict = deepcopy(undrained_soil_parameters.__dict__)
-        undrained_soil_parameters_dict["IGNORE_UNDRAINED"] = False
-        undrained_soil_parameters_dict["PERMEABILITY_XX"] = 1e-30
-        undrained_soil_parameters_dict["PERMEABILITY_YY"] = 1e-30
-        undrained_soil_parameters_dict["PERMEABILITY_ZZ"] = 1e-30
-        undrained_soil_parameters_dict["PERMEABILITY_XY"] = 0
-        undrained_soil_parameters_dict["PERMEABILITY_YZ"] = 0
-        undrained_soil_parameters_dict["PERMEABILITY_ZX"] = 0
-
-        # Create a new dictionary without None values
-        undrained_soil_parameters_dict = {k: v for k, v in undrained_soil_parameters_dict.items() if v is not None}
-
-        return undrained_soil_parameters_dict
+        return soil_parameters_dict
 
     @staticmethod
     def __create_two_phase_soil_parameters_dict(two_phase_soil_parameters: TwoPhaseSoil) \
