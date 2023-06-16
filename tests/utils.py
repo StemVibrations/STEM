@@ -18,9 +18,6 @@ class TestUtils:
 
         for k, v in expected.items():
 
-            if k not in actual:
-                a=1+1
-
             assert k in actual
 
             if isinstance(v, dict):

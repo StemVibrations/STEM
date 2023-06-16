@@ -9,12 +9,14 @@ class StructuralParametersABC(ABC):
     """
     pass
 
+
 @dataclass
 class EulerBeam(StructuralParametersABC):
     """
     Class containing the material parameters for beam material
 
     Attributes:
+        ndim (int): The number of dimensions of the beam formulation (2 or 3)
         YOUNG_MODULUS (float): The Young's modulus [Pa].
         POISSON_RATIO (float): The Poisson's ratio [-].
         DENSITY (float): The density [kg/m3].

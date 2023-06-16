@@ -485,8 +485,6 @@ class KratosIO:
         elif self.ndim == 3:
             euler_beam_parameters_dict["constitutive_law"]["name"] = \
                 "KratosMultiphysics.StructuralMechanicsApplication.BeamConstitutiveLaw"
-        else:
-            raise ValueError("Dimension not supported")
 
         return euler_beam_parameters_dict
 
