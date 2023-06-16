@@ -81,24 +81,9 @@ class OutputParametersABC(ABC):
     pass
 
     @abstractmethod
-    def assemble_parameters(self) -> Dict[str, Any]:
-        """
-        Abstract method for assembling the output properties into a nested dictionary
-        """
-        pass
-
-    @abstractmethod
     def validate(self):
         """
         Abstract method for validating user inputs
-        """
-        pass
-
-    @abstractmethod
-    def is_output_process(self):
-        """
-        Abstract method for checking whether an output is in the output process list
-        (True for GiD, TVK) or not (False for JSON) which is in `processes`
         """
         pass
 
@@ -136,37 +121,8 @@ class GiDOutputParameters(OutputParametersABC):
     plane_output: List[str] = field(default_factory=lambda: [])
     point_data_configuration: List[str] = field(default_factory=lambda: [])
 
-    def assemble_parameters(self) -> Dict[str, Any]:
-        """
-        Method for assembling the output properties for GiD format into a nested
-        dictionary.
-
-        Returns:
-            Dict[str, Any]: dictionary of a list containing the output parameters
-        """
-        return {
-            "postprocess_parameters": {
-                "result_file_configuration": dict(
-                    gidpost_flags=self.gidpost_flags,
-                    file_label=self.file_label,
-                    output_control_type=self.output_control_type,
-                    output_interval=self.output_interval,
-                    body_output=self.body_output,
-                    node_output=self.node_output,
-                    skin_output=self.skin_output,
-                    plane_output=self.plane_output,
-                    nodal_results=self.nodal_results,
-                    gauss_point_results=self.gauss_point_results,
-                ),
-                "point_data_configuration": self.point_data_configuration,
-            }
-        }
-
     def validate(self):
         pass
-
-    def is_output_process(self):
-        return True
 
 
 @dataclass
@@ -191,21 +147,8 @@ class VtkOutputParameters(OutputParametersABC):
     output_control_type: str = "step"
     output_interval: float = 1.0
 
-    def assemble_parameters(self) -> Dict[str, Any]:
-        """
-        Method for assembling the output properties for VTK format into a nested
-        dictionary.
-
-        Returns:
-            Dict[str, Any]: dictionary of a list containing the output parameters
-        """
-        return self.__dict__
-
     def validate(self):
         detect_tensor_outputs(requested_outputs=self.gauss_point_results)
-
-    def is_output_process(self):
-        return True
 
 
 @dataclass
@@ -226,24 +169,11 @@ class JsonOutputParameters(OutputParametersABC):
     time_frequency: float = 1.0
     sub_model_part_name: str = ""
 
-    def assemble_parameters(self) -> Dict[str, Any]:
-        """
-        Method for assembling the output properties for JSON format into a nested
-        dictionary.
-
-        Returns:
-            Dict[str, Any]: dictionary of a list containing the output parameters
-        """
-        return self.__dict__
-
     def validate(self):
         detect_tensor_outputs(requested_outputs=self.gauss_point_results)
 
-    def is_output_process(self):
-        return False
 
-
-class OutputProcess:
+class Output:
     """
     Class containing output information for postprocessing
 

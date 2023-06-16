@@ -1,16 +1,17 @@
 import json
 from copy import deepcopy
 from pathlib import Path
-from typing import List, Dict, Tuple, Union
+from typing import List, Dict, Tuple, Union, Any
 
 import numpy as np
 
 from stem.load import Load, PointLoad, MovingLoad
 from stem.output import (
-    OutputProcess,
+    Output,
     GiDOutputParameters,
     VtkOutputParameters,
     JsonOutputParameters,
+    OutputParametersABC,
 )
 from stem.soil_material import *
 from stem.structural_material import *
@@ -26,12 +27,12 @@ class KratosIO:
         ndim (int): The number of dimensions of the problem.
 
     """
+
     # TODO:
     #  add project folder to the attributes for relative output paths
 
     def __init__(self, ndim: int):
         self.ndim = ndim
-
 
     def write_mesh_to_mdpa(self, nodes, elements, filename):
         """
@@ -166,7 +167,7 @@ class KratosIO:
 
     @staticmethod
     def __create_gid_output_dict(
-            part_name: str, output_path: Path, output_parameters: GiDOutputParameters
+        part_name: str, output_path: Path, output_parameters: GiDOutputParameters
     ) -> Dict[str, Any]:
         """
         Creates a dictionary containing the output parameters to produce outputs in GiD
@@ -181,7 +182,7 @@ class KratosIO:
         Returns:
             Dict[str, Any]: dictionary containing the output parameters in Kratos format
         """
-        _output_path_gid = str(output_path).replace('\\', '/')
+        _output_path_gid = str(output_path).replace("\\", "/")
 
         parameters_dict = {
             "model_part_name": f"{DOMAIN}.{part_name}",
@@ -192,7 +193,7 @@ class KratosIO:
                         "WriteDeformedMeshFlag": "WriteUndeformed",
                         "WriteConditionsFlag": "WriteElementsOnly",
                         "GiDPostMode": output_parameters.gid_post_mode,
-                        "MultiFileFlag": "SingleFile"
+                        "MultiFileFlag": "SingleFile",
                     },
                     "file_label": output_parameters.file_label,
                     "output_control_type": output_parameters.output_control_type,
@@ -205,7 +206,7 @@ class KratosIO:
                     "gauss_point_results": output_parameters.gauss_point_results,
                 },
                 "point_data_configuration": output_parameters.point_data_configuration,
-            }
+            },
         }
         # initialize output dictionary
         output_dict: Dict[str, Any] = {
@@ -235,7 +236,7 @@ class KratosIO:
             Dict[str, Any]: dictionary containing the output parameters in Kratos format
         """
 
-        _output_path_vtk = str(output_path).replace('\\', '/')
+        _output_path_vtk = str(output_path).replace("\\", "/")
         parameters_dict = {
             "model_part_name": f"{DOMAIN}.{part_name}",
             "output_path": _output_path_vtk,
@@ -244,7 +245,7 @@ class KratosIO:
             "output_control_type": output_parameters.output_control_type,
             "output_interval": output_parameters.output_interval,
             "nodal_solution_step_data_variables": output_parameters.nodal_results,
-            "gauss_point_variables_in_elements": output_parameters.gauss_point_results
+            "gauss_point_variables_in_elements": output_parameters.gauss_point_results,
         }
 
         # initialize load dictionary
@@ -252,7 +253,7 @@ class KratosIO:
             "python_module": "vtk_output_process",
             "kratos_module": "KratosMultiphysics",
             "process_name": "VtkOutputProcess",
-            "Parameters": parameters_dict
+            "Parameters": parameters_dict,
         }
 
         return output_dict
@@ -267,7 +268,7 @@ class KratosIO:
 
         Args:
             part_name (str): name of the model part
-            output_path (str): output path for the GiD output
+            output_path (Path): output path for the GiD output
             output_parameters (JsonOutputParameters): class containing JSON output
                 parameters
 
@@ -275,14 +276,14 @@ class KratosIO:
             Dict[str, Any]: dictionary containing the output parameters in Kratos format
         """
 
-        _output_path_json = output_path
-        if _output_path_json.suffix == "":
+        _output_path = deepcopy(output_path)
+        if _output_path.suffix == "":
             # assume is a folder
-            _output_path_json = _output_path_json.joinpath(f"{part_name}" + ".json")
-        elif _output_path_json.suffix == "":
-            _output_path_json = _output_path_json.with_suffix(".json")
+            _output_path = _output_path.joinpath(f"{part_name}" + ".json")
+        elif _output_path.suffix == "":
+            _output_path = _output_path.with_suffix(".json")
 
-        _output_path_json = str(_output_path_json).replace('\\', '/')
+        _output_path_json = (str(_output_path)).replace("\\", "/")
         # initialize output dictionary
         output_dict: Dict[str, Any] = {
             "python_module": "json_output_process",
@@ -299,13 +300,13 @@ class KratosIO:
 
         return output_dict
 
-    def __create_output_dict(self, output: OutputProcess) -> Tuple[str, Dict[str, Any]]:
+    def __create_output_dict(self, output: Output) -> Tuple[str, Dict[str, Any]]:
         """
         Creates a dictionary containing the output parameters for the desired format.
         Allowed format are GiD, VTK and JSON.
 
         Args:
-            output (OutputProcess): output process object
+            output (Output): output process object
 
         Returns:
             str: string specifying the format of the output
@@ -321,46 +322,55 @@ class KratosIO:
         else:
             raise NotImplementedError
 
-    def create_output_process_dictionary(
-        self, outputs: List[OutputProcess]
-    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    @staticmethod
+    def __get_process_type(output_parameters: OutputParametersABC) -> str:
         """
-        Creates a dictionary containing the output_processes, that specifies
-        which output to request Kratos and the type of output ('GiD', 'VTK',
-        'JSON')
+        Creates a dictionary containing the output parameters to produce outputs in vtk
+        format. The format can be visualized e.g., using Paraview.
 
         Args:
-            outputs (List[OutputProcess]): list of output process objects
+            output_parameters (Output): class containing output parameters
 
         Returns:
-            Tuple[Dict[str, Any]]: Tuple of two dictionaries containing the output
-                properties.
-                - the first containing the "output_process" dictionary. This is a
-                  separate dictionary.
-                - the second containing the "json_output" dictionary. This is to be
-                  placed under "processes".
+            str
         """
-        output_dict: Dict[str, Any] = {"output_processes": {}}
-        json_dict: Dict[str, Any] = {"json_output": []}
+
+        if isinstance(
+            output_parameters, (VtkOutputParameters, GiDOutputParameters)
+        ):
+            return "output_processes"
+        return "processes"
+
+    def create_output_process_dictionary(
+        self, outputs: List[Output]
+    ) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the output_processes, that specifies which
+        output to request Kratos and the type of output ('GiD', 'VTK', 'JSON')
+
+        Args:
+            outputs (List[Output]): list of output process objects
+
+        Returns:
+            output_dict (Dict[str, Any]): dictionary containing two other dictionary
+                for output properties:
+                - the first containing the "output_process" dictionary.
+                - the second containing the "processes" dictionary, which includes JSON
+                  outputs.
+        """
+        output_dict: Dict[str, Any] = {"output_processes": {}, "processes": {}}
 
         for output in outputs:
             output.output_parameters.validate()
             key_output, _parameters_output = self.__create_output_dict(output=output)
-            if output.output_parameters.is_output_process():
-                if key_output in output_dict["output_processes"].keys():
-                    output_dict["output_processes"][key_output].append(
-                        _parameters_output
-                    )
-                else:
-                    output_dict["output_processes"][key_output] = [_parameters_output]
-
+            key_process = KratosIO.__get_process_type(output.output_parameters)
+            if key_output in output_dict[key_process].keys():
+                output_dict[key_process][key_output].append(_parameters_output)
             else:
-                json_dict[key_output].append(_parameters_output)
-
-        return output_dict, json_dict
+                output_dict[key_process][key_output] = [_parameters_output]
+        return output_dict
 
     def write_project_parameters_json(self, filename):
-
         self.__write_problem_data()
         self.__write_solver_settings()
         self.__write_output_processes()
@@ -387,7 +397,9 @@ class KratosIO:
 
         material_dict["UDSM_NAME"] = material_dict.pop("UMAT_NAME")
         material_dict["IS_FORTRAN_UDSM"] = material_dict.pop("IS_FORTRAN_UMAT")
-        material_dict["NUMBER_OF_UMAT_PARAMETERS"] = len(material_dict["UMAT_PARAMETERS"])
+        material_dict["NUMBER_OF_UMAT_PARAMETERS"] = len(
+            material_dict["UMAT_PARAMETERS"]
+        )
 
         return material_dict
 
@@ -411,7 +423,9 @@ class KratosIO:
         return material_dict
 
     @staticmethod
-    def __create_elastic_spring_damper_dict(material: StructuralParametersABC) -> Dict[str, Any]:
+    def __create_elastic_spring_damper_dict(
+        material: StructuralParametersABC,
+    ) -> Dict[str, Any]:
         """
         Creates a dictionary containing the material parameters for an elastic spring damper material. The
         NODAL_DAMPING_COEFFICIENT and NODAL_ROTATIONAL_DAMPING_COEFFICIENT keys are moved to the NODAL_DAMPING_RATIO
@@ -429,12 +443,18 @@ class KratosIO:
         material_dict: Dict[str, Any] = deepcopy(material.__dict__)
 
         # Change naming of coefficient to ratio as this is the (incorrect) naming in Kratos
-        material_dict["NODAL_DAMPING_RATIO"] = material_dict.pop("NODAL_DAMPING_COEFFICIENT")
-        material_dict["NODAL_ROTATIONAL_DAMPING_RATIO"] = material_dict.pop("NODAL_ROTATIONAL_DAMPING_COEFFICIENT")
+        material_dict["NODAL_DAMPING_RATIO"] = material_dict.pop(
+            "NODAL_DAMPING_COEFFICIENT"
+        )
+        material_dict["NODAL_ROTATIONAL_DAMPING_RATIO"] = material_dict.pop(
+            "NODAL_ROTATIONAL_DAMPING_COEFFICIENT"
+        )
         return material_dict
 
     @staticmethod
-    def __create_nodal_concentrated_dict(material: StructuralParametersABC) -> Dict[str, Any]:
+    def __create_nodal_concentrated_dict(
+        material: StructuralParametersABC,
+    ) -> Dict[str, Any]:
         """
         Creates a dictionary containing the material parameters for a nodal concentrated material. The
         NODAL_DAMPING_COEFFICIENT key is moved to the NODAL_DAMPING_RATIO key, as this can be recognized by Kratos.
@@ -449,10 +469,14 @@ class KratosIO:
         material_dict: Dict[str, Any] = deepcopy(material.__dict__)
 
         # Change naming of coefficient to ratio as this is the (incorrect) naming in Kratos
-        material_dict["NODAL_DAMPING_RATIO"] = material_dict.pop("NODAL_DAMPING_COEFFICIENT")
+        material_dict["NODAL_DAMPING_RATIO"] = material_dict.pop(
+            "NODAL_DAMPING_COEFFICIENT"
+        )
         return material_dict
 
-    def __create_linear_elastic_soil_dict(self, material: SoilConstitutiveLawABC) -> Dict[str, Any]:
+    def __create_linear_elastic_soil_dict(
+        self, material: SoilConstitutiveLawABC
+    ) -> Dict[str, Any]:
         """
         Creates a dictionary containing the material parameters for a linear elastic soil material. The constitutive law
         is set to the correct law for the dimension of the problem.
@@ -467,10 +491,14 @@ class KratosIO:
         """
 
         # initialize material dictionary
-        material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""},
-                                         "Variables": deepcopy(material.__dict__)}
+        material_dict: Dict[str, Any] = {
+            "constitutive_law": {"name": ""},
+            "Variables": deepcopy(material.__dict__),
+        }
         if self.ndim == 2:
-            material_dict["constitutive_law"]["name"] = "GeoLinearElasticPlaneStrain2DLaw"
+            material_dict["constitutive_law"][
+                "name"
+            ] = "GeoLinearElasticPlaneStrain2DLaw"
 
         elif self.ndim == 3:
             material_dict["constitutive_law"]["name"] = "GeoLinearElastic3DLaw"
@@ -479,7 +507,9 @@ class KratosIO:
 
         return material_dict
 
-    def __create_umat_soil_dict(self, material: SoilConstitutiveLawABC) -> Dict[str, Any]:
+    def __create_umat_soil_dict(
+        self, material: SoilConstitutiveLawABC
+    ) -> Dict[str, Any]:
         """
         Creates a dictionary containing the material parameters for a UMAT soil material. The constitutive law is set to
         the correct law for the dimension of the problem.
@@ -494,11 +524,15 @@ class KratosIO:
         """
 
         # initialize material dictionary
-        material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""},
-                                         "Variables": self.__create_umat_material_dict(material)}
+        material_dict: Dict[str, Any] = {
+            "constitutive_law": {"name": ""},
+            "Variables": self.__create_umat_material_dict(material),
+        }
 
         if self.ndim == 2:
-            material_dict["constitutive_law"]["name"] = "SmallStrainUMAT2DPlaneStrainLaw"
+            material_dict["constitutive_law"][
+                "name"
+            ] = "SmallStrainUMAT2DPlaneStrainLaw"
         elif self.ndim == 3:
             material_dict["constitutive_law"]["name"] = "SmallStrainUMAT3DLaw"
         else:
@@ -506,7 +540,9 @@ class KratosIO:
 
         return material_dict
 
-    def __create_udsm_soil_dict(self, material: SoilConstitutiveLawABC) -> Dict[str, Any]:
+    def __create_udsm_soil_dict(
+        self, material: SoilConstitutiveLawABC
+    ) -> Dict[str, Any]:
         """
         Creates a dictionary containing the material parameters for a UDSM soil material. The constitutive law is set to
         the correct law for the dimension of the problem.
@@ -521,11 +557,15 @@ class KratosIO:
         """
 
         # initialize material dictionary
-        material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""},
-                                         "Variables": self.__create_udsm_material_dict(material)}
+        material_dict: Dict[str, Any] = {
+            "constitutive_law": {"name": ""},
+            "Variables": self.__create_udsm_material_dict(material),
+        }
 
         if self.ndim == 2:
-            material_dict["constitutive_law"]["name"] = "SmallStrainUDSM2DPlaneStrainLaw"
+            material_dict["constitutive_law"][
+                "name"
+            ] = "SmallStrainUDSM2DPlaneStrainLaw"
         elif self.ndim == 3:
             material_dict["constitutive_law"]["name"] = "SmallStrainUDSM3DLaw"
         else:
@@ -533,8 +573,9 @@ class KratosIO:
 
         return material_dict
 
-    def __add_soil_formulation_parameters_to_material_dict(self, variables_dict: Dict[str, Any],
-                                                    soil_parameters: SoilMaterial):
+    def __add_soil_formulation_parameters_to_material_dict(
+        self, variables_dict: Dict[str, Any], soil_parameters: SoilMaterial
+    ):
         """
         Adds the soil type parameters to the material dictionary. The soil type parameters are different for one phase
         and two phase soil. The correct parameters are added to the material dictionary based on the soil type.
@@ -549,12 +590,18 @@ class KratosIO:
         """
 
         if isinstance(soil_parameters.soil_formulation, OnePhaseSoil):
-            one_phase_soil_parameters_dict = self.__create_one_phase_soil_parameters_dict(
-                soil_parameters.soil_formulation)
+            one_phase_soil_parameters_dict = (
+                self.__create_one_phase_soil_parameters_dict(
+                    soil_parameters.soil_formulation
+                )
+            )
             variables_dict.update(one_phase_soil_parameters_dict)
-        elif isinstance(soil_parameters.soil_formulation, TwoPhaseSoil) :
-            two_phase_soil_parameters_dict = self.__create_two_phase_soil_parameters_dict(
-                soil_parameters.soil_formulation)
+        elif isinstance(soil_parameters.soil_formulation, TwoPhaseSoil):
+            two_phase_soil_parameters_dict = (
+                self.__create_two_phase_soil_parameters_dict(
+                    soil_parameters.soil_formulation
+                )
+            )
             variables_dict.update(two_phase_soil_parameters_dict)
 
         # Remove ndim as this is not a material parameter
@@ -562,7 +609,9 @@ class KratosIO:
             variables_dict.pop("ndim")
 
     @staticmethod
-    def __create_one_phase_soil_parameters_dict(soil_parameters: OnePhaseSoil) -> Dict[str, Any]:
+    def __create_one_phase_soil_parameters_dict(
+        soil_parameters: OnePhaseSoil,
+    ) -> Dict[str, Any]:
         """
         Creates a dictionary containing the single phase soil parameters. For one phase soil, the permeability is set to
         near zero. Biot coefficient is added if it is not None.
@@ -576,7 +625,9 @@ class KratosIO:
         """
 
         soil_parameters_dict = deepcopy(soil_parameters.__dict__)
-        soil_parameters_dict["IGNORE_UNDRAINED"] = soil_parameters_dict.pop("IS_DRAINED")
+        soil_parameters_dict["IGNORE_UNDRAINED"] = soil_parameters_dict.pop(
+            "IS_DRAINED"
+        )
         soil_parameters_dict["PERMEABILITY_XX"] = 1e-30
         soil_parameters_dict["PERMEABILITY_YY"] = 1e-30
         soil_parameters_dict["PERMEABILITY_ZZ"] = 1e-30
@@ -585,13 +636,16 @@ class KratosIO:
         soil_parameters_dict["PERMEABILITY_ZX"] = 0
 
         # Create a new dictionary without None values
-        soil_parameters_dict = {k: v for k, v in soil_parameters_dict.items() if v is not None}
+        soil_parameters_dict = {
+            k: v for k, v in soil_parameters_dict.items() if v is not None
+        }
 
         return soil_parameters_dict
 
     @staticmethod
-    def __create_two_phase_soil_parameters_dict(two_phase_soil_parameters: TwoPhaseSoil) \
-            -> Dict[str, Any]:
+    def __create_two_phase_soil_parameters_dict(
+        two_phase_soil_parameters: TwoPhaseSoil,
+    ) -> Dict[str, Any]:
         """
         Creates a dictionary containing the two phase soil parameters. For two phase soil, permeability is taken into
         account and undrained behaviour is taken into account. Biot coefficient is added if it is not None.
@@ -608,7 +662,9 @@ class KratosIO:
         two_phase_soil_parameters_dict["IGNORE_UNDRAINED"] = False
 
         # Create a new dictionary without None values
-        two_phase_soil_parameters_dict = {k: v for k, v in two_phase_soil_parameters_dict.items() if v is not None}
+        two_phase_soil_parameters_dict = {
+            k: v for k, v in two_phase_soil_parameters_dict.items() if v is not None
+        }
 
         return two_phase_soil_parameters_dict
 
@@ -626,22 +682,34 @@ class KratosIO:
 
         """
 
-        soil_material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""},
-                                              "Variables": {}}
+        soil_material_dict: Dict[str, Any] = {
+            "constitutive_law": {"name": ""},
+            "Variables": {},
+        }
 
         # add material parameters to dictionary based on material type.
         if isinstance(material.constitutive_law, LinearElasticSoil):
-            soil_material_dict.update(self.__create_linear_elastic_soil_dict(material.constitutive_law))
+            soil_material_dict.update(
+                self.__create_linear_elastic_soil_dict(material.constitutive_law)
+            )
         elif isinstance(material.constitutive_law, SmallStrainUmatLaw):
-            soil_material_dict.update(self.__create_umat_soil_dict(material.constitutive_law))
+            soil_material_dict.update(
+                self.__create_umat_soil_dict(material.constitutive_law)
+            )
         elif isinstance(material.constitutive_law, SmallStrainUdsmLaw):
-            soil_material_dict.update(self.__create_udsm_soil_dict(material.constitutive_law))
+            soil_material_dict.update(
+                self.__create_udsm_soil_dict(material.constitutive_law)
+            )
 
-        self.__add_soil_formulation_parameters_to_material_dict(soil_material_dict["Variables"], material)
+        self.__add_soil_formulation_parameters_to_material_dict(
+            soil_material_dict["Variables"], material
+        )
 
         # get retention parameters
         retention_law = material.retention_parameters.__class__.__name__
-        retention_parameters: Dict[str, Any] = deepcopy(material.retention_parameters.__dict__)
+        retention_parameters: Dict[str, Any] = deepcopy(
+            material.retention_parameters.__dict__
+        )
 
         # add retention parameters to dictionary
         soil_material_dict["Variables"]["RETENTION_LAW"] = retention_law
@@ -655,7 +723,9 @@ class KratosIO:
 
         return soil_material_dict
 
-    def __create_euler_beam_dict(self, material_parameters: StructuralParametersABC) -> Dict[str, Any]:
+    def __create_euler_beam_dict(
+        self, material_parameters: StructuralParametersABC
+    ) -> Dict[str, Any]:
         """
         Creates a dictionary containing the euler beam parameters
 
@@ -670,26 +740,35 @@ class KratosIO:
         material_parameters_dict = deepcopy(material_parameters.__dict__)
 
         # Create a new dictionary without None values
-        material_parameters_dict = {k: v for k, v in material_parameters_dict.items() if v is not None}
+        material_parameters_dict = {
+            k: v for k, v in material_parameters_dict.items() if v is not None
+        }
 
         # remove ndim from dictionary
         if "ndim" in material_parameters_dict.keys():
             material_parameters_dict.pop("ndim")
 
         # initialize material dictionary
-        euler_beam_parameters_dict: Dict[str, Any] = {"constitutive_law": {"name": ""},
-                                                      "Variables": material_parameters_dict}
+        euler_beam_parameters_dict: Dict[str, Any] = {
+            "constitutive_law": {"name": ""},
+            "Variables": material_parameters_dict,
+        }
 
         # add constitutive law name to dictionary based on dimension
         if self.ndim == 2:
-            euler_beam_parameters_dict["constitutive_law"]["name"] = "LinearElastic2DBeamLaw"
+            euler_beam_parameters_dict["constitutive_law"][
+                "name"
+            ] = "LinearElastic2DBeamLaw"
         elif self.ndim == 3:
-            euler_beam_parameters_dict["constitutive_law"]["name"] = \
-                "KratosMultiphysics.StructuralMechanicsApplication.BeamConstitutiveLaw"
+            euler_beam_parameters_dict["constitutive_law"][
+                "name"
+            ] = "KratosMultiphysics.StructuralMechanicsApplication.BeamConstitutiveLaw"
 
         return euler_beam_parameters_dict
 
-    def __create_structural_material_dict(self, material: StructuralMaterial) -> Dict[str, Any]:
+    def __create_structural_material_dict(
+        self, material: StructuralMaterial
+    ) -> Dict[str, Any]:
         """
         Creates a dictionary containing the structural material parameters. The structural material parameters are based
         on the material type. The material parameters are added to the dictionary.
@@ -702,20 +781,30 @@ class KratosIO:
 
         """
 
-        structural_material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""},
-                                                    "Variables": {}}
+        structural_material_dict: Dict[str, Any] = {
+            "constitutive_law": {"name": ""},
+            "Variables": {},
+        }
 
         # add material parameters to dictionary based on material type.
         if isinstance(material.material_parameters, EulerBeam):
-            structural_material_dict.update(self.__create_euler_beam_dict(material.material_parameters))
+            structural_material_dict.update(
+                self.__create_euler_beam_dict(material.material_parameters)
+            )
         elif isinstance(material.material_parameters, ElasticSpringDamper):
-            structural_material_dict["Variables"] = self.__create_elastic_spring_damper_dict(material.material_parameters)
+            structural_material_dict[
+                "Variables"
+            ] = self.__create_elastic_spring_damper_dict(material.material_parameters)
         elif isinstance(material.material_parameters, NodalConcentrated):
-            structural_material_dict["Variables"] = self.__create_nodal_concentrated_dict(material.material_parameters)
+            structural_material_dict[
+                "Variables"
+            ] = self.__create_nodal_concentrated_dict(material.material_parameters)
 
         return structural_material_dict
 
-    def __create_material_dict(self, material: Union[SoilMaterial, StructuralMaterial], material_id: int) -> Dict[str, Any]:
+    def __create_material_dict(
+        self, material: Union[SoilMaterial, StructuralMaterial], material_id: int
+    ) -> Dict[str, Any]:
         """
         Creates a dictionary containing the material parameters
 
@@ -729,22 +818,26 @@ class KratosIO:
         """
 
         # initialize material dictionary
-        material_dict: Dict[str, Any] = {"model_part_name": material.name,
-                                         "properties_id": material_id,
-                                         "Material": {"constitutive_law": {"name": ""},
-                                                      "Variables": {}},
-                                         "Tables": {}
-                                        }
+        material_dict: Dict[str, Any] = {
+            "model_part_name": material.name,
+            "properties_id": material_id,
+            "Material": {"constitutive_law": {"name": ""}, "Variables": {}},
+            "Tables": {},
+        }
 
         # add material parameters to dictionary based on material type.
         if isinstance(material, SoilMaterial):
             material_dict["Material"].update(self.__create_soil_material_dict(material))
         elif isinstance(material, StructuralMaterial):
-            material_dict["Material"].update(self.__create_structural_material_dict(material))
+            material_dict["Material"].update(
+                self.__create_structural_material_dict(material)
+            )
 
         return material_dict
 
-    def write_material_parameters_json(self, materials: List[Union[SoilMaterial, StructuralMaterial]], filename: str):
+    def write_material_parameters_json(
+        self, materials: List[Union[SoilMaterial, StructuralMaterial]], filename: str
+    ):
         """
         Writes the material parameters to a json file
 
@@ -759,9 +852,10 @@ class KratosIO:
         # create material dictionary for each material and assign a unique material id
         material_id = 1
         for material in materials:
-            materials_dict["properties"].append(self.__create_material_dict(material, material_id))
+            materials_dict["properties"].append(
+                self.__create_material_dict(material, material_id)
+            )
             material_id += 1
 
         # write material dictionary to json file
-        json.dump(materials_dict, open(filename, 'w'), indent=4)
-
+        json.dump(materials_dict, open(filename, "w"), indent=4)
