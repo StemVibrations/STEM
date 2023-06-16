@@ -326,7 +326,7 @@ class TestKratosIO:
         ]
 
         # write dictionary for the output(s)
-        kratos_io = KratosIO()
+        kratos_io = KratosIO(ndim=2)
         test_dictionary, test_json = kratos_io.create_output_process_dictionary(
             all_outputs
         )

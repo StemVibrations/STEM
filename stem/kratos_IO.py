@@ -1,16 +1,9 @@
 import json
-from typing import Dict, List, Any, Union
 from copy import deepcopy
 from pathlib import Path
-from typing import List, Dict, Any, Tuple, Union
-
-from abc import ABC
+from typing import List, Dict, Tuple, Union
 
 import numpy as np
-
-from stem.soil_material import *
-from stem.structural_material import *
-
 
 from stem.load import Load, PointLoad, MovingLoad
 from stem.output import (
@@ -19,7 +12,8 @@ from stem.output import (
     VtkOutputParameters,
     JsonOutputParameters,
 )
-
+from stem.soil_material import *
+from stem.structural_material import *
 
 DOMAIN = "PorousDomain"
 
