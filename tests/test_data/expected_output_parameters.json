@@ -5,7 +5,7 @@
             "process_name": "GiDOutputProcess",
             "Parameters":    {
                 "model_part_name": "PorousDomain.test_gid_output",
-                "output_name": "test_gid",
+                "output_name": "dir_test/test_gid1",
                 "postprocess_parameters": {
                     "result_file_configuration": {
                         "gidpost_flags":       {
@@ -21,8 +21,36 @@
                         "node_output":         false,
                         "skin_output":         false,
                         "plane_output":        [],
-                        "nodal_results":       ["DISPLACEMENT","TOTAL_DISPLACEMENT","WATER_PRESSURE","VOLUME_ACCELERATION"],
-                        "gauss_point_results": ["GREEN_LAGRANGE_STRAIN_TENSOR","ENGINEERING_STRAIN_TENSOR","CAUCHY_STRESS_TENSOR","TOTAL_STRESS_TENSOR","VON_MISES_STRESS","FLUID_FLUX_VECTOR","HYDRAULIC_HEAD"]
+                        "nodal_results":       ["DISPLACEMENT","TOTAL_DISPLACEMENT"],
+                        "gauss_point_results": ["VON_MISES_STRESS","FLUID_FLUX_VECTOR","HYDRAULIC_HEAD"]
+                    },
+                    "point_data_configuration":  []
+                }
+            }
+        }, {
+            "python_module": "gid_output_process",
+            "kratos_module": "KratosMultiphysics",
+            "process_name": "GiDOutputProcess",
+            "Parameters":    {
+                "model_part_name": "PorousDomain.test_gid_output",
+                "output_name": "dir_test/test_gid2",
+                "postprocess_parameters": {
+                    "result_file_configuration": {
+                        "gidpost_flags":       {
+                            "WriteDeformedMeshFlag": "WriteUndeformed",
+                            "WriteConditionsFlag":   "WriteElementsOnly",
+                            "GiDPostMode":           "GiD_PostBinary",
+                            "MultiFileFlag":         "SingleFile"
+                        },
+                        "file_label":          "step",
+                        "output_control_type": "step",
+                        "output_interval":     100,
+                        "body_output":         true,
+                        "node_output":         false,
+                        "skin_output":         false,
+                        "plane_output":        [],
+                        "nodal_results":       ["WATER_PRESSURE","VOLUME_ACCELERATION"],
+                        "gauss_point_results": ["GREEN_LAGRANGE_STRAIN_TENSOR","ENGINEERING_STRAIN_TENSOR","CAUCHY_STRESS_TENSOR","TOTAL_STRESS_TENSOR"]
                     },
                     "point_data_configuration":  []
                 }
@@ -34,14 +62,29 @@
             "process_name": "VtkOutputProcess",
             "Parameters":    {
                 "model_part_name": "PorousDomain.test_vtk_output",
-                "output_path": "test_vtk",
+                "output_path": "dir_test/test_vtk1",
                 "file_format" :  "binary",
                 "output_precision" : 8,
                 "output_control_type" :  "step",
                 "output_interval" : 100.0,
-                "nodal_solution_step_data_variables" :  ["DISPLACEMENT","TOTAL_DISPLACEMENT","WATER_PRESSURE","VOLUME_ACCELERATION"],
+                "nodal_solution_step_data_variables" :  ["DISPLACEMENT","TOTAL_DISPLACEMENT"],
 
-                "gauss_point_variables_in_elements": ["GREEN_LAGRANGE_STRAIN_TENSOR","ENGINEERING_STRAIN_TENSOR","CAUCHY_STRESS_TENSOR","TOTAL_STRESS_TENSOR","VON_MISES_STRESS","FLUID_FLUX_VECTOR","HYDRAULIC_HEAD"]
+                "gauss_point_variables_in_elements": ["VON_MISES_STRESS","FLUID_FLUX_VECTOR","HYDRAULIC_HEAD"]
+            }
+        }, {
+            "python_module": "vtk_output_process",
+            "kratos_module": "KratosMultiphysics",
+            "process_name": "VtkOutputProcess",
+            "Parameters":    {
+                "model_part_name": "PorousDomain.test_vtk_output",
+                "output_path": "dir_test/test_vtk2",
+                "file_format" :  "binary",
+                "output_precision" : 8,
+                "output_control_type" :  "step",
+                "output_interval" : 100.0,
+                "nodal_solution_step_data_variables" :  ["WATER_PRESSURE","VOLUME_ACCELERATION"],
+
+                "gauss_point_variables_in_elements": ["GREEN_LAGRANGE_STRAIN_TENSOR","ENGINEERING_STRAIN_TENSOR","CAUCHY_STRESS_TENSOR","TOTAL_STRESS_TENSOR"]
             }
         }]
     },
@@ -51,12 +94,30 @@
             "kratos_module": "KratosMultiphysics",
             "process_name": "JsonOutputProcess",
             "Parameters": {
-                "model_part_name": "PorousDomain.test_json_output",
-                "output_file_name": "test_json",
+                "model_part_name": "PorousDomain.test_json_output1",
+                "output_file_name": "dir_test/test_json_output1.json",
                 "sub_model_part_name": "",
                 "output_variables": [
                     "DISPLACEMENT",
-                    "TOTAL_DISPLACEMENT",
+                    "TOTAL_DISPLACEMENT"
+                ],
+                "gauss_points_output_variables": [
+                    "VON_MISES_STRESS",
+                    "FLUID_FLUX_VECTOR",
+                    "HYDRAULIC_HEAD"
+                ],
+                "time_frequency": 0.002
+            }
+        },
+        {
+            "python_module": "json_output_process",
+            "kratos_module": "KratosMultiphysics",
+            "process_name": "JsonOutputProcess",
+            "Parameters": {
+                "model_part_name": "PorousDomain.test_json_output2",
+                "output_file_name": "dir_test/test_json_output2.json",
+                "sub_model_part_name": "",
+                "output_variables": [
                     "WATER_PRESSURE",
                     "VOLUME_ACCELERATION"
                 ],
@@ -64,10 +125,7 @@
                     "GREEN_LAGRANGE_STRAIN_TENSOR",
                     "ENGINEERING_STRAIN_TENSOR",
                     "CAUCHY_STRESS_TENSOR",
-                    "TOTAL_STRESS_TENSOR",
-                    "VON_MISES_STRESS",
-                    "FLUID_FLUX_VECTOR",
-                    "HYDRAULIC_HEAD"
+                    "TOTAL_STRESS_TENSOR"
                 ],
                 "time_frequency": 0.002
             }

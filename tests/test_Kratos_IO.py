@@ -62,73 +62,119 @@ class TestKratosIO:
         ProjectParameters.json file
         """
         # Nodal results
-        nodal_results = [
-                "DISPLACEMENT",
-                "TOTAL_DISPLACEMENT",
-                "WATER_PRESSURE",
-                "VOLUME_ACCELERATION",
-            ]
+        nodal_results1 = ["DISPLACEMENT", "TOTAL_DISPLACEMENT"]
+        nodal_results2 = [
+            "WATER_PRESSURE",
+            "VOLUME_ACCELERATION",
+        ]
         # gauss point results
-        gauss_point_results = [
-                "GREEN_LAGRANGE_STRAIN_TENSOR",
-                "ENGINEERING_STRAIN_TENSOR",
-                "CAUCHY_STRESS_TENSOR",
-                "TOTAL_STRESS_TENSOR",
-                "VON_MISES_STRESS",
-                "FLUID_FLUX_VECTOR",
-                "HYDRAULIC_HEAD",
-            ]
+        gauss_point_results1 = [
+            "VON_MISES_STRESS",
+            "FLUID_FLUX_VECTOR",
+            "HYDRAULIC_HEAD",
+        ]
+        gauss_point_results2 = [
+            "GREEN_LAGRANGE_STRAIN_TENSOR",
+            "ENGINEERING_STRAIN_TENSOR",
+            "CAUCHY_STRESS_TENSOR",
+            "TOTAL_STRESS_TENSOR",
+        ]
         # define output parameters
         # 1. GiD
-        gid_output_parameters = GiDOutputParameters(
+        gid_output_parameters1 = GiDOutputParameters(
             output_interval=100,
             body_output=True,
             node_output=False,
             skin_output=False,
-            nodal_results=nodal_results,
-            gauss_point_results=gauss_point_results,
+            nodal_results=nodal_results1,
+            gauss_point_results=gauss_point_results1,
+        )
+
+        gid_output_parameters2 = GiDOutputParameters(
+            output_interval=100,
+            body_output=True,
+            node_output=False,
+            skin_output=False,
+            nodal_results=nodal_results2,
+            gauss_point_results=gauss_point_results2,
         )
 
         # 2. Vtk (Paraview)
-        vtk_output_parameters = VtkOutputParameters(
+        vtk_output_parameters1 = VtkOutputParameters(
             file_format="binary",
             output_precision=8,
             output_control_type="step",
             output_interval=100.0,
-            nodal_solution_step_data_variables=nodal_results,
-            gauss_point_variables_in_elements=gauss_point_results
+            nodal_results=nodal_results1,
+            gauss_point_results=gauss_point_results1,
         )
-
+        vtk_output_parameters2 = VtkOutputParameters(
+            file_format="binary",
+            output_precision=8,
+            output_control_type="step",
+            output_interval=100.0,
+            nodal_results=nodal_results2,
+            gauss_point_results=gauss_point_results2,
+        )
         # 3. Json
-        json_output_parameters = JsonOutputParameters(
+        json_output_parameters1 = JsonOutputParameters(
             time_frequency=0.002,
-            output_variables=nodal_results,
-            gauss_points_output_variables=gauss_point_results
+            nodal_results=nodal_results1,
+            gauss_point_results=gauss_point_results1,
+        )
+        json_output_parameters2 = JsonOutputParameters(
+            time_frequency=0.002,
+            nodal_results=nodal_results2,
+            gauss_point_results=gauss_point_results2,
         )
 
         # create Load objects and store in the list
-        gid_output_process = OutputProcess(
+        gid_output_process1 = OutputProcess(
             part_name="test_gid_output",
-            output_name="test_gid",
-            output_parameters=gid_output_parameters,
+            output_path=r"dir_test/test_gid1",
+            output_parameters=gid_output_parameters1,
         )
-        vtk_output_process = OutputProcess(
+        gid_output_process2 = OutputProcess(
+            part_name="test_gid_output",
+            output_path=r"dir_test\test_gid2",
+            output_parameters=gid_output_parameters2,
+        )
+        vtk_output_process1 = OutputProcess(
             part_name="test_vtk_output",
-            output_name="test_vtk",
-            output_parameters=vtk_output_parameters,
+            output_path=r"dir_test/test_vtk1",
+            output_parameters=vtk_output_parameters1,
+        )
+        vtk_output_process2 = OutputProcess(
+            part_name="test_vtk_output",
+            output_path=r"dir_test\test_vtk2",
+            output_parameters=vtk_output_parameters2,
         )
 
-        json_output_process = OutputProcess(
-            part_name="test_json_output",
-            output_name="test_json",
-            output_parameters=json_output_parameters,
+        json_output_process1 = OutputProcess(
+            part_name="test_json_output1",
+            output_path=r"dir_test",
+            output_parameters=json_output_parameters1,
         )
-        all_outputs = [gid_output_process, vtk_output_process, json_output_process]
+
+        json_output_process2 = OutputProcess(
+            part_name="test_json_output2",
+            output_path=r"dir_test",
+            output_parameters=json_output_parameters2,
+        )
+        all_outputs = [
+            gid_output_process1,
+            vtk_output_process1,
+            json_output_process1,
+            gid_output_process2,
+            vtk_output_process2,
+            json_output_process2
+        ]
 
         # write dictionary for the output(s)
         kratos_io = KratosIO()
         test_dictionary, test_json = kratos_io.create_output_process_dictionary(
-            all_outputs)
+            all_outputs
+        )
 
         # nest the json into the process dictionary, as it should!
         test_dictionary["processes"] = test_json
