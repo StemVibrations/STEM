@@ -1,4 +1,5 @@
 import json
+
 import pytest
 
 from stem.kratos_IO import KratosIO
