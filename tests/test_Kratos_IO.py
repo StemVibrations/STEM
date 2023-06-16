@@ -174,7 +174,7 @@ class TestKratosIO:
 
         # Boundary conditions
         absorbing_boundaries_parameters = AbsorbingBoundary(
-            absorbing_factors=[1, 1], virtual_thickness=1000
+            absorbing_factors=[1.0, 1.0], virtual_thickness=1000.0
         )
 
         # create Load objects and store in the list
@@ -194,7 +194,7 @@ class TestKratosIO:
         all_outputs = [
             displacement_boundary_condition,
             rotation_boundary_condition,
-            absorbing_boundary,
+            absorbing_boundary
         ]
 
         # write dictionary for the output(s)
@@ -205,7 +205,7 @@ class TestKratosIO:
         ) = kratos_io.create_dictionaries_for_boundaries(all_outputs)
 
         # nest the json into the process dictionary, as it should!
-        test_constraint_dictionary["loads_process_list"] = test_absorbing_bound_list,
+        test_constraint_dictionary["loads_process_list"] = test_absorbing_bound_list
         test_dictionary = {"processes": test_constraint_dictionary}
         # load expected dictionary from the json
         expected_load_parameters_json = json.load(
