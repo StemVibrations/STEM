@@ -1,6 +1,4 @@
-from typing import List, Dict, Any, Tuple, Union, NewType
-
-from abc import ABC
+from typing import List, Dict, Any, Tuple
 
 import numpy as np
 
@@ -19,11 +17,6 @@ from stem.output import (
 )
 
 DOMAIN = "PorousDomain"
-
-ConstraintType = NewType(
-    "Constraint", Union[DisplacementConstraint, RotationConstraint]
-)
-BoundaryLoadType = NewType("BoundaryLoad", Union[AbsorbingBoundary])
 
 
 class KratosIO:
@@ -193,7 +186,9 @@ class KratosIO:
             "Parameters": boundary.boundary_parameters.__dict__,
         }
 
-        boundary_dict["Parameters"]["model_part_name"] = f"{DOMAIN}.{boundary.part_name}"
+        boundary_dict["Parameters"][
+            "model_part_name"
+        ] = f"{DOMAIN}.{boundary.part_name}"
         boundary_dict["Parameters"]["variable_name"] = "DISPLACEMENT"
         boundary_dict["Parameters"]["table"] = [0, 0, 0]
 
@@ -219,7 +214,9 @@ class KratosIO:
             "Parameters": boundary.boundary_parameters.__dict__,
         }
 
-        boundary_dict["Parameters"]["model_part_name"] = f"{DOMAIN}.{boundary.part_name}"
+        boundary_dict["Parameters"][
+            "model_part_name"
+        ] = f"{DOMAIN}.{boundary.part_name}"
         boundary_dict["Parameters"]["variable_name"] = "ROTATION"
         boundary_dict["Parameters"]["table"] = [0, 0, 0]
 
@@ -245,7 +242,9 @@ class KratosIO:
             "Parameters": boundary.boundary_parameters.__dict__,
         }
 
-        boundary_dict["Parameters"]["model_part_name"] = f"{DOMAIN}.{boundary.part_name}"
+        boundary_dict["Parameters"][
+            "model_part_name"
+        ] = f"{DOMAIN}.{boundary.part_name}"
 
         return boundary_dict
 
