@@ -73,11 +73,10 @@ class TwoPhaseSoil(SoilFormulationParametersABC):
     Attributes:
         DENSITY_SOLID (float): The density of the solid material [kg/m^3].
         POROSITY (float): The porosity of the soil [-].
-        BULK_MODULUS_SOLID (float): The bulk modulus of the solid material [Pa].
         PERMEABILITY_XX (float): The permeability in the x-direction [m^2].
         PERMEABILITY_YY (float): The permeability in the y-direction [m^2].
         PERMEABILITY_XY (float): The permeability in the xy-direction [m^2].
-
+        BULK_MODULUS_SOLID (float): The bulk modulus of the solid material [Pa].
         BIOT_COEFFICIENT (float): The Biot coefficient [-].
         PERMEABILITY_YZ (float): The permeability in the yz-direction [m^2].
         PERMEABILITY_ZX (float): The permeability in the zx-direction [m^2].
@@ -87,10 +86,10 @@ class TwoPhaseSoil(SoilFormulationParametersABC):
 
     DENSITY_SOLID: float
     POROSITY: float
-    BULK_MODULUS_SOLID: float
     PERMEABILITY_XX: float
     PERMEABILITY_YY: float
     PERMEABILITY_XY: float = 0
+    BULK_MODULUS_SOLID: float = 50e9
     BIOT_COEFFICIENT: Optional[float] = None
 
     # parameters for 3D
