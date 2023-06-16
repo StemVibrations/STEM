@@ -87,7 +87,7 @@ class KratosIO:
         Creates a dictionary containing the point load parameters
 
         Args:
-            load (Load): point load object
+            load (Load): load object
 
         Returns:
             Dict[str, Any]: dictionary containing the load parameters
@@ -102,11 +102,62 @@ class KratosIO:
         }
 
         load_dict["Parameters"]["model_part_name"] = f"{DOMAIN}.{load.name}"
-        load_dict["Parameters"]["variable_name"] = "POINT_LOAD"
+        load_dict["Parameters"]["variable_name"] = "LINE_LOAD"
         load_dict["Parameters"]["table"] = [0, 0, 0]
 
         return load_dict
 
+    @staticmethod
+    def __create_line_load_dict(load: Load) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the line load parameters
+
+        Args:
+            load (Load): load object
+
+        Returns:
+            Dict[str, Any]: dictionary containing the load parameters
+        """
+
+        # initialize load dictionary
+        load_dict: Dict[str, Any] = {
+            "python_module": "apply_vector_constraint_table_process",
+            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+            "process_name": "ApplyVectorConstraintTableProcess",
+            "Parameters": deepcopy(load.load_parameters.__dict__),
+        }
+
+        load_dict["Parameters"]["model_part_name"] = f"{DOMAIN}.{load.name}"
+        load_dict["Parameters"]["variable_name"] = "LINE_LOAD"
+        load_dict["Parameters"]["table"] = [0, 0, 0]
+
+        return load_dict
+
+    @staticmethod
+    def __create_surface_load_dict(load: Load) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the surface load parameters
+
+        Args:
+            load (Load): load object
+
+        Returns:
+            Dict[str, Any]: dictionary containing the load parameters
+        """
+
+        # initialize load dictionary
+        load_dict: Dict[str, Any] = {
+            "python_module": "apply_vector_constraint_table_process",
+            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+            "process_name": "ApplyVectorConstraintTableProcess",
+            "Parameters": deepcopy(load.load_parameters.__dict__),
+        }
+
+        load_dict["Parameters"]["model_part_name"] = f"{DOMAIN}.{load.name}"
+        load_dict["Parameters"]["variable_name"] = "SURFACE_LOAD"
+        load_dict["Parameters"]["table"] = [0, 0, 0]
+
+        return load_dict
     @staticmethod
     def __create_moving_load_dict(load: Load) -> Dict[str, Any]:
         """
@@ -188,7 +239,7 @@ class KratosIO:
             "python_module": "apply_vector_constraint_table_process",
             "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
             "process_name": "ApplyVectorConstraintTableProcess",
-            "Parameters": boundary.boundary_parameters.__dict__,
+            "Parameters": deepcopy(boundary.boundary_parameters.__dict__),
         }
 
         boundary_dict["Parameters"][
@@ -216,7 +267,7 @@ class KratosIO:
             "python_module": "apply_vector_constraint_table_process",
             "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
             "process_name": "ApplyVectorConstraintTableProcess",
-            "Parameters": boundary.boundary_parameters.__dict__,
+            "Parameters": deepcopy(boundary.boundary_parameters.__dict__),
         }
 
         boundary_dict["Parameters"][
@@ -476,15 +527,11 @@ class KratosIO:
             str
         """
 
-        if isinstance(
-            output_parameters, (VtkOutputParameters, GiDOutputParameters)
-        ):
+        if isinstance(output_parameters, (VtkOutputParameters, GiDOutputParameters)):
             return "output_processes"
         return "processes"
 
-    def create_output_process_dictionary(
-        self, outputs: List[Output]
-    ) -> Dict[str, Any]:
+    def create_output_process_dictionary(self, outputs: List[Output]) -> Dict[str, Any]:
         """
         Creates a dictionary containing the output_processes, that specifies which
         output to request Kratos and the type of output ('GiD', 'VTK', 'JSON')

@@ -315,6 +315,7 @@ class TestKratosIO:
         Test the creation of the load process dictionary for the
         ProjectParameters.json file
         """
+        # TODO: add tests for the line and surface loads
         # define load(s) parameters
         # point load
         point_load_parameters = PointLoad(
