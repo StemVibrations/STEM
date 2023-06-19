@@ -7,10 +7,22 @@ from stem.structural_material import *
 
 
 class KratosMaterialIO:
+    """
+    Class containing methods to write materials to Kratos
+
+    Attributes:
+        ndim (int): number of dimensions of the mesh
+
+    """
 
     def __init__(self, ndim: int):
+        """
+        Constructor of KratosMaterialIO class
+
+        Args:
+            ndim (int): number of dimensions of the mesh
+        """
         self.ndim: int = ndim
-        pass
 
     @staticmethod
     def __create_umat_material_dict(material: SoilConstitutiveLawABC) -> Dict[str, Any]:

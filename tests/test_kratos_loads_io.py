@@ -8,7 +8,7 @@ from tests.utils import TestUtils
 
 
 class TestKratosLoadsIO:
-    def test_create_load_process_dictionary(self):
+    def test_create_load_process_dict(self):
         """
         Test the creation of the load process dictionary for the
         ProjectParameters.json file
@@ -39,7 +39,7 @@ class TestKratosLoadsIO:
 
         # write dictionary for the load(s)
         kratos_io = KratosLoadsIO(domain="PorousDomain")
-        test_dictionary = kratos_io.create_loads_process_dictionary(all_loads)
+        test_dictionary = kratos_io.create_loads_process_dict(all_loads)
 
         # load expected dictionary from the json
         expected_load_parameters_json = json.load(

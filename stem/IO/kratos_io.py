@@ -60,7 +60,14 @@ class KratosIO:
     def __write_loads(self):
         pass
 
-    def write_project_parameters_json(self, filename):
+    def write_project_parameters_json(self, filename: str):
+        """
+        Writes project parameters to json file
+
+        Args:
+            filename (str): filename of json file
+
+        """
 
         self.__write_problem_data()
         self.__write_solver_settings()
@@ -69,4 +76,3 @@ class KratosIO:
         self.__write_constraints()
         self.__write_loads()
         # todo write Projectparameters.json
-        pass

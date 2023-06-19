@@ -8,10 +8,23 @@ from stem.load import Load, PointLoad, MovingLoad
 
 
 class KratosLoadsIO:
+    """
+    Class containing methods to write loads to Kratos
+
+    Attributes:
+        domain (str): name of the Kratos domain
+
+    """
 
     def __init__(self, domain: str):
+        """
+        Constructor of KratosLoadsIO class
+
+        Args:
+            domain (str): name of the Kratos domain
+
+        """
         self.domain = domain
-        pass
 
     def __create_point_load_dict(self, load: Load) -> Dict[str, Any]:
         """
@@ -81,7 +94,7 @@ class KratosLoadsIO:
         else:
             raise NotImplementedError
 
-    def create_loads_process_dictionary(self, loads: List[Load]) -> Dict[str, Any]:
+    def create_loads_process_dict(self, loads: List[Load]) -> Dict[str, Any]:
         """
         Creates a dictionary containing the load_process_list (list of
         dictionaries to specify the loads for the model)
