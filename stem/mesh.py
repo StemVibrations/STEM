@@ -122,7 +122,7 @@ class Mesh:
         nodes, elements = self.prepare_data_for_kratos(mesh_data)
 
         kratos_io = KratosIO(self.ndim)
-        kratos_io.write_mesh_to_mdpa(nodes, elements, filename)
+        kratos_io.write_mesh_to_mdpa(filename)
 
 
 

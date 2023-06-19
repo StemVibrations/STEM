@@ -1,5 +1,5 @@
 import json
-from typing import Dict, Union
+from typing import Dict, Union, Any, List
 from copy import deepcopy
 
 from stem.soil_material import *
@@ -9,7 +9,7 @@ from stem.structural_material import *
 class KratosMaterialIO:
 
     def __init__(self, ndim: int):
-        self.ndim = ndim
+        self.ndim: int = ndim
         pass
 
     @staticmethod
