@@ -37,15 +37,44 @@ class NodalOutput(Enum):
     VOLUME_ACCELERATION_Z = 63
 
 
+class GaussPointOutput(Enum):
+    VON_MISES_STRESS = 1
+    FLUID_FLUX_VECTOR = 2
+    HYDRAULIC_HEAD = 3
+    GREEN_LAGRANGE_STRAIN_VECTOR = 41
+    GREEN_LAGRANGE_STRAIN_TENSOR = 42
+    ENGINEERING_STRAIN_VECTOR = 51
+    ENGINEERING_STRAIN_TENSOR = 52
+    CAUCHY_STRESS_VECTOR = 61
+    CAUCHY_STRESS_TENSOR = 62
+    TOTAL_STRESS_VECTOR = 71
+    TOTAL_STRESS_TENSOR = 72
+
+
 TENSOR_OUTPUTS = [
     "GREEN_LAGRANGE_STRAIN",
     "ENGINEERING_STRAIN",
     "CAUCHY_STRESS",
     "TOTAL_STRESS",
 ]
+# Nodal results
+nodal_results1 = [NodalOutput.DISPLACEMENT, NodalOutput.TOTAL_DISPLACEMENT]
+nodal_results2 = [NodalOutput.WATER_PRESSURE, NodalOutput.VOLUME_ACCELERATION]
+# gauss point results
+gauss_point_results1 = [
+    GaussPointOutput.VON_MISES_STRESS,
+    GaussPointOutput.FLUID_FLUX_VECTOR,
+    GaussPointOutput.HYDRAULIC_HEAD,
+]
+gauss_point_results2 = [
+    GaussPointOutput.GREEN_LAGRANGE_STRAIN_TENSOR,
+    GaussPointOutput.ENGINEERING_STRAIN_TENSOR,
+    GaussPointOutput.CAUCHY_STRESS_TENSOR,
+    GaussPointOutput.TOTAL_STRESS_TENSOR,
+]
 
 
-def detect_tensor_outputs(requested_outputs: List[str]):
+def detect_vector_in_tensor_outputs(requested_outputs: List[GaussPointOutput]):
     """
     Detects whether gauss point outputs are requested and warns the user
 
@@ -56,15 +85,46 @@ def detect_tensor_outputs(requested_outputs: List[str]):
         detected_tensor_outputs = []
         for requested_output in requested_outputs:
             for tensor_output in TENSOR_OUTPUTS:
-                if tensor_output in requested_output:
+                if (
+                    tensor_output in requested_output.name
+                    and "_VECTOR" in requested_output.name
+                ):
+                    detected_tensor_outputs.append(tensor_output)
+                    break
+        if len(detected_tensor_outputs):
+            _fmt_list = "".join([f" - {outpt} \n" for outpt in detected_tensor_outputs])
+            _msg = (
+                f"\n[WARNING] Vector specified for tensor output:\n{_fmt_list}"
+                f"In GiD, Such outputs are incorrectly rendered."
+            )
+            print(_msg)
+
+
+# define out
+
+
+def detect_tensor_outputs(requested_outputs: List[GaussPointOutput]):
+    """
+    Detects whether gauss point outputs are requested and warns the user
+
+    Args:
+        requested_outputs (List[st]): list of requested outputs (gauss point)
+    """
+    if len(requested_outputs) > 0:
+        detected_tensor_outputs = []
+        for requested_output in requested_outputs:
+            for tensor_output in TENSOR_OUTPUTS:
+                if tensor_output in requested_output.name:
                     detected_tensor_outputs.append(tensor_output)
                     break
         if len(detected_tensor_outputs):
             _fmt_list = "".join([f" - {outpt} \n" for outpt in detected_tensor_outputs])
             _msg = (
                 f"\n[WARNING] tensor output detected:\n{_fmt_list}"
-                f"The outputs are incorrectly rendered for the selected output\n"
-                f"if vector is selected and ignored if tensor is selected."
+                f"The outputs are incorrectly rendered in VTK and JSON output types:\n"
+                f"For VECTOR the output is incorrectly produced ans misses "
+                f"components.\n"
+                f"For TENSOR the output is ignored.\n"
             )
             print(_msg)
 
@@ -94,7 +154,6 @@ class GiDOutputParameters(OutputParametersABC):
     Class containing the output parameters for GiD output
 
     Attributes:
-        gidpost_flags (Dict[str, Any]):
         file_label (str):
         output_control_type (str):
         output_interval (int):
@@ -105,12 +164,14 @@ class GiDOutputParameters(OutputParametersABC):
         nodal_results (List[str]):
         gauss_point_results (List[str]):
         point_data_configuration (List[str]):
+        file_format (str): format of output (gid_post_mode flag)
     """
 
-    nodal_results: List[str] = field(default_factory=lambda: [])
-    gauss_point_results: List[str] = field(default_factory=lambda: [])
-
-    gid_post_mode: str = "GiD_PostBinary"
+    # general inputs
+    nodal_results: List[NodalOutput] = field(default_factory=lambda: [])
+    gauss_point_results: List[GaussPointOutput] = field(default_factory=lambda: [])
+    # GiD specific inputs
+    file_format: str = "GiD_PostBinary"
     file_label: str = "step"
     output_control_type: str = "step"
     output_interval: int = 1
@@ -122,7 +183,7 @@ class GiDOutputParameters(OutputParametersABC):
     point_data_configuration: List[str] = field(default_factory=lambda: [])
 
     def validate(self):
-        pass
+        detect_vector_in_tensor_outputs(requested_outputs=self.gauss_point_results)
 
 
 @dataclass
@@ -131,21 +192,22 @@ class VtkOutputParameters(OutputParametersABC):
     Class containing the output parameters for GiD output
 
     Attributes:
-        nodal_results (List[str]):
-        gauss_point_results (List[str]):
+        output_interval (float):
         file_format (str): file format for VTK, either `binary` or `ascii` are allowed.
         output_precision (int):
         output_control_type (str): type of output control, either `step` or `time`.
-        output_interval (float):
+        nodal_results (List[str]):
+        gauss_point_results (List[str]):
     """
-    # general inputs
-    nodal_results: List[str] = field(default_factory=lambda: [])
-    gauss_point_results: List[str] = field(default_factory=lambda: [])
+
     # VTK specif inputs
+    output_interval: float
     file_format: str = "binary"
     output_precision: int = 7
     output_control_type: str = "step"
-    output_interval: float = 1.0
+    # general inputs
+    nodal_results: List[NodalOutput] = field(default_factory=lambda: [])
+    gauss_point_results: List[GaussPointOutput] = field(default_factory=lambda: [])
 
     def validate(self):
         detect_tensor_outputs(requested_outputs=self.gauss_point_results)
@@ -162,12 +224,12 @@ class JsonOutputParameters(OutputParametersABC):
         time_frequency (float):
         sub_model_part_name (str):
     """
-    # general inputs
-    nodal_results: List[str] = field(default_factory=lambda: [])
-    gauss_point_results: List[str] = field(default_factory=lambda: [])
     # JSON specif inputs
-    time_frequency: float = 1.0
+    time_frequency: float
     sub_model_part_name: str = ""
+    # general inputs
+    nodal_results: List[NodalOutput] = field(default_factory=lambda: [])
+    gauss_point_results: List[GaussPointOutput] = field(default_factory=lambda: [])
 
     def validate(self):
         detect_tensor_outputs(requested_outputs=self.gauss_point_results)
@@ -179,41 +241,41 @@ class Output:
 
     Attributes:
         part_name (str): name of the model part
-        output_path (str): output path for the output
-            - for GID, it represents the name (or relative path) ot the bin file.
-              For relative paths, the stem is referred as the name and the previous
-              as the directory. They will be created if they do not exist.
-              example1: `test1` results in the test1.bin file in the current folder.
-              example2: `path1/path2/test2` results in the test2.bin file in the
-                current_folder/path1/path2 where current_folder is the working
-                directory.
-              example3: `C:/Documents/yourproject/test3` results in the test2.bin
-                test3.bin output file in the folder C:/Documents/yourproject.
-            - for VTK it represents the path to folder to store the vtk outputs.
-              example1: `test1` stores the file in the test1 directory in the project
-                folder.
-              example2: `path1/path2/test2` stores the file in the test1 directory in
-                the project folder path1/path2/test2
-            - for JSON, it represents the name (or path) to the file.
-                If is a file (thus with extension .json), then it is saved with the
-                given name. If extension differs from json it is renamed to json. If
-                is a folder (no extension), the filename will have the same name of
-                the part of interest `part_name`.json
+        output_dir (str): Optional input. output directory for the relative or
+            absolute path to the output file. The path will be created if it does
+            not exist yet. If not specified, the files it corrensponds to the workiing
+            directory.
+            example1=`test1` results in the test1 output folder relative to
+                current folder as ".test1"
+            example2=`path1/path2/test2` saves the outputs in
+                current_folder/path1/path2/test2
+            example3=`C:/Documents/yourproject/test3` saves the outputs in
+                `C:/Documents/yourproject/test3`.
+        output_name (str): Optional input. Name for the output file. This parameter is
+            used by GiD and JSON outputs while is ignored in VTK. If the name is not
+            given, the part_name is used instead.
+
         output_parameters (OutputParametersABC): class containing the output parameters
     """
 
     def __init__(
-        self, output_path: str, part_name: str, output_parameters: OutputParametersABC
+        self,
+        part_name: str,
+        output_parameters: OutputParametersABC,
+        output_dir: str = "",
+        output_name: str = "",
     ):
         """
         Constructor of the output process class
 
         Args:
             part_name (str): name of the model part
-            output_path (str): output path for the output
+            output_name (str): name for the output file
+            output_dir (str): path to the output files
             output_parameters (OutputParametersABC): class containing output parameters
         """
 
+        self.output_name: str = output_name
         self.part_name: str = part_name
-        self.output_path: Path = Path(output_path)
+        self.output_dir: Path = Path(output_dir)
         self.output_parameters: OutputParametersABC = output_parameters

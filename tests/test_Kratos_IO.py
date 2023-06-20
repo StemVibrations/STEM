@@ -1,4 +1,8 @@
 import json
+import platform
+import shutil
+import pprint
+from pathlib import Path
 
 import pytest
 
@@ -12,6 +16,8 @@ from stem.output import (
     GiDOutputParameters,
     VtkOutputParameters,
     JsonOutputParameters,
+    NodalOutput,
+    GaussPointOutput,
 )
 from tests.utils import TestUtils
 
@@ -307,6 +313,7 @@ class TestKratosIO:
         Test the creation of the load process dictionary for the
         ProjectParameters.json file
         """
+        # TODO: add tests for the line and surface loads
         # define load(s) parameters
         # point load
         point_load_parameters = PointLoad(
@@ -351,19 +358,19 @@ class TestKratosIO:
         ProjectParameters.json file
         """
         # Nodal results
-        nodal_results1 = ["DISPLACEMENT", "TOTAL_DISPLACEMENT"]
-        nodal_results2 = ["WATER_PRESSURE", "VOLUME_ACCELERATION"]
-        # gauss point results
+        nodal_results1 = [NodalOutput.DISPLACEMENT, NodalOutput.TOTAL_DISPLACEMENT]
+        nodal_results2 = [NodalOutput.WATER_PRESSURE, NodalOutput.VOLUME_ACCELERATION]
+        # Gauss point results
         gauss_point_results1 = [
-            "VON_MISES_STRESS",
-            "FLUID_FLUX_VECTOR",
-            "HYDRAULIC_HEAD",
+            GaussPointOutput.VON_MISES_STRESS,
+            GaussPointOutput.FLUID_FLUX_VECTOR,
+            GaussPointOutput.HYDRAULIC_HEAD,
         ]
         gauss_point_results2 = [
-            "GREEN_LAGRANGE_STRAIN_TENSOR",
-            "ENGINEERING_STRAIN_TENSOR",
-            "CAUCHY_STRESS_TENSOR",
-            "TOTAL_STRESS_TENSOR",
+            GaussPointOutput.GREEN_LAGRANGE_STRAIN_TENSOR,
+            GaussPointOutput.ENGINEERING_STRAIN_TENSOR,
+            GaussPointOutput.CAUCHY_STRESS_TENSOR,
+            GaussPointOutput.TOTAL_STRESS_TENSOR,
         ]
         # define output parameters
         # 1. GiD
@@ -417,34 +424,38 @@ class TestKratosIO:
         # create Load objects and store in the list
         gid_output_process1 = Output(
             part_name="test_gid_output",
-            output_path=r"dir_test/test_gid1",
+            output_dir=r"dir_test",
+            output_name=r"test_gid1",
             output_parameters=gid_output_parameters1,
         )
         gid_output_process2 = Output(
             part_name="test_gid_output",
-            output_path=r"dir_test\test_gid2",
+            output_dir=r"dir_test",
+            output_name=r"test_gid2",
             output_parameters=gid_output_parameters2,
         )
         vtk_output_process1 = Output(
             part_name="test_vtk_output",
-            output_path=r"dir_test/test_vtk1",
+            output_dir=r"dir_test\test_vtk1",
             output_parameters=vtk_output_parameters1,
         )
         vtk_output_process2 = Output(
             part_name="test_vtk_output",
-            output_path=r"dir_test\test_vtk2",
+            output_dir=r"dir_test\test_vtk2",
             output_parameters=vtk_output_parameters2,
         )
 
         json_output_process1 = Output(
             part_name="test_json_output1",
-            output_path=r"dir_test",
+            output_name="test_json_output1",
+            output_dir="dir_test",
             output_parameters=json_output_parameters1,
         )
 
         json_output_process2 = Output(
             part_name="test_json_output2",
-            output_path=r"dir_test",
+            output_name="test_json_output2",
+            output_dir="dir_test",
             output_parameters=json_output_parameters2,
         )
         all_outputs = [
@@ -453,17 +464,32 @@ class TestKratosIO:
             json_output_process1,
             gid_output_process2,
             vtk_output_process2,
-            json_output_process2
+            json_output_process2,
         ]
 
         # write dictionary for the output(s)
         kratos_io = KratosIO(ndim=2)
         test_output = kratos_io.create_output_process_dictionary(all_outputs)
 
+        # json requires to make the directory, then we remove it...
+        for json_process in test_output["processes"]["json_output"]:
+            shutil.rmtree(
+                Path(json_process["Parameters"]["output_file_name"]).parent,
+                ignore_errors=True
+            )
+
         # load expected dictionary from the json
-        expected_load_parameters_json = json.load(
-            open("tests/test_data/expected_output_parameters.json")
-        )
+        op_sys = platform.system()
+        if op_sys == "Windows":
+            expected_load_parameters_json = json.load(
+                open("tests/test_data/expected_output_parameters_windows.json")
+            )
+        elif op_sys == "Linux":
+            expected_load_parameters_json = json.load(
+                open("tests/test_data/expected_output_parameters_ubuntu.json")
+            )
+        else:
+            raise OSError
 
         # assert the objects to be equal
         TestUtils.assert_dictionary_almost_equal(
