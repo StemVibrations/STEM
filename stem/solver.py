@@ -260,7 +260,7 @@ class SolverSettings:
     strategy_type: StrategyTypeABC = NewtonRaphsonStrategy()
     scheme: SchemeABC = NewmarkScheme()
     linear_solver_settings: LinearSolverSettingsABC = Amgcl()
-    rayleigh_m:Optional[float] = None
+    rayleigh_m: Optional[float] = None
     rayleigh_k: Optional[float] = None
 
     def __post_init__(self):
@@ -273,10 +273,6 @@ class SolverSettings:
         if self.solution_type == SolutionType.DYNAMIC:
             if self.rayleigh_m is None or self.rayleigh_k is None:
                 raise ValueError("Rayleigh damping parameters must be provided for dynamic analysis")
-
-        if self.rebuild_level < 2 and self.linear_solver_settings.scaling:
-            raise ValueError("System matrix can only be scaled when rebuild level is 2")
-
 
 
 @dataclass
