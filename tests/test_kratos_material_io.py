@@ -1,16 +1,13 @@
 import json
 
-import pytest
-
-from stem.kratos_IO import KratosIO
+from stem.IO.kratos_material_io import KratosMaterialIO
 from stem.soil_material import *
 from stem.structural_material import *
 
-from stem.load import PointLoad, MovingLoad, Load
 from tests.utils import TestUtils
 
 
-class TestKratosIO:
+class TestKratosMaterialIO:
 
     def test_write_soil_material_to_json(self):
         """
@@ -28,7 +25,6 @@ class TestKratosIO:
                                                           IS_FORTRAN_UMAT=False, STATE_VARIABLES=[])
 
         umat_retention_parameters = SaturatedBelowPhreaticLevelLaw()
-
 
         # Create undrained soil
         udsm_formulation = OnePhaseSoil(ndim=ndim, IS_DRAINED=False, DENSITY_SOLID=2650, POROSITY=0.3,
@@ -56,7 +52,6 @@ class TestKratosIO:
         two_phase_constitutive_parameters = LinearElasticSoil(YOUNG_MODULUS=1E9, POISSON_RATIO=0.3)
         two_phase_retention_parameters = SaturatedBelowPhreaticLevelLaw()
 
-
         # Create materials
         umat_material = SoilMaterial(name="test_umat_material", soil_formulation=umat_formulation,
                                      constitutive_law=umat_constitutive_parameters,
@@ -74,11 +69,10 @@ class TestKratosIO:
                                                 constitutive_law=two_phase_constitutive_parameters,
                                                 retention_parameters=two_phase_retention_parameters)
 
-
         all_materials = [umat_material, udsm_material, two_phase_material_2D, two_phase_material_3D]
 
         # write json file
-        kratos_io = KratosIO(ndim=3)
+        kratos_io = KratosMaterialIO(ndim=3)
         kratos_io.write_material_parameters_json(all_materials, "test_write_MaterialParameters.json")
 
         # read generated json file and expected json file
@@ -87,37 +81,6 @@ class TestKratosIO:
 
         # compare json files using custom dictionary comparison
         TestUtils.assert_dictionary_almost_equal(written_material_parameters_json, expected_material_parameters_json)
-
-    def test_raise_errors_for_material_parameters(self):
-        """
-        Tests that errors are raised when the soil material parameters are not valid.
-
-        """
-
-        # create 3d two phase soil without zz permeability, which is not allowed
-        pytest.raises(ValueError, TwoPhaseSoil, ndim=3, DENSITY_SOLID=2650, POROSITY=0.3, BULK_MODULUS_SOLID=1E9,
-                      PERMEABILITY_XX=1E-15, PERMEABILITY_YY=1E-15 , PERMEABILITY_XY=1, PERMEABILITY_ZX=2,
-                      PERMEABILITY_YZ=3)
-
-        # create 3d two phase soil without yz permeability, which is not allowed
-        pytest.raises(ValueError, TwoPhaseSoil, ndim=3, DENSITY_SOLID=2650, POROSITY=0.3, BULK_MODULUS_SOLID=1E9,
-                      PERMEABILITY_XX=1E-15, PERMEABILITY_YY=1E-15, PERMEABILITY_ZX=1, PERMEABILITY_ZZ=2,
-                      PERMEABILITY_YZ=None)
-
-        # create 3d two phase soil without zx permeability, which is not allowed
-        pytest.raises(ValueError, TwoPhaseSoil, ndim=3, DENSITY_SOLID=2650, POROSITY=0.3, BULK_MODULUS_SOLID=1E9,
-                      PERMEABILITY_XX=1E-15, PERMEABILITY_YY=1E-15 , PERMEABILITY_XY=1, PERMEABILITY_ZX=None,
-                      PERMEABILITY_ZZ=3)
-
-        # create 3d euler beam without I22, which is not allowed
-        pytest.raises(ValueError, EulerBeam, ndim=3, DENSITY=1.0, YOUNG_MODULUS=1.0, POISSON_RATIO=0.2, CROSS_AREA=1.0,
-                      I33=1, TORSIONAL_INERTIA=1)
-
-        # create 3d euler beam without torsional inertia, which is not allowed
-        pytest.raises(ValueError, EulerBeam, ndim=3, DENSITY=1.0, YOUNG_MODULUS=1.0, POISSON_RATIO=0.2, CROSS_AREA=1.0,
-                      I33=1, I22=1)
-
-
 
     def test_write_structural_material_to_json(self):
         """
@@ -152,7 +115,7 @@ class TestKratosIO:
         all_materials = [beam_material, spring_damper_material, nodal_concentrated_material]
 
         # write json file
-        kratos_io = KratosIO(ndim=ndim)
+        kratos_io = KratosMaterialIO(ndim=ndim)
         kratos_io.write_material_parameters_json(all_materials, "test_write_structural_MaterialParameters.json")
 
         # read generated json file and expected json file
@@ -161,46 +124,3 @@ class TestKratosIO:
 
         # compare json files using custom dictionary comparison
         TestUtils.assert_dictionary_almost_equal(written_material_parameters_json, expected_material_parameters_json)
-
-    def test_create_load_process_dictionary(self):
-        """
-        Test the creation of the load process dictionary for the
-        ProjectParameters.json file
-        """
-        # define load(s) parameters
-        # point load
-        point_load_parameters = PointLoad(
-            active=[True, False, True], value=[1000, 0, 0]
-        )
-
-        # moving (point) load
-        moving_point_load_parameters = MovingLoad(
-            origin=[0.0, 1.0, 2.0],
-            load=[0.0, -10.0, 0.0],
-            direction=[1.0, 0.0, -1.0],
-            velocity=5.0,
-            offset=3.0
-        )
-
-        # create Load objects and store in the list
-        point_load = Load(name="test_name", load_parameters=point_load_parameters)
-
-        moving_point_load = Load(
-            name="test_name_moving", load_parameters=moving_point_load_parameters
-        )
-
-        all_loads = [point_load, moving_point_load]
-
-        # write dictionary for the load(s)
-        kratos_io = KratosIO(ndim=2)
-        test_dictionary = kratos_io.create_loads_process_dictionary(all_loads)
-
-        # load expected dictionary from the json
-        expected_load_parameters_json = json.load(
-            open("tests/test_data/expected_load_parameters.json")
-        )
-
-        # assert the objects to be equal
-        TestUtils.assert_dictionary_almost_equal(
-            test_dictionary, expected_load_parameters_json
-        )
