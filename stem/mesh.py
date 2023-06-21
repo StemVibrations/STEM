@@ -2,9 +2,8 @@ from typing import Dict, List, Tuple, Union, Any
 
 import numpy as np
 import numpy.typing as npt
-#from gmsh_utils.gmsh_IO import GmshIO
 
-from stem.kratos_IO import KratosIO
+from stem.IO.kratos_IO import KratosIO
 
 class Node:
     """
@@ -123,7 +122,7 @@ class Mesh:
         nodes, elements = self.prepare_data_for_kratos(mesh_data)
 
         kratos_io = KratosIO(self.ndim)
-        kratos_io.write_mesh_to_mdpa(nodes, elements, filename)
+        kratos_io.write_mesh_to_mdpa(filename)
 
 
 
