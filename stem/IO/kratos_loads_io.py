@@ -1,9 +1,6 @@
 from typing import Dict, List, Any
 from copy import deepcopy
 
-import numpy as np
-
-
 from stem.load import Load, PointLoad, MovingLoad
 
 
