@@ -124,7 +124,7 @@ class LinearSolverSettingsABC(ABC):
     pass
 
 @dataclass
-class amgcl(LinearSolverSettingsABC):
+class Amgcl(LinearSolverSettingsABC):
     """
     Class containing information about the amgcl linear solver settings
     """
