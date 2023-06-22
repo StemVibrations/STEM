@@ -1,6 +1,6 @@
 import numpy as np
 
-from stem.kratos_IO import KratosIO
+from stem.IO.kratos_IO import KratosIO
 
 
 class Point:
