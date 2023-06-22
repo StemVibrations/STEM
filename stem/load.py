@@ -38,9 +38,6 @@ class LineLoad(LoadParametersABC):
     active: List[bool] = field(default_factory=lambda: [True, True, True])
     value: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
 
-    def __int__(self):
-        raise NotImplementedError
-
 
 @dataclass
 class SurfaceLoad(LoadParametersABC):
@@ -53,9 +50,6 @@ class SurfaceLoad(LoadParametersABC):
     """
     active: List[bool] = field(default_factory=lambda: [True, True, True])
     value: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
-
-    def __int__(self):
-        raise NotImplementedError
 
 
 @dataclass
