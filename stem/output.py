@@ -1,16 +1,8 @@
-import warnings
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from pathlib import Path
-from typing import List, Dict, Any
 from enum import Enum
-
-DEFAULT_GID_FLAGS = {
-    "WriteDeformedMeshFlag": "WriteUndeformed",
-    "WriteConditionsFlag": "WriteElementsOnly",
-    "GiDPostMode": "GiD_PostBinary",
-    "MultiFileFlag": "SingleFile",
-}
+from pathlib import Path
+from typing import List, Optional
 
 
 class NodalOutput(Enum):
@@ -56,21 +48,6 @@ TENSOR_OUTPUTS = [
     "ENGINEERING_STRAIN",
     "CAUCHY_STRESS",
     "TOTAL_STRESS",
-]
-# Nodal results
-nodal_results1 = [NodalOutput.DISPLACEMENT, NodalOutput.TOTAL_DISPLACEMENT]
-nodal_results2 = [NodalOutput.WATER_PRESSURE, NodalOutput.VOLUME_ACCELERATION]
-# gauss point results
-gauss_point_results1 = [
-    GaussPointOutput.VON_MISES_STRESS,
-    GaussPointOutput.FLUID_FLUX_VECTOR,
-    GaussPointOutput.HYDRAULIC_HEAD,
-]
-gauss_point_results2 = [
-    GaussPointOutput.GREEN_LAGRANGE_STRAIN_TENSOR,
-    GaussPointOutput.ENGINEERING_STRAIN_TENSOR,
-    GaussPointOutput.CAUCHY_STRESS_TENSOR,
-    GaussPointOutput.TOTAL_STRESS_TENSOR,
 ]
 
 
@@ -154,35 +131,45 @@ class GiDOutputParameters(OutputParametersABC):
     Class containing the output parameters for GiD output
 
     Attributes:
-        file_label (str):
-        output_control_type (str):
-        output_interval (int):
+        output_interval (float): frequency of the output, either step interval if
+            `output_control_type` is `step` or time interval in seconds if
+            `output_control_type` is `time`.
+        output_control_type (str): type of output control, either `step` or `time`.
+        file_format (str): format of output (`binary`,`ascii` or `hdf5`) for the
+            gid_post_mode flag
+        nodal_results (List[NodalOutput]): list of nodal outputs as defined in
+            NodalOutput.
+        gauss_point_results (List[GaussPointOutput]): list of gauss point outputs as
+            defined in GaussPointOutput.
+        file_label (str): labelling format for the files (`step` or `time`)
+
         body_output (bool):
         node_output (bool):
         skin_output (bool):
         plane_output (List[str]):
-        nodal_results (List[str]):
-        gauss_point_results (List[str]):
         point_data_configuration (List[str]):
-        file_format (str): format of output (gid_post_mode flag)
     """
 
     # general inputs
+    output_interval: float
+    output_control_type: str = "step"
+    file_format: str = "binary"
     nodal_results: List[NodalOutput] = field(default_factory=lambda: [])
     gauss_point_results: List[GaussPointOutput] = field(default_factory=lambda: [])
     # GiD specific inputs
-    file_format: str = "GiD_PostBinary"
     file_label: str = "step"
-    output_control_type: str = "step"
-    output_interval: int = 1
+    # optional
     body_output: bool = True
     node_output: bool = False
     skin_output: bool = False
-    # optional
     plane_output: List[str] = field(default_factory=lambda: [])
     point_data_configuration: List[str] = field(default_factory=lambda: [])
 
     def validate(self):
+        """
+        Validates the gauss point results requested for GiD output.
+        Prints warnings if vector format is requested for tensor output.
+        """
         detect_vector_in_tensor_outputs(requested_outputs=self.gauss_point_results)
 
 
@@ -192,24 +179,32 @@ class VtkOutputParameters(OutputParametersABC):
     Class containing the output parameters for GiD output
 
     Attributes:
-        output_interval (float):
-        file_format (str): file format for VTK, either `binary` or `ascii` are allowed.
-        output_precision (int):
+        output_interval (float): frequency of the output, either step interval if
+            `output_control_type` is `step` or time interval in seconds if
+            `output_control_type` is `time`.
         output_control_type (str): type of output control, either `step` or `time`.
-        nodal_results (List[str]):
-        gauss_point_results (List[str]):
+        file_format (str): file format for VTK, either `binary` or `ascii` are allowed.
+        nodal_results (List[NodalOutput]): list of nodal outputs as defined in
+            NodalOutput.
+        gauss_point_results (List[GaussPointOutput]): list of gauss point outputs as
+            defined in GaussPointOutput.
+        output_precision (int): precision of the output for ascii. Default is 7.
     """
 
-    # VTK specif inputs
-    output_interval: float
-    file_format: str = "binary"
-    output_precision: int = 7
-    output_control_type: str = "step"
     # general inputs
+    output_interval: float
+    output_control_type: str = "step"
+    file_format: str = "binary"
     nodal_results: List[NodalOutput] = field(default_factory=lambda: [])
     gauss_point_results: List[GaussPointOutput] = field(default_factory=lambda: [])
+    # VTK specif inputs
+    output_precision: int = 7
 
     def validate(self):
+        """
+        Validates the gauss point results requested for VTK output.
+        Prints warnings if tensor are asked in output.
+        """
         detect_tensor_outputs(requested_outputs=self.gauss_point_results)
 
 
@@ -219,19 +214,24 @@ class JsonOutputParameters(OutputParametersABC):
     Class containing the output parameters for JSON output
 
     Attributes:
-        nodal_results (List[str]):
-        gauss_point_results (List[str]):
-        time_frequency (float):
-        sub_model_part_name (str):
+        time_frequency (float): time frequency of the output [s].
+        nodal_results (List[NodalOutput]): list of nodal outputs as defined in
+            NodalOutput.
+        gauss_point_results (List[GaussPointOutput]): list of gauss point outputs as
+            defined in GaussPointOutput.
     """
+
     # JSON specif inputs
     time_frequency: float
-    sub_model_part_name: str = ""
     # general inputs
     nodal_results: List[NodalOutput] = field(default_factory=lambda: [])
     gauss_point_results: List[GaussPointOutput] = field(default_factory=lambda: [])
 
     def validate(self):
+        """
+        Validates the gauss point results requested for JSON output.
+        Prints warnings if tensor are asked in output.
+        """
         detect_tensor_outputs(requested_outputs=self.gauss_point_results)
 
 
