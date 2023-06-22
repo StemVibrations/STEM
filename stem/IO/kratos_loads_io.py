@@ -1,7 +1,7 @@
 from typing import Dict, List, Any
 from copy import deepcopy
 
-from stem.load import Load, PointLoad, MovingLoad
+from stem.load import *
 
 
 class KratosLoadsIO:
@@ -42,7 +42,7 @@ class KratosLoadsIO:
             "Parameters": deepcopy(load.load_parameters.__dict__),
         }
 
-        load_dict["Parameters"]["model_part_name"] = f"{self.domain}.{load.name}"
+        load_dict["Parameters"]["model_part_name"] = f"{self.domain}.{load.part_name}"
         load_dict["Parameters"]["variable_name"] = "POINT_LOAD"
         load_dict["Parameters"]["table"] = [0, 0, 0]
 
@@ -67,8 +67,58 @@ class KratosLoadsIO:
             "Parameters": deepcopy(load.load_parameters.__dict__),
         }
 
-        load_dict["Parameters"]["model_part_name"] = f"{self.domain}.{load.name}"
+        load_dict["Parameters"]["model_part_name"] = f"{self.domain}.{load.part_name}"
         load_dict["Parameters"]["variable_name"] = "POINT_LOAD"
+
+        return load_dict
+
+    def __create_line_load_dict(self, load: Load) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the line load parameters
+
+        Args:
+            load (Load): load object
+
+        Returns:
+            Dict[str, Any]: dictionary containing the load parameters
+        """
+
+        # initialize load dictionary
+        load_dict: Dict[str, Any] = {
+            "python_module": "apply_vector_constraint_table_process",
+            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+            "process_name": "ApplyVectorConstraintTableProcess",
+            "Parameters": deepcopy(load.load_parameters.__dict__),
+        }
+
+        load_dict["Parameters"]["model_part_name"] = f"{self.domain}.{load.part_name}"
+        load_dict["Parameters"]["variable_name"] = "LINE_LOAD"
+        load_dict["Parameters"]["table"] = [0, 0, 0]
+
+        return load_dict
+
+    def __create_surface_load_dict(self, load: Load) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the surface load parameters
+
+        Args:
+            load (Load): load object
+
+        Returns:
+            Dict[str, Any]: dictionary containing the load parameters
+        """
+
+        # initialize load dictionary
+        load_dict: Dict[str, Any] = {
+            "python_module": "apply_vector_constraint_table_process",
+            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+            "process_name": "ApplyVectorConstraintTableProcess",
+            "Parameters": deepcopy(load.load_parameters.__dict__),
+        }
+
+        load_dict["Parameters"]["model_part_name"] = f"{self.domain}.{load.part_name}"
+        load_dict["Parameters"]["variable_name"] = "SURFACE_LOAD"
+        load_dict["Parameters"]["table"] = [0, 0, 0]
 
         return load_dict
 
@@ -88,6 +138,10 @@ class KratosLoadsIO:
             return self.__create_point_load_dict(load=load)
         elif isinstance(load.load_parameters, MovingLoad):
             return self.__create_moving_load_dict(load=load)
+        elif isinstance(load.load_parameters, LineLoad):
+            return self.__create_line_load_dict(load=load)
+        elif isinstance(load.load_parameters, SurfaceLoad):
+            return self.__create_surface_load_dict(load=load)
         else:
             raise NotImplementedError
 

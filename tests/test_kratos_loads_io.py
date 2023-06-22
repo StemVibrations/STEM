@@ -2,7 +2,7 @@
 import json
 
 from stem.IO.kratos_loads_io import KratosLoadsIO
-from stem.load import PointLoad, MovingLoad, Load
+from stem.load import *
 
 from tests.utils import TestUtils
 
@@ -18,6 +18,14 @@ class TestKratosLoadsIO:
         point_load_parameters = PointLoad(
             active=[True, False, True], value=[1000, 0, 0]
         )
+        # line load
+        line_load_parameters = LineLoad(
+            active=[False, True, False], value=[0, -300, 0]
+        )
+        # surface load
+        surface_load_parameters = SurfaceLoad(
+            active=[False, False, True], value=[0, 0, 500]
+        )
 
         # moving (point) load
         moving_point_load_parameters = MovingLoad(
@@ -29,13 +37,16 @@ class TestKratosLoadsIO:
         )
 
         # create Load objects and store in the list
-        point_load = Load(name="test_name", load_parameters=point_load_parameters)
+        point_load = Load(part_name="test_name", load_parameters=point_load_parameters)
 
-        moving_point_load = Load(
-            name="test_name_moving", load_parameters=moving_point_load_parameters
-        )
+        line_load = Load(part_name="test_name_line",
+                         load_parameters=line_load_parameters)
+        surface_load = Load(part_name="test_name_surface",
+                            load_parameters=surface_load_parameters)
+        moving_point_load = Load(part_name="test_name_moving",
+                                 load_parameters=moving_point_load_parameters)
 
-        all_loads = [point_load, moving_point_load]
+        all_loads = [point_load, line_load, surface_load, moving_point_load]
 
         # write dictionary for the load(s)
         kratos_io = KratosLoadsIO(domain="PorousDomain")

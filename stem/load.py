@@ -85,18 +85,18 @@ class Load:
     Class containing load information acting on a body part
 
     Attributes:
-        name (str): name of the load
+        part_name (str): name of the load
         load_parameters (LoadParametersABC): class containing load parameters
     """
 
-    def __init__(self, name: str, load_parameters: LoadParametersABC):
+    def __init__(self, part_name: str, load_parameters: LoadParametersABC):
         """
         Constructor of the load class
 
         Args:
-            name (str): name of the load
+            part_name (str): name of the load
             load_parameters (LoadParametersABC): class containing load parameters
         """
 
-        self.name: str = name
+        self.part_name: str = part_name
         self.load_parameters: LoadParametersABC = load_parameters

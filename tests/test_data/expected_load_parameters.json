@@ -11,8 +11,29 @@
                 "value": [1000, 0.0, 0.0],
                 "table": [0, 0, 0]
             }
-        },
-        {
+        }, {
+            "python_module": "apply_vector_constraint_table_process",
+            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+            "process_name": "ApplyVectorConstraintTableProcess",
+            "Parameters": {
+                "model_part_name": "PorousDomain.test_name_line",
+                "variable_name": "LINE_LOAD",
+                "active": [false, true, false],
+                "value": [0.0, -300.0, 0.0],
+                "table": [0, 0, 0]
+            }
+        },  {
+            "python_module": "apply_vector_constraint_table_process",
+            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+            "process_name": "ApplyVectorConstraintTableProcess",
+            "Parameters": {
+                "model_part_name": "PorousDomain.test_name_surface",
+                "variable_name": "SURFACE_LOAD",
+                "active": [false, false, true],
+                "value": [0.0, 0.0, 500.0],
+                "table": [0, 0, 0]
+            }
+        }, {
             "python_module": "set_moving_load_process",
             "kratos_module": "StructuralMechanicsApplication",
             "process_name": "SetMovingLoadProcess",
