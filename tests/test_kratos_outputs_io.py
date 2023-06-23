@@ -124,13 +124,6 @@ class TestKratosOutputsIO:
         kratos_outputs_io = KratosOutputsIO(domain="PorousDomain")
         test_output = kratos_outputs_io.create_output_process_dictionary(all_outputs)
 
-        # json requires to make the directory, then we remove it...
-        for json_process in test_output["processes"]["json_output"]:
-            shutil.rmtree(
-                Path(json_process["Parameters"]["output_file_name"]).parent,
-                ignore_errors=True,
-            )
-
         # load expected dictionary from the json
         expected_load_parameters_json = json.load(
             open("tests/test_data/expected_output_parameters.json")
