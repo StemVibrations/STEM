@@ -1,6 +1,5 @@
 STEM
 ====
-
 STEM is an open-source calculation model that is developed to compute the impact of
 mitigation techniques on railway induced vibrations.
 
@@ -18,9 +17,8 @@ of the track and soil properties.
 The STEM model is based on the finite element method and it is powered by
 `Kratos Multiphysics <https://github.com/KratosMultiphysics/Kratos>`_.
 
-
 User guide
-----------
+==========
 Installation
 ............
 It is recommended to install STEM in a Python virtual environment.
@@ -65,9 +63,8 @@ Alternatively, you can install the requirements manually with the following comm
 
    pip install -r requirements.txt
 
-
 STEM team
----------
+=========
 STEM is a research programme that results from a collaboration between the following partners:
 
 * `ProRail <https://www.prorail.nl>`_
@@ -76,3 +73,11 @@ STEM is a research programme that results from a collaboration between the follo
 * `TU Delft <https://www.tudelft.nl>`_
 
 The :doc:`authors`.
+
+Package documentation
+=====================
+
+The :doc:`stem` documentation.
+
+The :doc:`stem.IO` documentation.
+
