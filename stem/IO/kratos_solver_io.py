@@ -52,9 +52,18 @@ class KratosSolverIO:
                                     "input_filename": problem_name},
                                 "time_stepping": {
                                     "time_step": solver_settings.time_integration.delta_time,
-                                    "max_delta_time": solver_settings.time_integration.max_delta_time_factor}
-
-
+                                    "max_delta_time": solver_settings.time_integration.max_delta_time_factor},
+                                "buffer_size": 2,
+                                "echo_level": 1,
+                                "clear_storage": False,
+                                "compute_reactions": False,
+                                "move_mesh_flag": False,
+                                "reform_dofs_at_each_step": False,
+                                "nodal_smoothing": False,
+                                "block_builder": True,
+                                "rebuild_level": solver_settings.rebuild_level,
+                                "prebuild_dynamics": solver_settings.prebuild_dynamics,
+                                "solution_type": solver_settings.solution_type
                                 }
 
 
