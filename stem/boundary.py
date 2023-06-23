@@ -8,13 +8,15 @@ class BoundaryParametersABC(ABC):
     """
     Abstract base class for boundary parameters
     """
+
     pass
 
+    @property
     @abstractmethod
     def is_constraint(self) -> bool:
         """
         Helping function to determine whether the boundary should be in the list of
-        constraint (True) or in the list of loads (False).
+        constraints (True) or in the list of loads (False).
         Returns:
             bool
         """
@@ -28,15 +30,22 @@ class DisplacementConstraint(BoundaryParametersABC):
 
     Attributes:
         active (List[bool]): Activate/deactivate constraint for each direction.
-        is_fixed (List[bool]): Specify if constraint is fixed.
-        value (List[float]):
+        is_fixed (List[bool]): Specify if constraint is fixed for each direction.
+        value (List[float]): Displacement constraint for direction [m].
     """
 
-    active: List[bool] = field(default_factory=lambda: [True, True, True])
-    is_fixed: List[bool] = field(default_factory=lambda: [True, True, True])
-    value: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+    active: List[bool]
+    is_fixed: List[bool]
+    value: List[float]
 
+    @property
     def is_constraint(self) -> bool:
+        """
+        Determines whether the boundary should be in the list of
+        constraints (True) or in the list of loads (False).
+        Returns:
+            bool
+        """
         return True
 
 
@@ -47,16 +56,24 @@ class RotationConstraint(BoundaryParametersABC):
 
     Attributes:
         active (List[bool]): Activate/deactivate constraint for each direction.
-        is_fixed (List[bool]): Specify if constraint is fixed.
-        value (List[float]):
+        is_fixed (List[bool]): Specify if constraint is fixed around each axis.
+        value (List[float]): Rotation constraint around x, y and axis.
     """
 
-    active: List[bool] = field(default_factory=lambda: [True, True, True])
-    is_fixed: List[bool] = field(default_factory=lambda: [True, True, True])
-    value: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+    active: List[bool]
+    is_fixed: List[bool]
+    value: List[float]
 
+    @property
     def is_constraint(self) -> bool:
+        """
+        Determines whether the boundary should be in the list of
+        constraints (True) or in the list of loads (False).
+        Returns:
+            bool
+        """
         return True
+
 
 @dataclass
 class AbsorbingBoundary(BoundaryParametersABC):
@@ -64,13 +81,23 @@ class AbsorbingBoundary(BoundaryParametersABC):
     Class containing the boundary parameters for a point boundary
 
     Attributes:
-        absorbing_factors (List[float]): Activate/deactivate boundary for each direction.
-        virtual_thickness (float): Entity of the boundary in the 3 directions [N].
+        absorbing_factors (List[float]): Indicated how much of the P-wave
+            and S-wave should be damped from the boundaries and is comprised between
+            0 (no damping) and 1 (full damping).
+        virtual_thickness (float): Entity of the virtual thickness [m].
     """
-    absorbing_factors: List[float] = field(default_factory=lambda: [1.0, 1.0])
-    virtual_thickness: float = 1
 
+    absorbing_factors: List[float]
+    virtual_thickness: float
+
+    @property
     def is_constraint(self) -> bool:
+        """
+        Determines whether the boundary should be in the list of
+        constraints (True) or in the list of loads (False).
+        Returns:
+            bool
+        """
         return False
 
 
