@@ -44,10 +44,20 @@ html_theme_options = {
     'navigation_depth': 2,
     'includehidden': True,
     'titles_only': True,
-    "github_url": "https://github.com/StemVibrations/STEM",
 }
 
 # If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
 html_show_sphinx = False
 # If true, "(C) Copyright ..." is shown in the HTML footer. Default is True.
 html_show_copyright = True
+# If true shows the source link to the rst code
+html_show_sourcelink = False
+
+# Link to the github
+html_context = {
+    "display_github": True,
+    "github_user": "stemVibrations",
+    "github_repo": "STEM",
+    "github_version": "main",
+    "conf_py_path": "/docs/",
+}
