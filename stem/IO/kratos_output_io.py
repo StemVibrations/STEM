@@ -243,8 +243,8 @@ class KratosOutputsIO:
     @staticmethod
     def __get_process_type_for_output(output_parameters: OutputParametersABC) -> str:
         """
-        Creates a dictionary containing the output parameters to produce outputs in vtk
-        format. The format can be visualized e.g., using Paraview.
+        Checks if considered output parameters are `output_process` as for VTK and
+        GiD JSON output types or `process` as for JSON output type.
 
         Args:
             output_parameters (Output): class containing output parameters
@@ -276,7 +276,7 @@ class KratosOutputsIO:
 
         for output in outputs:
             output.output_parameters.validate()
-            key_output, _parameters_output = self.__create_output_dict(output=output)
+            key_output, _parameters_output = self.__create_output_dict(output)
             key_process = KratosOutputsIO.__get_process_type_for_output(
                 output.output_parameters
             )
