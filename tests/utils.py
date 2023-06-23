@@ -1,3 +1,4 @@
+import pprint
 from typing import Dict, Any
 
 import numpy.testing as npt
@@ -25,6 +26,7 @@ class TestUtils:
             elif isinstance(v, str):
                 assert v == actual[k]
             elif isinstance(v, list):
+                assert len(v) == len(actual[k])
                 for v_i, actual_i in zip(v, actual[k]):
                     if isinstance(v_i, dict):
                         TestUtils.assert_dictionary_almost_equal(v_i, actual_i)
