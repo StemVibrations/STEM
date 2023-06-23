@@ -16,7 +16,7 @@ class BoundaryParametersABC(ABC):
     def is_constraint(self) -> bool:
         """
         Helping function to determine whether the boundary should be in the list of
-        constraint (True) or in the list of loads (False).
+        constraints (True) or in the list of loads (False).
         Returns:
             bool
         """
@@ -42,7 +42,7 @@ class DisplacementConstraint(BoundaryParametersABC):
     def is_constraint(self) -> bool:
         """
         Determines whether the boundary should be in the list of
-        constraint (True) or in the list of loads (False).
+        constraints (True) or in the list of loads (False).
         Returns:
             bool
         """
@@ -68,7 +68,7 @@ class RotationConstraint(BoundaryParametersABC):
     def is_constraint(self) -> bool:
         """
         Determines whether the boundary should be in the list of
-        constraint (True) or in the list of loads (False).
+        constraints (True) or in the list of loads (False).
         Returns:
             bool
         """
@@ -94,7 +94,7 @@ class AbsorbingBoundary(BoundaryParametersABC):
     def is_constraint(self) -> bool:
         """
         Determines whether the boundary should be in the list of
-        constraint (True) or in the list of loads (False).
+        constraints (True) or in the list of loads (False).
         Returns:
             bool
         """
