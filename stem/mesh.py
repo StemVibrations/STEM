@@ -1,17 +1,17 @@
 from typing import Dict, List, Tuple, Union, Any
-
 import numpy as np
 import numpy.typing as npt
 
 from stem.IO.kratos_IO import KratosIO
+
 
 class Node:
     """
     Class containing information about a node
 
     Attributes:
-        id (int): node id
-        coordinates (np.array): node coordinates
+        - id (int): node id
+        - coordinates (np.array): node coordinates
 
     """
     def __init__(self, id, coordinates):
@@ -23,9 +23,9 @@ class Element:
     Class containing information about an element
 
     Attributes:
-        id (int): element id
-        element_type (str): element type
-        node_ids (Union[List[int], npt.NDArray[np.int_]]): node ids
+        - id (int): element id
+        - element_type (str): element type
+        - node_ids (Union[List[int], npt.NDArray[np.int_]]): node ids
 
     """
     def __init__(self, id: int, element_type: str, node_ids: Union[List[int], npt.NDArray[np.int_]]):
@@ -39,9 +39,9 @@ class Condition:
     Class containing information about a condition
 
     Attributes:
-        id (int): condition id
-        element_type (str): element type
-        node_ids (Union[List[int], npt.NDArray[np.int_]]): node ids
+        - id (int): condition id
+        - element_type (str): element type
+        - node_ids (Union[List[int], npt.NDArray[np.int_]]): node ids
 
     """
     def __init__(self, id: int, element_type: str, node_ids: Union[List[int], npt.NDArray[np.int_]]):
@@ -55,13 +55,13 @@ class Mesh:
     Class containing information about the mesh
 
     Args:
-        ndim (int): number of dimensions of the mesh
+        - ndim (int): number of dimensions of the mesh
 
     Attributes:
-        ndim (int): number of dimensions of the mesh
-        nodes (np.array or None): node id followed by node coordinates in an array
-        elements (np.array or None): element id followed by connectivities in an array
-        conditions (np.array or None): condition id followed by connectivities in an array
+        - ndim (int): number of dimensions of the mesh
+        - nodes (np.array or None): node id followed by node coordinates in an array
+        - elements (np.array or None): element id followed by connectivities in an array
+        - conditions (np.array or None): condition id followed by connectivities in an array
 
     """
     def __init__(self, ndim: int):
@@ -71,7 +71,6 @@ class Mesh:
         self.elements = None
         self.conditions = None
 
-        pass
 
     @classmethod
     def read_mesh_from_gmsh(cls, mesh_file_name: str) -> None:
@@ -85,13 +84,12 @@ class Mesh:
         Prepares mesh data for Kratos
 
         Args:
-            mesh_data (Dict): dictionary of mesh data
+            - mesh_data (Dict[str, Any]): dictionary of mesh data
 
 
         Returns:
-            nodes (npt.NDArray[np.float64]): node id followed by node coordinates in an array
-            elements (npt.NDArray[np.int_]): element id followed by connectivities in an array
-
+            - nodes (npt.NDArray[np.float64]): node id followed by node coordinates in an array
+            - elements (npt.NDArray[np.int_]): element id followed by connectivities in an array
         """
 
         # create array of nodes where each row is represented by [id, x,y,z]
@@ -107,16 +105,15 @@ class Mesh:
         return nodes, all_elements
 
 
-    def write_mesh_to_kratos_structure(self, mesh_data: Dict[str,Any], filename: str) -> None:
+    def write_mesh_to_kratos_structure(self, mesh_data: Dict[str, Any], filename: str) -> None:
         """
         Writes mesh data to the structure which can be read by Kratos
 
         Args:
-            mesh_data (Dict): dictionary of mesh data
-            filename (str): filename of the kratos mesh file
+            - mesh_data (Dict[str, Any]): dictionary of mesh data
+            - filename (str): filename of the kratos mesh file
 
         Returns:
-            -
         """
 
         nodes, elements = self.prepare_data_for_kratos(mesh_data)

@@ -11,8 +11,7 @@ class KratosMaterialIO:
     Class containing methods to write materials to Kratos
 
     Attributes:
-        ndim (int): number of dimensions of the mesh
-
+        - ndim (int): number of dimensions of the mesh
     """
 
     def __init__(self, ndim: int):
@@ -20,7 +19,7 @@ class KratosMaterialIO:
         Constructor of KratosMaterialIO class
 
         Args:
-            ndim (int): number of dimensions of the mesh
+            - ndim (int): number of dimensions of the mesh
         """
         self.ndim: int = ndim
 
@@ -31,11 +30,10 @@ class KratosMaterialIO:
         keys are moved to the UDSM_NAME and IS_FORTRAN_UDSM keys, as this can be recognized by Kratos.
 
         Args:
-            material (SoilConstitutiveLawABC): soil constitutive law object containing the material parameters for UMAT
+            - material (:class:`stem.soil_material.SoilConstitutiveLawABC`): soil constitutive law object containing the material parameters for UMAT
 
         Returns:
-            Dict[str, Any]: dictionary containing the material parameters
-
+            - Dict[str, Any]: dictionary containing the material parameters
         """
         material_dict: Dict[str, Any] = deepcopy(material.__dict__)
 
@@ -52,11 +50,10 @@ class KratosMaterialIO:
         the UMAT_PARAMETERS key, as this can be recognized by Kratos.
 
         Args:
-            material (SoilConstitutiveLawABC): soil constitutive law object containing the material parameters for UDSM
+            - material (:class:`stem.soil_material.SoilConstitutiveLawABC`): soil constitutive law object containing the material parameters for UDSM
 
         Returns:
-            Dict[str, Any]: dictionary containing the material parameters
-
+            - Dict[str, Any]: dictionary containing the material parameters
         """
         material_dict: Dict[str, Any] = deepcopy(material.__dict__)
 
@@ -72,12 +69,11 @@ class KratosMaterialIO:
         and NODAL_ROTATIONAL_DAMPING_RATIO keys, as this can be recognized by Kratos.
 
         Args:
-            material (StructuralParametersABC): material object containing the material parameters for an elastic
+            - material (:class:`stem.structural_material.StructuralParametersABC`): material object containing the material parameters for an elastic
                 spring damper material
 
         Returns:
-            Dict[str, Any]: dictionary containing the material parameters
-
+            - Dict[str, Any]: dictionary containing the material parameters
         """
 
         material_dict: Dict[str, Any] = deepcopy(material.__dict__)
@@ -94,11 +90,11 @@ class KratosMaterialIO:
         NODAL_DAMPING_COEFFICIENT key is moved to the NODAL_DAMPING_RATIO key, as this can be recognized by Kratos.
 
         Args:
-            material (StructuralParametersABC): material object containing the material parameters for the nodal
+            - material (:class:`stem.structural_material.StructuralParametersABC`): material object containing the material parameters for the nodal
                 concentrated material.
 
         Returns:
-            Dict[str, Any]: dictionary containing the material parameters
+            - Dict[str, Any]: dictionary containing the material parameters
         """
         material_dict: Dict[str, Any] = deepcopy(material.__dict__)
 
@@ -112,12 +108,11 @@ class KratosMaterialIO:
         is set to the correct law for the dimension of the problem.
 
         Args:
-            material (SoilConstitutiveLawABC): soil constitutive law object containing the material parameters for a
+            - material (:class:`stem.soil_material.SoilConstitutiveLawABC`): soil constitutive law object containing the material parameters for a
                 linear elastic soil material
 
         Returns:
-            Dict[str, Any]: dictionary containing the material parameters
-
+            - Dict[str, Any]: dictionary containing the material parameters
         """
 
         # initialize material dictionary
@@ -139,12 +134,11 @@ class KratosMaterialIO:
         the correct law for the dimension of the problem.
 
         Args:
-            material (SoilConstitutiveLawABC): soil constitutive law object containing the material parameters for a
+            - material (:class:`stem.soil_material.SoilConstitutiveLawABC`): soil constitutive law object containing the material parameters for a
                 UMAT soil material
 
         Returns:
-            Dict[str, Any]: dictionary containing the material parameters
-
+            - Dict[str, Any]: dictionary containing the material parameters
         """
 
         # initialize material dictionary
@@ -166,12 +160,11 @@ class KratosMaterialIO:
         the correct law for the dimension of the problem.
 
         Args:
-            material (SoilConstitutiveLawABC): soil constitutive law object containing the material parameters for a
+            - material (:class:`stem.soil_material.SoilConstitutiveLawABC`): soil constitutive law object containing the material parameters for a
                 UDSM soil material
 
         Returns:
-            Dict[str, Any]: dictionary containing the material parameters
-
+            - Dict[str, Any]: dictionary containing the material parameters
         """
 
         # initialize material dictionary
@@ -194,12 +187,10 @@ class KratosMaterialIO:
         and two phase soil. The correct parameters are added to the material dictionary based on the soil type.
 
         Args:
-            variables_dict (Dict[str, Any]): dictionary containing the material parameters
-            soil_parameters (SoilMaterial): soil material object
+            - variables_dict (Dict[str, Any]): dictionary containing the material parameters
+            - soil_parameters (:class:`stem.soil_material.SoilMaterial`): soil material object
 
         Returns:
-            None
-
         """
 
         if isinstance(soil_parameters.soil_formulation, OnePhaseSoil):
@@ -222,11 +213,10 @@ class KratosMaterialIO:
         near zero. Biot coefficient is added if it is not None.
 
         Args:
-            soil_parameters (OnePhaseSoil): one phase soil parameters object.
+            - soil_parameters (:class:`stem.soil_material.OnePhaseSoil`): one phase soil parameters object.
 
         Returns:
-            Dict[str, Any]: dictionary containing the one phase soil parameters
-
+            - Dict[str, Any]: dictionary containing the one phase soil parameters
         """
 
         soil_parameters_dict = deepcopy(soil_parameters.__dict__)
@@ -251,11 +241,10 @@ class KratosMaterialIO:
         account and undrained behaviour is taken into account. Biot coefficient is added if it is not None.
 
         Args:
-            two_phase_soil_parameters (TwoPhaseSoil): Two phase soil parameters object.
+            - two_phase_soil_parameters (:class:`stem.soil_material.TwoPhaseSoil`): Two phase soil parameters object.
 
         Returns:
-            Dict[str, Any]: dictionary containing the two phase soil parameters
-
+            - Dict[str, Any]: dictionary containing the two phase soil parameters
         """
 
         two_phase_soil_parameters_dict = deepcopy(two_phase_soil_parameters.__dict__)
@@ -273,11 +262,10 @@ class KratosMaterialIO:
         the dictionary, lastly the fluid parameters are added to the dictionary.
 
         Args:
-            material (SoilMaterial): Material object.
+            - material (:class:`stem.soil_material.SoilMaterial`): Material object.
 
         Returns:
-            Dict[str, Any]: dictionary containing the soil material parameters
-
+            - Dict[str, Any]: dictionary containing the soil material parameters
         """
 
         soil_material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""},
@@ -314,11 +302,10 @@ class KratosMaterialIO:
         Creates a dictionary containing the euler beam parameters
 
         Args:
-            material: Material object containing the material parameters
+            - material (:class:`stem.structural_material.StructuralParametersABC`): Material object containing the material parameters
 
         Returns:
-            euler_beam_parameters_dict: Dictionary containing the euler beam parameters
-
+            - Dict[str, Any]: Dictionary containing the euler beam parameters
         """
 
         material_parameters_dict = deepcopy(material_parameters.__dict__)
@@ -349,11 +336,10 @@ class KratosMaterialIO:
         on the material type. The material parameters are added to the dictionary.
 
         Args:
-            material (StructuralMaterial): Material object.
+            - material (:class:`stem.structural_material.StructuralMaterial`): Material object.
 
         Returns:
-            Dict[str, Any]: dictionary containing the structural material parameters
-
+            - Dict[str, Any]: dictionary containing the structural material parameters
         """
 
         structural_material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""},
@@ -376,12 +362,12 @@ class KratosMaterialIO:
         Creates a dictionary containing the material parameters
 
         Args:
-            material (Union[SoilMaterial, StructuralMaterial]): material object
-            material_id (int): material id
+            - material (Union[:class:`stem.soil_material.SoilMaterial`,
+                              :class:`stem.soil_material.StructuralMaterial`]): material object
+            - material_id (int): material id
 
         Returns:
-            Dict[str, Any]: dictionary containing the material parameters
-
+            - Dict[str, Any]: dictionary containing the material parameters
         """
 
         # initialize material dictionary
@@ -405,9 +391,9 @@ class KratosMaterialIO:
         Writes the material parameters to a json file
 
         Args:
-            materials (List[Union[SoilMaterial, StructuralMaterial]): list of material objects
-            filename (str): filename of the output json file
-
+            - materials (List[Union[:class:`stem.soil_material.SoilMaterial`, \
+                :class:`stem.structural_material.StructuralMaterial`]]): list of material objects
+            - filename (str): filename of the output json file
         """
 
         materials_dict: Dict[str, Any] = {"properties": []}

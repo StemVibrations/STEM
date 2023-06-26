@@ -48,7 +48,7 @@ To install the package as a developer, you need first to check out the repositor
 
    git clone https://github.com/StemVibrations/STEM.git
 
-To can install the package in editable mode with the following command:
+To install the package in editable mode with the following command:
 
 .. code-block::
 
@@ -78,6 +78,3 @@ Package documentation
 =====================
 
 The :doc:`stem` documentation.
-
-The :doc:`stem.IO` documentation.
-
