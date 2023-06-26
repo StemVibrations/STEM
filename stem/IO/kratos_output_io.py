@@ -118,6 +118,7 @@ class KratosOutputsIO:
         self,
         part_name: str,
         output_dir: Path,
+        output_name: str,
         output_parameters: VtkOutputParameters,
     ) -> Dict[str, Any]:
         """
@@ -127,6 +128,8 @@ class KratosOutputsIO:
         Args:
             - part_name (str): name of the model part
             - output_dir (Path): output path for the VTK output
+            - output_name (str): Name for the output file. This parameter is ignored by
+                VTK output process.
             - output_parameters (:class:`stem.output.VtkOutputParameters`): class containing VTK output
                   parameters
 
