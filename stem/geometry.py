@@ -22,7 +22,7 @@ class Line:
 
     Attributes:
         - id (int or None): A unique identifier for the line.
-        - point_ids (Iterable or None): An Iterable of two integers representing the ids of the points that make up the
+        - point_ids (Iterable or None): An Iterable of two integers representing the ids of the points that make up the\
             line.
     """
 
@@ -37,7 +37,7 @@ class Surface:
 
     Attributes:
         - id (int or None): A unique identifier for the surface.
-        - line_ids (Iterable or None): An Iterable of three or more integers representing the ids of the lines that make
+        - line_ids (Iterable or None): An Iterable of three or more integers representing the ids of the lines that make\
             up the surface.
     """
     def __init__(self):
@@ -51,7 +51,7 @@ class Volume:
 
     Attributes:
         - id (int or None): A unique identifier for the volume.
-        - surface_ids (Iterable or None): An Iterable of four or more integers representing the ids of the surfaces that
+        - surface_ids (Iterable or None): An Iterable of four or more integers representing the ids of the surfaces that\
             make up the volume.
     """
     def __init__(self):
