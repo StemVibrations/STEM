@@ -2,7 +2,7 @@ from typing import Dict, List, Tuple, Union, Any
 import numpy as np
 import numpy.typing as npt
 
-from stem.IO.kratos_IO import KratosIO
+from stem.IO.kratos_io import KratosIO
 
 
 class Node:
