@@ -161,7 +161,7 @@ class SmallStrainUdsmLaw(SoilConstitutiveLawABC):
     Class containing the material parameters for small strain udsm material
 
     Inheritance:
-    - :class:`SoilConstitutiveLawABC`
+        - :class:`SoilConstitutiveLawABC`
 
     Attributes:
         - UDSM_NAME (str): The name and location of the udsm .dll or .so file.

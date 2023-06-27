@@ -37,7 +37,8 @@ class BodyModelPart(ModelPart):
         - elements (np.array or None): element id followed by connectivities in an array
         - conditions (np.array or None): condition id followed by connectivities in an array
         - parameters (dict): dictionary containing the model part parameters
-        - material (Union[:class:`stem.soil_material.SoilMaterial`, :class:`StructuralMaterial`]): material of the model part
+        - material (Union[:class:`stem.soil_material.SoilMaterial`, \
+            :class:`stem.structural_material.StructuralMaterial`]): material of the model part
     """
 
     def __init__(self):
