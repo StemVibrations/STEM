@@ -9,8 +9,7 @@ class KratosLoadsIO:
     Class containing methods to write loads to Kratos
 
     Attributes:
-        domain (str): name of the Kratos domain
-
+        - domain (str): name of the Kratos domain
     """
 
     def __init__(self, domain: str):
@@ -18,8 +17,7 @@ class KratosLoadsIO:
         Constructor of KratosLoadsIO class
 
         Args:
-            domain (str): name of the Kratos domain
-
+            - domain (str): name of the Kratos domain
         """
         self.domain = domain
 
@@ -28,10 +26,10 @@ class KratosLoadsIO:
         Creates a dictionary containing the point load parameters
 
         Args:
-            load (Load): point load object
+            - load (:class:`stem.load.Load`): point load object
 
         Returns:
-            Dict[str, Any]: dictionary containing the load parameters
+            - Dict[str, Any]: dictionary containing the load parameters
         """
 
         # initialize load dictionary
@@ -53,10 +51,10 @@ class KratosLoadsIO:
         Creates a dictionary containing the moving load parameters
 
         Args:
-            load (Load): moving load object
+            - load (:class:`stem.load.Load`): moving load object
 
         Returns:
-            Dict[str, Any]: dictionary containing the load parameters
+            - Dict[str, Any]: dictionary containing the load parameters
         """
 
         # initialize load dictionary
@@ -77,10 +75,10 @@ class KratosLoadsIO:
         Creates a dictionary containing the load parameters
 
         Args:
-            load (Load): load object
+            - load (:class:`stem.load.Load`): load object
 
         Returns:
-            Dict[str, Any]: dictionary containing the load parameters
+            - Dict[str, Any]: dictionary containing the load parameters
         """
 
         # add load parameters to dictionary based on load type.
@@ -97,10 +95,10 @@ class KratosLoadsIO:
         dictionaries to specify the loads for the model)
 
         Args:
-            loads (List[Load]): list of load objects
+            - loads (List[:class:`stem.load.Load`]): list of load objects
 
         Returns:
-            loads_dict (Dict): dictionary of a list containing the load properties
+            - loads_dict (Dict): dictionary of a list containing the load properties
         """
 
         loads_dict: Dict[str, Any] = {"loads_process_list": []}
