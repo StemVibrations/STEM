@@ -25,13 +25,13 @@ class Element:
     Attributes:
         - id (int): element id
         - element_type (str): element type
-        - node_ids (Union[List[int], npt.NDArray[np.int_]]): node ids
+        - node_ids (Union[List[int], npt.NDArray[np.int64]]): node ids
 
     """
-    def __init__(self, id: int, element_type: str, node_ids: Union[List[int], npt.NDArray[np.int_]]):
+    def __init__(self, id: int, element_type: str, node_ids: Union[List[int], npt.NDArray[np.int64]]):
         self.id: int = id
         self.element_type: str = element_type
-        self.node_ids: Union[List[int], npt.NDArray[np.int_]] = node_ids
+        self.node_ids: Union[List[int], npt.NDArray[np.int64]] = node_ids
 
 
 class Condition:
@@ -41,13 +41,13 @@ class Condition:
     Attributes:
         - id (int): condition id
         - element_type (str): element type
-        - node_ids (Union[List[int], npt.NDArray[np.int_]]): node ids
+        - node_ids (Union[List[int], npt.NDArray[np.int64]]): node ids
 
     """
-    def __init__(self, id: int, element_type: str, node_ids: Union[List[int], npt.NDArray[np.int_]]):
+    def __init__(self, id: int, element_type: str, node_ids: Union[List[int], npt.NDArray[np.int64]]):
         self.id: int = id
         self.element_type: str = element_type
-        self.node_ids: Union[List[int], npt.NDArray[np.int_]] = node_ids
+        self.node_ids: Union[List[int], npt.NDArray[np.int64]] = node_ids
 
 
 class Mesh:
@@ -79,7 +79,7 @@ class Mesh:
         pass
 
     def prepare_data_for_kratos(self, mesh_data: Dict[str, Any]) \
-            -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.int_]]:
+            -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.int64]]:
         """
         Prepares mesh data for Kratos
 
@@ -89,7 +89,7 @@ class Mesh:
 
         Returns:
             - nodes (npt.NDArray[np.float64]): node id followed by node coordinates in an array
-            - elements (npt.NDArray[np.int_]): element id followed by connectivities in an array
+            - elements (npt.NDArray[np.int64]): element id followed by connectivities in an array
         """
 
         # create array of nodes where each row is represented by [id, x,y,z]
