@@ -1,51 +1,53 @@
-{
-    "loads_process_list": [
-        {
-            "python_module": "apply_vector_constraint_table_process",
-            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
-            "process_name": "ApplyVectorConstraintTableProcess",
-            "Parameters": {
-                "model_part_name": "PorousDomain.test_name",
-                "variable_name": "POINT_LOAD",
-                "active": [true, false, true],
-                "value": [1000, 0.0, 0.0],
-                "table": [0, 0, 0]
+{"processes":
+    {
+        "loads_process_list": [
+            {
+                "python_module": "apply_vector_constraint_table_process",
+                "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+                "process_name": "ApplyVectorConstraintTableProcess",
+                "Parameters": {
+                    "model_part_name": "PorousDomain.test_name",
+                    "variable_name": "POINT_LOAD",
+                    "active": [true, false, true],
+                    "value": [1000, 0.0, 0.0],
+                    "table": [0, 0, 0]
+                }
+            }, {
+                "python_module": "apply_vector_constraint_table_process",
+                "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+                "process_name": "ApplyVectorConstraintTableProcess",
+                "Parameters": {
+                    "model_part_name": "PorousDomain.test_name_line",
+                    "variable_name": "LINE_LOAD",
+                    "active": [false, true, false],
+                    "value": [0.0, -300.0, 0.0],
+                    "table": [0, 0, 0]
+                }
+            },  {
+                "python_module": "apply_vector_constraint_table_process",
+                "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+                "process_name": "ApplyVectorConstraintTableProcess",
+                "Parameters": {
+                    "model_part_name": "PorousDomain.test_name_surface",
+                    "variable_name": "SURFACE_LOAD",
+                    "active": [false, false, true],
+                    "value": [0.0, 0.0, 500.0],
+                    "table": [0, 0, 0]
+                }
+            }, {
+                "python_module": "set_moving_load_process",
+                "kratos_module": "StructuralMechanicsApplication",
+                "process_name": "SetMovingLoadProcess",
+                "Parameters": {
+                    "model_part_name": "PorousDomain.test_name_moving",
+                    "variable_name": "POINT_LOAD",
+                    "load": [0.0, -10, 0.0],
+                    "direction": [1.0, 0.0, -1.0],
+                    "velocity": 5.0,
+                    "origin": [0.0, 1.0, 2.0],
+                    "offset": 3.0
+                }
             }
-        }, {
-            "python_module": "apply_vector_constraint_table_process",
-            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
-            "process_name": "ApplyVectorConstraintTableProcess",
-            "Parameters": {
-                "model_part_name": "PorousDomain.test_name_line",
-                "variable_name": "LINE_LOAD",
-                "active": [false, true, false],
-                "value": [0.0, -300.0, 0.0],
-                "table": [0, 0, 0]
-            }
-        },  {
-            "python_module": "apply_vector_constraint_table_process",
-            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
-            "process_name": "ApplyVectorConstraintTableProcess",
-            "Parameters": {
-                "model_part_name": "PorousDomain.test_name_surface",
-                "variable_name": "SURFACE_LOAD",
-                "active": [false, false, true],
-                "value": [0.0, 0.0, 500.0],
-                "table": [0, 0, 0]
-            }
-        }, {
-            "python_module": "set_moving_load_process",
-            "kratos_module": "StructuralMechanicsApplication",
-            "process_name": "SetMovingLoadProcess",
-            "Parameters": {
-                "model_part_name": "PorousDomain.test_name_moving",
-                "variable_name": "POINT_LOAD",
-                "load": [0.0, -10, 0.0],
-                "direction": [1.0, 0.0, -1.0],
-                "velocity": 5.0,
-                "origin": [0.0, 1.0, 2.0],
-                "offset": 3.0
-            }
-        }
-    ]
+        ]
+    }
 }

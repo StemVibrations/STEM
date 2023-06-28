@@ -21,6 +21,8 @@ class KratosMaterialIO:
 
         Args:
             ndim (int): number of dimensions of the mesh
+            # TODO: Provide domain as well, so to be combined with material name.
+               Now is ambiguous.
         """
         self.ndim: int = ndim
 
@@ -413,6 +415,10 @@ class KratosMaterialIO:
         materials_dict: Dict[str, Any] = {"properties": []}
 
         # create material dictionary for each material and assign a unique material id
+        # TODO: assign it to the SoilMaterial and StructuraMaterial objects. Now this
+        #  cannot be linked to geometry because is only created in the json file,
+        #  but not returned as variable to be accessed!
+        # TODO: add the output_dir as well (see Output.py and kratos_output_io.py).
         material_id = 1
         for material in materials:
             materials_dict["properties"].append(self.__create_material_dict(material, material_id))

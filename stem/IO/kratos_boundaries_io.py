@@ -131,7 +131,7 @@ class KratosBoundariesIO:
 
     def create_dictionaries_for_boundaries(
         self, boundaries: List[Boundary]
-    ) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
+    ) -> Dict[str, Any]:
         """
         Creates a dictionary containing the `constraint_process_list` (list of
         dictionaries to specify the constraints for the model) and a list of
@@ -141,20 +141,21 @@ class KratosBoundariesIO:
             boundaries (List[Boundary]): list of boundary objects.
 
         Returns:
-            constraints_dict (Dict[str, Any]): dictionary of a list containing the
-                constraints acting on the model.
-            load_boundaries (List[Dict[str, Any]]): dictionary of a list
-                containing the non-constraint (load) boundaries of the model.
+            processes_dict (Dict[str, Any]): dictionary of processes concerning
+                boundaries, both constraints and non-constraint (i.e.,
+                loads) acting on the model.
         """
 
-        constraints_dict: Dict[str, Any] = {"constraints_process_list": []}
-        load_boundaries: List[Dict[str, Any]] = []
+        processes_dict: Dict[str, Any] = {
+            "processes": {"constraints_process_list": [], "loads_process_list": []}
+        }
 
         for boundary in boundaries:
             boundary_dict = self.__create_boundary_dict(boundary)
             if boundary.boundary_parameters.is_constraint:
-                constraints_dict["constraints_process_list"].append(boundary_dict)
+                kk = "constraints_process_list"
             else:
-                load_boundaries.append(boundary_dict)
+                kk = "loads_process_list"
+            processes_dict["processes"][kk].append(boundary_dict)
 
-        return constraints_dict, load_boundaries
+        return processes_dict

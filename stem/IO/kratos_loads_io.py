@@ -157,9 +157,11 @@ class KratosLoadsIO:
             loads_dict (Dict): dictionary of a list containing the load properties
         """
 
-        loads_dict: Dict[str, Any] = {"loads_process_list": []}
+        loads_dict: Dict[str, Any] = {"processes": {"loads_process_list": []}}
 
         for load in loads:
-            loads_dict["loads_process_list"].append(self.__create_load_dict(load))
+            loads_dict["processes"]["loads_process_list"].append(
+                self.__create_load_dict(load)
+            )
 
         return loads_dict

@@ -57,14 +57,13 @@ class TestKratosBoundariesIO:
 
         # write dictionary for the output(s)
         kratos_io = KratosBoundariesIO(domain="PorousDomain")
-        (
-            test_constraint_dictionary,
-            test_absorbing_bound_list
-        ) = kratos_io.create_dictionaries_for_boundaries(all_outputs)
+        test_boundaries_dict = kratos_io.create_dictionaries_for_boundaries(
+            all_outputs
+        )
 
         # nest the json into the process dictionary, as it should!
-        test_constraint_dictionary["loads_process_list"] = test_absorbing_bound_list
-        test_dictionary = {"processes": test_constraint_dictionary}
+        # test_constraint_dictionary["loads_process_list"] = test_absorbing_bound_list
+        # test_dictionary = {"processes": test_constraint_dictionary}
         # load expected dictionary from the json
         expected_load_parameters_json = json.load(
             open("tests/test_data/expected_boundary_conditions_parameters.json")
@@ -72,5 +71,5 @@ class TestKratosBoundariesIO:
 
         # assert the objects to be equal
         TestUtils.assert_dictionary_almost_equal(
-            test_dictionary, expected_load_parameters_json
+            test_boundaries_dict, expected_load_parameters_json
         )
