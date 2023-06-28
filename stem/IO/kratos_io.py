@@ -28,6 +28,9 @@ class KratosIO:
         outputs_io (:class:`stem.io.kratos_loads_io.KratosOutputsIO`): The outputs IO
             object.
 
+        - ndim (int): The number of dimensions of the problem.
+        - loads_io (:class:`stem.IO.kratos_loads_io.KratosLoadsIO`): The loads IO object.
+        - material_io (:class:`stem.IO.kratos_material_io.KratosMaterialIO`): The material IO object.
     """
 
     def __init__(self, ndim: int):
@@ -35,7 +38,7 @@ class KratosIO:
         Constructor of KratosIO class
 
         Args:
-            ndim: The number of dimensions of the problem.
+            - ndim: The number of dimensions of the problem.
         """
 
         self.ndim = ndim
@@ -86,3 +89,32 @@ class KratosIO:
 
     def __write_solver_settings(self):
         pass
+
+    def __write_output_processes(self):
+        pass
+
+    def __write_input_processes(self):
+        pass
+
+    def __write_constraints(self):
+        pass
+
+    def __write_loads(self):
+        pass
+
+    def write_project_parameters_json(self, filename: str):
+        """
+        Writes project parameters to json file
+
+        Args:
+            filename (str): filename of json file
+
+        """
+
+        self.__write_problem_data()
+        self.__write_solver_settings()
+        self.__write_output_processes()
+        self.__write_input_processes()
+        self.__write_constraints()
+        self.__write_loads()
+        # todo write Projectparameters.json

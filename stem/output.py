@@ -6,6 +6,9 @@ from typing import List, Optional
 
 
 class NodalOutput(Enum):
+    """
+    Enum class for variables at the nodes
+    """
     DISPLACEMENT = 1
     DISPLACEMENT_X = 11
     DISPLACEMENT_Y = 12
@@ -30,6 +33,9 @@ class NodalOutput(Enum):
 
 
 class GaussPointOutput(Enum):
+    """
+    Enum class for variables at the Gauss Point
+    """
     VON_MISES_STRESS = 1
     FLUID_FLUX_VECTOR = 2
     HYDRAULIC_HEAD = 3
@@ -56,7 +62,7 @@ def detect_vector_in_tensor_outputs(requested_outputs: List[GaussPointOutput]):
     Detects whether gauss point outputs are requested and warns the user
 
     Args:
-        requested_outputs (List[st]): list of requested outputs (gauss point)
+        - requested_outputs (List[:class:`GaussPointOutput`]): list of requested outputs (gauss point)
     """
     if len(requested_outputs) > 0:
         detected_tensor_outputs = []
@@ -77,15 +83,12 @@ def detect_vector_in_tensor_outputs(requested_outputs: List[GaussPointOutput]):
             print(_msg)
 
 
-# define out
-
-
 def detect_tensor_outputs(requested_outputs: List[GaussPointOutput]):
     """
     Detects whether gauss point outputs are requested and warns the user
 
     Args:
-        requested_outputs (List[st]): list of requested outputs (gauss point)
+        - requested_outputs (List[:class:`GaussPointOutput`]): list of requested outputs (gauss point)
     """
     if len(requested_outputs) > 0:
         detected_tensor_outputs = []
@@ -110,9 +113,6 @@ def detect_tensor_outputs(requested_outputs: List[GaussPointOutput]):
 class OutputParametersABC(ABC):
     """
     Abstract class for the definition of user output parameters (GiD, VTK, json).
-
-    Attributes:
-        -
     """
 
     pass
@@ -130,24 +130,23 @@ class GiDOutputParameters(OutputParametersABC):
     """
     Class containing the output parameters for GiD output
 
-    Attributes:
-        output_interval (float): frequency of the output, either step interval if
-            `output_control_type` is `step` or time interval in seconds if
-            `output_control_type` is `time`.
-        output_control_type (str): type of output control, either `step` or `time`.
-        file_format (str): format of output (`binary`,`ascii` or `hdf5`) for the
-            gid_post_mode flag
-        nodal_results (List[NodalOutput]): list of nodal outputs as defined in
-            NodalOutput.
-        gauss_point_results (List[GaussPointOutput]): list of gauss point outputs as
-            defined in GaussPointOutput.
-        file_label (str): labelling format for the files (`step` or `time`)
+    Inheritance:
+        - :class:`OutputParametersABC`
 
-        body_output (bool):
-        node_output (bool):
-        skin_output (bool):
-        plane_output (List[str]):
-        point_data_configuration (List[str]):
+    Attributes:
+        - output_interval (float): frequency of the output, either step interval if\
+              `output_control_type` is `step` or time interval in seconds if\
+              `output_control_type` is `time`.
+        - output_control_type (str): type of output control, either `step` or `time`.
+        - file_format (str): format of output (`binary`,`ascii` or `hdf5`) for the gid_post_mode flag
+        - nodal_results (List[:class:`NodalOutput`]): list of nodal outputs as defined in :class:`NodalOutput`.
+        - gauss_point_results (List[:class:`GaussPointOutput`]): list of gauss point outputs as defined in :class:`GaussPointOutput`.
+        - file_label (str): labelling format for the files (`step` or `time`)
+        - body_output (bool):
+        - node_output (bool):
+        - skin_output (bool):
+        - plane_output (List[str]):
+        - point_data_configuration (List[str]):
     """
 
     # general inputs
@@ -178,17 +177,19 @@ class VtkOutputParameters(OutputParametersABC):
     """
     Class containing the output parameters for GiD output
 
+    Inheritance:
+        - :class:`OutputParametersABC`
+
     Attributes:
-        output_interval (float): frequency of the output, either step interval if
-            `output_control_type` is `step` or time interval in seconds if
-            `output_control_type` is `time`.
-        output_control_type (str): type of output control, either `step` or `time`.
-        file_format (str): file format for VTK, either `binary` or `ascii` are allowed.
-        nodal_results (List[NodalOutput]): list of nodal outputs as defined in
-            NodalOutput.
-        gauss_point_results (List[GaussPointOutput]): list of gauss point outputs as
-            defined in GaussPointOutput.
-        output_precision (int): precision of the output for ascii. Default is 7.
+        - output_interval (float): frequency of the output, either step interval if \
+              `output_control_type` is `step` or time interval in seconds if \
+              `output_control_type` is `time`.
+        - output_control_type (str): type of output control, either `step` or `time`.
+        - file_format (str): file format for VTK, either `binary` or `ascii` are allowed.
+        - nodal_results (List[:class:`NodalOutput`]): list of nodal outputs as defined in :class:`NodalOutput`.
+        - gauss_point_results (List[:class:`GaussPointOutput`]): list of gauss point outputs as \
+              defined in :class:`GaussPointOutput`.
+          output_precision (int): precision of the output for ascii. Default is 7.
     """
 
     # general inputs
@@ -213,12 +214,14 @@ class JsonOutputParameters(OutputParametersABC):
     """
     Class containing the output parameters for JSON output
 
+    Inheritance:
+        - :class:`OutputParametersABC`
+
     Attributes:
-        time_frequency (float): time frequency of the output [s].
-        nodal_results (List[NodalOutput]): list of nodal outputs as defined in
-            NodalOutput.
-        gauss_point_results (List[GaussPointOutput]): list of gauss point outputs as
-            defined in GaussPointOutput.
+        - time_frequency (float): time frequency of the output [s].
+        - nodal_results (List[:class:`NodalOutput`]): list of nodal outputs as defined in :class:`NodalOutput`.
+        - gauss_point_results (List[:class:`GaussPointOutput`]): list of gauss point outputs as \
+              defined in :class:`GaussPointOutput`.
     """
 
     # JSON specif inputs
@@ -240,22 +243,18 @@ class Output:
     Class containing output information for postprocessing
 
     Attributes:
-        part_name (str): name of the model part
-        output_dir (str): Optional input. output directory for the relative or
-            absolute path to the output file. The path will be created if it does
-            not exist yet. If not specified, the files it corrensponds to the workiing
-            directory.
-            example1=`test1` results in the test1 output folder relative to
-                current folder as ".test1"
-            example2=`path1/path2/test2` saves the outputs in
-                current_folder/path1/path2/test2
-            example3=`C:/Documents/yourproject/test3` saves the outputs in
-                `C:/Documents/yourproject/test3`.
-        output_name (str): Optional input. Name for the output file. This parameter is
-            used by GiD and JSON outputs while is ignored in VTK. If the name is not
-            given, the part_name is used instead.
-
-        output_parameters (OutputParametersABC): class containing the output parameters
+        - part_name (str): name of the model part
+        - output_dir (str): Optional input. output directory for the relative or \
+              absolute path to the output file. The path will be created if it does \
+              not exist yet. If not specified, the files it corresponds to the working \
+              directory. \n
+              example1='test1' results in the test1 output folder relative to current folder as '.test1'\
+              example2='path1/path2/test2' saves the outputs in 'current_folder/path1/path2/test2' \
+              example3='C:/Documents/yourproject/test3' saves the outputs in 'C:/Documents/yourproject/test3'.
+        - output_name (str): Optional input. Name for the output file. This parameter is \
+              used by GiD and JSON outputs while is ignored in VTK. If the name is not \
+              given, the part_name is used instead.
+        - output_parameters (:class:`OutputParametersABC`): class containing the output parameters
     """
 
     def __init__(
@@ -269,10 +268,10 @@ class Output:
         Constructor of the output process class
 
         Args:
-            part_name (str): name of the model part
-            output_name (str): name for the output file
-            output_dir (str): path to the output files
-            output_parameters (OutputParametersABC): class containing output parameters
+            - part_name (str): name of the model part
+            - output_name (str): name for the output file
+            - output_dir (str): path to the output files
+            - output_parameters (:class:`OutputParametersABC`): class containing output parameters
         """
 
         self.output_name: str = output_name

@@ -28,6 +28,9 @@ class DisplacementConstraint(BoundaryParametersABC):
     """
     Class containing the boundary parameters for displacement constraint
 
+    Inheritance:
+        - :class:`BoundaryParametersABC`
+
     Attributes:
         active (List[bool]): Activate/deactivate constraint for each direction.
         is_fixed (List[bool]): Specify if constraint is fixed for each direction.
@@ -54,6 +57,9 @@ class RotationConstraint(BoundaryParametersABC):
     """
     Class containing the boundary parameters for rotation constraint
 
+    Inheritance:
+        - :class:`BoundaryParametersABC`
+
     Attributes:
         active (List[bool]): Activate/deactivate constraint for each direction.
         is_fixed (List[bool]): Specify if constraint is fixed around each axis.
@@ -70,7 +76,7 @@ class RotationConstraint(BoundaryParametersABC):
         Determines whether the boundary should be in the list of
         constraints (True) or in the list of loads (False).
         Returns:
-            bool
+            - bool
         """
         return True
 
@@ -80,11 +86,14 @@ class AbsorbingBoundary(BoundaryParametersABC):
     """
     Class containing the boundary parameters for a point boundary
 
+    Inheritance:
+        - :class:`BoundaryParametersABC`
+
     Attributes:
-        absorbing_factors (List[float]): Indicated how much of the P-wave
+        - absorbing_factors (List[float]): Indicated how much of the P-wave
             and S-wave should be damped from the boundaries and is comprised between
             0 (no damping) and 1 (full damping).
-        virtual_thickness (float): Entity of the virtual thickness [m].
+        - virtual_thickness (float): Entity of the virtual thickness [m].
     """
 
     absorbing_factors: List[float]
@@ -96,7 +105,7 @@ class AbsorbingBoundary(BoundaryParametersABC):
         Determines whether the boundary should be in the list of
         constraints (True) or in the list of loads (False).
         Returns:
-            bool
+            - bool
         """
         return False
 
@@ -106,8 +115,9 @@ class Boundary:
     Class containing boundary information acting on a body part
 
     Attributes:
-        part_name (str): name of the boundary
-        boundary_parameters (BoundaryParametersABC): class containing boundary parameters
+        - part_name (str): name of the boundary
+        - boundary_parameters (:class:`BoundaryParametersABC`): class containing boundary
+            parameters
     """
 
     def __init__(self, part_name: str, boundary_parameters: BoundaryParametersABC):
@@ -115,8 +125,9 @@ class Boundary:
         Constructor of the boundary class
 
         Args:
-            part_name (str): name of the boundary
-            boundary_parameters (BoundaryParametersABC): class containing boundary parameters
+            - part_name (str): name of the boundary
+            - boundary_parameters (:class:`BoundaryParametersABC`): class containing boundary
+                parameters
         """
 
         self.part_name: str = part_name

@@ -9,7 +9,7 @@ class KratosBoundariesIO:
     Class containing methods to write boundary conditions to Kratos
 
     Attributes:
-        domain (str): name of the Kratos domain
+        - domain (str): name of the Kratos domain
 
     """
 
@@ -18,7 +18,7 @@ class KratosBoundariesIO:
         Constructor of KratosBoundariesIO class
 
         Args:
-            domain (str): name of the Kratos domain
+            - domain (str): name of the Kratos domain
 
         """
         self.domain = domain
@@ -30,11 +30,12 @@ class KratosBoundariesIO:
         Creates a dictionary containing the displacement constraint parameters
 
         Args:
-            part_name (str): part name where the boundary condition is applied
-            boundary_parameters (DisplacementConstraint): displacement constraint
+            - part_name (str): part name where the boundary condition is applied
+            - boundary_parameters (:class:`stem.boundary.DisplacementConstraint`):
+             displacement constraint
                 parameters object
         Returns:
-            Dict[str, Any]: dictionary containing the boundary parameters
+            - Dict[str, Any]: dictionary containing the boundary parameters
         """
 
         # initialize boundary dictionary
@@ -58,12 +59,12 @@ class KratosBoundariesIO:
         Creates a dictionary containing the rotation constraint parameters
 
         Args:
-            part_name (str): part name where the boundary condition is applied
-            boundary_parameters (RotationConstraint): rotation constraint parameters
-                object
+            - part_name (str): part name where the boundary condition is applied
+            - boundary_parameters (:class:`stem.boundary.RotationConstraint`):
+                rotation constraint parameters object
 
         Returns:
-            Dict[str, Any]: dictionary containing the boundary parameters
+            - Dict[str, Any]: dictionary containing the boundary parameters
         """
 
         # initialize boundary dictionary
@@ -87,12 +88,12 @@ class KratosBoundariesIO:
         Creates a dictionary containing the absorbing boundary parameters
 
         Args:
-            part_name (str): part name where the boundary condition is applied
-            boundary_parameters (AbsorbingBoundary): absorbing boundary parameters
-                object
+            - part_name (str): part name where the boundary condition is applied
+            - boundary_parameters (:class:`stem.boundary.AbsorbingBoundary`):
+                absorbing boundary parameters object
 
         Returns:
-            Dict[str, Any]: dictionary containing the boundary parameters
+            - Dict[str, Any]: dictionary containing the boundary parameters
         """
 
         # initialize boundary dictionary
@@ -112,10 +113,10 @@ class KratosBoundariesIO:
         Creates a dictionary containing the boundary parameters
 
         Args:
-            boundary (Load): boundary object
+            - boundary (:class:`stem.boundary.Boundary`): boundary object
 
         Returns:
-            Dict[str, Any]: dictionary containing the boundary parameters
+            - Dict[str, Any]: dictionary containing the boundary parameters
         """
 
         # add boundary parameters to dictionary based on boundary type.
@@ -138,7 +139,8 @@ class KratosBoundariesIO:
         dictionaries for the absorbing boundaries to be given to `load_process_list`.
 
         Args:
-            boundaries (List[Boundary]): list of boundary objects.
+            boundaries (List[:class:`stem.boundary.Boundary`]): list of
+            boundary objects.
 
         Returns:
             processes_dict (Dict[str, Any]): dictionary of processes concerning

@@ -106,6 +106,11 @@ class ModelPart:
     like excavation.
 
     Attributes:
+        - name (str): name of the model part
+        - nodes (np.array or None): node id followed by node coordinates in an array
+        - elements (np.array or None): element id followed by connectivities in an array
+        - conditions (np.array or None): condition id followed by connectivities in an array
+        - parameters (dict): dictionary containing the model part parameters
         name (str): name of the model part
         nodes (Iterable[Node]): node id followed by node coordinates in an array
         elements (Iterable[Element]): element id followed by connectivities in an array
@@ -163,14 +168,21 @@ class BodyModelPart(ModelPart):
     This class contains model parts which are part of the body, e.g. a soil layer or track components.
     # TODO: later change to Iterable[Node], Iterable[Element] etc. ...
 
-    Attributes:
-        name (str): name of the model part
-        nodes (Iterable[int]): node id followed by node coordinates in an array
-        elements (Iterable[int]): element id followed by connectivities in an array
-        conditions (Iterable[int]): condition id followed by connectivities in an array
-        parameters (dict): dictionary containing the model part parameters
-        material (Union[SoilMaterial, StructuralMaterial]): material of the model part
+    Inheritance:
+    - :class:`ModelPart`
 
+    Attributes:
+        - name (str): name of the model part
+        - nodes (np.array or None): node id followed by node coordinates in an array
+        - elements (np.array or None): element id followed by connectivities in an array
+        - conditions (np.array or None): condition id followed by connectivities in an array
+        - parameters (dict): dictionary containing the model part parameters
+        - material (Union[:class:`stem.soil_material.SoilMaterial`, \
+            :class:`stem.structural_material.StructuralMaterial`]): material of the model part
+
+        nodes (Iterable[Node]): node id followed by node coordinates in an array
+        elements (Iterable[Element]): element id followed by connectivities in an array
+        conditions (Iterable[Condition]): condition id followed by connectivities in an
     """
 
     material: Optional[Union[SoilMaterial, StructuralMaterial]] = None
@@ -264,7 +276,7 @@ def write_property_block(
 
 def write_set_block(geo_set: GeometrySet, ind: int, fmt_id: str = "{:d}"):
     """
-    Helping function to write the a geometry set (elements or conditions) as mdpa
+    Helping function to write a geometry set (elements or conditions) as mdpa
     format for Kratos.
 
     Args:
