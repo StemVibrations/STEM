@@ -22,8 +22,7 @@ class KratosOutputsIO:
     Class containing methods to write outputs to Kratos
 
     Attributes:
-        domain (str): name of the Kratos domain
-
+        - domain (str): name of the Kratos domain
     """
 
     def __init__(self, domain: str):
@@ -31,8 +30,7 @@ class KratosOutputsIO:
         Constructor of KratosOutputsIO class
 
         Args:
-            domain (str): name of the Kratos domain
-
+            - domain (str): name of the Kratos domain
         """
         self.domain = domain
 
@@ -48,14 +46,14 @@ class KratosOutputsIO:
         format. To visualize the outputs, the software GiD is required.
 
         Args:
-            part_name (str): name of the model part
-            output_dir (Path): output path for the GiD output
-            output_name (str): Name for the output file.
-            output_parameters (GiDOutputParameters): class containing GiD output
-                parameters
+            - part_name (str): name of the model part
+            - output_dir (Path): output path for the GiD output
+            - output_name (str): Name for the output file.
+            - output_parameters (:class:`stem.output.GiDOutputParameters`): class containing GiD output
+                  parameters
 
         Returns:
-            Dict[str, Any]: dictionary containing the output parameters in Kratos format
+            - Dict[str, Any]: dictionary containing the output parameters in Kratos format
         """
 
         if output_name is None or output_name == "":
@@ -128,15 +126,15 @@ class KratosOutputsIO:
         format. The format can be visualized e.g., using Paraview.
 
         Args:
-            part_name (str): name of the model part
-            output_dir (Path): output path for the VTK output
-            output_name (str): Name for the output file. This parameter is ignored by
+            - part_name (str): name of the model part
+            - output_dir (Path): output path for the VTK output
+            - output_name (str): Name for the output file. This parameter is ignored by
                 VTK output process.
-            output_parameters (VtkOutputParameters): class containing VTK output
-                parameters
+            - output_parameters (:class:`stem.output.VtkOutputParameters`): class containing VTK output
+                  parameters
 
         Returns:
-            Dict[str, Any]: dictionary containing the output parameters in Kratos format
+            - Dict[str, Any]: dictionary containing the output parameters in Kratos format
         """
 
         _output_path = output_dir
@@ -179,15 +177,15 @@ class KratosOutputsIO:
         JSON format.
 
         Args:
-            part_name (str): name of the model part
-            output_dir (Path): output path for the VTK output
-            output_name (str): Name for the output file. If not needed, the name is
-                taken as the part_name.
-            output_parameters (JsonOutputParameters): class containing JSON output
-                parameters
+            - part_name (str): name of the model part
+            - output_dir (Path): output path for the VTK output
+            - output_name (str): Name for the output file. If not needed, the name is
+                  taken as the part_name.
+            - output_parameters (:class:`stem.output.JsonOutputParameters`): class containing JSON output
+                  parameters
 
         Returns:
-            Dict[str, Any]: dictionary containing the output parameters in Kratos format
+            - Dict[str, Any]: dictionary containing the output parameters in Kratos format
         """
 
         if output_name is None or output_name == "":
@@ -224,11 +222,11 @@ class KratosOutputsIO:
         Allowed format are GiD, VTK and JSON.
 
         Args:
-            output (Output): output process object
+            - output (:class:`stem.output.Output`): output process object
 
         Returns:
-            str: string specifying the format of the output
-            Dict[str, Any]: dictionary containing the output parameters
+            - str: string specifying the format of the output
+            - Dict[str, Any]: dictionary containing the output parameters
         """
         # add output keys and parameters to dictionary based on output process type.
         if isinstance(output.output_parameters, GiDOutputParameters):
@@ -247,10 +245,10 @@ class KratosOutputsIO:
         GiD JSON output types or `process` as for JSON output type.
 
         Args:
-            output_parameters (Output): class containing output parameters
+            - output_parameters (:class:`stem.output.Output`): class containing output parameters
 
         Returns:
-            str
+            - Output dictionary key: string specifying the location of the output definition
         """
 
         if isinstance(output_parameters, (VtkOutputParameters, GiDOutputParameters)):
@@ -263,14 +261,13 @@ class KratosOutputsIO:
         output to request Kratos and the type of output ('GiD', 'VTK', 'JSON')
 
         Args:
-            outputs (List[Output]): list of output process objects
+            - outputs (List[:class:`stem.output.Output`]): list of output process objects
 
         Returns:
-            output_dict (Dict[str, Any]): dictionary containing two other dictionary
-                for output properties:
-                - the first containing the "output_process" dictionary.
-                - the second containing the "processes" dictionary, which includes JSON
-                  outputs.
+            - output_dict (Dict[str, Any]): dictionary containing two other dictionary \
+                                            for output properties: \n
+                                            - the first containing the "output_process" dictionary.
+                                            - the second containing the "processes" dictionary, which includes JSON outputs.
         """
         output_dict: Dict[str, Any] = {"output_processes": {}, "processes": {}}
 

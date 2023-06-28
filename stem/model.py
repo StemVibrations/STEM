@@ -8,10 +8,10 @@ class Model:
     A class to represent the main model.
 
     Attributes:
-        project_parameters (dict): A dictionary containing the project parameters.
-        solver (Solver): The solver used to solve the problem.
-        body_model_parts (list): A list containing the body model parts.
-        process_model_parts (list): A list containing the process model parts.
+        - project_parameters (dict): A dictionary containing the project parameters.
+        - solver (Solver): The solver used to solve the problem.
+        - body_model_parts (list): A list containing the body model parts.
+        - process_model_parts (list): A list containing the process model parts.
 
     """
     def __init__(self):
