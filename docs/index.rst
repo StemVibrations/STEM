@@ -66,7 +66,7 @@ Alternatively, you can install the requirements manually with the following comm
 
 STEM interface definitions
 ==========================
-STEM has two interface definitions to interact with the model, and allow the extension of the model and the use
+STEM has interface definitions to interact with the model, and allow the extension of the model and the use
 of different train and material models:
    * :ref:`uvec`
    * :ref:`umat`
