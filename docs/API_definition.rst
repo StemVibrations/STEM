@@ -1,12 +1,14 @@
-API definition
-==============
+Interface definitions
+=====================
 
 .. _uvec:
-User-defined vehicle model (UVEC)
----------------------------------
+
+User-defined vehicle model
+--------------------------
 To be defined.
 
 .. _umat:
+
 User-defined soil models
 ------------------------
 STEM supports two types of user-defined soil models:
