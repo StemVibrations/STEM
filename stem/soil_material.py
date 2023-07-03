@@ -234,7 +234,7 @@ class SoilMaterial:
     Class containing the parameters for a soil material
 
     Attributes:
-        - name (str): The name of the material.
+        - name (str): The name to describe the soil material.
         - soil_formulation (:class:`SoilFormulationParametersABC`): The soil formulation parameters.
         - constitutive_law (:class:`SoilConstitutiveLawABC`): The soil constitutive law parameters.
         - retention_parameters (:class:`RetentionLawABC`): The retention law parameters.

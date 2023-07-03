@@ -15,8 +15,7 @@ class BoundaryParametersABC(ABC):
     @abstractmethod
     def is_constraint(self) -> bool:
         """
-        Helping function to determine whether the boundary should be in the list of
-        constraints (True) or in the list of loads (False).
+        Property which indicates if boundary condition is a constraint.
         Returns:
             bool
         """
@@ -44,8 +43,7 @@ class DisplacementConstraint(BoundaryParametersABC):
     @property
     def is_constraint(self) -> bool:
         """
-        Determines whether the boundary should be in the list of
-        constraints (True) or in the list of loads (False).
+        Property which indicates if boundary condition is a constraint. True for DisplacementConstraint.
         Returns:
             bool
         """
@@ -73,10 +71,9 @@ class RotationConstraint(BoundaryParametersABC):
     @property
     def is_constraint(self) -> bool:
         """
-        Determines whether the boundary should be in the list of
-        constraints (True) or in the list of loads (False).
+        Property which indicates if boundary condition is a constraint. True for RotationConstraint.
         Returns:
-            - bool
+            bool
         """
         return True
 
@@ -102,10 +99,9 @@ class AbsorbingBoundary(BoundaryParametersABC):
     @property
     def is_constraint(self) -> bool:
         """
-        Determines whether the boundary should be in the list of
-        constraints (True) or in the list of loads (False).
+        Property which indicates if boundary condition is a constraint. False for AbsorbingBoundary.
         Returns:
-            - bool
+            bool
         """
         return False
 
@@ -116,8 +112,7 @@ class Boundary:
 
     Attributes:
         - part_name (str): name of the boundary
-        - boundary_parameters (:class:`BoundaryParametersABC`): class containing boundary
-            parameters
+        - boundary_parameters (:class:`BoundaryParametersABC`): class containing boundary parameters
     """
 
     def __init__(self, part_name: str, boundary_parameters: BoundaryParametersABC):
@@ -126,8 +121,7 @@ class Boundary:
 
         Args:
             - part_name (str): name of the boundary
-            - boundary_parameters (:class:`BoundaryParametersABC`): class containing boundary
-                parameters
+            - boundary_parameters (:class:`BoundaryParametersABC`): class containing boundary parameters
         """
 
         self.part_name: str = part_name

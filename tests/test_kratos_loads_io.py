@@ -1,9 +1,9 @@
-
 import json
 
-from stem.IO.kratos_loads_io import KratosLoadsIO
+from stem.IO.kratos_io import KratosIO
 from stem.load import *
-
+from stem.model import Model
+from stem.model_part import ModelPart
 from tests.utils import TestUtils
 
 
@@ -13,44 +13,48 @@ class TestKratosLoadsIO:
         Test the creation of the load process dictionary for the
         ProjectParameters.json file
         """
+        # define model parts
+
         # define load(s) parameters
         # point load
-        point_load_parameters = PointLoad(
-            active=[True, False, True], value=[1000, 0, 0]
+        mp_point_load = ModelPart(
+            name="test_name_point",
+            parameters=PointLoad(active=[True, False, True], value=[1000, 0, 0]),
         )
         # line load
-        line_load_parameters = LineLoad(
-            active=[False, True, False], value=[0, -300, 0]
+        mp_line_load = ModelPart(
+            name="test_name_line",
+            parameters=LineLoad(active=[False, True, False], value=[0, -300, 0]),
         )
         # surface load
-        surface_load_parameters = SurfaceLoad(
-            active=[False, False, True], value=[0, 0, 500]
+        mp_surface_load = ModelPart(
+            name="test_name_surface",
+            parameters=SurfaceLoad(active=[False, False, True], value=[0, 0, 500]),
         )
 
         # moving (point) load
-        moving_point_load_parameters = MovingLoad(
-            origin=[0.0, 1.0, 2.0],
-            load=[0.0, -10.0, 0.0],
-            direction=[1.0, 0.0, -1.0],
-            velocity=5.0,
-            offset=3.0
+        mp_moving_point_load = ModelPart(
+            name="test_name_moving",
+            parameters=MovingLoad(
+                origin=[0.0, 1.0, 2.0],
+                load=[0.0, -10.0, 0.0],
+                direction=[1.0, 0.0, -1.0],
+                velocity=5.0,
+                offset=3.0,
+            ),
         )
 
-        # create Load objects and store in the list
-        point_load = Load(part_name="test_name", load_parameters=point_load_parameters)
-
-        line_load = Load(part_name="test_name_line",
-                         load_parameters=line_load_parameters)
-        surface_load = Load(part_name="test_name_surface",
-                            load_parameters=surface_load_parameters)
-        moving_point_load = Load(part_name="test_name_moving",
-                                 load_parameters=moving_point_load_parameters)
-
-        all_loads = [point_load, line_load, surface_load, moving_point_load]
+        # collect model parts together
+        model_parts = [
+            mp_point_load,
+            mp_line_load,
+            mp_surface_load,
+            mp_moving_point_load,
+        ]
 
         # write dictionary for the load(s)
-        kratos_io = KratosLoadsIO(domain="PorousDomain")
-        test_dictionary = kratos_io.create_loads_process_dict(all_loads)
+        kratos_io = KratosIO(ndim=2, model=Model(ndim=2, model_parts=model_parts))
+        test_dictionary = kratos_io.write_project_parameters_json()
 
         # load expected dictionary from the json
         expected_load_parameters_json = json.load(

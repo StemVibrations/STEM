@@ -1,7 +1,5 @@
-import numpy as np
-
-from stem.IO.kratos_io import KratosIO
-
+from dataclasses import dataclass
+from typing import List
 
 class Point:
     """

@@ -6,7 +6,7 @@
                 "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
                 "process_name": "ApplyVectorConstraintTableProcess",
                 "Parameters": {
-                    "model_part_name": "PorousDomain.test_name",
+                    "model_part_name": "PorousDomain.test_name_point",
                     "variable_name": "POINT_LOAD",
                     "active": [true, false, true],
                     "value": [1000, 0.0, 0.0],
@@ -48,6 +48,7 @@
                     "offset": 3.0
                 }
             }
-        ]
+        ],
+        "constraints_process_list": []
     }
 }

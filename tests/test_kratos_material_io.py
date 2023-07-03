@@ -1,6 +1,9 @@
 import json
 
+from stem.IO.kratos_io import KratosIO
 from stem.IO.kratos_material_io import KratosMaterialIO
+from stem.model import Model
+from stem.model_part import BodyModelPart
 from stem.soil_material import *
 from stem.structural_material import *
 
@@ -69,11 +72,17 @@ class TestKratosMaterialIO:
                                                 constitutive_law=two_phase_constitutive_parameters,
                                                 retention_parameters=two_phase_retention_parameters)
 
-        all_materials = [umat_material, udsm_material, two_phase_material_2D, two_phase_material_3D]
+        # assign them to body model parts and create body model parts
+        bmp_umat = BodyModelPart(name="test_umat_material", parameters=umat_material)
+        bmp_udsm = BodyModelPart(name="test_udsm_material", parameters=udsm_material)
+        bmp_two_phase_2D = BodyModelPart(name="test_two_phase_material_2D", parameters=two_phase_material_2D)
+        bmp_two_phase_3D = BodyModelPart(name="test_two_phase_material_3D", parameters=two_phase_material_3D)
+
+        body_model_parts = [bmp_umat, bmp_udsm, bmp_two_phase_2D, bmp_two_phase_3D]
 
         # write json file
-        kratos_io = KratosMaterialIO(ndim=3)
-        kratos_io.write_material_parameters_json(all_materials, "test_write_MaterialParameters.json")
+        kratos_io = KratosIO(ndim=3, model=Model(ndim=ndim, body_model_parts=body_model_parts))
+        kratos_io.write_material_parameters_json("test_write_MaterialParameters.json")
 
         # read generated json file and expected json file
         written_material_parameters_json = json.load(open("test_write_MaterialParameters.json"))
@@ -112,11 +121,17 @@ class TestKratosMaterialIO:
         nodal_concentrated_material = StructuralMaterial(name="test_nodal_concentrated_material",
                                                material_parameters=nodal_concentrated_material_parameters)
 
-        all_materials = [beam_material, spring_damper_material, nodal_concentrated_material]
+        # assign them to body model parts and create body model parts
+        bmp_beam = BodyModelPart(name="test_beam_material", parameters=beam_material)
+        bmp_spring_damper = BodyModelPart(name="test_spring_damper_material", parameters=spring_damper_material)
+        bmp_nodal_concentrated = BodyModelPart(name="test_nodal_concentrated_material",
+                                               parameters=nodal_concentrated_material)
+
+        body_model_parts = [bmp_beam, bmp_spring_damper, bmp_nodal_concentrated]
 
         # write json file
-        kratos_io = KratosMaterialIO(ndim=ndim)
-        kratos_io.write_material_parameters_json(all_materials, "test_write_structural_MaterialParameters.json")
+        kratos_io = KratosIO(ndim=2, model=Model(ndim=2, body_model_parts=body_model_parts))
+        kratos_io.write_material_parameters_json("test_write_structural_MaterialParameters.json")
 
         # read generated json file and expected json file
         written_material_parameters_json = json.load(open("test_write_structural_MaterialParameters.json"))

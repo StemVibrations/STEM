@@ -1,5 +1,5 @@
+from typing import Any, Dict
 from copy import deepcopy
-from typing import List, Dict, Tuple, Any
 
 from stem.boundary import *
 
@@ -24,16 +24,14 @@ class KratosBoundariesIO:
         self.domain = domain
 
     def __create_displacement_constraint_dict(
-        self, part_name: str, boundary_parameters: DisplacementConstraint
+        self, part_name: str, parameters: DisplacementConstraint
     ) -> Dict[str, Any]:
         """
         Creates a dictionary containing the displacement constraint parameters
 
         Args:
             - part_name (str): part name where the boundary condition is applied
-            - boundary_parameters (:class:`stem.boundary.DisplacementConstraint`):
-             displacement constraint
-                parameters object
+            - parameters (:class:`stem.boundary.DisplacementConstraint`): displacement constraint parameters object
         Returns:
             - Dict[str, Any]: dictionary containing the boundary parameters
         """
@@ -43,7 +41,7 @@ class KratosBoundariesIO:
             "python_module": "apply_vector_constraint_table_process",
             "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
             "process_name": "ApplyVectorConstraintTableProcess",
-            "Parameters": deepcopy(boundary_parameters.__dict__),
+            "Parameters": deepcopy(parameters.__dict__),
         }
 
         boundary_dict["Parameters"]["model_part_name"] = f"{self.domain}.{part_name}"
@@ -53,15 +51,14 @@ class KratosBoundariesIO:
         return boundary_dict
 
     def __create_rotation_constraint_dict(
-        self, part_name: str, boundary_parameters: RotationConstraint
+        self, part_name: str, parameters: RotationConstraint
     ) -> Dict[str, Any]:
         """
         Creates a dictionary containing the rotation constraint parameters
 
         Args:
             - part_name (str): part name where the boundary condition is applied
-            - boundary_parameters (:class:`stem.boundary.RotationConstraint`):
-                rotation constraint parameters object
+            - parameters (:class:`stem.boundary.RotationConstraint`): rotation constraint parameters object
 
         Returns:
             - Dict[str, Any]: dictionary containing the boundary parameters
@@ -72,7 +69,7 @@ class KratosBoundariesIO:
             "python_module": "apply_vector_constraint_table_process",
             "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
             "process_name": "ApplyVectorConstraintTableProcess",
-            "Parameters": deepcopy(boundary_parameters.__dict__),
+            "Parameters": deepcopy(parameters.__dict__),
         }
 
         boundary_dict["Parameters"]["model_part_name"] = f"{self.domain}.{part_name}"
@@ -82,15 +79,14 @@ class KratosBoundariesIO:
         return boundary_dict
 
     def __create_absorbing_boundary_dict(
-        self, part_name: str, boundary_parameters: AbsorbingBoundary
+        self, part_name: str, parameters: AbsorbingBoundary
     ) -> Dict[str, Any]:
         """
         Creates a dictionary containing the absorbing boundary parameters
 
         Args:
             - part_name (str): part name where the boundary condition is applied
-            - boundary_parameters (:class:`stem.boundary.AbsorbingBoundary`):
-                absorbing boundary parameters object
+            - parameters (:class:`stem.boundary.AbsorbingBoundary`): absorbing boundary parameters object
 
         Returns:
             - Dict[str, Any]: dictionary containing the boundary parameters
@@ -101,19 +97,22 @@ class KratosBoundariesIO:
             "python_module": "set_absorbing_boundary_parameters_process",
             "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
             "process_name": "SetAbsorbingBoundaryParametersProcess",
-            "Parameters": boundary_parameters.__dict__,
+            "Parameters": parameters.__dict__,
         }
 
         boundary_dict["Parameters"]["model_part_name"] = f"{self.domain}.{part_name}"
 
         return boundary_dict
 
-    def __create_boundary_dict(self, boundary: Boundary) -> Dict[str, Any]:
+    def create_boundary_condition_dict(
+        self, part_name: str, parameters: BoundaryParametersABC
+    ) -> Dict[str, Any] | None:
         """
         Creates a dictionary containing the boundary parameters
 
         Args:
-            - boundary (:class:`stem.boundary.Boundary`): boundary object
+            - part_name (str): part name where the boundary condition is applied
+            - parameters (:class:`stem.boundary.BoundaryParametersABC`): boundary parameters object
 
         Returns:
             - Dict[str, Any]: dictionary containing the boundary parameters
@@ -121,43 +120,11 @@ class KratosBoundariesIO:
 
         # add boundary parameters to dictionary based on boundary type.
 
-        if isinstance(boundary.boundary_parameters, DisplacementConstraint):
-            return self.__create_displacement_constraint_dict(**boundary.__dict__)
-        elif isinstance(boundary.boundary_parameters, RotationConstraint):
-            return self.__create_rotation_constraint_dict(**boundary.__dict__)
-        elif isinstance(boundary.boundary_parameters, AbsorbingBoundary):
-            return self.__create_absorbing_boundary_dict(**boundary.__dict__)
+        if isinstance(parameters, DisplacementConstraint):
+            return self.__create_displacement_constraint_dict(part_name, parameters)
+        elif isinstance(parameters, RotationConstraint):
+            return self.__create_rotation_constraint_dict(part_name, parameters)
+        elif isinstance(parameters, AbsorbingBoundary):
+            return self.__create_absorbing_boundary_dict(part_name, parameters)
         else:
             raise NotImplementedError
-
-    def create_dictionaries_for_boundaries(
-        self, boundaries: List[Boundary]
-    ) -> Dict[str, Any]:
-        """
-        Creates a dictionary containing the `constraint_process_list` (list of
-        dictionaries to specify the constraints for the model) and a list of
-        dictionaries for the absorbing boundaries to be given to `load_process_list`.
-
-        Args:
-            boundaries (List[:class:`stem.boundary.Boundary`]): list of
-            boundary objects.
-
-        Returns:
-            processes_dict (Dict[str, Any]): dictionary of processes concerning
-                boundaries, both constraints and non-constraint (i.e.,
-                loads) acting on the model.
-        """
-
-        processes_dict: Dict[str, Any] = {
-            "processes": {"constraints_process_list": [], "loads_process_list": []}
-        }
-
-        for boundary in boundaries:
-            boundary_dict = self.__create_boundary_dict(boundary)
-            if boundary.boundary_parameters.is_constraint:
-                kk = "constraints_process_list"
-            else:
-                kk = "loads_process_list"
-            processes_dict["processes"][kk].append(boundary_dict)
-
-        return processes_dict

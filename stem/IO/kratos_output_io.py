@@ -1,11 +1,6 @@
-import json
-from copy import deepcopy
 from pathlib import Path
-from typing import List, Dict, Tuple, Union, Any
+from typing import Dict, Tuple, Any, List
 
-import numpy as np
-
-from stem.load import Load, PointLoad, MovingLoad
 from stem.output import (
     Output,
     GiDOutputParameters,
@@ -13,7 +8,6 @@ from stem.output import (
     JsonOutputParameters,
     OutputParametersABC,
 )
-from stem.soil_material import *
 from stem.structural_material import *
 
 
@@ -49,8 +43,7 @@ class KratosOutputsIO:
             - part_name (str): name of the model part
             - output_dir (Path): output path for the GiD output
             - output_name (str): Name for the output file.
-            - output_parameters (:class:`stem.output.GiDOutputParameters`): class containing GiD output
-                  parameters
+            - output_parameters (:class:`stem.output.GiDOutputParameters`): class containing GiD output parameters
 
         Returns:
             - Dict[str, Any]: dictionary containing the output parameters in Kratos format
@@ -130,8 +123,7 @@ class KratosOutputsIO:
             - output_dir (Path): output path for the VTK output
             - output_name (str): Name for the output file. This parameter is ignored by
                 VTK output process.
-            - output_parameters (:class:`stem.output.VtkOutputParameters`): class containing VTK output
-                  parameters
+            - output_parameters (:class:`stem.output.VtkOutputParameters`): class containing VTK output parameters
 
         Returns:
             - Dict[str, Any]: dictionary containing the output parameters in Kratos format
@@ -264,10 +256,9 @@ class KratosOutputsIO:
             - outputs (List[:class:`stem.output.Output`]): list of output process objects
 
         Returns:
-            - output_dict (Dict[str, Any]): dictionary containing two other dictionary \
-                                            for output properties: \n
-                                            - the first containing the "output_process" dictionary.
-                                            - the second containing the "processes" dictionary, which includes JSON outputs.
+            - output_dict (Dict[str, Any]): dictionary containing two other dictionary for output properties:
+                the first containing the "output_process" dictionary.
+                the second containing the "processes" dictionary, which includes JSON outputs.
         """
         output_dict: Dict[str, Any] = {"output_processes": {}, "processes": {}}
 

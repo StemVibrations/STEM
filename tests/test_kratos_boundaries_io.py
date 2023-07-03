@@ -1,14 +1,13 @@
 import json
 
-import pytest
-
-from stem.IO.kratos_boundaries_io import KratosBoundariesIO
+from stem.IO.kratos_io import KratosIO
 from stem.boundary import *
+from stem.model import Model
+from stem.model_part import ModelPart
 from tests.utils import TestUtils
 
 
 class TestKratosBoundariesIO:
-
     def test_create_boundary_condition_dictionaries(self):
         """
         Test the creation of the boundary condition dictionaries for the
@@ -17,53 +16,40 @@ class TestKratosBoundariesIO:
         # define constraints
 
         # Displacements
-        fix_displacements_parameters = DisplacementConstraint(
-            active=[True, True, False],
-            is_fixed=[True, True, False],
-            value=[0.0, 0.0, 0.0],
+        mp_fix_displacements = ModelPart(
+            name="test_displacement_constraint",
+            parameters=DisplacementConstraint(
+                active=[True, True, False],
+                is_fixed=[True, True, False],
+                value=[0.0, 0.0, 0.0],
+            ),
         )
 
         # Rotations
-        fix_rotations_parameters = RotationConstraint(
-            active=[False, False, True],
-            is_fixed=[False, False, True],
-            value=[0.0, 0.0, 0.0],
+        mp_fix_rotations = ModelPart(
+            name="test_rotation_constraint",
+            parameters=RotationConstraint(
+                active=[False, False, True],
+                is_fixed=[False, False, True],
+                value=[0.0, 0.0, 0.0],
+            ),
+        )
+        # Absorbing boundaries
+        mp_absorbing_boundaries = ModelPart(
+            name="abs",
+            parameters=AbsorbingBoundary(
+                absorbing_factors=[1.0, 1.0], virtual_thickness=1000.0
+            ),
         )
 
-        # Boundary conditions
-        absorbing_boundaries_parameters = AbsorbingBoundary(
-            absorbing_factors=[1.0, 1.0], virtual_thickness=1000.0
-        )
+        # collect model parts together
+        model_parts = [mp_fix_displacements, mp_fix_rotations, mp_absorbing_boundaries]
 
-        # create Load objects and store in the list
-        displacement_boundary_condition = Boundary(
-            part_name="test_displacement_constraint",
-            boundary_parameters=fix_displacements_parameters,
-        )
-        rotation_boundary_condition = Boundary(
-            part_name="test_rotation_constraint",
-            boundary_parameters=fix_rotations_parameters,
-        )
+        # write dictionary for the boundary condition(s)
+        kratos_io = KratosIO(ndim=2, model=Model(ndim=2, model_parts=model_parts))
+        # no inputs write no json file!
+        test_boundaries_dict = kratos_io.write_project_parameters_json()
 
-        absorbing_boundary = Boundary(
-            part_name="abs",
-            boundary_parameters=absorbing_boundaries_parameters,
-        )
-        all_outputs = [
-            displacement_boundary_condition,
-            rotation_boundary_condition,
-            absorbing_boundary
-        ]
-
-        # write dictionary for the output(s)
-        kratos_io = KratosBoundariesIO(domain="PorousDomain")
-        test_boundaries_dict = kratos_io.create_dictionaries_for_boundaries(
-            all_outputs
-        )
-
-        # nest the json into the process dictionary, as it should!
-        # test_constraint_dictionary["loads_process_list"] = test_absorbing_bound_list
-        # test_dictionary = {"processes": test_constraint_dictionary}
         # load expected dictionary from the json
         expected_load_parameters_json = json.load(
             open("tests/test_data/expected_boundary_conditions_parameters.json")
