@@ -388,28 +388,3 @@ class KratosMaterialIO:
             material_dict["Material"].update(self.__create_structural_material_dict(material))
 
         return material_dict
-
-    # def write_material_parameters_json(self, materials: List[Union[SoilMaterial, StructuralMaterial]], filename: str):
-    #     """
-    #     Writes the material parameters to a json file
-    #
-    #     Args:
-    #         - materials (List[Union[:class:`stem.soil_material.SoilMaterial`, \
-    #             :class:`stem.structural_material.StructuralMaterial`]]): list of material objects
-    #         - filename (str): filename of the output json file
-    #     """
-    #
-    #     materials_dict: Dict[str, Any] = {"properties": []}
-    #
-    #     # create material dictionary for each material and assign a unique material id
-    #     # TODO: assign id to the SoilMaterial and StructuraMaterial objects. Now this
-    #     #  cannot be linked to geometry because is only created in the json file,
-    #     #  but not returned as variable to be accessed!
-    #     # TODO: add the output_dir as well (see Output.py and kratos_output_io.py).
-    #     material_id = 1
-    #     for material in materials:
-    #         materials_dict["properties"].append(self.__create_material_dict(material, material_id))
-    #         material_id += 1
-    #
-    #     # write material dictionary to json file
-    #     json.dump(materials_dict, open(filename, 'w'), indent=4)

@@ -106,7 +106,7 @@ class KratosBoundariesIO:
 
     def create_boundary_condition_dict(
         self, part_name: str, parameters: BoundaryParametersABC
-    ) -> Dict[str, Any] | None:
+    ) -> Union[Dict[str, Any], None]:
         """
         Creates a dictionary containing the boundary parameters
 

@@ -120,7 +120,7 @@ class KratosLoadsIO:
 
         return load_dict
 
-    def create_load_dict(self, part_name:str, parameters: LoadParametersABC) -> Dict[str, Any] | None:
+    def create_load_dict(self, part_name:str, parameters: LoadParametersABC) -> Union[Dict[str, Any], None]:
         """
         Creates a dictionary containing the load parameters
 
