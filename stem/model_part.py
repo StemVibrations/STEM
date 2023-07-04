@@ -152,7 +152,7 @@ class Part:
 
         return block
 
-    def write_sub_model_blocks(self, ind: int, fmt_id: str = "{:d}") -> List[str]:
+    def write_sub_model_blocks(self, ind: int = 2, fmt_id: str = "{:d}") -> List[str]:
         """
         Writes the sub-model blocks of the given model part or body model part.
 

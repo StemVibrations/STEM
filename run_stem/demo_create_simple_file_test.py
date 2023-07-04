@@ -29,6 +29,10 @@ def gmsh_to_kratos(gmsh_key: str):
 
 # IMPORTANT !!!! SPECIFY LOCAL PATH TO KRATOS...
 pth_kratos = r"C:\Users\morettid\OneDrive - TNO\Desktop\projects\STEM"
+materialfname = "MaterialParameters.json"
+projectfname = "ProjectParameters.json"
+meshfname = "test_simple_dynamic.mdpa"
+
 
 # --------------------------------------------------------------------------------------------------------------------
 sys.path.append(os.path.join(pth_kratos, "KratosGeoMechanics"))
@@ -38,10 +42,6 @@ import KratosMultiphysics.GeoMechanicsApplication
 from KratosMultiphysics.GeoMechanicsApplication.geomechanics_analysis import (
     GeoMechanicsAnalysis,
 )
-# --------------------------------------------------------------------------------------------------------------------
-
-# define properties
-properties = {1: None}
 
 # -------------------------------------------------------------------------------------
 # define nodes, elements and conditions (or get them from gmesh!)
@@ -123,7 +123,7 @@ gauss_point_results = [
 # define output parameters
 gid_output = Output(
     part_name=mp_soil.name,
-    output_dir="dir_test",
+    output_dir="run_stem/test_simple_dynamic",
     output_name="test_gid_output",
     output_parameters=GiDOutputParameters(
         file_format="binary",
@@ -147,34 +147,30 @@ kratos_io = KratosIO(ndim=2, model=model, outputs=[gid_output])
 # -------------------------------------------------------------------------------------
 # MaterialsParameters.json
 # NB this goes first, because it provides ID to the materials
-kratos_io.write_material_parameters_json("MaterialParameters_file.json")
+kratos_io.write_material_parameters_json(materialfname)
 
 # -------------------------------------------------------------------------------------
 # ProjectParameters.json
-kratos_io.write_project_parameters_json(filename="ProjectParameters.json")
+kratos_io.write_project_parameters_json(filename=projectfname)
 
 # read parameters in and write block for solver!
-project_parameters = json.load(open("ProjectParameters.json", "r"))
+project_parameters = json.load(open(projectfname, "r"))
 project_parameters = add_solver_settings_to_project_parameters(
     project_parameters=project_parameters,
-    fname="test_mesh_file",
-    materials_fname="MaterialParameters_file.json",
+    fname=meshfname.split('.')[0],
+    materials_fname=materialfname,
 )
-json.dump(project_parameters, open("ProjectParameters.json", "w"), indent=4)
+json.dump(project_parameters, open(projectfname, "w"), indent=4)
 # -------------------------------------------------------------------------------------
 # Assemble parts together and write input files
 # mdpa file
-kratos_io.write_mesh_to_mdpa(filename="test_mesh_file.mdpa")
+kratos_io.write_mesh_to_mdpa(filename=meshfname)
 
 # -------------------------------------------------------------------------------------
 # run Kratos!!
 
-
-with open("ProjectParameters.json", "r") as parameter_file:
+with open(projectfname, "r") as parameter_file:
     parameters = KratosMultiphysics.Parameters(parameter_file.read())
-
-# TODO: now we get an error because the condition are specified as the whole list a node comprising element 1
-#  however, should only take a list of descending nodes.
 
 model = KratosMultiphysics.Model()
 simulation = GeoMechanicsAnalysis(model, parameters)
