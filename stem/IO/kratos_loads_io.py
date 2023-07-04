@@ -1,5 +1,5 @@
-from typing import Dict, List, Any
 from copy import deepcopy
+from typing import Dict, List, Any, Union
 
 from stem.load import *
 

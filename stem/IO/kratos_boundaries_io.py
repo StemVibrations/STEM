@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Union
 from copy import deepcopy
 
 from stem.boundary import *
