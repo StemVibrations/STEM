@@ -98,6 +98,7 @@ class ResidualConvergenceCriteria(ConvergenceCriteriaABC):
         """
         return "residual_criterion"
 
+
 @dataclass
 class WaterPressureConvergenceCriteria(ConvergenceCriteriaABC):
     """
@@ -259,8 +260,10 @@ class StrategyTypeABC(ABC):
 class NewtonRaphsonStrategy(StrategyTypeABC):
     """
     Class containing information about the Newton-Raphson strategy
+
+    Inheritance:
+        - :class: `StrategyTypeABC`
     """
-    pass
 
     @property
     def strategy_type(self):
@@ -277,6 +280,9 @@ class NewtonRaphsonStrategy(StrategyTypeABC):
 class LineSearchStrategy(StrategyTypeABC):
     """
     Class containing information about the line search strategy
+
+    Inheritance:
+        - :class: `StrategyTypeABC`
 
     Attributes:
         - max_line_search_iterations (int): maximum number of line search iterations. Default value is 10.
@@ -311,6 +317,9 @@ class LineSearchStrategy(StrategyTypeABC):
 class ArcLengthStrategy(StrategyTypeABC):
     """
     Class containing information about the arc length strategy
+
+    Inheritance:
+        - :class: `StrategyTypeABC`
 
     Attributes:
         - desired_iterations (int): This is used to calculate the radius of the next step. Default value is 10.
@@ -356,6 +365,9 @@ class LinearSolverSettingsABC(ABC):
 class Amgcl(LinearSolverSettingsABC):
     """
     Class containing information about the amgcl linear solver settings
+
+    Inheritance:
+        - :class: `LinearSolverSettingsABC`
 
     Attributes:
         - tolerance (float): tolerance for the linear solver convergence criteria. Default value is 1e-6.
