@@ -90,7 +90,7 @@ class WaterBoundary:
 
     """
 
-    def __init__(self, water_boundary: WaterBoundaryParameters, name: str):
+    def __init__(self, water_boundary: Union[InterpolateLineBoundary, PhreaticMultiLineBoundary], name: str):
         """
         Constructor of the class
 
@@ -99,7 +99,7 @@ class WaterBoundary:
 
         """
 
-        self.water_boundary: WaterBoundaryParameters = water_boundary
+        self.water_boundary: Union[InterpolateLineBoundary, PhreaticMultiLineBoundary] = water_boundary
         self.type: str = self.water_boundary.type
         self.name: str = name
 
