@@ -1,5 +1,4 @@
-import json
-from typing import Dict, Union, Any, List
+from typing import Dict, Any, List
 from copy import deepcopy
 
 from stem.solver import *
