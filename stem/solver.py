@@ -42,6 +42,7 @@ class ConvergenceCriteriaABC(ABC):
         """
         raise Exception("abstract class of convergence criteria is called")
 
+
 class DisplacementConvergenceCriteria(ConvergenceCriteriaABC):
     """
     Class containing information about the displacement convergence criteria
@@ -67,6 +68,7 @@ class DisplacementConvergenceCriteria(ConvergenceCriteriaABC):
 
         """
         return "displacement_criterion"
+
 
 class ResidualConvergenceCriteria(ConvergenceCriteriaABC):
     """
@@ -221,6 +223,7 @@ class SolutionType(Enum):
     K0_PROCEDURE = 2
     DYNAMIC = 3
 
+
 @dataclass
 class StrategyTypeABC(ABC):
     """
@@ -372,6 +375,7 @@ class Amgcl(LinearSolverSettingsABC):
         """
         return "amgcl"
 
+
 @dataclass
 class TimeIntegration:
     """
@@ -460,8 +464,8 @@ class Problem:
     Attributes:
         problem_name (str): name of the problem
         number_of_threads (int): number of threads used for the analysis
-        settings (SolverSettings): dictionary containing the solver settings
-        echo_level (int): echo level
+        settings (:class:`SolverSettings`): dictionary containing the solver settings
+        echo_level (int): echo level. Default value is 1.
 
     """
 
@@ -469,9 +473,3 @@ class Problem:
     number_of_threads: int
     settings: SolverSettings
     echo_level: int = 1
-
-
-strategy = NewtonRaphsonStrategy()
-
-tmp=1+1
-
