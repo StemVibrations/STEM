@@ -121,8 +121,8 @@ class KratosSolverIO:
             - Dict[str, Any]: dictionary containing the model part names
         """
         model_parts_dict: Dict[str, Any] = {"problem_domain_sub_model_part_list": [],
-                                                  "processes_sub_model_part_list": [],
-                                                  "body_domain_sub_model_part_list": []}
+                                            "processes_sub_model_part_list": [],
+                                            "body_domain_sub_model_part_list": []}
 
         # loop over model parts and add body model parts and other model parts to the corresponding lists
         for model_part in model_parts:
