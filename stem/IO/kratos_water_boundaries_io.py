@@ -78,10 +78,12 @@ class KratosWaterBoundariesIO:
 
         """
         if water_boundary.water_boundary.type == "Phreatic_Multi_Line":
+            local_water_boundary: PhreaticMultiLineBoundary = water_boundary.water_boundary
             return self.__phreatic_multi_line_boundary_dict(water_boundary.name, water_boundary.water_boundary.type,
-                                                            water_boundary.water_boundary)
+                                                            local_water_boundary)
         elif water_boundary.water_boundary.type == "Interpolate_Line":
+            local_water_boundary: InterpolateLineBoundary = water_boundary.water_boundary
             return self.__interpolate_line_boundary_dict(water_boundary.name, water_boundary.water_boundary.type,
-                                                         water_boundary.water_boundary)
+                                                         local_water_boundary)
         else:
             raise ValueError(f"Unknown water boundary type: {water_boundary.water_boundary.type}")
