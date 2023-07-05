@@ -6,7 +6,6 @@ from stem.solver import *
 from stem.model_part import ModelPart, BodyModelPart
 
 
-
 class KratosSolverIO:
     """
     Class containing methods to write Kratos solver settings
@@ -32,7 +31,7 @@ class KratosSolverIO:
         Creates a dictionary containing the problem data
 
         Args:
-            problem_data (Problem): The problem data
+            problem_data (:class: `stem.solver.Problem`): The problem data
 
         Returns:
             Dict[str, Any]: dictionary containing the problem data
@@ -52,7 +51,7 @@ class KratosSolverIO:
         Creates a dictionary containing the scheme parameters
 
         Args:
-            scheme (SchemeABC): The scheme object
+            scheme (:class: `stem.solver.SchemeABC`): The scheme object
 
         Returns:
             Dict[str, Any]: dictionary containing the scheme parameters
@@ -64,19 +63,19 @@ class KratosSolverIO:
         return scheme_dict
 
     @staticmethod
-    def __create_strategy_dict(strategy: StrategyTypeABC):
+    def __create_strategy_dict(strategy_parameters: StrategyTypeABC):
         """
         Creates a dictionary containing the strategy parameters
 
         Args:
-            strategy (StrategyTypeABC): The strategy object
+            strategy_parameters (:class: `stem.solver.StrategyTypeABC`): The strategy parameters object
 
         Returns:
             Dict[str, Any]: dictionary containing the strategy parameters
         """
 
-        strategy_dict: Dict[str, Any] = {"strategy_type": strategy.strategy_type}
-        strategy_dict.update(deepcopy(strategy.__dict__))
+        strategy_dict: Dict[str, Any] = {"strategy_type": strategy_parameters.strategy_type}
+        strategy_dict.update(deepcopy(strategy_parameters.__dict__))
         return strategy_dict
 
     @staticmethod
@@ -85,7 +84,7 @@ class KratosSolverIO:
         Creates a dictionary containing the convergence criterion parameters
 
         Args:
-            convergence_criterion (ConvergenceCriteriaABC): The convergence criterion object
+            convergence_criterion (:class: `stem.solver.ConvergenceCriteriaABC`): The convergence criterion object
 
         Returns:
             Dict[str, Any]: dictionary containing the convergence criterion parameters
@@ -101,7 +100,7 @@ class KratosSolverIO:
         Creates a dictionary containing the linear solver parameters
 
         Args:
-            linear_solver (LinearSolverSettingsABC): The linear solver object
+            linear_solver (:class: `stem.solver.LinearSolverSettingsABC`): The linear solver object
 
         Returns:
             Dict[str, Any]: dictionary containing the linear solver parameters
@@ -117,7 +116,7 @@ class KratosSolverIO:
         Creates a dictionary containing the model part names
 
         Args:
-            model_parts (List[ModelPart]): The list of model parts
+            model_parts (List[:class: `stem.model_part.ModelPart`]): The list of model parts
 
         Returns:
             Dict[str, Any]: dictionary containing the model part names
@@ -142,10 +141,10 @@ class KratosSolverIO:
         Creates a dictionary containing the solver settings
 
         Args:
-            solver_settings (SolverSettings): The solver settings
+            solver_settings (:class: `stem.solver.SolverSettings`): The solver settings
             mesh_file_name (str): The name of the mesh file
             materials_file_name (str): The name of the materials file
-            model_parts (List[ModelPart]): The list of model parts
+            model_parts (List[:class: `stem.model_part.ModelPart`]): The list of model parts
 
         Returns:
             Dict[str, Any]: dictionary containing the solver settings
@@ -200,10 +199,10 @@ class KratosSolverIO:
         Creates a dictionary containing the solver settings
 
         Args:
-            problem_data (Problem): The problem data
+            problem_data (:class: `stem.solver.Problem`): The problem data
             mesh_file_name (str): The name of the mesh file
             materials_file_name (str): The name of the materials file
-            model_parts (List[ModelPart]): The list of model parts
+            model_parts (List[:class: `stem.model_part.ModelPart`]): The list of model parts
 
         Returns:
             Dict[str, Any]: dictionary containing the problem data and the solver settings
