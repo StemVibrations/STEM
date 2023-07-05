@@ -1,3 +1,4 @@
+import abc
 from dataclasses import dataclass
 from enum import Enum
 from abc import ABC
@@ -12,12 +13,24 @@ class SchemeABC(ABC):
     """
     pass
 
+    @property
+    @abc.abstractmethod
+    def scheme_type(self):
+        return Exception("abstract class of scheme is called")
+
+
 @dataclass
 class ConvergenceCriteriaABC(ABC):
     """
     Abstract class for the convergence criteria
     """
     pass
+
+
+    @property
+    @abc.abstractmethod
+    def convergence_criterion(self):
+        return Exception("abstract class of convergence criteria is called")
 
 class DisplacementConvergenceCriteria(ConvergenceCriteriaABC):
     """
@@ -30,6 +43,10 @@ class DisplacementConvergenceCriteria(ConvergenceCriteriaABC):
     """
     displacement_relative_tolerance: float = 1e-4
     displacement_absolute_tolerance: float = 1e-9
+
+    @property
+    def convergence_criterion(self):
+        return "displacement_criterion"
 
 class ResidualConvergenceCriteria(ConvergenceCriteriaABC):
     """
@@ -44,6 +61,10 @@ class ResidualConvergenceCriteria(ConvergenceCriteriaABC):
     residual_relative_tolerance: float = 1e-4
     residual_absolute_tolerance: float = 1e-9
 
+    @property
+    def convergence_criterion(self):
+        return "residual_criterion"
+
 class WaterPressureConvergenceCriteria(ConvergenceCriteriaABC):
     """
     Class containing information about the water pressure convergence criteria
@@ -56,6 +77,10 @@ class WaterPressureConvergenceCriteria(ConvergenceCriteriaABC):
 
     water_pressure_relative_tolerance: float = 1e-4
     water_pressure_absolute_tolerance: float = 1e-9
+
+    @property
+    def convergence_criterion(self):
+        return "water_pressure_criterion"
 
 class DisplacementAndWaterPressureConvergenceCriteria(ConvergenceCriteriaABC):
     """
@@ -75,6 +100,12 @@ class DisplacementAndWaterPressureConvergenceCriteria(ConvergenceCriteriaABC):
     water_pressure_absolute_tolerance: float = 1e-9
 
 
+    @property
+    def convergence_criterion(self):
+        return "displacement_and_water_pressure_criterion"
+
+
+
 
 @dataclass
 class NewmarkScheme(SchemeABC):
@@ -90,13 +121,20 @@ class NewmarkScheme(SchemeABC):
     newmark_gamma: float = 0.5
     newmark_theta: float = 0.5
 
+    @property
+    def scheme_type(self):
+        return "newmark"
+
 
 @dataclass
 class BackwardEulerScheme(SchemeABC):
     """
     Class containing information about the backward Euler scheme
     """
-    pass
+
+    @property
+    def scheme_type(self):
+        return "backward_euler"
 
 
 class SolutionType(Enum):
@@ -129,12 +167,23 @@ class StrategyTypeABC(ABC):
     min_iterations: int = 6
     number_cycles: int = 100
 
+    @property
+    @abc.abstractmethod
+    def strategy_type(self):
+        raise Exception("abstract class of strategy type is called")
+
+
 @dataclass
 class NewtonRaphsonStrategy(StrategyTypeABC):
     """
     Class containing information about the Newton-Raphson strategy
     """
     pass
+
+
+    @property
+    def strategy_type(self):
+       return "newton_raphson"
 
 @dataclass
 class LineSearchStrategy(StrategyTypeABC):
@@ -159,6 +208,9 @@ class LineSearchStrategy(StrategyTypeABC):
     line_search_tolerance: float = 1e-4
     echo_level: int = 0
 
+    @property
+    def strategy_type(self):
+       return "line_search"
 
 @dataclass
 class ArcLengthStrategy(StrategyTypeABC):
@@ -175,6 +227,9 @@ class ArcLengthStrategy(StrategyTypeABC):
     max_radius_factor: float = 1.0
     min_radius_factor: float = 0.1
 
+    @property
+    def strategy_type(self):
+       return "arc_length"
 
 @dataclass
 class LinearSolverSettingsABC(ABC):
@@ -186,6 +241,11 @@ class LinearSolverSettingsABC(ABC):
 
     """
     scaling: bool = False
+
+    @property
+    @abc.abstractmethod
+    def solver_type(self):
+        raise Exception("abstract class of linear solver settings is called")
 
 
 @dataclass
@@ -200,6 +260,10 @@ class Amgcl(LinearSolverSettingsABC):
     """
     tolerance: float = 1e-6
     max_iterations: int = 1000
+
+    @property
+    def solver_type(self):
+        return "amgcl"
 
 @dataclass
 class TimeIntegration:
@@ -224,6 +288,7 @@ class TimeIntegration:
     reduction_factor: float
     increase_factor: float
     max_delta_time_factor: float = 1000
+
 
 @dataclass
 class SolverSettings:
@@ -294,5 +359,7 @@ class Problem:
     echo_level: int = 1
 
 
+strategy = NewtonRaphsonStrategy()
 
+tmp=1+1
 

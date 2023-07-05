@@ -3,6 +3,7 @@ from typing import Dict, Union, Any, List
 from copy import deepcopy
 
 from stem.solver import *
+from stem.model_part import ModelPart, BodyModelPart
 
 
 
@@ -27,16 +28,56 @@ class KratosSolverIO:
         Returns:
             Dict[str, Any]: dictionary containing the problem data
         """
-        problem_data_dict = {"problem_name": problem_data.problem_name,
-                             "start_time": problem_data.settings.time_integration.start_time,
-                             "end_time": problem_data.settings.time_integration.end_time,
-                             "echo_level": problem_data.echo_level,
-                             "parallel_type": "OpenMP",
-                             "number_of_threads": problem_data.number_of_threads}
+        problem_data_dict: Dict[str, Any] = {"problem_name": problem_data.problem_name,
+                                             "start_time": problem_data.settings.time_integration.start_time,
+                                             "end_time": problem_data.settings.time_integration.end_time,
+                                             "echo_level": problem_data.echo_level,
+                                             "parallel_type": "OpenMP",
+                                             "number_of_threads": problem_data.number_of_threads}
 
         return problem_data_dict
 
-    def __create_solver_settings_dictionary(self, solver_settings: SolverSettings, problem_name:str):
+    def __create_scheme_dict(self, scheme: SchemeABC):
+
+        scheme_dict = {"scheme_type": scheme.scheme_type}
+        scheme_dict.update(deepcopy(scheme.__dict__))
+        return scheme_dict
+
+    def __create_strategy_dict(self, strategy):
+
+        strategy_dict = {"strategy_type": strategy.strategy_type}
+        strategy_dict.update(deepcopy(strategy.__dict__))
+        return strategy_dict
+
+    def __create_convergence_criterion_dict(self, convergence_criterion):
+
+        convergence_criterion_dict = {"convergence_criterion": convergence_criterion.convergence_criterion}
+        convergence_criterion_dict.update(deepcopy(convergence_criterion.__dict__))
+        return convergence_criterion_dict
+
+    def __create_linear_solver_dict(self, linear_solver):
+
+        linear_solver_dict = {"linear_solver_settings": {"solver_type": linear_solver.solver_type}}
+        linear_solver_dict["linear_solver_settings"].update(deepcopy(linear_solver.__dict__))
+        return linear_solver_dict
+
+
+    def __create_model_part_name_dict(self, model_parts: List[ModelPart]):
+        model_parts_dict = {"problem_domain_sub_model_part_list": [],
+                            "processes_sub_model_part_list": [],
+                            "body_domain_sub_model_part_list": []}
+
+        for model_part in model_parts:
+            if isinstance(model_part, BodyModelPart):
+                model_parts_dict["problem_domain_sub_model_part_list"].append(model_part.name)
+                model_parts_dict["body_domain_sub_model_part_list"].append(model_part.name)
+            else:
+                model_parts_dict["processes_sub_model_part_list"].append(model_part.name)
+
+        return model_parts_dict
+
+    def __create_solver_settings_dictionary(self, solver_settings: SolverSettings, mesh_file_name: str,
+                                            materials_file_name: str, model_parts: List[ModelPart]):
         """
         Creates a dictionary containing the solver settings
 
@@ -49,10 +90,15 @@ class KratosSolverIO:
                                 "start_time": solver_settings.time_integration.start_time,
                                 "model_import_settings": {
                                     "input_type": "mdpa",
-                                    "input_filename": problem_name},
+                                    "input_filename": mesh_file_name},
+                                "material_import_settings": {
+                                    "materials_filename": materials_file_name},
                                 "time_stepping": {
                                     "time_step": solver_settings.time_integration.delta_time,
                                     "max_delta_time": solver_settings.time_integration.max_delta_time_factor},
+
+                                "reduction_factor":  solver_settings.time_integration.reduction_factor,
+                                "increase_factor": solver_settings.time_integration.increase_factor,
                                 "buffer_size": 2,
                                 "echo_level": 1,
                                 "clear_storage": False,
@@ -63,20 +109,41 @@ class KratosSolverIO:
                                 "block_builder": True,
                                 "rebuild_level": solver_settings.rebuild_level,
                                 "prebuild_dynamics": solver_settings.prebuild_dynamics,
-                                "solution_type": solver_settings.solution_type
+                                "solution_type": solver_settings.solution_type,
+                                "rayleigh_m": solver_settings.rayleigh_m if solver_settings.rayleigh_m is not None
+                                else 0,
+                                "rayleigh_k": solver_settings.rayleigh_k if solver_settings.rayleigh_k is not None
+                                else 0,
+                                "calculate_reactions": True,
+                                "rotation_dofs": True
                                 }
 
+        # Add the settings of the scheme, strategy, convergence criterion and linear solver
+        solver_settings_dict.update(self.__create_scheme_dict(solver_settings.scheme))
+        solver_settings_dict.update(self.__create_strategy_dict(solver_settings.strategy_type))
+        solver_settings_dict.update(self.__create_convergence_criterion_dict(solver_settings.convergence_criteria))
+        solver_settings_dict.update(self.__create_linear_solver_dict(solver_settings.linear_solver_settings))
+
+        # Add the model part names
+        solver_settings_dict.update(self.__create_model_part_name_dict(model_parts))
 
         return solver_settings_dict
 
-
-    def create_settings_dictionary(self, problem_data: Problem):
+    def create_settings_dictionary(self, problem_data: Problem, mesh_file_name:str, materials_file_name: str,
+                                   model_parts: List[ModelPart]):
         """
         Creates a dictionary containing the solver settings
 
         Returns:
             Dict[str, Any]: dictionary containing the solver settings
         """
-        pass
+
+        settings_dict = {"problem_data": self.__create_problem_data_dictionary(problem_data),
+                         "solver_settings": self.__create_solver_settings_dictionary(problem_data.settings,
+                                                                                     mesh_file_name,
+                                                                                     materials_file_name,
+                                                                                     model_parts)}
+
+        return settings_dict
 
 
