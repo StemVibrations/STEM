@@ -1,5 +1,5 @@
 import abc
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from abc import ABC
 
@@ -451,9 +451,9 @@ class SolverSettings:
 
     convergence_criteria: ConvergenceCriteriaABC
     reset_displacements: bool = False
-    strategy_type: StrategyTypeABC = NewtonRaphsonStrategy()
-    scheme: SchemeABC = NewmarkScheme()
-    linear_solver_settings: LinearSolverSettingsABC = Amgcl()
+    strategy_type: StrategyTypeABC = field(default_factory=NewtonRaphsonStrategy)
+    scheme: SchemeABC = field(default_factory=NewmarkScheme)
+    linear_solver_settings: LinearSolverSettingsABC = field(default_factory=Amgcl)
     rayleigh_m: Optional[float] = None
     rayleigh_k: Optional[float] = None
 
