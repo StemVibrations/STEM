@@ -475,10 +475,10 @@ class Problem:
     Class containing information about the builder, strategy, scheme and linear solver.
 
     Attributes:
-        problem_name (str): name of the problem
-        number_of_threads (int): number of threads used for the analysis
-        settings (:class:`SolverSettings`): dictionary containing the solver settings
-        echo_level (int): echo level. Default value is 1.
+        - problem_name (str): name of the problem
+        - number_of_threads (int): number of threads used for the analysis
+        - settings (:class:`SolverSettings`): dictionary containing the solver settings
+        - echo_level (int): echo level. Default value is 1.
 
     """
 

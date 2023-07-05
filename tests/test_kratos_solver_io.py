@@ -11,7 +11,8 @@ class TestKratosSolverIO:
 
     def test_create_settings_dictionary(self):
         """
-        Test the creation of the settings dictionary
+        Test the creation of the problem data and solver settings dictionary. This test compares a created dictionary
+        with a reference dictionary.
 
         """
 
