@@ -43,6 +43,7 @@ class ConvergenceCriteriaABC(ABC):
         raise Exception("abstract class of convergence criteria is called")
 
 
+@dataclass
 class DisplacementConvergenceCriteria(ConvergenceCriteriaABC):
     """
     Class containing information about the displacement convergence criteria
@@ -69,7 +70,7 @@ class DisplacementConvergenceCriteria(ConvergenceCriteriaABC):
         """
         return "displacement_criterion"
 
-
+@dataclass
 class ResidualConvergenceCriteria(ConvergenceCriteriaABC):
     """
     Class containing information about the residual convergence criteria
@@ -97,7 +98,7 @@ class ResidualConvergenceCriteria(ConvergenceCriteriaABC):
         """
         return "residual_criterion"
 
-
+@dataclass
 class WaterPressureConvergenceCriteria(ConvergenceCriteriaABC):
     """
     Class containing information about the water pressure convergence criteria
@@ -126,7 +127,7 @@ class WaterPressureConvergenceCriteria(ConvergenceCriteriaABC):
         """
         return "water_pressure_criterion"
 
-
+@dataclass
 class DisplacementAndWaterPressureConvergenceCriteria(ConvergenceCriteriaABC):
     """
     Class containing information about the displacement and water pressure convergence criteria
