@@ -159,7 +159,7 @@ class KratosSolverIO:
                                                     "materials_filename": materials_file_name},
                                                 "time_stepping": {
                                                     "time_step": solver_settings.time_integration.delta_time,
-                                                    "max_delta_time": solver_settings.time_integration.max_delta_time_factor},
+                                                    "max_delta_time_factor": solver_settings.time_integration.max_delta_time_factor},
                                                 "reduction_factor":  solver_settings.time_integration.reduction_factor,
                                                 "increase_factor": solver_settings.time_integration.increase_factor,
                                                 "buffer_size": 2,
@@ -172,13 +172,14 @@ class KratosSolverIO:
                                                 "block_builder": True,
                                                 "rebuild_level": solver_settings.rebuild_level,
                                                 "prebuild_dynamics": solver_settings.prebuild_dynamics,
-                                                "solution_type": solver_settings.solution_type,
+                                                "solution_type": solver_settings.solution_type.name.lower(),
                                                 "rayleigh_m": solver_settings.rayleigh_m if solver_settings.rayleigh_m
                                                                                             is not None else 0,
                                                 "rayleigh_k": solver_settings.rayleigh_k if solver_settings.rayleigh_k
                                                                                             is not None else 0,
                                                 "calculate_reactions": True,
-                                                "rotation_dofs": True
+                                                "rotation_dofs": True,
+                                                "reset_displacements": solver_settings.reset_displacements
                                                 }
 
         # Add the settings of the scheme, strategy, convergence criterion and linear solver
