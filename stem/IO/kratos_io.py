@@ -10,10 +10,9 @@ class KratosIO:
     Class containing methods to write mesh and problem data to Kratos
 
     Attributes:
-        ndim (int): The number of dimensions of the problem.
-        loads_io (KratosLoadsIO): The loads IO object.
-        material_io (KratosMaterialIO): The material IO object.
-
+        - ndim (int): The number of dimensions of the problem.
+        - loads_io (:class:`stem.IO.kratos_loads_io.KratosLoadsIO`): The loads IO object.
+        - material_io (:class:`stem.IO.kratos_material_io.KratosMaterialIO`): The material IO object.
     """
 
     def __init__(self, ndim: int):
@@ -21,7 +20,7 @@ class KratosIO:
         Constructor of KratosIO class
 
         Args:
-            ndim: The number of dimensions of the problem.
+            - ndim: The number of dimensions of the problem.
         """
 
         self.ndim = ndim
@@ -33,13 +32,10 @@ class KratosIO:
         Saves mesh data to mdpa file
 
         Args:
-            filename (str): filename of mdpa file
+            - filename (str): filename of mdpa file
 
         Returns:
-            -
-
         """
-
         pass
 
     def __write_problem_data(self):
@@ -65,10 +61,10 @@ class KratosIO:
         Writes project parameters to json file
 
         Args:
-            filename (str): filename of json file
+            - filename (str): filename of json file
 
+        Returns:
         """
-
         self.__write_problem_data()
         self.__write_solver_settings()
         self.__write_output_processes()

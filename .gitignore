@@ -7,3 +7,4 @@ build/*
 STEM.egg-info/*
 .coverage
 .tox/*
+docs/build/*
