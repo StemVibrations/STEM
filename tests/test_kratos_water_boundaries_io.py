@@ -34,7 +34,7 @@ class TestKratosWaterBoundariesIO:
 
         # check the dictionary
         # read the expected dictionary from the json
-        with open("test_data/expected_water_lines.json") as json_file:
+        with open("tests/test_data/expected_water_lines.json") as json_file:
             expected_water_boundary_json = json.load(json_file)
         # compare the dictionaries
         TestUtils.assert_dictionary_almost_equal(expected_water_boundary_json['test'][0],
