@@ -49,7 +49,7 @@ class DisplacementConvergenceCriteria(ConvergenceCriteriaABC):
     Class containing information about the displacement convergence criteria
 
     Inheritance:
-        - :class: `ConvergenceCriteriaABC`
+        - :class:`ConvergenceCriteriaABC`
 
     Attributes:
         - displacement_relative_tolerance (float): The relative tolerance for the displacement. Default value is 1e-4.
@@ -76,7 +76,7 @@ class ResidualConvergenceCriteria(ConvergenceCriteriaABC):
     Class containing information about the residual convergence criteria
 
     Inheritance:
-        - :class: `ConvergenceCriteriaABC`
+        - :class:`ConvergenceCriteriaABC`
 
     Attributes:
         - residual_relative_tolerance (float): The relative tolerance for the residual. Default value is 1e-4.
@@ -105,7 +105,7 @@ class WaterPressureConvergenceCriteria(ConvergenceCriteriaABC):
     Class containing information about the water pressure convergence criteria
 
     Inheritance:
-        - :class: `ConvergenceCriteriaABC`
+        - :class:`ConvergenceCriteriaABC`
 
     Attributes:
         - water_pressure_relative_tolerance (float): The relative tolerance for the water pressure. Default value \
@@ -134,7 +134,7 @@ class DisplacementAndWaterPressureConvergenceCriteria(ConvergenceCriteriaABC):
     Class containing information about the displacement and water pressure convergence criteria
 
     Inheritance:
-        - :class: `ConvergenceCriteriaABC`
+        - :class:`ConvergenceCriteriaABC`
 
     Attributes:
         - displacement_relative_tolerance (float): The relative tolerance for the displacement. Default value is 1e-4.
@@ -168,7 +168,7 @@ class NewmarkScheme(SchemeABC):
     Class containing information about the Newmark scheme
 
     Inheritance:
-        - :class: `SchemeABC`
+        - :class:`SchemeABC`
 
     Attributes:
         - newmark_beta (float): The beta parameter of the Newmark scheme. Default value is 0.25.
@@ -197,7 +197,7 @@ class BackwardEulerScheme(SchemeABC):
     Class containing information about the backward Euler scheme
 
     Inheritance:
-        - :class: `SchemeABC`
+        - :class:`SchemeABC`
     """
 
     @property
@@ -262,7 +262,7 @@ class NewtonRaphsonStrategy(StrategyTypeABC):
     Class containing information about the Newton-Raphson strategy
 
     Inheritance:
-        - :class: `StrategyTypeABC`
+        - :class:`StrategyTypeABC`
     """
 
     @property
@@ -270,7 +270,7 @@ class NewtonRaphsonStrategy(StrategyTypeABC):
         """
         Returns the strategy type name of the Newton-Raphson strategy
 
-        Returns
+        Returns:
             - str: strategy type name
         """
         return "newton_raphson"
@@ -282,7 +282,7 @@ class LineSearchStrategy(StrategyTypeABC):
     Class containing information about the line search strategy
 
     Inheritance:
-        - :class: `StrategyTypeABC`
+        - :class:`StrategyTypeABC`
 
     Attributes:
         - max_line_search_iterations (int): maximum number of line search iterations. Default value is 10.
@@ -307,7 +307,7 @@ class LineSearchStrategy(StrategyTypeABC):
         """
         Returns the strategy type name of the line search strategy
 
-        Returns
+        Returns:
             - str: strategy type name
         """
         return "line_search"
@@ -319,7 +319,7 @@ class ArcLengthStrategy(StrategyTypeABC):
     Class containing information about the arc length strategy
 
     Inheritance:
-        - :class: `StrategyTypeABC`
+        - :class:`StrategyTypeABC`
 
     Attributes:
         - desired_iterations (int): This is used to calculate the radius of the next step. Default value is 10.
@@ -367,7 +367,7 @@ class Amgcl(LinearSolverSettingsABC):
     Class containing information about the amgcl linear solver settings
 
     Inheritance:
-        - :class: `LinearSolverSettingsABC`
+        - :class:`LinearSolverSettingsABC`
 
     Attributes:
         - tolerance (float): tolerance for the linear solver convergence criteria. Default value is 1e-6.
@@ -432,7 +432,7 @@ class SolverSettings:
             :class:`DisplacementConvergenceCriteria`, :class:`ResidualConvergenceCriteria`, \
             :class:`WaterPressureConvergenceCriteria` or :class:`DisplacementAndWaterPressureConvergenceCriteria`
         - reset_displacements (bool): if true, the displacements are reset at the beginning of the phase
-        - strategy_type (:class:`StrategyTypeABC`): strategy type, :class:`NewtonRaphsonStrategy`,
+        - strategy_type (:class:`StrategyTypeABC`): strategy type, :class:`NewtonRaphsonStrategy`, \
             :class:`LineSearchStrategy` or :class:`ArcLengthStrategy`. Default value is :class:`NewtonRaphsonStrategy`.
         - scheme (:class:`SchemeABC`): scheme, :class:`NewmarkSceme` or :class:`BackwardEulerScheme`. Default value \
             is :class:`NewmarkSceme`.
@@ -472,7 +472,7 @@ class SolverSettings:
 @dataclass
 class Problem:
     """
-    Class containing information about the builder, strategy, scheme and linear solver.
+    Class containing information about the problem settings and the solver settings
 
     Attributes:
         - problem_name (str): name of the problem
