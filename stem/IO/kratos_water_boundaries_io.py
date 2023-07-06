@@ -9,7 +9,6 @@ class KratosWaterBoundariesIO:
     def __init__(self, domain: str):
         self.domain = domain
 
-
     @overload
     def __water_boundary_dict(self, name: str, type: str, water_boundary: PhreaticMultiLineBoundary) -> Dict[str, Any]:
         """
@@ -26,7 +25,7 @@ class KratosWaterBoundariesIO:
         ...
 
     @overload
-    def __water_boundary_dict(self, name: str, type: str, water_boundary: InterpolateLineBoundary ) -> Dict[str, Any]:
+    def __water_boundary_dict(self, name: str, type: str, water_boundary: InterpolateLineBoundary) -> Dict[str, Any]:
         """
         Creates a dictionary containing the water boundary parameters for interpolate line boundary
 
