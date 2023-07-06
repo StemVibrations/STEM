@@ -14,7 +14,7 @@ class KratosMaterialIO:
         - ndim (int): number of dimensions of the mesh
     """
 
-    def __init__(self, ndim: int):
+    def __init__(self, ndim: int, domain:str):
         """
         Constructor of KratosMaterialIO class
 
@@ -22,6 +22,7 @@ class KratosMaterialIO:
             - ndim (int): number of dimensions of the mesh
         """
         self.ndim: int = ndim
+        self.domain = domain
 
     @staticmethod
     def __create_umat_material_dict(material: SoilConstitutiveLawABC) -> Dict[str, Any]:
@@ -356,12 +357,13 @@ class KratosMaterialIO:
 
         return structural_material_dict
 
-    def __create_material_dict(self, material: Union[SoilMaterial, StructuralMaterial], material_id: int) -> Dict[
-        str, Any]:
+    def create_material_dict(
+            self, part_name:str, material: Union[SoilMaterial, StructuralMaterial], material_id: int) -> Dict[str, Any]:
         """
         Creates a dictionary containing the material parameters
 
         Args:
+            - part_name (str): name of the body model part for the material
             - material (Union[:class:`stem.soil_material.SoilMaterial`,
                               :class:`stem.soil_material.StructuralMaterial`]): material object
             - material_id (int): material id
@@ -371,7 +373,7 @@ class KratosMaterialIO:
         """
 
         # initialize material dictionary
-        material_dict: Dict[str, Any] = {"model_part_name": material.name,
+        material_dict: Dict[str, Any] = {"model_part_name": f"{self.domain}.{part_name}",
                                          "properties_id": material_id,
                                          "Material": {"constitutive_law": {"name": ""},
                                                       "Variables": {}},
@@ -385,24 +387,3 @@ class KratosMaterialIO:
             material_dict["Material"].update(self.__create_structural_material_dict(material))
 
         return material_dict
-
-    def write_material_parameters_json(self, materials: List[Union[SoilMaterial, StructuralMaterial]], filename: str):
-        """
-        Writes the material parameters to a json file
-
-        Args:
-            - materials (List[Union[:class:`stem.soil_material.SoilMaterial`, \
-                :class:`stem.structural_material.StructuralMaterial`]]): list of material objects
-            - filename (str): filename of the output json file
-        """
-
-        materials_dict: Dict[str, Any] = {"properties": []}
-
-        # create material dictionary for each material and assign a unique material id
-        material_id = 1
-        for material in materials:
-            materials_dict["properties"].append(self.__create_material_dict(material, material_id))
-            material_id += 1
-
-        # write material dictionary to json file
-        json.dump(materials_dict, open(filename, 'w'), indent=4)

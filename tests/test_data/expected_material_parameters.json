@@ -1,7 +1,7 @@
 {
     "properties": [
         {
-            "model_part_name": "test_umat_material",
+            "model_part_name": "PorousDomain.test_umat_material",
             "properties_id": 1,
             "Material": {
                 "constitutive_law": {
@@ -38,7 +38,7 @@
             "Tables": {}
         },
         {
-            "model_part_name": "test_udsm_material",
+            "model_part_name": "PorousDomain.test_udsm_material",
             "properties_id": 2,
             "Material": {
                 "constitutive_law": {
@@ -79,7 +79,7 @@
             "Tables": {}
         },
         {
-            "model_part_name": "test_two_phase_material_2D",
+            "model_part_name": "PorousDomain.test_two_phase_material_2D",
             "properties_id": 3,
             "Material": {
                 "constitutive_law": {
@@ -106,7 +106,7 @@
             "Tables": {}
         },
         {
-            "model_part_name": "test_two_phase_material_3D",
+            "model_part_name": "PorousDomain.test_two_phase_material_3D",
             "properties_id": 4,
             "Material": {
                 "constitutive_law": {

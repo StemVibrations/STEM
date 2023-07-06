@@ -1,4 +1,3 @@
-
 import json
 
 from stem.IO.kratos_loads_io import KratosLoadsIO
@@ -19,9 +18,7 @@ class TestKratosLoadsIO:
             active=[True, False, True], value=[1000, 0, 0]
         )
         # line load
-        line_load_parameters = LineLoad(
-            active=[False, True, False], value=[0, -300, 0]
-        )
+        line_load_parameters = LineLoad(active=[False, True, False], value=[0, -300, 0])
         # surface load
         surface_load_parameters = SurfaceLoad(
             active=[False, False, True], value=[0, 0, 500]
@@ -33,24 +30,32 @@ class TestKratosLoadsIO:
             load=[0.0, -10.0, 0.0],
             direction=[1.0, 0.0, -1.0],
             velocity=5.0,
-            offset=3.0
+            offset=3.0,
         )
 
-        # create Load objects and store in the list
-        point_load = Load(part_name="test_name", load_parameters=point_load_parameters)
+        # collect the part names and parameters into a dictionary
+        # TODO: change later when model part is implemented
+        all_boundary_parameters = {
+            "test_point_load": point_load_parameters,
+            "test_line_load": line_load_parameters,
+            "test_surface_load": surface_load_parameters,
+            "test_moving_load": moving_point_load_parameters,
+        }
 
-        line_load = Load(part_name="test_name_line",
-                         load_parameters=line_load_parameters)
-        surface_load = Load(part_name="test_name_surface",
-                            load_parameters=surface_load_parameters)
-        moving_point_load = Load(part_name="test_name_moving",
-                                 load_parameters=moving_point_load_parameters)
-
-        all_loads = [point_load, line_load, surface_load, moving_point_load]
+        # initialize process dictionary
+        test_dictionary: Dict[str, Any] = {
+            "processes": {"constraints_process_list": [], "loads_process_list": []}
+        }
 
         # write dictionary for the load(s)
-        kratos_io = KratosLoadsIO(domain="PorousDomain")
-        test_dictionary = kratos_io.create_loads_process_dict(all_loads)
+        # TODO: when model part are implemented, generate file through kratos_io
+        boundaries_io = KratosLoadsIO(domain="PorousDomain")
+
+        for part_name, part_parameters in all_boundary_parameters.items():
+            _parameters = boundaries_io.create_load_dict(
+                part_name=part_name, parameters=part_parameters
+            )
+            test_dictionary["processes"]["loads_process_list"].append(_parameters)
 
         # load expected dictionary from the json
         expected_load_parameters_json = json.load(

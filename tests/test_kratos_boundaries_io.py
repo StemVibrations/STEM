@@ -35,36 +35,32 @@ class TestKratosBoundariesIO:
             absorbing_factors=[1.0, 1.0], virtual_thickness=1000.0
         )
 
-        # create Load objects and store in the list
-        displacement_boundary_condition = Boundary(
-            part_name="test_displacement_constraint",
-            boundary_parameters=fix_displacements_parameters,
-        )
-        rotation_boundary_condition = Boundary(
-            part_name="test_rotation_constraint",
-            boundary_parameters=fix_rotations_parameters,
-        )
+        # collect the part names and parameters into a dictionary
+        # TODO: change later when model part is implemented
+        all_boundary_parameters = {
+            "test_displacement_constraint":fix_displacements_parameters,
+            "test_rotation_constraint":fix_rotations_parameters,
+            "test_absorbing_boundaries":absorbing_boundaries_parameters,
+        }
 
-        absorbing_boundary = Boundary(
-            part_name="abs",
-            boundary_parameters=absorbing_boundaries_parameters,
-        )
-        all_outputs = [
-            displacement_boundary_condition,
-            rotation_boundary_condition,
-            absorbing_boundary
-        ]
+        # initialize process dictionary
+        test_dictionary: Dict[str, Any] = {
+            "processes": {"constraints_process_list": [], "loads_process_list": []}
+        }
 
-        # write dictionary for the output(s)
-        kratos_io = KratosBoundariesIO(domain="PorousDomain")
-        (
-            test_constraint_dictionary,
-            test_absorbing_bound_list
-        ) = kratos_io.create_dictionaries_for_boundaries(all_outputs)
+        # write dictionary for the boundary(/ies)
+        boundaries_io = KratosBoundariesIO(domain="PorousDomain")
+        # TODO: when model part are implemented, generate file through kratos_io
 
-        # nest the json into the process dictionary, as it should!
-        test_constraint_dictionary["loads_process_list"] = test_absorbing_bound_list
-        test_dictionary = {"processes": test_constraint_dictionary}
+        for part_name, part_parameters in all_boundary_parameters.items():
+            _parameters = boundaries_io.create_boundary_condition_dict(
+                part_name=part_name, parameters=part_parameters
+            )
+            _key = "loads_process_list"
+            if part_parameters.is_constraint:
+                _key = "constraints_process_list"
+            test_dictionary["processes"][_key].append(_parameters)
+
         # load expected dictionary from the json
         expected_load_parameters_json = json.load(
             open("tests/test_data/expected_boundary_conditions_parameters.json")

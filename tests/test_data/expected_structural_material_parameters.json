@@ -1,7 +1,7 @@
 {
     "properties": [
         {
-            "model_part_name": "test_beam_material",
+            "model_part_name": "PorousDomain.test_beam_material",
             "properties_id": 1,
             "Material": {
                 "constitutive_law": {
@@ -18,7 +18,7 @@
             "Tables": {}
         },
         {
-            "model_part_name": "test_spring_damper_material",
+            "model_part_name": "PorousDomain.test_spring_damper_material",
             "properties_id": 2,
             "Material": {
                 "constitutive_law": {
@@ -35,7 +35,7 @@
 
         },
         {
-            "model_part_name": "test_nodal_concentrated_material",
+            "model_part_name": "PorousDomain.test_nodal_concentrated_material",
             "properties_id": 3,
             "Material": {
                 "constitutive_law": {

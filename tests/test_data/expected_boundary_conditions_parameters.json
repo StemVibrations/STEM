@@ -34,7 +34,7 @@
                 "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
                 "process_name": "SetAbsorbingBoundaryParametersProcess",
                 "Parameters": {
-                    "model_part_name": "PorousDomain.abs",
+                    "model_part_name": "PorousDomain.test_absorbing_boundaries",
                     "absorbing_factors": [1.0, 1.0],
                     "virtual_thickness": 1000.0
                 }

@@ -77,25 +77,3 @@ class MovingLoad(LoadParametersABC):
     velocity: Union[float, str] = 0.0
     origin: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
     offset: float = 0.0
-
-
-class Load:
-    """
-    Class containing load information acting on a body part
-
-    Attributes:
-        - part_name (str): name of the load
-        - load_parameters (:class:`LoadParametersABC`): class containing load parameters
-    """
-
-    def __init__(self, part_name: str, load_parameters: LoadParametersABC):
-        """
-        Constructor of the load class
-
-        Args:
-            - part_name (str): name of the load
-            - load_parameters (:class:`LoadParametersABC`): class containing load parameters
-        """
-
-        self.part_name: str = part_name
-        self.load_parameters: LoadParametersABC = load_parameters
