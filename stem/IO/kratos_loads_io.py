@@ -120,6 +120,31 @@ class KratosLoadsIO:
 
         return load_dict
 
+    def __create_gravity_load_dict(self, part_name:str, parameters: LoadParametersABC) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the surface load parameters
+
+        Args:
+            - model_part (:class:`stem.model_part.ModelPart`): model part (load) object
+
+        Returns:
+            Dict[str, Any]: dictionary containing the load parameters
+        """
+
+        # initialize load dictionary
+        load_dict: Dict[str, Any] = {
+            "python_module": "apply_vector_constraint_table_process",
+            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+            "process_name":  "ApplyVectorConstraintTableProcess",
+            "Parameters": deepcopy(parameters.__dict__),
+        }
+
+        load_dict["Parameters"]["model_part_name"] = f"{self.domain}.{part_name}"
+        load_dict["Parameters"]["variable_name"] = "VOLUME_ACCELERATION"
+        load_dict["Parameters"]["table"] = [0, 0, 0]
+
+        return load_dict
+
     def create_load_dict(self, part_name:str, parameters: LoadParametersABC) -> Union[Dict[str, Any], None]:
         """
         Creates a dictionary containing the load parameters
@@ -140,5 +165,7 @@ class KratosLoadsIO:
             return self.__create_line_load_dict(part_name, parameters)
         elif isinstance(parameters, SurfaceLoad):
             return self.__create_surface_load_dict(part_name, parameters)
+        elif isinstance(parameters, GravityLoad):
+            return self.__create_gravity_load_dict(part_name, parameters)
         else:
             raise NotImplementedError

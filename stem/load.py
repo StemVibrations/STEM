@@ -77,3 +77,20 @@ class MovingLoad(LoadParametersABC):
     velocity: Union[float, str] = 0.0
     origin: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
     offset: float = 0.0
+
+
+@dataclass
+class GravityLoad(LoadParametersABC):
+    """
+    Class containing the load parameters for a gravity loads.
+
+    Inheritance:
+        - :class:`LoadParametersABC`
+
+    Attributes:
+        active (List[bool]): Activate/deactivate load for each direction. Input True only in the vertical direction.
+        value (List[float]): Entity of the gravity acceleration in the 3 directions [m/s^2]. Should be -9.81 only in
+            the vertical direction
+    """
+    active: List[bool] = field(default_factory=lambda: [False, False, False])
+    value: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])

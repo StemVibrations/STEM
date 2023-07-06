@@ -23,7 +23,10 @@ class TestKratosLoadsIO:
         surface_load_parameters = SurfaceLoad(
             active=[False, False, True], value=[0, 0, 500]
         )
-
+        # gravity load
+        gravity_load_parameters = GravityLoad(
+            active=[False, True, False], value=[0, -9.81, 0]
+        )
         # moving (point) load
         moving_point_load_parameters = MovingLoad(
             origin=[0.0, 1.0, 2.0],
@@ -39,7 +42,9 @@ class TestKratosLoadsIO:
             "test_point_load": point_load_parameters,
             "test_line_load": line_load_parameters,
             "test_surface_load": surface_load_parameters,
+            "test_gravity_load" : gravity_load_parameters,
             "test_moving_load": moving_point_load_parameters,
+
         }
 
         # initialize process dictionary
