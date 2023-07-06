@@ -217,13 +217,24 @@ class SolutionType(Enum):
 
     Attributes:
         - QUASI_STATIC (int): quasi-static solution type
-        - K0_PROCEDURE (int): K0-procedure solution type
         - DYNAMIC (int): dynamic solution type
-
     """
     QUASI_STATIC = 1
-    K0_PROCEDURE = 2
-    DYNAMIC = 3
+    DYNAMIC = 2
+
+
+class StressInitialisationType(Enum):
+    """
+    Enum class containing the stress initialisation types
+
+    Attributes:
+        - NONE (int): no stress initialisation
+        - GRAVITY_LOADING (int): gravity loading stress initialisation
+        - K0_PROCEDURE (int): K0-procedure stress initialisation
+    """
+    NONE = 1
+    GRAVITY_LOADING = 2
+    K0_PROCEDURE = 3
 
 
 @dataclass
@@ -435,7 +446,9 @@ class SolverSettings:
     Class containing information about the time integration, builder, strategy, scheme and linear solver.
 
     Attributes:
-        - solution_type (:class:`SolutionType`): solution type, quasi-static, K0-procedure or dynamic
+        - solution_type (:class:`SolutionType`): solution type, QUASI_STATIC or DYNAMIC
+        - stress_initialisation_type (:class:`StressInitialisationType`): stress initialisation type, \
+            NONE, GRAVITY_LOADING OR K0_PROCEDURE
         - time_integration (:class:`TimeIntegration`): time integration settings
         - rebuild_level (int): 2 if the lhs matrix is rebuilt at each non-linear iteration, 1 if the lhs matrix \
             is rebuilt at each time step, 0 if the lhs matrix is only built once
@@ -458,6 +471,7 @@ class SolverSettings:
     """
 
     solution_type: SolutionType
+    stress_initialisation_type: StressInitialisationType
     time_integration: TimeIntegration
 
     rebuild_level: int
@@ -476,11 +490,15 @@ class SolverSettings:
         Post initialization method
 
         Raises:
-            ValueError: if the Rayleigh damping parameters are not provided for dynamic analysis
+            - ValueError: if the Rayleigh damping parameters are not provided for dynamic analysis
+            - ValueError: if the K0-procedure is selected for dynamic analysis
         """
         if self.solution_type == SolutionType.DYNAMIC:
             if self.rayleigh_m is None or self.rayleigh_k is None:
                 raise ValueError("Rayleigh damping parameters must be provided for dynamic analysis")
+
+            if self.stress_initialisation_type == StressInitialisationType.K0_PROCEDURE:
+                raise ValueError("Kratos Multiphysics does not support the K0-procedure for dynamic analysis")
 
 
 @dataclass
