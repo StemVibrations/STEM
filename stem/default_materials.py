@@ -105,7 +105,8 @@ def default_steel_beam_material(ndim:int) -> StructuralMaterial:
                 I33=1
             ),
         )
-
+    else:
+        raise ValueError
 
 class DefaultMaterial(Enum):
     Peat = default_peat_material()
