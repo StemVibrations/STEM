@@ -230,19 +230,7 @@ class SolutionType(Enum):
 class StrategyTypeABC(ABC):
     """
     Abstract class for the strategy type
-
-    Attributes:
-        - max_iterations (int): maximum number of iterations allowed, if this number is reached, the time step size is\
-            decreased and the algorithm is restarted. Default value is 15.
-        - min_iterations (int): minimum number of iterations, below this number, the time step size is increased.\
-            Default value is 6.
-        - number_cycles (int): number of allowed cycles of decreasing the time step size until the algorithm is stopped.\
-            Default value is 100.
-
     """
-    max_iterations: int = 15
-    min_iterations: int = 6
-    number_cycles: int = 100
 
     @property
     @abc.abstractmethod
@@ -261,9 +249,20 @@ class NewtonRaphsonStrategy(StrategyTypeABC):
     """
     Class containing information about the Newton-Raphson strategy
 
+    Attributes:
+        - max_iterations (int): maximum number of iterations allowed, if this number is reached, the time step size is\
+            decreased and the algorithm is restarted. Default value is 15.
+        - min_iterations (int): minimum number of iterations, below this number, the time step size is increased.\
+            Default value is 6.
+        - number_cycles (int): number of allowed cycles of decreasing the time step size until the algorithm is stopped.\
+            Default value is 100.
+
     Inheritance:
         - :class:`StrategyTypeABC`
     """
+    max_iterations: int = 15
+    min_iterations: int = 6
+    number_cycles: int = 100
 
     @property
     def strategy_type(self):
@@ -285,6 +284,12 @@ class LineSearchStrategy(StrategyTypeABC):
         - :class:`StrategyTypeABC`
 
     Attributes:
+        - max_iterations (int): maximum number of iterations allowed, if this number is reached, the time step size is\
+            decreased and the algorithm is restarted. Default value is 15.
+        - min_iterations (int): minimum number of iterations, below this number, the time step size is increased.\
+            Default value is 6.
+        - number_cycles (int): number of allowed cycles of decreasing the time step size until the algorithm is stopped.\
+            Default value is 100.
         - max_line_search_iterations (int): maximum number of line search iterations. Default value is 10.
         - first_alpha_value (float): first alpha guess value used for the first iteration. Default value is 1.0.
         - second_alpha_value (float): second alpha guess value used for the first iteration. Default value is 0.5.
@@ -294,6 +299,9 @@ class LineSearchStrategy(StrategyTypeABC):
             residual*alpha*dx and current iteration residual*alpha*dx. Default value is 1e-4.
         - echo_level (int): echo level. Default value is 0.
     """
+    max_iterations: int = 15
+    min_iterations: int = 6
+    number_cycles: int = 100
     max_line_search_iterations: int = 10
     first_alpha_value: float = 1.0
     second_alpha_value: float = 0.5
@@ -322,11 +330,20 @@ class ArcLengthStrategy(StrategyTypeABC):
         - :class:`StrategyTypeABC`
 
     Attributes:
+        - max_iterations (int): maximum number of iterations allowed, if this number is reached, the time step size is\
+            decreased and the algorithm is restarted. Default value is 15.
+        - min_iterations (int): minimum number of iterations, below this number, the time step size is increased.\
+            Default value is 6.
+        - number_cycles (int): number of allowed cycles of decreasing the time step size until the algorithm is stopped.\
+            Default value is 100.
         - desired_iterations (int): This is used to calculate the radius of the next step. Default value is 10.
         - max_radius_factor (float): maximum radius factor of the arc. Default value is 1.0.
         - min_radius_factor (float): minimum radius factor of the arc. Default value is 0.1.
 
     """
+    max_iterations: int = 15
+    min_iterations: int = 6
+    number_cycles: int = 100
     desired_iterations: int = 10
     max_radius_factor: float = 1.0
     min_radius_factor: float = 0.1
@@ -347,13 +364,7 @@ class ArcLengthStrategy(StrategyTypeABC):
 class LinearSolverSettingsABC(ABC):
     """
     Class containing information about the linear solver settings
-
-    Attributes:
-        - scaling (bool): if true, the system matrix will be scaled before solving the linear system of equations.\
-            Default value is False.
-
     """
-    scaling: bool = False
 
     @property
     @abc.abstractmethod
@@ -370,10 +381,13 @@ class Amgcl(LinearSolverSettingsABC):
         - :class:`LinearSolverSettingsABC`
 
     Attributes:
+        - scaling (bool): if true, the system matrix will be scaled before solving the linear system of equations.\
+            Default value is False.
         - tolerance (float): tolerance for the linear solver convergence criteria. Default value is 1e-6.
         - max_iterations (int): maximum number of iterations for the linear solver. Default value is 1000.
 
     """
+    scaling: bool = False
     tolerance: float = 1e-6
     max_iterations: int = 1000
 
@@ -462,7 +476,7 @@ class SolverSettings:
         Post initialization method
 
         Raises:
-            ValueError: if the rayleigh damping parameters are not provided for dynamic analysis
+            ValueError: if the Rayleigh damping parameters are not provided for dynamic analysis
         """
         if self.solution_type == SolutionType.DYNAMIC:
             if self.rayleigh_m is None or self.rayleigh_k is None:
@@ -478,7 +492,8 @@ class Problem:
         - problem_name (str): name of the problem
         - number_of_threads (int): number of threads used for the analysis
         - settings (:class:`SolverSettings`): dictionary containing the solver settings
-        - echo_level (int): echo level. Default value is 1.
+        - echo_level (int): echo level. Default value is 1. If 0, no information regarding the solver is printed. If 1,
+            only the most important information is printed. If 2, all the information is printed. #todo make this comment more detailed
 
     """
 
