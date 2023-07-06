@@ -3,6 +3,7 @@ from typing import Optional, Union
 from stem.soil_material import SoilMaterial
 from stem.structural_material import StructuralMaterial
 
+from stem.geometry import Geometry, Volume, Surface, Line, Point
 
 class ModelPart:
     """
@@ -21,7 +22,36 @@ class ModelPart:
         self.nodes = None
         self.elements = None
         self.conditions = None
+
+        self.geometry: Geometry = Geometry()
         self.parameters = {}
+
+    def get_geometry_from_geo_data(self, geo_data, name):
+        """
+        Get the geometry from the geo_data and set the nodes and elements attributes.
+
+        Args:
+            - geo_data (dict): dictionary containing the geometry data
+
+        """
+
+        group_data = geo_data["physical_groups"][name]
+        ndim_group = group_data["ndim"]
+
+        if ndim_group == 3:
+
+            for id in group_data["geometry_id"]:
+                volume = Volume()
+                volume.id = id
+                volume.surface_ids = geo_data["volumes"][volume.id]
+
+            self.geometry.volumes = geo_data["volumes"][group_data["geometry_id"]]
+            # self.geometry.surfaces =
+
+        geo_data["points"] = {k: v for k, v in geo_data["points"].items() if k in group_data["points"]}
+
+
+
 
 
 class BodyModelPart(ModelPart):
