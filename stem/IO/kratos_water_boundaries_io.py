@@ -67,15 +67,15 @@ class KratosWaterBoundariesIO:
                 "y_coordinates": water_boundary.y_coordinates,
                 "z_coordinates": water_boundary.z_coordinates,
             }
-            boundary_dict: Dict[str, Any] = {
+            boundary_dict_multi_line: Dict[str, Any] = {
                 "python_module": "apply_scalar_constraint_table_process",
                 "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
                 "process_name": "ApplyScalarConstraintTableProcess",
                 "Parameters": parameters,
             }
-            return boundary_dict
+            return boundary_dict_multi_line
         elif isinstance(water_boundary, InterpolateLineBoundary):
-            boundary_dict: Dict[str, Any] = {
+            boundary_dict_interpolate: Dict[str, Any] = {
                 "python_module": "apply_scalar_constraint_table_process",
                 "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
                 "process_name": "ApplyScalarConstraintTableProcess",
@@ -89,7 +89,7 @@ class KratosWaterBoundariesIO:
                     "out_of_plane_direction": water_boundary.out_of_plane_direction,
                 }
             }
-            return boundary_dict
+            return boundary_dict_interpolate
         else:
             raise NotImplementedError("This type of boundary is not implemented")
 
