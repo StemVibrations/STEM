@@ -21,12 +21,13 @@ class KratosLoadsIO:
         """
         self.domain = domain
 
-    def __create_point_load_dict(self, part_name:str, parameters: LoadParametersABC) -> Dict[str, Any]:
+    def __create_point_load_dict(self, part_name:str, parameters: PointLoad) -> Dict[str, Any]:
         """
         Creates a dictionary containing the point load parameters
 
         Args:
-            - load (:class:`stem.load.Load`): point load object
+            - part_name (str): name of the model part on which the load is applied
+            - parameters (:class:`stem.load.PointLoad`): point load parameters object
 
         Returns:
             - Dict[str, Any]: dictionary containing the load parameters
@@ -46,12 +47,13 @@ class KratosLoadsIO:
 
         return load_dict
 
-    def __create_moving_load_dict(self, part_name:str, parameters: LoadParametersABC) -> Dict[str, Any]:
+    def __create_moving_load_dict(self, part_name:str, parameters: MovingLoad) -> Dict[str, Any]:
         """
         Creates a dictionary containing the moving load parameters
 
         Args:
-            - model_part (:class:`stem.model_part.ModelPart`): model part (load) object
+            - part_name (str): name of the model part on which the load is applied
+            - parameters (:class:`stem.load.MovingLoad`): moving load parameters object
 
         Returns:
             - Dict[str, Any]: dictionary containing the load parameters
@@ -70,12 +72,13 @@ class KratosLoadsIO:
 
         return load_dict
 
-    def __create_line_load_dict(self, part_name:str, parameters: LoadParametersABC) -> Dict[str, Any]:
+    def __create_line_load_dict(self, part_name:str, parameters: LineLoad) -> Dict[str, Any]:
         """
         Creates a dictionary containing the line load parameters
 
         Args:
-            - model_part (:class:`stem.model_part.ModelPart`): model part (load) object
+            - part_name (str): name of the model part on which the load is applied
+            - parameters (:class:`stem.load.LineLoad`): line load parameters object
 
         Returns:
             - Dict[str, Any]: dictionary containing the load parameters
@@ -100,7 +103,8 @@ class KratosLoadsIO:
         Creates a dictionary containing the surface load parameters
 
         Args:
-            - model_part (:class:`stem.model_part.ModelPart`): model part (load) object
+            - part_name (str): name of the model part on which the load is applied
+            - parameters (:class:`stem.load.SurfaceLoad`): surface load parameters object
 
         Returns:
             Dict[str, Any]: dictionary containing the load parameters
@@ -120,12 +124,13 @@ class KratosLoadsIO:
 
         return load_dict
 
-    def __create_gravity_load_dict(self, part_name:str, parameters: LoadParametersABC) -> Dict[str, Any]:
+    def __create_gravity_load_dict(self, part_name:str, parameters: GravityLoad) -> Dict[str, Any]:
         """
         Creates a dictionary containing the surface load parameters
 
         Args:
-            - model_part (:class:`stem.model_part.ModelPart`): model part (load) object
+            - part_name (str): name of the model part on which the load is applied
+            - parameters (:class:`stem.load.GravityLoad`): gravity load parameters object
 
         Returns:
             Dict[str, Any]: dictionary containing the load parameters

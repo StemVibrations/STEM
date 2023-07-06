@@ -30,10 +30,13 @@ class TestKratosBoundariesIO:
             value=[0.0, 0.0, 0.0],
         )
 
-        # Boundary conditions
+        # Absorbing boundaries
         absorbing_boundaries_parameters = AbsorbingBoundary(
             absorbing_factors=[1.0, 1.0], virtual_thickness=1000.0
         )
+
+        # Absorbing boundaries
+        excavation_parameters = Excavation(deactivate_soil_part=True)
 
         # collect the part names and parameters into a dictionary
         # TODO: change later when model part is implemented
@@ -41,6 +44,7 @@ class TestKratosBoundariesIO:
             "test_displacement_constraint":fix_displacements_parameters,
             "test_rotation_constraint":fix_rotations_parameters,
             "test_absorbing_boundaries":absorbing_boundaries_parameters,
+            "test_excavation": excavation_parameters,
         }
 
         # initialize process dictionary

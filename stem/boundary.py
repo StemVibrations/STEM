@@ -104,3 +104,27 @@ class AbsorbingBoundary(BoundaryParametersABC):
             bool
         """
         return False
+
+
+@dataclass
+class Excavation(BoundaryParametersABC):
+    """
+    Class containing the boundary parameters for an excavation process
+
+    Inheritance:
+        - :class:`BoundaryParametersABC`
+
+    Attributes:
+        - deactivate_soil_part (bool): Deactivate or not the soil part
+    """
+
+    deactivate_soil_part: bool
+
+    @property
+    def is_constraint(self) -> bool:
+        """
+        Property which indicates if boundary condition is a constraint. True for excavation.
+        Returns:
+            bool
+        """
+        return True
