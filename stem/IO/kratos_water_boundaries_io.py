@@ -1,7 +1,6 @@
 from typing import Dict, Any
-from typing import overload
 
-from stem.water_boundaries import WaterBoundary, PhreaticMultiLineBoundary, InterpolateLineBoundary
+from stem.water_boundaries import WaterBoundary, PhreaticMultiLineBoundary, InterpolateLineBoundary, WaterBoundaryParameters
 
 
 class KratosWaterBoundariesIO:
@@ -9,38 +8,7 @@ class KratosWaterBoundariesIO:
     def __init__(self, domain: str):
         self.domain = domain
 
-    @overload
-    def __water_boundary_dict(self, name: str, type: str, water_boundary: PhreaticMultiLineBoundary) -> Dict[str, Any]:
-        """
-        Creates a dictionary containing the water boundary parameters for phreatic multi line boundary
-
-        Attributes:
-            - water_boundary: water boundary object
-            - type: type of the water boundary
-            - name: name of the water boundary
-
-        Returns: dictionary containing the water boundary parameters
-
-        """
-        ...
-
-    @overload
-    def __water_boundary_dict(self, name: str, type: str, water_boundary: InterpolateLineBoundary) -> Dict[str, Any]:
-        """
-        Creates a dictionary containing the water boundary parameters for interpolate line boundary
-
-        Attributes:
-            - water_boundary:  water boundary object
-            - type: type of the water boundary
-            - name: name of the water boundary
-
-        Returns: dictionary containing the water boundary parameters
-
-
-        """
-        ...
-
-    def __water_boundary_dict(self, name: str, type: str, water_boundary: Any) -> Dict[str, Any]:
+    def __water_boundary_dict(self, name: str, type: str, water_boundary: WaterBoundaryParameters) -> Dict[str, Any]:
         """
         Creates a dictionary containing the water boundary parameters
 
