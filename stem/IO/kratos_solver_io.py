@@ -170,7 +170,7 @@ class KratosSolverIO:
                                                 "compute_reactions": False,
                                                 "move_mesh_flag": False,
                                                 "reform_dofs_at_each_step": False,
-                                                "nodal_smoothing": False,
+                                                "nodal_smoothing": solver_settings.calculate_stresses_on_nodes,
                                                 "block_builder": True,
                                                 "rebuild_level": 0 if solver_settings.is_stiffness_matrix_constant
                                                                    else 2,

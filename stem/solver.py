@@ -459,6 +459,8 @@ class SolverSettings:
             :class:`DisplacementConvergenceCriteria`, :class:`ResidualConvergenceCriteria`, \
             :class:`WaterPressureConvergenceCriteria` or :class:`DisplacementAndWaterPressureConvergenceCriteria`
         - reset_displacements (bool): if true, the displacements are reset at the beginning of the phase
+        - calculate_stresses_on_nodes (bool): if true, the stresses are also calculated on the nodes and not only on \
+            the gauss points. Default value is True.
         - strategy_type (:class:`StrategyTypeABC`): strategy type, :class:`NewtonRaphsonStrategy`, \
             :class:`LineSearchStrategy` or :class:`ArcLengthStrategy`. Default value is :class:`NewtonRaphsonStrategy`.
         - scheme (:class:`SchemeABC`): scheme, :class:`NewmarkSceme` or :class:`BackwardEulerScheme`. Default value \
@@ -481,6 +483,7 @@ class SolverSettings:
 
     convergence_criteria: ConvergenceCriteriaABC
     reset_displacements: bool = False
+    calculate_stresses_on_nodes: bool = True
     strategy_type: StrategyTypeABC = field(default_factory=NewtonRaphsonStrategy)
     scheme: SchemeABC = field(default_factory=NewmarkScheme)
     linear_solver_settings: LinearSolverSettingsABC = field(default_factory=Amgcl)
