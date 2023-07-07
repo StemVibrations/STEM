@@ -36,7 +36,7 @@ class TestKratosSolverIO:
         solver_settings = SolverSettings(solution_type=solution_type,
                                          stress_initialisation_type=stress_initialisation_type,
                                          time_integration=time_integration,
-                                         rebuild_level=0, prebuild_dynamics=True,
+                                         is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
                                          convergence_criteria=convergence_criterion,
                                          strategy_type=strategy_type, scheme=scheme_type,
                                          linear_solver_settings=linear_solver_settings, rayleigh_k=0.001,

@@ -450,11 +450,11 @@ class SolverSettings:
         - stress_initialisation_type (:class:`StressInitialisationType`): stress initialisation type, \
             NONE, GRAVITY_LOADING OR K0_PROCEDURE
         - time_integration (:class:`TimeIntegration`): time integration settings
-        - rebuild_level (int): 2 if the lhs matrix is rebuilt at each non-linear iteration, 1 if the lhs matrix \
-            is rebuilt at each time step, 0 if the lhs matrix is only built once
-        - prebuild_dynamics (bool): if true, the mass and damping matrices are prebuilt and directly used to calculate \
-            the rhs. If false, the mass and damping matrices are built at each non-linear iteration for calculating \
-            the rhs
+        - is_stiffness_matrix_constant (bool): if true, the lhs matrix is only built once, else, the lhs matrix is \
+            rebuilt at each non-linear iteration
+        - are_mass_and_damping_constant (bool): if true, the mass and damping matrices are prebuilt and directly used \
+            to calculate the rhs. If false, the mass and damping matrices are built at each non-linear iteration \
+            for calculating the rhs and possibly the lhs
         - convergence_criteria (:class:`ConvergenceCriteriaABC`): convergence criteria, \
             :class:`DisplacementConvergenceCriteria`, :class:`ResidualConvergenceCriteria`, \
             :class:`WaterPressureConvergenceCriteria` or :class:`DisplacementAndWaterPressureConvergenceCriteria`
@@ -474,8 +474,8 @@ class SolverSettings:
     stress_initialisation_type: StressInitialisationType
     time_integration: TimeIntegration
 
-    rebuild_level: int
-    prebuild_dynamics: bool
+    is_stiffness_matrix_constant: bool
+    are_mass_and_damping_constant: bool
 
     convergence_criteria: ConvergenceCriteriaABC
     reset_displacements: bool = False

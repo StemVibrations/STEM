@@ -13,6 +13,7 @@ class KratosSolverIO:
         - ndim (int): The number of dimensions of the problem (2 or 3).
         - domain (str): The name of the Kratos domain.
     """
+
     def __init__(self, ndim: int, domain: str):
         """
         Class to read and write Kratos solver settings.
@@ -89,7 +90,8 @@ class KratosSolverIO:
             - Dict[str, Any]: dictionary containing the convergence criterion parameters
         """
 
-        convergence_criterion_dict: Dict[str, Any] = {"convergence_criterion": convergence_criterion.convergence_criterion}
+        convergence_criterion_dict: Dict[str, Any] = {
+            "convergence_criterion": convergence_criterion.convergence_criterion}
         convergence_criterion_dict.update(deepcopy(convergence_criterion.__dict__))
         return convergence_criterion_dict
 
@@ -160,7 +162,7 @@ class KratosSolverIO:
                                                 "time_stepping": {
                                                     "time_step": solver_settings.time_integration.delta_time,
                                                     "max_delta_time_factor": solver_settings.time_integration.max_delta_time_factor},
-                                                "reduction_factor":  solver_settings.time_integration.reduction_factor,
+                                                "reduction_factor": solver_settings.time_integration.reduction_factor,
                                                 "increase_factor": solver_settings.time_integration.increase_factor,
                                                 "buffer_size": 2,
                                                 "echo_level": 1,
@@ -170,8 +172,9 @@ class KratosSolverIO:
                                                 "reform_dofs_at_each_step": False,
                                                 "nodal_smoothing": False,
                                                 "block_builder": True,
-                                                "rebuild_level": solver_settings.rebuild_level,
-                                                "prebuild_dynamics": solver_settings.prebuild_dynamics,
+                                                "rebuild_level": 0 if solver_settings.is_stiffness_matrix_constant
+                                                                   else 2,
+                                                "prebuild_dynamics": solver_settings.are_mass_and_damping_constant,
                                                 "solution_type": solver_settings.solution_type.name.lower(),
                                                 "rayleigh_m": solver_settings.rayleigh_m if solver_settings.rayleigh_m
                                                                                             is not None else 0,
@@ -216,5 +219,3 @@ class KratosSolverIO:
                                                                                       model_parts)}
 
         return settings_dict
-
-
