@@ -31,9 +31,9 @@ class DisplacementConstraint(BoundaryParametersABC):
         - :class:`BoundaryParametersABC`
 
     Attributes:
-        active (List[bool]): Activate/deactivate constraint for each direction.
-        is_fixed (List[bool]): Specify if constraint is fixed for each direction.
-        value (List[float]): Displacement constraint for direction [m].
+        - active (List[bool]): Activate/deactivate constraint for each direction.
+        - is_fixed (List[bool]): Specify if constraint is fixed for each direction.
+        - value (List[float]): Displacement constraint for direction [m].
     """
 
     active: List[bool]
