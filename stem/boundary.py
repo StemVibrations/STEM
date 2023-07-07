@@ -19,7 +19,7 @@ class BoundaryParametersABC(ABC):
         Returns:
             bool
         """
-        pass
+        raise Exception("abstract method 'is_constraint' of boundary parameters class is called")
 
 
 @dataclass
