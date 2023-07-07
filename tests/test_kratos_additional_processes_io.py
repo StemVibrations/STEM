@@ -2,8 +2,8 @@ import json
 
 import pytest
 
-from stem.IO.kratos_boundaries_io import KratosBoundariesIO
-from stem.boundary import *
+from stem.IO.kratos_additional_processes_io import KratosAdditionalProcessesIO
+from stem.additional_processes import *
 from tests.utils import TestUtils
 
 
@@ -16,31 +16,13 @@ class TestKratosBoundariesIO:
         """
         # define constraints
 
-        # Displacements
-        fix_displacements_parameters = DisplacementConstraint(
-            active=[True, True, False],
-            is_fixed=[True, True, False],
-            value=[0.0, 0.0, 0.0],
-        )
-
-        # Rotations
-        fix_rotations_parameters = RotationConstraint(
-            active=[False, False, True],
-            is_fixed=[False, False, True],
-            value=[0.0, 0.0, 0.0],
-        )
-
         # Absorbing boundaries
-        absorbing_boundaries_parameters = AbsorbingBoundary(
-            absorbing_factors=[1.0, 1.0], virtual_thickness=1000.0
-        )
+        excavation_parameters = Excavation(deactivate_soil_part=True)
 
         # collect the part names and parameters into a dictionary
         # TODO: change later when model part is implemented
-        all_boundary_parameters = {
-            "test_displacement_constraint":fix_displacements_parameters,
-            "test_rotation_constraint":fix_rotations_parameters,
-            "test_absorbing_boundaries":absorbing_boundaries_parameters
+        all_parameters = {
+            "test_excavation": excavation_parameters,
         }
 
         # initialize process dictionary
@@ -49,21 +31,21 @@ class TestKratosBoundariesIO:
         }
 
         # write dictionary for the boundary(/ies)
-        boundaries_io = KratosBoundariesIO(domain="PorousDomain")
+        add_processes_io = KratosAdditionalProcessesIO(domain="PorousDomain")
         # TODO: when model part are implemented, generate file through kratos_io
 
-        for part_name, part_parameters in all_boundary_parameters.items():
-            _parameters = boundaries_io.create_boundary_condition_dict(
+        for part_name, part_parameters in all_parameters.items():
+            _parameters = add_processes_io.create_additional_processes_dict(
                 part_name=part_name, parameters=part_parameters
             )
             _key = "loads_process_list"
-            if part_parameters.is_constraint:
+            if isinstance(part_parameters, Excavation):
                 _key = "constraints_process_list"
             test_dictionary["processes"][_key].append(_parameters)
 
         # load expected dictionary from the json
         expected_load_parameters_json = json.load(
-            open("tests/test_data/expected_boundary_conditions_parameters.json")
+            open("tests/test_data/expected_additional_processes_parameters.json")
         )
 
         # assert the objects to be equal
