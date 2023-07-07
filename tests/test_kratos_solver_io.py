@@ -17,6 +17,8 @@ class TestKratosSolverIO:
         """
 
         # set up solver settings
+        analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
+
         solution_type = SolutionType.DYNAMIC
 
         time_integration = TimeIntegration(start_time=0.0, end_time=1.0, delta_time=0.1, reduction_factor=0.5,
@@ -33,7 +35,7 @@ class TestKratosSolverIO:
 
         stress_initialisation_type = StressInitialisationType.NONE
 
-        solver_settings = SolverSettings(solution_type=solution_type,
+        solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
                                          stress_initialisation_type=stress_initialisation_type,
                                          time_integration=time_integration,
                                          is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,

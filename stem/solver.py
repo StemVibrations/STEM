@@ -440,6 +440,20 @@ class TimeIntegration:
     max_delta_time_factor: float = 1000
 
 
+class AnalysisType(Enum):
+    """
+    Enum class containing the analysis type
+
+    Attributes:
+        - MECHANICAL_GROUNDWATER_FLOW (int): coupled mechanical and groundwater flow analysis
+        - MECHANICAL (int): mechanical analysis
+        - GROUNDWATER_FLOW (int): groundwater flow analysis
+    """
+    MECHANICAL_GROUNDWATER_FLOW = 1
+    MECHANICAL = 2
+    GROUNDWATER_FLOW = 3
+
+
 @dataclass
 class SolverSettings:
     """
@@ -473,7 +487,7 @@ class SolverSettings:
             information and convergence information are printed. If 2, time information, convergence information, \
             intermediate rhs results and linear solver settings are printed.
     """
-
+    analysis_type: AnalysisType
     solution_type: SolutionType
     stress_initialisation_type: StressInitialisationType
     time_integration: TimeIntegration

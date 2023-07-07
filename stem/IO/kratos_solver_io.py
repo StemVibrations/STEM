@@ -155,6 +155,24 @@ class KratosSolverIO:
         elif solver_settings.solution_type == SolutionType.DYNAMIC:
             return "dynamic"
 
+    @staticmethod
+    def __set_analysis_type(analysis_type: AnalysisType):
+        """
+        Sets the analysis type name
+
+        Args:
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type
+
+        Returns:
+            - str: The analysis type name
+        """
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW:
+            return "U_Pw"
+        elif analysis_type == AnalysisType.MECHANICAL:
+            return "U_Pw"
+        elif analysis_type == AnalysisType.GROUNDWATER_FLOW:
+            return "Pw"
+
 
 
     def __create_solver_settings_dictionary(self, solver_settings: SolverSettings, mesh_file_name: str,
@@ -171,7 +189,7 @@ class KratosSolverIO:
         Returns:
             - Dict[str, Any]: dictionary containing the solver settings
         """
-        solver_settings_dict: Dict[str, Any] = {"solver_type": "U_Pw",
+        solver_settings_dict: Dict[str, Any] = {"solver_type": self.__set_analysis_type(solver_settings.analysis_type),
                                                 "model_part_name": self.domain,
                                                 "domain_size": self.ndim,
                                                 "start_time": solver_settings.time_integration.start_time,
