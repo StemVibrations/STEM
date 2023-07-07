@@ -467,7 +467,9 @@ class SolverSettings:
             :class:`Amgcl` is supported
         - rayleigh_m (Optional[float]): mass proportional damping parameter
         - rayleigh_k (Optional[float]): stiffness proportional damping parameter
-
+        - echo_level (int): echo level. Default value is 1. If 0, only time information is printed. If 1, time \
+            information and convergence information are printed. If 2, time information, convergence information, \
+            intermediate rhs results and linear solver settings are printed.
     """
 
     solution_type: SolutionType
@@ -484,6 +486,7 @@ class SolverSettings:
     linear_solver_settings: LinearSolverSettingsABC = field(default_factory=Amgcl)
     rayleigh_m: Optional[float] = None
     rayleigh_k: Optional[float] = None
+    echo_level: int = 1
 
     def __post_init__(self):
         """
@@ -510,12 +513,10 @@ class Problem:
         - problem_name (str): name of the problem
         - number_of_threads (int): number of threads used for the analysis
         - settings (:class:`SolverSettings`): dictionary containing the solver settings
-        - echo_level (int): echo level. Default value is 1. If 0, no information regarding the solver is printed. If 1,
-            only the most important information is printed. If 2, all the information is printed. #todo make this comment more detailed
 
     """
 
     problem_name: str
     number_of_threads: int
     settings: SolverSettings
-    echo_level: int = 1
+

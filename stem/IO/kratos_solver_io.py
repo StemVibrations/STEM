@@ -39,7 +39,7 @@ class KratosSolverIO:
         problem_data_dict: Dict[str, Any] = {"problem_name": problem_data.problem_name,
                                              "start_time": problem_data.settings.time_integration.start_time,
                                              "end_time": problem_data.settings.time_integration.end_time,
-                                             "echo_level": problem_data.echo_level,
+                                             "echo_level": 1,
                                              "parallel_type": "OpenMP",
                                              "number_of_threads": problem_data.number_of_threads}
 
@@ -165,7 +165,7 @@ class KratosSolverIO:
                                                 "reduction_factor": solver_settings.time_integration.reduction_factor,
                                                 "increase_factor": solver_settings.time_integration.increase_factor,
                                                 "buffer_size": 2,
-                                                "echo_level": 1,
+                                                "echo_level": solver_settings.echo_level,
                                                 "clear_storage": False,
                                                 "compute_reactions": False,
                                                 "move_mesh_flag": False,
