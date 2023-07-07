@@ -31,7 +31,11 @@ class TestKratosSolverIO:
 
         linear_solver_settings = Amgcl(tolerance=1e-8, max_iterations=500, scaling=True)
 
-        solver_settings = SolverSettings(solution_type=solution_type, time_integration=time_integration,
+        stress_initialisation_type = StressInitialisationType.NONE
+
+        solver_settings = SolverSettings(solution_type=solution_type,
+                                         stress_initialisation_type=stress_initialisation_type,
+                                         time_integration=time_integration,
                                          rebuild_level=0, prebuild_dynamics=True,
                                          convergence_criteria=convergence_criterion,
                                          strategy_type=strategy_type, scheme=scheme_type,
@@ -39,7 +43,7 @@ class TestKratosSolverIO:
                                          rayleigh_m=0.001)
 
         # set up problem data
-        problem_data = Problem(problem_name="test", number_of_threads=2, settings= solver_settings, echo_level=2)
+        problem_data = Problem(problem_name="test", number_of_threads=2, settings=solver_settings, echo_level=2)
 
         # create model parts
         model_part1 = ModelPart()
