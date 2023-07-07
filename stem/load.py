@@ -29,6 +29,32 @@ class PointLoad(LoadParametersABC):
 
 
 @dataclass
+class LineLoad(LoadParametersABC):
+    """
+    Class containing the load parameters for a line load
+
+    Attributes:
+        active (List[bool]): Activate/deactivate load for each direction.
+        value (List[float]): Entity of the load in the 3 directions [N].
+    """
+    active: List[bool] = field(default_factory=lambda: [True, True, True])
+    value: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+
+
+@dataclass
+class SurfaceLoad(LoadParametersABC):
+    """
+    Class containing the load parameters for a surface load
+
+    Attributes:
+        active (List[bool]): Activate/deactivate load for each direction.
+        value (List[float]): Entity of the load in the 3 directions [N].
+    """
+    active: List[bool] = field(default_factory=lambda: [True, True, True])
+    value: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+
+
+@dataclass
 class MovingLoad(LoadParametersABC):
     """
     Class containing the load parameters for a moving load.
@@ -51,25 +77,3 @@ class MovingLoad(LoadParametersABC):
     velocity: Union[float, str] = 0.0
     origin: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
     offset: float = 0.0
-
-
-class Load:
-    """
-    Class containing load information acting on a body part
-
-    Attributes:
-        - name (str): name of the load
-        - load_parameters (:class:`LoadParametersABC`): class containing load parameters
-    """
-
-    def __init__(self, name: str, load_parameters: LoadParametersABC):
-        """
-        Constructor of the load class
-
-        Args:
-            - name (str): name of the load
-            - load_parameters (:class:`LoadParametersABC`): class containing load parameters
-        """
-
-        self.name: str = name
-        self.load_parameters: LoadParametersABC = load_parameters

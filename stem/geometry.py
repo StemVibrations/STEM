@@ -1,7 +1,5 @@
-import numpy as np
-
-from stem.IO.kratos_io import KratosIO
-
+from dataclasses import dataclass
+from typing import List
 
 class Point:
     """
@@ -59,6 +57,7 @@ class Volume:
         self.surface_ids = None
 
 
+@dataclass
 class Geometry:
     """
     A class to represent a collection of geometric objects in a two- or three-dimensional space.
@@ -68,15 +67,20 @@ class Geometry:
         - lines (Iterable or None): An Iterable of Line objects representing the lines in the geometry.
         - surfaces (Iterable or None): An Iterable of Surface objects representing the surfaces in the geometry.
         - volumes (Iterable or None): An Iterable of Volume objects representing the volumes in the geometry.
+        points (List[Node]): List of Point objects representing the points in the
+            geometry.
+        lines (List[Line]): List of Line objects representing the lines in the geometry.
+        surfaces (List[Surface]): List of Surface objects representing the surfaces in the geometry.
+        volumes (List[Volume]): List of Volume objects representing the volumes in the geometry.
     """
-    def __init__(self):
-        self.points = None
-        self.lines = None
-        self.surfaces = None
-        self.volumes = None
+
+    points: List[Point]
+    lines: List[Line]
+    surfaces: List[Surface]
+    volumes: List[Volume]
 
     def get_geometry_data_from_gmsh(self):
-        #todo connect  to gmsh io and populate points, lines, surfaces, volumes
+        # todo connect  to gmsh io and populate points, lines, surfaces, volumes
         pass
 
 

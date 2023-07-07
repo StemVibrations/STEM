@@ -15,7 +15,7 @@ extrusion_length = [0, 0, 2]
 # set a name label for the surface
 name_label = "Soil Layer"
 # if "True", saves mesh data to separate mdpa files; otherwise "False"
-save_file = False
+save_file = True
 # if "True", opens gmsh interface; otherwise "False"
 open_gmsh_gui = False
 # set a name for mesh output file

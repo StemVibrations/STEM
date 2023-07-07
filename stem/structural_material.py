@@ -96,7 +96,7 @@ class StructuralMaterial:
     Class containing material information about a body part, e.g. a soil layer or track components
 
     Attributes:
-        - name (str): name of the material
+        - name (str): The name to describe the structural material.
         - material_parameters (:class:`StructuralParametersABC`): class containing material parameters
     """
     name: str
