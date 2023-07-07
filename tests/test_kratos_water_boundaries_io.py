@@ -2,7 +2,7 @@ from tests.utils import TestUtils
 import json
 
 from stem.IO.kratos_water_boundaries_io import KratosWaterBoundariesIO
-from stem.water_boundaries import WaterBoundary, InterpolateLineBoundary, PhreaticMultiLineBoundary
+from stem.water_boundaries import WaterBoundary, InterpolateLineBoundary, PhreaticMultiLineBoundary, PhreaticLine
 
 
 class TestKratosWaterBoundariesIO:
@@ -31,6 +31,17 @@ class TestKratosWaterBoundariesIO:
             surfaces_assigment=["domain d"],
         )
         water_boundary_interpolate = WaterBoundary(interpolation_type, name="water_soils_2")
+        # check phreatic line
+        phreatic_line = PhreaticLine(
+            is_fixed=True,
+            gravity_direction=1,
+            out_of_plane_direction=2,
+            value=0,
+            first_reference_coordinate=[0.0,1.0,0.0],
+            second_reference_coordinate=[1.0,0.5,0.0],
+            specific_weight=10000.0,
+        )
+        water_boundary_phreatic_line = WaterBoundary(phreatic_line, name="water_soils_3")
 
         # check the dictionary
         # read the expected dictionary from the json
@@ -43,3 +54,5 @@ class TestKratosWaterBoundariesIO:
                                                  ))
         TestUtils.assert_dictionary_almost_equal(expected_water_boundary_json['test'][1],
                                                  kratos_io.create_water_boundary_dict(water_boundary_interpolate))
+        TestUtils.assert_dictionary_almost_equal(expected_water_boundary_json['test'][2],
+                                                    kratos_io.create_water_boundary_dict(water_boundary_phreatic_line))

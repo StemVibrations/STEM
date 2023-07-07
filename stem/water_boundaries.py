@@ -80,6 +80,30 @@ class InterpolateLineBoundary(WaterBoundaryParameters):
         return "Interpolate_Line"
 
 
+@dataclass
+class PhreaticLine(WaterBoundaryParameters):
+    """
+    Class containing the boundary parameters for phreatic line boundary condition. This condition is should only contain
+    two points.
+
+    Attributes:
+        - first_reference_coordinate (List[float]): First reference coordinate of the phreatic line [m].
+        - second_reference_coordinate (List[float]): Second reference coordinate of the phreatic line [m].
+        - specific_weight (float): Specific weight of the water .
+        - value (float): Value of the water pressure .
+
+
+    """
+    first_reference_coordinate: List[float] = field(default_factory=lambda: [0.0])
+    second_reference_coordinate: List[float] = field(default_factory=lambda: [0.0])
+    specific_weight: float = 9.81
+    value: float = 0.0
+
+    @property
+    def type(self):
+        return "Phreatic_Line"
+
+
 class WaterBoundary:
     """
     Class containing water boundary information acting on a body part
@@ -90,7 +114,7 @@ class WaterBoundary:
 
     """
 
-    def __init__(self, water_boundary: Union[InterpolateLineBoundary, PhreaticMultiLineBoundary], name: str):
+    def __init__(self, water_boundary: Union[InterpolateLineBoundary, PhreaticMultiLineBoundary, PhreaticLine], name: str):
         """
         Constructor of the class
 
@@ -99,7 +123,7 @@ class WaterBoundary:
 
         """
 
-        self.water_boundary: Union[InterpolateLineBoundary, PhreaticMultiLineBoundary] = water_boundary
+        self.water_boundary: Union[InterpolateLineBoundary, PhreaticMultiLineBoundary, PhreaticLine] = water_boundary
         self.type: str = self.water_boundary.type
         self.name: str = name
 

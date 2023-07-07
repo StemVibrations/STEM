@@ -1,6 +1,6 @@
 from typing import Dict, Any
 
-from stem.water_boundaries import WaterBoundary, PhreaticMultiLineBoundary, InterpolateLineBoundary, WaterBoundaryParameters
+from stem.water_boundaries import WaterBoundary, PhreaticMultiLineBoundary, InterpolateLineBoundary, WaterBoundaryParameters, PhreaticLine
 
 
 class KratosWaterBoundariesIO:
@@ -58,6 +58,26 @@ class KratosWaterBoundariesIO:
                 }
             }
             return boundary_dict_interpolate
+        elif isinstance(water_boundary, PhreaticLine):
+            boundary_dict_phreatic_line: Dict[str, Any] = {
+                "python_module": "apply_scalar_constraint_table_process",
+                "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+                "process_name": "ApplyScalarConstraintTableProcess",
+                "Parameters": {
+                    "model_part_name": f"{self.domain}.{name}",
+                    "variable_name": "WATER_PRESSURE",
+                    "is_fixed": water_boundary.is_fixed,
+                    "table": [0, 0],
+                    "fluid_pressure_type": type,
+                    "gravity_direction": water_boundary.gravity_direction,
+                    "out_of_plane_direction": water_boundary.out_of_plane_direction,
+                    "specific_weight": water_boundary.specific_weight,
+                    "first_reference_coordinate": water_boundary.first_reference_coordinate,
+                    "second_reference_coordinate": water_boundary.second_reference_coordinate,
+                    "value": water_boundary.value,
+                }
+            }
+            return boundary_dict_phreatic_line
         else:
             raise NotImplementedError("This type of boundary is not implemented")
 
