@@ -82,7 +82,7 @@ class MovingLoad(LoadParametersABC):
 @dataclass
 class GravityLoad(LoadParametersABC):
     """
-    Class containing the load parameters for a gravity loads.
+    Class containing the load parameters for a gravity load.
 
     Inheritance:
         - :class:`LoadParametersABC`
