@@ -136,6 +136,27 @@ class KratosSolverIO:
 
         return model_parts_dict
 
+    @staticmethod
+    def __set_solution_type(solver_settings: SolverSettings):
+        """
+        Sets the solution type name
+
+        Args:
+            - solver_settings (:class:`stem.solver.SolverSettings`): The solver settings
+
+        Returns:
+            - str: The solution type name
+        """
+        if solver_settings.solution_type == SolutionType.QUASI_STATIC:
+            if solver_settings.stress_initialisation_type == StressInitialisationType.K0_PROCEDURE:
+                return "k0_procedure"
+            else:
+                return "quasi_static"
+        elif solver_settings.solution_type == SolutionType.DYNAMIC:
+            return "dynamic"
+
+
+
     def __create_solver_settings_dictionary(self, solver_settings: SolverSettings, mesh_file_name: str,
                                             materials_file_name: str, model_parts: List[ModelPart]):
         """
@@ -175,7 +196,7 @@ class KratosSolverIO:
                                                 "rebuild_level": 0 if solver_settings.is_stiffness_matrix_constant
                                                                    else 2,
                                                 "prebuild_dynamics": solver_settings.are_mass_and_damping_constant,
-                                                "solution_type": solver_settings.solution_type.name.lower(),
+                                                "solution_type": self.__set_solution_type(solver_settings),
                                                 "rayleigh_m": solver_settings.rayleigh_m if solver_settings.rayleigh_m
                                                                                             is not None else 0,
                                                 "rayleigh_k": solver_settings.rayleigh_k if solver_settings.rayleigh_k
