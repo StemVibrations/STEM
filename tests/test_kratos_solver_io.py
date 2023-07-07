@@ -43,7 +43,7 @@ class TestKratosSolverIO:
                                          rayleigh_m=0.001)
 
         # set up problem data
-        problem_data = Problem(problem_name="test", number_of_threads=2, settings=solver_settings, echo_level=2)
+        problem_data = Problem(problem_name="test", number_of_threads=2, settings=solver_settings)
 
         # create model parts
         model_part1 = ModelPart()
