@@ -59,9 +59,9 @@ class RotationConstraint(BoundaryParametersABC):
         - :class:`BoundaryParametersABC`
 
     Attributes:
-        active (List[bool]): Activate/deactivate constraint for each direction.
-        is_fixed (List[bool]): Specify if constraint is fixed around each axis.
-        value (List[float]): Rotation constraint around x, y and axis.
+        - active (List[bool]): Activate/deactivate constraint for each direction.
+        - is_fixed (List[bool]): Specify if constraint is fixed around each axis.
+        - value (List[float]): Rotation constraint around x, y and axis.
     """
 
     active: List[bool]
