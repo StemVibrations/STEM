@@ -28,10 +28,10 @@ class Point(GeometricalObjectABC):
         - :class:`GeometricalObjectABC`
 
     Attributes:
-        - __id (Optional[int]): A unique identifier for the point.
-        - coordinates (Iterable or None): An iterable of floats representing the x, y and z coordinates of the point.
+        - __id (int): A unique identifier for the point.
+        - coordinates (List[float]): An iterable of floats representing the x, y and z coordinates of the point.
     """
-    def __init__(self, id):
+    def __init__(self, id: int):
         """
         Constructor for the point class.
 
@@ -72,8 +72,8 @@ class Line(GeometricalObjectABC):
         - :class:`GeometricalObjectABC`
 
     Attributes:
-        - id (int or None): A unique identifier for the line.
-        - point_ids (Iterable or None): An Iterable of two integers representing the ids of the points that make up the\
+        - id (int): A unique identifier for the line.
+        - point_ids (List[int]): An Iterable of two integers representing the ids of the points that make up the\
             line.
     """
 
@@ -118,7 +118,7 @@ class Surface(GeometricalObjectABC):
 
     Attributes:
         - __id (int): A unique identifier for the surface.
-        - line_ids (Iterable or None): An Iterable of three or more integers representing the ids of the lines that make\
+        - line_ids (List[int]): An Iterable of three or more integers representing the ids of the lines that make\
             up the surface.
     """
     def __init__(self, id: int):
@@ -223,6 +223,47 @@ class Geometry:
         return unique_entities
 
     @staticmethod
+    def __set_point(geo_data: Dict[str, Any], point_id: int):
+        """
+        Creates a point from the geometry data.
+
+        Args:
+            - geo_data (Dict[str, Any]): A dictionary containing the geometry data as provided by gmsh_utils.
+            - point_id (int): The id of the line to create.
+
+        Returns:
+            - point (:class:`Point`): The point object.
+        """
+
+        # create point
+        point = Point(point_id)
+        point.coordinates = geo_data["points"][point.id]
+        return point
+
+    @staticmethod
+    def __set_line(geo_data: Dict[str,Any], line_id: int):
+        """
+        Creates a line from the geometry data.
+
+        Args:
+            - geo_data (Dict[str, Any]): A dictionary containing the geometry data as provided by gmsh_utils.
+            - line_id (int): The id of the line to create.
+
+        Returns:
+            - line (:class:`Line`): The line object.
+        """
+
+        # Initialise point list
+        points = []
+
+        # create line and lower dimensional objects
+        line = Line(abs(line_id))
+        line.point_ids = geo_data["lines"][line.id]
+        for point_id in line.point_ids:
+            points.append(Geometry.__set_point(geo_data, point_id))
+        return line, points
+
+    @staticmethod
     def __create_surface(geo_data: Dict[str, Any], surface_id: int):
         """
         Creates a surface from the geometry data.
@@ -232,7 +273,7 @@ class Geometry:
             - surface_id (int): The id of the surface to create.
 
         Returns:
-            - surface (Surface): The surface object.
+            - surface (:class:`Surface`): The surface object.
         """
 
         # Initialise point and line lists
@@ -243,13 +284,10 @@ class Geometry:
         surface = Surface(abs(surface_id))
         surface.line_ids = geo_data["surfaces"][surface.id]
         for line_id in surface.line_ids:
-            line = Line(abs(line_id))
-            line.point_ids = geo_data["lines"][line.id]
-            for point_id in line.point_ids:
-                point = Point(point_id)
-                point.coordinates = geo_data["points"][point.id]
-                points.append(point)
+            line, line_points = Geometry.__set_line(geo_data, line_id)
+
             lines.append(line)
+            points.extend(line_points)
 
         return surface, lines, points
 
@@ -275,7 +313,27 @@ class Geometry:
         group_data = geo_data["physical_groups"][group_name]
         ndim_group = group_data["ndim"]
 
-        if ndim_group == 3:
+        if ndim_group == 0:
+            for id in group_data["geometry_ids"]:
+                points.append(Geometry.__set_point(geo_data, id))
+        elif ndim_group == 1:
+
+            for id in group_data["geometry_ids"]:
+                line, line_points = Geometry.__set_line(geo_data, id)
+
+                lines.append(line)
+                points.extend(line_points)
+
+        elif ndim_group == 2:
+            # create surfaces and lower dimensional objects
+            for id in group_data["geometry_ids"]:
+
+                surface, surface_lines, surface_points = Geometry.__create_surface(geo_data, id)
+                surfaces.append(surface)
+                lines.extend(surface_lines)
+                points.extend(surface_points)
+
+        elif ndim_group == 3:
             # Create volumes and lower dimensional objects
             for id in group_data["geometry_ids"]:
                 volume = Volume(id)
@@ -288,15 +346,6 @@ class Geometry:
                     lines.extend(surface_lines)
                     points.extend(surface_points)
                 volumes.append(volume)
-
-        elif ndim_group == 2:
-            # create surfaces and lower dimensional objects
-            for id in group_data["geometry_ids"]:
-
-                surface, lines, points = Geometry.__create_surface(geo_data, id)
-                surfaces.append(surface)
-                lines.extend(lines)
-                points.extend(points)
 
         # remove duplicates from points, lines, surfaces, volumes
         unique_volumes = Geometry.__get_unique_entities_by_ids(volumes)
