@@ -18,7 +18,7 @@ Enumeration of rail types
     rail_60E1 = 3
 
 
-def default_steel_rail_material(ndim: int, rail_type: RailTypes) -> StructuralMaterial:
+def set_default_steel_rail_material(ndim: int, rail_type: RailTypes) -> StructuralMaterial:
     """
     Function to define the default elastic material for a steel beam of the given geometry.
     Currently, the most common rails adopted in the Netherlands are implemented (46E3, 54E1 and 60E1).
