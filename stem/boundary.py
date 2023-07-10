@@ -73,8 +73,9 @@ class RotationConstraint(BoundaryParametersABC):
     def is_constraint(self) -> bool:
         """
         Property which indicates if boundary condition is a constraint. True for RotationConstraint.
+        
         Returns:
-            bool
+            - bool
         """
         return True
 
