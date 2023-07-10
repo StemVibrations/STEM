@@ -88,8 +88,8 @@ class GravityLoad(LoadParametersABC):
         - :class:`LoadParametersABC`
 
     Attributes:
-        active (List[bool]): Activate/deactivate load for each direction. Input True only in the vertical direction.
-        value (List[float]): Entity of the gravity acceleration in the 3 directions [m/s^2]. Should be -9.81 only in
+        - active (List[bool]): Activate/deactivate load for each direction. Input True only in the vertical direction.
+        - value (List[float]): Entity of the gravity acceleration in the 3 directions [m/s^2]. Should be -9.81 only in
             the vertical direction
     """
     active: List[bool] = field(default_factory=lambda: [False, False, False])
