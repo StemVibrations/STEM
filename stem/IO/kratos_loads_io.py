@@ -107,7 +107,7 @@ class KratosLoadsIO:
             - parameters (:class:`stem.load.SurfaceLoad`): surface load parameters object
 
         Returns:
-            Dict[str, Any]: dictionary containing the load parameters
+            - Dict[str, Any]: dictionary containing the load parameters
         """
 
         # initialize load dictionary
