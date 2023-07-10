@@ -1,8 +1,6 @@
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Sequence
 from abc import ABC, abstractmethod
-import numpy as np
 
-from stem.IO.kratos_io import KratosIO
 
 class GeometricalObjectABC(ABC):
     """
@@ -197,23 +195,23 @@ class Geometry:
         - surfaces (Optional[List[Surface]]): An Iterable of Surface objects representing the surfaces in the geometry.
         - volumes (Optional[List[Volume]]): An Iterable of Volume objects representing the volumes in the geometry.
     """
-    def __init__(self, points: List[Point] = None, lines: List[Line] = None, surfaces: List[Surface] = None,
-                 volumes: List[Volume] = None):
+    def __init__(self, points: Optional[List[Point]] = None, lines: Optional[List[Line]] = None,
+                 surfaces: Optional[List[Surface]] = None, volumes: Optional[List[Volume]] = None):
         self.points: Optional[List[Point]] = points
         self.lines: Optional[List[Line]] = lines
         self.surfaces: Optional[List[Surface]] = surfaces
         self.volumes: Optional[List[Volume]] = volumes
 
     @staticmethod
-    def __get_unique_entities_by_ids(entities: List[GeometricalObjectABC]):
+    def __get_unique_entities_by_ids(entities: Sequence[GeometricalObjectABC]):
         """
         Returns a list of unique entities by their ids.
 
         Args:
-            - entities (List[Union[Volume,Surface,Line,Point]): An Iterable of entities.
+            - entities (Sequence[GeometricalObjectABC]): An Sequence of geometrical entities.
 
         Returns:
-            - unique_entities (List[GeometricalObjectABC): A list of unique entities.
+            - unique_entities (List[GeometricalObjectABC): A list of unique geometrical entities entities.
 
         """
         unique_entity_ids = []
@@ -333,5 +331,3 @@ if __name__ == '__main__':
                 "physical_groups": expected_physical_groups}
 
     geom = Geometry.create_geometry_from_gmsh_group(geo_data, "group_1")
-
-    a=1+1
