@@ -2,9 +2,9 @@ import pytest
 from gmsh_utils.gmsh_IO import GmshIO
 
 from stem.geometry import *
-from tests.utils import TestUtils
 
-class TestGeometry():
+
+class TestGeometry:
 
     @pytest.fixture
     def expected_geo_data_3D(self):
@@ -37,16 +37,15 @@ class TestGeometry():
 
         """
 
-
         # Read the gmsh geo file
         gmsh_io = GmshIO()
-        gmsh_io.read_gmsh_geo(r"tests\test_data\gmsh_utils_column_3D_tetra4.geo")
+        gmsh_io.read_gmsh_geo(r"tests/test_data/gmsh_utils_column_3D_tetra4.geo")
         geo_data = gmsh_io.geo_data
 
         # Create the geometry from the gmsh group
         geometry = Geometry().create_geometry_from_gmsh_group(geo_data, "group_2")
 
-        # Assert thate the geometry is created correctly
+        # Assert that the geometry is created correctly
         assert len(geometry.points) == len(expected_geo_data_3D["points"])
         for point in geometry.points:
             assert pytest.approx(point.coordinates) == expected_geo_data_3D["points"][point.id]
