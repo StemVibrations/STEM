@@ -1,26 +1,77 @@
-from typing import Dict, Any
-
+from typing import Dict, List, Any, Optional
+from abc import ABC, abstractmethod
 import numpy as np
 
 from stem.IO.kratos_io import KratosIO
 
+class GeometricalObjectABC(ABC):
+    """
+    An abstract base class for all geometrical objects.
+    """
 
-class Point:
+    @property
+    @abstractmethod
+    def id(self) -> int:
+        """
+        Abstract property for returning the id of the object.
+
+        Raises:
+            - Exception: cannot call abstract method.
+
+        """
+        raise Exception("Cannot call abstract method.")
+
+
+class Point(GeometricalObjectABC):
     """
     A class to represent a point in space.
 
+    Inheritance:
+        - GeometricalObjectABC
+
     Attributes:
-        - id (int or None): A unique identifier for the point.
+        - __id (Optional[int]): A unique identifier for the point.
         - coordinates (Iterable or None): An iterable of floats representing the x, y and z coordinates of the point.
     """
-    def __init__(self):
-        self.id = None
-        self.coordinates = None
+    def __init__(self, id):
+        """
+        Constructor for the point class.
+
+        Args:
+            id (int): The id of the point.
+        """
+        self.__id: int = id
+        self.coordinates: List[float] = []
+
+    @property
+    def id(self) -> int:
+        """
+        Getter for the id of the point.
+
+        Returns:
+            - int: The id of the point.
+
+        """
+        return self.__id
+
+    @id.setter
+    def id(self, value: int):
+        """
+        Setter for the id of the point.
+
+        Args:
+            - value (int): The id of the point.
+
+        """
+        self.__id = value
 
 
-class Line:
+class Line(GeometricalObjectABC):
     """
     A class to represent a line in space.
+
+    Inheritance:
+        - GeometricalObjectABC
 
     Attributes:
         - id (int or None): A unique identifier for the line.
@@ -28,37 +79,112 @@ class Line:
             line.
     """
 
-    def __init__(self):
-        self.id = None
-        self.point_ids = None
+    def __init__(self, id: int):
+        """
+        Constructor for the line class.
+
+        Args:
+            id (int): The id of the line.
+        """
+        self.__id: int = id
+        self.point_ids: List[int] = []
+
+    @property
+    def id(self) -> int:
+        """
+        Getter for the id of the line.
+
+        Returns:
+            - int: The id of the line.
+        """
+        return self.__id
+
+    @id.setter
+    def id(self, value: int):
+        """
+        Setter for the id of the line.
+
+        Args:
+            - value (int): The id of the line.
+
+        """
+        self.__id = value
 
 
-class Surface:
+class Surface(GeometricalObjectABC):
     """
     A class to represent a surface in space.
 
+    Inheritance:
+        - GeometricalObjectABC
+
     Attributes:
-        - id (int or None): A unique identifier for the surface.
+        - __id (int): A unique identifier for the surface.
         - line_ids (Iterable or None): An Iterable of three or more integers representing the ids of the lines that make\
             up the surface.
     """
-    def __init__(self):
-        self.id = None
-        self.line_ids = None
+    def __init__(self, id: int):
+        self.__id: int = id
+        self.line_ids: List[int] = []
+
+    @property
+    def id(self) -> int:
+        """
+        Getter for the id of the surface.
+
+        Returns:
+            - int: The id of the surface.
+        """
+        return self.__id
+
+    @id.setter
+    def id(self, value: int):
+        """
+        Setter for the id of the surface.
+
+        Args:
+            - value (int): The id of the surface.
+
+        """
+        self.__id = value
 
 
-class Volume:
+class Volume(GeometricalObjectABC):
     """
     A class to represent a volume in a three-dimensional space.
 
+    Inheritance:
+        - GeometricalObjectABC
+
     Attributes:
-        - id (int or None): A unique identifier for the volume.
-        - surface_ids (Iterable or None): An Iterable of four or more integers representing the ids of the surfaces that\
+        - __id (int): A unique identifier for the volume.
+        - surface_ids (List[int]): An Iterable of four or more integers representing the ids of the surfaces that\
             make up the volume.
     """
-    def __init__(self):
-        self.id = None
-        self.surface_ids = None
+    def __init__(self, id: int):
+        self.__id: int = id
+        self.surface_ids: List[int] = []
+
+    @property
+    def id(self) -> int:
+        """
+        Getter for the id of the volume.
+
+        Returns:
+            - int: The id of the volume.
+        """
+        return self.__id
+
+    @id.setter
+    def id(self, value: int):
+        """
+        Setter for the id of the volume.
+
+        Args:
+            - value (int): The id of the volume.
+
+        """
+        self.__id = value
 
 
 class Geometry:
@@ -66,19 +192,30 @@ class Geometry:
     A class to represent a collection of geometric objects in a two- or three-dimensional space.
 
     Attributes:
-        - points (Iterable or None): An Iterable of Point objects representing the points in the geometry.
-        - lines (Iterable or None): An Iterable of Line objects representing the lines in the geometry.
-        - surfaces (Iterable or None): An Iterable of Surface objects representing the surfaces in the geometry.
-        - volumes (Iterable or None): An Iterable of Volume objects representing the volumes in the geometry.
+        - points (Optional[List[Point]]): An Iterable of Point objects representing the points in the geometry.
+        - lines (Optional[List[Line]]): An Iterable of Line objects representing the lines in the geometry.
+        - surfaces (Optional[List[Surface]]): An Iterable of Surface objects representing the surfaces in the geometry.
+        - volumes (Optional[List[Volume]]): An Iterable of Volume objects representing the volumes in the geometry.
     """
-    def __init__(self, points=None, lines=None, surfaces=None, volumes=None):
-        self.points = points
-        self.lines = lines
-        self.surfaces = surfaces
-        self.volumes = volumes
+    def __init__(self, points: List[Point] = None, lines: List[Line] = None, surfaces: List[Surface] = None,
+                 volumes: List[Volume] = None):
+        self.points: Optional[List[Point]] = points
+        self.lines: Optional[List[Line]] = lines
+        self.surfaces: Optional[List[Surface]] = surfaces
+        self.volumes: Optional[List[Volume]] = volumes
 
     @staticmethod
-    def __get_unique_entities_by_ids(entities):
+    def __get_unique_entities_by_ids(entities: List[GeometricalObjectABC]):
+        """
+        Returns a list of unique entities by their ids.
+
+        Args:
+            - entities (List[Union[Volume,Surface,Line,Point]): An Iterable of entities.
+
+        Returns:
+            - unique_entities (List[GeometricalObjectABC): A list of unique entities.
+
+        """
         unique_entity_ids = []
         unique_entities = []
         for entity in entities:
@@ -88,20 +225,30 @@ class Geometry:
         return unique_entities
 
     @staticmethod
-    def __create_surface(geo_data, surface_id):
+    def __create_surface(geo_data: Dict[str, Any], surface_id: int):
+        """
+        Creates a surface from the geometry data.
+
+        Args:
+            - geo_data (Dict[str, Any]): A dictionary containing the geometry data as provided by gmsh_utils.
+            - surface_id (int): The id of the surface to create.
+
+        Returns:
+            - surface (Surface): The surface object.
+        """
+
+        # Initialise point and line lists
         points = []
         lines = []
 
-        surface = Surface()
-        surface.id = abs(surface_id)
+        # create surface and lower dimensional objects
+        surface = Surface(abs(surface_id))
         surface.line_ids = geo_data["surfaces"][surface.id]
         for line_id in surface.line_ids:
-            line = Line()
-            line.id = abs(line_id)
+            line = Line(abs(line_id))
             line.point_ids = geo_data["lines"][line.id]
             for point_id in line.point_ids:
-                point = Point()
-                point.id = point_id
+                point = Point(point_id)
                 point.coordinates = geo_data["points"][point.id]
                 points.append(point)
             lines.append(line)
@@ -133,8 +280,7 @@ class Geometry:
         if ndim_group == 3:
             # Create volumes and lower dimensional objects
             for id in group_data["geometry_ids"]:
-                volume = Volume()
-                volume.id = id
+                volume = Volume(id)
                 volume.surface_ids = geo_data["volumes"][volume.id]
 
                 # create surfaces and lower dimensional objects which are part of the current volume
