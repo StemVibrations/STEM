@@ -103,7 +103,8 @@ class AbsorbingBoundary(BoundaryParametersABC):
     def is_constraint(self) -> bool:
         """
         Property which indicates if boundary condition is a constraint. False for AbsorbingBoundary.
+        
         Returns:
-            bool
+            - bool
         """
         return False
