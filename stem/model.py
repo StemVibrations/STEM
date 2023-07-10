@@ -45,11 +45,15 @@ class Model:
         body_model_part.name = name
         body_model_part.material = material_parameters
 
-        body_model_part.set_geometry(gmsh_io.geo_data)
+        body_model_part.get_geometry_from_geo_data(gmsh_io.geo_data, name)
 
         self.body_model_parts.append(body_model_part)
 
-        gmsh_utils.make
+
+if __name__ == '__main__':
+    coordinates = [[0, 0,0], [1, 0,0], [1, 1,0], [0, 1,0]]
+
+
 
 
 
