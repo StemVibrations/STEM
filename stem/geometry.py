@@ -187,7 +187,7 @@ class Volume(GeometricalObjectABC):
 
 class Geometry:
     """
-    A class to represent a collection of geometric objects in a two- or three-dimensional space.
+    A class to represent a collection of geometric objects in a zero-, one-, two- or three-dimensional space.
 
     Attributes:
         - points (Optional[List[:class:`Point`]]): An Iterable of Point objects representing the points in the geometry.
