@@ -42,7 +42,7 @@ def set_default_steel_rail_material(ndim: int, rail_type: RailTypes) -> Structur
             parameters["I22"] = 2.787e-06
             parameters["TORSIONAL_INERTIA"] = 2.38e-05
 
-    elif rail_type.value == 3:
+    elif rail_type == RailTypes.rail_60E1:
         parameters = dict(CROSS_AREA=0.00767, I33=3.038e-05)
         if ndim == 3:
             parameters["I22"] = 5.123e-06
