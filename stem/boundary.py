@@ -16,8 +16,9 @@ class BoundaryParametersABC(ABC):
     def is_constraint(self) -> bool:
         """
         Property which indicates if boundary condition is a constraint.
+        
         Returns:
-            bool
+            - bool
         """
         raise Exception("abstract method 'is_constraint' of boundary parameters class is called")
 
