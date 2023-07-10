@@ -301,7 +301,7 @@ class Geometry:
             - group_name (str): The name of the group to create the geometry from.
 
         Returns:
-            - geometry (Geometry): A Geometry object containing the geometric objects in the group.
+            - geometry (:class:`Geometry`): A Geometry object containing the geometric objects in the group.
         """
 
         # initialize point, line, surface and volume lists
@@ -314,10 +314,11 @@ class Geometry:
         ndim_group = group_data["ndim"]
 
         if ndim_group == 0:
+            # create points
             for id in group_data["geometry_ids"]:
                 points.append(Geometry.__set_point(geo_data, id))
         elif ndim_group == 1:
-
+            # create lines and lower dimensional objects
             for id in group_data["geometry_ids"]:
                 line, line_points = Geometry.__set_line(geo_data, id)
 
@@ -354,29 +355,3 @@ class Geometry:
         unique_points = Geometry.__get_unique_entities_by_ids(points)
 
         return cls(unique_points, unique_lines, unique_surfaces, unique_volumes)
-
-
-
-if __name__ == '__main__':
-    expected_points = {1: [0., 0., 0.], 2: [0.5, 0., 0.], 3: [0.5, 1., 0.], 4: [0., 1., 0.], 11: [0., 2., 0.],
-                       12: [0.5, 2., 0.], 13: [0., 0., -0.5], 14: [0.5, 0., -0.5], 18: [0.5, 1., -0.5],
-                       22: [0., 1., -0.5], 23: [0., 2., -0.5], 32: [0.5, 2., -0.5]}
-    expected_lines = {5: [1, 2], 6: [2, 3], 7: [3, 4], 8: [4, 1], 13: [4, 11], 14: [11, 12], 15: [12, 3],
-                      19: [13, 14], 20: [14, 18], 21: [18, 22], 22: [22, 13], 24: [1, 13], 25: [2, 14],
-                      29: [3, 18], 33: [4, 22], 41: [23, 22], 43: [18, 32], 44: [32, 23], 46: [11, 23],
-                      55: [12, 32]}
-    expected_surfaces = {10: [5, 6, 7, 8], 17: [-13, -7, -15, -14], 26: [5, 25, -19, -24], 30: [6, 29, -20, -25],
-                         34: [7, 33, -21, -29], 38: [8, 24, -22, -33], 39: [19, 20, 21, 22],
-                         48: [-13, 33, -41, -46], 56: [-15, 55, -43, -29], 60: [-14, 46, -44, -55],
-                         61: [41, -21, 43, 44]}
-    expected_volumes = {1: [-10, 39, 26, 30, 34, 38], 2: [-17, 61, -48, -34, -56, -60]}
-    expected_physical_groups = {'group_1': {'geometry_ids': [1], 'id': 1, 'ndim': 3},
-                                'group_2': {'geometry_ids': [2], 'id': 2, 'ndim': 3}}
-
-    geo_data = {"points": expected_points,
-                "lines": expected_lines,
-                "surfaces": expected_surfaces,
-                "volumes": expected_volumes,
-                "physical_groups": expected_physical_groups}
-
-    geom = Geometry.create_geometry_from_gmsh_group(geo_data, "group_1")
