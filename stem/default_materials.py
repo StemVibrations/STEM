@@ -27,7 +27,7 @@ def default_steel_rail_material(ndim: int, rail_type: RailTypes) -> StructuralMa
     Returns:
         - :class:`stem.structural_material.StructuralMaterial`
     """
-    if rail_type.value == 1:
+    if rail_type  == RailTypes.rail_46E3:
         parameters = dict(CROSS_AREA=0.005944,I33=1.606e-05)
         if ndim == 3:
             parameters["I22"] = 3.075e-06
