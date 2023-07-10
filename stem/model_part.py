@@ -39,10 +39,6 @@ class ModelPart:
         self.geometry = Geometry.create_geometry_from_gmsh_group(geo_data, name)
 
 
-
-
-
-
 class BodyModelPart(ModelPart):
     """
     This class contains model parts which are part of the body, e.g. a soil layer or track components.

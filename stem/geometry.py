@@ -25,7 +25,7 @@ class Point(GeometricalObjectABC):
     A class to represent a point in space.
 
     Inheritance:
-        - GeometricalObjectABC
+        - :class:`GeometricalObjectABC`
 
     Attributes:
         - __id (Optional[int]): A unique identifier for the point.
@@ -69,7 +69,7 @@ class Line(GeometricalObjectABC):
     A class to represent a line in space.
 
     Inheritance:
-        - GeometricalObjectABC
+        - :class:`GeometricalObjectABC`
 
     Attributes:
         - id (int or None): A unique identifier for the line.
@@ -114,7 +114,7 @@ class Surface(GeometricalObjectABC):
     A class to represent a surface in space.
 
     Inheritance:
-        - GeometricalObjectABC
+        - :class:`GeometricalObjectABC`
 
     Attributes:
         - __id (int): A unique identifier for the surface.
@@ -152,7 +152,7 @@ class Volume(GeometricalObjectABC):
     A class to represent a volume in a three-dimensional space.
 
     Inheritance:
-        - GeometricalObjectABC
+        - :class:`GeometricalObjectABC`
 
     Attributes:
         - __id (int): A unique identifier for the volume.
@@ -190,10 +190,10 @@ class Geometry:
     A class to represent a collection of geometric objects in a two- or three-dimensional space.
 
     Attributes:
-        - points (Optional[List[Point]]): An Iterable of Point objects representing the points in the geometry.
-        - lines (Optional[List[Line]]): An Iterable of Line objects representing the lines in the geometry.
-        - surfaces (Optional[List[Surface]]): An Iterable of Surface objects representing the surfaces in the geometry.
-        - volumes (Optional[List[Volume]]): An Iterable of Volume objects representing the volumes in the geometry.
+        - points (Optional[List[:class:`Point`]]): An Iterable of Point objects representing the points in the geometry.
+        - lines (Optional[List[:class:`Line`]]): An Iterable of Line objects representing the lines in the geometry.
+        - surfaces (Optional[List[:class:`Surface`]]): An Iterable of Surface objects representing the surfaces in the geometry.
+        - volumes (Optional[List[:class:`Volume`]]): An Iterable of Volume objects representing the volumes in the geometry.
     """
     def __init__(self, points: Optional[List[Point]] = None, lines: Optional[List[Line]] = None,
                  surfaces: Optional[List[Surface]] = None, volumes: Optional[List[Volume]] = None):
@@ -208,10 +208,10 @@ class Geometry:
         Returns a list of unique entities by their ids.
 
         Args:
-            - entities (Sequence[GeometricalObjectABC]): An Sequence of geometrical entities.
+            - entities (Sequence[:class:`GeometricalObjectABC`]): An Sequence of geometrical entities.
 
         Returns:
-            - unique_entities (List[GeometricalObjectABC): A list of unique geometrical entities entities.
+            - unique_entities (List[:class:`GeometricalObjectABC`): A list of unique geometrical entities entities.
 
         """
         unique_entity_ids = []
