@@ -10,6 +10,9 @@ from stem.structural_material import StructuralMaterial, EulerBeam
 
 
 class RailTypes(Enum):
+"""
+Enumeration of rail types
+"""
     rail_46E3 = 1
     rail_54E1 = 2
     rail_60E1 = 3
