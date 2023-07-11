@@ -10,9 +10,9 @@ from stem.structural_material import StructuralMaterial, EulerBeam
 
 
 class RailTypes(Enum):
-"""
-Enumeration of rail types
-"""
+    """
+    Enumeration of rail types
+    """
     rail_46E3 = 1
     rail_54E1 = 2
     rail_60E1 = 3
@@ -30,8 +30,8 @@ def set_default_steel_rail_material(ndim: int, rail_type: RailTypes) -> Structur
     Returns:
         - :class:`stem.structural_material.StructuralMaterial`
     """
-    if rail_type  == RailTypes.rail_46E3:
-        parameters = dict(CROSS_AREA=0.005944,I33=1.606e-05)
+    if rail_type == RailTypes.rail_46E3:
+        parameters = dict(CROSS_AREA=0.005944, I33=1.606e-05)
         if ndim == 3:
             parameters["I22"] = 3.075e-06
             parameters["TORSIONAL_INERTIA"] = 1.635e-05
@@ -62,11 +62,11 @@ class DefaultMaterial(Enum):
     Enumeration class to retrieve default soil materials to help the user in making the model.
     """
 
-    Rail_45E3_2D = default_steel_rail_material(ndim=2, rail_type=RailTypes.rail_46E3)
-    Rail_45E3_3D = default_steel_rail_material(ndim=3, rail_type=RailTypes.rail_46E3)
+    Rail_46E3_2D = set_default_steel_rail_material(ndim=2, rail_type=RailTypes.rail_46E3)
+    Rail_46E3_3D = set_default_steel_rail_material(ndim=3, rail_type=RailTypes.rail_46E3)
 
-    Rail_54E1_2D = default_steel_rail_material(ndim=2, rail_type=RailTypes.rail_54E1)
-    Rail_54E1_3D = default_steel_rail_material(ndim=3, rail_type=RailTypes.rail_54E1)
+    Rail_54E1_2D = set_default_steel_rail_material(ndim=2, rail_type=RailTypes.rail_54E1)
+    Rail_54E1_3D = set_default_steel_rail_material(ndim=3, rail_type=RailTypes.rail_54E1)
 
-    Rail_60E1_2D = default_steel_rail_material(ndim=2, rail_type=RailTypes.rail_60E1)
-    Rail_60E1_3D = default_steel_rail_material(ndim=3, rail_type=RailTypes.rail_60E1)
+    Rail_60E1_2D = set_default_steel_rail_material(ndim=2, rail_type=RailTypes.rail_60E1)
+    Rail_60E1_3D = set_default_steel_rail_material(ndim=3, rail_type=RailTypes.rail_60E1)
