@@ -359,6 +359,43 @@ class Geometry:
         return surface, lines, points
 
     @classmethod
+    def create_geometry_from_geo_data(cls, geo_data: Dict[str,Any]):
+        """
+        Creates the geometry from gmsh geo_data
+
+        Args:
+            - geo_data (Dict[str, Any]): A dictionary containing the geometry data as provided by gmsh_utils.
+
+        Returns:
+            - geometry (:class:`Geometry`): The geometry object.
+        """
+
+        # initialise geometry lists
+        points = []
+        lines = []
+        surfaces = []
+        volumes = []
+
+        # add volumes to geometry
+        for key, value in geo_data["volumes"].items():
+            volumes.append(Volume.create(value,key))
+
+        # add surfaces to geometry
+        for key, value in geo_data["surfaces"].items():
+            surfaces.append(Surface.create(value, key))
+
+        # add lines to geometry
+        for key, value in geo_data["lines"].items():
+            lines.append(Line.create(value,key))
+
+        # add points to geometry
+        for key, value in geo_data["points"].items():
+            points.append(Point.create(value,key))
+
+        # create the geometry class
+        return cls(points, lines, surfaces, volumes)
+
+    @classmethod
     def create_geometry_from_gmsh_group(cls, geo_data: Dict[str, Any], group_name: str):
         """
         Initialises the geometry by parsing the geometry data from the geo_data dictionary.

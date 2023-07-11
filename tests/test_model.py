@@ -108,8 +108,7 @@ class TestGeometry:
         soil_material = create_default_2d_soil_material
 
         # create model
-        model = Model()
-        model.ndim = ndim
+        model = Model(ndim)
 
         # add soil layer
         model.add_soil_layer(layer_coordinates, soil_material, "soil1")
@@ -160,8 +159,7 @@ class TestGeometry:
         soil_material2.name = "soil2"
 
         # create model
-        model = Model()
-        model.ndim = ndim
+        model = Model(ndim)
 
         # add soil layers
         model.add_soil_layer(layer1_coordinates, soil_material1, "layer1")
