@@ -169,7 +169,7 @@ class TestModel:
 
         """
         # define soil material
-        ndim=2
+        ndim = 2
         soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
         constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
         soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
@@ -414,6 +414,9 @@ class TestModel:
             for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
                 assert generated_surface.id == expected_surface.id
                 assert generated_surface.line_ids == expected_surface.line_ids
+
+            # finalize gmsh
+            model.gmsh_io.finalize_gmsh()
 
     def test_synchronise_geometry(self, expected_geometry_two_layers_2D_after_sync: Tuple[Geometry, Geometry],
                                    create_default_2d_soil_material: SoilMaterial):
