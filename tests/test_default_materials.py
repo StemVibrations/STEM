@@ -6,12 +6,10 @@ from stem.default_materials import DefaultMaterial
 from tests.utils import TestUtils
 
 
-class TestKratosMaterialIO:
+class TestDefaultMaterials:
     def test_default_structural_materials(self):
         """
-        Test writing a material list to json. In this test, the material list contains a beam material, a spring damper
-        material and a nodal concentrated material.
-
+        Test the default material parameters to be used in STEM.
         """
         ndim = 3
         default_materials = [
