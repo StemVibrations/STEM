@@ -228,13 +228,14 @@ class VanGenuchtenLaw(RetentionLawABC):
     RESIDUAL_SATURATION: float = 1e-10
     MINIMUM_RELATIVE_PERMEABILITY: float = 0.0001
 
+
 @dataclass
 class SoilMaterial:
     """
     Class containing the parameters for a soil material
 
     Attributes:
-        - name (str): The name of the material.
+        - name (str): The name to describe the soil material.
         - soil_formulation (:class:`SoilFormulationParametersABC`): The soil formulation parameters.
         - constitutive_law (:class:`SoilConstitutiveLawABC`): The soil constitutive law parameters.
         - retention_parameters (:class:`RetentionLawABC`): The retention law parameters.

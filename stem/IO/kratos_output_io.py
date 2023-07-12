@@ -3,9 +3,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import List, Dict, Tuple, Union, Any
 
-import numpy as np
 
-from stem.load import Load, PointLoad, MovingLoad
 from stem.output import (
     Output,
     GiDOutputParameters,
@@ -13,8 +11,6 @@ from stem.output import (
     JsonOutputParameters,
     OutputParametersABC,
 )
-from stem.soil_material import *
-from stem.structural_material import *
 
 
 class KratosOutputsIO:

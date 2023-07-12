@@ -1,0 +1,17 @@
+{
+    "processes": {
+        "constraints_process_list": [
+            {
+                "python_module": "apply_excavation_process",
+                "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+                "process_name":  "ApplyExcavationProcess",
+                "Parameters":    {
+                    "model_part_name":      "PorousDomain.test_excavation",
+                    "variable_name":        "EXCAVATION",
+                    "deactivate_soil_part": true
+                }
+            }
+        ],
+        "loads_process_list": []
+    }
+}
