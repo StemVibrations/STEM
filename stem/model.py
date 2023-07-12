@@ -125,7 +125,8 @@ class Model:
 
     def synchronise_geometry(self):
         """
-        Synchronise the geometry of the model with the geometry of the model parts.
+        Synchronise the geometry of all model parts and synchronise the geometry of the whole model. This function
+        recalculates all ids and connectivities of all geometrical entities.
 
         """
 

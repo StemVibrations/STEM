@@ -78,6 +78,44 @@ class TestModel:
         return geometry_1, geometry_2
 
     @pytest.fixture
+    def expected_geometry_two_layers_2D_after_sync(self):
+
+        geometry_1 = Geometry()
+
+        geometry_1.points = [Point.create([0, 0, 0], 1),
+                             Point.create([1, 0, 0], 2),
+                             Point.create([1, 1, 0], 3),
+                             Point.create([0.5, 1, 0], 4),
+                             Point.create([0, 1, 0], 5)]
+
+        geometry_1.lines = [Line.create([1, 2], 1),
+                            Line.create([2, 3], 2),
+                            Line.create([3, 4], 3),
+                            Line.create([4, 5], 4),
+                            Line.create([5, 1], 5)]
+
+        geometry_1.surfaces = [Surface.create([1, 2, 3, 4, 5], 1)]
+
+        geometry_1.volumes = []
+
+        geometry_2 = Geometry()
+        geometry_2.points = [Point.create([1, 1, 0], 3),
+                             Point.create([0.5, 1, 0], 4),
+                             Point.create([0.5, 2, 0], 6),
+                             Point.create([1, 2, 0], 7)]
+
+        geometry_2.lines = [Line.create([3, 4], 3),
+                            Line.create([4, 6], 6),
+                            Line.create([6, 7], 7),
+                            Line.create([7, 3], 8)]
+
+        geometry_2.surfaces = [Surface.create([3, 6, 7, 8], 2)]
+
+        geometry_2.volumes = []
+
+        return geometry_1, geometry_2
+
+    @pytest.fixture
     def create_default_2d_soil_material(self):
         # define soil material
         ndim=2
@@ -156,20 +194,6 @@ class TestModel:
                                 Point.create([0., 1., -0.5], 22),
                                 Point.create([0.5, 1., -0.5], 18),
                                 Point.create([0.5, 2., -0.5], 32)]
-
-        expected_points = {1: [0., 0., 0.], 2: [0.5, 0., 0.], 3: [0.5, 1., 0.], 4: [0., 1., 0.], 11: [0., 2., 0.],
-                           12: [0.5, 2., 0.], 13: [0., 0., -0.5], 14: [0.5, 0., -0.5], 18: [0.5, 1., -0.5],
-                           22: [0., 1., -0.5], 23: [0., 2., -0.5], 32: [0.5, 2., -0.5]}
-        expected_lines = {5: [1, 2], 6: [2, 3], 7: [3, 4], 8: [4, 1], 13: [4, 11], 14: [11, 12], 15: [12, 3],
-                          19: [13, 14], 20: [14, 18], 21: [18, 22], 22: [22, 13], 24: [1, 13], 25: [2, 14],
-                          29: [3, 18], 33: [4, 22], 41: [23, 22], 43: [18, 32], 44: [32, 23], 46: [11, 23],
-                          55: [12, 32]}
-        expected_surfaces = {10: [5, 6, 7, 8], 17: [-13, -7, -15, -14], 26: [5, 25, -19, -24], 30: [6, 29, -20, -25],
-                             34: [7, 33, -21, -29], 38: [8, 24, -22, -33], 39: [19, 20, 21, 22],
-                             48: [-13, 33, -41, -46], 56: [-15, 55, -43, -29], 60: [-14, 46, -44, -55],
-                             61: [41, -21, 43, 44]}
-        expected_volumes = {1: [-10, 39, 26, 30, 34, 38], 2: [-17, 61, -48, -34, -56, -60]}
-
 
         return geometry_1, geometry_2
 
@@ -327,6 +351,67 @@ class TestModel:
             for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
                 assert generated_surface.id == expected_surface.id
                 assert generated_surface.line_ids == expected_surface.line_ids
+
+
+    def test_synchronise_geometry(self, expected_geometry_two_layers_2D_after_sync: Tuple[Geometry, Geometry],
+                                   create_default_2d_soil_material: SoilMaterial):
+        """
+        Test if the geometry is synchronised correctly after adding a new layer to the model. Where the new layer
+        overlaps with the existing layer, the existing layer is cut and the overlapping part is removed.
+
+        Args:
+            - expected_geometry_two_layers_2D_after_sync (Tuple[Geometry, Geometry]): The expected geometry after \
+                synchronising the geometry.
+            - create_default_2d_soil_material (SoilMaterial): A default soil material.
+
+        """
+
+        # define layer coordinates
+        ndim = 2
+        layer1_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+        layer2_coordinates = [(1, 1, 0), (0.5, 1, 0), (0.5, 2, 0), (1, 2, 0)]
+
+        # define soil materials
+        soil_material1 = create_default_2d_soil_material
+        soil_material1.name = "soil1"
+
+        soil_material2 = create_default_2d_soil_material
+        soil_material2.name = "soil2"
+
+        # create model
+        model = Model(ndim)
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
+        model.add_soil_layer_by_coordinates(layer2_coordinates, soil_material2, "layer2")
+
+        # synchronise geometry and recalculates the ids
+        model.synchronise_geometry()
+
+        # check if geometry is added correctly for each layer
+        for i in range(len(model.body_model_parts)):
+            generated_geometry = model.body_model_parts[i].geometry
+            expected_geometry = expected_geometry_two_layers_2D_after_sync[i]
+
+            # check if points are added correctly
+            for generated_point, expected_point in zip(generated_geometry.points, expected_geometry.points):
+                assert generated_point.id == expected_point.id
+                assert pytest.approx(generated_point.coordinates) == expected_point.coordinates
+
+            # check if lines are added correctly
+            for generated_line, expected_line in zip(generated_geometry.lines, expected_geometry.lines):
+                assert generated_line.id == expected_line.id
+                assert generated_line.point_ids == expected_line.point_ids
+
+            # check if surfaces are added correctly
+            for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
+                assert generated_surface.id == expected_surface.id
+                assert generated_surface.line_ids == expected_surface.line_ids
+
+        # finalize gmsh
+        model.gmsh_io.finalize_gmsh()
+
+
 
 
 
