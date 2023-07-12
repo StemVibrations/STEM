@@ -29,7 +29,7 @@ class Point(GeometricalObjectABC):
 
     Attributes:
         - __id (int): A unique identifier for the point.
-        - coordinates (List[float]): An iterable of floats representing the x, y and z coordinates of the point.
+        - coordinates (Sequence[float]): An sequence of floats representing the x, y and z coordinates of the point.
     """
     def __init__(self, id: int):
         """
@@ -47,11 +47,11 @@ class Point(GeometricalObjectABC):
         Creates a point object from a list of coordinates and an id.
 
         Args:
-            - coordinates (List[float]): An iterable of floats representing the x, y and z coordinates of the point.
+            - coordinates (Sequence[float]): An iterable of floats representing the x, y and z coordinates of the point.
             - id (int): The id of the point.
 
         Returns:
-            - Point: A point object.
+            - :class:`Point`: A point object.
 
         """
         point = cls(id)
@@ -90,7 +90,7 @@ class Line(GeometricalObjectABC):
 
     Attributes:
         - id (int): A unique identifier for the line.
-        - point_ids (List[int]): An Iterable of two integers representing the ids of the points that make up the\
+        - point_ids (Sequence[int]): A sequence of two integers representing the ids of the points that make up the\
             line.
     """
 
@@ -110,12 +110,12 @@ class Line(GeometricalObjectABC):
         Creates a line object from a list of point ids and an id.
 
         Args:
-            - point_ids (List[int]): An Iterable of two integers representing the ids of the points that make up the\
+            - point_ids (Sequence[int]): A sequence of two integers representing the ids of the points that make up the\
                 line.
             - id (int): The id of the line.
 
         Returns:
-            - Line: A line object.
+            - :class:`Line`: A line object.
 
         """
         line = cls(id)
@@ -153,7 +153,7 @@ class Surface(GeometricalObjectABC):
 
     Attributes:
         - __id (int): A unique identifier for the surface.
-        - line_ids (List[int]): An Iterable of three or more integers representing the ids of the lines that make\
+        - line_ids (Sequence[int]): A sequence of three or more integers representing the ids of the lines that make\
             up the surface.
     """
     def __init__(self, id: int):
@@ -187,12 +187,12 @@ class Surface(GeometricalObjectABC):
         Creates a surface object from a list of line ids and an id.
 
         Args:
-            - line_ids (List[int]): An Iterable of three or more integers representing the ids of the lines that make\
+            - line_ids (Sequence[int]): A sequence of three or more integers representing the ids of the lines that make\
                 up the surface.
             - id (int): The id of the surface.
 
         Returns:
-            - Surface: A surface object.
+            - :class:`Surface`: A surface object.
 
         """
         surface = cls(id)
@@ -209,7 +209,7 @@ class Volume(GeometricalObjectABC):
 
     Attributes:
         - __id (int): A unique identifier for the volume.
-        - surface_ids (List[int]): An Iterable of four or more integers representing the ids of the surfaces that\
+        - surface_ids (Sequence[int]): A sequence of four or more integers representing the ids of the surfaces that\
             make up the volume.
     """
     def __init__(self, id: int):
@@ -243,12 +243,12 @@ class Volume(GeometricalObjectABC):
         Creates a volume object from a list of surface ids and an id.
 
         Args:
-            - surface_ids (List[int]): An Iterable of four or more integers representing the ids of the surfaces that\
+            - surface_ids (Sequence[int]): A sequence of four or more integers representing the ids of the surfaces that\
                 make up the volume.
             - id (int): The id of the volume.
 
         Returns:
-            - Volume: A volume object.
+            - :class:`Volume`: A volume object.
 
         """
         volume = cls(id)
@@ -282,7 +282,7 @@ class Geometry:
             - entities (Sequence[:class:`GeometricalObjectABC`]): An Sequence of geometrical entities.
 
         Returns:
-            - unique_entities (List[:class:`GeometricalObjectABC`): A list of unique geometrical entities entities.
+            - Sequence[:class:`GeometricalObjectABC`]: A sequence of unique geometrical entities entities.
 
         """
         unique_entity_ids = []
@@ -303,7 +303,7 @@ class Geometry:
             - point_id (int): The id of the line to create.
 
         Returns:
-            - point (:class:`Point`): The point object.
+            - :class:`Point`: The point object.
         """
 
         # create point
@@ -319,7 +319,7 @@ class Geometry:
             - line_id (int): The id of the line to create.
 
         Returns:
-            - line (:class:`Line`): The line object.
+            - Tuple[:class:`Line`, Sequence[:class:`Point`]]: The line object and the points that make up the line.
         """
 
         # Initialise point list
@@ -342,7 +342,8 @@ class Geometry:
             - surface_id (int): The id of the surface to create.
 
         Returns:
-            - surface (:class:`Surface`): The surface object.
+            - Tuple[:class:`Surface`, Sequence[:class:`Line`], Sequence[:class:`Point`]]: The surface object, \
+                the lines that make up the surface and the points that make up the lines.
         """
 
         # Initialise point and line lists
@@ -369,7 +370,7 @@ class Geometry:
             - geo_data (Dict[str, Any]): A dictionary containing the geometry data as provided by gmsh_utils.
 
         Returns:
-            - geometry (:class:`Geometry`): The geometry object.
+            - :class:`Geometry`: The geometry object.
         """
 
         # initialise geometry lists
@@ -407,7 +408,7 @@ class Geometry:
             - group_name (str): The name of the group to create the geometry from.
 
         Returns:
-            - geometry (:class:`Geometry`): A Geometry object containing the geometric objects in the group.
+            - :class:`Geometry`: A Geometry object containing the geometric objects in the group.
         """
 
         # initialize point, line, surface and volume lists
