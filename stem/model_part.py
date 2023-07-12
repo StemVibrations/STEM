@@ -3,7 +3,8 @@ from typing import Optional, Union, Dict, Any
 from stem.soil_material import SoilMaterial
 from stem.structural_material import StructuralMaterial
 
-from stem.geometry import Geometry, Volume, Surface, Line, Point
+from stem.geometry import Geometry
+
 
 class ModelPart:
     """
@@ -11,7 +12,7 @@ class ModelPart:
     like excavation.
 
     Attributes:
-        - name (str): name of the model part
+        - name (Optional[str]): name of the model part
         - nodes (np.array or None): node id followed by node coordinates in an array
         - elements (np.array or None): element id followed by connectivities in an array
         - conditions (np.array or None): condition id followed by connectivities in an array
@@ -19,7 +20,7 @@ class ModelPart:
         - parameters (dict): dictionary containing the model part parameters
     """
     def __init__(self):
-        self.name = None
+        self.name: Optional[str] = None
         self.nodes = None
         self.elements = None
         self.conditions = None
@@ -43,7 +44,7 @@ class BodyModelPart(ModelPart):
     """
     This class contains model parts which are part of the body, e.g. a soil layer or track components.
 
-        Inheritance:
+    Inheritance:
         - :class:`ModelPart`
 
     Attributes:
