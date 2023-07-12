@@ -39,7 +39,24 @@ class Point(GeometricalObjectABC):
             id (int): The id of the point.
         """
         self.__id: int = id
-        self.coordinates: List[float] = []
+        self.coordinates: Sequence[float] = []
+
+    @classmethod
+    def create(cls, coordinates: Sequence[float], id: int):
+        """
+        Creates a point object from a list of coordinates and an id.
+
+        Args:
+            - coordinates (List[float]): An iterable of floats representing the x, y and z coordinates of the point.
+            - id (int): The id of the point.
+
+        Returns:
+            - Point: A point object.
+
+        """
+        point = cls(id)
+        point.coordinates = coordinates
+        return point
 
     @property
     def id(self) -> int:
@@ -85,7 +102,25 @@ class Line(GeometricalObjectABC):
             id (int): The id of the line.
         """
         self.__id: int = id
-        self.point_ids: List[int] = []
+        self.point_ids: Sequence[int] = []
+
+    @classmethod
+    def create(cls, point_ids: Sequence[int], id: int):
+        """
+        Creates a line object from a list of point ids and an id.
+
+        Args:
+            - point_ids (List[int]): An Iterable of two integers representing the ids of the points that make up the\
+                line.
+            - id (int): The id of the line.
+
+        Returns:
+            - Line: A line object.
+
+        """
+        line = cls(id)
+        line.point_ids = point_ids
+        return line
 
     @property
     def id(self) -> int:
@@ -123,7 +158,7 @@ class Surface(GeometricalObjectABC):
     """
     def __init__(self, id: int):
         self.__id: int = id
-        self.line_ids: List[int] = []
+        self.line_ids: Sequence[int] = []
 
     @property
     def id(self) -> int:
@@ -146,6 +181,24 @@ class Surface(GeometricalObjectABC):
         """
         self.__id = value
 
+    @classmethod
+    def create(cls, line_ids: Sequence[int], id: int):
+        """
+        Creates a surface object from a list of line ids and an id.
+
+        Args:
+            - line_ids (List[int]): An Iterable of three or more integers representing the ids of the lines that make\
+                up the surface.
+            - id (int): The id of the surface.
+
+        Returns:
+            - Surface: A surface object.
+
+        """
+        surface = cls(id)
+        surface.line_ids = line_ids
+        return surface
+
 
 class Volume(GeometricalObjectABC):
     """
@@ -161,7 +214,7 @@ class Volume(GeometricalObjectABC):
     """
     def __init__(self, id: int):
         self.__id: int = id
-        self.surface_ids: List[int] = []
+        self.surface_ids: Sequence[int] = []
 
     @property
     def id(self) -> int:
@@ -183,6 +236,24 @@ class Volume(GeometricalObjectABC):
 
         """
         self.__id = value
+
+    @classmethod
+    def create(cls, surface_ids: Sequence[int], id: int):
+        """
+        Creates a volume object from a list of surface ids and an id.
+
+        Args:
+            - surface_ids (List[int]): An Iterable of four or more integers representing the ids of the surfaces that\
+                make up the volume.
+            - id (int): The id of the volume.
+
+        Returns:
+            - Volume: A volume object.
+
+        """
+        volume = cls(id)
+        volume.surface_ids = surface_ids
+        return volume
 
 
 class Geometry:
@@ -236,9 +307,7 @@ class Geometry:
         """
 
         # create point
-        point = Point(point_id)
-        point.coordinates = geo_data["points"][point.id]
-        return point
+        return Point.create(geo_data["points"][point_id],point_id)
 
     @staticmethod
     def __set_line(geo_data: Dict[str,Any], line_id: int):
@@ -257,8 +326,8 @@ class Geometry:
         points = []
 
         # create line and lower dimensional objects
-        line = Line(abs(line_id))
-        line.point_ids = geo_data["lines"][line.id]
+        line_id = abs(line_id)
+        line = Line.create(geo_data["lines"][line_id], line_id)
         for point_id in line.point_ids:
             points.append(Geometry.__set_point(geo_data, point_id))
         return line, points
@@ -281,8 +350,8 @@ class Geometry:
         lines = []
 
         # create surface and lower dimensional objects
-        surface = Surface(abs(surface_id))
-        surface.line_ids = geo_data["surfaces"][surface.id]
+        surface_id = abs(surface_id)
+        surface = Surface.create(geo_data["surfaces"][surface_id], surface_id)
         for line_id in surface.line_ids:
             line, line_points = Geometry.__set_line(geo_data, line_id)
 
@@ -290,6 +359,43 @@ class Geometry:
             points.extend(line_points)
 
         return surface, lines, points
+
+    @classmethod
+    def create_geometry_from_geo_data(cls, geo_data: Dict[str,Any]):
+        """
+        Creates the geometry from gmsh geo_data
+
+        Args:
+            - geo_data (Dict[str, Any]): A dictionary containing the geometry data as provided by gmsh_utils.
+
+        Returns:
+            - geometry (:class:`Geometry`): The geometry object.
+        """
+
+        # initialise geometry lists
+        points = []
+        lines = []
+        surfaces = []
+        volumes = []
+
+        # add volumes to geometry
+        for key, value in geo_data["volumes"].items():
+            volumes.append(Volume.create(value,key))
+
+        # add surfaces to geometry
+        for key, value in geo_data["surfaces"].items():
+            surfaces.append(Surface.create(value, key))
+
+        # add lines to geometry
+        for key, value in geo_data["lines"].items():
+            lines.append(Line.create(value,key))
+
+        # add points to geometry
+        for key, value in geo_data["points"].items():
+            points.append(Point.create(value,key))
+
+        # create the geometry class
+        return cls(points, lines, surfaces, volumes)
 
     @classmethod
     def create_geometry_from_gmsh_group(cls, geo_data: Dict[str, Any], group_name: str):
@@ -337,8 +443,7 @@ class Geometry:
         elif ndim_group == 3:
             # Create volumes and lower dimensional objects
             for id in group_data["geometry_ids"]:
-                volume = Volume(id)
-                volume.surface_ids = geo_data["volumes"][volume.id]
+                volume = Volume.create(geo_data["volumes"][id], id)
 
                 # create surfaces and lower dimensional objects which are part of the current volume
                 for surface_id in volume.surface_ids:

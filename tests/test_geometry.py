@@ -182,4 +182,33 @@ class TestGeometry:
         for volume in geometry.volumes:
             assert volume.surface_ids == expected_geo_data_3D["volumes"][volume.id]
 
+    def test_create_geometry_from_geo_data(self, expected_geo_data_3D):
+        """
+        Test the creation of a 3D geometry from a geo_data dictionary.
 
+        Args:
+            - expected_geo_data_3D (Dict[int, Any]): expected geometry data for a 3D geometry group.
+
+        """
+
+        geo_data = expected_geo_data_3D
+
+        # Create the geometry from the gmsh group
+        geometry = Geometry().create_geometry_from_geo_data(geo_data)
+
+        # Assert that the geometry is created correctly
+        assert len(geometry.points) == len(expected_geo_data_3D["points"])
+        for point in geometry.points:
+            assert pytest.approx(point.coordinates) == expected_geo_data_3D["points"][point.id]
+
+        assert len(geometry.lines) == len(expected_geo_data_3D["lines"])
+        for line in geometry.lines:
+            assert line.point_ids == expected_geo_data_3D["lines"][line.id]
+
+        assert len(geometry.surfaces) == len(expected_geo_data_3D["surfaces"])
+        for surface in geometry.surfaces:
+            assert surface.line_ids == expected_geo_data_3D["surfaces"][surface.id]
+
+        assert len(geometry.volumes) == len(expected_geo_data_3D["volumes"])
+        for volume in geometry.volumes:
+            assert volume.surface_ids == expected_geo_data_3D["volumes"][volume.id]
