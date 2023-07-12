@@ -7,7 +7,7 @@ from stem.model import *
 from stem.geometry import *
 
 
-class TestGeometry:
+class TestModel:
 
     @pytest.fixture
     def expected_geo_data_0D(self):
@@ -23,24 +23,23 @@ class TestGeometry:
     @pytest.fixture
     def expected_geometry_single_layer_2D(self):
 
-        geometry= Geometry()
+        geometry = Geometry()
 
-        geometry.points = [Point.create([0,0,0], 1),
-                           Point.create([1,0,0], 2),
-                           Point.create([1,1,0], 3),
-                           Point.create([0,1,0], 4)]
+        geometry.points = [Point.create([0, 0, 0], 1),
+                           Point.create([1, 0, 0], 2),
+                           Point.create([1, 1, 0], 3),
+                           Point.create([0, 1, 0], 4)]
 
-        geometry.lines = [Line.create([1,2], 1),
-                          Line.create([2,3], 2),
-                          Line.create([3,4], 3),
-                          Line.create([4,1], 4)]
+        geometry.lines = [Line.create([1, 2], 1),
+                          Line.create([2, 3], 2),
+                          Line.create([3, 4], 3),
+                          Line.create([4, 1], 4)]
 
         geometry.surfaces = [Surface.create([1,2,3,4], 1)]
 
         geometry.volumes = []
 
         return geometry
-
 
     @pytest.fixture
     def expected_geometry_two_layers_2D(self):
@@ -223,6 +222,8 @@ class TestGeometry:
             assert generated_surface.id == expected_surface.id
             assert generated_surface.line_ids == expected_surface.line_ids
 
+        # finalize gmsh
+        model.gmsh_io.finalize_gmsh()
 
     def test_add_multiple_soil_layers_2D(self, expected_geometry_two_layers_2D: Tuple[Geometry, Geometry],
                                          create_default_2d_soil_material: SoilMaterial):
@@ -277,6 +278,9 @@ class TestGeometry:
             for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
                 assert generated_surface.id == expected_surface.id
                 assert generated_surface.line_ids == expected_surface.line_ids
+
+        # finalize gmsh
+        model.gmsh_io.finalize_gmsh()
 
     def test_add_all_layers_from_geo_file(self, expected_geometry_two_layers_3D: Tuple[Geometry, Geometry]):
         """
