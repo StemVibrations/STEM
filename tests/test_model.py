@@ -88,6 +88,92 @@ class TestGeometry:
                                      retention_parameters=SaturatedBelowPhreaticLevelLaw())
         return soil_material
 
+    @pytest.fixture
+    def expected_geometry_two_layers_3D(self):
+        """
+        Expected geometry data for a 3D geometry. The geometry is 2 stacked blocks, where the top and bottom blocks
+        are in different groups.
+        """
+
+        geometry_1 = Geometry()
+        geometry_1.volumes = [Volume.create([-10, 39, 26, 30, 34, 38], 1)]
+        geometry_1.surfaces = [Surface.create([5, 6, 7, 8], 10),
+                               Surface.create([19, 20, 21, 22], 39),
+                               Surface.create([5, 25, -19, -24], 26),
+                               Surface.create([6, 29, -20, -25], 30),
+                               Surface.create([7, 33, -21, -29], 34),
+                               Surface.create([8, 24, -22, -33], 38)
+                               ]
+        geometry_1.lines = [Line.create([1, 2], 5),
+                            Line.create([2, 3], 6),
+                            Line.create([3, 4], 7),
+                            Line.create([4, 1], 8),
+                            Line.create([13, 14], 19),
+                            Line.create([14, 18], 20),
+                            Line.create([18, 22], 21),
+                            Line.create([22, 13], 22),
+                            Line.create([2, 14], 25),
+                            Line.create([1, 13], 24),
+                            Line.create([3, 18], 29),
+                            Line.create([4, 22], 33)]
+
+        geometry_1.points = [Point.create([0., 0., 0.], 1),
+                                Point.create([0.5, 0., 0.], 2),
+                                Point.create([0.5, 1., 0.], 3),
+                                Point.create([0., 1., 0.], 4),
+                                Point.create([0., 0., -0.5], 13),
+                                Point.create([0.5, 0., -0.5], 14),
+                                Point.create([0.5, 1., -0.5], 18),
+                                Point.create([0., 1., -0.5], 22)]
+
+
+        geometry_2 = Geometry()
+        geometry_2.volumes = [Volume.create([-17, 61, -48, -34, -56, -60], 2)]
+
+        geometry_2.surfaces = [Surface.create([-13, -7, -15, -14],17),
+                               Surface.create([41, -21, 43, 44], 61),
+                                 Surface.create([-13, 33, -41, -46], 48),
+                                    Surface.create([7, 33, -21, -29], 34),
+                                    Surface.create([-15, 55, -43, -29], 56),
+                                    Surface.create([-14, 46, -44, -55], 60)]
+        geometry_2.lines = [Line.create([4, 11], 13),
+                            Line.create([3, 4], 7),
+                            Line.create([12, 3], 15),
+                            Line.create([11, 12], 14),
+                            Line.create([23, 22], 41),
+                            Line.create([18, 22], 21),
+                            Line.create([18, 32], 43),
+                            Line.create([32, 23], 44),
+                            Line.create([4, 22], 33),
+                            Line.create([11, 23], 46),
+                            Line.create([3, 18], 29),
+                            Line.create([12, 32], 55)]
+
+        geometry_2.points = [Point.create([0., 1., 0.], 4),
+                                Point.create([0., 2., 0.], 11),
+                                Point.create([0.5, 1., 0.], 3),
+                                Point.create([0.5, 2., 0.], 12),
+                                Point.create([0., 2., -0.5], 23),
+                                Point.create([0., 1., -0.5], 22),
+                                Point.create([0.5, 1., -0.5], 18),
+                                Point.create([0.5, 2., -0.5], 32)]
+
+        expected_points = {1: [0., 0., 0.], 2: [0.5, 0., 0.], 3: [0.5, 1., 0.], 4: [0., 1., 0.], 11: [0., 2., 0.],
+                           12: [0.5, 2., 0.], 13: [0., 0., -0.5], 14: [0.5, 0., -0.5], 18: [0.5, 1., -0.5],
+                           22: [0., 1., -0.5], 23: [0., 2., -0.5], 32: [0.5, 2., -0.5]}
+        expected_lines = {5: [1, 2], 6: [2, 3], 7: [3, 4], 8: [4, 1], 13: [4, 11], 14: [11, 12], 15: [12, 3],
+                          19: [13, 14], 20: [14, 18], 21: [18, 22], 22: [22, 13], 24: [1, 13], 25: [2, 14],
+                          29: [3, 18], 33: [4, 22], 41: [23, 22], 43: [18, 32], 44: [32, 23], 46: [11, 23],
+                          55: [12, 32]}
+        expected_surfaces = {10: [5, 6, 7, 8], 17: [-13, -7, -15, -14], 26: [5, 25, -19, -24], 30: [6, 29, -20, -25],
+                             34: [7, 33, -21, -29], 38: [8, 24, -22, -33], 39: [19, 20, 21, 22],
+                             48: [-13, 33, -41, -46], 56: [-15, 55, -43, -29], 60: [-14, 46, -44, -55],
+                             61: [41, -21, 43, 44]}
+        expected_volumes = {1: [-10, 39, 26, 30, 34, 38], 2: [-17, 61, -48, -34, -56, -60]}
+
+
+        return geometry_1, geometry_2
+
     def test_add_single_soil_layer_2D(self, expected_geometry_single_layer_2D: Geometry,
                                       create_default_2d_soil_material: SoilMaterial):
         """
@@ -192,6 +278,51 @@ class TestGeometry:
                 assert generated_surface.id == expected_surface.id
                 assert generated_surface.line_ids == expected_surface.line_ids
 
+    def test_add_all_layers_from_geo_file(self, expected_geometry_two_layers_3D: Tuple[Geometry, Geometry]):
+        """
+        Tests if all layers are added correctly to the model in a 3D space. A geo file is read and all layers are
+        added to the model.
+
+        """
+
+        geo_file_name = "tests/test_data/gmsh_utils_column_3D_tetra4.geo"
+
+        # create model
+        model = Model(ndim=3)
+        model.add_all_layers_from_geo_file(geo_file_name, ["group_1"])
+
+        # check if body model parts are added correctly
+        assert len(model.body_model_parts) == 1
+        assert model.body_model_parts[0].name == "group_1"
+
+        # check if process model part is added correctly
+        assert len(model.process_model_parts) == 1
+        assert model.process_model_parts[0].name == "group_2"
+
+        # check if geometry is added correctly
+        all_model_parts = []
+        all_model_parts.extend(model.body_model_parts)
+        all_model_parts.extend(model.process_model_parts)
+
+        # check if geometry is added correctly for each layer
+        for i in range(len(all_model_parts)):
+            generated_geometry = all_model_parts[i].geometry
+            expected_geometry = expected_geometry_two_layers_3D[i]
+
+            # check if points are added correctly
+            for generated_point, expected_point in zip(generated_geometry.points, expected_geometry.points):
+                assert generated_point.id == expected_point.id
+                assert pytest.approx(generated_point.coordinates) == expected_point.coordinates
+
+            # check if lines are added correctly
+            for generated_line, expected_line in zip(generated_geometry.lines, expected_geometry.lines):
+                assert generated_line.id == expected_line.id
+                assert generated_line.point_ids == expected_line.point_ids
+
+            # check if surfaces are added correctly
+            for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
+                assert generated_surface.id == expected_surface.id
+                assert generated_surface.line_ids == expected_surface.line_ids
 
 
 
