@@ -300,9 +300,6 @@ class TestModel:
             assert generated_surface.id == expected_surface.id
             assert generated_surface.line_ids == expected_surface.line_ids
 
-        # finalize gmsh
-        model.gmsh_io.finalize_gmsh()
-
     def test_add_multiple_soil_layers_2D(self, expected_geometry_two_layers_2D: Tuple[Geometry, Geometry],
                                          create_default_2d_soil_material: SoilMaterial):
         """
@@ -362,9 +359,6 @@ class TestModel:
                 assert generated_surface.id == expected_surface.id
                 assert generated_surface.line_ids == expected_surface.line_ids
 
-        # finalize gmsh
-        model.gmsh_io.finalize_gmsh()
-
     def test_add_all_layers_from_geo_file(self, expected_geometry_two_layers_3D: Tuple[Geometry, Geometry]):
         """
         Tests if all layers are added correctly to the model in a 3D space. A geo file is read and all layers are
@@ -414,9 +408,6 @@ class TestModel:
             for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
                 assert generated_surface.id == expected_surface.id
                 assert generated_surface.line_ids == expected_surface.line_ids
-
-            # finalize gmsh
-            model.gmsh_io.finalize_gmsh()
 
     def test_synchronise_geometry(self, expected_geometry_two_layers_2D_after_sync: Tuple[Geometry, Geometry],
                                    create_default_2d_soil_material: SoilMaterial):
@@ -475,11 +466,3 @@ class TestModel:
             for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
                 assert generated_surface.id == expected_surface.id
                 assert generated_surface.line_ids == expected_surface.line_ids
-
-        # finalize gmsh
-        model.gmsh_io.finalize_gmsh()
-
-
-
-
-
