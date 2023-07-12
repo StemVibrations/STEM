@@ -39,7 +39,7 @@ class Point(GeometricalObjectABC):
             id (int): The id of the point.
         """
         self.__id: int = id
-        self.coordinates: List[float] = []
+        self.coordinates: Sequence[float] = []
 
     @classmethod
     def create(cls, coordinates: Sequence[float], id: int):
@@ -102,7 +102,7 @@ class Line(GeometricalObjectABC):
             id (int): The id of the line.
         """
         self.__id: int = id
-        self.point_ids: List[int] = []
+        self.point_ids: Sequence[int] = []
 
     @classmethod
     def create(cls, point_ids: Sequence[int], id: int):
@@ -158,7 +158,7 @@ class Surface(GeometricalObjectABC):
     """
     def __init__(self, id: int):
         self.__id: int = id
-        self.line_ids: List[int] = []
+        self.line_ids: Sequence[int] = []
 
     @property
     def id(self) -> int:
@@ -199,6 +199,7 @@ class Surface(GeometricalObjectABC):
         surface.line_ids = line_ids
         return surface
 
+
 class Volume(GeometricalObjectABC):
     """
     A class to represent a volume in a three-dimensional space.
@@ -213,7 +214,7 @@ class Volume(GeometricalObjectABC):
     """
     def __init__(self, id: int):
         self.__id: int = id
-        self.surface_ids: List[int] = []
+        self.surface_ids: Sequence[int] = []
 
     @property
     def id(self) -> int:
@@ -253,6 +254,7 @@ class Volume(GeometricalObjectABC):
         volume = cls(id)
         volume.surface_ids = surface_ids
         return volume
+
 
 class Geometry:
     """
