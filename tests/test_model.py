@@ -111,7 +111,7 @@ class TestGeometry:
         model = Model(ndim)
 
         # add soil layer
-        model.add_soil_layer(layer_coordinates, soil_material, "soil1")
+        model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
 
         # check if layer is added correctly
         assert len(model.body_model_parts) == 1
@@ -162,8 +162,8 @@ class TestGeometry:
         model = Model(ndim)
 
         # add soil layers
-        model.add_soil_layer(layer1_coordinates, soil_material1, "layer1")
-        model.add_soil_layer(layer2_coordinates, soil_material2, "layer2")
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
+        model.add_soil_layer_by_coordinates(layer2_coordinates, soil_material2, "layer2")
 
         # check if layers are added correctly
         assert len(model.body_model_parts) == 2

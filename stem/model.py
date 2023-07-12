@@ -16,9 +16,10 @@ class Model:
         - ndim (int): Number of dimensions of the model
         - project_parameters (dict): A dictionary containing the project parameters.
         - solver (Solver): The solver used to solve the problem.
-        - geometry (Optional[:class:`Geometry`]) The geometry of the whole model.
+        - geometry (Optional[:class:`stem.geometry.Geometry`]) The geometry of the whole model.
         - body_model_parts (list): A list containing the body model parts.
         - process_model_parts (list): A list containing the process model parts.
+        - extrusion_length(Optional[Sequence[float]]): The extrusion length in x,y and z direction
 
     """
     def __init__(self, ndim: int):
@@ -44,11 +45,47 @@ class Model:
 
         self.geometry = Geometry.create_geometry_from_geo_data(geo_data)
 
-    def add_soil_layer(self, coordinates: Sequence[Sequence[float]],
+    def add_all_layers_from_geo_file(self, geo_file_name: str, body_names: Sequence[str]):
+        """
+        Add all physical groups from a geo file to the model. The physical groups with the names in body_names are
+        added as body model parts, the other physical groups are added as process model parts.
+
+        Args:
+            - geo_file_name (str): name of the geo file
+            - body_names (Sequence[str]): names of the physical groups which should be added as body model parts
+
+        """
+
+        # read the geo file and generate the geo_data dictionary
+        self.gmsh_io.read_gmsh_geo(geo_file_name)
+
+        # Reset the gmsh instance with the geo data, as read from the geo file
+        self.gmsh_io.generate_geo_from_geo_data()
+
+        geo_data = self.gmsh_io.geo_data
+
+        # Create geometry and model part for each physical group in the gmsh geo_data
+        for group_name in geo_data["physical_groups"].keys():
+            if group_name in body_names:
+                model_part = BodyModelPart()
+            else:
+                model_part = ModelPart()
+
+            model_part.name = group_name
+            model_part.get_geometry_from_geo_data(geo_data, group_name)
+
+            # add model part to either body model parts or process model part
+            if isinstance(model_part, BodyModelPart):
+                self.body_model_parts.append(model_part)
+            else:
+                self.process_model_parts.append(model_part)
+
+    def add_soil_layer_by_coordinates(self, coordinates: Sequence[Sequence[float]],
                        material_parameters: Union[SoilMaterial, StructuralMaterial], name: str,
                        ):
         """
-        Adds a soil layer to the model.
+        Adds a soil layer to the model by giving a sequence of 2D coordinates. In 3D the 2D geometry is extruded in
+        the direction of the extrusion_length
 
         Args:
             - coordinates (Sequence[Sequence[float]]): The coordinates of the soil layer.
@@ -103,20 +140,6 @@ class Model:
         # get the complete geometry
         self.get_geometry_from_geo_data(self.gmsh_io.geo_data)
 
-if __name__ == '__main__':
-    coordinates = [[0, 0,0], [1, 0,0], [1, 1,0], [0, 1, 0]]
-
-    soil_formulation = OnePhaseSoil(2,IS_DRAINED=True,DENSITY_SOLID=2650, POROSITY=0.3)
-    constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
-
-    soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
-                                 retention_parameters=SaturatedBelowPhreaticLevelLaw())
-
-    model = Model()
-    model.ndim = 2
-    model.add_soil_layer(coordinates, soil_material, "soil")
-
-    a=1+1
 
 
 
