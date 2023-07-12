@@ -29,7 +29,7 @@ class Point(GeometricalObjectABC):
 
     Attributes:
         - __id (int): A unique identifier for the point.
-        - coordinates (Sequence[float]): An sequence of floats representing the x, y and z coordinates of the point.
+        - coordinates (Sequence[float]): A sequence of floats representing the x, y and z coordinates of the point.
     """
     def __init__(self, id: int):
         """
