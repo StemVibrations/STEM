@@ -9,7 +9,7 @@ class WaterBoundaryParameters(ABC):
     """
     Abstract base class for load water boundary parameters
 
-    Attributes:
+    Args:
         - surfaces_assigment (List[str]): List of surfaces to which the water boundary is assigned.
         - is_fixed (bool): True if the water boundary is fixed, False otherwise.
         - gravity_direction (int): Direction of the gravity vector.
@@ -17,10 +17,10 @@ class WaterBoundaryParameters(ABC):
 
 
     """
-    surfaces_assigment: List[str] = field(default_factory=lambda: [""])
-    is_fixed: bool = True
-    gravity_direction: int = 1
-    out_of_plane_direction: int = 2
+    surfaces_assigment: List[str]
+    is_fixed: bool
+    gravity_direction: int
+    out_of_plane_direction: int
 
 
 @dataclass
@@ -28,25 +28,24 @@ class PhreaticMultiLineBoundary(WaterBoundaryParameters):
     """
     Class containing the load parameters for a phreatic line boundary condition
 
-    Attributes:
+    Args:
         - x_coordinates (List[float]): X coordinates of the phreatic line [m].
         - y_coordinates (List[float]): Y coordinates of the phreatic line [m].
         - z_coordinates (List[float]): Z coordinates of the phreatic line [m].
-        - specific_weight (float): Specific weight of the water [kN/m3].
+        - specific_weight (float): Specific weight of the water.
+        - water_pressure (float): Water pressure.
 
 
     """
-    x_coordinates: List[float] = field(default_factory=lambda: [0.0])
-    y_coordinates: List[float] = field(default_factory=lambda: [0.0])
+    x_coordinates: List[float]
+    y_coordinates: List[float]
+    specific_weight: float
+    water_pressure: float
     z_coordinates: List[float] = field(default_factory=lambda: [0.0])
-    specific_weight: float = 9.81
-    water_pressure: float = 0.0
 
     def __post_init__(self):
         """
         Post initialization method of the class. It checks that the coordinates are of the same length.
-
-        Returns: None
 
         """
 
@@ -71,7 +70,6 @@ class InterpolateLineBoundary(WaterBoundaryParameters):
     """
     Class containing the boundary parameters for a interpolate line boundary condition.
 
-
     """
     pass
 
@@ -86,7 +84,7 @@ class PhreaticLine(WaterBoundaryParameters):
     Class containing the boundary parameters for phreatic line boundary condition. This condition is should only contain
     two points.
 
-    Attributes:
+    Args:
         - first_reference_coordinate (List[float]): First reference coordinate of the phreatic line [m].
         - second_reference_coordinate (List[float]): Second reference coordinate of the phreatic line [m].
         - specific_weight (float): Specific weight of the water .
@@ -94,10 +92,10 @@ class PhreaticLine(WaterBoundaryParameters):
 
 
     """
-    first_reference_coordinate: List[float] = field(default_factory=lambda: [0.0])
-    second_reference_coordinate: List[float] = field(default_factory=lambda: [0.0])
-    specific_weight: float = 9.81
-    value: float = 0.0
+    first_reference_coordinate: List[float]
+    second_reference_coordinate: List[float]
+    specific_weight: float
+    value: float
 
     @property
     def type(self):
@@ -114,7 +112,7 @@ class WaterBoundary:
 
     """
 
-    def __init__(self, water_boundary: Union[InterpolateLineBoundary, PhreaticMultiLineBoundary, PhreaticLine], name: str):
+    def __init__(self, water_boundary_parameters: Union[InterpolateLineBoundary, PhreaticMultiLineBoundary, PhreaticLine], name: str):
         """
         Constructor of the class
 
@@ -123,7 +121,7 @@ class WaterBoundary:
 
         """
 
-        self.water_boundary: Union[InterpolateLineBoundary, PhreaticMultiLineBoundary, PhreaticLine] = water_boundary
+        self.water_boundary: Union[InterpolateLineBoundary, PhreaticMultiLineBoundary, PhreaticLine] = water_boundary_parameters
         self.type: str = self.water_boundary.type
         self.name: str = name
 

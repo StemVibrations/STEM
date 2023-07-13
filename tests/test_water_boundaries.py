@@ -2,6 +2,7 @@ import pytest
 
 from stem.water_boundaries import *
 
+
 class TestWaterBoundaries:
 
     def test_raise_errors_for_water_boundaries(self):

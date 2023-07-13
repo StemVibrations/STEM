@@ -1,6 +1,7 @@
 from typing import Dict, Any
 
-from stem.water_boundaries import WaterBoundary, PhreaticMultiLineBoundary, InterpolateLineBoundary, WaterBoundaryParameters, PhreaticLine
+from stem.water_boundaries import WaterBoundary, PhreaticMultiLineBoundary, InterpolateLineBoundary, \
+    WaterBoundaryParameters, PhreaticLine
 
 
 class KratosWaterBoundariesIO:
@@ -55,7 +56,8 @@ class KratosWaterBoundariesIO:
         }
         return boundary_dict_phreatic_line
 
-    def __create_phreatic_multi_line_dict(self, name: str, type: str, water_boundary: PhreaticMultiLineBoundary) -> Dict[str, Any]:
+    def __create_phreatic_multi_line_dict(self, name: str, type: str, water_boundary: PhreaticMultiLineBoundary) -> \
+    Dict[str, Any]:
         """
         Creates a dictionary containing the phreatic multi line parameters
 
@@ -90,7 +92,8 @@ class KratosWaterBoundariesIO:
         }
         return boundary_dict_multi_line
 
-    def __create_interpolation_line_dict(self, name: str, type: str, water_boundary: InterpolateLineBoundary) -> Dict[str, Any]:
+    def __create_interpolation_line_dict(self, name: str, type: str, water_boundary: InterpolateLineBoundary) -> Dict[
+        str, Any]:
         """
         Creates a dictionary containing the interpolation line parameters
 
@@ -120,7 +123,8 @@ class KratosWaterBoundariesIO:
         }
         return boundary_dict_interpolate
 
-    def __create_water_boundary_dict(self, name: str, type: str, water_boundary: WaterBoundaryParameters) -> Dict[str, Any]:
+    def __create_water_boundary_dict(self, name: str, type: str, water_boundary: WaterBoundaryParameters) -> Dict[
+        str, Any]:
         """
         Creates a dictionary containing the water boundary parameters
 
@@ -135,15 +139,18 @@ class KratosWaterBoundariesIO:
         """
         if isinstance(water_boundary, PhreaticMultiLineBoundary):
             temp_phreatic_multi_line: PhreaticMultiLineBoundary = water_boundary
-            boundary_dict_multi_line: Dict[str, Any] = self.__create_phreatic_multi_line_dict(name, type, temp_phreatic_multi_line)
+            boundary_dict_multi_line: Dict[str, Any] = self.__create_phreatic_multi_line_dict(name, type,
+                                                                                              temp_phreatic_multi_line)
             return boundary_dict_multi_line
         elif isinstance(water_boundary, InterpolateLineBoundary):
             temp_interpolate_line: InterpolateLineBoundary = water_boundary
-            boundary_dict_interpolate_line: Dict[str, Any] = self.__create_interpolation_line_dict(name, type, temp_interpolate_line)
+            boundary_dict_interpolate_line: Dict[str, Any] = self.__create_interpolation_line_dict(name, type,
+                                                                                                   temp_interpolate_line)
             return boundary_dict_interpolate_line
         elif isinstance(water_boundary, PhreaticLine):
             temp_phreatic_line: PhreaticLine = water_boundary
-            boundary_dict_phreatic_line: Dict[str, Any] = self.__create_phreatic_line_dict(name, type, temp_phreatic_line)
+            boundary_dict_phreatic_line: Dict[str, Any] = self.__create_phreatic_line_dict(name, type,
+                                                                                           temp_phreatic_line)
             return boundary_dict_phreatic_line
         else:
             raise NotImplementedError("This type of boundary is not implemented")
