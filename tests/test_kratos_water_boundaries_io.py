@@ -22,6 +22,7 @@ class TestKratosWaterBoundariesIO:
             x_coordinates=[-40.0, -11.4, 0.0, 9.0, 21.5, 95.0],
             y_coordinates=[0.44, 0.44, 3.0, 3.0, -0.5, -0.5],
             surfaces_assigment=["domain a", "domain b", "domain c"],
+            specific_weight=10000.0,
         )
         water_boundary = WaterBoundary(multi_line_boundary, name="water_soils_1")
         # use the kratos io to create the dictionary
@@ -29,6 +30,9 @@ class TestKratosWaterBoundariesIO:
         # set the interpolation type
         interpolation_type = InterpolateLineBoundary(
             surfaces_assigment=["domain d"],
+            is_fixed=True,
+            gravity_direction=1,
+            out_of_plane_direction=2,
         )
         water_boundary_interpolate = WaterBoundary(interpolation_type, name="water_soils_2")
         # check phreatic line
@@ -40,6 +44,7 @@ class TestKratosWaterBoundariesIO:
             first_reference_coordinate=[0.0,1.0,0.0],
             second_reference_coordinate=[1.0,0.5,0.0],
             specific_weight=10000.0,
+            surfaces_assigment=["domain e"]
         )
         water_boundary_phreatic_line = WaterBoundary(phreatic_line, name="water_soils_3")
 
