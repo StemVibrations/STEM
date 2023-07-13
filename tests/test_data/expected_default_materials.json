@@ -14,7 +14,7 @@
                     "CROSS_AREA":0.005944,
                     "I33":1.606e-05,
                     "I22": 3.075e-06,
-                    "TORSIONAL_INERTIA": 1.635e-05
+                    "TORSIONAL_INERTIA": 1.9135e-05
                 }
             },
             "Tables": {}
@@ -33,7 +33,7 @@
                     "CROSS_AREA":0.006977,
                     "I33": 2.3372e-05,
                     "I22": 2.787e-06,
-                    "TORSIONAL_INERTIA": 2.38e-05
+                    "TORSIONAL_INERTIA": 2.616E-05
                 }
             },
             "Tables": {}
@@ -52,7 +52,7 @@
                     "CROSS_AREA":0.00767,
                     "I33": 3.038e-05,
                     "I22": 5.123e-06,
-                    "TORSIONAL_INERTIA": 3.522e-05
+                    "TORSIONAL_INERTIA": 3.550e-05
                 }
             },
             "Tables": {}
