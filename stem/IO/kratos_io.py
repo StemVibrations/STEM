@@ -1,5 +1,8 @@
+
+from stem.IO.kratos_boundaries_io import KratosBoundariesIO
 from stem.IO.kratos_loads_io import KratosLoadsIO
 from stem.IO.kratos_material_io import KratosMaterialIO
+from stem.IO.kratos_output_io import KratosOutputsIO
 
 
 DOMAIN = "PorousDomain"
@@ -24,8 +27,11 @@ class KratosIO:
         """
 
         self.ndim = ndim
+
+        self.material_io = KratosMaterialIO(self.ndim, DOMAIN)
         self.loads_io = KratosLoadsIO(DOMAIN)
-        self.material_io = KratosMaterialIO(self.ndim)
+        self.boundaries_io = KratosBoundariesIO(DOMAIN)
+        self.outputs_io = KratosOutputsIO(DOMAIN)
 
     def write_mesh_to_mdpa(self, filename):
         """
