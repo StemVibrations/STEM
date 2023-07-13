@@ -15,11 +15,11 @@ class Model:
     Attributes:
         - ndim (int): Number of dimensions of the model
         - project_parameters (dict): A dictionary containing the project parameters.
-        - solver (Solver): The solver used to solve the problem.
+        - solver (:class:`stem.solver.Solver`): The solver used to solve the problem.
         - geometry (Optional[:class:`stem.geometry.Geometry`]) The geometry of the whole model.
-        - body_model_parts (List[BodyModelPart]): A list containing the body model parts.
-        - process_model_parts (List[ModelPart]): A list containing the process model parts.
-        - extrusion_length(Optional[Sequence[float]]): The extrusion length in x,y and z direction
+        - body_model_parts (List[:class:`stem.model_part.BodyModelPart`]): A list containing the body model parts.
+        - process_model_parts (List[:class:`stem.model_part.ModelPart`]): A list containing the process model parts.
+        - extrusion_length (Optional[Sequence[float]]): The extrusion length in x, y and z direction
 
     """
     def __init__(self, ndim: int):
@@ -100,7 +100,7 @@ class Model:
         the direction of the extrusion_length
 
         Args:
-            - coordinates (Sequence[Sequence[float]]): The coordinates of the soil layer.
+            - coordinates (Sequence[Sequence[float]]): The plane coordinates of the soil layer.
             - material_parameters (Union[:class:`stem.soil_material.SoilMaterial`, \
                 :class:`stem.structural_material.StructuralMaterial`]): The material parameters of the soil layer.
             - name (str): The name of the soil layer.

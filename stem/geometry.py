@@ -29,7 +29,7 @@ class Point(GeometricalObjectABC):
 
     Attributes:
         - __id (int): A unique identifier for the point.
-        - coordinates (Sequence[float]): An sequence of floats representing the x, y and z coordinates of the point.
+        - coordinates (Sequence[float]): A sequence of floats representing the x, y and z coordinates of the point.
     """
     def __init__(self, id: int):
         """
@@ -44,7 +44,7 @@ class Point(GeometricalObjectABC):
     @classmethod
     def create(cls, coordinates: Sequence[float], id: int):
         """
-        Creates a point object from a list of coordinates and an id.
+        Creates a point object from a list of coordinates and a point id.
 
         Args:
             - coordinates (Sequence[float]): An iterable of floats representing the x, y and z coordinates of the point.
@@ -107,7 +107,7 @@ class Line(GeometricalObjectABC):
     @classmethod
     def create(cls, point_ids: Sequence[int], id: int):
         """
-        Creates a line object from a list of point ids and an id.
+        Creates a line object from a list of point ids and a line id.
 
         Args:
             - point_ids (Sequence[int]): A sequence of two integers representing the ids of the points that make up the\
@@ -184,7 +184,7 @@ class Surface(GeometricalObjectABC):
     @classmethod
     def create(cls, line_ids: Sequence[int], id: int):
         """
-        Creates a surface object from a list of line ids and an id.
+        Creates a surface object from a list of line ids and a surface id.
 
         Args:
             - line_ids (Sequence[int]): A sequence of three or more integers representing the ids of the lines that make\
@@ -240,7 +240,7 @@ class Volume(GeometricalObjectABC):
     @classmethod
     def create(cls, surface_ids: Sequence[int], id: int):
         """
-        Creates a volume object from a list of surface ids and an id.
+        Creates a volume object from a list of surface ids and a volume id.
 
         Args:
             - surface_ids (Sequence[int]): A sequence of four or more integers representing the ids of the surfaces that\
