@@ -131,5 +131,5 @@ class TestKratosOutputsIO:
 
         # assert the objects to be equal
         TestUtils.assert_dictionary_almost_equal(
-            test_output, expected_load_parameters_json
+            expected_load_parameters_json, test_output
         )

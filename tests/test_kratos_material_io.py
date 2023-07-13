@@ -142,7 +142,7 @@ class TestKratosMaterialIO:
 
         # compare json files using custom dictionary comparison
         TestUtils.assert_dictionary_almost_equal(
-            test_dict, expected_material_parameters_json
+            expected_material_parameters_json, test_dict
         )
 
     def test_write_structural_material_dict(self):
@@ -216,5 +216,5 @@ class TestKratosMaterialIO:
 
         # compare json files using custom dictionary comparison
         TestUtils.assert_dictionary_almost_equal(
-            test_dict, expected_material_parameters_json
+            expected_material_parameters_json, test_dict
         )
