@@ -359,7 +359,52 @@ class TestModel:
                 assert generated_surface.id == expected_surface.id
                 assert generated_surface.line_ids == expected_surface.line_ids
 
-    def test_add_all_layers_from_geo_file(self, expected_geometry_two_layers_3D: Tuple[Geometry, Geometry]):
+    def test_add_all_layers_from_geo_file_2D(self, expected_geometry_two_layers_2D: Tuple[Geometry, Geometry]):
+        """
+        Tests if all layers are added correctly to the model in a 2D space. A geo file is read and all layers are
+        added to the model.
+
+        Args:
+            - expected_geometry_two_layers_2D (Tuple[:class:`stem.geometry.Geometry`, :class:`stem.geometry.Geometry`]): \
+                expected geometry of the model
+
+        """
+
+        geo_file_name = "tests/test_data/gmsh_utils_two_blocks_2D.geo"
+
+        # create model
+        model = Model(ndim=2)
+        model.add_all_layers_from_geo_file(geo_file_name, ["group_1"])
+
+        # check if body model parts are added correctly
+        assert len(model.body_model_parts) == 1
+        assert model.body_model_parts[0].name == "group_1"
+
+        # check if process model part is added correctly
+        assert len(model.process_model_parts) == 1
+        assert model.process_model_parts[0].name == "group_2"
+
+        # check if geometry is added correctly for each layer
+        for i in range(len(model.body_model_parts)):
+            generated_geometry = model.body_model_parts[i].geometry
+            expected_geometry = expected_geometry_two_layers_2D[i]
+
+            # check if points are added correctly
+            for generated_point, expected_point in zip(generated_geometry.points, expected_geometry.points):
+                assert generated_point.id == expected_point.id
+                assert pytest.approx(generated_point.coordinates) == expected_point.coordinates
+
+            # check if lines are added correctly
+            for generated_line, expected_line in zip(generated_geometry.lines, expected_geometry.lines):
+                assert generated_line.id == expected_line.id
+                assert generated_line.point_ids == expected_line.point_ids
+
+            # check if surfaces are added correctly
+            for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
+                assert generated_surface.id == expected_surface.id
+                assert generated_surface.line_ids == expected_surface.line_ids
+
+    def test_add_all_layers_from_geo_file_3D(self, expected_geometry_two_layers_3D: Tuple[Geometry, Geometry]):
         """
         Tests if all layers are added correctly to the model in a 3D space. A geo file is read and all layers are
         added to the model.
