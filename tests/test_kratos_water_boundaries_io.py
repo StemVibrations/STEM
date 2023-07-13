@@ -22,7 +22,7 @@ class TestKratosWaterBoundariesIO:
             x_coordinates=[-40.0, -11.4, 0.0, 9.0, 21.5, 95.0],
             y_coordinates=[0.44, 0.44, 3.0, 3.0, -0.5, -0.5],
             surfaces_assigment=["domain a", "domain b", "domain c"],
-            specific_weight=10000.0,
+            specific_weight=9.81,
         )
         water_boundary = WaterBoundary(multi_line_boundary, name="water_soils_1")
         # use the kratos io to create the dictionary
@@ -43,14 +43,14 @@ class TestKratosWaterBoundariesIO:
             value=0,
             first_reference_coordinate=[0.0,1.0,0.0],
             second_reference_coordinate=[1.0,0.5,0.0],
-            specific_weight=9.81,
+            specific_weight=10000.0,
             surfaces_assigment=["domain e"]
         )
         water_boundary_phreatic_line = WaterBoundary(phreatic_line, name="water_soils_3")
 
         # check the dictionary
         # read the expected dictionary from the json
-        with open("tests/test_data/expected_water_lines.json") as json_file:
+        with open("test_data/expected_water_lines.json") as json_file:
             expected_water_boundary_json = json.load(json_file)
         # compare the dictionaries
         TestUtils.assert_dictionary_almost_equal(expected_water_boundary_json['test'][0],
