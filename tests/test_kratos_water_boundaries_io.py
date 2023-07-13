@@ -43,7 +43,7 @@ class TestKratosWaterBoundariesIO:
             value=0,
             first_reference_coordinate=[0.0,1.0,0.0],
             second_reference_coordinate=[1.0,0.5,0.0],
-            specific_weight=10000.0,
+            specific_weight=9.81,
             surfaces_assigment=["domain e"]
         )
         water_boundary_phreatic_line = WaterBoundary(phreatic_line, name="water_soils_3")
