@@ -212,6 +212,7 @@ class KratosOutputsIO:
                 "gauss_points_output_variables": [
                     op.name for op in output_parameters.gauss_point_results
                 ],
+                "time_frequency": output_parameters.time_frequency - 1e-10
             },
         }
         return output_dict
