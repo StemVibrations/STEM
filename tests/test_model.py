@@ -1,4 +1,5 @@
 from typing import Tuple
+import pickle
 
 import pytest
 
@@ -177,6 +178,23 @@ class TestModel:
         return soil_material
 
     @pytest.fixture
+    def create_default_3d_soil_material(self):
+        """
+        Create a default soil material for a 3D geometry.
+
+        Returns:
+            :class:`stem.models.soil.SoilMaterial`: default soil material
+
+        """
+        # define soil material
+        ndim = 3
+        soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
+        constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
+        soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
+                                     retention_parameters=SaturatedBelowPhreaticLevelLaw())
+        return soil_material
+
+    @pytest.fixture
     def expected_geometry_two_layers_3D(self):
         """
         Expected geometry data for a 3D geometry. The geometry is 2 stacked blocks, where the top and bottom blocks
@@ -221,6 +239,81 @@ class TestModel:
         geometry_2.volumes = [Volume.create([-17, 61, -48, -34, -56, -60], 2)]
 
         geometry_2.surfaces = [Surface.create([-13, -7, -15, -14],17),
+                               Surface.create([41, -21, 43, 44], 61),
+                               Surface.create([-13, 33, -41, -46], 48),
+                               Surface.create([7, 33, -21, -29], 34),
+                               Surface.create([-15, 55, -43, -29], 56),
+                               Surface.create([-14, 46, -44, -55], 60)]
+
+        geometry_2.lines = [Line.create([4, 11], 13),
+                            Line.create([3, 4], 7),
+                            Line.create([12, 3], 15),
+                            Line.create([11, 12], 14),
+                            Line.create([23, 22], 41),
+                            Line.create([18, 22], 21),
+                            Line.create([18, 32], 43),
+                            Line.create([32, 23], 44),
+                            Line.create([4, 22], 33),
+                            Line.create([11, 23], 46),
+                            Line.create([3, 18], 29),
+                            Line.create([12, 32], 55)]
+
+        geometry_2.points = [Point.create([0., 1., 0.], 4),
+                             Point.create([0., 2., 0.], 11),
+                             Point.create([0.5, 1., 0.], 3),
+                             Point.create([0.5, 2., 0.], 12),
+                             Point.create([0., 2., -0.5], 23),
+                             Point.create([0., 1., -0.5], 22),
+                             Point.create([0.5, 1., -0.5], 18),
+                             Point.create([0.5, 2., -0.5], 32)]
+
+        return geometry_1, geometry_2
+
+    @pytest.fixture
+    def expected_geometry_two_layers_3D_after_sync(self):
+        """
+        Expected geometry data for a 3D geometry. The geometry is 2 stacked blocks, where the top and bottom blocks
+        are in different groups.
+
+        Returns:
+            Tuple[:class:`stem.geometry.Geometry`,:class:`stem.geometry.Geometry`]: expected geometry data
+        """
+
+        geometry_1 = Geometry()
+        geometry_1.volumes = [Volume.create([-10, 39, 26, 30, 34, 38], 1)]
+        geometry_1.surfaces = [Surface.create([5, 6, 7, 8], 10),
+                               Surface.create([19, 20, 21, 22], 39),
+                               Surface.create([5, 25, -19, -24], 26),
+                               Surface.create([6, 29, -20, -25], 30),
+                               Surface.create([7, 33, -21, -29], 34),
+                               Surface.create([8, 24, -22, -33], 38)]
+
+        geometry_1.lines = [Line.create([1, 2], 5),
+                            Line.create([2, 3], 6),
+                            Line.create([3, 4], 7),
+                            Line.create([4, 1], 8),
+                            Line.create([13, 14], 19),
+                            Line.create([14, 18], 20),
+                            Line.create([18, 22], 21),
+                            Line.create([22, 13], 22),
+                            Line.create([2, 14], 25),
+                            Line.create([1, 13], 24),
+                            Line.create([3, 18], 29),
+                            Line.create([4, 22], 33)]
+
+        geometry_1.points = [Point.create([0., 0., 0.], 1),
+                             Point.create([0.5, 0., 0.], 2),
+                             Point.create([0.5, 1., 0.], 3),
+                             Point.create([0., 1., 0.], 4),
+                             Point.create([0., 0., -0.5], 13),
+                             Point.create([0.5, 0., -0.5], 14),
+                             Point.create([0.5, 1., -0.5], 18),
+                             Point.create([0., 1., -0.5], 22)]
+
+        geometry_2 = Geometry()
+        geometry_2.volumes = [Volume.create([-17, 61, -48, -34, -56, -60], 2)]
+
+        geometry_2.surfaces = [Surface.create([-13, -7, -15, -14], 17),
                                Surface.create([41, -21, 43, 44], 61),
                                Surface.create([-13, 33, -41, -46], 48),
                                Surface.create([7, 33, -21, -29], 34),
@@ -454,10 +547,10 @@ class TestModel:
                 assert generated_surface.id == expected_surface.id
                 assert generated_surface.line_ids == expected_surface.line_ids
 
-    def test_synchronise_geometry(self, expected_geometry_two_layers_2D_after_sync: Tuple[Geometry, Geometry],
+    def test_synchronise_geometry_2D(self, expected_geometry_two_layers_2D_after_sync: Tuple[Geometry, Geometry],
                                    create_default_2d_soil_material: SoilMaterial):
         """
-        Test if the geometry is synchronised correctly after adding a new layer to the model. Where the new layer
+        Test if the geometry is synchronised correctly in 2D after adding a new layer to the model. Where the new layer
         overlaps with the existing layer, the existing layer is cut and the overlapping part is removed.
 
         Args:
@@ -511,3 +604,69 @@ class TestModel:
             for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
                 assert generated_surface.id == expected_surface.id
                 assert generated_surface.line_ids == expected_surface.line_ids
+
+
+    def test_synchronise_geometry_3D(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if the geometry is synchronised correctly in 3D after adding a new layer to the model. Where the new layer
+        overlaps with the existing layer, the existing layer is cut and the overlapping part is removed.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+
+        import json
+
+        # define layer coordinates
+        ndim = 3
+        layer1_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+        layer2_coordinates = [(1, 1, 0), (0.5, 1, 0), (0.5, 2, 0), (1, 2, 0)]
+
+        # define soil materials
+        soil_material1 = create_default_3d_soil_material
+        soil_material1.name = "soil1"
+
+        soil_material2 = create_default_3d_soil_material
+        soil_material2.name = "soil2"
+
+        # create model
+        model = Model(ndim)
+        model.extrusion_length = [0,0,1]
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
+        model.add_soil_layer_by_coordinates(layer2_coordinates, soil_material2, "layer2")
+
+        # synchronise geometry and recalculates the ids
+        model.synchronise_geometry()
+
+        with open("tests/test_data/expected_geometry_after_sync_3D.pickle", "rb") as f:
+            expected_geometry_two_layers_3D_after_sync = pickle.load(f)
+
+        # collect all generated geometries
+        generated_geometries = [model.body_model_parts[0].geometry, model.body_model_parts[1].geometry, model.geometry]
+
+        # check if geometry is added correctly for each layer
+        for generated_geometry, expected_geometry in zip(generated_geometries,
+                                                         expected_geometry_two_layers_3D_after_sync):
+
+            # check if points are added correctly
+            for generated_point, expected_point in zip(generated_geometry.points, expected_geometry.points):
+                assert generated_point.id == expected_point.id
+                assert pytest.approx(generated_point.coordinates) == expected_point.coordinates
+
+            # check if lines are added correctly
+            for generated_line, expected_line in zip(generated_geometry.lines, expected_geometry.lines):
+                assert generated_line.id == expected_line.id
+                assert generated_line.point_ids == expected_line.point_ids
+
+            # check if surfaces are added correctly
+            for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
+                assert generated_surface.id == expected_surface.id
+                assert generated_surface.line_ids == expected_surface.line_ids
+
+            # check if volumes are added correctly
+            for generated_volume, expected_volume in zip(generated_geometry.volumes, expected_geometry.volumes):
+                assert generated_volume.id == expected_volume.id
+                assert generated_volume.surface_ids == expected_volume.surface_ids
