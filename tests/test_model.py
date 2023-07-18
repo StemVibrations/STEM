@@ -239,10 +239,88 @@ class TestModel:
         return soil_material
 
     @pytest.fixture
-    def expected_geometry_two_layers_3D(self):
+    def expected_geometry_two_layers_3D_extruded(self):
         """
-        Expected geometry data for a 3D geometry. The geometry is 2 stacked blocks, where the top and bottom blocks
-        are in different groups.
+        Expected geometry data for a 3D geometry create from 2D extrusion. The geometry is 2 stacked blocks, where the
+        top and bottom blocks are in different groups.
+
+        Returns:
+            Tuple[:class:`stem.geometry.Geometry`,:class:`stem.geometry.Geometry`]: expected geometry data
+        """
+
+        geometry_1 = Geometry()
+
+        geometry_1.points = [Point.create([0, 0, 0], 1),
+                           Point.create([0, 0, 1], 2),
+                           Point.create([1, 0, 1], 4),
+                           Point.create([1, 0, 0], 3),
+                           Point.create([1, 1, 1], 6),
+                           Point.create([1, 1, 0], 5),
+                           Point.create([0, 1, 1], 8),
+                           Point.create([0, 1, 0], 7)]
+
+        geometry_1.lines = [Line.create([1, 2], 1),
+                          Line.create([2, 4], 4),
+                          Line.create([3, 4], 2),
+                          Line.create([1, 3], 3),
+                          Line.create([4, 6], 7),
+                          Line.create([5, 6], 5),
+                          Line.create([3, 5], 6),
+                          Line.create([6, 8], 10),
+                          Line.create([7, 8], 8),
+                          Line.create([5, 7], 9),
+                          Line.create([8, 2], 12),
+                          Line.create([7, 1], 11)]
+
+        geometry_1.surfaces = [Surface.create([1, 4, -2, -3], 1),
+                             Surface.create([2, 7, -5, -6], 2),
+                             Surface.create([5, 10, -8, -9], 3),
+                             Surface.create([8, 12, -1, -11], 4),
+                             Surface.create([3, 6, 9, 11], 5),
+                             Surface.create([4, 7, 10, 12], 6)]
+
+        geometry_1.volumes = [Volume.create([-1, -2, -3, -4, -5, 6], 1)]
+
+        geometry_2 = Geometry()
+
+        geometry_2.points = [Point.create([1., 1., 0.], 5),
+                             Point.create([1., 1., 1.], 6),
+                             Point.create([0.0, 1., 1.], 8),
+                             Point.create([0, 1., 0.], 7),
+                             Point.create([0., 2., 1], 10),
+                             Point.create([0., 2., 0], 9),
+                             Point.create([1, 2., 1], 12),
+                             Point.create([1, 2., 0], 11)]
+
+        geometry_2.lines = [Line.create([5, 6], 5),
+                            Line.create([6, 8], 10),
+                            Line.create([7, 8], 8),
+                            Line.create([5, 7], 9),
+                            Line.create([8, 10], 15),
+                            Line.create([9, 10], 13),
+                            Line.create([7, 9], 14),
+                            Line.create([10, 12], 18),
+                            Line.create([11, 12], 16),
+                            Line.create([9, 11], 17),
+                            Line.create([12, 6], 20),
+                            Line.create([11, 5], 19)]
+
+        geometry_2.surfaces = [Surface.create([5, 10, -8, -9], 3),
+                               Surface.create([8, 15, -13, -14], 7),
+                               Surface.create([13, 18, -16, -17], 8),
+                               Surface.create([16, 20, -5, -19], 9),
+                               Surface.create([9, 14, 17, 19], 10),
+                               Surface.create([10, 15, 18, 20], 11)]
+
+        geometry_2.volumes = [Volume.create([3, 7, 8, 9, 10, -11], 2)]
+
+        return geometry_1, geometry_2
+
+    @pytest.fixture
+    def expected_geometry_two_layers_3D_geo_file(self):
+        """
+        Expected geometry data for a 3D geometry create in a geo file. The geometry is 2 stacked blocks, where the top
+        and bottom blocks are in different groups.
 
         Returns:
             Tuple[:class:`stem.geometry.Geometry`,:class:`stem.geometry.Geometry`]: expected geometry data
@@ -476,6 +554,69 @@ class TestModel:
                 assert generated_surface.id == expected_surface.id
                 assert generated_surface.line_ids == expected_surface.line_ids
 
+    def test_add_multiple_soil_layers_3D(self, expected_geometry_two_layers_3D_extruded: Tuple[Geometry, Geometry],
+                                         create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if multiple soil layers are added correctly to the model in a 3D space. Multiple soil layers are generated
+        and multiple soil materials are created and added to the model.
+
+        Args:
+            - expected_geometry_two_layers_3D_extruded (Tuple[:class:`stem.geometry.Geometry`, \
+                :class:`stem.geometry.Geometry`]): expected geometry of the model which is created by extruding \
+                a 2D geometry
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+
+        """
+
+        ndim = 3
+
+        layer1_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+        layer2_coordinates = [(1, 1, 0), (0, 1, 0), (0, 2, 0), (1, 2, 0)]
+
+        # define soil materials
+        soil_material1 = create_default_3d_soil_material
+        soil_material1.name = "soil1"
+
+        soil_material2 = create_default_3d_soil_material
+        soil_material2.name = "soil2"
+
+        # create model
+        model = Model(ndim)
+        model.extrusion_length = [0, 0, 1]
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
+        model.add_soil_layer_by_coordinates(layer2_coordinates, soil_material2, "layer2")
+
+        model.synchronise_geometry()
+
+        # check if layers are added correctly
+        assert len(model.body_model_parts) == 2
+        assert model.body_model_parts[0].name == "layer1"
+        assert model.body_model_parts[0].material == soil_material1
+        assert model.body_model_parts[1].name == "layer2"
+        assert model.body_model_parts[1].material == soil_material2
+
+        # check if geometry is added correctly for each layer
+        for i in range(len(model.body_model_parts)):
+            generated_geometry = model.body_model_parts[i].geometry
+            expected_geometry = expected_geometry_two_layers_3D_extruded[i]
+
+            # check if points are added correctly
+            for generated_point, expected_point in zip(generated_geometry.points, expected_geometry.points):
+                assert generated_point.id == expected_point.id
+                assert pytest.approx(generated_point.coordinates) == expected_point.coordinates
+
+            # check if lines are added correctly
+            for generated_line, expected_line in zip(generated_geometry.lines, expected_geometry.lines):
+                assert generated_line.id == expected_line.id
+                assert generated_line.point_ids == expected_line.point_ids
+
+            # check if surfaces are added correctly
+            for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
+                assert generated_surface.id == expected_surface.id
+                assert generated_surface.line_ids == expected_surface.line_ids
+
     def test_add_all_layers_from_geo_file_2D(self, expected_geometry_two_layers_2D: Tuple[Geometry, Geometry]):
         """
         Tests if all layers are added correctly to the model in a 2D space. A geo file is read and all layers are
@@ -521,14 +662,14 @@ class TestModel:
                 assert generated_surface.id == expected_surface.id
                 assert generated_surface.line_ids == expected_surface.line_ids
 
-    def test_add_all_layers_from_geo_file_3D(self, expected_geometry_two_layers_3D: Tuple[Geometry, Geometry]):
+    def test_add_all_layers_from_geo_file_3D(self, expected_geometry_two_layers_3D_geo_file: Tuple[Geometry, Geometry]):
         """
         Tests if all layers are added correctly to the model in a 3D space. A geo file is read and all layers are
         added to the model.
 
         Args:
-            - expected_geometry_two_layers_3D (Tuple[:class:`stem.geometry.Geometry`, :class:`stem.geometry.Geometry`]): \
-                expected geometry of the model
+            - expected_geometry_two_layers_3D_geo_file (Tuple[:class:`stem.geometry.Geometry`, \
+                :class:`stem.geometry.Geometry`]): expected geometry of the model
 
         """
 
@@ -554,7 +695,7 @@ class TestModel:
         # check if geometry is added correctly for each layer
         for i in range(len(all_model_parts)):
             generated_geometry = all_model_parts[i].geometry
-            expected_geometry = expected_geometry_two_layers_3D[i]
+            expected_geometry = expected_geometry_two_layers_3D_geo_file[i]
 
             # check if points are added correctly
             for generated_point, expected_point in zip(generated_geometry.points, expected_geometry.points):
@@ -628,7 +769,6 @@ class TestModel:
             for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
                 assert generated_surface.id == expected_surface.id
                 assert generated_surface.line_ids == expected_surface.line_ids
-
 
     def test_synchronise_geometry_3D(self, create_default_3d_soil_material: SoilMaterial):
         """
