@@ -107,18 +107,16 @@ class Model:
 
         """
 
+        gmsh_input = {name: {"coordinates": coordinates, "ndim": self.ndim}}
         # check if extrusion length is specified in 3D
         if self.ndim == 3:
             if self.extrusion_length is None:
                 raise ValueError("Extrusion length must be specified for 3D models")
-            else:
-                extrusion_length = self.extrusion_length
-        else:
-            # in 2D extrusion length is not needed
-            extrusion_length = [0, 0, 0]
+
+            gmsh_input[name]["extrusion_length"] = self.extrusion_length
 
         # todo check if this function in gmsh io can be improved
-        self.gmsh_io.generate_geometry([coordinates], extrusion_length, self.ndim, "", [name])
+        self.gmsh_io.generate_geometry(gmsh_input, "")
 
         # create body model part
         body_model_part = BodyModelPart()
