@@ -3,7 +3,8 @@ from typing import Optional, Union, Dict, Any
 from stem.soil_material import SoilMaterial
 from stem.structural_material import StructuralMaterial
 
-from stem.geometry import Geometry, Volume, Surface, Line, Point
+from stem.geometry import Geometry
+
 
 class ModelPart:
     """
@@ -11,21 +12,21 @@ class ModelPart:
     like excavation.
 
     Attributes:
-        - name (str): name of the model part
-        - nodes (np.array or None): node id followed by node coordinates in an array
-        - elements (np.array or None): element id followed by connectivities in an array
-        - conditions (np.array or None): condition id followed by connectivities in an array
+        - name (Optional[str]): name of the model part
+        - nodes (None): node id followed by node coordinates in an array
+        - elements (None): element id followed by connectivities in an array
+        - conditions (None): condition id followed by connectivities in an array
         - geometry (Optional[:class:`stem.geometry.Geometry`]): geometry of the model part
-        - parameters (dict): dictionary containing the model part parameters
+        - parameters (Dict[Any,Any]): dictionary containing the model part parameters
     """
     def __init__(self):
-        self.name = None
-        self.nodes = None
-        self.elements = None
-        self.conditions = None
+        self.name: Optional[str] = None
+        self.nodes = None # todo define type
+        self.elements = None # todo define type
+        self.conditions = None # todo define type
 
         self.geometry: Optional[Geometry] = None
-        self.parameters = {}
+        self.parameters = {} # todo define type
 
     def get_geometry_from_geo_data(self, geo_data: Dict[str, Any], name: str):
         """
@@ -43,15 +44,15 @@ class BodyModelPart(ModelPart):
     """
     This class contains model parts which are part of the body, e.g. a soil layer or track components.
 
-        Inheritance:
+    Inheritance:
         - :class:`ModelPart`
 
     Attributes:
         - name (str): name of the model part
-        - nodes (np.array or None): node id followed by node coordinates in an array
-        - elements (np.array or None): element id followed by connectivities in an array
-        - conditions (np.array or None): condition id followed by connectivities in an array
-        - parameters (dict): dictionary containing the model part parameters
+        - nodes (None): node id followed by node coordinates in an array
+        - elements (None): element id followed by connectivities in an array
+        - conditions (None): condition id followed by connectivities in an array
+        - parameters (Dict[str, Any]): dictionary containing the model part parameters
         - material (Union[:class:`stem.soil_material.SoilMaterial`, \
             :class:`stem.structural_material.StructuralMaterial`]): material of the model part
     """
