@@ -7,11 +7,11 @@ from stem.additional_processes import *
 from tests.utils import TestUtils
 
 
-class TestKratosBoundariesIO:
+class KratosAdditionalProcessesIO:
 
-    def test_create_boundary_condition_dictionaries(self):
+    def test_create_additional_processes_dictionaries(self):
         """
-        Test the creation of the boundary condition dictionaries for the
+        Test the creation of the additional processes dictionaries for the
         ProjectParameters.json file
         """
         # define constraints
@@ -50,5 +50,5 @@ class TestKratosBoundariesIO:
 
         # assert the objects to be equal
         TestUtils.assert_dictionary_almost_equal(
-            expected_load_parameters_json, test_dictionary
+            test_dictionary, expected_load_parameters_json
         )

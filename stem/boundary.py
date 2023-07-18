@@ -90,8 +90,8 @@ class AbsorbingBoundary(BoundaryParametersABC):
         - :class:`BoundaryParametersABC`
 
     Attributes:
-        - absorbing_factors (List[float]): Indicated how much of the P-wave
-            and S-wave should be damped from the boundaries and is comprised between
+        - absorbing_factors (List[float]): Indicated how much of the P-wave \
+            and S-wave should be damped from the boundaries and is comprised between \
             0 (no damping) and 1 (full damping).
         - virtual_thickness (float): Entity of the virtual thickness [m].
     """
