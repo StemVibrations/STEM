@@ -53,7 +53,7 @@ class Mesh:
     """
     def __init__(self, ndim: int):
 
-        self.ndim: Optional[int] = None
+        self.ndim: int = ndim
         self.nodes = None
         self.elements = None
 

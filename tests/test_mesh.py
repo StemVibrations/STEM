@@ -1,5 +1,4 @@
 import pytest
-from gmsh_utils.gmsh_IO import GmshIO
 
 from stem.mesh import *
 
@@ -130,6 +129,7 @@ class TestMesh:
         Test the creation of a 3D mesh from a gmsh group.
 
         """
+
         # Set up the mesh data
         mesh_data = {"ndim": 3,
                      "nodes": {1: [0, 0, 0], 2: [0.5, 0, 0], 3: [1, 0, 0],

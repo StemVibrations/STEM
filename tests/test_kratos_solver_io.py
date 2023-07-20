@@ -48,11 +48,9 @@ class TestKratosSolverIO:
         problem_data = Problem(problem_name="test", number_of_threads=2, settings=solver_settings)
 
         # create model parts
-        model_part1 = ModelPart()
-        model_part1.name = "ModelPart1"
+        model_part1 = ModelPart("ModelPart1")
 
-        body_model_part1 = BodyModelPart()
-        body_model_part1.name = "BodyModelPart1"
+        body_model_part1 = BodyModelPart("BodyModelPart1")
 
         model_parts = [model_part1, body_model_part1]
 

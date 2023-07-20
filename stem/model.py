@@ -29,7 +29,7 @@ class MeshSettings:
         - element_shape (:class:`stem.model.ElementShape`): The element shape. TRIANGLE for triangular elements and
          tetrahedral elements,  QUADRILATERAL for quadrilateral elements and hexahedral elements.
     """
-    element_size: float
+    element_size: float = -1
     element_order: int = 1
     element_shape: ElementShape = ElementShape.TRIANGLE # todo implement possibility to choose in gmsh utils
 
@@ -57,8 +57,8 @@ class Model:
         self.project_parameters = None
         self.solver = None
         self.geometry: Optional[Geometry] = None
-        self.mesh = Optional[Mesh] = None
-        self.mesh_settings: MeshSettings = field(default_factory=MeshSettings)
+        self.mesh: Optional[Mesh] = None
+        self.mesh_settings: MeshSettings = MeshSettings()
         self.gmsh_io = gmsh_IO.GmshIO()
         self.body_model_parts: List[BodyModelPart] = []
         self.process_model_parts: List[ModelPart] = []

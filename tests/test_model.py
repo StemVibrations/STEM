@@ -780,7 +780,6 @@ class TestModel:
 
         """
 
-        import json
 
         # define layer coordinates
         ndim = 3
@@ -834,3 +833,89 @@ class TestModel:
             for generated_volume, expected_volume in zip(generated_geometry.volumes, expected_geometry.volumes):
                 assert generated_volume.id == expected_volume.id
                 assert generated_volume.surface_ids == expected_volume.surface_ids
+    def test_generate_mesh_with_only_a_body_model_part_2d(self, create_default_2d_soil_material: SoilMaterial):
+        """
+        Test if the mesh is generated correctly in 2D if there is only one body model part.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+        model = Model(2)
+
+        # add soil material
+        soil_material = create_default_2d_soil_material
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
+        model.synchronise_geometry()
+
+        # generate mesh
+        model.generate_mesh()
+
+        mesh = model.body_model_parts[0].mesh
+
+        assert mesh.ndim == 2
+
+        unique_element_ids = []
+        # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
+        # correct and if the element ids are unique and if the number of nodes per element is correct
+        assert len(mesh.elements) == 162
+        for element in mesh.elements:
+            assert element.element_type == "TRIANGLE_3N"
+            assert element.id not in unique_element_ids
+            assert len(element.node_ids) == 3
+            unique_element_ids.append(element.id)
+
+        # check if nodes are generated correctly, i.e. if there are nodes in the mesh and if the node ids are unique
+        # and if the number of coordinates per node is correct
+        unique_node_ids = []
+        assert len(mesh.nodes) == 98
+        for node in mesh.nodes:
+            assert node.id not in unique_node_ids
+            assert len(node.coordinates) == 3
+            unique_node_ids.append(node.id)
+
+    def test_generate_mesh_with_only_a_body_model_part_3d(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if the mesh is generated correctly in 3D if there is only one body model part.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+        model = Model(3)
+        model.extrusion_length = [0, 0, 1]
+
+        # add soil material
+        soil_material = create_default_3d_soil_material
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
+        model.synchronise_geometry()
+
+        # generate mesh
+        model.generate_mesh()
+
+        mesh = model.body_model_parts[0].mesh
+
+        assert mesh.ndim == 3
+
+        unique_element_ids = []
+        # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
+        # correct and if the element ids are unique and if the number of nodes per element is correct
+        assert len(mesh.elements) == 1120
+        for element in mesh.elements:
+            assert element.element_type == "TETRAHEDRON_4N"
+            assert element.id not in unique_element_ids
+            assert len(element.node_ids) == 4
+            unique_element_ids.append(element.id)
+
+        # check if nodes are generated correctly, i.e. if there are nodes in the mesh and if the node ids are unique
+        # and if the number of coordinates per node is correct
+        unique_node_ids = []
+        assert len(mesh.nodes) == 340
+        for node in mesh.nodes:
+            assert node.id not in unique_node_ids
+            assert len(node.coordinates) == 3
+            unique_node_ids.append(node.id)
