@@ -1,4 +1,5 @@
 from typing import List, Sequence, Dict, Any, Optional, Union
+from enum import Enum
 
 from gmsh_utils import gmsh_IO
 
@@ -6,6 +7,35 @@ from stem.model_part import ModelPart, BodyModelPart
 from stem.soil_material import *
 from stem.structural_material import *
 from stem.geometry import Geometry
+from stem.mesh import Mesh
+
+
+class ElementShape(Enum):
+    """
+    Enum class for the element shape.
+    """
+    TRIANGLE = "triangle"
+    QUADRILATURAL = "quadrilateral"
+
+
+@dataclass
+class MeshSettings:
+    """
+    A class to represent the mesh settings.
+
+    Attributes:
+        - element_size (float): The element size.
+        - element_order (int): The element order. 1 for linear elements, 2 for quadratic elements.
+        - element_shape (:class:`stem.model.ElementShape`): The element shape. TRIANGLE for triangular elements and
+         tetrahedral elements,  QUADRILATERAL for quadrilateral elements and hexahedral elements.
+    """
+    element_size: float
+    element_order: int = 1
+    element_shape: ElementShape = ElementShape.TRIANGLE # todo implement possibility to choose in gmsh utils
+
+    def __post_init__(self):
+        if self.element_order not in [1, 2]:
+            raise ValueError("The element order must be 1 or 2. Higher order elements are not supported.")
 
 
 class Model:
@@ -27,7 +57,8 @@ class Model:
         self.project_parameters = None
         self.solver = None
         self.geometry: Optional[Geometry] = None
-        self.mesh = None
+        self.mesh = Optional[Mesh] = None
+        self.mesh_settings: MeshSettings = field(default_factory=MeshSettings)
         self.gmsh_io = gmsh_IO.GmshIO()
         self.body_model_parts: List[BodyModelPart] = []
         self.process_model_parts: List[ModelPart] = []
@@ -78,12 +109,11 @@ class Model:
             # create model part, if the group name is in the body names, create a body model part, otherwise a process
             # model part
             if group_name in body_names:
-                model_part = BodyModelPart()
+                model_part = BodyModelPart(group_name)
             else:
-                model_part = ModelPart()
+                model_part = ModelPart(group_name)
 
             # set the name and geometry of the model part
-            model_part.name = group_name
             model_part.get_geometry_from_geo_data(geo_data, group_name)
 
             # add model part to either body model parts or process model part
@@ -119,8 +149,7 @@ class Model:
         self.gmsh_io.generate_geometry(gmsh_input, "")
 
         # create body model part
-        body_model_part = BodyModelPart()
-        body_model_part.name = name
+        body_model_part = BodyModelPart(name)
         body_model_part.material = material_parameters
 
         # set the geometry of the body model part
@@ -155,7 +184,26 @@ class Model:
         # get the complete geometry
         self.__get_geometry_from_geo_data(self.gmsh_io.geo_data)
 
+    def generate_mesh(self):
+        """
+        Generate the mesh for the whole model.
 
+        """
+
+        self.gmsh_io.generate_mesh(self.ndim, element_size=self.mesh_settings.element_size,
+                                   order=self.mesh_settings.element_order)
+
+        # collect all model parts
+        all_model_parts: List[Union[BodyModelPart, ModelPart]] = []
+        all_model_parts.extend(self.body_model_parts)
+        all_model_parts.extend(self.process_model_parts)
+
+        for model_part in all_model_parts:
+            # Check if all model parts have a name
+            if model_part.name is None:
+                raise ValueError("All model parts must have a name")
+            else:
+                model_part.mesh = Mesh.create_mesh_from_gmsh_group(self.gmsh_io.mesh_data, model_part.name)
 
 
 

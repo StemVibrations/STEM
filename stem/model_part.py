@@ -4,6 +4,7 @@ from stem.soil_material import SoilMaterial
 from stem.structural_material import StructuralMaterial
 
 from stem.geometry import Geometry
+from stem.mesh import Mesh
 
 
 class ModelPart:
@@ -12,20 +13,23 @@ class ModelPart:
     like excavation.
 
     Attributes:
-        - name (Optional[str]): name of the model part
+        - name (str): name of the model part
         - nodes (None): node id followed by node coordinates in an array
         - elements (None): element id followed by connectivities in an array
         - conditions (None): condition id followed by connectivities in an array
         - geometry (Optional[:class:`stem.geometry.Geometry`]): geometry of the model part
         - parameters (Dict[Any,Any]): dictionary containing the model part parameters
     """
-    def __init__(self):
-        self.name: Optional[str] = None
-        self.nodes = None # todo define type
-        self.elements = None # todo define type
-        self.conditions = None # todo define type
+    def __init__(self, name: str):
+        """
+        Initialize the model part
 
+        Args:
+            - name (str): name of the model part
+        """
+        self.name: str = name
         self.geometry: Optional[Geometry] = None
+        self.mesh: Optional[Mesh] = None
         self.parameters = {} # todo define type
 
     def get_geometry_from_geo_data(self, geo_data: Dict[str, Any], name: str):
@@ -57,7 +61,13 @@ class BodyModelPart(ModelPart):
             :class:`stem.structural_material.StructuralMaterial`]): material of the model part
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name: str):
+        """
+        Initialize the body model part
+
+        Args:
+            - name (str): name of the body model part
+        """
+        super().__init__(name)
 
         self.material: Optional[Union[SoilMaterial, StructuralMaterial]] = None
