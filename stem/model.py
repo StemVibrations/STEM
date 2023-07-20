@@ -1,5 +1,6 @@
 from typing import List, Sequence, Dict, Any, Optional, Union
 from enum import Enum
+from dataclasses import dataclass
 
 from gmsh_utils import gmsh_IO
 

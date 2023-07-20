@@ -30,7 +30,7 @@ class ModelPart:
         self.name: str = name
         self.geometry: Optional[Geometry] = None
         self.mesh: Optional[Mesh] = None
-        self.parameters = {} # todo define type
+        self.parameters: Dict[Any, Any] = {} # todo define type
 
     def get_geometry_from_geo_data(self, geo_data: Dict[str, Any], name: str):
         """

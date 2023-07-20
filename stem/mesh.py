@@ -1,5 +1,4 @@
-from typing import Dict, List, Tuple, Union, Any, Optional
-from enum import Enum
+from typing import Dict, List, Tuple, Sequence, Union, Any, Optional
 
 import numpy as np
 import numpy.typing as npt
@@ -13,12 +12,12 @@ class Node:
 
     Attributes:
         - id (int): node id
-        - coordinates (np.array): node coordinates
+        - coordinates (Sequence[float]): node coordinates
 
     """
-    def __init__(self, id, coordinates):
-        self.id = id
-        self.coordinates = coordinates
+    def __init__(self, id: int, coordinates: Sequence[float]):
+        self.id: int = id
+        self.coordinates: Sequence[float] = coordinates
 
 
 class Element:
@@ -28,13 +27,13 @@ class Element:
     Attributes:
         - id (int): element id
         - element_type (str): element type
-        - node_ids (Union[List[int], npt.NDArray[np.int64]]): node ids
+        - node_ids (Sequence[int]): node ids
 
     """
-    def __init__(self, id: int, element_type: str, node_ids: Union[List[int], npt.NDArray[np.int64]]):
+    def __init__(self, id: int, element_type: str, node_ids: Sequence[int]):
         self.id: int = id
         self.element_type: str = element_type
-        self.node_ids: Union[List[int], npt.NDArray[np.int64]] = node_ids
+        self.node_ids: Sequence[int] = node_ids
 
 
 class Mesh:
@@ -46,16 +45,15 @@ class Mesh:
 
     Attributes:
         - ndim (int): number of dimensions of the mesh
-        - nodes (np.array or None): node id followed by node coordinates in an array
-        - elements (np.array or None): element id followed by connectivities in an array
-        - conditions (np.array or None): condition id followed by connectivities in an array
+        - nodes (List[Node]): node id followed by node coordinates in an array
+        - elements (List[Element]): element id followed by connectivities in an array
 
     """
     def __init__(self, ndim: int):
 
         self.ndim: int = ndim
-        self.nodes = None
-        self.elements = None
+        self.nodes: List[Node] = []
+        self.elements: List[Element] = []
 
     @classmethod
     def create_mesh_from_mesh_data(cls, mesh_data: Dict[str, Any]):
