@@ -62,12 +62,6 @@ class Mesh:
         self.elements = None
 
     @classmethod
-    def read_mesh_from_gmsh(cls, mesh_file_name: str) -> None:
-        #todo implement this method to read mesh from gmsh file and create a mesh object with the data read from the
-        # file.
-        pass
-
-    @classmethod
     def create_mesh_from_mesh_data(cls, mesh_data: Dict[str, Any]):
         """
         Creates a mesh object from mesh data
