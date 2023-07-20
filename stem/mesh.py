@@ -20,10 +20,6 @@ class Node:
         self.id = id
         self.coordinates = coordinates
 
-# class ElementType(Enum):
-#
-#
-# def get_element_type_from
 
 class Element:
     """
@@ -96,7 +92,7 @@ class Mesh:
         return mesh
 
     @classmethod
-    def create_mesh_from_gmsh_group(cls, mesh_data, group_name):
+    def create_mesh_from_gmsh_group(cls, mesh_data: Dict[str, Any], group_name: str):
         """
         Creates a mesh object from gmsh group
 
@@ -107,6 +103,10 @@ class Mesh:
         Returns:
             - :class:`Mesh`: mesh object
         """
+
+        if group_name not in mesh_data["physical_groups"]:
+            raise ValueError(f"Group {group_name} not found in mesh data")
+
         # create mesh object
         group_data = mesh_data["physical_groups"][group_name]
 
@@ -156,7 +156,6 @@ class Mesh:
         all_elements = np.array(all_elements_list).astype(int)
 
         return nodes, all_elements
-
 
     def write_mesh_to_kratos_structure(self, mesh_data: Dict[str, Any], filename: str) -> None:
         """
