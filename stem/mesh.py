@@ -24,10 +24,10 @@ class MeshSettings:
     A class to represent the mesh settings.
 
     Attributes:
-        - element_size (float): The element size.
-        - element_order (int): The element order. 1 for linear elements, 2 for quadratic elements.
+        - element_size (float): The element size (default -1, which means that gmsh determines the size).
+        - element_order (int): The element order. 1 for linear elements, 2 for quadratic elements. (default 1)
         - element_shape (:class:`stem.model.ElementShape`): The element shape. TRIANGLE for triangular elements and \
-         tetrahedral elements,  QUADRILATERAL for quadrilateral elements and hexahedral elements.
+         tetrahedral elements,  QUADRILATERAL for quadrilateral elements and hexahedral elements. (default TRIANGLE)
     """
     element_size: float = -1
     element_order: int = 1
