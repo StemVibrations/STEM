@@ -3,14 +3,14 @@ from typing import Sequence
 import numpy as np
 
 
-def is_collinear(point:Sequence, start_point:Sequence, end_point:Sequence):
+def is_collinear(point:Sequence[float], start_point:Sequence[float], end_point:Sequence[float]):
     """
     Check if point is aligned with the other two on a line. Points must have the same dimension (2D or 3D)
 
     Args:
-        point (Sequence): point to be tested
-        start_point (Sequence): first point on the line
-        end_point (Sequence): second point on the line
+        point (Sequence[float]): point to be tested
+        start_point (Sequence[float]): first point on the line
+        end_point (Sequence[float]): second point on the line
 
     Returns:
         bool: whether the point is aligned or not
@@ -23,14 +23,14 @@ def is_collinear(point:Sequence, start_point:Sequence, end_point:Sequence):
     return np.sum(np.abs(cross_product)) < 1e-06
 
 
-def is_point_between_points(point, start_point, end_point):
+def is_point_between_points(point:Sequence[float], start_point:Sequence[float], end_point:Sequence[float]):
     """
     Check if point is between the other two. Points must have the same dimension (2D or 3D).
 
     Args:
-        point (Sequence): point to be tested
-        start_point (Sequence): first extreme on the line
-        end_point (Sequence): second extreme on the line
+        point (Sequence[float]): point to be tested
+        start_point (Sequence[float]): first extreme on the line
+        end_point (Sequence[float]): second extreme on the line
 
     Returns:
         bool: whether the point is between the other two or not

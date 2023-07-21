@@ -1,5 +1,8 @@
 from typing import Optional, Union, Dict, Any
 
+from stem.load import LoadParametersABC
+from stem.boundary import BoundaryParametersABC
+from stem.additional_processes import AdditionalProcessesParametersABC
 from stem.soil_material import SoilMaterial
 from stem.structural_material import StructuralMaterial
 
@@ -17,7 +20,10 @@ class ModelPart:
         - elements (None): element id followed by connectivities in an array
         - conditions (None): condition id followed by connectivities in an array
         - geometry (Optional[:class:`stem.geometry.Geometry`]): geometry of the model part
-        - parameters (Dict[Any,Any]): dictionary containing the model part parameters
+        - parameters (Optional[Union[:class:`stem.load.LoadParametersABC`, \
+            :class:`stem.boundary.BoundaryParametersABC, \
+            :class:`stem.additional_processes.AdditionalProcessesParametersABC`]]): process parameters containing the
+            model part parameters.
     """
     def __init__(self):
         self.name: Optional[str] = None
@@ -26,7 +32,9 @@ class ModelPart:
         self.conditions = None # todo define type
 
         self.geometry: Optional[Geometry] = None
-        self.parameters = {} # todo define type
+        self.parameters: Optional[
+            Union[LoadParametersABC, BoundaryParametersABC,AdditionalProcessesParametersABC]
+        ] = None
 
     def get_geometry_from_geo_data(self, geo_data: Dict[str, Any], name: str):
         """
