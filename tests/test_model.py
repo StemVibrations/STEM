@@ -999,3 +999,49 @@ class TestModel:
             # check if node is also available in the body mesh
             assert node.id in unique_body_node_ids
             assert len(node.coordinates) == 3
+
+    def test_validate_expected_success(self):
+        """
+        Test if the model is validated correctly. A model is created with two process model parts which both have
+        a unique name.
+
+        """
+
+        model = Model(2)
+
+        model_part1 = ModelPart("test1")
+        model_part2 = ModelPart("test2")
+
+        model.process_model_parts = [model_part1, model_part2]
+
+        model.validate()
+
+    def test_validate_expected_fail_non_unique_names(self):
+        """
+        Test if the model is validated correctly. A model is created with two process model parts which both have
+        the same name. This should raise a ValueError.
+
+        """
+
+        model = Model(2)
+
+        model_part1 = ModelPart("test")
+        model_part2 = ModelPart("test")
+
+        model.process_model_parts = [model_part1, model_part2]
+
+        pytest.raises(ValueError, model.validate)
+
+    def test_validate_expected_fail_no_name(self):
+        """
+        Test if the model is validated correctly. A model is created with a process model part which does not contain
+        a name. This should raise a ValueError.
+
+        """
+
+        model = Model(2)
+
+        model_part1 = ModelPart(None)
+        model.process_model_parts = [model_part1]
+
+        pytest.raises(ValueError, model.validate)

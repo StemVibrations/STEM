@@ -13,11 +13,9 @@ class ModelPart:
     like excavation.
 
     Attributes:
-        - name (str): name of the model part
-        - nodes (None): node id followed by node coordinates in an array
-        - elements (None): element id followed by connectivities in an array
-        - conditions (None): condition id followed by connectivities in an array
+        - __name (str): name of the model part
         - geometry (Optional[:class:`stem.geometry.Geometry`]): geometry of the model part
+        - mesh (Optional[:class:`stem.mesh.Mesh`]): mesh of the model part
         - parameters (Dict[Any,Any]): dictionary containing the model part parameters
     """
     def __init__(self, name: str):
@@ -27,10 +25,21 @@ class ModelPart:
         Args:
             - name (str): name of the model part
         """
-        self.name: str = name
+        self.__name: str = name
         self.geometry: Optional[Geometry] = None
         self.mesh: Optional[Mesh] = None
         self.parameters: Dict[Any, Any] = {} # todo define type
+
+    @property
+    def name(self):
+        """
+        Get the name of the model part
+
+        Returns:
+            - str: name of the model part
+
+        """
+        return self.__name
 
     def get_geometry_from_geo_data(self, geo_data: Dict[str, Any], name: str):
         """
@@ -52,10 +61,9 @@ class BodyModelPart(ModelPart):
         - :class:`ModelPart`
 
     Attributes:
-        - name (str): name of the model part
-        - nodes (None): node id followed by node coordinates in an array
-        - elements (None): element id followed by connectivities in an array
-        - conditions (None): condition id followed by connectivities in an array
+        - __name (str): name of the model part
+        - geometry (Optional[:class:`stem.geometry.Geometry`]): geometry of the model part
+        - mesh (Optional[:class:`stem.mesh.Mesh`]): mesh of the model part
         - parameters (Dict[str, Any]): dictionary containing the model part parameters
         - material (Union[:class:`stem.soil_material.SoilMaterial`, \
             :class:`stem.structural_material.StructuralMaterial`]): material of the model part

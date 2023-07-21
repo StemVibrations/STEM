@@ -147,11 +147,7 @@ class Model:
 
         # Get the geometry from the geo_data for each model part
         for model_part in all_model_parts:
-            # Check if all model parts have a name
-            if model_part.name is None:
-                raise ValueError("All model parts must have a name")
-            else:
-                model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, model_part.name)
+            model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, model_part.name)
 
         # get the complete geometry
         self.__get_geometry_from_geo_data(self.gmsh_io.geo_data)
@@ -162,6 +158,7 @@ class Model:
 
         """
 
+        # generate mesh
         self.gmsh_io.generate_mesh(self.ndim, element_size=self.mesh_settings.element_size,
                                    order=self.mesh_settings.element_order)
 
@@ -170,13 +167,41 @@ class Model:
         all_model_parts.extend(self.body_model_parts)
         all_model_parts.extend(self.process_model_parts)
 
+        # add the mesh to each model part
+        for model_part in all_model_parts:
+            model_part.mesh = Mesh.create_mesh_from_gmsh_group(self.gmsh_io.mesh_data, model_part.name)
+
+    def __validate_model_part_names(self):
+        """
+        Checks if all model parts have a unique name.
+
+        Raises:
+            - ValueError: If not all model parts have a name.
+            - ValueError: If not all model part names are unique .
+        """
+
+        # collect all model parts
+        all_model_parts: List[Union[BodyModelPart, ModelPart]] = []
+        all_model_parts.extend(self.body_model_parts)
+        all_model_parts.extend(self.process_model_parts)
+
+        unique_names = []
         for model_part in all_model_parts:
             # Check if all model parts have a name
             if model_part.name is None:
                 raise ValueError("All model parts must have a name")
             else:
-                model_part.mesh = Mesh.create_mesh_from_gmsh_group(self.gmsh_io.mesh_data, model_part.name)
+                if model_part.name in unique_names:
+                    raise ValueError("All model parts must have a unique name")
+                unique_names.append(model_part.name)
 
+    def validate(self):
+        """
+        Validate the model. \
+            - Checks if all model parts have a unique name.
 
+        """
+
+        self.__validate_model_part_names()
 
 
