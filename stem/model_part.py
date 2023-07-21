@@ -20,7 +20,6 @@ class ModelPart:
         - __name (str): name of the model part
         - geometry (Optional[:class:`stem.geometry.Geometry`]): geometry of the model part
         - mesh (Optional[:class:`stem.mesh.Mesh`]): mesh of the model part
-        - parameters (Dict[Any,Any]): dictionary containing the model part parameters
         - parameters (Optional[Union[:class:`stem.load.LoadParametersABC`, \
             :class:`stem.boundary.BoundaryParametersABC, \
             :class:`stem.additional_processes.AdditionalProcessesParametersABC`]]): process parameters containing the

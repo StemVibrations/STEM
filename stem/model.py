@@ -163,12 +163,11 @@ class Model:
         if isinstance(load_parameters, MovingLoad):
             self.__validate_moving_load_parameters(coordinates, load_parameters)
 
-        # create body model part
-        model_part = ModelPart()
-        model_part.name = name
+        # create model part
+        model_part = ModelPart(name)
         model_part.parameters = load_parameters
 
-        # set the geometry of the body model part
+        # set the geometry of the model part
         model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
 
         self.process_model_parts.append(model_part)
@@ -194,7 +193,6 @@ class Model:
 
             if len(coordinate) > 3 or len(coordinate) < 1:
                 raise ValueError(f"Coordinate should be either 2D or 3D but {len(coordinate)} was given")
-
 
     @staticmethod
     def __validate_moving_load_parameters(coordinates: Sequence[Sequence[float]], load_parameters: MovingLoad):
