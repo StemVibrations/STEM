@@ -17,7 +17,7 @@ class KratosAdditionalProcessesIO:
         # define constraints
 
         # Absorbing boundaries
-        excavation_parameters = Excavation(deactivate_soil_part=True)
+        excavation_parameters = Excavation(deactivate_body_model_part=True)
 
         # collect the part names and parameters into a dictionary
         # TODO: change later when model part is implemented
