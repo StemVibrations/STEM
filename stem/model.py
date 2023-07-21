@@ -1,11 +1,16 @@
-from typing import List, Sequence, Dict, Any, Optional, Union
+import collections
+from typing import List, Sequence, Dict, Any, Optional, Union, get_args
+
+import numpy as np
 
 from gmsh_utils import gmsh_IO
 
 from stem.model_part import ModelPart, BodyModelPart
 from stem.soil_material import *
 from stem.structural_material import *
+from stem.load import *
 from stem.geometry import Geometry
+from stem.utils import is_point_between_points, is_collinear
 
 
 class Model:
@@ -127,6 +132,97 @@ class Model:
         body_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
 
         self.body_model_parts.append(body_model_part)
+
+    def add_load_by_coordinates(self, coordinates: Sequence[Sequence[float]], load_parameters: LoadParametersABC, name: str):
+        """
+        Adds a load to the model by giving a sequence of 3D coordinates. For a 2D model, the third coordinate is
+        ignored.
+
+        Args:
+            - coordinates (Sequence[Sequence[float]]): The coordinates of the load.
+            - parameters (:class:`stem.load.LoadParametersABC`): The parameters of the load.
+            - name (str): The name of the load part.
+
+        """
+
+        self.__validate_coordinates(coordinates)
+
+        if isinstance(load_parameters, PointLoad):
+            gmsh_input = {name: {"coordinates": coordinates, "ndim": 0}}
+        elif isinstance(load_parameters, get_args(Union[LineLoad, MovingLoad])):
+            gmsh_input = {name: {"coordinates": coordinates, "ndim": 1}}
+        elif isinstance(load_parameters, SurfaceLoad):
+            gmsh_input = {name: {"coordinates": coordinates, "ndim": 2}}
+        else:
+            # TODO: deal with Gravity loads
+            raise ValueError(f'Invalid load_parameters ({load_parameters.__class__.__name__}) object'
+                             f' provided for the load {name}.Expected one of PointLoad, MovingLoad,'
+                             f' LineLoad or SurfaceLoad.')
+
+        self.gmsh_io.generate_geometry(gmsh_input, "")
+
+        if isinstance(load_parameters, MovingLoad):
+            self.__validate_moving_load_parameters(coordinates, load_parameters)
+
+        # create body model part
+        model_part = ModelPart()
+        model_part.name = name
+        model_part.parameters = load_parameters
+
+        # set the geometry of the body model part
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
+
+        self.process_model_parts.append(model_part)
+
+    @staticmethod
+    def __validate_coordinates(coordinates: Sequence[Sequence[float]]):
+        """
+        Validates the coordinates in input.
+
+        Args:
+            - coordinates (Sequence[Sequence[float]]): The coordinates of the load.
+
+        """
+
+        # check if coordinates is a sequence
+        if not isinstance(coordinates, collections.abc.Sequence):
+            raise ValueError(f"Coordinates are not a sequence!\n:{coordinates}.")
+
+        # check if coordinates is a sequence
+        for coordinate in coordinates:
+            if not isinstance(coordinate, collections.abc.Sequence):
+                raise ValueError(f"Coordinate in coordinates  is not a sequence!\n:{coordinate}.")
+
+            if len(coordinate) > 3 or len(coordinate) < 1:
+                raise ValueError(f"Coordinate should be either 2D or 3D but {len(coordinate)} was given")
+
+
+    @staticmethod
+    def __validate_moving_load_parameters(coordinates: Sequence[Sequence[float]], load_parameters: MovingLoad):
+        """
+        Validates the coordinates in input for the moving load and the trajectory (collinearity of the
+        points and if the origin is between the point).
+
+        Args:
+            - coordinates (Sequence[Sequence[float]]): The start-end coordinate of the moving load.
+            - parameters (:class:`stem.load.LoadParametersABC`): The parameters of the load.
+
+        """
+
+        # check if coordinates is a sequence
+        if len(coordinates) != 2:
+            raise ValueError(f"For moving loads, start and ending points have to be specified, but the given "
+                             f"coordinates are:\n :{coordinates}.")
+
+        if not is_collinear(
+                point=load_parameters.origin, start_point=coordinates[0], end_point=coordinates[1]
+        ):
+            raise ValueError(f"Origin of the moving load and given points of the trajectory are not aligned!")
+
+        if not is_point_between_points(
+                point=load_parameters.origin, start_point=coordinates[0], end_point=coordinates[1]
+        ):
+            raise ValueError(f"Point not in between given two points.")
 
     def synchronise_geometry(self):
         """

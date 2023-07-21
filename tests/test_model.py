@@ -2,9 +2,11 @@ from typing import Tuple
 import pickle
 
 import pytest
+from gmsh_utils import gmsh_IO
 
 from stem.model import *
 from stem.geometry import *
+from tests.utils import TestUtils
 
 
 class TestModel:
@@ -44,6 +46,51 @@ class TestModel:
         geometry.surfaces = [Surface.create([1,2,3,4], 1)]
 
         geometry.volumes = []
+
+        return geometry
+
+
+    @pytest.fixture
+    def expected_geometry_single_layer_3D(self):
+        """
+        Sets expected geometry data for a 2D geometry group. The group is a geometry of a square.
+
+        Returns:
+            - :class:`stem.geometry.Geometry`: geometry of a 2D square
+        """
+
+        geometry = Geometry()
+
+        geometry.points = [Point.create([0, 0, 0], 1),
+                           Point.create([0, 0, 1], 5),
+                           Point.create([1, 0, 1], 6),
+                           Point.create([1, 0, 0], 2),
+                           Point.create([1, 1, 1], 7),
+                           Point.create([1, 1, 0], 3),
+                           Point.create([0, 1, 1], 8),
+                           Point.create([0, 1, 0], 4)]
+
+        geometry.lines = [Line.create([1, 5], 5),
+                          Line.create([5, 6], 7),
+                          Line.create([2, 6], 6),
+                          Line.create([1, 2], 1),
+                          Line.create([6, 7], 9),
+                          Line.create([3, 7], 8),
+                          Line.create([2, 3], 2),
+                          Line.create([7, 8], 11),
+                          Line.create([4, 8], 10),
+                          Line.create([3, 4], 3),
+                          Line.create([8, 5], 12),
+                          Line.create([4, 1], 4)]
+
+        geometry.surfaces = [Surface.create([5, 7, -6, -1], 2),
+                             Surface.create([6, 9, -8, -2], 3),
+                             Surface.create([8,11, -10, -3], 4),
+                             Surface.create([10, 12, -5, -4], 5),
+                             Surface.create([1, 2, 3, 4], 1),
+                             Surface.create([7, 9, 11, 12], 6)]
+
+        geometry.volumes = [Volume.create([-2, -3, -4, -5, -1, 6], 1)]
 
         return geometry
 
@@ -202,7 +249,35 @@ class TestModel:
         full_geometry.surfaces = [Surface.create([1, 2, 3, 4, 5], 1),
                                   Surface.create([3, 6, 7, 8], 2)]
 
+        full_geometry.volumes = []
+
         return geometry_1, geometry_2, full_geometry
+
+    @pytest.fixture
+    def expected_geometry_line_load(self):
+        """
+        Sets expected geometry data for a 2D geometry group. The group is a geometry of a square.
+
+        Returns:
+            - :class:`stem.geometry.Geometry`: geometry of a 2D square
+        """
+
+        geometry = Geometry()
+
+        geometry.points = [Point.create([0, 0, 0], 1),
+                           Point.create([3, 0, 0], 2),
+                           Point.create([4, -1, 0], 3),
+                           Point.create([10, -1, 0], 4)]
+
+        geometry.lines = [Line.create([1, 2], 1),
+                          Line.create([2, 3], 2),
+                          Line.create([3, 4], 3)]
+
+        geometry.surfaces = []
+
+        geometry.volumes = []
+
+        return geometry
 
     @pytest.fixture
     def create_default_2d_soil_material(self):
@@ -237,6 +312,61 @@ class TestModel:
         soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
                                      retention_parameters=SaturatedBelowPhreaticLevelLaw())
         return soil_material
+
+    @pytest.fixture
+    def create_default_point_load_parameters(self):
+        """
+        Create a default point load parameters.
+
+        Returns:
+            :class:`stem.load.PointLoad`: default point load
+
+        """
+        # define soil material
+        return PointLoad(active=[False, True, False], value=[0, -200, 0])
+
+    @pytest.fixture
+    def create_default_line_load_parameters(self):
+        """
+        Create a default line load parameters.
+
+        Returns:
+            :class:`stem.load.PointLoad`: default point load
+
+        """
+        # define soil material
+        return LineLoad(active=[False, True, False], value=[0, -20, 0])
+
+    @pytest.fixture
+    def create_default_surface_load_parameters(self):
+        """
+        Create a default surface load properties.
+
+        Returns:
+            :class:`stem.load.SurfaceLoad`: default surface load
+
+        """
+        # define soil material
+        return SurfaceLoad(active=[False, True, False], value=[0, -2, 0])
+
+    @pytest.fixture
+    def create_default_moving_load_parameters(self):
+        """
+        Create a default surface load properties.
+
+        Returns:
+            :class:`stem.load.SurfaceLoad`: default surface load
+
+        """
+        # define soil material
+        return MovingLoad(
+            origin=[5.0, 0.0, 0.0],
+            load=[0.0, -10.0, 0.0],
+            velocity=5.0,
+            offset=3.0,
+            direction=[1, 1, 1]
+        )
+
 
     @pytest.fixture
     def expected_geometry_two_layers_3D_extruded(self):
@@ -391,6 +521,20 @@ class TestModel:
 
         return geometry_1, geometry_2
 
+    @pytest.fixture(autouse=True)
+    def close_gmsh(self):
+        """
+        Initializer to close gmsh if it was not closed before. In case a test fails, the destroyer method is not called
+        on the Model object and gmsh keeps on running. Therefore, nodes, lines, surfaces and volumes ids are not
+        reset to one. This causes also the next test after the failed one to fail as well, which has nothing to do
+        the test themselves.
+
+        Returns:
+            - None
+
+        """
+        gmsh_IO.GmshIO().finalize_gmsh()
+
     def test_add_single_soil_layer_2D(self, expected_geometry_single_layer_2D: Geometry,
                                       create_default_2d_soil_material: SoilMaterial):
         """
@@ -426,19 +570,7 @@ class TestModel:
         expected_geometry = expected_geometry_single_layer_2D
 
         # check if points are added correctly
-        for generated_point, expected_point in zip(generated_geometry.points, expected_geometry.points):
-            assert generated_point.id == expected_point.id
-            assert pytest.approx(generated_point.coordinates) == expected_point.coordinates
-
-        # check if lines are added correctly
-        for generated_line, expected_line in zip(generated_geometry.lines, expected_geometry.lines):
-            assert generated_line.id == expected_line.id
-            assert generated_line.point_ids == expected_line.point_ids
-
-        # check if surfaces are added correctly
-        for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
-            assert generated_surface.id == expected_surface.id
-            assert generated_surface.line_ids == expected_surface.line_ids
+        TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
     def test_add_single_soil_layer_3D(self, expected_geometry_single_layer_3D: Geometry,
                                       create_default_3d_soil_material: SoilMaterial):
@@ -476,24 +608,7 @@ class TestModel:
         expected_geometry = expected_geometry_single_layer_3D
 
         # check if points are added correctly
-        for generated_point, expected_point in zip(generated_geometry.points, expected_geometry.points):
-            assert generated_point.id == expected_point.id
-            assert pytest.approx(generated_point.coordinates) == expected_point.coordinates
-
-        # check if lines are added correctly
-        for generated_line, expected_line in zip(generated_geometry.lines, expected_geometry.lines):
-            assert generated_line.id == expected_line.id
-            assert generated_line.point_ids == expected_line.point_ids
-
-        # check if surfaces are added correctly
-        for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
-            assert generated_surface.id == expected_surface.id
-            assert generated_surface.line_ids == expected_surface.line_ids
-
-        # check if volumes are added correctly
-        for generated_volume, expected_volume in zip(generated_geometry.volumes, expected_geometry.volumes):
-            assert generated_volume.id == expected_volume.id
-            assert generated_volume.surface_ids == expected_volume.surface_ids
+        TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
     def test_add_multiple_soil_layers_2D(self, expected_geometry_two_layers_2D: Tuple[Geometry, Geometry],
                                          create_default_2d_soil_material: SoilMaterial):
@@ -539,20 +654,7 @@ class TestModel:
             generated_geometry = model.body_model_parts[i].geometry
             expected_geometry = expected_geometry_two_layers_2D[i]
 
-            # check if points are added correctly
-            for generated_point, expected_point in zip(generated_geometry.points, expected_geometry.points):
-                assert generated_point.id == expected_point.id
-                assert pytest.approx(generated_point.coordinates) == expected_point.coordinates
-
-            # check if lines are added correctly
-            for generated_line, expected_line in zip(generated_geometry.lines, expected_geometry.lines):
-                assert generated_line.id == expected_line.id
-                assert generated_line.point_ids == expected_line.point_ids
-
-            # check if surfaces are added correctly
-            for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
-                assert generated_surface.id == expected_surface.id
-                assert generated_surface.line_ids == expected_surface.line_ids
+            TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
     def test_add_multiple_soil_layers_3D(self, expected_geometry_two_layers_3D_extruded: Tuple[Geometry, Geometry],
                                          create_default_3d_soil_material: SoilMaterial):
@@ -602,20 +704,7 @@ class TestModel:
             generated_geometry = model.body_model_parts[i].geometry
             expected_geometry = expected_geometry_two_layers_3D_extruded[i]
 
-            # check if points are added correctly
-            for generated_point, expected_point in zip(generated_geometry.points, expected_geometry.points):
-                assert generated_point.id == expected_point.id
-                assert pytest.approx(generated_point.coordinates) == expected_point.coordinates
-
-            # check if lines are added correctly
-            for generated_line, expected_line in zip(generated_geometry.lines, expected_geometry.lines):
-                assert generated_line.id == expected_line.id
-                assert generated_line.point_ids == expected_line.point_ids
-
-            # check if surfaces are added correctly
-            for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
-                assert generated_surface.id == expected_surface.id
-                assert generated_surface.line_ids == expected_surface.line_ids
+            TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
     def test_add_all_layers_from_geo_file_2D(self, expected_geometry_two_layers_2D: Tuple[Geometry, Geometry]):
         """
@@ -647,20 +736,7 @@ class TestModel:
             generated_geometry = model.body_model_parts[i].geometry
             expected_geometry = expected_geometry_two_layers_2D[i]
 
-            # check if points are added correctly
-            for generated_point, expected_point in zip(generated_geometry.points, expected_geometry.points):
-                assert generated_point.id == expected_point.id
-                assert pytest.approx(generated_point.coordinates) == expected_point.coordinates
-
-            # check if lines are added correctly
-            for generated_line, expected_line in zip(generated_geometry.lines, expected_geometry.lines):
-                assert generated_line.id == expected_line.id
-                assert generated_line.point_ids == expected_line.point_ids
-
-            # check if surfaces are added correctly
-            for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
-                assert generated_surface.id == expected_surface.id
-                assert generated_surface.line_ids == expected_surface.line_ids
+            TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
     def test_add_all_layers_from_geo_file_3D(self, expected_geometry_two_layers_3D_geo_file: Tuple[Geometry, Geometry]):
         """
@@ -697,20 +773,7 @@ class TestModel:
             generated_geometry = all_model_parts[i].geometry
             expected_geometry = expected_geometry_two_layers_3D_geo_file[i]
 
-            # check if points are added correctly
-            for generated_point, expected_point in zip(generated_geometry.points, expected_geometry.points):
-                assert generated_point.id == expected_point.id
-                assert pytest.approx(generated_point.coordinates) == expected_point.coordinates
-
-            # check if lines are added correctly
-            for generated_line, expected_line in zip(generated_geometry.lines, expected_geometry.lines):
-                assert generated_line.id == expected_line.id
-                assert generated_line.point_ids == expected_line.point_ids
-
-            # check if surfaces are added correctly
-            for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
-                assert generated_surface.id == expected_surface.id
-                assert generated_surface.line_ids == expected_surface.line_ids
+            TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
     def test_synchronise_geometry_2D(self, expected_geometry_two_layers_2D_after_sync: Tuple[Geometry, Geometry],
                                    create_default_2d_soil_material: SoilMaterial):
@@ -755,20 +818,7 @@ class TestModel:
         for generated_geometry, expected_geometry in zip(generated_geometries,
                                                          expected_geometry_two_layers_2D_after_sync):
 
-            # check if points are added correctly
-            for generated_point, expected_point in zip(generated_geometry.points, expected_geometry.points):
-                assert generated_point.id == expected_point.id
-                assert pytest.approx(generated_point.coordinates) == expected_point.coordinates
-
-            # check if lines are added correctly
-            for generated_line, expected_line in zip(generated_geometry.lines, expected_geometry.lines):
-                assert generated_line.id == expected_line.id
-                assert generated_line.point_ids == expected_line.point_ids
-
-            # check if surfaces are added correctly
-            for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
-                assert generated_surface.id == expected_surface.id
-                assert generated_surface.line_ids == expected_surface.line_ids
+            TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
     def test_synchronise_geometry_3D(self, create_default_3d_soil_material: SoilMaterial):
         """
@@ -815,22 +865,115 @@ class TestModel:
         for generated_geometry, expected_geometry in zip(generated_geometries,
                                                          expected_geometry_two_layers_3D_after_sync):
 
-            # check if points are added correctly
-            for generated_point, expected_point in zip(generated_geometry.points, expected_geometry.points):
-                assert generated_point.id == expected_point.id
-                assert pytest.approx(generated_point.coordinates) == expected_point.coordinates
+            TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
-            # check if lines are added correctly
-            for generated_line, expected_line in zip(generated_geometry.lines, expected_geometry.lines):
-                assert generated_line.id == expected_line.id
-                assert generated_line.point_ids == expected_line.point_ids
+    def test_add_point_loads_to_2_points(self, create_default_point_load_parameters: PointLoad):
+        """
+        Test if a single soil point load is added correctly to the model. Two points are generated
+        and a single load is created and added to the model.
 
-            # check if surfaces are added correctly
-            for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
-                assert generated_surface.id == expected_surface.id
-                assert generated_surface.line_ids == expected_surface.line_ids
+        Args:
+            - create_default_point_load_properties (:class:`stem.load.PointLoad`): default point load parameters
 
-            # check if volumes are added correctly
-            for generated_volume, expected_volume in zip(generated_geometry.volumes, expected_geometry.volumes):
-                assert generated_volume.id == expected_volume.id
-                assert generated_volume.surface_ids == expected_volume.surface_ids
+        """
+
+        ndim = 3
+
+        point_coordinates = [(-0.5, 0, 0), (0.5, 0, 0)]
+
+        # define soil material
+        load_parameters = create_default_point_load_parameters
+
+        # create model
+        model = Model(ndim)
+        # add soil layer
+        model.add_load_by_coordinates(point_coordinates, load_parameters, "point_load_1")
+
+        # check if layer is added correctly
+        assert len(model.process_model_parts) == 1
+        assert model.process_model_parts[0].name == "point_load_1"
+        assert model.process_model_parts[0].parameters == load_parameters
+
+        # check if geometry is added correctly
+        generated_geometry = model.process_model_parts[0].geometry
+        expected_geometry = Geometry(
+            points=[Point.create([-0.5, 0, 0], 1), Point.create([0.5, 0, 0], 2)],
+            lines=[],
+            surfaces=[],
+            volumes=[]
+        )
+
+        TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
+
+    def test_add_line_load_to_3_edges(self, expected_geometry_line_load: Geometry,
+                                      create_default_line_load_parameters: PointLoad):
+        """
+        Test if a line load is added correctly to the model when applied on 3 edges. 4 points are generated
+        and a single soil material is created and added to the model.
+
+        Args:
+            - expected_geometry_line_load (:class:`stem.geometry.Geometry`): expected geometry of the model
+            - create_default_line_load_parameters (:class:`stem.load.LineLoad`): default line load parameters
+
+        """
+
+        ndim = 3
+
+        point_coordinates = [(0, 0, 0), (3, 0, 0), (4, -1, 0), (10, -1, 0)]
+
+        # define soil material
+        load_parameters = create_default_line_load_parameters
+
+        # create model
+        model = Model(ndim)
+        # add soil layer
+        model.add_load_by_coordinates(point_coordinates, load_parameters, "line_load_1")
+
+        # check if layer is added correctly
+        assert len(model.process_model_parts) == 1
+        assert model.process_model_parts[0].name == "line_load_1"
+        assert model.process_model_parts[0].parameters == load_parameters
+
+        # check if geometry is added correctly
+        generated_geometry = model.process_model_parts[0].geometry
+        expected_geometry = expected_geometry_line_load
+
+        TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
+
+    def test_add_moving_point_load(self, create_default_moving_load_parameters: MovingLoad):
+        """
+        Test if a single soil point load is added correctly to the model. Two points are generated
+        and a single load is created and added to the model.
+
+        Args:
+            - create_default_moving_load_parameters (:class:`stem.load.MovingLoad`): default moving load parameters
+
+        """
+
+        ndim = 3
+
+        point_coordinates = [(0.0, 0, 0), (10, 0, 0)]
+
+        # define soil material
+        load_parameters = create_default_moving_load_parameters
+
+        # create model
+        model = Model(ndim)
+        # add soil layer
+        model.add_load_by_coordinates(point_coordinates, load_parameters, "moving_load_1")
+
+        # check if layer is added correctly
+        assert len(model.process_model_parts) == 1
+        assert model.process_model_parts[0].name == "moving_load_1"
+        assert model.process_model_parts[0].parameters == load_parameters
+
+        # check if geometry is added correctly
+        generated_geometry = model.process_model_parts[0].geometry
+        expected_geometry = Geometry(
+            points=[Point.create([0.0, 0, 0], 1), Point.create([10.0, 0, 0], 2)],
+            lines=[Line.create([1, 2], 1)],
+            surfaces=[],
+            volumes=[]
+        )
+
+        TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
