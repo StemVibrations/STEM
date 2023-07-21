@@ -205,13 +205,25 @@ class TestMeshSettings:
     Test the mesh settings class.
     """
 
-    def test_validation_element_order(self):
+    def test_validation_element_order_at_initialisation_expected_raise(self):
         """
-        Test the validation of the element order.
+        Test the validation of the element order. Expected to raise a ValueError when the element order is not 1 or 2.
 
         """
 
         # test if ValueError is raised when element_order is not 1 or 2
         with pytest.raises(ValueError):
 
-            mesh_settings = MeshSettings(element_order=3)
+            MeshSettings(element_order=3)
+
+    def test_validation_element_order_after_initialisation_expected_raise(self):
+        """
+        Test the validation of the element order. Expected to raise a ValueError when the element order is not 1 or 2.
+
+        """
+
+        # test if ValueError is raised when element_order is not 1 or 2
+        mesh_settings = MeshSettings()
+
+        with pytest.raises(ValueError):
+            mesh_settings.element_order = 3

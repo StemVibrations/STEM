@@ -43,6 +43,9 @@ class MeshSettings:
         self.element_size: float = element_size
         self.element_shape: ElementShape = element_shape
 
+        if element_order not in [1, 2]:
+            raise ValueError("The element order must be 1 or 2. Higher order elements are not supported.")
+
         self.__element_order: int = element_order
 
     @property
@@ -67,21 +70,10 @@ class MeshSettings:
             - ValueError: If the element order is not 1 or 2.
         """
 
-        if self.element_order not in [1, 2]:
+        if element_order not in [1, 2]:
             raise ValueError("The element order must be 1 or 2. Higher order elements are not supported.")
 
         self.__element_order = element_order
-
-
-    def __post_init__(self):
-        """
-        Post initialization of the mesh settings. Checks if the element order is 1 or 2.
-
-        Raises:
-            - ValueError: If the element order is not 1 or 2.
-        """
-        if self.element_order not in [1, 2]:
-            raise ValueError("The element order must be 1 or 2. Higher order elements are not supported.")
 
 
 class Node:
