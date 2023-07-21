@@ -34,6 +34,12 @@ class MeshSettings:
     element_shape: ElementShape = ElementShape.TRIANGLE  # todo implement possibility to choose in gmsh utils
 
     def __post_init__(self):
+        """
+        Post initialization of the mesh settings. Checks if the element order is 1 or 2.
+
+        Raises:
+            - ValueError: If the element order is not 1 or 2.
+        """
         if self.element_order not in [1, 2]:
             raise ValueError("The element order must be 1 or 2. Higher order elements are not supported.")
 
