@@ -122,7 +122,7 @@ class Mesh:
         nodes = [Node(node_id, mesh_data["nodes"][node_id]) for node_id in group_node_ids]
 
         # add nodes and elements to mesh object
-        mesh = cls(mesh_data["ndim"])
+        mesh = cls(group_data["ndim"])
         mesh.nodes = nodes
         mesh.elements = elements
 

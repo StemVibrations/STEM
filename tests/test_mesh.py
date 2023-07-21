@@ -15,7 +15,8 @@ class TestMesh:
         mesh_data = {"ndim": 0,
                      "nodes": {1: [0, 0, 0], 2: [0.5, 0, 0]},
                      "elements": {"POINT_1N": {1: [1], 2: [2]}},
-                     "physical_groups": {"points_group": {'element_ids': [1, 2],
+                     "physical_groups": {"points_group": {"ndim": 0,
+                                                          'element_ids': [1, 2],
                                                           "node_ids": [1, 2],
                                                           "element_type": "POINT_1N"}}}
 
@@ -53,7 +54,8 @@ class TestMesh:
         mesh_data = {"ndim": 1,
                      "nodes": {1: [0, 0, 0], 2: [0.5, 0, 0], 3: [1, 0, 0]},
                      "elements": {"LINE_2N": {1: [1, 2], 2: [2, 3]}},
-                     "physical_groups": {"lines_group": {'element_ids': [1, 2],
+                     "physical_groups": {"lines_group": {"ndim": 1,
+                                                         'element_ids': [1, 2],
                                                          "node_ids": [1, 2, 3],
                                                          "element_type": "LINE_2N"}}}
 
@@ -92,7 +94,8 @@ class TestMesh:
                      "nodes": {1: [0, 0, 0], 2: [0.5, 0, 0], 3: [1, 0, 0],
                                4: [0, 0.5, 0], 5: [0.5, 0.5, 0], 6: [1, 0.5, 0]},
                      "elements": {"TRIANGLE_3N": {1: [1, 2, 4], 2: [2, 3, 5], 3: [3, 6, 5]}},
-                     "physical_groups": {"triangles_group": {'element_ids': [1, 2, 3],
+                     "physical_groups": {"triangles_group": {"ndim": 2,
+                                                             'element_ids': [1, 2, 3],
                                                              "node_ids": [1, 2, 3, 4, 5, 6],
                                                              "element_type": "TRIANGLE_3N"}}}
 
@@ -138,7 +141,8 @@ class TestMesh:
                                10: [0, 0.5, 0.5], 11: [0.5, 0.5, 0.5], 12: [1, 0.5, 0.5]},
                      "elements": {"TETRAHEDRON_4N": {1: [1, 2, 4, 7], 2: [2, 3, 5, 8], 3: [3, 6, 5, 9],
                                                      4: [4, 5, 7, 10], 5: [5, 6, 8, 11], 6: [6, 9, 11, 8]}},
-                     "physical_groups": {"tetrahedral_group": {'element_ids': [1, 2, 3, 4, 5, 6],
+                     "physical_groups": {"tetrahedral_group": {"ndim": 3,
+                                                               'element_ids': [1, 2, 3, 4, 5, 6],
                                                                "node_ids": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
                                                                "element_type": "TETRAHEDRON_4N"}}}
 
@@ -178,7 +182,7 @@ class TestMesh:
 
     def test_create_mesh_from_non_existing_group(self):
         """
-        Test the creation of a mesh from a non-existing gmsh group.
+        Test the creation of a mesh from a non-existing gmsh group. Expected to raise a ValueError.
 
         """
 
@@ -186,7 +190,8 @@ class TestMesh:
         mesh_data = {"ndim": 0,
                      "nodes": {1: [0, 0, 0], 2: [0.5, 0, 0]},
                      "elements": {"POINT_1N": {1: [1], 2: [2]}},
-                     "physical_groups": {"points_group": {'element_ids': [1, 2],
+                     "physical_groups": {"points_group": {"ndim": 0,
+                                                          'element_ids': [1, 2],
                                                           "node_ids": [1, 2],
                                                           "element_type": "POINT_1N"}}}
 

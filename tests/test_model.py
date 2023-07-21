@@ -210,7 +210,7 @@ class TestModel:
         Create a default soil material for a 2D geometry.
 
         Returns:
-            :class:`stem.models.soil.SoilMaterial`: default soil material
+            - :class:`stem.soil_material.SoilMaterial`: default soil material
 
         """
         # define soil material
@@ -227,7 +227,7 @@ class TestModel:
         Create a default soil material for a 3D geometry.
 
         Returns:
-            :class:`stem.models.soil.SoilMaterial`: default soil material
+            - :class:`stem.soil_material.SoilMaterial`: default soil material
 
         """
         # define soil material
@@ -245,7 +245,7 @@ class TestModel:
         top and bottom blocks are in different groups.
 
         Returns:
-            Tuple[:class:`stem.geometry.Geometry`,:class:`stem.geometry.Geometry`]: expected geometry data
+            - Tuple[:class:`stem.geometry.Geometry`,:class:`stem.geometry.Geometry`]: expected geometry data
         """
 
         geometry_1 = Geometry()
@@ -780,7 +780,6 @@ class TestModel:
 
         """
 
-
         # define layer coordinates
         ndim = 3
         layer1_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
@@ -833,6 +832,7 @@ class TestModel:
             for generated_volume, expected_volume in zip(generated_geometry.volumes, expected_geometry.volumes):
                 assert generated_volume.id == expected_volume.id
                 assert generated_volume.surface_ids == expected_volume.surface_ids
+
     def test_generate_mesh_with_only_a_body_model_part_2d(self, create_default_2d_soil_material: SoilMaterial):
         """
         Test if the mesh is generated correctly in 2D if there is only one body model part.
@@ -919,3 +919,83 @@ class TestModel:
             assert node.id not in unique_node_ids
             assert len(node.coordinates) == 3
             unique_node_ids.append(node.id)
+
+    def test_generate_mesh_with_body_and_process_model_part(self, create_default_2d_soil_material: SoilMaterial):
+        """
+        Test if the mesh is generated correctly in the body model part and a process model part.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+        """
+        model = Model(2)
+
+        # add soil material
+        soil_material = create_default_2d_soil_material
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
+
+        # add process geometry
+        gmsh_process_input = {"process_0d": {"coordinates": [[0, 0.5, 0]], "ndim": 0}}
+        model.gmsh_io.generate_geometry(gmsh_process_input, "")
+
+        # create process model part
+        process_model_part = ModelPart("process_0d")
+
+        # set the geometry of the process model part
+        process_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, "process_0d")
+
+        # add process model part
+        model.process_model_parts.append(process_model_part)
+
+        # synchronise geometry and generate mesh
+        model.synchronise_geometry()
+        model.generate_mesh()
+
+        # check mesh of body model part
+        mesh_body = model.body_model_parts[0].mesh
+
+        assert mesh_body.ndim == 2
+
+        unique_element_ids = []
+        # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
+        # correct and if the element ids are unique and if the number of nodes per element is correct
+        assert len(mesh_body.elements) == 162
+        for element in mesh_body.elements:
+            assert element.element_type == "TRIANGLE_3N"
+            assert element.id not in unique_element_ids
+            assert len(element.node_ids) == 3
+            unique_element_ids.append(element.id)
+
+        # check if nodes are generated correctly, i.e. if there are nodes in the mesh and if the node ids are unique
+        # and if the number of coordinates per node is correct
+        unique_body_node_ids = []
+        assert len(mesh_body.nodes) == 98
+        for node in mesh_body.nodes:
+            assert node.id not in unique_body_node_ids
+            assert len(node.coordinates) == 3
+            unique_body_node_ids.append(node.id)
+
+        # check process model part
+        mesh_process = model.process_model_parts[0].mesh
+
+        assert mesh_process.ndim == 0
+
+        # check elements of process model part, i.e. if the number of elements is correct and if the element type is
+        # correct and if the element ids are unique and if the number of nodes per element is correct
+        assert len(mesh_process.elements) == 1
+        for element in mesh_process.elements:
+            assert element.element_type == "POINT_1N"
+            assert element.id == 1
+            assert element.id not in unique_element_ids
+            assert len(element.node_ids) == 1
+            unique_element_ids.append(element.id)
+
+        # check nodes of process model part, i.e. if there is 1 node in the mesh and if the node ids are present in the
+        # body mesh and if the number of coordinates per node is correct
+        assert len(mesh_process.nodes) == 1
+        for node in mesh_process.nodes:
+
+            # check if node is also available in the body mesh
+            assert node.id in unique_body_node_ids
+            assert len(node.coordinates) == 3
