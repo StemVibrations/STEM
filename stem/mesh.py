@@ -1,10 +1,41 @@
 from typing import Dict, List, Tuple, Sequence, Union, Any, Optional
+from enum import Enum
+from dataclasses import dataclass
 
 import numpy as np
 import numpy.typing as npt
 
 from stem.IO.kratos_io import KratosIO
 
+
+class ElementShape(Enum):
+    """
+    Enum class for the element shape. TRIANGLE for triangular elements and tetrahedral elements, QUADRILATERAL for
+    quadrilateral elements and hexahedral elements.
+
+    """
+    TRIANGLE = "triangle"
+    QUADRILATURAL = "quadrilateral"
+
+
+@dataclass
+class MeshSettings:
+    """
+    A class to represent the mesh settings.
+
+    Attributes:
+        - element_size (float): The element size.
+        - element_order (int): The element order. 1 for linear elements, 2 for quadratic elements.
+        - element_shape (:class:`stem.model.ElementShape`): The element shape. TRIANGLE for triangular elements and \
+         tetrahedral elements,  QUADRILATERAL for quadrilateral elements and hexahedral elements.
+    """
+    element_size: float = -1
+    element_order: int = 1
+    element_shape: ElementShape = ElementShape.TRIANGLE  # todo implement possibility to choose in gmsh utils
+
+    def __post_init__(self):
+        if self.element_order not in [1, 2]:
+            raise ValueError("The element order must be 1 or 2. Higher order elements are not supported.")
 
 class Node:
     """
@@ -56,40 +87,6 @@ class Mesh:
         self.elements: List[Element] = []
 
     @classmethod
-    def create_mesh_from_mesh_data(cls, mesh_data: Dict[str, Any]):
-        """
-        Creates a mesh object from mesh data
-
-        Args:
-            - mesh_data (Dict[str, Any]): dictionary of mesh data
-
-        Returns:
-            - :class:`Mesh`: mesh object
-        """
-
-        # create mesh object
-
-        node_data = mesh_data["nodes"]
-        element_data = mesh_data["elements"]
-
-        nodes = []
-        for node_id, coordinates in node_data.items():
-            node = Node(node_id, coordinates)
-            nodes.append(node)
-
-        elements = []
-        for element_type, element_type_data in element_data.items():
-            for element_id, element_node in element_type_data.items():
-                element = Element(element_id, element_type, element_node)
-                elements.append(element)
-
-        mesh = cls(mesh_data["ndim"])
-        mesh.nodes = nodes
-        mesh.elements = elements
-
-        return mesh
-
-    @classmethod
     def create_mesh_from_gmsh_group(cls, mesh_data: Dict[str, Any], group_name: str):
         """
         Creates a mesh object from gmsh group
@@ -127,7 +124,6 @@ class Mesh:
         mesh.elements = elements
 
         return mesh
-
 
     def prepare_data_for_kratos(self, mesh_data: Dict[str, Any]) \
             -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.int64]]:

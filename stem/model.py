@@ -8,35 +8,7 @@ from stem.model_part import ModelPart, BodyModelPart
 from stem.soil_material import *
 from stem.structural_material import *
 from stem.geometry import Geometry
-from stem.mesh import Mesh
-
-
-class ElementShape(Enum):
-    """
-    Enum class for the element shape.
-    """
-    TRIANGLE = "triangle"
-    QUADRILATURAL = "quadrilateral"
-
-
-@dataclass
-class MeshSettings:
-    """
-    A class to represent the mesh settings.
-
-    Attributes:
-        - element_size (float): The element size.
-        - element_order (int): The element order. 1 for linear elements, 2 for quadratic elements.
-        - element_shape (:class:`stem.model.ElementShape`): The element shape. TRIANGLE for triangular elements and
-         tetrahedral elements,  QUADRILATERAL for quadrilateral elements and hexahedral elements.
-    """
-    element_size: float = -1
-    element_order: int = 1
-    element_shape: ElementShape = ElementShape.TRIANGLE # todo implement possibility to choose in gmsh utils
-
-    def __post_init__(self):
-        if self.element_order not in [1, 2]:
-            raise ValueError("The element order must be 1 or 2. Higher order elements are not supported.")
+from stem.mesh import Mesh, MeshSettings
 
 
 class Model:
@@ -58,7 +30,6 @@ class Model:
         self.project_parameters = None
         self.solver = None
         self.geometry: Optional[Geometry] = None
-        self.mesh: Optional[Mesh] = None
         self.mesh_settings: MeshSettings = MeshSettings()
         self.gmsh_io = gmsh_IO.GmshIO()
         self.body_model_parts: List[BodyModelPart] = []
