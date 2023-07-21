@@ -200,3 +200,18 @@ class TestMesh:
             Mesh.create_mesh_from_gmsh_group(mesh_data, "non_existing_group")
 
 
+class TestMeshSettings:
+    """
+    Test the mesh settings class.
+    """
+
+    def test_validation_element_order(self):
+        """
+        Test the validation of the element order.
+
+        """
+
+        # test if ValueError is raised when element_order is not 1 or 2
+        with pytest.raises(ValueError):
+
+            mesh_settings = MeshSettings(element_order=3)

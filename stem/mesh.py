@@ -18,20 +18,60 @@ class ElementShape(Enum):
     QUADRILATURAL = "quadrilateral"
 
 
-@dataclass
 class MeshSettings:
     """
     A class to represent the mesh settings.
 
     Attributes:
         - element_size (float): The element size (default -1, which means that gmsh determines the size).
-        - element_order (int): The element order. 1 for linear elements, 2 for quadratic elements. (default 1)
         - element_shape (:class:`stem.model.ElementShape`): The element shape. TRIANGLE for triangular elements and \
          tetrahedral elements,  QUADRILATERAL for quadrilateral elements and hexahedral elements. (default TRIANGLE)
+         - __element_order (int): The element order. 1 for linear elements, 2 for quadratic elements. (default 1)
     """
-    element_size: float = -1
-    element_order: int = 1
-    element_shape: ElementShape = ElementShape.TRIANGLE  # todo implement possibility to choose in gmsh utils
+
+    def __init__(self, element_size: float = -1, element_order: int = 1,
+                 element_shape: ElementShape = ElementShape.TRIANGLE):
+        """
+        Initialize the mesh settings.
+
+        Args:
+            - element_size (float): The element size (default -1, which means that gmsh determines the size).
+            - element_order (int): The element order. 1 for linear elements, 2 for quadratic elements. (default 1)
+            - element_shape (:class:`stem.model.ElementShape`): The element shape. TRIANGLE for triangular elements and \
+            tetrahedral elements,  QUADRILATERAL for quadrilateral elements and hexahedral elements. (default TRIANGLE)
+        """
+        self.element_size: float = element_size
+        self.element_shape: ElementShape = element_shape
+
+        self.__element_order: int = element_order
+
+    @property
+    def element_order(self):
+        """
+        Get the element order.
+
+        Returns:
+            - int: element order
+        """
+        return self.__element_order
+
+    @element_order.setter
+    def element_order(self, element_order: int):
+        """
+        Set the element order. The element order must be 1 or 2.
+
+        Args:
+            - element_order (int): element order
+
+        Raises:
+            - ValueError: If the element order is not 1 or 2.
+        """
+
+        if self.element_order not in [1, 2]:
+            raise ValueError("The element order must be 1 or 2. Higher order elements are not supported.")
+
+        self.__element_order = element_order
+
 
     def __post_init__(self):
         """
@@ -42,6 +82,7 @@ class MeshSettings:
         """
         if self.element_order not in [1, 2]:
             raise ValueError("The element order must be 1 or 2. Higher order elements are not supported.")
+
 
 class Node:
     """
