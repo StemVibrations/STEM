@@ -101,6 +101,9 @@ class Mesh:
             - mesh_data (Dict[str, Any]): dictionary of mesh data
             - group_name (str): name of the group
 
+        Raises:
+            - ValueError: If the group name is not found in the mesh data
+
         Returns:
             - :class:`Mesh`: mesh object
         """
