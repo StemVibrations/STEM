@@ -1,6 +1,8 @@
 from typing import Dict, List, Any, Optional, Sequence
 from abc import ABC, abstractmethod
 
+import numpy as np
+
 
 class GeometricalObjectABC(ABC):
     """
@@ -322,14 +324,13 @@ class Geometry:
             - Tuple[:class:`Line`, Sequence[:class:`Point`]]: The line object and the points that make up the line.
         """
 
-        # Initialise point list
-        points = []
-
         # create line and lower dimensional objects
         line_id = abs(line_id)
         line = Line.create(geo_data["lines"][line_id], line_id)
-        for point_id in line.point_ids:
-            points.append(Geometry.__set_point(geo_data, point_id))
+
+        # Using list comprehension to get the points
+        points = [Geometry.__set_point(geo_data, point_id) for point_id in line.point_ids]
+
         return line, points
 
     @staticmethod
