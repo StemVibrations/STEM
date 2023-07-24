@@ -205,3 +205,83 @@ class Model:
         self.__validate_model_part_names()
 
 
+    def show_geometry_from_geometry_data(self,show_surface_ids: bool = True, show_line_ids: bool = True,
+                                         show_point_ids: bool = True):
+        import numpy as np
+        from mpl_toolkits.mplot3d import Axes3D
+        # Axes3D import has side effects, it enables using projection='3d' in add_subplot
+        import matplotlib.pyplot as plt
+
+        from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+
+        # Initialize figure in 3D
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+
+        # get geo data
+        geo_data = self.gmsh_io.geo_data
+
+        # loop over all volumes
+        for volume_k, volume_connectivities in geo_data["volumes"].items():
+
+            # loop over all surfaces within the volume
+            for surface_k in volume_connectivities:
+
+                surface_point_ids = []
+                surface_connectivities = geo_data["surfaces"][abs(surface_k)]
+
+                # calculate centroids of lines to show line ids
+                line_centroids = []
+                for line_k in surface_connectivities:
+                    line_connectivities = geo_data["lines"][abs(line_k)]
+                    # reverse line connectivity if line is defined in opposite direction
+                    if line_k < 0:
+                        line_connectivities = line_connectivities[::-1]
+
+                    line_centroids.append(np.mean([geo_data["points"][line_connectivities[0]],
+                                                   geo_data["points"][line_connectivities[1]]], axis=0))
+
+                    surface_point_ids.extend(line_connectivities)
+
+                # get unique points within surface
+                unique_points = []
+                for point_id in surface_point_ids:
+
+                    if point_id not in unique_points:
+                        unique_points.append(point_id)
+
+
+                # get coordinates of surface points
+                surface_point_coordinates = np.array([geo_data["points"][point_id] for point_id in unique_points])
+
+                # set vertices in format as required by Poly3DCollection
+                vertices = [list(zip(surface_point_coordinates[:, 0],
+                                     surface_point_coordinates[:, 1],
+                                     surface_point_coordinates[:, 2]))]
+
+                # create Poly3DCollection
+                poly = Poly3DCollection(vertices, facecolors='blue', linewidths=1, edgecolors='black', alpha=0.35)
+
+                # show surface ids
+                if show_surface_ids:
+                    surface_centroid = np.mean(surface_point_coordinates, axis=0)
+                    ax.text(surface_centroid[0], surface_centroid[1], surface_centroid[2], f"s_{abs(surface_k)}",
+                            color='black', fontsize=14, fontweight='bold')
+
+                # show line ids
+                if show_line_ids:
+                    for line_centroid, line_k in zip(line_centroids, surface_connectivities):
+                        ax.text(line_centroid[0], line_centroid[1], line_centroid[2], f"l_{abs(line_k)}",
+                                color='black', fontsize=14, fontweight='bold')
+
+                # show point ids
+                if show_point_ids:
+                    for point_id, point_coordinates in geo_data["points"].items():
+                        ax.text(point_coordinates[0], point_coordinates[1], point_coordinates[2], f"p_{point_id}",
+                                color='black', fontsize=14, fontweight='bold')
+
+                # add Poly3DCollection to figure
+                ax.add_collection3d(poly)
+
+        fig.show()
+
