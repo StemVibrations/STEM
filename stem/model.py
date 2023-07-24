@@ -2,6 +2,8 @@ from typing import List, Sequence, Dict, Any, Optional, Union
 from enum import Enum
 from dataclasses import dataclass
 
+import numpy as np
+import matplotlib.pyplot as plt
 from gmsh_utils import gmsh_IO
 
 from stem.model_part import ModelPart, BodyModelPart
@@ -204,13 +206,21 @@ class Model:
 
         self.__validate_model_part_names()
 
+    def show_geometry_from_geo_data(self,show_volume_ids: bool=False,
+                                    show_surface_ids: bool = False, show_line_ids: bool = False,
+                                         show_point_ids: bool = False):
+        """
+        Show the geometry of the model in a matplotlib plot.
 
-    def show_geometry_from_geometry_data(self,show_surface_ids: bool = True, show_line_ids: bool = True,
-                                         show_point_ids: bool = True):
-        import numpy as np
+        Args:
+            - show_volume_ids (bool): If True, the volume ids are shown in the plot.
+            - show_surface_ids (bool): If True, the surface ids are shown in the plot.
+            - show_line_ids (bool): If True, the line ids are shown in the plot.
+            - show_point_ids (bool): If True, the point ids are shown in the plot.
+
+        """
         from mpl_toolkits.mplot3d import Axes3D
         # Axes3D import has side effects, it enables using projection='3d' in add_subplot
-        import matplotlib.pyplot as plt
 
         from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
@@ -224,6 +234,7 @@ class Model:
         # loop over all volumes
         for volume_k, volume_connectivities in geo_data["volumes"].items():
 
+            all_surface_centroids = []
             # loop over all surfaces within the volume
             for surface_k in volume_connectivities:
 
@@ -262,9 +273,12 @@ class Model:
                 # create Poly3DCollection
                 poly = Poly3DCollection(vertices, facecolors='blue', linewidths=1, edgecolors='black', alpha=0.35)
 
+                surface_centroid = np.mean(surface_point_coordinates, axis=0)
+                all_surface_centroids.append(surface_centroid)
+
                 # show surface ids
                 if show_surface_ids:
-                    surface_centroid = np.mean(surface_point_coordinates, axis=0)
+
                     ax.text(surface_centroid[0], surface_centroid[1], surface_centroid[2], f"s_{abs(surface_k)}",
                             color='black', fontsize=14, fontweight='bold')
 
@@ -283,5 +297,39 @@ class Model:
                 # add Poly3DCollection to figure
                 ax.add_collection3d(poly)
 
+            if show_volume_ids:
+                volume_centroid = np.mean(all_surface_centroids, axis=0)
+                # volume_centroid = np.mean(surface_point_coordinates, axis=0)
+                ax.text(volume_centroid[0], volume_centroid[1], volume_centroid[2], f"v_{volume_k}",
+                        color='black', fontsize=14, fontweight='bold')
+
+        all_coordinates = np.array([point_coordinates for point_coordinates in geo_data["points"].values()])
+
+        min_x,max_x = np.min(all_coordinates[:, 0]), np.max(all_coordinates[:, 0])
+        dx = max_x - min_x
+        min_y,max_y = np.min(all_coordinates[:, 1]), np.max(all_coordinates[:, 1])
+        dy = max_y - min_y
+        min_z,max_z = np.min(all_coordinates[:, 2]), np.max(all_coordinates[:, 2])
+        dz = max_z - min_z
+
+        buffer = 0.1
+
+        xlim = [min_x - buffer*dx, max_x + buffer*dx]
+        ylim = [min_y - buffer*dy, max_y + buffer*dy]
+        zlim = [min_z - buffer*dz, max_z + buffer*dz]
+
+
+        ax.set_xlabel("x coordinates [m]")
+        ax.set_ylabel("y coordinates [m]")
+        ax.set_zlabel("z coordinates [m]")
+
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+        ax.set_zlim(zlim)
+
+        ax.set_aspect('equal')
+
         fig.show()
+
+        a=1+1
 
