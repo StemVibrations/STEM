@@ -130,20 +130,6 @@ class Model:
 
         self.body_model_parts.append(body_model_part)
 
-    # def __rearrange_line_point_connectivities(self, line_point_connectivities: List[List[int]]) -> List[List[int]]:
-    #     # loop over lines and check if the connectivities have to be reversed
-    #     for i in range(len(line_point_connectivities) - 1):
-    #
-    #         # connectivities of the current line are reversed if the first point of the current line is in the
-    #         # connectivities of the next line
-    #         if line_point_connectivities[i][0] in line_point_connectivities[i + 1]:
-    #             line_point_connectivities[i].reverse()
-    #
-    #     # check if last line has to be reversed
-    #     if line_point_connectivities[-1][1] in line_point_connectivities[-2]:
-    #         line_point_connectivities[-1].reverse()
-    #     return line_point_connectivities
-
     def add_boundary_condition_by_geometry_ids(self, ndim_boundary: int, geometry_ids: Sequence[int],
                                                boundary_parameters: BoundaryParametersABC, name: str):
         """
