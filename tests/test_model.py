@@ -6,6 +6,7 @@ import numpy.testing as npt
 
 from stem.model import *
 from stem.geometry import *
+from stem.solver import *
 
 
 class TestModel:
@@ -1199,3 +1200,76 @@ class TestModel:
         npt.assert_allclose(model.process_model_parts[0].parameters.value, [0, 0, -10])
         npt.assert_allclose(model.process_model_parts[0].parameters.active, [True, True, True])
 
+    def test_setup_stress_initialisation(self, create_default_2d_soil_material: SoilMaterial):
+        """
+        Test if the stress initialisation is set up correctly. A model is created with a soil layer. It is checked if
+        gravity is added in case the K0 procedure or gravity loading is used.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+
+        # set up solver settings
+        analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
+
+        solution_type = SolutionType.QUASI_STATIC
+
+        time_integration = TimeIntegration(start_time=0.0, end_time=1.0, delta_time=0.1, reduction_factor=0.5,
+                                           increase_factor=2.0, max_delta_time_factor=500)
+
+        convergence_criterion = DisplacementConvergenceCriteria()
+
+        stress_initialisation_type = StressInitialisationType.NONE
+
+        solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
+                                         stress_initialisation_type=stress_initialisation_type,
+                                         time_integration=time_integration,
+                                         is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
+                                         convergence_criteria=convergence_criterion)
+
+        # set up problem data
+        problem_data = Problem(problem_name="test", number_of_threads=2, settings=solver_settings)
+
+        model_no_gravity = Model(2)
+        model_no_gravity.project_parameters = problem_data
+
+        # set up soil material
+        soil_material = create_default_2d_soil_material
+        model_no_gravity.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0)], soil_material, "soil1")
+        model_no_gravity.synchronise_geometry()
+
+        # setup_stress_initialisation
+        model_no_gravity._Model__setup_stress_initialisation()
+
+        model_k0 = Model(2)
+        model_k0.project_parameters = problem_data
+
+        model_k0.project_parameters.settings.stress_initialisation_type = StressInitialisationType.K0_PROCEDURE
+        model_k0.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0)], soil_material, "soil1")
+        model_k0.synchronise_geometry()
+
+        # setup_stress_initialisation
+        model_k0._Model__setup_stress_initialisation()
+
+        model_gravity_loading = Model(2)
+        model_gravity_loading.project_parameters = problem_data
+
+        model_gravity_loading.project_parameters.settings.stress_initialisation_type = \
+            StressInitialisationType.GRAVITY_LOADING
+        model_gravity_loading.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0)], soil_material, "soil1")
+        model_gravity_loading.synchronise_geometry()
+
+        # setup_stress_initialisation
+        model_gravity_loading._Model__setup_stress_initialisation()
+
+        assert len(model_no_gravity.process_model_parts) == 0
+        assert len(model_k0.process_model_parts) == 1
+        assert len(model_gravity_loading.process_model_parts) == 1
+
+        assert model_k0.process_model_parts[0].name == "gravity_load_2d"
+        assert model_gravity_loading.process_model_parts[0].name == "gravity_load_2d"
+
+    @pytest.mark.skip("Not implemented yet")
+    def test_post_setup(self):
+        pass
