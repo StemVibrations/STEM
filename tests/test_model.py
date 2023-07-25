@@ -2,6 +2,7 @@ from typing import Tuple
 import pickle
 
 import pytest
+import numpy.testing as npt
 
 from stem.model import *
 from stem.geometry import *
@@ -1045,3 +1046,86 @@ class TestModel:
         model.process_model_parts = [model_part1]
 
         pytest.raises(ValueError, model.validate)
+
+    def test_add_gravity_load_1d_and_2d(self, create_default_2d_soil_material: SoilMaterial):
+        """
+        Test if a gravity load is added correctly to the model in a 2d space containing 1d and 2d elements. A gravity
+        load is generated and added to the model.
+
+        """
+
+        # create model
+        model = Model(2)
+
+        # add a 2d layer
+
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1,1,0)], create_default_2d_soil_material, "soil1")
+
+        # add a 1d layer
+        layer_settings = {"beam": {"ndim": 1,
+                                   "element_size": -1,
+                                   "coordinates": [[0, 0, 0], [1, 0, 0]]}}
+
+        model.gmsh_io.generate_geometry(layer_settings,"")
+        model.synchronise_geometry()
+
+        # add 1d model part to model
+        body_model_part = BodyModelPart("beam")
+        body_model_part.material = EulerBeam(ndim=2, YOUNG_MODULUS=1e6, POISSON_RATIO=0.3, DENSITY=1, CROSS_AREA=1,
+                                             I33=1)
+        body_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, "beam")
+
+        model.body_model_parts.append(body_model_part)
+
+        # add gravity load
+        model.add_gravity_load()
+
+        assert len(model.process_model_parts) == 2
+        assert model.process_model_parts[0].name == "gravity_load_1d"
+        assert model.process_model_parts[1].name == "gravity_load_2d"
+
+        # setup expected geometries for 1d and 2d
+        expected_geometry_points_1d = [Point.create([0, 0, 0],1), Point.create([1, 0, 0], 2)]
+        expected_geometry_lines_1d = [Line.create([1, 2], 1)]
+        expected_geometry_gravity_1d = Geometry(expected_geometry_points_1d, expected_geometry_lines_1d, [], [])
+
+        expected_geometry_points_2d = [Point.create([0, 0, 0], 1), Point.create([1, 0, 0], 2),
+                                       Point.create([1, 1, 0], 3)]
+        expected_geometry_lines_2d = [Line.create([1, 2], 1), Line.create([2, 3], 2), Line.create([3, 1], 3)]
+        expected_geometry_surfaces_2d = [Surface.create([1, 2, 3], 1)]
+        expected_geometry_gravity_2d = Geometry(expected_geometry_points_2d, expected_geometry_lines_2d,
+                                                expected_geometry_surfaces_2d, [])
+
+        expected_geometries = [expected_geometry_gravity_1d, expected_geometry_gravity_2d]
+
+        # check if all process model parts are correct
+        for model_part in model.process_model_parts:
+
+            # check if parameters are added correctly
+            npt.assert_allclose(model_part.parameters.value, [0, -9.81, 0])
+            npt.assert_allclose(model_part.parameters.active, [True, True, True])
+
+            # check if geometry is added correctly
+            generated_model_part = model_part.geometry
+
+            # check if points are added correctly
+            for generated_point, expected_point in zip(generated_model_part.points, expected_geometries[0].points):
+                assert generated_point.id == expected_point.id
+                npt.assert_allclose(generated_point.coordinates,expected_point.coordinates)
+
+            # check if lines are added correctly
+            for generated_line, expected_line in zip(generated_model_part.lines, expected_geometries[0].lines):
+                assert generated_line.id == expected_line.id
+                assert generated_line.point_ids == expected_line.point_ids
+
+            # check if surfaces are added correctly
+            for generated_surface, expected_surface in zip(generated_model_part.surfaces,
+                                                           expected_geometries[0].surfaces):
+                assert generated_surface.id == expected_surface.id
+                assert generated_surface.line_ids == expected_surface.line_ids
+
+
+
+
+
+        a=1+1

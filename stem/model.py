@@ -243,21 +243,22 @@ class Model:
                                     body_model_part_names])
 
         model_parts_ndim = np.array([self.gmsh_io.geo_data["physical_groups"][name]["ndim"]
-                                     for name in body_model_part_names])
+                                     for name in body_model_part_names]).ravel()
 
         # add gravity load as physical group per dimension
-        body_geometries_1d = model_parts_geometry_ids[model_parts_ndim == 1]
+        body_geometries_1d = model_parts_geometry_ids[model_parts_ndim == 1].ravel()
         if len(body_geometries_1d) > 0:
             self.__add_gravity_model_part(gravity_load, 1, body_geometries_1d)
 
-        body_geometries_2d = model_parts_geometry_ids[model_parts_ndim == 2]
+        body_geometries_2d = model_parts_geometry_ids[model_parts_ndim == 2].ravel()
         if len(body_geometries_2d) > 0:
             self.__add_gravity_model_part(gravity_load, 2, body_geometries_1d)
 
-        body_geometries_3d = model_parts_geometry_ids[model_parts_ndim == 3]
+        body_geometries_3d = model_parts_geometry_ids[model_parts_ndim == 3].ravel()
         if len(body_geometries_3d) > 0:
             self.__add_gravity_model_part(gravity_load, 3, body_geometries_1d)
 
+        self.synchronise_geometry()
 
     def validate(self):
         """
