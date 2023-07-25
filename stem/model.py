@@ -2,6 +2,7 @@ from typing import List, Sequence, Dict, Any, Optional, Union
 from enum import Enum
 from dataclasses import dataclass
 
+import numpy as np
 from gmsh_utils import gmsh_IO
 
 from stem.model_part import ModelPart, BodyModelPart
@@ -9,6 +10,7 @@ from stem.soil_material import *
 from stem.structural_material import *
 from stem.geometry import Geometry
 from stem.mesh import Mesh, MeshSettings
+from stem.load import *
 
 
 class Model:
@@ -194,6 +196,68 @@ class Model:
                 if model_part.name in unique_names:
                     raise ValueError("All model parts must have a unique name")
                 unique_names.append(model_part.name)
+
+    def __add_gravity_model_part(self, gravity_load: GravityLoad, ndim: int, geometry_ids: Sequence[int]):
+        """
+        Add a gravity model part to the complete model.
+
+        Args:
+            - gravity_load (GravityLoad): The gravity load object.
+            - ndim (int): The number of dimensions of the on which the gravity load should be applied.
+            - geometry_ids (Sequence[int]): The geometry on which the gravity load should be applied.
+
+        """
+
+        # set new model part name
+        model_part_name = f"gravity_load_{ndim}d"
+
+        # create new gravity physical group and model part
+        self.gmsh_io.add_physical_group(model_part_name, ndim, geometry_ids)
+        model_part = ModelPart(model_part_name)
+
+        model_part.parameters = gravity_load
+
+        # add gravity load to process model parts
+        self.process_model_parts.append(model_part)
+
+    def add_gravity_load(self, gravity_value: float = -9.81, vertical_axis: int = 1):
+        """
+        Add a gravity load to the complete model.
+
+        Args:
+            - gravity_value (float): The gravity value [m/s^2]. (default -9.81)
+            - vertical_axis (int): The vertical axis of the model. x=>0, y=>1, z=>2. (default y, 1)
+
+        """
+
+        # set gravity load at vertical axis
+        gravity_load_values = [0, 0, 0]
+        gravity_load_values[vertical_axis] = gravity_value
+        gravity_load = GravityLoad(value=gravity_load_values, active=[True, True, True])
+
+        # get all body model part names
+        body_model_part_names = [body_model_part.name for body_model_part in self.body_model_parts]
+
+        # get geometry ids and ndim for each body model part
+        model_parts_geometry_ids = np.array([self.gmsh_io.geo_data["physical_groups"][name]["geometry_ids"] for name in
+                                    body_model_part_names])
+
+        model_parts_ndim = np.array([self.gmsh_io.geo_data["physical_groups"][name]["ndim"]
+                                     for name in body_model_part_names])
+
+        # add gravity load as physical group per dimension
+        body_geometries_1d = model_parts_geometry_ids[model_parts_ndim == 1]
+        if len(body_geometries_1d) > 0:
+            self.__add_gravity_model_part(gravity_load, 1, body_geometries_1d)
+
+        body_geometries_2d = model_parts_geometry_ids[model_parts_ndim == 2]
+        if len(body_geometries_2d) > 0:
+            self.__add_gravity_model_part(gravity_load, 2, body_geometries_1d)
+
+        body_geometries_3d = model_parts_geometry_ids[model_parts_ndim == 3]
+        if len(body_geometries_3d) > 0:
+            self.__add_gravity_model_part(gravity_load, 3, body_geometries_1d)
+
 
     def validate(self):
         """
