@@ -1052,6 +1052,9 @@ class TestModel:
         Test if a gravity load is added correctly to the model in a 2d space containing 1d and 2d elements. A gravity
         load is generated and added to the model.
 
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
         """
 
         # create model
@@ -1159,8 +1162,15 @@ class TestModel:
         npt.assert_allclose(model.process_model_parts[0].parameters.value, [-12, 0, 0])
         npt.assert_allclose(model.process_model_parts[0].parameters.active, [True, True, True])
 
-
     def test_add_gravity_load_3d(self, create_default_3d_soil_material):
+        """
+        Test if a gravity load is added correctly to the model in a 3d space. A gravity load is generated and added to
+        the model.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
 
         # create model
         model = Model(3)
