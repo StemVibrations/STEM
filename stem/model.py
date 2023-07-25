@@ -252,11 +252,11 @@ class Model:
 
         body_geometries_2d = model_parts_geometry_ids[model_parts_ndim == 2].ravel()
         if len(body_geometries_2d) > 0:
-            self.__add_gravity_model_part(gravity_load, 2, body_geometries_1d)
+            self.__add_gravity_model_part(gravity_load, 2, body_geometries_2d)
 
         body_geometries_3d = model_parts_geometry_ids[model_parts_ndim == 3].ravel()
         if len(body_geometries_3d) > 0:
-            self.__add_gravity_model_part(gravity_load, 3, body_geometries_1d)
+            self.__add_gravity_model_part(gravity_load, 3, body_geometries_3d)
 
         self.synchronise_geometry()
 
