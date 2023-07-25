@@ -1080,7 +1080,7 @@ class TestModel:
         model.body_model_parts.append(body_model_part)
 
         # add gravity load
-        model.add_gravity_load()
+        model._Model__add_gravity_load()
 
         assert len(model.process_model_parts) == 2
         assert model.process_model_parts[0].name == "gravity_load_1d"
@@ -1146,7 +1146,7 @@ class TestModel:
         model.synchronise_geometry()
 
         # add gravity load
-        model.add_gravity_load(-12,0)
+        model._Model__add_gravity_load(-12,0)
 
         assert len(model.process_model_parts) == 1
 
@@ -1182,7 +1182,7 @@ class TestModel:
         model.synchronise_geometry()
 
         # add gravity load
-        model.add_gravity_load(vertical_axis=2, gravity_value=-10)
+        model._Model__add_gravity_load(vertical_axis=2, gravity_value=-10)
 
         assert len(model.process_model_parts) == 1
 
