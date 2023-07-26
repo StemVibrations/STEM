@@ -5,7 +5,7 @@ import numpy as np
 
 def is_collinear(point:Sequence[float], start_point:Sequence[float], end_point:Sequence[float]):
     """
-    Check if point is aligned with the other two on a line. Points must have the same dimension (2D or 3D)
+    Check if a point is aligned with the two points of a line. Points must have the same dimension (2D or 3D)
 
     Args:
         - point (Sequence[float]): point coordinates to be tested
