@@ -53,7 +53,7 @@ class TestModel:
     @pytest.fixture
     def expected_geometry_single_layer_3D(self):
         """
-        Sets expected geometry data for a 2D geometry group. The group is a geometry of a square.
+        Sets expected geometry data for a 3D geometry group. The group is a geometry of a cube.
 
         Returns:
             - :class:`stem.geometry.Geometry`: geometry of a 3D cube
