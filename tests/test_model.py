@@ -7,6 +7,7 @@ import numpy.testing as npt
 from stem.model import *
 from stem.geometry import *
 from stem.solver import *
+from stem.boundary import *
 
 
 class TestModel:
@@ -1047,6 +1048,128 @@ class TestModel:
         model.process_model_parts = [model_part1]
 
         pytest.raises(ValueError, model.validate)
+
+    def test_add_boundary_condition_by_geometry_ids(self,create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if a boundary condition is added correctly to the model. A boundary condition is added to the model by
+        specifying the geometry ids to which the boundary condition should be applied.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+
+
+        # create a 3D model
+        model = Model(3)
+        model.extrusion_length = [0, 0, 1]
+
+        # create multiple boundary condition parameters
+        no_rotation_parameters = RotationConstraint(active=[True, True, True], is_fixed=[True, True, True],
+                                                    value=[0, 0, 0])
+
+        absorbing_parameters = AbsorbingBoundary(absorbing_factors=[1,1], virtual_thickness=0)
+
+        no_displacement_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True],
+                                                            value=[0, 0, 0])
+
+        # add body model part
+        soil_material = create_default_3d_soil_material
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "test_soil")
+
+
+        # add boundary conditions in 0d, 1d and 2d
+        model.add_boundary_condition_by_geometry_ids(0, [1, 2], no_rotation_parameters, "no_rotation")
+        model.add_boundary_condition_by_geometry_ids(1, [8], absorbing_parameters, "absorbing")
+        model.add_boundary_condition_by_geometry_ids(2, [1, 2], no_displacement_parameters, "no_displacement")
+
+        model.synchronise_geometry()
+
+        # set expected parameters of the boundary conditions
+        expected_0d_model_part_parameters = RotationConstraint(active=[True, True, True], is_fixed=[True, True, True],
+                                                               value=[0, 0, 0])
+
+        expected_1d_model_part_parameters = AbsorbingBoundary(absorbing_factors=[1, 1], virtual_thickness=0)
+
+        expected_2d_model_part_parameters = DisplacementConstraint(active=[True, True, True],
+                                                                   is_fixed=[True, True, True], value=[0, 0, 0])
+
+        # set expected geometry 0d boundary condition
+        expected_boundary_points = [Point.create([0, 0, 0], 1), Point.create([1, 0, 0], 2)]
+        expected_boundary_lines = [Line.create([1, 2], 1)]
+        expected_boundary_surfaces = []
+        expected_boundary_volumes = []
+
+        expected_boundary_geometry_0d = Geometry(expected_boundary_points, expected_boundary_lines,
+                                                 expected_boundary_surfaces, expected_boundary_volumes)
+
+        # set expected geometry 1d boundary condition
+        expected_boundary_points = [Point.create([1, 1, 0], 3), Point.create([1, 1, 1], 7)]
+        expected_boundary_lines = [Line.create([3, 7], 8)]
+        expected_boundary_surfaces = []
+        expected_boundary_volumes = []
+
+        expected_boundary_geometry_1d = Geometry(expected_boundary_points, expected_boundary_lines,
+                                                 expected_boundary_surfaces, expected_boundary_volumes)
+
+        # set expected geometry 2d boundary condition
+        expected_boundary_points = [Point.create([0, 0, 0], 1), Point.create([1, 0, 0], 2), Point.create([1, 1, 0], 3),
+                                    Point.create([0, 1, 0], 4), Point.create([0, 0, 1], 5), Point.create([1, 0, 1], 6)]
+
+        expected_boundary_lines = [Line.create([1, 2], 1), Line.create([2, 3], 2), Line.create([3, 4], 3),
+                                   Line.create([4, 1], 4), Line.create([1, 5], 5), Line.create([5, 6], 7),
+                                   Line.create([2, 6], 6)]
+
+        expected_boundary_surfaces = [Surface.create([1, 2, 3, 4], 1), Surface.create([5, 7, -6, -1], 2)]
+
+        expected_boundary_volumes = []
+
+        expected_boundary_geometry_2d = Geometry(expected_boundary_points, expected_boundary_lines,
+                                                 expected_boundary_surfaces, expected_boundary_volumes)
+
+
+        # collect all expected geometries
+        all_expected_geometries = [expected_boundary_geometry_0d, expected_boundary_geometry_1d,
+                                      expected_boundary_geometry_2d]
+
+        # check 0d parameters
+        npt.assert_allclose(model.process_model_parts[0].parameters.active, expected_0d_model_part_parameters.active)
+        npt.assert_allclose(model.process_model_parts[0].parameters.is_fixed, expected_0d_model_part_parameters.is_fixed)
+        npt.assert_allclose(model.process_model_parts[0].parameters.value, expected_0d_model_part_parameters.value)
+
+        # check 1d parameters
+        npt.assert_allclose(model.process_model_parts[1].parameters.absorbing_factors,
+                            expected_1d_model_part_parameters.absorbing_factors)
+        npt.assert_allclose(model.process_model_parts[1].parameters.virtual_thickness,
+                            expected_1d_model_part_parameters.virtual_thickness)
+
+        # check 2d parameters
+        npt.assert_allclose(model.process_model_parts[2].parameters.active, expected_2d_model_part_parameters.active)
+        npt.assert_allclose(model.process_model_parts[2].parameters.is_fixed, expected_2d_model_part_parameters.is_fixed)
+        npt.assert_allclose(model.process_model_parts[2].parameters.value, expected_2d_model_part_parameters.value)
+
+        for expected_geometry, model_part in zip(all_expected_geometries, model.process_model_parts):
+
+            # check if points are added correctly
+            for generated_point, expected_point in zip(model_part.geometry.points, expected_geometry.points):
+                assert generated_point.id == expected_point.id
+                assert pytest.approx(generated_point.coordinates) == expected_point.coordinates
+
+            # check if lines are added correctly
+            for generated_line, expected_line in zip(model_part.geometry.lines, expected_geometry.lines):
+                assert generated_line.id == expected_line.id
+                assert generated_line.point_ids == expected_line.point_ids
+
+            # check if surfaces are added correctly
+            for generated_surface, expected_surface in zip(model_part.geometry.surfaces, expected_geometry.surfaces):
+                assert generated_surface.id == expected_surface.id
+                assert generated_surface.line_ids == expected_surface.line_ids
+
+            # check if volumes are added correctly
+            for generated_volume, expected_volume in zip(model_part.geometry.volumes, expected_geometry.volumes):
+                assert generated_volume.id == expected_volume.id
+                assert generated_volume.surface_ids == expected_volume.surface_ids
+
 
     def test_add_gravity_load_1d_and_2d(self, create_default_2d_soil_material: SoilMaterial):
         """
