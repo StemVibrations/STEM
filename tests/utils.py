@@ -55,8 +55,6 @@ class TestUtils:
         """
         # check if points are added correctly
         for generated_point, expected_point in zip(actual_geometry.points, expected_geometry.points):
-            if generated_point.id != expected_point.id:
-                a=1+1
             assert generated_point.id == expected_point.id
             assert pytest.approx(generated_point.coordinates) == expected_point.coordinates
 
