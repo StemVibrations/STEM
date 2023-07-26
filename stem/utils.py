@@ -28,9 +28,9 @@ def is_point_between_points(point:Sequence[float], start_point:Sequence[float], 
     Check if point is between the other two. Points must have the same dimension (2D or 3D).
 
     Args:
-        point (Sequence[float]): point to be tested
-        start_point (Sequence[float]): first extreme on the line
-        end_point (Sequence[float]): second extreme on the line
+        - point (Sequence[float]): point coordinates to be tested
+        - start_point (Sequence[float]): first extreme coordinates of the line
+        - end_point (Sequence[float]): second extreme coordinates of the line
 
     Returns:
         bool: whether the point is between the other two or not
