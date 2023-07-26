@@ -256,7 +256,7 @@ class TestModel:
     @pytest.fixture
     def expected_geometry_line_load(self):
         """
-        Sets expected geometry data for a 2D geometry group. The group is a geometry of a square.
+        Sets expected geometry data for a 1D geometry group. The group is a geometry of a multi-line.
 
         Returns:
             - :class:`stem.geometry.Geometry`: geometry of a 2D square
