@@ -1,0 +1,61 @@
+{
+    "properties": [
+        {
+            "model_part_name": "PorousDomain.default_elastic_rail_46E3_3D",
+            "properties_id": 1,
+            "Material": {
+                "constitutive_law": {
+                    "name": "KratosMultiphysics.StructuralMechanicsApplication.BeamConstitutiveLaw"
+                },
+                "Variables": {
+                    "YOUNG_MODULUS": 2.1e11,
+                    "POISSON_RATIO": 0.3,
+                    "DENSITY": 7850,
+                    "CROSS_AREA":0.005944,
+                    "I33":1.606e-05,
+                    "I22": 3.075e-06,
+                    "TORSIONAL_INERTIA": 1.9135e-05
+                }
+            },
+            "Tables": {}
+        },
+        {
+            "model_part_name": "PorousDomain.default_elastic_rail_54E1_3D",
+            "properties_id": 2,
+            "Material": {
+                "constitutive_law": {
+                    "name": "KratosMultiphysics.StructuralMechanicsApplication.BeamConstitutiveLaw"
+                },
+                "Variables": {
+                    "YOUNG_MODULUS": 2.1e11,
+                    "POISSON_RATIO": 0.3,
+                    "DENSITY": 7850,
+                    "CROSS_AREA":0.006977,
+                    "I33": 2.3372e-05,
+                    "I22": 2.787e-06,
+                    "TORSIONAL_INERTIA": 2.616E-05
+                }
+            },
+            "Tables": {}
+        },
+        {
+            "model_part_name": "PorousDomain.default_elastic_rail_60E1_3D",
+            "properties_id": 3,
+            "Material": {
+                "constitutive_law": {
+                    "name": "KratosMultiphysics.StructuralMechanicsApplication.BeamConstitutiveLaw"
+                },
+                "Variables": {
+                    "YOUNG_MODULUS": 2.1e11,
+                    "POISSON_RATIO": 0.3,
+                    "DENSITY": 7850,
+                    "CROSS_AREA":0.00767,
+                    "I33": 3.038e-05,
+                    "I22": 5.123e-06,
+                    "TORSIONAL_INERTIA": 3.550e-05
+                }
+            },
+            "Tables": {}
+        }
+    ]
+}

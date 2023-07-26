@@ -1,0 +1,44 @@
+{
+    "processes": {
+        "constraints_process_list": [
+            {
+                "python_module": "apply_vector_constraint_table_process",
+                "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+                "process_name": "ApplyVectorConstraintTableProcess",
+                "Parameters": {
+                    "model_part_name": "PorousDomain.test_displacement_constraint",
+                    "variable_name": "DISPLACEMENT",
+                    "active": [true, true, false],
+                    "is_fixed": [true, true, false],
+                    "value": [0.0, 0.0, 0.0],
+                    "table": [0, 0, 0]
+                }
+            },
+            {
+                "python_module": "apply_vector_constraint_table_process",
+                "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+                "process_name": "ApplyVectorConstraintTableProcess",
+                "Parameters": {
+                    "model_part_name": "PorousDomain.test_rotation_constraint",
+                    "variable_name": "ROTATION",
+                    "active": [false, false, true],
+                    "is_fixed": [false, false, true],
+                    "value": [0.0, 0.0, 0.0],
+                    "table": [0, 0, 0]
+                }
+            }
+        ],
+        "loads_process_list": [
+            {
+                "python_module": "set_absorbing_boundary_parameters_process",
+                "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+                "process_name": "SetAbsorbingBoundaryParametersProcess",
+                "Parameters": {
+                    "model_part_name": "PorousDomain.test_absorbing_boundaries",
+                    "absorbing_factors": [1.0, 1.0],
+                    "virtual_thickness": 1000.0
+                }
+            }
+        ]
+    }
+}
