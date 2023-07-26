@@ -924,7 +924,7 @@ class TestModel:
 
         # create model
         model = Model(ndim)
-        # add soil layer
+        # add line load
         model.add_load_by_coordinates(point_coordinates, load_parameters, "line_load_1")
 
         # check if layer is added correctly
