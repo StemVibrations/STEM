@@ -33,7 +33,7 @@ def is_point_between_points(point:Sequence[float], start_point:Sequence[float], 
         - end_point (Sequence[float]): second extreme coordinates of the line
 
     Returns:
-        bool: whether the point is between the other two or not
+        - bool: whether the point is between the other two or not
     """
 
     # Calculate vectors between the points
