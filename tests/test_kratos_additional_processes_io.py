@@ -7,7 +7,7 @@ from stem.additional_processes import *
 from tests.utils import TestUtils
 
 
-class KratosAdditionalProcessesIO:
+class TestKratosAdditionalProcessesIO:
 
     def test_create_additional_processes_dictionaries(self):
         """

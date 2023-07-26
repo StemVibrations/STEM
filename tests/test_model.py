@@ -360,13 +360,12 @@ class TestModel:
         """
         # define soil material
         return MovingLoad(
-            origin=[5.0, 0.0, 0.0],
+            origin=[3.5, -0.5, 0.0],
             load=[0.0, -10.0, 0.0],
             velocity=5.0,
             offset=3.0,
             direction=[1, 1, 1]
         )
-
 
     @pytest.fixture
     def expected_geometry_two_layers_3D_extruded(self):
@@ -938,19 +937,22 @@ class TestModel:
 
         TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
-    def test_add_moving_point_load(self, create_default_moving_load_parameters: MovingLoad):
+    def test_add_moving_point_load(self, expected_geometry_line_load: Geometry,
+                                   create_default_moving_load_parameters: MovingLoad):
         """
         Test if a single soil point load is added correctly to the model. Two points are generated
         and a single load is created and added to the model.
 
         Args:
+            - expected_geometry_line_load (:class:`stem.geometry.Geometry`): expected geometry of the model
             - create_default_moving_load_parameters (:class:`stem.load.MovingLoad`): default moving load parameters
 
         """
 
         ndim = 3
 
-        point_coordinates = [(0.0, 0, 0), (10, 0, 0)]
+        point_coordinates = [(0, 0, 0), (3, 0, 0), (4, -1, 0), (10, -1, 0)]
+        # origin is in (3.5, -0.5, 0) thus in the trajectory
 
         # define soil material
         load_parameters = create_default_moving_load_parameters
@@ -967,14 +969,53 @@ class TestModel:
 
         # check if geometry is added correctly
         generated_geometry = model.process_model_parts[0].geometry
-        expected_geometry = Geometry(
-            points=[Point.create([0.0, 0, 0], 1), Point.create([10.0, 0, 0], 2)],
-            lines=[Line.create([1, 2], 1)],
-            surfaces=[],
-            volumes=[]
-        )
+        expected_geometry = expected_geometry_line_load
 
         TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
+
+    def test_validation_coordinates(self):
+        """
+        Test that validation raises and error if the points are not correctly specified.
+        """
+
+        ndim = 3
+        model = Model(ndim=ndim)
+
+        # test for incorrect number of coordinates
+        with pytest.raises(ValueError, match=f"Coordinate should be either 2D or 3D but 4 was given."):
+            model.validate_coordinates([(0.0, 0, 0, 4.0)])
+
+        # test for incorrect type (Sequence of float instead of Sequence[Sequence[float]])
+        with pytest.raises(ValueError, match=f"Coordinate in coordinates  is not a sequence!\n:0.0."):
+            model.validate_coordinates([0.0])
+
+        # test for incorrect type (Sequence of float instead of Sequence[Sequence[float]])
+        with pytest.raises(ValueError, match=f"oordinates are not a sequence!\n:0.0."):
+            model.validate_coordinates(0.0)
+
+    def test_validation_moving_load(self, create_default_moving_load_parameters:MovingLoad):
+        """
+        Test validation of moving load when points is not collinear to the trajectory.
+
+        Args:
+            - create_default_moving_load_parameters (:class:`stem.load.MovingLoad`): default moving load parameters
+
+        """
+
+        ndim = 3
+
+        point_coordinates = [(0.0, 0, 0), (1, 0, 0), (2, 0, 0), (4, 0, 0)]
+        # origin is in (1.5, 0.5, 0) thus not in the trajectory
+
+        # define soil material
+        load_parameters = create_default_moving_load_parameters
+        # create model
+        model = Model(ndim)
+
+        with pytest.raises(ValueError, match="Origin is not in the trajectory of the moving load."):
+            model.add_load_by_coordinates(
+                point_coordinates, load_parameters, "moving_load_1"
+            )
 
     def test_generate_mesh_with_only_a_body_model_part_2d(self, create_default_2d_soil_material: SoilMaterial):
         """

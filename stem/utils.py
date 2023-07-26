@@ -1,9 +1,31 @@
-from typing import Sequence
+import collections
+from typing import Sequence, List
 
 import numpy as np
 
 
-def is_collinear(point:Sequence[float], start_point:Sequence[float], end_point:Sequence[float]):
+def check_dimensions(points:Sequence[Sequence[float]]):
+    """
+
+    Check if points have the same dimensions (2D or 3D).
+
+    Args:
+        - points: (Sequence[Sequence[float]]): points to be tested
+
+    Raises:
+        - ValueError: when the points have different dimensions.
+        - ValueError: when the dimension is not either 2 or 3D.
+
+    """
+    lengths = [len(point) for point in points]
+    if len(np.unique(lengths)) != 1:
+        raise ValueError("Mismatch in dimension of given points!")
+
+    if any([ll not in [2,3] for ll in lengths]):
+        raise ValueError("Dimension of the points should be 2D or 3D.")
+
+
+def is_collinear(point:Sequence[float], start_point:Sequence[float], end_point:Sequence[float], a_tol:float=1e-06):
     """
     Check if point is aligned with the other two on a line. Points must have the same dimension (2D or 3D)
 
@@ -11,16 +33,24 @@ def is_collinear(point:Sequence[float], start_point:Sequence[float], end_point:S
         point (Sequence[float]): point to be tested
         start_point (Sequence[float]): first point on the line
         end_point (Sequence[float]): second point on the line
+        a_tol (Sequence[float]): absolute tolerance to check collinearity
 
     Returns:
         bool: whether the point is aligned or not
+    Returns:
+        ValueError: when there is a dimension mismatch in the point dimensions.
     """
+
+    # check dimensions of points for validation
+    check_dimensions([point, start_point, end_point])
 
     vec_1 = np.asarray(point) - np.asarray(start_point)
     vec_2 = np.asarray(end_point) - np.asarray(start_point)
 
+    # cross product of the two vector
     cross_product = np.cross(vec_1, vec_2)
-    return np.sum(np.abs(cross_product)) < 1e-06
+    # It should be smaller than tolerance for points to be aligned
+    return np.sum(np.abs(cross_product)) < a_tol
 
 
 def is_point_between_points(point:Sequence[float], start_point:Sequence[float], end_point:Sequence[float]):
@@ -45,3 +75,18 @@ def is_point_between_points(point:Sequence[float], start_point:Sequence[float], 
 
     # Check if the scalar projection is between 0 and 1 (inclusive)
     return 0 <= scalar_projection <= 1
+
+
+def is_non_string_sequence(obj:object):
+    """
+    Check if object is a sequence but not a string
+
+    Args:
+        obj (object): object to be tested
+    Returns:
+        bool: whether the object is a sequence but not a string
+    """
+
+    if isinstance(obj, str):
+        return False
+    return isinstance(obj, collections.abc.Sequence)

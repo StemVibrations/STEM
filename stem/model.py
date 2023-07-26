@@ -11,7 +11,7 @@ from stem.structural_material import *
 from stem.load import *
 from stem.geometry import Geometry
 from stem.mesh import Mesh, MeshSettings
-from stem.utils import is_point_between_points, is_collinear
+from stem.utils import is_point_between_points, is_collinear, is_non_string_sequence
 
 
 class Model:
@@ -110,6 +110,8 @@ class Model:
                 :class:`stem.structural_material.StructuralMaterial`]): The material parameters of the soil layer.
             - name (str): The name of the soil layer.
 
+        Raises:
+            - ValueError: if extrusion_length is not specified.
         """
 
         gmsh_input = {name: {"coordinates": coordinates, "ndim": self.ndim}}
@@ -142,13 +144,19 @@ class Model:
             - load_parameters (:class:`stem.load.LoadParametersABC`): The parameters of the load.
             - name (str): The name of the load part.
 
+        Raises:
+            - ValueError: if load_parameters is not of one of the classes PointLoad, MovingLoad, LineLoad
+                          or SurfaceLoad.
         """
 
-        self.__validate_coordinates(coordinates)
+        # validation of inputs
+        self.validate_coordinates(coordinates)
+        if isinstance(load_parameters, MovingLoad):
+            self.__validate_moving_load_parameters(coordinates, load_parameters)
 
         if isinstance(load_parameters, PointLoad):
             gmsh_input = {name: {"coordinates": coordinates, "ndim": 0}}
-        elif isinstance(load_parameters, get_args(Union[LineLoad, MovingLoad])):
+        elif isinstance(load_parameters, LineLoad) or isinstance(load_parameters, MovingLoad):
             gmsh_input = {name: {"coordinates": coordinates, "ndim": 1}}
         elif isinstance(load_parameters, SurfaceLoad):
             gmsh_input = {name: {"coordinates": coordinates, "ndim": 2}}
@@ -160,9 +168,6 @@ class Model:
 
         self.gmsh_io.generate_geometry(gmsh_input, "")
 
-        if isinstance(load_parameters, MovingLoad):
-            self.__validate_moving_load_parameters(coordinates, load_parameters)
-
         # create model part
         model_part = ModelPart(name)
         model_part.parameters = load_parameters
@@ -173,26 +178,30 @@ class Model:
         self.process_model_parts.append(model_part)
 
     @staticmethod
-    def __validate_coordinates(coordinates: Sequence[Sequence[float]]):
+    def validate_coordinates(coordinates: Sequence[Sequence[float]]):
         """
         Validates the coordinates in input.
 
         Args:
             - coordinates (Sequence[Sequence[float]]): The coordinates of the load.
 
+        Raises:
+            - ValueError: if coordinates is not a sequence
+            - ValueError: if each element (point) in coordinates is not a sequence
+            - ValueError: if the number of elements (number of coordinates) is not 2 or 3.
         """
 
         # check if coordinates is a sequence
-        if not isinstance(coordinates, collections.abc.Sequence):
+        if not is_non_string_sequence(coordinates):
             raise ValueError(f"Coordinates are not a sequence!\n:{coordinates}.")
 
         # check if coordinates is a sequence
         for coordinate in coordinates:
-            if not isinstance(coordinate, collections.abc.Sequence):
+            if not is_non_string_sequence(coordinate):
                 raise ValueError(f"Coordinate in coordinates  is not a sequence!\n:{coordinate}.")
 
             if len(coordinate) > 3 or len(coordinate) < 1:
-                raise ValueError(f"Coordinate should be either 2D or 3D but {len(coordinate)} was given")
+                raise ValueError(f"Coordinate should be either 2D or 3D but {len(coordinate)} was given.")
 
     @staticmethod
     def __validate_moving_load_parameters(coordinates: Sequence[Sequence[float]], load_parameters: MovingLoad):
@@ -204,22 +213,29 @@ class Model:
             - coordinates (Sequence[Sequence[float]]): The start-end coordinate of the moving load.
             - parameters (:class:`stem.load.LoadParametersABC`): The parameters of the load.
 
+        Raises:
+            - ValueError: if moving load origin is not on trajectory
         """
 
-        # check if coordinates is a sequence
-        if len(coordinates) != 2:
-            raise ValueError(f"For moving loads, start and ending points have to be specified, but the given "
-                             f"coordinates are:\n :{coordinates}.")
+        _checks = []
 
-        if not is_collinear(
-                point=load_parameters.origin, start_point=coordinates[0], end_point=coordinates[1]
-        ):
-            raise ValueError(f"Origin of the moving load and given points of the trajectory are not aligned!")
+        # iterate over each line constituting the trajectory
+        for ix in range(len(coordinates)-1):
 
-        if not is_point_between_points(
-                point=load_parameters.origin, start_point=coordinates[0], end_point=coordinates[1]
-        ):
-            raise ValueError(f"Point not in between given two points.")
+            # check origin is collinear to the edges of the line
+            collinear_check = is_collinear(
+                point=load_parameters.origin, start_point=coordinates[ix],end_point=coordinates[ix+1]
+            )
+            # check origin is between the edges of the line (edges included)
+            is_between_check = is_point_between_points(
+                point=load_parameters.origin, start_point=coordinates[ix], end_point=coordinates[ix+1]
+            )
+            # check if point complies
+            _checks.append(collinear_check and is_between_check)
+
+        # if point doesn't comply to at least one line, it raises an error
+        if not any(_checks):
+            raise ValueError(f"Origin is not in the trajectory of the moving load.")
 
     def synchronise_geometry(self):
         """
