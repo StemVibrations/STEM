@@ -1,5 +1,8 @@
 from typing import Optional, Union, Dict, Any
 
+from stem.additional_processes import AdditionalProcessesParametersABC
+from stem.boundary import BoundaryParametersABC
+from stem.load import LoadParametersABC
 from stem.soil_material import SoilMaterial
 from stem.structural_material import StructuralMaterial
 
@@ -16,7 +19,10 @@ class ModelPart:
         - __name (str): name of the model part
         - geometry (Optional[:class:`stem.geometry.Geometry`]): geometry of the model part
         - mesh (Optional[:class:`stem.mesh.Mesh`]): mesh of the model part
-        - parameters (Dict[Any,Any]): dictionary containing the model part parameters
+        - parameters (Optional[Union[:class:`stem.load.LoadParametersABC`, \
+            :class:`stem.boundary.BoundaryParametersABC, \
+            :class:`stem.additional_processes.AdditionalProcessesParametersABC`]]): process parameters containing the \
+            model part parameters.
     """
     def __init__(self, name: str):
         """
@@ -28,7 +34,9 @@ class ModelPart:
         self.__name: str = name
         self.geometry: Optional[Geometry] = None
         self.mesh: Optional[Mesh] = None
-        self.parameters: Dict[Any, Any] = {} # todo define type
+        self.parameters: Optional[
+            Union[LoadParametersABC, BoundaryParametersABC, AdditionalProcessesParametersABC]
+        ] = None
 
     @property
     def name(self):

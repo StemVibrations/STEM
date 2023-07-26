@@ -7,6 +7,7 @@ from gmsh_utils import gmsh_IO
 from stem.model_part import ModelPart, BodyModelPart
 from stem.soil_material import *
 from stem.structural_material import *
+from stem.boundary import *
 from stem.geometry import Geometry
 from stem.mesh import Mesh, MeshSettings
 
@@ -128,6 +129,33 @@ class Model:
         body_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
 
         self.body_model_parts.append(body_model_part)
+
+    def add_boundary_condition_by_geometry_ids(self, ndim_boundary: int, geometry_ids: Sequence[int],
+                                               boundary_parameters: BoundaryParametersABC, name: str):
+        """
+        Add a boundary condition to the model by giving the geometry ids of the boundary condition.
+
+        Args:
+            - ndim_boundary (int): dimension of the boundary condition
+            - geometry_ids (Sequence[int]): geometry ids of the boundary condition
+            - boundary_condition (:class:`stem.boundary_condition.BoundaryCondition`): boundary condition object
+            - name (str): name of the boundary condition
+
+        """
+
+        # add physical group to gmsh
+        self.gmsh_io.add_physical_group(name, ndim_boundary, geometry_ids)
+
+        # create model part
+        model_part = ModelPart(name)
+
+        # retrieve geometry from gmsh and add to model part
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
+
+        # add boundary parameters to model part
+        model_part.parameters = boundary_parameters
+
+        self.process_model_parts.append(model_part)
 
     def synchronise_geometry(self):
         """
