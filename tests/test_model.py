@@ -527,7 +527,7 @@ class TestModel:
         Initializer to close gmsh if it was not closed before. In case a test fails, the destroyer method is not called
         on the Model object and gmsh keeps on running. Therefore, nodes, lines, surfaces and volumes ids are not
         reset to one. This causes also the next test after the failed one to fail as well, which has nothing to do
-        the test themselves.
+        the test itself.
 
         Returns:
             - None
