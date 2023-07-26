@@ -6,6 +6,7 @@ import numpy.testing as npt
 
 from stem.model import *
 from stem.geometry import *
+from stem.solver import *
 from stem.boundary import *
 
 
@@ -1152,7 +1153,7 @@ class TestModel:
             # check if points are added correctly
             for generated_point, expected_point in zip(model_part.geometry.points, expected_geometry.points):
                 assert generated_point.id == expected_point.id
-                assert pytest.approx(generated_point.coordinates) == expected_point.coordinates
+                npt.assert_allclose(generated_point.coordinates, expected_point.coordinates)
 
             # check if lines are added correctly
             for generated_line, expected_line in zip(model_part.geometry.lines, expected_geometry.lines):
@@ -1168,3 +1169,246 @@ class TestModel:
             for generated_volume, expected_volume in zip(model_part.geometry.volumes, expected_geometry.volumes):
                 assert generated_volume.id == expected_volume.id
                 assert generated_volume.surface_ids == expected_volume.surface_ids
+
+
+    def test_add_gravity_load_1d_and_2d(self, create_default_2d_soil_material: SoilMaterial):
+        """
+        Test if a gravity load is added correctly to the model in a 2d space containing 1d and 2d elements. A gravity
+        load is generated and added to the model.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+
+        # create model
+        model = Model(2)
+
+        # add a 2d layer
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0)], create_default_2d_soil_material, "soil1")
+
+        # add a 1d layer
+        layer_settings = {"beam": {"ndim": 1,
+                                   "element_size": -1,
+                                   "coordinates": [[0, 0, 0], [1, 0, 0]]}}
+
+        model.gmsh_io.generate_geometry(layer_settings, "")
+        model.synchronise_geometry()
+
+        # add 1d model part to model
+        body_model_part = BodyModelPart("beam")
+        body_model_part.material = EulerBeam(ndim=2, YOUNG_MODULUS=1e6, POISSON_RATIO=0.3, DENSITY=1, CROSS_AREA=1,
+                                             I33=1)
+        body_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, "beam")
+
+        model.body_model_parts.append(body_model_part)
+
+        # add gravity load
+        model._Model__add_gravity_load()
+
+        assert len(model.process_model_parts) == 2
+        assert model.process_model_parts[0].name == "gravity_load_1d"
+        assert model.process_model_parts[1].name == "gravity_load_2d"
+
+        # setup expected geometries for 1d and 2d
+        expected_geometry_points_1d = [Point.create([0, 0, 0],1), Point.create([1, 0, 0], 2)]
+        expected_geometry_lines_1d = [Line.create([1, 2], 1)]
+        expected_geometry_gravity_1d = Geometry(expected_geometry_points_1d, expected_geometry_lines_1d, [], [])
+
+        expected_geometry_points_2d = [Point.create([0, 0, 0], 1), Point.create([1, 0, 0], 2),
+                                       Point.create([1, 1, 0], 3)]
+        expected_geometry_lines_2d = [Line.create([1, 2], 1), Line.create([2, 3], 2), Line.create([3, 1], 3)]
+        expected_geometry_surfaces_2d = [Surface.create([1, 2, 3], 1)]
+        expected_geometry_gravity_2d = Geometry(expected_geometry_points_2d, expected_geometry_lines_2d,
+                                                expected_geometry_surfaces_2d, [])
+
+        expected_geometries = [expected_geometry_gravity_1d, expected_geometry_gravity_2d]
+
+        # check if all process model parts are correct
+        for model_part in model.process_model_parts:
+
+            # check if parameters are added correctly
+            npt.assert_allclose(model_part.parameters.value, [0, -9.81, 0])
+            npt.assert_allclose(model_part.parameters.active, [True, True, True])
+
+            # check if geometry is added correctly
+            generated_model_part = model_part.geometry
+
+            # check if points are added correctly
+            for generated_point, expected_point in zip(generated_model_part.points, expected_geometries[0].points):
+                assert generated_point.id == expected_point.id
+                npt.assert_allclose(generated_point.coordinates,expected_point.coordinates)
+
+            # check if lines are added correctly
+            for generated_line, expected_line in zip(generated_model_part.lines, expected_geometries[0].lines):
+                assert generated_line.id == expected_line.id
+                assert generated_line.point_ids == expected_line.point_ids
+
+            # check if surfaces are added correctly
+            for generated_surface, expected_surface in zip(generated_model_part.surfaces,
+                                                           expected_geometries[0].surfaces):
+                assert generated_surface.id == expected_surface.id
+                assert generated_surface.line_ids == expected_surface.line_ids
+
+    def test_add_gravity_load_two_layers_same_dimension(self, create_default_2d_soil_material: SoilMaterial):
+        """
+        Test if a gravity load is added correctly to the model in a 2d space containing 2 layers. A gravity load is
+        generated and added to the model.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+
+        # create model
+        model = Model(2)
+
+        # add a 2d layer
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0)], create_default_2d_soil_material, "soil1")
+        model.add_soil_layer_by_coordinates([(1, 0, 0), (0, 0, 0), (1, -1, 0)], create_default_2d_soil_material, "soil2")
+
+        model.synchronise_geometry()
+
+        # add gravity load
+        model._Model__add_gravity_load(-12,0)
+
+        assert len(model.process_model_parts) == 1
+
+        generated_geometry = model.process_model_parts[0].geometry
+
+        # check if number of points, lines, surfaces are correct, i.e. if the number of points, lines, surfaces are the
+        # same as the number of points, lines, surfaces of the model geometry
+        assert len(generated_geometry.points) == len(model.geometry.points) == 4
+        assert len(generated_geometry.lines) == len(model.geometry.lines) == 5
+        assert len(generated_geometry.surfaces) == len(model.geometry.surfaces) == 2
+
+        assert model.process_model_parts[0].name == "gravity_load_2d"
+        npt.assert_allclose(model.process_model_parts[0].parameters.value, [-12, 0, 0])
+        npt.assert_allclose(model.process_model_parts[0].parameters.active, [True, True, True])
+
+    def test_add_gravity_load_3d(self, create_default_3d_soil_material):
+        """
+        Test if a gravity load is added correctly to the model in a 3d space. A gravity load is generated and added to
+        the model.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+
+        # create model
+        model = Model(3)
+        model.extrusion_length = [0, 0, 1]
+
+        # add a 2d layer
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0)], create_default_3d_soil_material, "soil1")
+
+        model.synchronise_geometry()
+
+        # add gravity load
+        model._Model__add_gravity_load(vertical_axis=2, gravity_value=-10)
+
+        assert len(model.process_model_parts) == 1
+
+        generated_geometry = model.process_model_parts[0].geometry
+
+        # check if number of points, lines, surfaces are correct, i.e. if the number of points, lines, surfaces and
+        # volumes are the same as the number of points, lines, surfaces and volumes of the model geometry
+        assert len(generated_geometry.points) == len(model.geometry.points) == 6
+        assert len(generated_geometry.lines) == len(model.geometry.lines) == 9
+        assert len(generated_geometry.surfaces) == len(model.geometry.surfaces) == 5
+        assert len(generated_geometry.volumes) == len(model.geometry.volumes) == 1
+
+        assert model.process_model_parts[0].name == "gravity_load_3d"
+        npt.assert_allclose(model.process_model_parts[0].parameters.value, [0, 0, -10])
+        npt.assert_allclose(model.process_model_parts[0].parameters.active, [True, True, True])
+
+    def test_setup_stress_initialisation(self, create_default_2d_soil_material: SoilMaterial):
+        """
+        Test if the stress initialisation is set up correctly. A model is created with a soil layer. It is checked if
+        gravity is added in case the K0 procedure or gravity loading is used.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+
+        # set up solver settings
+        analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
+
+        solution_type = SolutionType.QUASI_STATIC
+
+        time_integration = TimeIntegration(start_time=0.0, end_time=1.0, delta_time=0.1, reduction_factor=0.5,
+                                           increase_factor=2.0, max_delta_time_factor=500)
+
+        convergence_criterion = DisplacementConvergenceCriteria()
+
+        stress_initialisation_type = StressInitialisationType.NONE
+
+        solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
+                                         stress_initialisation_type=stress_initialisation_type,
+                                         time_integration=time_integration,
+                                         is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
+                                         convergence_criteria=convergence_criterion)
+
+        # set up problem data
+        problem_data = Problem(problem_name="test", number_of_threads=2, settings=solver_settings)
+
+        model_no_gravity = Model(2)
+        model_no_gravity.project_parameters = problem_data
+
+        # set up soil material
+        soil_material = create_default_2d_soil_material
+        model_no_gravity.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0)], soil_material, "soil1")
+        model_no_gravity.synchronise_geometry()
+
+        # setup_stress_initialisation
+        model_no_gravity._Model__setup_stress_initialisation()
+
+        model_k0 = Model(2)
+        model_k0.project_parameters = problem_data
+
+        model_k0.project_parameters.settings.stress_initialisation_type = StressInitialisationType.K0_PROCEDURE
+        model_k0.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0)], soil_material, "soil1")
+        model_k0.synchronise_geometry()
+
+        # setup_stress_initialisation
+        model_k0._Model__setup_stress_initialisation()
+
+        model_gravity_loading = Model(2)
+        model_gravity_loading.project_parameters = problem_data
+
+        model_gravity_loading.project_parameters.settings.stress_initialisation_type = \
+            StressInitialisationType.GRAVITY_LOADING
+        model_gravity_loading.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0)], soil_material, "soil1")
+        model_gravity_loading.synchronise_geometry()
+
+        # setup_stress_initialisation
+        model_gravity_loading._Model__setup_stress_initialisation()
+
+        assert len(model_no_gravity.process_model_parts) == 0
+        assert len(model_k0.process_model_parts) == 1
+        assert len(model_gravity_loading.process_model_parts) == 1
+
+        assert model_k0.process_model_parts[0].name == "gravity_load_2d"
+        assert model_gravity_loading.process_model_parts[0].name == "gravity_load_2d"
+
+    def test_setup_stress_initialisation_without_project_parameters(self):
+        """
+        A model is created without project parameters. It is
+        checked if a ValueError is raised while setting up the stress initialisation.
+
+        """
+        # create model
+        model = Model(2)
+
+        # test if value error is raised
+        with pytest.raises(ValueError,
+                           match=r"Project parameters must be set before setting up the stress initialisation"):
+            model._Model__setup_stress_initialisation()
+
+
+
+    @pytest.mark.skip("Not implemented yet")
+    def test_post_setup(self):
+        pass

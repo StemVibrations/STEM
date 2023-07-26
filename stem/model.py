@@ -2,6 +2,7 @@ from typing import List, Sequence, Dict, Any, Optional, Union
 from enum import Enum
 from dataclasses import dataclass
 
+import numpy as np
 from gmsh_utils import gmsh_IO
 
 from stem.model_part import ModelPart, BodyModelPart
@@ -10,6 +11,8 @@ from stem.structural_material import *
 from stem.boundary import *
 from stem.geometry import Geometry
 from stem.mesh import Mesh, MeshSettings
+from stem.load import *
+from stem.solver import Problem, StressInitialisationType
 
 
 class Model:
@@ -28,7 +31,7 @@ class Model:
     """
     def __init__(self, ndim: int):
         self.ndim: int = ndim
-        self.project_parameters = None
+        self.project_parameters: Optional[Problem] = None
         self.solver = None
         self.geometry: Optional[Geometry] = None
         self.mesh_settings: MeshSettings = MeshSettings()
@@ -223,6 +226,69 @@ class Model:
                     raise ValueError("All model parts must have a unique name")
                 unique_names.append(model_part.name)
 
+    def __add_gravity_model_part(self, gravity_load: GravityLoad, ndim: int, geometry_ids: Sequence[int]):
+        """
+        Add a gravity model part to the complete model.
+
+        Args:
+            - gravity_load (GravityLoad): The gravity load object.
+            - ndim (int): The number of dimensions of the on which the gravity load should be applied.
+            - geometry_ids (Sequence[int]): The geometry on which the gravity load should be applied.
+
+        """
+
+        # set new model part name
+        model_part_name = f"gravity_load_{ndim}d"
+
+        # create new gravity physical group and model part
+        self.gmsh_io.add_physical_group(model_part_name, ndim, geometry_ids)
+        model_part = ModelPart(model_part_name)
+
+        model_part.parameters = gravity_load
+
+        # add gravity load to process model parts
+        self.process_model_parts.append(model_part)
+
+    def __add_gravity_load(self, gravity_value: float = -9.81, vertical_axis: int = 1):
+        """
+        Add a gravity load to the complete model.
+
+        Args:
+            - gravity_value (float): The gravity value [m/s^2]. (default -9.81)
+            - vertical_axis (int): The vertical axis of the model. x=>0, y=>1, z=>2. (default y, 1)
+
+        """
+
+        # set gravity load at vertical axis
+        gravity_load_values: List[float] = [0, 0, 0]
+        gravity_load_values[vertical_axis] = gravity_value
+        gravity_load = GravityLoad(value=gravity_load_values, active=[True, True, True])
+
+        # get all body model part names
+        body_model_part_names = [body_model_part.name for body_model_part in self.body_model_parts]
+
+        # get geometry ids and ndim for each body model part
+        model_parts_geometry_ids = np.array([self.gmsh_io.geo_data["physical_groups"][name]["geometry_ids"] for name in
+                                    body_model_part_names])
+
+        model_parts_ndim = np.array([self.gmsh_io.geo_data["physical_groups"][name]["ndim"]
+                                     for name in body_model_part_names]).ravel()
+
+        # add gravity load as physical group per dimension
+        body_geometries_1d = model_parts_geometry_ids[model_parts_ndim == 1].ravel()
+        if len(body_geometries_1d) > 0:
+            self.__add_gravity_model_part(gravity_load, 1, body_geometries_1d)
+
+        body_geometries_2d = model_parts_geometry_ids[model_parts_ndim == 2].ravel()
+        if len(body_geometries_2d) > 0:
+            self.__add_gravity_model_part(gravity_load, 2, body_geometries_2d)
+
+        body_geometries_3d = model_parts_geometry_ids[model_parts_ndim == 3].ravel()
+        if len(body_geometries_3d) > 0:
+            self.__add_gravity_model_part(gravity_load, 3, body_geometries_3d)
+
+        self.synchronise_geometry()
+
     def validate(self):
         """
         Validate the model. \
@@ -231,5 +297,42 @@ class Model:
         """
 
         self.__validate_model_part_names()
+
+    def __setup_stress_initialisation(self):
+        """
+        Set up the stress initialisation. For K0 procedure and gravity loading, a gravity load is added to the model.
+
+        Raises:
+            - ValueError: If the project parameters are not set.
+
+        """
+
+        if self.project_parameters is None:
+            raise ValueError("Project parameters must be set before setting up the stress initialisation")
+
+        # add gravity load if K0 procedure or gravity loading is used
+        if (self.project_parameters.settings.stress_initialisation_type ==
+            StressInitialisationType.K0_PROCEDURE) or \
+                (self.project_parameters.settings.stress_initialisation_type ==
+                 StressInitialisationType.GRAVITY_LOADING):
+
+            self.__add_gravity_load()
+
+    def post_setup(self):
+        """
+        Post setup of the model. \
+            - Synchronise the geometry. \
+            - Generate the mesh. \
+            - Validate the model. \
+            - Set up the stress initialisation.
+
+        """
+
+        self.synchronise_geometry()
+        self.generate_mesh()
+        self.validate()
+
+        self.__setup_stress_initialisation()
+
 
 
