@@ -13,7 +13,7 @@ def is_collinear(point:Sequence[float], start_point:Sequence[float], end_point:S
         - end_point (Sequence[float]): coordinates of second point of a line
 
     Returns:
-        bool: whether the point is aligned or not
+        - bool: whether the point is aligned or not
     """
 
     vec_1 = np.asarray(point) - np.asarray(start_point)
