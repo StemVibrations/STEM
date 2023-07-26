@@ -56,7 +56,7 @@ class TestModel:
         Sets expected geometry data for a 2D geometry group. The group is a geometry of a square.
 
         Returns:
-            - :class:`stem.geometry.Geometry`: geometry of a 2D square
+            - :class:`stem.geometry.Geometry`: geometry of a 3D cube
         """
 
         geometry = Geometry()
