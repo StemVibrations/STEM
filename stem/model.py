@@ -139,7 +139,7 @@ class Model:
 
         Args:
             - coordinates (Sequence[Sequence[float]]): The coordinates of the load.
-            - parameters (:class:`stem.load.LoadParametersABC`): The parameters of the load.
+            - load_parameters (:class:`stem.load.LoadParametersABC`): The parameters of the load.
             - name (str): The name of the load part.
 
         """
