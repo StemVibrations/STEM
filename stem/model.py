@@ -155,7 +155,7 @@ class Model:
         else:
             # TODO: deal with Gravity loads
             raise ValueError(f'Invalid load_parameters ({load_parameters.__class__.__name__}) object'
-                             f' provided for the load {name}.Expected one of PointLoad, MovingLoad,'
+                             f' provided for the load {name}. Expected one of PointLoad, MovingLoad,'
                              f' LineLoad or SurfaceLoad.')
 
         self.gmsh_io.generate_geometry(gmsh_input, "")
