@@ -30,13 +30,13 @@ def is_collinear(point:Sequence[float], start_point:Sequence[float], end_point:S
     Check if point is aligned with the other two on a line. Points must have the same dimension (2D or 3D)
 
     Args:
-        point (Sequence[float]): point to be tested
-        start_point (Sequence[float]): first point on the line
-        end_point (Sequence[float]): second point on the line
-        a_tol (Sequence[float]): absolute tolerance to check collinearity
+        - point (Sequence[float]): point coordinates to be tested
+        - start_point (Sequence[float]): coordinates of first point of a line
+        - end_point (Sequence[float]): coordinates of second point of a line
+        - a_tol (Sequence[float]): absolute tolerance to check collinearity
 
     Returns:
-        bool: whether the point is aligned or not
+        - bool: whether the point is aligned or not
     Returns:
         ValueError: when there is a dimension mismatch in the point dimensions.
     """
@@ -58,12 +58,12 @@ def is_point_between_points(point:Sequence[float], start_point:Sequence[float], 
     Check if point is between the other two. Points must have the same dimension (2D or 3D).
 
     Args:
-        point (Sequence[float]): point to be tested
-        start_point (Sequence[float]): first extreme on the line
-        end_point (Sequence[float]): second extreme on the line
+        - point (Sequence[float]): point coordinates to be tested
+        - start_point (Sequence[float]): first extreme coordinates of the line
+        - end_point (Sequence[float]): second extreme coordinates of the line
 
     Returns:
-        bool: whether the point is between the other two or not
+        - bool: whether the point is between the other two or not
     """
 
     # Calculate vectors between the points

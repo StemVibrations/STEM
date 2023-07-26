@@ -53,10 +53,10 @@ class TestModel:
     @pytest.fixture
     def expected_geometry_single_layer_3D(self):
         """
-        Sets expected geometry data for a 2D geometry group. The group is a geometry of a square.
+        Sets expected geometry data for a 3D geometry group. The group is a geometry of a cube.
 
         Returns:
-            - :class:`stem.geometry.Geometry`: geometry of a 2D square
+            - :class:`stem.geometry.Geometry`: geometry of a 3D cube
         """
 
         geometry = Geometry()
@@ -256,10 +256,10 @@ class TestModel:
     @pytest.fixture
     def expected_geometry_line_load(self):
         """
-        Sets expected geometry data for a 2D geometry group. The group is a geometry of a square.
+        Sets expected geometry data for a 1D geometry group. The group is a geometry of a multi-line.
 
         Returns:
-            - :class:`stem.geometry.Geometry`: geometry of a 2D square
+            - :class:`stem.geometry.Geometry`: geometry of a 1D multi-line
         """
 
         geometry = Geometry()
@@ -526,7 +526,7 @@ class TestModel:
         Initializer to close gmsh if it was not closed before. In case a test fails, the destroyer method is not called
         on the Model object and gmsh keeps on running. Therefore, nodes, lines, surfaces and volumes ids are not
         reset to one. This causes also the next test after the failed one to fail as well, which has nothing to do
-        the test themselves.
+        the test itself.
 
         Returns:
             - None
@@ -883,7 +883,7 @@ class TestModel:
 
         # create model
         model = Model(ndim)
-        # add soil layer
+        # add point load
         model.add_load_by_coordinates(point_coordinates, load_parameters, "point_load_1")
 
         # check if layer is added correctly
