@@ -8,9 +8,9 @@ def is_collinear(point:Sequence[float], start_point:Sequence[float], end_point:S
     Check if point is aligned with the other two on a line. Points must have the same dimension (2D or 3D)
 
     Args:
-        point (Sequence[float]): point to be tested
-        start_point (Sequence[float]): first point on the line
-        end_point (Sequence[float]): second point on the line
+        - point (Sequence[float]): point coordinates to be tested
+        - start_point (Sequence[float]): coordinates of first point of a line
+        - end_point (Sequence[float]): coordinates of second point of a line
 
     Returns:
         bool: whether the point is aligned or not
