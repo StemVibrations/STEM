@@ -22,7 +22,7 @@ class ModelPart:
         - mesh (Optional[:class:`stem.mesh.Mesh`]): mesh of the model part
         - parameters (Optional[Union[:class:`stem.load.LoadParametersABC`, \
             :class:`stem.boundary.BoundaryParametersABC, \
-            :class:`stem.additional_processes.AdditionalProcessesParametersABC`]]): process parameters containing the
+            :class:`stem.additional_processes.AdditionalProcessesParametersABC`]]): process parameters containing the \
             model part parameters.
     """
     def __init__(self, name: str):
