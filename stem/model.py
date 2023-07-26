@@ -35,7 +35,6 @@ class Model:
         self.gmsh_io = gmsh_IO.GmshIO()
         self.body_model_parts: List[BodyModelPart] = []
         self.process_model_parts: List[ModelPart] = []
-        self.geometry = Geometry()
 
 
     def generate_track(self, sleeper_distance: float, n_sleepers: int):
@@ -356,7 +355,7 @@ class Model:
 
 
 if __name__ == '__main__':
-    model = Model()
+    model = Model(2)
 
     rail_nodes = model.generate_track(0.6, 10)
 
