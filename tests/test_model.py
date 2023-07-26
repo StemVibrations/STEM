@@ -259,7 +259,7 @@ class TestModel:
         Sets expected geometry data for a 1D geometry group. The group is a geometry of a multi-line.
 
         Returns:
-            - :class:`stem.geometry.Geometry`: geometry of a 2D square
+            - :class:`stem.geometry.Geometry`: geometry of a 1D multi-line
         """
 
         geometry = Geometry()
