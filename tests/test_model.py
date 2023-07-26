@@ -1270,6 +1270,22 @@ class TestModel:
         assert model_k0.process_model_parts[0].name == "gravity_load_2d"
         assert model_gravity_loading.process_model_parts[0].name == "gravity_load_2d"
 
+    def test_setup_stress_initialisation_without_project_parameters(self):
+        """
+        A model is created without project parameters. It is
+        checked if a ValueError is raised while setting up the stress initialisation.
+
+        """
+        # create model
+        model = Model(2)
+
+        # test if value error is raised
+        with pytest.raises(ValueError,
+                           match=r"Project parameters must be set before setting up the stress initialisation"):
+            model._Model__setup_stress_initialisation()
+
+
+
     @pytest.mark.skip("Not implemented yet")
     def test_post_setup(self):
         pass

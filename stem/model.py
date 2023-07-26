@@ -232,7 +232,7 @@ class Model:
         """
 
         # set gravity load at vertical axis
-        gravity_load_values = [0, 0, 0]
+        gravity_load_values: List[float] = [0, 0, 0]
         gravity_load_values[vertical_axis] = gravity_value
         gravity_load = GravityLoad(value=gravity_load_values, active=[True, True, True])
 
@@ -274,7 +274,13 @@ class Model:
         """
         Set up the stress initialisation. For K0 procedure and gravity loading, a gravity load is added to the model.
 
+        Raises:
+            - ValueError: If the project parameters are not set.
+
         """
+
+        if self.project_parameters is None:
+            raise ValueError("Project parameters must be set before setting up the stress initialisation")
 
         # add gravity load if K0 procedure or gravity loading is used
         if (self.project_parameters.settings.stress_initialisation_type ==
