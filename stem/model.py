@@ -1,9 +1,10 @@
 from enum import Enum
 from dataclasses import dataclass
-import collections
 from typing import List, Sequence, Dict, Any, Optional, Union, get_args
 
 import numpy as np
+import numpy.typing as npty
+
 from gmsh_utils import gmsh_IO
 
 from stem.model_part import ModelPart, BodyModelPart
@@ -182,7 +183,7 @@ class Model:
         self.process_model_parts.append(model_part)
 
     @staticmethod
-    def validate_coordinates(coordinates: Sequence[Sequence[float]]):
+    def validate_coordinates(coordinates: Union[Sequence[Sequence[float]], npty.NDArray[np.float64]]):
         """
         Validates the coordinates in input.
 
@@ -190,22 +191,20 @@ class Model:
             - coordinates (Sequence[Sequence[float]]): The coordinates of the load.
 
         Raises:
-            - ValueError: if coordinates is not a sequence
-            - ValueError: if each element (point) in coordinates is not a sequence
+            - ValueError: if coordinates is not convertible to a 2D array (i.e. a sequence of sequences)
             - ValueError: if the number of elements (number of coordinates) is not 3.
         """
 
-        # check if coordinates is a sequence
-        if not is_non_string_sequence(coordinates):
-            raise ValueError(f"Coordinates are not a sequence!\n:{coordinates}.")
+        # if is not an array, make it array!
 
-        # check if coordinates is a sequence
-        for coordinate in coordinates:
-            if not is_non_string_sequence(coordinate):
-                raise ValueError(f"Coordinate in coordinates  is not a sequence!\n:{coordinate}.")
+        if not isinstance(coordinates, np.ndarray):
+            coordinates = np.array(coordinates)
 
-            if len(coordinate) != 3:
-                raise ValueError(f"Coordinates should be 3D but {len(coordinate)} coordinates were given.")
+        if len(coordinates.shape) != 2:
+            raise ValueError(f"Coordinates are not a sequence of a sequence or a 2D array.")
+
+        if coordinates.shape[1] != 3:
+            raise ValueError(f"Coordinates should be 3D but {coordinates.shape[1]} coordinates were given.")
 
     @staticmethod
     def __validate_moving_load_parameters(coordinates: Sequence[Sequence[float]], load_parameters: MovingLoad):

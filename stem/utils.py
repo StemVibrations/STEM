@@ -1,4 +1,3 @@
-import collections
 from typing import Sequence, List
 
 import numpy as np
@@ -15,8 +14,8 @@ def check_dimensions(points:Sequence[Sequence[float]]):
     Raises:
         - ValueError: when the points have different dimensions.
         - ValueError: when the dimension is not either 2 or 3D.
-
     """
+
     lengths = [len(point) for point in points]
     if len(np.unique(lengths)) != 1:
         raise ValueError("Mismatch in dimension of given points!")
@@ -35,11 +34,11 @@ def is_collinear(point:Sequence[float], start_point:Sequence[float], end_point:S
         - end_point (Sequence[float]): coordinates of second point of a line
         - a_tol (Sequence[float]): absolute tolerance to check collinearity
 
-    Returns:
-        - bool: whether the point is aligned or not
-
     Raises:
         - ValueError: when there is a dimension mismatch in the point dimensions.
+
+    Returns:
+        - bool: whether the point is aligned or not
     """
 
     # check dimensions of points for validation
@@ -63,11 +62,11 @@ def is_point_between_points(point:Sequence[float], start_point:Sequence[float], 
         - start_point (Sequence[float]): first extreme coordinates of the line
         - end_point (Sequence[float]): second extreme coordinates of the line
 
-    Returns:
-        - bool: whether the point is between the other two or not
-
     Raises:
         - ValueError: when there is a dimension mismatch in the point dimensions.
+
+    Returns:
+        - bool: whether the point is between the other two or not
     """
 
     # check dimensions of points for validation
@@ -97,4 +96,4 @@ def is_non_string_sequence(obj:object):
 
     if isinstance(obj, str):
         return False
-    return isinstance(obj, collections.abc.Sequence)
+    return isinstance(obj, Sequence)

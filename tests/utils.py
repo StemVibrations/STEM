@@ -61,14 +61,14 @@ class TestUtils:
         # check if lines are added correctly
         for generated_line, expected_line in zip(actual_geometry.lines, expected_geometry.lines):
             assert generated_line.id == expected_line.id
-            assert generated_line.point_ids == expected_line.point_ids
+            npt.assert_equal(generated_line.point_ids, expected_line.point_ids)
 
         # check if surfaces are added correctly
         for generated_surface, expected_surface in zip(actual_geometry.surfaces, expected_geometry.surfaces):
             assert generated_surface.id == expected_surface.id
-            assert generated_surface.line_ids == expected_surface.line_ids
+            npt.assert_equal(generated_surface.line_ids, expected_surface.line_ids)
 
         # check if volumes are added correctly
         for generated_volume, expected_volume in zip(actual_geometry.volumes, expected_geometry.volumes):
             assert generated_volume.id == expected_volume.id
-            assert generated_volume.surface_ids == expected_volume.surface_ids
+            npt.assert_equal(generated_volume.surface_ids, expected_volume.surface_ids)

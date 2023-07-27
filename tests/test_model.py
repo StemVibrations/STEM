@@ -992,17 +992,26 @@ class TestModel:
         ndim = 3
         model = Model(ndim=ndim)
 
+        # test inputs for numpy arrays:
+        # test for 2D-array, correct number of coordinates (shape 3,2)
+        model.validate_coordinates(np.zeros((2,3)))
+
+        # test for incorrect number of coordinates in array (shape 3,2)
+        with pytest.raises(ValueError, match=f"Coordinates should be 3D but 2 coordinates were given."):
+            model.validate_coordinates(np.zeros((3,2)))
+
+        # test for incorrect number of dimension in array (1-D array)
+        with pytest.raises(ValueError, match=f"Coordinates are not a sequence of a sequence or a 2D array."):
+            model.validate_coordinates(np.arange(3))
+
+        # test inputs for sequence of floats:
         # test for incorrect number of coordinates
         with pytest.raises(ValueError, match=f"Coordinates should be 3D but 4 coordinates were given."):
-            model.validate_coordinates([(0.0, 0, 0, 4.0)])
+            model.validate_coordinates([(0.0, 0.0, 0.0, 4.0)])
 
         # test for incorrect type (Sequence of float instead of Sequence[Sequence[float]])
-        with pytest.raises(ValueError, match=f"Coordinate in coordinates  is not a sequence!\n:0.0."):
-            model.validate_coordinates([0.0])
-
-        # test for incorrect type (Sequence of float instead of Sequence[Sequence[float]])
-        with pytest.raises(ValueError, match=f"Coordinates are not a sequence!\n:0.0."):
-            model.validate_coordinates(0.0)
+        with pytest.raises(ValueError, match="Coordinates are not a sequence of a sequence or a 2D array."):
+            model.validate_coordinates([0.0, 0.0, 0.0])
 
     def test_validation_moving_load(self, create_default_moving_load_parameters:MovingLoad):
         """
