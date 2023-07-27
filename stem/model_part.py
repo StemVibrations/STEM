@@ -18,11 +18,11 @@ class ModelPart:
     Attributes:
         - __name (str): name of the model part
         - geometry (Optional[:class:`stem.geometry.Geometry`]): geometry of the model part
-        - mesh (Optional[:class:`stem.mesh.Mesh`]): mesh of the model part
         - parameters (Optional[Union[:class:`stem.load.LoadParametersABC`, \
             :class:`stem.boundary.BoundaryParametersABC, \
             :class:`stem.additional_processes.AdditionalProcessesParametersABC`]]): process parameters containing the \
             model part parameters.
+        - mesh (Optional[:class:`stem.mesh.Mesh`]): mesh of the model part
     """
     def __init__(self, name: str):
         """
@@ -33,10 +33,10 @@ class ModelPart:
         """
         self.__name: str = name
         self.geometry: Optional[Geometry] = None
-        self.mesh: Optional[Mesh] = None
         self.parameters: Optional[
-            Union[LoadParametersABC, BoundaryParametersABC, AdditionalProcessesParametersABC]
+            Union[LoadParametersABC, BoundaryParametersABC,AdditionalProcessesParametersABC]
         ] = None
+        self.mesh: Optional[Mesh] = None
 
     @property
     def name(self):
