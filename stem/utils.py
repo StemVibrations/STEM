@@ -32,7 +32,7 @@ def is_collinear(point:Sequence[float], start_point:Sequence[float], end_point:S
         - point (Sequence[float]): point coordinates to be tested
         - start_point (Sequence[float]): coordinates of first point of a line
         - end_point (Sequence[float]): coordinates of second point of a line
-        - a_tol (Sequence[float]): absolute tolerance to check collinearity
+        - a_tol (float): absolute tolerance to check collinearity (default 1e-6)
 
     Raises:
         - ValueError: when there is a dimension mismatch in the point dimensions.
