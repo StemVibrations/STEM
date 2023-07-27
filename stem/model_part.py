@@ -1,6 +1,5 @@
 from typing import Optional, Union, Dict, Any
 
-
 from stem.additional_processes import AdditionalProcessesParametersABC
 from stem.boundary import BoundaryParametersABC
 from stem.load import LoadParametersABC
