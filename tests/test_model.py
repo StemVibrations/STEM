@@ -1342,25 +1342,7 @@ class TestModel:
 
         for expected_geometry, model_part in zip(all_expected_geometries, model.process_model_parts):
 
-            # check if points are added correctly
-            for generated_point, expected_point in zip(model_part.geometry.points, expected_geometry.points):
-                assert generated_point.id == expected_point.id
-                npt.assert_allclose(generated_point.coordinates, expected_point.coordinates)
-
-            # check if lines are added correctly
-            for generated_line, expected_line in zip(model_part.geometry.lines, expected_geometry.lines):
-                assert generated_line.id == expected_line.id
-                assert generated_line.point_ids == expected_line.point_ids
-
-            # check if surfaces are added correctly
-            for generated_surface, expected_surface in zip(model_part.geometry.surfaces, expected_geometry.surfaces):
-                assert generated_surface.id == expected_surface.id
-                assert generated_surface.line_ids == expected_surface.line_ids
-
-            # check if volumes are added correctly
-            for generated_volume, expected_volume in zip(model_part.geometry.volumes, expected_geometry.volumes):
-                assert generated_volume.id == expected_volume.id
-                assert generated_volume.surface_ids == expected_volume.surface_ids
+            TestUtils.assert_almost_equal_geometries(expected_geometry, model_part.geometry)
 
 
     def test_add_gravity_load_1d_and_2d(self, create_default_2d_soil_material: SoilMaterial):
@@ -1426,21 +1408,7 @@ class TestModel:
             # check if geometry is added correctly
             generated_model_part = model_part.geometry
 
-            # check if points are added correctly
-            for generated_point, expected_point in zip(generated_model_part.points, expected_geometries[0].points):
-                assert generated_point.id == expected_point.id
-                npt.assert_allclose(generated_point.coordinates,expected_point.coordinates)
-
-            # check if lines are added correctly
-            for generated_line, expected_line in zip(generated_model_part.lines, expected_geometries[0].lines):
-                assert generated_line.id == expected_line.id
-                assert generated_line.point_ids == expected_line.point_ids
-
-            # check if surfaces are added correctly
-            for generated_surface, expected_surface in zip(generated_model_part.surfaces,
-                                                           expected_geometries[0].surfaces):
-                assert generated_surface.id == expected_surface.id
-                assert generated_surface.line_ids == expected_surface.line_ids
+            TestUtils.assert_almost_equal_geometries(expected_geometries[0], generated_model_part)
 
     def test_add_gravity_load_two_layers_same_dimension(self, create_default_2d_soil_material: SoilMaterial):
         """
@@ -1598,8 +1566,6 @@ class TestModel:
         with pytest.raises(ValueError,
                            match=r"Project parameters must be set before setting up the stress initialisation"):
             model._Model__setup_stress_initialisation()
-
-
 
     @pytest.mark.skip("Not implemented yet")
     def test_post_setup(self):
