@@ -16,7 +16,7 @@ from stem.geometry import Geometry
 from stem.mesh import Mesh, MeshSettings
 from stem.load import *
 from stem.solver import Problem, StressInitialisationType
-from stem.utils import is_point_between_points, is_collinear, is_non_string_sequence
+from stem.utils import is_point_between_points, is_collinear
 
 
 class Model:

@@ -20,7 +20,7 @@ def check_dimensions(points:Sequence[Sequence[float]]):
     if len(np.unique(lengths)) != 1:
         raise ValueError("Mismatch in dimension of given points!")
 
-    if any([ll not in [2,3] for ll in lengths]):
+    if any([ll not in [2, 3] for ll in lengths]):
         raise ValueError("Dimension of the points should be 2D or 3D.")
 
 
@@ -81,19 +81,3 @@ def is_point_between_points(point:Sequence[float], start_point:Sequence[float], 
 
     # Check if the scalar projection is between 0 and 1 (inclusive)
     return 0 <= scalar_projection <= 1
-
-
-def is_non_string_sequence(obj:object):
-    """
-    Check if object is a sequence but not a string
-
-    Args:
-        obj (object): object to be tested
-
-    Returns:
-        bool: whether the object is a sequence but not a string
-    """
-
-    if isinstance(obj, str):
-        return False
-    return isinstance(obj, Sequence)
