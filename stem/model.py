@@ -188,7 +188,7 @@ class Model:
         Raises:
             - ValueError: if coordinates is not a sequence
             - ValueError: if each element (point) in coordinates is not a sequence
-            - ValueError: if the number of elements (number of coordinates) is not 2 or 3.
+            - ValueError: if the number of elements (number of coordinates) is not 3.
         """
 
         # check if coordinates is a sequence
@@ -200,8 +200,8 @@ class Model:
             if not is_non_string_sequence(coordinate):
                 raise ValueError(f"Coordinate in coordinates  is not a sequence!\n:{coordinate}.")
 
-            if len(coordinate) > 3 or len(coordinate) < 1:
-                raise ValueError(f"Coordinate should be either 2D or 3D but {len(coordinate)} was given.")
+            if len(coordinate) != 3:
+                raise ValueError(f"Coordinates should be 3D but {len(coordinate)} coordinates were given.")
 
     @staticmethod
     def __validate_moving_load_parameters(coordinates: Sequence[Sequence[float]], load_parameters: MovingLoad):
@@ -217,8 +217,6 @@ class Model:
             - ValueError: if moving load origin is not on trajectory
         """
 
-        _checks = []
-
         # iterate over each line constituting the trajectory
         for ix in range(len(coordinates)-1):
 
@@ -231,11 +229,13 @@ class Model:
                 point=load_parameters.origin, start_point=coordinates[ix], end_point=coordinates[ix+1]
             )
             # check if point complies
-            _checks.append(collinear_check and is_between_check)
+            is_on_line = collinear_check and is_between_check
+            # exit at the first success of the test (point in the line)
+            if is_on_line:
+                return
 
-        # if point doesn't comply to at least one line, it raises an error
-        if not any(_checks):
-            raise ValueError(f"Origin is not in the trajectory of the moving load.")
+        # none of the lines contain the origin, then raise an error
+        raise ValueError(f"Origin is not in the trajectory of the moving load.")
 
     def synchronise_geometry(self):
         """

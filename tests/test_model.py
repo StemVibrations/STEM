@@ -889,7 +889,10 @@ class TestModel:
         # check if layer is added correctly
         assert len(model.process_model_parts) == 1
         assert model.process_model_parts[0].name == "point_load_1"
-        assert model.process_model_parts[0].parameters == load_parameters
+        TestUtils.assert_dictionary_almost_equal(
+            model.process_model_parts[0].parameters.__dict__,
+            load_parameters.__dict__
+        )
 
         # check if geometry is added correctly
         generated_geometry = model.process_model_parts[0].geometry
@@ -929,8 +932,10 @@ class TestModel:
         # check if layer is added correctly
         assert len(model.process_model_parts) == 1
         assert model.process_model_parts[0].name == "line_load_1"
-        assert model.process_model_parts[0].parameters == load_parameters
-
+        TestUtils.assert_dictionary_almost_equal(
+            model.process_model_parts[0].parameters.__dict__,
+            load_parameters.__dict__
+        )
         # check if geometry is added correctly
         generated_geometry = model.process_model_parts[0].geometry
         expected_geometry = expected_geometry_line_load
@@ -965,7 +970,10 @@ class TestModel:
         # check if layer is added correctly
         assert len(model.process_model_parts) == 1
         assert model.process_model_parts[0].name == "moving_load_1"
-        assert model.process_model_parts[0].parameters == load_parameters
+        TestUtils.assert_dictionary_almost_equal(
+            model.process_model_parts[0].parameters.__dict__,
+            load_parameters.__dict__
+        )
 
         # check if geometry is added correctly
         generated_geometry = model.process_model_parts[0].geometry
@@ -982,7 +990,7 @@ class TestModel:
         model = Model(ndim=ndim)
 
         # test for incorrect number of coordinates
-        with pytest.raises(ValueError, match=f"Coordinate should be either 2D or 3D but 4 was given."):
+        with pytest.raises(ValueError, match=f"Coordinates should be 3D but 4 coordinates were given."):
             model.validate_coordinates([(0.0, 0, 0, 4.0)])
 
         # test for incorrect type (Sequence of float instead of Sequence[Sequence[float]])
@@ -990,7 +998,7 @@ class TestModel:
             model.validate_coordinates([0.0])
 
         # test for incorrect type (Sequence of float instead of Sequence[Sequence[float]])
-        with pytest.raises(ValueError, match=f"oordinates are not a sequence!\n:0.0."):
+        with pytest.raises(ValueError, match=f"Coordinates are not a sequence!\n:0.0."):
             model.validate_coordinates(0.0)
 
     def test_validation_moving_load(self, create_default_moving_load_parameters:MovingLoad):

@@ -37,8 +37,9 @@ def is_collinear(point:Sequence[float], start_point:Sequence[float], end_point:S
 
     Returns:
         - bool: whether the point is aligned or not
-    Returns:
-        ValueError: when there is a dimension mismatch in the point dimensions.
+
+    Raises:
+        - ValueError: when there is a dimension mismatch in the point dimensions.
     """
 
     # check dimensions of points for validation
@@ -64,7 +65,13 @@ def is_point_between_points(point:Sequence[float], start_point:Sequence[float], 
 
     Returns:
         - bool: whether the point is between the other two or not
+
+    Raises:
+        - ValueError: when there is a dimension mismatch in the point dimensions.
     """
+
+    # check dimensions of points for validation
+    check_dimensions([point, start_point, end_point])
 
     # Calculate vectors between the points
     vec_1 = np.asarray(point) - np.asarray(start_point)
@@ -83,6 +90,7 @@ def is_non_string_sequence(obj:object):
 
     Args:
         obj (object): object to be tested
+
     Returns:
         bool: whether the object is a sequence but not a string
     """
