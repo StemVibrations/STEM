@@ -1,23 +1,19 @@
-from typing import Sequence, Optional
+from typing import Sequence, Optional, Dict
 
 import numpy as np
 
 from stem.model_part import ModelPart, BodyModelPart
 
-MAPPER_GMSH_TO_KRATOS_2D = {
-    "TRIANGLE_3N": "UPwSmallStrainElement2D3N"
+MAPPER_GMSH_TO_KRATOS: Dict[int, Dict[str, Dict[str,str]]] = {
+    2: {
+        "element": {"TRIANGLE_3N": "UPwSmallStrainElement2D3N"},
+        "condition": {"LINE_2N": "UPwFaceLoadCondition2D2N"}
+    },
+    3: {
+        "element": {"TRIANGLE_3N": "UPwSmallStrainElement3D3N"},
+        "condition": {}
+    }
 }
-
-MAPPER_GMSH_TO_KRATOS_3D = {
-    "TRIANGLE_3N": "UPwSmallStrainElement2D3N"
-}
-
-
-def map_gmsh_element_to_kratos(gmsh_element: str, ndim: int):
-    if ndim == 2:
-        return MAPPER_GMSH_TO_KRATOS_2D[gmsh_element]
-    elif ndim == 3:
-        return MAPPER_GMSH_TO_KRATOS_3D[gmsh_element]
 
 
 class KratosModelPartIO:
@@ -59,6 +55,7 @@ class KratosModelPartIO:
             raise ValueError(f"Model part {model_part.name} has not been meshed."
                              f"Before creating the mdpa file, the model part needs to be meshed."
                              f"Please run Model.mesh_")
+
     @staticmethod
     def __is_body_model_part(model_part:ModelPart):
         """Check if the model part is a body model part
@@ -71,7 +68,25 @@ class KratosModelPartIO:
         """
         return isinstance(model_part, BodyModelPart)
 
-    def __get_kratos_element_type(self, model_part: ModelPart):
+    def get_kratos_element_type(self, model_part: ModelPart):
+        """Map the gmsh element to the correct element type in Kratos based on the dimension
+        of the problem and whether the part is a body model part or process model part
+
+        Args:
+            - model_part (:class:`stem.model_part.ModelPart`): the model part for which the element
+                mapping is needed.
+
+        Raises:
+            - ValueError: if mesh not initialised first
+
+        Returns:
+            - str: the Kratos corresponding element type.
+        """
+        if model_part.mesh is None:
+            raise ValueError(f"Model part {model_part.name} has not been meshed."
+                             f"Before creating the mdpa file, the model part needs to be meshed."
+                             f"Please run Model.mesh_")
+
         # check unique_elements
         element_part_type = np.unique(
             [element.element_type for element in model_part.mesh.elements]
@@ -80,9 +95,12 @@ class KratosModelPartIO:
         if len(element_part_type) > 1:
             raise ValueError(f"Model part {model_part.name} has more than 1 element type assigned."
                              f"\n{element_part_type}. Error.")
-        element_part_type = element_part_type[0]
+        gmsh_element_type = str(element_part_type[0])
 
-        return map_gmsh_element_to_kratos(element_part_type, self.ndim)
+        # if body model part map to elements, else to condition elements
+        if self.__is_body_model_part(model_part):
+            return MAPPER_GMSH_TO_KRATOS[self.ndim]["element"][gmsh_element_type]
+        return MAPPER_GMSH_TO_KRATOS[self.ndim]["condition"][gmsh_element_type]
 
     def __write_submodel_block(self, buffer:list[str], block_name:str, block_entities: Optional[Sequence[int]]=None):
         """
@@ -92,6 +110,7 @@ class KratosModelPartIO:
             - buffer (List[str]): buffer containing the submodelpart info to be updated with the current block.
             - block_name (str): block name, it can be one of
             - block_entities (Optional[Sequence[int]]): ids to be written to the block. If None, an empty block is written.
+
         Returns:
             - buffer (List[str]): updated buffer with info of the current block.
         """
@@ -110,17 +129,25 @@ class KratosModelPartIO:
         Writes the submodelpart block for a body model part (physical parts with materials).
 
         Args:
-            - body_model_parts (:class:`stem.model_part.BodyModelPart`): the body model part to write to mdpa.
+            - body_model_part (:class:`stem.model_part.BodyModelPart`): the body model part to write to mdpa.
+
+        Raises:
+            - ValueError: if model part is not a body model part
+            - ValueError: if mesh not initialised first
 
         Returns:
-            - block_text
+            - block_text (List[str]): list of strings for the submodelpart. Each element is a line in the mdpa file.
         """
         # validate part is body model part
         if not self.__is_body_model_part(body_model_part):
             raise ValueError(f"Model part {body_model_part.name} is not a body model part!")
 
         # check if mesh is initialised
-        self.__validate_mesh(body_model_part)
+        if body_model_part.mesh is None:
+            raise ValueError(f"Model part {body_model_part.name} has not been meshed."
+                             f"Before creating the mdpa file, the model part needs to be meshed."
+                             f"Please run Model.generate_mesh()")
+
         # initialise block
         block_text = ["", f"Begin SubModelPart {body_model_part.name}"]
         block_text = self.__write_submodel_block(
@@ -147,21 +174,26 @@ class KratosModelPartIO:
         additional processes such as excavations).
 
         Args:
-            - process_model_parts (:class:`stem.model_part.ModelPart`): the process model part to write to mdpa.
+            - process_model_part (:class:`stem.model_part.ModelPart`): the process model part to write to mdpa.
+
+        Raises:
+            - ValueError: if model part is not a process model part
+            - ValueError: if mesh not initialised first
 
         Returns:
-            - block_text
+            - block_text (List[str]): list of strings for the submodelpart. Each element is a line in the mdpa file.
         """
 
         # validate part is process model part
         if self.__is_body_model_part(process_model_part):
             raise ValueError(f"Model part {process_model_part.name} is not a process model part!")
 
-        # check if part is process model part
-        self.__validate_mesh(process_model_part)
-
         # check if mesh is initialised
-        self.__validate_mesh(process_model_part)
+        if process_model_part.mesh is None:
+            raise ValueError(f"Model part {process_model_part.name} has not been meshed."
+                             f"Before creating the mdpa file, the model part needs to be meshed."
+                             f"Please run Model.generate_mesh()")
+
         # initialise block
         block_text = ["", f"Begin SubModelPart {process_model_part.name}"]
         block_text = self.__write_submodel_block(
@@ -185,21 +217,3 @@ class KratosModelPartIO:
 
         block_text += ["", f"Begin SubModelPart", ""]
         return block_text
-
-    def __create_element_block(self, model_part: ModelPart):
-        """
-        Creates a dictionary containing the problem data
-
-        Args:
-            - problem_data (:class:`stem.solver.Problem`): The problem data
-
-        Returns:
-            - Dict[str, Any]: dictionary containing the problem data
-        """
-
-        # check if mesh is initialised
-        self.__validate_mesh(model_part)
-
-
-        return None
-

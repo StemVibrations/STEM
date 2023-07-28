@@ -5,6 +5,9 @@ from stem.load import LineLoad
 from stem.model import Model
 from stem.model_part import *
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
+from gmsh_utils import gmsh_IO
+
+import pytest
 
 from tests.utils import TestUtils
 from stem.IO.kratos_model_part_io import KratosModelPartIO
@@ -12,12 +15,30 @@ from stem.IO.kratos_model_part_io import KratosModelPartIO
 
 class TestKratosModelPartIO:
 
-    def test_create_submodelpart_text(self):
+    @pytest.fixture(autouse=True)
+    def close_gmsh(self):
         """
-        Test the creation of the mdpa text of a model part
+        Initializer to close gmsh if it was not closed before. In case a test fails, the destroyer method is not called
+        on the Model object and gmsh keeps on running. Therefore, nodes, lines, surfaces and volumes ids are not
+        reset to one. This causes also the next test after the failed one to fail as well, which has nothing to do
+        the test itself.
+
+        Returns:
+            - None
+
         """
-        # define coordinates of the soil layer
-        ndim = 2
+        gmsh_IO.GmshIO().finalize_gmsh()
+
+
+    @pytest.fixture
+    def create_default_2d_model_and_mesh(self):
+        """
+        Sets expected geometry data for a 3D geometry group. The group is a geometry of a cube.
+
+        Returns:
+            - :class:`stem.geometry.Geometry`: geometry of a 3D cube
+        """
+        ndim=2
         layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
         load_coordinates = [layer_coordinates[2], layer_coordinates[3]]
         # define soil material
@@ -39,11 +60,24 @@ class TestKratosModelPartIO:
 
         model.set_mesh_size(1)
         model.generate_mesh()
+
+        return model
+
+    def test_create_submodelpart_text(self, create_default_2d_model_and_mesh:Model):
+        """
+        Test the creation of the mdpa text of a model part
+
+        Args:
+            - create_default_2d_model_and_mesh (:class:`stem.model.Model`): the default model to use in testing
+        """
+        # load the default 2D model
+        model = create_default_2d_model_and_mesh
+
         body_model_part_to_write = model.body_model_parts[0]
         process_model_part_to_write = model.process_model_parts[0]
 
         # IO object
-        model_part_io = KratosModelPartIO(ndim=2, domain="PorousDomain")
+        model_part_io = KratosModelPartIO(ndim=model.ndim, domain="PorousDomain")
 
         # generate text block body model part: soil1
         actual_text_body = model_part_io.write_submodelpart_body_model_part(
@@ -69,3 +103,25 @@ class TestKratosModelPartIO:
 
         # assert the objects to be equal
         npt.assert_equal(actual=actual_text_load, desired=expected_text_load)
+
+    def test_mapping_gmsh_to_kratos_element(self, create_default_2d_model_and_mesh:Model):
+        """
+        Test the correct mapping between gmsh and Kratos
+
+        Args:
+            - create_default_2d_model_and_mesh (:class:`stem.model.Model`): the default model to use in testing
+        """
+        # load the default 2D model
+        model = create_default_2d_model_and_mesh
+
+        body_model_part = model.body_model_parts[0]
+        process_model_part = model.process_model_parts[0]
+
+        # IO object
+        model_part_io = KratosModelPartIO(ndim=model.ndim, domain="PorousDomain")
+
+        actual_element_type = model_part_io.get_kratos_element_type(body_model_part)
+        actual_condition_element_type = model_part_io.get_kratos_element_type(process_model_part)
+        npt.assert_equal(actual=actual_element_type, desired="UPwSmallStrainElement2D3N")
+        npt.assert_equal(actual=actual_condition_element_type, desired="UPwFaceLoadCondition2D2N")
+
