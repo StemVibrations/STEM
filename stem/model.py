@@ -290,6 +290,16 @@ class Model:
         # get the complete geometry
         self.__get_geometry_from_geo_data(self.gmsh_io.geo_data)
 
+    def set_mesh_size(self, element_size:float):
+        """Set the element size to dimension (m).
+
+        Args:
+            element_size (float): the desired element size in m.
+
+        """
+        self.mesh_settings.element_size = element_size
+
+
     def generate_mesh(self):
         """
         Generate the mesh for the whole model.
