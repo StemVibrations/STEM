@@ -12,7 +12,7 @@ class Utils:
     @staticmethod
     def are_2d_coordinates_clockwise(coordinates: Sequence[Sequence[float]]):
         """
-        Checks if the 2D coordinates are given in clockwise order. If the sum of the edges is positive, the coordinates
+        Checks if the 2D coordinates are given in clockwise order. If the signed area is positive, the coordinates
         are given in clockwise order.
 
         Args:
@@ -22,13 +22,15 @@ class Utils:
             - bool: True if the coordinates are given in clockwise order, False otherwise.
         """
 
-        sum_edges = 0.0
+        # calculate signed area of polygon
+        signed_area = 0.0
         for i in range(len(coordinates) - 1):
-            sum_edges += (coordinates[i + 1][0] - coordinates[i][0]) * (coordinates[i + 1][1] + coordinates[i][1])
+            signed_area += (coordinates[i + 1][0] - coordinates[i][0]) * (coordinates[i + 1][1] + coordinates[i][1])
 
-        sum_edges += (coordinates[0][0] - coordinates[-1][0]) * (coordinates[0][1] + coordinates[-1][1])
+        signed_area += (coordinates[0][0] - coordinates[-1][0]) * (coordinates[0][1] + coordinates[-1][1])
 
-        return sum_edges > 0.0
+        # if signed area is positive, the coordinates are given in clockwise order
+        return signed_area > 0.0
 
     @staticmethod
     def check_dimensions(points:Sequence[Sequence[float]]):
