@@ -98,6 +98,27 @@ class Model:
             else:
                 self.process_model_parts.append(model_part)
 
+    @staticmethod
+    def is_clockwise(coordinates: Sequence[Sequence[float]]):
+        """
+        Checks if the coordinates are given in clockwise order. If the sum of the edges is positive, the coordinates
+        are given in clockwise order.
+
+        Args:
+            - coordinates (Sequence[Sequence[float]]): The plane coordinates of the soil layer.
+
+        Returns:
+            - bool: True if the coordinates are given in clockwise order, False otherwise.
+        """
+
+        sum_edges = 0
+        for i in range(len(coordinates)-1):
+            sum_edges += (coordinates[i+1][0] - coordinates[i][0]) * (coordinates[i+1][1]+coordinates[i][1])
+
+        sum_edges += (coordinates[0][0] - coordinates[-1][0])*(coordinates[0][1]+coordinates[-1][1])
+
+        return sum_edges > 0
+
     def add_soil_layer_by_coordinates(self, coordinates: Sequence[Sequence[float]],
                        material_parameters: Union[SoilMaterial, StructuralMaterial], name: str,
                        ):
@@ -112,6 +133,10 @@ class Model:
             - name (str): The name of the soil layer.
 
         """
+
+        # sort coordinates in anti-clockwise order
+        if self.is_clockwise(coordinates):
+            coordinates = coordinates[::-1]
 
         gmsh_input = {name: {"coordinates": coordinates, "ndim": self.ndim}}
         # check if extrusion length is specified in 3D
