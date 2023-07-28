@@ -11,12 +11,11 @@ from stem.model_part import ModelPart, BodyModelPart
 from stem.soil_material import *
 from stem.structural_material import *
 from stem.boundary import *
-from stem.load import *
 from stem.geometry import Geometry
 from stem.mesh import Mesh, MeshSettings
 from stem.load import *
 from stem.solver import Problem, StressInitialisationType
-from stem.utils import is_point_between_points, is_collinear
+from stem.utils import Utils
 
 
 class Model:
@@ -119,6 +118,10 @@ class Model:
             - ValueError: if extrusion_length is not specified.
         """
 
+        # sort coordinates in anti-clockwise order, such that elements in mesh are also in anti-clockwise order
+        if Utils.are_2d_coordinates_clockwise(coordinates):
+            coordinates = coordinates[::-1]
+
         gmsh_input = {name: {"coordinates": coordinates, "ndim": self.ndim}}
         # check if extrusion length is specified in 3D
         if self.ndim == 3:
@@ -154,11 +157,14 @@ class Model:
                           or SurfaceLoad.
         """
 
+        # todo add validation that load is applied on a body model part
+
         # validation of inputs
         self.validate_coordinates(coordinates)
         if isinstance(load_parameters, MovingLoad):
             self.__validate_moving_load_parameters(coordinates, load_parameters)
 
+        # create input for gmsh
         if isinstance(load_parameters, PointLoad):
             gmsh_input = {name: {"coordinates": coordinates, "ndim": 0}}
         elif isinstance(load_parameters, LineLoad) or isinstance(load_parameters, MovingLoad):
@@ -166,7 +172,6 @@ class Model:
         elif isinstance(load_parameters, SurfaceLoad):
             gmsh_input = {name: {"coordinates": coordinates, "ndim": 2}}
         else:
-            # TODO: deal with Gravity loads
             raise ValueError(f'Invalid load_parameters ({load_parameters.__class__.__name__}) object'
                              f' provided for the load {name}. Expected one of PointLoad, MovingLoad,'
                              f' LineLoad or SurfaceLoad.')
@@ -224,11 +229,11 @@ class Model:
         for ix in range(len(coordinates)-1):
 
             # check origin is collinear to the edges of the line
-            collinear_check = is_collinear(
+            collinear_check = Utils.is_collinear(
                 point=load_parameters.origin, start_point=coordinates[ix],end_point=coordinates[ix+1]
             )
             # check origin is between the edges of the line (edges included)
-            is_between_check = is_point_between_points(
+            is_between_check = Utils.is_point_between_points(
                 point=load_parameters.origin, start_point=coordinates[ix], end_point=coordinates[ix+1]
             )
             # check if point complies
