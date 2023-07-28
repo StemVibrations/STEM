@@ -118,7 +118,7 @@ class TestGeometry:
 
         assert len(geometry.lines) == len(expected_geo_data_1D["lines"])
         for line_id, line in geometry.lines.items():
-            assert line.id == line.id
+            assert line_id == line.id
             npt.assert_equal(line.point_ids, expected_geo_data_1D["lines"][line.id])
 
     def test_create_2d_geometry_from_gmsh_group(self, expected_geo_data_2D: Dict[str, Any]):
