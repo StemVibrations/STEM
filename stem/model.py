@@ -119,7 +119,7 @@ class Model:
         """
 
         # sort coordinates in anti-clockwise order, such that elements in mesh are also in anti-clockwise order
-        if Utils.is_clockwise(coordinates):
+        if Utils.are_2d_coordinates_clockwise(coordinates):
             coordinates = coordinates[::-1]
 
         gmsh_input = {name: {"coordinates": coordinates, "ndim": self.ndim}}

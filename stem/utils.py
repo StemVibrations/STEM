@@ -10,9 +10,9 @@ class Utils:
     """
 
     @staticmethod
-    def is_clockwise(coordinates: Sequence[Sequence[float]]):
+    def are_2d_coordinates_clockwise(coordinates: Sequence[Sequence[float]]):
         """
-        Checks if the coordinates are given in clockwise order. If the sum of the edges is positive, the coordinates
+        Checks if the 2D coordinates are given in clockwise order. If the sum of the edges is positive, the coordinates
         are given in clockwise order.
 
         Args:
