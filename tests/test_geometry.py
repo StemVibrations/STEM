@@ -146,7 +146,7 @@ class TestGeometry:
 
         assert len(geometry.lines) == len(expected_geo_data_2D["lines"])
         for line_id, line in geometry.lines.items():
-            assert line.id == line.id
+            assert line_id == line.id
             npt.assert_equal(line.point_ids, expected_geo_data_2D["lines"][line.id])
 
         assert len(geometry.surfaces) == len(expected_geo_data_2D["surfaces"])
