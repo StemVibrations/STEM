@@ -118,7 +118,7 @@ class TestGeometry:
 
         assert len(geometry.lines) == len(expected_geo_data_1D["lines"])
         for line_id, line in geometry.lines.items():
-            assert line.id == line.id
+            assert line_id == line.id
             npt.assert_equal(line.point_ids, expected_geo_data_1D["lines"][line.id])
 
     def test_create_2d_geometry_from_gmsh_group(self, expected_geo_data_2D: Dict[str, Any]):
@@ -146,12 +146,12 @@ class TestGeometry:
 
         assert len(geometry.lines) == len(expected_geo_data_2D["lines"])
         for line_id, line in geometry.lines.items():
-            assert line.id == line.id
+            assert line_id == line.id
             npt.assert_equal(line.point_ids, expected_geo_data_2D["lines"][line.id])
 
         assert len(geometry.surfaces) == len(expected_geo_data_2D["surfaces"])
         for surface_id, surface in geometry.surfaces.items():
-            assert surface.id == surface.id
+            assert surface_id == surface.id
             npt.assert_equal(surface.line_ids, expected_geo_data_2D["surfaces"][surface.id])
 
     def test_create_3d_geometry_from_gmsh_group(self, expected_geo_data_3D: Dict[str, Any]):
@@ -179,17 +179,17 @@ class TestGeometry:
 
         assert len(geometry.lines) == len(expected_geo_data_3D["lines"])
         for line_id, line in geometry.lines.items():
-            assert line.id == line.id
+            assert line_id == line.id
             npt.assert_equal(line.point_ids, expected_geo_data_3D["lines"][line.id])
 
         assert len(geometry.surfaces) == len(expected_geo_data_3D["surfaces"])
         for surface_id, surface in geometry.surfaces.items():
-            assert surface.id == surface.id
+            assert surface_id == surface.id
             npt.assert_equal(surface.line_ids, expected_geo_data_3D["surfaces"][surface.id])
 
         assert len(geometry.volumes) == len(expected_geo_data_3D["volumes"])
         for volume_id, volume in geometry.volumes.items():
-            assert volume.id == volume.id
+            assert volume_id == volume.id
             npt.assert_equal(volume.surface_ids, expected_geo_data_3D["volumes"][volume.id])
 
     def test_create_geometry_from_geo_data(self, expected_geo_data_3D: Dict[str, Any]):
@@ -214,15 +214,15 @@ class TestGeometry:
 
         assert len(geometry.lines) == len(expected_geo_data_3D["lines"])
         for line_id, line in geometry.lines.items():
-            assert line.id == line.id
+            assert line_id == line.id
             npt.assert_equal(line.point_ids, expected_geo_data_3D["lines"][line.id])
 
         assert len(geometry.surfaces) == len(expected_geo_data_3D["surfaces"])
         for surface_id, surface in geometry.surfaces.items():
-            assert surface.id == surface.id
+            assert surface_id == surface.id
             npt.assert_equal(surface.line_ids, expected_geo_data_3D["surfaces"][surface.id])
 
         assert len(geometry.volumes) == len(expected_geo_data_3D["volumes"])
         for volume_id, volume in geometry.volumes.items():
-            assert volume.id == volume.id
+            assert volume_id == volume.id
             npt.assert_equal(volume.surface_ids, expected_geo_data_3D["volumes"][volume.id])
