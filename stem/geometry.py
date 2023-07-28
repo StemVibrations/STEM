@@ -266,12 +266,12 @@ class Geometry:
         - surfaces (Optional[List[:class:`Surface`]]): An Iterable of Surface objects representing the surfaces in the geometry.
         - volumes (Optional[List[:class:`Volume`]]): An Iterable of Volume objects representing the volumes in the geometry.
     """
-    def __init__(self, points: Optional[List[Point]] = None, lines: Optional[List[Line]] = None,
-                 surfaces: Optional[List[Surface]] = None, volumes: Optional[List[Volume]] = None):
-        self.points: Optional[List[Point]] = points
-        self.lines: Optional[List[Line]] = lines
-        self.surfaces: Optional[List[Surface]] = surfaces
-        self.volumes: Optional[List[Volume]] = volumes
+    def __init__(self, points: Dict[int, Point] = {}, lines: Dict[int, Line] = {},
+                 surfaces: Dict[int, Surface] = {}, volumes: Dict[int,Volume] = {}):
+        self.points: Dict[int, Point] = points
+        self.lines: Dict[int, Line] = lines
+        self.surfaces: Dict[int, Surface] = surfaces
+        self.volumes: Dict[int, Volume] = volumes
 
     @staticmethod
     def __get_unique_entities_by_ids(entities: Sequence[GeometricalObjectABC]):
@@ -374,26 +374,26 @@ class Geometry:
         """
 
         # initialise geometry lists
-        points = []
-        lines = []
-        surfaces = []
-        volumes = []
+        points = {}
+        lines = {}
+        surfaces = {}
+        volumes = {}
 
         # add volumes to geometry
         for key, value in geo_data["volumes"].items():
-            volumes.append(Volume.create(value,key))
+            volumes[key] = Volume.create(value,key)
 
         # add surfaces to geometry
         for key, value in geo_data["surfaces"].items():
-            surfaces.append(Surface.create(value, key))
+            surfaces[key] = Surface.create(value, key)
 
         # add lines to geometry
         for key, value in geo_data["lines"].items():
-            lines.append(Line.create(value,key))
+            lines[key] = Line.create(value,key)
 
         # add points to geometry
         for key, value in geo_data["points"].items():
-            points.append(Point.create(value,key))
+            points[key] = Point.create(value,key)
 
         # create the geometry class
         return cls(points, lines, surfaces, volumes)
@@ -412,10 +412,10 @@ class Geometry:
         """
 
         # initialize point, line, surface and volume lists
-        points = []
-        lines = []
-        surfaces = []
-        volumes = []
+        points = {}
+        lines = {}
+        surfaces = {}
+        volumes = {}
 
         group_data = geo_data["physical_groups"][group_name]
         ndim_group = group_data["ndim"]
@@ -423,23 +423,27 @@ class Geometry:
         if ndim_group == 0:
             # create points
             for id in group_data["geometry_ids"]:
-                points.append(Geometry.__set_point(geo_data, id))
+                points[id] = Geometry.__set_point(geo_data, id)
         elif ndim_group == 1:
             # create lines and lower dimensional objects
             for id in group_data["geometry_ids"]:
                 line, line_points = Geometry.__set_line(geo_data, id)
 
-                lines.append(line)
-                points.extend(line_points)
+                lines[id] = line
+                for point in line_points:
+                    points[point.id] = point
 
         elif ndim_group == 2:
             # create surfaces and lower dimensional objects
             for id in group_data["geometry_ids"]:
 
                 surface, surface_lines, surface_points = Geometry.__create_surface(geo_data, id)
-                surfaces.append(surface)
-                lines.extend(surface_lines)
-                points.extend(surface_points)
+                surfaces[id] = surface
+                for line in surface_lines:
+                    lines[line.id] = line
+                for point in surface_points:
+                    points[point.id] = point
+
 
         elif ndim_group == 3:
             # Create volumes and lower dimensional objects
@@ -449,15 +453,12 @@ class Geometry:
                 # create surfaces and lower dimensional objects which are part of the current volume
                 for surface_id in volume.surface_ids:
                     surface, surface_lines, surface_points = Geometry.__create_surface(geo_data, surface_id)
-                    surfaces.append(surface)
-                    lines.extend(surface_lines)
-                    points.extend(surface_points)
-                volumes.append(volume)
+                    surfaces[abs(surface_id)] = surface
+                    for line in surface_lines:
+                        lines[line.id] = line
+                    for point in surface_points:
+                        points[point.id] = point
 
-        # remove duplicates from points, lines, surfaces, volumes
-        unique_volumes = Geometry.__get_unique_entities_by_ids(volumes)
-        unique_surfaces = Geometry.__get_unique_entities_by_ids(surfaces)
-        unique_lines = Geometry.__get_unique_entities_by_ids(lines)
-        unique_points = Geometry.__get_unique_entities_by_ids(points)
+                volumes[id] = volume
 
-        return cls(unique_points, unique_lines, unique_surfaces, unique_volumes)
+        return cls(points, lines, surfaces, volumes)
