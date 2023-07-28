@@ -261,13 +261,14 @@ class Geometry:
     A class to represent a collection of geometric objects in a zero-, one-, two- or three-dimensional space.
 
     Attributes:
-        - points (Optional[List[:class:`Point`]]): An Iterable of Point objects representing the points in the geometry.
-        - lines (Optional[List[:class:`Line`]]): An Iterable of Line objects representing the lines in the geometry.
-        - surfaces (Optional[List[:class:`Surface`]]): An Iterable of Surface objects representing the surfaces in the geometry.
-        - volumes (Optional[List[:class:`Volume`]]): An Iterable of Volume objects representing the volumes in the geometry.
+        - points (Dict[int, :class:`Point`]): An dictionary of Point objects representing the points in the geometry.
+        - lines (Dict[int, :class:`Line`]): A dictionary of Line objects representing the lines in the geometry.
+        - surfaces (Dict[int, :class:`Surface`]): A dictionary of Surface objects representing the surfaces in the \
+          geometry.
+        - volumes (Dict[int, :class:`Volume`]): A dictionary of Volume objects representing the volumes in the geometry.
     """
     def __init__(self, points: Dict[int, Point] = {}, lines: Dict[int, Line] = {},
-                 surfaces: Dict[int, Surface] = {}, volumes: Dict[int,Volume] = {}):
+                 surfaces: Dict[int, Surface] = {}, volumes: Dict[int, Volume] = {}):
         self.points: Dict[int, Point] = points
         self.lines: Dict[int, Line] = lines
         self.surfaces: Dict[int, Surface] = surfaces
@@ -373,7 +374,7 @@ class Geometry:
             - :class:`Geometry`: The geometry object.
         """
 
-        # initialise geometry lists
+        # initialise geometry dictionaries
         points = {}
         lines = {}
         surfaces = {}
@@ -411,7 +412,7 @@ class Geometry:
             - :class:`Geometry`: A Geometry object containing the geometric objects in the group.
         """
 
-        # initialize point, line, surface and volume lists
+        # initialize point, line, surface and volume dictionaries
         points = {}
         lines = {}
         surfaces = {}
@@ -443,7 +444,6 @@ class Geometry:
                     lines[line.id] = line
                 for point in surface_points:
                     points[point.id] = point
-
 
         elif ndim_group == 3:
             # Create volumes and lower dimensional objects
