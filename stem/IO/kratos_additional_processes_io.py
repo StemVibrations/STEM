@@ -42,11 +42,12 @@ class KratosAdditionalProcessesIO:
             "python_module": "apply_excavation_process",
             "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
             "process_name":  "ApplyExcavationProcess",
-            "Parameters": parameters.__dict__,
+            "Parameters": {},
         }
 
         boundary_dict["Parameters"]["model_part_name"] = f"{self.domain}.{part_name}"
         boundary_dict["Parameters"]["variable_name"] = "EXCAVATION"
+        boundary_dict["Parameters"]["deactivate_soil_part"] = parameters.deactivate_body_model_part
 
         return boundary_dict
 
