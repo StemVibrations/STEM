@@ -169,17 +169,17 @@ class TestModel:
         geometry_1.volumes = []
 
         geometry_2 = Geometry()
-        geometry_2.points = [Point.create([1, 1, 0], 3),
+        geometry_2.points = [Point.create([1, 2, 0], 5),
+                             Point.create([0, 2, 0], 6),
                              Point.create([0, 1, 0], 4),
-                             Point.create([0, 2, 0], 5),
-                             Point.create([1, 2, 0], 6)]
+                             Point.create([1, 1, 0], 3)]
 
-        geometry_2.lines = [Line.create([3, 4], 3),
-                            Line.create([4, 5], 5),
-                            Line.create([5, 6], 6),
-                            Line.create([6, 3], 7)]
+        geometry_2.lines = [Line.create([5, 6], 5),
+                            Line.create([6, 4], 6),
+                            Line.create([3, 4], 3),
+                            Line.create([3, 5], 7)]
 
-        geometry_2.surfaces = [Surface.create([3, 5, 6, 7], 2)]
+        geometry_2.surfaces = [Surface.create([5, 6, -3, 7], 2)]
 
         geometry_2.volumes = []
 
@@ -1363,7 +1363,7 @@ class TestModel:
             - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
 
         """
-
+        gmsh_IO.GmshIO().finalize_gmsh()
         # create model
         model = Model(2)
 
@@ -1429,8 +1429,10 @@ class TestModel:
 
         """
 
+
         # create model
         model = Model(2)
+
 
         # add a 2d layer
         model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0)], create_default_2d_soil_material, "soil1")

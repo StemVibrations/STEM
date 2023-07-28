@@ -11,12 +11,11 @@ from stem.model_part import ModelPart, BodyModelPart
 from stem.soil_material import *
 from stem.structural_material import *
 from stem.boundary import *
-from stem.load import *
 from stem.geometry import Geometry
 from stem.mesh import Mesh, MeshSettings
 from stem.load import *
 from stem.solver import Problem, StressInitialisationType
-from stem.utils import is_point_between_points, is_collinear
+from stem.utils import Utils
 
 
 class Model:
@@ -102,27 +101,6 @@ class Model:
             else:
                 self.process_model_parts.append(model_part)
 
-    @staticmethod
-    def is_clockwise(coordinates: Sequence[Sequence[float]]):
-        """
-        Checks if the coordinates are given in clockwise order. If the sum of the edges is positive, the coordinates
-        are given in clockwise order.
-
-        Args:
-            - coordinates (Sequence[Sequence[float]]): The plane coordinates of the soil layer.
-
-        Returns:
-            - bool: True if the coordinates are given in clockwise order, False otherwise.
-        """
-
-        sum_edges = 0
-        for i in range(len(coordinates)-1):
-            sum_edges += (coordinates[i+1][0] - coordinates[i][0]) * (coordinates[i+1][1]+coordinates[i][1])
-
-        sum_edges += (coordinates[0][0] - coordinates[-1][0])*(coordinates[0][1]+coordinates[-1][1])
-
-        return sum_edges > 0
-
     def add_soil_layer_by_coordinates(self, coordinates: Sequence[Sequence[float]],
                        material_parameters: Union[SoilMaterial, StructuralMaterial], name: str,
                        ):
@@ -141,7 +119,7 @@ class Model:
         """
 
         # sort coordinates in anti-clockwise order
-        if self.is_clockwise(coordinates):
+        if Utils.is_clockwise(coordinates):
             coordinates = coordinates[::-1]
 
         gmsh_input = {name: {"coordinates": coordinates, "ndim": self.ndim}}
@@ -249,11 +227,11 @@ class Model:
         for ix in range(len(coordinates)-1):
 
             # check origin is collinear to the edges of the line
-            collinear_check = is_collinear(
+            collinear_check = Utils.is_collinear(
                 point=load_parameters.origin, start_point=coordinates[ix],end_point=coordinates[ix+1]
             )
             # check origin is between the edges of the line (edges included)
-            is_between_check = is_point_between_points(
+            is_between_check = Utils.is_point_between_points(
                 point=load_parameters.origin, start_point=coordinates[ix], end_point=coordinates[ix+1]
             )
             # check if point complies
