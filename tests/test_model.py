@@ -36,19 +36,19 @@ class TestModel:
 
         geometry = Geometry()
 
-        geometry.points = [Point.create([0, 0, 0], 1),
-                           Point.create([1, 0, 0], 2),
-                           Point.create([1, 1, 0], 3),
-                           Point.create([0, 1, 0], 4)]
+        geometry.points = {1: Point.create([0, 0, 0], 1),
+                           2: Point.create([1, 0, 0], 2),
+                           3: Point.create([1, 1, 0], 3),
+                           4: Point.create([0, 1, 0], 4)}
 
-        geometry.lines = [Line.create([1, 2], 1),
-                          Line.create([2, 3], 2),
-                          Line.create([3, 4], 3),
-                          Line.create([4, 1], 4)]
+        geometry.lines = {1: Line.create([1, 2], 1),
+                          2: Line.create([2, 3], 2),
+                          3: Line.create([3, 4], 3),
+                          4: Line.create([4, 1], 4)}
 
-        geometry.surfaces = [Surface.create([1,2,3,4], 1)]
+        geometry.surfaces = {1: Surface.create([1,2,3,4], 1)}
 
-        geometry.volumes = []
+        geometry.volumes = {}
 
         return geometry
 
@@ -64,36 +64,36 @@ class TestModel:
 
         geometry = Geometry()
 
-        geometry.points = [Point.create([0, 0, 0], 1),
-                           Point.create([0, 0, 1], 5),
-                           Point.create([1, 0, 1], 6),
-                           Point.create([1, 0, 0], 2),
-                           Point.create([1, 1, 1], 7),
-                           Point.create([1, 1, 0], 3),
-                           Point.create([0, 1, 1], 8),
-                           Point.create([0, 1, 0], 4)]
+        geometry.points = {1, Point.create([0, 0, 0], 1),
+                           5, Point.create([0, 0, 1], 5),
+                           6, Point.create([1, 0, 1], 6),
+                           2, Point.create([1, 0, 0], 2),
+                           7, Point.create([1, 1, 1], 7),
+                           3, Point.create([1, 1, 0], 3),
+                           8, Point.create([0, 1, 1], 8),
+                           4, Point.create([0, 1, 0], 4)}
 
-        geometry.lines = [Line.create([1, 5], 5),
-                          Line.create([5, 6], 7),
-                          Line.create([2, 6], 6),
-                          Line.create([1, 2], 1),
-                          Line.create([6, 7], 9),
-                          Line.create([3, 7], 8),
-                          Line.create([2, 3], 2),
-                          Line.create([7, 8], 11),
-                          Line.create([4, 8], 10),
-                          Line.create([3, 4], 3),
-                          Line.create([8, 5], 12),
-                          Line.create([4, 1], 4)]
+        geometry.lines = {5, Line.create([1, 5], 5),
+                          7, Line.create([5, 6], 7),
+                          6, Line.create([2, 6], 6),
+                          1, Line.create([1, 2], 1),
+                          9, Line.create([6, 7], 9),
+                          8, Line.create([3, 7], 8),
+                          2, Line.create([2, 3], 2),
+                          11, Line.create([7, 8], 11),
+                          10, Line.create([4, 8], 10),
+                          3, Line.create([3, 4], 3),
+                          12, Line.create([8, 5], 12),
+                          4, Line.create([4, 1], 4)}
 
-        geometry.surfaces = [Surface.create([5, 7, -6, -1], 2),
-                             Surface.create([6, 9, -8, -2], 3),
-                             Surface.create([8,11, -10, -3], 4),
-                             Surface.create([10, 12, -5, -4], 5),
-                             Surface.create([1, 2, 3, 4], 1),
-                             Surface.create([7, 9, 11, 12], 6)]
+        geometry.surfaces = {2, Surface.create([5, 7, -6, -1], 2),
+                             3, Surface.create([6, 9, -8, -2], 3),
+                             4, Surface.create([8,11, -10, -3], 4),
+                             5, Surface.create([10, 12, -5, -4], 5),
+                             1, Surface.create([1, 2, 3, 4], 1),
+                             6, Surface.create([7, 9, 11, 12], 6)}
 
-        geometry.volumes = [Volume.create([-2, -3, -4, -5, -1, 6], 1)]
+        geometry.volumes = {1, Volume.create([-2, -3, -4, -5, -1, 6], 1)}
 
         return geometry
 
@@ -108,36 +108,38 @@ class TestModel:
 
         geometry = Geometry()
 
-        geometry.points = [Point.create([0, 0, 0], 1),
-                           Point.create([0, 0, 1], 5),
-                           Point.create([1, 0, 1], 6),
-                           Point.create([1, 0, 0], 2),
-                           Point.create([1, 1, 1], 7),
-                           Point.create([1, 1, 0], 3),
-                           Point.create([0, 1, 1], 8),
-                           Point.create([0, 1, 0], 4)]
+        geometry.points = {1: Point.create([0, 0, 0], 1),
+                           5: Point.create([0, 0, 1], 5),
+                           6: Point.create([1, 0, 1], 6),
+                           2: Point.create([1, 0, 0], 2),
+                           7: Point.create([1, 1, 1], 7),
+                           3: Point.create([1, 1, 0], 3),
+                           8: Point.create([0, 1, 1], 8),
+                           4: Point.create([0, 1, 0], 4)}
 
-        geometry.lines = [Line.create([1, 5], 5),
-                          Line.create([5, 6], 7),
-                          Line.create([2, 6], 6),
-                          Line.create([1, 2], 1),
-                          Line.create([6, 7], 9),
-                          Line.create([3, 7], 8),
-                          Line.create([2, 3], 2),
-                          Line.create([7, 8], 11),
-                          Line.create([4, 8], 10),
-                          Line.create([3, 4], 3),
-                          Line.create([8, 5], 12),
-                          Line.create([4, 1], 4)]
+        geometry.lines = {5: Line.create([1, 5], 5),
+                          7: Line.create([5, 6], 7),
+                          6: Line.create([2, 6], 6),
+                          1: Line.create([1, 2], 1),
+                          9: Line.create([6, 7], 9),
+                          8: Line.create([3, 7], 8),
+                          2: Line.create([2, 3], 2),
+                          11: Line.create([7, 8], 11),
+                          10: Line.create([4, 8], 10),
+                          3: Line.create([3, 4], 3),
+                          12: Line.create([8, 5], 12),
+                          4: Line.create([4, 1], 4)}
 
-        geometry.surfaces = [Surface.create([5, 7, -6, -1], 2),
-                             Surface.create([6, 9, -8, -2], 3),
-                             Surface.create([8,11, -10, -3], 4),
-                             Surface.create([10, 12, -5, -4], 5),
-                             Surface.create([1, 2, 3, 4], 1),
-                             Surface.create([7, 9, 11, 12], 6)]
+        geometry.surfaces = {2: Surface.create([5, 7, -6, -1], 2),
+                             3: Surface.create([6, 9, -8, -2], 3),
+                             4: Surface.create([8, 11, -10, -3], 4),
+                             5: Surface.create([10, 12, -5, -4], 5),
+                             1: Surface.create([1, 2, 3, 4], 1),
+                             6: Surface.create([7, 9, 11, 12], 6)}
 
-        geometry.volumes = [Volume.create([-2, -3, -4, -5, -1, 6], 1)]
+        # The volumes list converted to a dictionary
+        geometry.volumes = {1: Volume.create([-2, -3, -4, -5, -1, 6], 1)}
+
 
         return geometry
 
@@ -152,36 +154,37 @@ class TestModel:
 
         """
 
+        # geometry_1
         geometry_1 = Geometry()
+        geometry_1.points = {1: Point.create([0, 0, 0], 1),
+                             2: Point.create([1, 0, 0], 2),
+                             3: Point.create([1, 1, 0], 3),
+                             4: Point.create([0, 1, 0], 4)}
 
-        geometry_1.points = [Point.create([0, 0, 0], 1),
-                             Point.create([1, 0, 0], 2),
-                             Point.create([1, 1, 0], 3),
-                             Point.create([0, 1, 0], 4)]
+        geometry_1.lines = {1: Line.create([1, 2], 1),
+                            2: Line.create([2, 3], 2),
+                            3: Line.create([3, 4], 3),
+                            4: Line.create([4, 1], 4)}
 
-        geometry_1.lines = [Line.create([1, 2], 1),
-                            Line.create([2, 3], 2),
-                            Line.create([3, 4], 3),
-                            Line.create([4, 1], 4)]
+        geometry_1.surfaces = {1: Surface.create([1, 2, 3, 4], 1)}
 
-        geometry_1.surfaces = [Surface.create([1, 2, 3, 4], 1)]
+        geometry_1.volumes = {}
 
-        geometry_1.volumes = []
-
+        # geometry_2
         geometry_2 = Geometry()
-        geometry_2.points = [Point.create([1, 1, 0], 3),
-                             Point.create([0, 1, 0], 4),
-                             Point.create([0, 2, 0], 5),
-                             Point.create([1, 2, 0], 6)]
+        geometry_2.points = {3: Point.create([1, 1, 0], 3),
+                             4: Point.create([0, 1, 0], 4),
+                             5: Point.create([0, 2, 0], 5),
+                             6: Point.create([1, 2, 0], 6)}
 
-        geometry_2.lines = [Line.create([3, 4], 3),
-                            Line.create([4, 5], 5),
-                            Line.create([5, 6], 6),
-                            Line.create([6, 3], 7)]
+        geometry_2.lines = {3: Line.create([3, 4], 3),
+                            5: Line.create([4, 5], 5),
+                            6: Line.create([5, 6], 6),
+                            7: Line.create([6, 3], 7)}
 
-        geometry_2.surfaces = [Surface.create([3, 5, 6, 7], 2)]
+        geometry_2.surfaces = {2: Surface.create([3, 5, 6, 7], 2)}
 
-        geometry_2.volumes = []
+        geometry_2.volumes = {}
 
         return geometry_1, geometry_2
 
@@ -198,61 +201,76 @@ class TestModel:
         # create expected geometry layer 1
         geometry_1 = Geometry()
 
-        geometry_1.points = [Point.create([0, 0, 0], 1),
-                             Point.create([1, 0, 0], 2),
-                             Point.create([1, 1, 0], 3),
-                             Point.create([0.5, 1, 0], 4),
-                             Point.create([0, 1, 0], 5)]
+        geometry_1.points = {
+            1: Point.create([0, 0, 0], 1),
+            2: Point.create([1, 0, 0], 2),
+            3: Point.create([1, 1, 0], 3),
+            4: Point.create([0.5, 1, 0], 4),
+            5: Point.create([0, 1, 0], 5)
+        }
 
-        geometry_1.lines = [Line.create([1, 2], 1),
-                            Line.create([2, 3], 2),
-                            Line.create([3, 4], 3),
-                            Line.create([4, 5], 4),
-                            Line.create([5, 1], 5)]
+        geometry_1.lines = {
+            1: Line.create([1, 2], 1),
+            2: Line.create([2, 3], 2),
+            3: Line.create([3, 4], 3),
+            4: Line.create([4, 5], 4),
+            5: Line.create([5, 1], 5)
+        }
 
-        geometry_1.surfaces = [Surface.create([1, 2, 3, 4, 5], 1)]
+        geometry_1.surfaces = {
+            1: Surface.create([1, 2, 3, 4, 5], 1)
+        }
 
-        geometry_1.volumes = []
-
-        # create expected geometry layer 2
         geometry_2 = Geometry()
-        geometry_2.points = [Point.create([1, 1, 0], 3),
-                             Point.create([0.5, 1, 0], 4),
-                             Point.create([0.5, 2, 0], 6),
-                             Point.create([1, 2, 0], 7)]
+        geometry_2.points = {
+            3: Point.create([1, 1, 0], 3),
+            4: Point.create([0.5, 1, 0], 4),
+            6: Point.create([0.5, 2, 0], 6),
+            7: Point.create([1, 2, 0], 7)
+        }
 
-        geometry_2.lines = [Line.create([3, 4], 3),
-                            Line.create([4, 6], 6),
-                            Line.create([6, 7], 7),
-                            Line.create([7, 3], 8)]
+        geometry_2.lines = {
+            3: Line.create([3, 4], 3),
+            6: Line.create([4, 6], 6),
+            7: Line.create([6, 7], 7),
+            8: Line.create([7, 3], 8)
+        }
 
-        geometry_2.surfaces = [Surface.create([3, 6, 7, 8], 2)]
+        geometry_2.surfaces = {
+            2: Surface.create([3, 6, 7, 8], 2)
+        }
 
-        geometry_2.volumes = []
+        geometry_2.volumes = {}
 
         # create expected full geometry
         full_geometry = Geometry()
-        full_geometry.points = [Point.create([0, 0, 0], 1),
-                                Point.create([1, 0, 0], 2),
-                                Point.create([1, 1, 0], 3),
-                                Point.create([0.5, 1, 0], 4),
-                                Point.create([0, 1, 0], 5),
-                                Point.create([0.5, 2, 0], 6),
-                                Point.create([1, 2, 0], 7)]
+        full_geometry.points = {
+            1: Point.create([0, 0, 0], 1),
+            2: Point.create([1, 0, 0], 2),
+            3: Point.create([1, 1, 0], 3),
+            4: Point.create([0.5, 1, 0], 4),
+            5: Point.create([0, 1, 0], 5),
+            6: Point.create([0.5, 2, 0], 6),
+            7: Point.create([1, 2, 0], 7)
+        }
 
-        full_geometry.lines = [Line.create([1, 2], 1),
-                               Line.create([2, 3], 2),
-                               Line.create([3, 4], 3),
-                               Line.create([4, 5], 4),
-                               Line.create([5, 1], 5),
-                               Line.create([4, 6], 6),
-                               Line.create([6, 7], 7),
-                               Line.create([7, 3], 8)]
+        full_geometry.lines = {
+            1: Line.create([1, 2], 1),
+            2: Line.create([2, 3], 2),
+            3: Line.create([3, 4], 3),
+            4: Line.create([4, 5], 4),
+            5: Line.create([5, 1], 5),
+            6: Line.create([4, 6], 6),
+            7: Line.create([6, 7], 7),
+            8: Line.create([7, 3], 8)
+        }
 
-        full_geometry.surfaces = [Surface.create([1, 2, 3, 4, 5], 1),
-                                  Surface.create([3, 6, 7, 8], 2)]
+        full_geometry.surfaces = {
+            1: Surface.create([1, 2, 3, 4, 5], 1),
+            2: Surface.create([3, 6, 7, 8], 2)
+        }
 
-        full_geometry.volumes = []
+        full_geometry.volumes = {}
 
         return geometry_1, geometry_2, full_geometry
 
@@ -267,18 +285,22 @@ class TestModel:
 
         geometry = Geometry()
 
-        geometry.points = [Point.create([0, 0, 0], 1),
-                           Point.create([3, 0, 0], 2),
-                           Point.create([4, -1, 0], 3),
-                           Point.create([10, -1, 0], 4)]
+        geometry.points = {
+            1: Point.create([0, 0, 0], 1),
+            2: Point.create([3, 0, 0], 2),
+            3: Point.create([4, -1, 0], 3),
+            4: Point.create([10, -1, 0], 4)
+        }
 
-        geometry.lines = [Line.create([1, 2], 1),
-                          Line.create([2, 3], 2),
-                          Line.create([3, 4], 3)]
+        geometry.lines = {
+            1: Line.create([1, 2], 1),
+            2: Line.create([2, 3], 2),
+            3: Line.create([3, 4], 3)
+        }
 
-        geometry.surfaces = []
+        geometry.surfaces = {}
 
-        geometry.volumes = []
+        geometry.volumes = {}
 
         return geometry
 
@@ -381,70 +403,84 @@ class TestModel:
         """
 
         geometry_1 = Geometry()
+        geometry_1.points = {
+            1: Point.create([0, 0, 0], 1),
+            2: Point.create([0, 0, 1], 2),
+            4: Point.create([1, 0, 1], 4),
+            3: Point.create([1, 0, 0], 3),
+            6: Point.create([1, 1, 1], 6),
+            5: Point.create([1, 1, 0], 5),
+            8: Point.create([0, 1, 1], 8),
+            7: Point.create([0, 1, 0], 7)
+        }
 
-        geometry_1.points = [Point.create([0, 0, 0], 1),
-                           Point.create([0, 0, 1], 2),
-                           Point.create([1, 0, 1], 4),
-                           Point.create([1, 0, 0], 3),
-                           Point.create([1, 1, 1], 6),
-                           Point.create([1, 1, 0], 5),
-                           Point.create([0, 1, 1], 8),
-                           Point.create([0, 1, 0], 7)]
+        geometry_1.lines = {
+            1: Line.create([1, 2], 1),
+            4: Line.create([2, 4], 4),
+            2: Line.create([3, 4], 2),
+            3: Line.create([1, 3], 3),
+            7: Line.create([4, 6], 7),
+            5: Line.create([5, 6], 5),
+            6: Line.create([3, 5], 6),
+            10: Line.create([6, 8], 10),
+            8: Line.create([7, 8], 8),
+            9: Line.create([5, 7], 9),
+            12: Line.create([8, 2], 12),
+            11: Line.create([7, 1], 11)
+        }
 
-        geometry_1.lines = [Line.create([1, 2], 1),
-                          Line.create([2, 4], 4),
-                          Line.create([3, 4], 2),
-                          Line.create([1, 3], 3),
-                          Line.create([4, 6], 7),
-                          Line.create([5, 6], 5),
-                          Line.create([3, 5], 6),
-                          Line.create([6, 8], 10),
-                          Line.create([7, 8], 8),
-                          Line.create([5, 7], 9),
-                          Line.create([8, 2], 12),
-                          Line.create([7, 1], 11)]
+        geometry_1.surfaces = {
+            1: Surface.create([1, 4, -2, -3], 1),
+            2: Surface.create([2, 7, -5, -6], 2),
+            3: Surface.create([5, 10, -8, -9], 3),
+            4: Surface.create([8, 12, -1, -11], 4),
+            5: Surface.create([3, 6, 9, 11], 5),
+            6: Surface.create([4, 7, 10, 12], 6)
+        }
 
-        geometry_1.surfaces = [Surface.create([1, 4, -2, -3], 1),
-                             Surface.create([2, 7, -5, -6], 2),
-                             Surface.create([5, 10, -8, -9], 3),
-                             Surface.create([8, 12, -1, -11], 4),
-                             Surface.create([3, 6, 9, 11], 5),
-                             Surface.create([4, 7, 10, 12], 6)]
-
-        geometry_1.volumes = [Volume.create([-1, -2, -3, -4, -5, 6], 1)]
+        geometry_1.volumes = {
+            1: Volume.create([-1, -2, -3, -4, -5, 6], 1)
+        }
 
         geometry_2 = Geometry()
+        geometry_2.points = {
+            5: Point.create([1., 1., 0.], 5),
+            6: Point.create([1., 1., 1.], 6),
+            8: Point.create([0.0, 1., 1.], 8),
+            7: Point.create([0, 1., 0.], 7),
+            10: Point.create([0., 2., 1], 10),
+            9: Point.create([0., 2., 0], 9),
+            12: Point.create([1, 2., 1], 12),
+            11: Point.create([1, 2., 0], 11)
+        }
 
-        geometry_2.points = [Point.create([1., 1., 0.], 5),
-                             Point.create([1., 1., 1.], 6),
-                             Point.create([0.0, 1., 1.], 8),
-                             Point.create([0, 1., 0.], 7),
-                             Point.create([0., 2., 1], 10),
-                             Point.create([0., 2., 0], 9),
-                             Point.create([1, 2., 1], 12),
-                             Point.create([1, 2., 0], 11)]
+        geometry_2.lines = {
+            5: Line.create([5, 6], 5),
+            10: Line.create([6, 8], 10),
+            8: Line.create([7, 8], 8),
+            9: Line.create([5, 7], 9),
+            15: Line.create([8, 10], 15),
+            13: Line.create([9, 10], 13),
+            14: Line.create([7, 9], 14),
+            18: Line.create([10, 12], 18),
+            16: Line.create([11, 12], 16),
+            17: Line.create([9, 11], 17),
+            20: Line.create([12, 6], 20),
+            19: Line.create([11, 5], 19)
+        }
 
-        geometry_2.lines = [Line.create([5, 6], 5),
-                            Line.create([6, 8], 10),
-                            Line.create([7, 8], 8),
-                            Line.create([5, 7], 9),
-                            Line.create([8, 10], 15),
-                            Line.create([9, 10], 13),
-                            Line.create([7, 9], 14),
-                            Line.create([10, 12], 18),
-                            Line.create([11, 12], 16),
-                            Line.create([9, 11], 17),
-                            Line.create([12, 6], 20),
-                            Line.create([11, 5], 19)]
+        geometry_2.surfaces = {
+            3: Surface.create([5, 10, -8, -9], 3),
+            7: Surface.create([8, 15, -13, -14], 7),
+            8: Surface.create([13, 18, -16, -17], 8),
+            9: Surface.create([16, 20, -5, -19], 9),
+            10: Surface.create([9, 14, 17, 19], 10),
+            11: Surface.create([10, 15, 18, 20], 11)
+        }
 
-        geometry_2.surfaces = [Surface.create([5, 10, -8, -9], 3),
-                               Surface.create([8, 15, -13, -14], 7),
-                               Surface.create([13, 18, -16, -17], 8),
-                               Surface.create([16, 20, -5, -19], 9),
-                               Surface.create([9, 14, 17, 19], 10),
-                               Surface.create([10, 15, 18, 20], 11)]
-
-        geometry_2.volumes = [Volume.create([3, 7, 8, 9, 10, -11], 2)]
+        geometry_2.volumes = {
+            2: Volume.create([3, 7, 8, 9, 10, -11], 2)
+        }
 
         return geometry_1, geometry_2
 
@@ -459,67 +495,84 @@ class TestModel:
         """
 
         geometry_1 = Geometry()
-        geometry_1.volumes = [Volume.create([-10, 39, 26, 30, 34, 38], 1)]
-        geometry_1.surfaces = [Surface.create([5, 6, 7, 8], 10),
-                               Surface.create([19, 20, 21, 22], 39),
-                               Surface.create([5, 25, -19, -24], 26),
-                               Surface.create([6, 29, -20, -25], 30),
-                               Surface.create([7, 33, -21, -29], 34),
-                               Surface.create([8, 24, -22, -33], 38)]
+        geometry_1.volumes = {
+            1: Volume.create([-10, 39, 26, 30, 34, 38], 1)
+        }
 
-        geometry_1.lines = [Line.create([1, 2], 5),
-                            Line.create([2, 3], 6),
-                            Line.create([3, 4], 7),
-                            Line.create([4, 1], 8),
-                            Line.create([13, 14], 19),
-                            Line.create([14, 18], 20),
-                            Line.create([18, 22], 21),
-                            Line.create([22, 13], 22),
-                            Line.create([2, 14], 25),
-                            Line.create([1, 13], 24),
-                            Line.create([3, 18], 29),
-                            Line.create([4, 22], 33)]
+        geometry_1.surfaces = {
+            10: Surface.create([5, 6, 7, 8], 10),
+            39: Surface.create([19, 20, 21, 22], 39),
+            26: Surface.create([5, 25, -19, -24], 26),
+            30: Surface.create([6, 29, -20, -25], 30),
+            34: Surface.create([7, 33, -21, -29], 34),
+            38: Surface.create([8, 24, -22, -33], 38)
+        }
 
-        geometry_1.points = [Point.create([0., 0., 0.], 1),
-                             Point.create([0.5, 0., 0.], 2),
-                             Point.create([0.5, 1., 0.], 3),
-                             Point.create([0., 1., 0.], 4),
-                             Point.create([0., 0., -0.5], 13),
-                             Point.create([0.5, 0., -0.5], 14),
-                             Point.create([0.5, 1., -0.5], 18),
-                             Point.create([0., 1., -0.5], 22)]
+        geometry_1.lines = {
+            5: Line.create([1, 2], 5),
+            6: Line.create([2, 3], 6),
+            7: Line.create([3, 4], 7),
+            8: Line.create([4, 1], 8),
+            19: Line.create([13, 14], 19),
+            20: Line.create([14, 18], 20),
+            21: Line.create([18, 22], 21),
+            22: Line.create([22, 13], 22),
+            25: Line.create([2, 14], 25),
+            24: Line.create([1, 13], 24),
+            29: Line.create([3, 18], 29),
+            33: Line.create([4, 22], 33)
+        }
+
+        geometry_1.points = {
+            1: Point.create([0., 0., 0.], 1),
+            2: Point.create([0.5, 0., 0.], 2),
+            3: Point.create([0.5, 1., 0.], 3),
+            4: Point.create([0., 1., 0.], 4),
+            13: Point.create([0., 0., -0.5], 13),
+            14: Point.create([0.5, 0., -0.5], 14),
+            18: Point.create([0.5, 1., -0.5], 18),
+            22: Point.create([0., 1., -0.5], 22)
+        }
 
         geometry_2 = Geometry()
-        geometry_2.volumes = [Volume.create([-17, 61, -48, -34, -56, -60], 2)]
+        geometry_2.volumes = {
+            2: Volume.create([-17, 61, -48, -34, -56, -60], 2)
+        }
 
-        geometry_2.surfaces = [Surface.create([-13, -7, -15, -14],17),
-                               Surface.create([41, -21, 43, 44], 61),
-                               Surface.create([-13, 33, -41, -46], 48),
-                               Surface.create([7, 33, -21, -29], 34),
-                               Surface.create([-15, 55, -43, -29], 56),
-                               Surface.create([-14, 46, -44, -55], 60)]
+        geometry_2.surfaces = {
+            17: Surface.create([-13, -7, -15, -14], 17),
+            61: Surface.create([41, -21, 43, 44], 61),
+            48: Surface.create([-13, 33, -41, -46], 48),
+            34: Surface.create([7, 33, -21, -29], 34),
+            56: Surface.create([-15, 55, -43, -29], 56),
+            60: Surface.create([-14, 46, -44, -55], 60)
+        }
 
-        geometry_2.lines = [Line.create([4, 11], 13),
-                            Line.create([3, 4], 7),
-                            Line.create([12, 3], 15),
-                            Line.create([11, 12], 14),
-                            Line.create([23, 22], 41),
-                            Line.create([18, 22], 21),
-                            Line.create([18, 32], 43),
-                            Line.create([32, 23], 44),
-                            Line.create([4, 22], 33),
-                            Line.create([11, 23], 46),
-                            Line.create([3, 18], 29),
-                            Line.create([12, 32], 55)]
+        geometry_2.lines = {
+            13: Line.create([4, 11], 13),
+            7: Line.create([3, 4], 7),
+            15: Line.create([12, 3], 15),
+            14: Line.create([11, 12], 14),
+            41: Line.create([23, 22], 41),
+            21: Line.create([18, 22], 21),
+            43: Line.create([18, 32], 43),
+            44: Line.create([32, 23], 44),
+            33: Line.create([4, 22], 33),
+            46: Line.create([11, 23], 46),
+            29: Line.create([3, 18], 29),
+            55: Line.create([12, 32], 55)
+        }
 
-        geometry_2.points = [Point.create([0., 1., 0.], 4),
-                             Point.create([0., 2., 0.], 11),
-                             Point.create([0.5, 1., 0.], 3),
-                             Point.create([0.5, 2., 0.], 12),
-                             Point.create([0., 2., -0.5], 23),
-                             Point.create([0., 1., -0.5], 22),
-                             Point.create([0.5, 1., -0.5], 18),
-                             Point.create([0.5, 2., -0.5], 32)]
+        geometry_2.points = {
+            4: Point.create([0., 1., 0.], 4),
+            11: Point.create([0., 2., 0.], 11),
+            3: Point.create([0.5, 1., 0.], 3),
+            12: Point.create([0.5, 2., 0.], 12),
+            23: Point.create([0., 2., -0.5], 23),
+            22: Point.create([0., 1., -0.5], 22),
+            18: Point.create([0.5, 1., -0.5], 18),
+            32: Point.create([0.5, 2., -0.5], 32)
+        }
 
         return geometry_1, geometry_2
 
@@ -900,10 +953,7 @@ class TestModel:
         # check if geometry is added correctly
         generated_geometry = model.process_model_parts[0].geometry
         expected_geometry = Geometry(
-            points=[Point.create([-0.5, 0, 0], 1), Point.create([0.5, 0, 0], 2)],
-            lines=[],
-            surfaces=[],
-            volumes=[]
+            points={1:Point.create([-0.5, 0, 0], 1), 2: Point.create([0.5, 0, 0], 2)}
         )
 
         TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
@@ -1296,38 +1346,51 @@ class TestModel:
                                                                    is_fixed=[True, True, True], value=[0, 0, 0])
 
         # set expected geometry 0d boundary condition
-        expected_boundary_points = [Point.create([0, 0, 0], 1), Point.create([1, 0, 0], 2)]
-        expected_boundary_lines = [Line.create([1, 2], 1)]
-        expected_boundary_surfaces = []
-        expected_boundary_volumes = []
+        expected_boundary_points = {1: Point.create([0, 0, 0], 1), 2:  Point.create([1, 0, 0], 2)}
+        expected_boundary_lines = {1: Line.create([1, 2], 1)}
+        expected_boundary_surfaces = {}
+        expected_boundary_volumes = {}
 
         expected_boundary_geometry_0d = Geometry(expected_boundary_points, expected_boundary_lines,
                                                  expected_boundary_surfaces, expected_boundary_volumes)
 
         # set expected geometry 1d boundary condition
-        expected_boundary_points = [Point.create([1, 1, 0], 3), Point.create([1, 1, 1], 7)]
-        expected_boundary_lines = [Line.create([3, 7], 8)]
-        expected_boundary_surfaces = []
-        expected_boundary_volumes = []
+        expected_boundary_points = {3: Point.create([1, 1, 0], 3), 7: Point.create([1, 1, 1], 7)}
+        expected_boundary_lines = {8: Line.create([3, 7], 8)}
+        expected_boundary_surfaces = {}
+        expected_boundary_volumes = {}
 
         expected_boundary_geometry_1d = Geometry(expected_boundary_points, expected_boundary_lines,
                                                  expected_boundary_surfaces, expected_boundary_volumes)
 
         # set expected geometry 2d boundary condition
-        expected_boundary_points = [Point.create([0, 0, 0], 1), Point.create([1, 0, 0], 2), Point.create([1, 1, 0], 3),
-                                    Point.create([0, 1, 0], 4), Point.create([0, 0, 1], 5), Point.create([1, 0, 1], 6)]
 
-        expected_boundary_lines = [Line.create([1, 2], 1), Line.create([2, 3], 2), Line.create([3, 4], 3),
-                                   Line.create([4, 1], 4), Line.create([1, 5], 5), Line.create([5, 6], 7),
-                                   Line.create([2, 6], 6)]
+        expected_boundary_geometry_2d = Geometry()
+        expected_boundary_geometry_2d.points = {
+            1: Point.create([0, 0, 0], 1),
+            2: Point.create([1, 0, 0], 2),
+            3: Point.create([1, 1, 0], 3),
+            4: Point.create([0, 1, 0], 4),
+            5: Point.create([0, 0, 1], 5),
+            6: Point.create([1, 0, 1], 6)
+        }
 
-        expected_boundary_surfaces = [Surface.create([1, 2, 3, 4], 1), Surface.create([5, 7, -6, -1], 2)]
+        expected_boundary_geometry_2d.lines = {
+            1: Line.create([1, 2], 1),
+            2: Line.create([2, 3], 2),
+            3: Line.create([3, 4], 3),
+            4: Line.create([4, 1], 4),
+            5: Line.create([1, 5], 5),
+            7: Line.create([5, 6], 7),
+            6: Line.create([2, 6], 6)
+        }
 
-        expected_boundary_volumes = []
+        expected_boundary_geometry_2d.surfaces = {
+            1: Surface.create([1, 2, 3, 4], 1),
+            2: Surface.create([5, 7, -6, -1], 2)
+        }
 
-        expected_boundary_geometry_2d = Geometry(expected_boundary_points, expected_boundary_lines,
-                                                 expected_boundary_surfaces, expected_boundary_volumes)
-
+        expected_boundary_geometry_2d.volumes = {}
 
         # collect all expected geometries
         all_expected_geometries = [expected_boundary_geometry_0d, expected_boundary_geometry_1d,
@@ -1394,16 +1457,16 @@ class TestModel:
         assert model.process_model_parts[1].name == "gravity_load_2d"
 
         # setup expected geometries for 1d and 2d
-        expected_geometry_points_1d = [Point.create([0, 0, 0],1), Point.create([1, 0, 0], 2)]
-        expected_geometry_lines_1d = [Line.create([1, 2], 1)]
-        expected_geometry_gravity_1d = Geometry(expected_geometry_points_1d, expected_geometry_lines_1d, [], [])
+        expected_geometry_points_1d = {1: Point.create([0, 0, 0],1), 2: Point.create([1, 0, 0], 2)}
+        expected_geometry_lines_1d = {1: Line.create([1, 2], 1)}
+        expected_geometry_gravity_1d = Geometry(expected_geometry_points_1d, expected_geometry_lines_1d, {}, {})
 
-        expected_geometry_points_2d = [Point.create([0, 0, 0], 1), Point.create([1, 0, 0], 2),
-                                       Point.create([1, 1, 0], 3)]
-        expected_geometry_lines_2d = [Line.create([1, 2], 1), Line.create([2, 3], 2), Line.create([3, 1], 3)]
-        expected_geometry_surfaces_2d = [Surface.create([1, 2, 3], 1)]
+        expected_geometry_points_2d = {1: Point.create([0, 0, 0], 1), 2: Point.create([1, 0, 0], 2),
+                                       3: Point.create([1, 1, 0], 3)}
+        expected_geometry_lines_2d = {1: Line.create([1, 2], 1), 2: Line.create([2, 3], 2), 3: Line.create([3, 1], 3)}
+        expected_geometry_surfaces_2d = {1: Surface.create([1, 2, 3], 1)}
         expected_geometry_gravity_2d = Geometry(expected_geometry_points_2d, expected_geometry_lines_2d,
-                                                expected_geometry_surfaces_2d, [])
+                                                expected_geometry_surfaces_2d, {})
 
         expected_geometries = [expected_geometry_gravity_1d, expected_geometry_gravity_2d]
 
