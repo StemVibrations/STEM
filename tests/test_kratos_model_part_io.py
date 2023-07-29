@@ -104,24 +104,3 @@ class TestKratosModelPartIO:
         # assert the objects to be equal
         npt.assert_equal(actual=actual_text_load, desired=expected_text_load)
 
-    def test_mapping_gmsh_to_kratos_element(self, create_default_2d_model_and_mesh:Model):
-        """
-        Test the correct mapping between gmsh and Kratos
-
-        Args:
-            - create_default_2d_model_and_mesh (:class:`stem.model.Model`): the default model to use in testing
-        """
-        # load the default 2D model
-        model = create_default_2d_model_and_mesh
-
-        body_model_part = model.body_model_parts[0]
-        process_model_part = model.process_model_parts[0]
-
-        # IO object
-        model_part_io = KratosModelPartIO(ndim=model.ndim, domain="PorousDomain")
-
-        actual_element_type = model_part_io.get_kratos_element_type(body_model_part)
-        actual_condition_element_type = model_part_io.get_kratos_element_type(process_model_part)
-        npt.assert_equal(actual=actual_element_type, desired="UPwSmallStrainElement2D3N")
-        npt.assert_equal(actual=actual_condition_element_type, desired="UPwFaceLoadCondition2D2N")
-

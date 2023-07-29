@@ -1,4 +1,4 @@
-from typing import Sequence, Optional, Dict
+from typing import Sequence, Optional, Dict, List
 
 import numpy as np
 
@@ -68,20 +68,22 @@ class KratosModelPartIO:
         """
         return isinstance(model_part, BodyModelPart)
 
-    def get_kratos_element_type(self, model_part: ModelPart):
-        """Map the gmsh element to the correct element type in Kratos based on the dimension
-        of the problem and whether the part is a body model part or process model part
+    @staticmethod
+    def __get_element_model_part(model_part: ModelPart):
+        """Return the gmsh element of the model part.
 
         Args:
-            - model_part (:class:`stem.model_part.ModelPart`): the model part for which the element
-                mapping is needed.
+            - model_part (:class:`stem.model_part.ModelPart`): the model part
 
         Raises:
             - ValueError: if mesh not initialised first
+            - ValueError: if element types are not unique in the model part.
 
         Returns:
-            - str: the Kratos corresponding element type.
+            - str: the gmsh element type
         """
+
+        # infer part name
         if model_part.mesh is None:
             raise ValueError(f"Model part {model_part.name} has not been meshed."
                              f"Before creating the mdpa file, the model part needs to be meshed."
@@ -95,14 +97,9 @@ class KratosModelPartIO:
         if len(element_part_type) > 1:
             raise ValueError(f"Model part {model_part.name} has more than 1 element type assigned."
                              f"\n{element_part_type}. Error.")
-        gmsh_element_type = str(element_part_type[0])
+        return str(element_part_type[0])
 
-        # if body model part map to elements, else to condition elements
-        if self.__is_body_model_part(model_part):
-            return MAPPER_GMSH_TO_KRATOS[self.ndim]["element"][gmsh_element_type]
-        return MAPPER_GMSH_TO_KRATOS[self.ndim]["condition"][gmsh_element_type]
-
-    def __write_submodel_block(self, buffer:list[str], block_name:str, block_entities: Optional[Sequence[int]]=None):
+    def __write_submodel_block(self, buffer:List[str], block_name:str, block_entities: Optional[Sequence[int]]=None):
         """
         Helping function to write the submodel blocks for the model parts.
 
