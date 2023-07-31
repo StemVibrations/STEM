@@ -87,7 +87,7 @@ class TestKratosModelIO:
         expected_text_body = ['', 'Begin SubModelPart soil1', '  Begin SubModelPartTables', '  End SubModelPartTables',
                               '  Begin SubModelPartNodes', '  1', '  2', '  3', '  4', '  5', '  End SubModelPartNodes',
                               '  Begin SubModelPartElements', '  2', '  3', '  4', '  5',
-                              '  End SubModelPartElements', '', 'End SubModelPart', '']
+                              '  End SubModelPartElements', 'End SubModelPart', '']
         # assert the objects to be equal
         npt.assert_equal(actual=actual_text_body, desired=expected_text_body)
 
@@ -99,7 +99,31 @@ class TestKratosModelIO:
         expected_text_load = ['', 'Begin SubModelPart load1', '  Begin SubModelPartTables',
                               '  End SubModelPartTables', '  Begin SubModelPartNodes', '  3', '  4',
                               '  End SubModelPartNodes', '  Begin SubModelPartConditions', '  1',
-                              '  End SubModelPartConditions', '', 'Begin SubModelPart', '']
+                              '  End SubModelPartConditions', 'Begin SubModelPart', '']
 
         # assert the objects to be equal
         npt.assert_equal(actual=actual_text_load, desired=expected_text_load)
+
+    def test_write_mdpa_text(self, create_default_2d_model_and_mesh):
+        """
+        Test the creation of the mdpa text of the whole model
+
+        Args:
+            - create_default_2d_model_and_mesh (:class:`stem.model.Model`): the default model to use in testing
+        """
+        # load the default 2D model
+        model = create_default_2d_model_and_mesh
+
+        # IO object
+        model_part_io = KratosModelIO(ndim=model.ndim, domain="PorousDomain")
+
+        # generate text block body model part: soil1
+        actual_text_body = model_part_io.write_mdpa_text(model=model)
+
+        # define expected block text
+        with open('tests/test_data/expected_mdpa_file.mdpa', 'r') as openfile:
+            expected_text_body = openfile.readlines()
+
+        expected_text_body = [line.rstrip() for line in expected_text_body]
+        # assert the objects to be equal
+        npt.assert_equal(actual=actual_text_body, desired=expected_text_body)

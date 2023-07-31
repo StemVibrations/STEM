@@ -1,0 +1,58 @@
+
+Begin Properties 1
+End Properties
+
+
+Begin Nodes
+  1   0.0000000000  0.0000000000  0.0000000000
+  2   1.0000000000  0.0000000000  0.0000000000
+  3   1.0000000000  1.0000000000  0.0000000000
+  4   0.0000000000  1.0000000000  0.0000000000
+  5   0.5000000000  0.5000000000  0.0000000000
+End Nodes
+
+
+Begin Elements DUMMY
+  2  1  2 5 1
+  3  1  1 5 4
+  4  1  3 5 2
+  5  1  4 5 3
+End Elements
+
+
+Begin Conditions DUMMY
+  1  1  3 4
+End Conditions
+
+
+Begin SubModelPart soil1
+  Begin SubModelPartTables
+  End SubModelPartTables
+  Begin SubModelPartNodes
+  1
+  2
+  3
+  4
+  5
+  End SubModelPartNodes
+  Begin SubModelPartElements
+  2
+  3
+  4
+  5
+  End SubModelPartElements
+End SubModelPart
+
+
+Begin SubModelPart load1
+  Begin SubModelPartTables
+  End SubModelPartTables
+  Begin SubModelPartNodes
+  3
+  4
+  End SubModelPartNodes
+  Begin SubModelPartConditions
+  1
+  End SubModelPartConditions
+Begin SubModelPart
+

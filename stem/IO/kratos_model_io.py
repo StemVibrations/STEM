@@ -77,7 +77,7 @@ class KratosModelIO:
             - model (:class:`stem.model.Model`]): the model object containing the process model parts.
 
         """
-        if any([pmp.id is not None for pmp in model.process_model_parts]):
+        if any([pmp.id is None for pmp in model.process_model_parts]):
             print(f"WARNING: Some of the process model parts have ids and some doesn't."
                   f"Ids are reset back.")
 
@@ -87,6 +87,31 @@ class KratosModelIO:
             if self.__check_if_process_writes_conditions(pmp):
                 cc +=1
                 pmp.id = cc
+
+    @staticmethod
+    def initialise_body_model_part_ids(model: Model):
+        """
+        Initialise or reset the process model part ids if some are initialised and some are not.
+
+        Args:
+            - model (:class:`stem.model.Model`]): the model object containing the process model parts.
+
+        """
+
+        _check_initialised = [pmp.id is None for pmp in model.body_model_parts]
+
+        if all(_check_initialised) or any(_check_initialised):
+
+            if any(_check_initialised):
+                print(f"WARNING: Some of the process model parts have ids or no id at all."
+                      f"Ids are initialised.")
+
+            cc = 0
+            for bmp in model.body_model_parts:
+                # if the process writes condition add an id
+                cc += 1
+                bmp.id = cc
+
 
     def __write_submodel_block(self, buffer:List[str], block_name:str, block_entities: Optional[Sequence[int]]=None):
         """
@@ -151,7 +176,7 @@ class KratosModelIO:
         block_text = self.__write_submodel_block(
                     block_text, block_name="Elements", block_entities=entities
                 )
-        block_text += ["", f"End SubModelPart", ""]
+        block_text += [f"End SubModelPart", ""]
         return block_text
 
     def write_submodelpart_process_model_part(self, process_model_part: ModelPart):
@@ -201,7 +226,7 @@ class KratosModelIO:
                 block_text, block_name="Conditions", block_entities=entities
             )
 
-        block_text += ["", f"Begin SubModelPart", ""]
+        block_text += [f"Begin SubModelPart", ""]
         return block_text
 
     def __write_element_line(self, mat_id:int, element:Element):
@@ -219,7 +244,7 @@ class KratosModelIO:
         _node_ids = element.node_ids
         # assemble format for string
         _fmt = f"{sp}{self.format_int}{sp}{self.format_int}{sp}" + " ".join([self.format_int] * len(_node_ids))
-        line = _fmt.format(mat_id, element.id, *_node_ids)
+        line = _fmt.format(element.id, mat_id, *_node_ids)
         return line
 
     def __write_node_line(self, node:Node):
@@ -316,7 +341,7 @@ class KratosModelIO:
         block_text.extend(
             [self.__write_element_line(mat_id, el) for el in body_model_part.mesh.elements]
         )
-        block_text += ["", f"End Elements", ""]
+        block_text += [f"End Elements", ""]
         return block_text
 
     def write_conditions_process_model_part(self, process_model_part: ModelPart, mat_id:int,
@@ -357,7 +382,7 @@ class KratosModelIO:
             block_text.extend(
                 [self.__write_element_line(mat_id, el) for el in process_model_part.mesh.elements]
             )
-            block_text += ["", f"End Conditions", ""]
+            block_text += [f"End Conditions", ""]
         return block_text
 
     def __write_all_nodes(self, model):
@@ -396,7 +421,7 @@ class KratosModelIO:
         # get the unique ids and write properties
 
         block_text = []
-        for _id in sorted(ids_to_write):
+        for _id in np.sort(ids_to_write):
             block_text.extend(
                 ["", f"Begin Properties {_id}", "End Properties", ""]
             )
@@ -501,6 +526,7 @@ class KratosModelIO:
 
         # initialise process model part ids
         self.__initialise_process_model_part_ids(model)
+        self.initialise_body_model_part_ids(model)
 
         block_text = []
         # retrieve the materials in the model and write mdpa text blocks

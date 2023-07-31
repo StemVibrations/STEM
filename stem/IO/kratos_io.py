@@ -46,7 +46,6 @@ class KratosIO:
         self.model_io = KratosModelIO(self.ndim, DOMAIN)
         self.solver_io = KratosSolverIO(self.ndim, DOMAIN)
 
-
     def write_mesh_to_mdpa(self, model: Model, mesh_file_name: str, output_folder="."):
         """Saves mesh data to mdpa file.
 
@@ -91,14 +90,16 @@ class KratosIO:
             - materials_file_name (str): name of the material parameters file. Defaults to `MaterialParamaeters.json`.
 
         Returns:
-            - materials_dict[str, Any]: dictionary containing the material parameters dictionary.
+            - materials_dict[str, Any]: dictionary containing the material parameters' dictionary.
         """
 
         materials_dict: Dict[str, Any] = {"properties": []}
 
+        # check if ids are initialised
+        self.model_io.initialise_body_model_part_ids(model)
+
         # iterate over the body model parts and write the materials (assign also the id)
-        for ix, bmp in enumerate(model.body_model_parts):
-            bmp.id = ix + 1
+        for bmp in model.body_model_parts:
 
             if bmp.material is None:
                 raise ValueError(f"Body model part {bmp.name} has material assigned.")
@@ -257,7 +258,7 @@ class KratosIO:
             - project_parameters_dict (Dict[str, Any]): the dictionary containing the project parameters.
         """
 
-        # write materials and initialise material IDs
+        # write materials
         self.write_material_parameters_json(model, output_folder, materials_file_name)
 
         # write project parameters
