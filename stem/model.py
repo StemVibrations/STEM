@@ -7,11 +7,6 @@ import numpy as np
 import numpy.typing as npty
 
 import numpy as np
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-# Axes3D import has side effects, it enables using projection='3d' in add_subplot
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-
 
 from gmsh_utils import gmsh_IO
 
@@ -24,6 +19,7 @@ from stem.mesh import Mesh, MeshSettings
 from stem.load import *
 from stem.solver import Problem, StressInitialisationType
 from stem.utils import Utils
+from stem.plot_utils import PlotUtils
 
 
 class Model:
@@ -418,171 +414,11 @@ class Model:
 
         self.__validate_model_part_names()
 
+    def show_geometry(self, show_volume_ids: bool = False, show_surface_ids: bool = False, show_line_ids: bool = False,
+                      show_point_ids: bool = False):
+        PlotUtils.show_geometry(self.ndim, self.geometry, show_volume_ids, show_surface_ids, show_line_ids,
+                                show_point_ids)
 
-    def __add_2d_geometry_to_plot(self, surface, show_surface_ids, show_line_ids, show_point_ids, ax):
-
-        # initialize list of surface point ids
-        surface_point_ids = []
-
-        # calculate centroids of lines to show line ids
-        line_centroids = []
-        for line_k in surface.line_ids:
-
-            # get current line
-            line = self.geometry.lines[abs(line_k)]
-
-            # copy line point ids as line_connectivities can be reversed
-            line_connectivities = np.copy(line.point_ids)
-
-            # reverse line connectivity if line is defined in opposite direction
-            if line_k < 0:
-                line_connectivities = line_connectivities[::-1]
-
-            # calculate line centroid
-            line_centroids.append(np.mean([self.geometry.points[line_connectivities[0]].coordinates,
-                                           self.geometry.points[line_connectivities[1]].coordinates], axis=0))
-
-            surface_point_ids.extend(line_connectivities)
-
-        # get unique points within surface
-        unique_points = []
-        for point_id in surface_point_ids:
-
-            if point_id not in unique_points:
-                unique_points.append(point_id)
-
-        # get coordinates of surface points
-        surface_point_coordinates = np.array([self.geometry.points[point_id].coordinates
-                                              for point_id in unique_points])
-
-        # set vertices in format as required by Poly3DCollection
-        vertices = [list(zip(surface_point_coordinates[:, 0],
-                             surface_point_coordinates[:, 1],
-                             surface_point_coordinates[:, 2]))]
-
-        # create Poly3DCollection
-        poly = Poly3DCollection(vertices, facecolors='blue', linewidths=1, edgecolors='black', alpha=0.35)
-
-        # calculate surface centroid and add to list of all surface centroids which are required to calculate
-        # the volume centroid
-        surface_centroid = np.mean(surface_point_coordinates, axis=0)
-
-
-        # show surface ids
-        if show_surface_ids:
-            ax.text(surface_centroid[0], surface_centroid[1], surface_centroid[2], f"s_{abs(surface.id)}",
-                    color='black', fontsize=14, fontweight='bold')
-
-        # show line ids
-        if show_line_ids:
-            for line_centroid, line_k in zip(line_centroids, surface.line_ids):
-                ax.text(line_centroid[0], line_centroid[1], line_centroid[2], f"l_{abs(line_k)}",
-                        color='black', fontsize=14, fontweight='bold')
-
-        # show point ids
-        if show_point_ids:
-            for point_id, point in self.geometry.points.items():
-                ax.text(point.coordinates[0], point.coordinates[1], point.coordinates[2], f"p_{point_id}",
-                        color='black', fontsize=14, fontweight='bold')
-
-        # add Poly3DCollection to figure
-        ax.add_collection3d(poly)
-
-        return surface_centroid
-
-    def show_geometry_from_geo_data(self, show_volume_ids: bool = False,
-                                    show_surface_ids: bool = False, show_line_ids: bool = False,
-                                         show_point_ids: bool = False):
-        """
-        Show the geometry of the model in a matplotlib plot.
-
-        Args:
-            - show_volume_ids (bool): If True, the volume ids are shown in the plot.
-            - show_surface_ids (bool): If True, the surface ids are shown in the plot.
-            - show_line_ids (bool): If True, the line ids are shown in the plot.
-            - show_point_ids (bool): If True, the point ids are shown in the plot.
-
-        """
-        from mpl_toolkits.mplot3d import Axes3D
-        # Axes3D import has side effects, it enables using projection='3d' in add_subplot
-
-        from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-
-        # Initialize figure in 3D
-        fig = plt.figure()
-
-
-        if self.ndim == 2:
-            ax = fig.add_subplot(111, projection='3d')
-            for surface in self.geometry.surfaces.values():
-                self.__add_2d_geometry_to_plot(surface, show_surface_ids, show_line_ids,show_point_ids, ax)
-
-            # set view to the x-y plane
-            ax.view_init(elev=90, azim=-90)
-
-        if self.ndim == 3:
-            ax = fig.add_subplot(111, projection='3d')
-            # loop over all volumes
-            for volume_k, volume_data in self.geometry.volumes.items():
-
-                # initialize list of surface centroids which are required to plot the surface ids
-                all_surface_centroids = []
-
-                # loop over all surfaces within the volume
-                for surface_k in volume_data.surface_ids:
-
-                    # get current surface
-                    surface = self.geometry.surfaces[abs(surface_k)]
-
-                    surface_centroid = self.__add_2d_geometry_to_plot(surface, show_surface_ids, show_line_ids,
-                                                                      show_point_ids, ax)
-                    all_surface_centroids.append(surface_centroid)
-
-                # show volume ids
-                if show_volume_ids:
-                    volume_centroid = np.mean(all_surface_centroids, axis=0)
-                    ax.text(volume_centroid[0], volume_centroid[1], volume_centroid[2], f"v_{volume_k}",
-                            color='black', fontsize=14, fontweight='bold')
-
-        # set limits of plot
-        # extend limits with buffer, which is 10% of the difference between min and max
-        buffer = 0.1
-        all_coordinates = np.array([point.coordinates for point in self.geometry.points.values()])
-
-        # calculate and set x and y limits
-        min_x, max_x = np.min(all_coordinates[:, 0]), np.max(all_coordinates[:, 0])
-        dx = max_x - min_x
-        min_y, max_y = np.min(all_coordinates[:, 1]), np.max(all_coordinates[:, 1])
-        dy = max_y - min_y
-
-        xlim = [min_x - buffer*dx, max_x + buffer*dx]
-        ylim = [min_y - buffer*dy, max_y + buffer*dy]
-
-        ax.set_xlim(xlim)
-        ax.set_ylim(ylim)
-
-        # set x and y labels
-        ax.set_xlabel("x coordinates [m]")
-        ax.set_ylabel("y coordinates [m]")
-
-        if self.ndim == 3:
-            # calculate and set z limits
-            min_z, max_z = np.min(all_coordinates[:, 2]), np.max(all_coordinates[:, 2])
-            dz = max_z - min_z
-
-            zlim = [min_z - buffer * dz, max_z + buffer * dz]
-
-            ax.set_zlim(zlim)
-
-            # set z label
-            ax.set_zlabel("z coordinates [m]")
-
-        # set equal aspect ratio to equal axes
-        ax.set_aspect('equal')
-
-        fig.show()
-
-        a=1+1
 
     def __setup_stress_initialisation(self):
         """
