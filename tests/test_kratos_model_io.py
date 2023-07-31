@@ -103,4 +103,3 @@ class TestKratosModelIO:
 
         # assert the objects to be equal
         npt.assert_equal(actual=actual_text_load, desired=expected_text_load)
-
