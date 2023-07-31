@@ -104,6 +104,9 @@ class KratosIO:
             if bmp.material is None:
                 raise ValueError(f"Body model part {bmp.name} has material assigned.")
 
+            if bmp.id is None:
+                raise ValueError  # it will not rise because initialised ...
+
             materials_dict["properties"].append(
                 self.material_io.create_material_dict(
                     part_name=f"{self.material_io.domain}.{bmp.name}",
