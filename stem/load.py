@@ -24,8 +24,8 @@ class PointLoad(LoadParametersABC):
         - value (List[float]): Entity of the load in the 3 directions [N].
     """
 
-    active: List[bool] = field(default_factory=lambda: [True, True, True])
-    value: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+    active: List[bool]
+    value: List[float]
 
 
 @dataclass
@@ -37,8 +37,8 @@ class LineLoad(LoadParametersABC):
         - active (List[bool]): Activate/deactivate load for each direction.
         - value (List[float]): Entity of the load in the 3 directions [N].
     """
-    active: List[bool] = field(default_factory=lambda: [True, True, True])
-    value: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+    active: List[bool]
+    value: List[float]
 
 
 @dataclass
@@ -50,8 +50,8 @@ class SurfaceLoad(LoadParametersABC):
         - active (List[bool]): Activate/deactivate load for each direction.
         - value (List[float]): Entity of the load in the 3 directions [N].
     """
-    active: List[bool] = field(default_factory=lambda: [True, True, True])
-    value: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+    active: List[bool]
+    value: List[float]
 
 
 @dataclass
@@ -72,10 +72,10 @@ class MovingLoad(LoadParametersABC):
         - offset (float): Offset of the moving load [m].
     """
 
-    load: Union[List[float], List[str]] = field(default_factory=lambda: [0.0, 0.0, 0.0])
-    direction: List[float] = field(default_factory=lambda: [1, 1, 1])
-    velocity: Union[float, str] = 0.0
-    origin: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+    load: Union[List[float], List[str]]
+    direction: List[float]
+    velocity: Union[float, str]
+    origin: List[float]
     offset: float = 0.0
 
 
@@ -92,5 +92,5 @@ class GravityLoad(LoadParametersABC):
         - value (List[float]): Entity of the gravity acceleration in the 3 directions [m/s^2]. Should be -9.81 only in
             the vertical direction
     """
-    active: List[bool] = field(default_factory=lambda: [False, False, False])
-    value: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+    active: List[bool]
+    value: List[float]

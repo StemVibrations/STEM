@@ -1,6 +1,10 @@
 from typing import List, Sequence, Dict, Any, Optional, Union
 from enum import Enum
 from dataclasses import dataclass
+from typing import List, Sequence, Dict, Any, Optional, Union, get_args
+
+import numpy as np
+import numpy.typing as npty
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -9,8 +13,12 @@ from gmsh_utils import gmsh_IO
 from stem.model_part import ModelPart, BodyModelPart
 from stem.soil_material import *
 from stem.structural_material import *
+from stem.boundary import *
 from stem.geometry import Geometry
 from stem.mesh import Mesh, MeshSettings
+from stem.load import *
+from stem.solver import Problem, StressInitialisationType
+from stem.utils import Utils
 
 
 class Model:
@@ -29,7 +37,7 @@ class Model:
     """
     def __init__(self, ndim: int):
         self.ndim: int = ndim
-        self.project_parameters = None
+        self.project_parameters: Optional[Problem] = None
         self.solver = None
         self.geometry: Optional[Geometry] = None
         self.mesh_settings: MeshSettings = MeshSettings()
@@ -109,7 +117,13 @@ class Model:
                 :class:`stem.structural_material.StructuralMaterial`]): The material parameters of the soil layer.
             - name (str): The name of the soil layer.
 
+        Raises:
+            - ValueError: if extrusion_length is not specified.
         """
+
+        # sort coordinates in anti-clockwise order, such that elements in mesh are also in anti-clockwise order
+        if Utils.are_2d_coordinates_clockwise(coordinates):
+            coordinates = coordinates[::-1]
 
         gmsh_input = {name: {"coordinates": coordinates, "ndim": self.ndim}}
         # check if extrusion length is specified in 3D
@@ -130,6 +144,136 @@ class Model:
         body_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
 
         self.body_model_parts.append(body_model_part)
+
+    def add_load_by_coordinates(self, coordinates: Sequence[Sequence[float]], load_parameters: LoadParametersABC, name: str):
+        """
+        Adds a load to the model by giving a sequence of 3D coordinates. For a 2D model, the third coordinate is
+        ignored.
+
+        Args:
+            - coordinates (Sequence[Sequence[float]]): The coordinates of the load.
+            - load_parameters (:class:`stem.load.LoadParametersABC`): The parameters of the load.
+            - name (str): The name of the load part.
+
+        Raises:
+            - ValueError: if load_parameters is not of one of the classes PointLoad, MovingLoad, LineLoad
+                          or SurfaceLoad.
+        """
+
+        # todo add validation that load is applied on a body model part
+
+        # validation of inputs
+        self.validate_coordinates(coordinates)
+        if isinstance(load_parameters, MovingLoad):
+            self.__validate_moving_load_parameters(coordinates, load_parameters)
+
+        # create input for gmsh
+        if isinstance(load_parameters, PointLoad):
+            gmsh_input = {name: {"coordinates": coordinates, "ndim": 0}}
+        elif isinstance(load_parameters, LineLoad) or isinstance(load_parameters, MovingLoad):
+            gmsh_input = {name: {"coordinates": coordinates, "ndim": 1}}
+        elif isinstance(load_parameters, SurfaceLoad):
+            gmsh_input = {name: {"coordinates": coordinates, "ndim": 2}}
+        else:
+            raise ValueError(f'Invalid load_parameters ({load_parameters.__class__.__name__}) object'
+                             f' provided for the load {name}. Expected one of PointLoad, MovingLoad,'
+                             f' LineLoad or SurfaceLoad.')
+
+        self.gmsh_io.generate_geometry(gmsh_input, "")
+
+        # create model part
+        model_part = ModelPart(name)
+        model_part.parameters = load_parameters
+
+        # set the geometry of the model part
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
+
+        self.process_model_parts.append(model_part)
+
+    @staticmethod
+    def validate_coordinates(coordinates: Union[Sequence[Sequence[float]], npty.NDArray[np.float64]]):
+        """
+        Validates the coordinates in input.
+
+        Args:
+            - coordinates (Sequence[Sequence[float]]): The coordinates of the load.
+
+        Raises:
+            - ValueError: if coordinates is not convertible to a 2D array (i.e. a sequence of sequences)
+            - ValueError: if the number of elements (number of coordinates) is not 3.
+        """
+
+        # if is not an array, make it array!
+
+        if not isinstance(coordinates, np.ndarray):
+            coordinates = np.array(coordinates)
+
+        if len(coordinates.shape) != 2:
+            raise ValueError(f"Coordinates are not a sequence of a sequence or a 2D array.")
+
+        if coordinates.shape[1] != 3:
+            raise ValueError(f"Coordinates should be 3D but {coordinates.shape[1]} coordinates were given.")
+
+    @staticmethod
+    def __validate_moving_load_parameters(coordinates: Sequence[Sequence[float]], load_parameters: MovingLoad):
+        """
+        Validates the coordinates in input for the moving load and the trajectory (collinearity of the
+        points and if the origin is between the point).
+
+        Args:
+            - coordinates (Sequence[Sequence[float]]): The start-end coordinate of the moving load.
+            - parameters (:class:`stem.load.LoadParametersABC`): The parameters of the load.
+
+        Raises:
+            - ValueError: if moving load origin is not on trajectory
+        """
+
+        # iterate over each line constituting the trajectory
+        for ix in range(len(coordinates)-1):
+
+            # check origin is collinear to the edges of the line
+            collinear_check = Utils.is_collinear(
+                point=load_parameters.origin, start_point=coordinates[ix],end_point=coordinates[ix+1]
+            )
+            # check origin is between the edges of the line (edges included)
+            is_between_check = Utils.is_point_between_points(
+                point=load_parameters.origin, start_point=coordinates[ix], end_point=coordinates[ix+1]
+            )
+            # check if point complies
+            is_on_line = collinear_check and is_between_check
+            # exit at the first success of the test (point in the line)
+            if is_on_line:
+                return
+
+        # none of the lines contain the origin, then raise an error
+        raise ValueError(f"Origin is not in the trajectory of the moving load.")
+
+    def add_boundary_condition_by_geometry_ids(self, ndim_boundary: int, geometry_ids: Sequence[int],
+                                               boundary_parameters: BoundaryParametersABC, name: str):
+        """
+        Add a boundary condition to the model by giving the geometry ids of the boundary condition.
+
+        Args:
+            - ndim_boundary (int): dimension of the boundary condition
+            - geometry_ids (Sequence[int]): geometry ids of the boundary condition
+            - boundary_condition (:class:`stem.boundary_condition.BoundaryCondition`): boundary condition object
+            - name (str): name of the boundary condition
+
+        """
+
+        # add physical group to gmsh
+        self.gmsh_io.add_physical_group(name, ndim_boundary, geometry_ids)
+
+        # create model part
+        model_part = ModelPart(name)
+
+        # retrieve geometry from gmsh and add to model part
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
+
+        # add boundary parameters to model part
+        model_part.parameters = boundary_parameters
+
+        self.process_model_parts.append(model_part)
 
     def synchronise_geometry(self):
         """
@@ -196,6 +340,69 @@ class Model:
                 if model_part.name in unique_names:
                     raise ValueError("All model parts must have a unique name")
                 unique_names.append(model_part.name)
+
+    def __add_gravity_model_part(self, gravity_load: GravityLoad, ndim: int, geometry_ids: Sequence[int]):
+        """
+        Add a gravity model part to the complete model.
+
+        Args:
+            - gravity_load (GravityLoad): The gravity load object.
+            - ndim (int): The number of dimensions of the on which the gravity load should be applied.
+            - geometry_ids (Sequence[int]): The geometry on which the gravity load should be applied.
+
+        """
+
+        # set new model part name
+        model_part_name = f"gravity_load_{ndim}d"
+
+        # create new gravity physical group and model part
+        self.gmsh_io.add_physical_group(model_part_name, ndim, geometry_ids)
+        model_part = ModelPart(model_part_name)
+
+        model_part.parameters = gravity_load
+
+        # add gravity load to process model parts
+        self.process_model_parts.append(model_part)
+
+    def __add_gravity_load(self, gravity_value: float = -9.81, vertical_axis: int = 1):
+        """
+        Add a gravity load to the complete model.
+
+        Args:
+            - gravity_value (float): The gravity value [m/s^2]. (default -9.81)
+            - vertical_axis (int): The vertical axis of the model. x=>0, y=>1, z=>2. (default y, 1)
+
+        """
+
+        # set gravity load at vertical axis
+        gravity_load_values: List[float] = [0, 0, 0]
+        gravity_load_values[vertical_axis] = gravity_value
+        gravity_load = GravityLoad(value=gravity_load_values, active=[True, True, True])
+
+        # get all body model part names
+        body_model_part_names = [body_model_part.name for body_model_part in self.body_model_parts]
+
+        # get geometry ids and ndim for each body model part
+        model_parts_geometry_ids = np.array([self.gmsh_io.geo_data["physical_groups"][name]["geometry_ids"] for name in
+                                    body_model_part_names])
+
+        model_parts_ndim = np.array([self.gmsh_io.geo_data["physical_groups"][name]["ndim"]
+                                     for name in body_model_part_names]).ravel()
+
+        # add gravity load as physical group per dimension
+        body_geometries_1d = model_parts_geometry_ids[model_parts_ndim == 1].ravel()
+        if len(body_geometries_1d) > 0:
+            self.__add_gravity_model_part(gravity_load, 1, body_geometries_1d)
+
+        body_geometries_2d = model_parts_geometry_ids[model_parts_ndim == 2].ravel()
+        if len(body_geometries_2d) > 0:
+            self.__add_gravity_model_part(gravity_load, 2, body_geometries_2d)
+
+        body_geometries_3d = model_parts_geometry_ids[model_parts_ndim == 3].ravel()
+        if len(body_geometries_3d) > 0:
+            self.__add_gravity_model_part(gravity_load, 3, body_geometries_3d)
+
+        self.synchronise_geometry()
 
     def validate(self):
         """
@@ -333,3 +540,38 @@ class Model:
 
         a=1+1
 
+    def __setup_stress_initialisation(self):
+        """
+        Set up the stress initialisation. For K0 procedure and gravity loading, a gravity load is added to the model.
+
+        Raises:
+            - ValueError: If the project parameters are not set.
+
+        """
+
+        if self.project_parameters is None:
+            raise ValueError("Project parameters must be set before setting up the stress initialisation")
+
+        # add gravity load if K0 procedure or gravity loading is used
+        if (self.project_parameters.settings.stress_initialisation_type ==
+            StressInitialisationType.K0_PROCEDURE) or \
+                (self.project_parameters.settings.stress_initialisation_type ==
+                 StressInitialisationType.GRAVITY_LOADING):
+
+            self.__add_gravity_load()
+
+    def post_setup(self):
+        """
+        Post setup of the model. \
+            - Synchronise the geometry. \
+            - Generate the mesh. \
+            - Validate the model. \
+            - Set up the stress initialisation.
+
+        """
+
+        self.synchronise_geometry()
+        self.generate_mesh()
+        self.validate()
+
+        self.__setup_stress_initialisation()
