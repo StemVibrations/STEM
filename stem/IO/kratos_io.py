@@ -14,7 +14,7 @@ from stem.load import LoadParametersABC
 from stem.model import Model
 from stem.output import Output
 from stem.solver import Problem
-from stem.utils import merge
+from stem.utils import Utils
 
 DOMAIN = "PorousDomain"
 
@@ -224,7 +224,7 @@ class KratosIO:
 
         # merge dictionaries into one
         project_parameters_dict: Dict[str, Any] = reduce(
-            merge, (solver_dict, outputs_dict, loads_and_bc_dict)
+            Utils.merge, (solver_dict, outputs_dict, loads_and_bc_dict)
         )
         # write json file
         if project_file_name is not None:
