@@ -89,6 +89,10 @@ class KratosIO:
             - output_folder (str): folder to store the material parameters file. Defaults to the working directory.
             - materials_file_name (str): name of the material parameters file. Defaults to `MaterialParamaeters.json`.
 
+        Raises:
+            - ValueError: if material is not assigned to the body model part
+            - ValueError: if material id is not initialised
+
         Returns:
             - materials_dict[str, Any]: dictionary containing the material parameters' dictionary.
         """
@@ -98,11 +102,11 @@ class KratosIO:
         # check if ids are initialised
         self.model_io.initialise_body_model_part_ids(model)
 
-        # iterate over the body model parts and write the materials (assign also the id)
+        # iterate over the body model parts and create materials
         for bmp in model.body_model_parts:
 
             if bmp.material is None:
-                raise ValueError(f"Body model part {bmp.name} has material assigned.")
+                raise ValueError(f"Body model part {bmp.name} has no material assigned.")
 
             if bmp.id is None:
                 raise ValueError  # it will not rise because initialised ...
@@ -115,6 +119,7 @@ class KratosIO:
                 )
             )
 
+        # write the material parameters file to json
         if materials_file_name is not None:
             output_folder_pth = Path(output_folder)
             output_path_file = output_folder_pth.joinpath(materials_file_name)
@@ -132,6 +137,9 @@ class KratosIO:
             - model (:class:`stem.model.Model`]): The model object containing the solver data and model parts.
             - mesh_file_name (str): The name of the mesh file.
             - materials_file_name (str): The name of the materials parameters json file.
+
+        Raises:
+            - ValueError: if solver_settings in model are not initialised.
 
         Returns:
             - Dict[str, Any]: dictionary containing the part of the project parameters
@@ -178,11 +186,15 @@ class KratosIO:
             "processes": {"constraints_process_list": [], "loads_process_list": []}
         }
 
+        # loop on the process model parts
         for mp in model.process_model_parts:
+
+            # add load
             if isinstance(mp.parameters, LoadParametersABC):
                 _parameters = self.loads_io.create_load_dict(mp.name, mp.parameters)
                 processes_dict["processes"]["loads_process_list"].append(_parameters)
 
+            # add boundary condition
             elif isinstance(mp.parameters, BoundaryParametersABC):
                 _parameters = self.boundaries_io.create_boundary_condition_dict(
                     mp.name, mp.parameters
@@ -219,12 +231,15 @@ class KratosIO:
             - project_parameters_dict (Dict[str, Any]): the dictionary containing the project parameters.
         """
         output_folder_pth = Path(output_folder)
-
+        # get the solver dictionary
         solver_dict = self.__write_solver_settings(
             model, mesh_file_name, materials_file_name
         )
+        # get the output dictionary
         outputs_dict = self.__write_output_processes(outputs=outputs)
+        # get the boundary condition dictionary
         loads_and_bc_dict = self.__write_loads_and_constraints(model=model)
+        # TODO get the additional_processes dictionary
 
         # merge dictionaries into one
         project_parameters_dict: Dict[str, Any] = reduce(

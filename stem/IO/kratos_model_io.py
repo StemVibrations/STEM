@@ -41,7 +41,6 @@ class KratosModelIO:
         self.format_int = format_int
         self.format_float = format_float
 
-
     @staticmethod
     def __is_body_model_part(model_part:ModelPart):
         """Check whether the model part is a body model part.
@@ -85,7 +84,7 @@ class KratosModelIO:
         for pmp in model.process_model_parts:
             # if the process writes condition add an id
             if self.__check_if_process_writes_conditions(pmp):
-                cc +=1
+                cc += 1
                 pmp.id = cc
 
     @staticmethod
@@ -106,12 +105,8 @@ class KratosModelIO:
                 print(f"WARNING: Some of the process model parts have ids or no id at all."
                       f"Ids are initialised.")
 
-            cc = 0
-            for bmp in model.body_model_parts:
-                # if the process writes condition add an id
-                cc += 1
-                bmp.id = cc
-
+            for ix, bmp in enumerate(model.body_model_parts):
+                bmp.id = ix + 1
 
     def __write_submodel_block(self, buffer:List[str], block_name:str, block_entities: Optional[Sequence[int]]=None):
         """
@@ -240,9 +235,12 @@ class KratosModelIO:
         Returns:
             - line (str): string representing an element (or condition) in Kratos.
         """
+        # simplify space syntax
         sp = " " * self.ind
         _node_ids = element.node_ids
-        # assemble format for string
+        # assemble format for element/condition string
+        # `  element_id  property_id  node_1 node_2 node_3 ... node_N`
+        # where N=number of nodes of the element/condition
         _fmt = f"{sp}{self.format_int}{sp}{self.format_int}{sp}" + " ".join([self.format_int] * len(_node_ids))
         line = _fmt.format(element.id, mat_id, *_node_ids)
         return line
@@ -257,9 +255,11 @@ class KratosModelIO:
         Returns:
             - line: string representing a node in Kratos.
         """
+        # simplify space syntax
         sp = " " * self.ind
         node_coords = node.coordinates
-        # assemble format for string
+        # assemble format for nodal string
+        #   node_id  coordinate_1 coordinate_2 coordinate_3
         _fmt = f"{sp}{self.format_int}{sp}" + " ".join([self.format_float] * len(node_coords))
         line = _fmt.format(node.id, *node_coords)
         return line
