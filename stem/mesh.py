@@ -5,8 +5,6 @@ from dataclasses import dataclass
 import numpy as np
 import numpy.typing as npt
 
-from stem.IO.kratos_io import KratosIO
-
 
 class ElementShape(Enum):
     """
@@ -192,23 +190,3 @@ class Mesh:
         all_elements = np.array(all_elements_list).astype(int)
 
         return nodes, all_elements
-
-    def write_mesh_to_kratos_structure(self, mesh_data: Dict[str, Any], filename: str) -> None:
-        """
-        Writes mesh data to the structure which can be read by Kratos
-
-        Args:
-            - mesh_data (Dict[str, Any]): dictionary of mesh data
-            - filename (str): filename of the kratos mesh file
-
-        Returns:
-        """
-
-        nodes, elements = self.prepare_data_for_kratos(mesh_data)
-
-        kratos_io = KratosIO(self.ndim)
-        kratos_io.write_mesh_to_mdpa(filename)
-
-
-
-

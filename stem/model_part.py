@@ -23,6 +23,7 @@ class ModelPart:
             :class:`stem.additional_processes.AdditionalProcessesParametersABC`]]): process parameters containing the \
             model part parameters.
         - mesh (Optional[:class:`stem.mesh.Mesh`]): mesh of the model part
+        - id (Optional[int]): the id of the model part
     """
     def __init__(self, name: str):
         """
@@ -37,6 +38,7 @@ class ModelPart:
             Union[LoadParametersABC, BoundaryParametersABC,AdditionalProcessesParametersABC]
         ] = None
         self.mesh: Optional[Mesh] = None
+        self.id : Optional[int] = None
 
     @property
     def name(self):

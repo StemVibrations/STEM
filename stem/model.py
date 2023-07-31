@@ -13,7 +13,7 @@ from stem.structural_material import *
 from stem.boundary import *
 from stem.load import *
 from stem.geometry import Geometry
-from stem.mesh import Mesh, MeshSettings
+from stem.mesh import Mesh, MeshSettings, Node
 from stem.load import *
 from stem.solver import Problem, StressInitialisationType
 from stem.utils import is_point_between_points, is_collinear
@@ -405,6 +405,34 @@ class Model:
             self.__add_gravity_model_part(gravity_load, 3, body_geometries_3d)
 
         self.synchronise_geometry()
+
+    def get_all_model_parts(self):
+        """Returns both body and process model parts in the model.
+
+        Returns:
+            all_model_parts (List[:class:`stem.model_part.ModelPart`]): list of all the model parts.
+        """
+        all_model_parts = []
+        all_model_parts.extend(self.process_model_parts)
+        all_model_parts.extend(self.body_model_parts)
+        return all_model_parts
+
+    def get_all_nodes(self):
+        """Retrieve all the unique nodes in the model mesh.
+
+        Returns:
+            - node_dict (Dict[int, :class:`stem.mesh.Node`]): dictionary containing nodes id and nodes objects.
+        """
+
+        node_dict: Dict[int, Node] = {}
+        for mp in self.get_all_model_parts():
+            if mp.mesh is None:
+                raise ValueError('Geometry has not been meshed yet! Please first run the Model.generate_mesh method.')
+            for nn in mp.mesh.nodes:
+                if not nn in node_dict.keys():
+                    node_dict[nn.id] = nn
+
+        return node_dict
 
     def validate(self):
         """

@@ -10,10 +10,10 @@ from gmsh_utils import gmsh_IO
 import pytest
 
 from tests.utils import TestUtils
-from stem.IO.kratos_model_part_io import KratosModelPartIO
+from stem.IO.kratos_model_io import KratosModelIO
 
 
-class TestKratosModelPartIO:
+class TestKratosModelIO:
 
     @pytest.fixture(autouse=True)
     def close_gmsh(self):
@@ -77,7 +77,7 @@ class TestKratosModelPartIO:
         process_model_part_to_write = model.process_model_parts[0]
 
         # IO object
-        model_part_io = KratosModelPartIO(ndim=model.ndim, domain="PorousDomain")
+        model_part_io = KratosModelIO(ndim=model.ndim, domain="PorousDomain")
 
         # generate text block body model part: soil1
         actual_text_body = model_part_io.write_submodelpart_body_model_part(
