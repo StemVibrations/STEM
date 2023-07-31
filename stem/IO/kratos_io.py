@@ -78,7 +78,7 @@ class KratosIO:
     def write_material_parameters_json(
         self,
         model: Model,
-        materials_file_name: Optional[str] = "MaterialParamaeters.json",
+        materials_file_name: str = "MaterialParamaeters.json",
         output_folder: str = "."
     ):
         """Writes the material parameters to json format for Kratos.
