@@ -1,6 +1,5 @@
 import json
 import numpy.testing as npt
-from stem.IO.kratos_loads_io import KratosLoadsIO
 from stem.load import LineLoad
 from stem.model import Model
 from stem.model_part import *

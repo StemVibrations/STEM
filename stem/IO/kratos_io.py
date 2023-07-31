@@ -1,7 +1,7 @@
 import json
 from functools import reduce
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 from stem.IO.kratos_boundaries_io import KratosBoundariesIO
 from stem.IO.kratos_loads_io import KratosLoadsIO
@@ -63,31 +63,31 @@ class KratosIO:
         # append EOL to each line
         output_formatted_txt = [line + "\n" for line in block_text]
 
-        if mesh_file_name is not None:
-            output_folder = Path(output_folder)
-            output_folder.mkdir(parents=True, exist_ok=True)
+        output_folder_pth = Path(output_folder)
+        output_folder_pth.mkdir(exist_ok=True, parents=True)
 
-            output_path = output_folder.joinpath(mesh_file_name)
-            output_path = output_path.with_suffix(".mdpa")
+        output_path = output_folder_pth.joinpath(mesh_file_name)
+        # if no suffix or wron suffix change to mdpa
+        output_path = output_path.with_suffix(".mdpa")
 
-            with open(output_path, "w") as _buf:
-                _buf.writelines(output_formatted_txt)
+        with open(output_path, "w") as _buf:
+            _buf.writelines(output_formatted_txt)
 
         return output_formatted_txt
 
     def write_material_parameters_json(
         self,
         model: Model,
-        output_folder: str = ".",
-        materials_file_name: str = "MaterialParamaeters.json",
+        materials_file_name: Optional[str] = "MaterialParamaeters.json",
+        output_folder: str = "."
     ):
         """Writes the material parameters to json format for Kratos.
 
         Args:
             - model (:class:`stem.model.Model`]): The model object containing all the required info on the \
                 materials.
-            - output_folder (str): folder to store the material parameters file. Defaults to the working directory.
             - materials_file_name (str): name of the material parameters file. Defaults to `MaterialParamaeters.json`.
+            - output_folder (str): folder to store the material parameters file. Defaults to the working directory.
 
         Raises:
             - ValueError: if material is not assigned to the body model part
@@ -120,10 +120,10 @@ class KratosIO:
             )
 
         # write the material parameters file to json
-        if materials_file_name is not None:
-            output_folder_pth = Path(output_folder)
-            output_path_file = output_folder_pth.joinpath(materials_file_name)
-            json.dump(materials_dict, open(output_path_file, "w"), indent=4)
+        output_folder_pth = Path(output_folder)
+        output_folder_pth.mkdir(exist_ok=True, parents=True)
+        output_path_file = output_folder_pth.joinpath(materials_file_name)
+        json.dump(materials_dict, open(output_path_file, "w"), indent=4)
 
         return materials_dict
 
@@ -150,7 +150,7 @@ class KratosIO:
 
         return self.solver_io.create_settings_dictionary(
             model.project_parameters,
-            mesh_file_name,
+            Path(mesh_file_name).stem,
             materials_file_name,
             model.get_all_model_parts(),
         )
@@ -163,8 +163,7 @@ class KratosIO:
             - outputs (List[:class:`stem.output.Output`]): The list of output processes objects to write in outputs.
 
         Returns:
-            - Dict[str, Any]: dictionary containing the part of the project parameters
-                dictionary related to outputs
+            - Dict[str, Any]: dictionary containing the part of the project parameters dictionary related to outputs
         """
         return self.outputs_io.create_output_process_dictionary(outputs=outputs)
 
@@ -179,8 +178,8 @@ class KratosIO:
             - model (:class:`stem.model.Model`]): The model object containing the process model parts.
 
         Returns:
-            - Dict[str, Any]: dictionary containing the part of the project parameters
-                dictionary related to loads and boundary conditions
+            - Dict[str, Any]: dictionary containing the part of the project parameters dictionary related \
+                to loads and boundary conditions
         """
         processes_dict: Dict[str, Any] = {
             "processes": {"constraints_process_list": [], "loads_process_list": []}
@@ -212,8 +211,8 @@ class KratosIO:
         outputs: List[Output],
         mesh_file_name: str,
         materials_file_name: str,
-        output_folder: str = ".",
         project_file_name: str = "ProjectParameters.json",
+        output_folder: str = "."
     ):
         """
         Writes project parameters to json file
@@ -224,13 +223,12 @@ class KratosIO:
             - outputs (List[:class:`stem.output.Output`]): The list of output processes objects to write in outputs.
             - mesh_file_name (str): The name of the mesh file.
             - materials_file_name (str): The name of the materials file.
-            - output_folder (str): folder to store the project parameters file. Defaults to the working directory.
             - project_file_name (str): name of the project parameters file. Defaults to `ProjectParamaeters.json`.
+            - output_folder (str): folder to store the project parameters file. Defaults to the working directory.
 
         Returns:
             - project_parameters_dict (Dict[str, Any]): the dictionary containing the project parameters.
         """
-        output_folder_pth = Path(output_folder)
         # get the solver dictionary
         solver_dict = self.__write_solver_settings(
             model, mesh_file_name, materials_file_name
@@ -246,9 +244,11 @@ class KratosIO:
             Utils.merge, (solver_dict, outputs_dict, loads_and_bc_dict)
         )
         # write json file
-        if project_file_name is not None:
-            output_path_file = output_folder_pth.joinpath(project_file_name)
-            json.dump(project_parameters_dict, open(output_path_file, "w"), indent=4)
+        output_folder_pth = Path(output_folder)
+        output_folder_pth.mkdir(exist_ok=True, parents=True)
+
+        output_path_file = output_folder_pth.joinpath(project_file_name)
+        json.dump(project_parameters_dict, open(output_path_file, "w"), indent=4)
 
         return project_parameters_dict
 
@@ -257,8 +257,8 @@ class KratosIO:
         model: Model,
         outputs: List[Output],
         mesh_file_name: str,
-        project_file_name: str = "ProjectParameters.json",
         materials_file_name: str = "MaterialParameters.json",
+        project_file_name: str = "ProjectParameters.json",
         output_folder: str = ".",
     ):
         """
@@ -268,8 +268,8 @@ class KratosIO:
             - model (:class:`stem.model.Model`]): The model object containing all the required info.
             - outputs (List[:class:`stem.output.Output`]): The list of output processes objects to write in outputs.
             - mesh_file_name (str): The name of the mesh file.
-            - project_file_name (str): name of the project parameters file. Defaults to `ProjectParamaeters.json`.
             - materials_file_name (str): The name of the materials file.
+            - project_file_name (str): name of the project parameters file. Defaults to `ProjectParamaeters.json`.
             - output_folder (str): folder to store the project parameters file. Defaults to the working directory.
 
         Returns:
