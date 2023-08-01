@@ -81,7 +81,8 @@ class KratosIO:
         materials_file_name: str = "MaterialParameters.json",
         output_folder: str = "."
     ):
-        """Writes the material parameters to json format for Kratos.
+        """
+        Writes the material parameters to json format for Kratos.
 
         Args:
             - model (:class:`stem.model.Model`]): The model object containing all the required info on the \
