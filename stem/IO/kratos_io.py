@@ -1,19 +1,18 @@
 import json
 from functools import reduce
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 
 from stem.IO.kratos_boundaries_io import KratosBoundariesIO
 from stem.IO.kratos_loads_io import KratosLoadsIO
 from stem.IO.kratos_material_io import KratosMaterialIO
-from stem.IO.kratos_output_io import KratosOutputsIO
 from stem.IO.kratos_model_io import KratosModelIO
+from stem.IO.kratos_output_io import KratosOutputsIO
 from stem.IO.kratos_solver_io import KratosSolverIO
 from stem.boundary import BoundaryParametersABC
 from stem.load import LoadParametersABC
 from stem.model import Model
 from stem.output import Output
-from stem.solver import Problem
 from stem.utils import Utils
 
 DOMAIN = "PorousDomain"

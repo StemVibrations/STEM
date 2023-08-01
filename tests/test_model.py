@@ -1,15 +1,14 @@
-from typing import Tuple
 import pickle
+from typing import Tuple
 
-import pytest
-from gmsh_utils import gmsh_IO
 import numpy.testing as npt
+import pytest
 
-from stem.model import *
-from stem.geometry import *
-from tests.utils import TestUtils
-from stem.solver import *
 from stem.boundary import *
+from stem.geometry import *
+from stem.model import *
+from stem.solver import *
+from tests.utils import TestUtils
 
 
 class TestModel:

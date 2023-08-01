@@ -1,12 +1,12 @@
-from typing import Sequence, Optional, Dict, List
+from typing import Sequence, Optional, List
 
 import numpy as np
 
+from stem.boundary import AbsorbingBoundary
 from stem.load import LineLoad, MovingLoad, SurfaceLoad
 from stem.mesh import Element, Node
 from stem.model import Model
 from stem.model_part import ModelPart, BodyModelPart
-from stem.boundary import AbsorbingBoundary
 
 
 class KratosModelIO:

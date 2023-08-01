@@ -2,21 +2,19 @@ import json
 from typing import List
 
 import numpy.testing as npt
+import pytest
+from gmsh_utils import gmsh_IO
 
+from stem.IO.kratos_io import KratosIO
 from stem.boundary import DisplacementConstraint
-from stem.load import LineLoad
+from stem.load import LineLoad, SurfaceLoad
 from stem.model import Model
 from stem.model_part import *
 from stem.output import NodalOutput, GaussPointOutput, GiDOutputParameters, Output
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
-from gmsh_utils import gmsh_IO
-
-import pytest
-
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, \
     NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
 from tests.utils import TestUtils
-from stem.IO.kratos_io import KratosIO
 
 
 class TestKratosModelIO:
@@ -75,6 +73,50 @@ class TestKratosModelIO:
         model.generate_mesh()
 
         return model
+    
+
+    @pytest.fixture
+    def create_default_3d_model_and_mesh(self):
+        """
+        Sets expected geometry data for a 3D geometry group. The group is a geometry of a cube.
+
+        Returns:
+            - :class:`stem.model.Model`: the default 3D model of a cube soil and a surface load.
+        """
+        ndim=3
+        layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+        load_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+        # define soil material
+        soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
+        constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
+        soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
+                                     retention_parameters=SaturatedBelowPhreaticLevelLaw())
+
+        # define load properties
+        surface_load = SurfaceLoad(active=[False, True, False], value=[0, -20, 0])
+
+        # create model
+        model = Model(ndim)
+        model.extrusion_length = [0, 0, -1]
+
+        # add soil layer and line load and mesh them
+        model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
+        model.add_load_by_coordinates(load_coordinates, surface_load, "load1")
+
+        # add pin parameters
+        no_displacement_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True],
+                                                            value=[0, 0, 0])
+
+        # add boundary conditions in 0d, 1d and 2d
+        model.add_boundary_condition_by_geometry_ids(2, [6], no_displacement_parameters, "no_displacement")
+
+        model.synchronise_geometry()
+
+        model.set_mesh_size(1)
+        model.generate_mesh()
+
+        return model
+    
 
     @pytest.fixture
     def create_default_outputs(self):
@@ -175,7 +217,6 @@ class TestKratosModelIO:
     ):
         """
         Test correct writing of the material parameters for the default model.
-
         Args:
             - create_default_2d_model_and_mesh (:class:`stem.model.Model`): the default 2D model of a square \
                 soil layer and a line load.
@@ -187,7 +228,7 @@ class TestKratosModelIO:
         expected_dict = json.load(open("tests/test_data/expected_MaterialParameters.json", 'r'))
         TestUtils.assert_dictionary_almost_equal(expected_dict, actual_dict)
 
-    def test_write_mdpa_file(
+    def test_write_mdpa_file_2d(
         self,
         create_default_2d_model_and_mesh:Model,
         create_default_solver_settings:Problem
@@ -211,6 +252,34 @@ class TestKratosModelIO:
             output_folder="dir_test"
         )
         with open('tests/test_data/expected_mdpa_file.mdpa', 'r') as openfile:
+            expected_text = openfile.readlines()
+
+        npt.assert_equal(actual=actual_text, desired=expected_text)
+
+    def test_write_mdpa_file_3d(
+        self,
+        create_default_3d_model_and_mesh:Model,
+        create_default_solver_settings:Problem
+    ):
+        """
+        Test correct writing of the mdpa file (mesh) for the default model and solver settings.
+
+        Args:
+            - create_default_3d_model_and_mesh (:class:`stem.model.Model`): the default 3D model of a cube \
+                soil and a surface load on top.
+            - create_default_solver_settings (:class:`stem.solver.Problem`): the Problem object containing the \
+                solver settings.
+        """
+        model = create_default_3d_model_and_mesh
+        kratos_io = KratosIO(ndim=model.ndim)
+        model.project_parameters = create_default_solver_settings
+
+        actual_text = kratos_io.write_mesh_to_mdpa(
+            model=model,
+            mesh_file_name="test_mdpa_file_3d.mdpa",
+            output_folder="dir_test"
+        )
+        with open('tests/test_data/expected_mdpa_file_3d.mdpa', 'r') as openfile:
             expected_text = openfile.readlines()
 
         npt.assert_equal(actual=actual_text, desired=expected_text)

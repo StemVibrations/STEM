@@ -1,17 +1,13 @@
-import json
 import numpy.testing as npt
+import pytest
+from gmsh_utils import gmsh_IO
 
+from stem.IO.kratos_model_io import KratosModelIO
 from stem.boundary import DisplacementConstraint
 from stem.load import LineLoad
 from stem.model import Model
 from stem.model_part import *
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
-from gmsh_utils import gmsh_IO
-
-import pytest
-
-from tests.utils import TestUtils
-from stem.IO.kratos_model_io import KratosModelIO
 
 
 class TestKratosModelIO:
@@ -29,7 +25,6 @@ class TestKratosModelIO:
 
         """
         gmsh_IO.GmshIO().finalize_gmsh()
-
 
     @pytest.fixture
     def create_default_2d_model_and_mesh(self):
