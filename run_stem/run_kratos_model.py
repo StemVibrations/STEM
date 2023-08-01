@@ -2,7 +2,7 @@ import os
 import sys
 
 # IMPORTANT !!!! SPECIFY LOCAL PATH TO KRATOS...
-pth_kratos = r"C:\Users\morettid\OneDrive - TNO\Desktop\projects\STEM"
+pth_kratos = r"C:\Please\Define\Installation\Directory\Of\Kratos"
 materialfname = "MaterialParameters.json"
 projectfname = "ProjectParameters.json"
 meshfname = "test_simple_dynamic.mdpa"
