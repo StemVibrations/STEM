@@ -48,7 +48,7 @@ class TestPlotUtils:
                                      retention_parameters=SaturatedBelowPhreaticLevelLaw())
         return soil_material
 
-    def create_geometry_and_plot(self, ndim, material):
+    def create_geometry_and_plot(self, ndim: int, material: SoilMaterial):
         """
         Create a geometry and plots it.
 
@@ -78,18 +78,16 @@ class TestPlotUtils:
         # synchronise geometry
         model.synchronise_geometry()
 
-        # show geometry in 3D
+        # show geometry
         PlotUtils.show_geometry(model.ndim, model.geometry, True, True, True, True)
 
     @pytest.mark.skipif(not SHOW_PLOTS, reason="Plotting is disabled")
-    def test_plot_geometry_2D(self, create_default_2d_soil_material):
+    def test_plot_geometry_2D(self, create_default_2d_soil_material: SoilMaterial):
         """
         Test the plot of a 2D geometry.
 
         Args:
-            create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
-
-        Returns:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
 
         """
 
@@ -97,7 +95,7 @@ class TestPlotUtils:
         self.create_geometry_and_plot(2, create_default_2d_soil_material)
 
     @pytest.mark.skipif(not SHOW_PLOTS, reason="Plotting is disabled")
-    def test_plot_geometry_3D(self, create_default_3d_soil_material):
+    def test_plot_geometry_3D(self, create_default_3d_soil_material: SoilMaterial):
         """
         Test the plot of a 3D geometry.
 
