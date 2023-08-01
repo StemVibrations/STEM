@@ -263,7 +263,7 @@ class KratosIO:
         output_folder: str = ".",
     ):
         """
-        Writes files for Kratos given a model object and required outpus
+        Writes all required input files for a Kratos simulation, i.e: project parameters json; material parameters json and the mdpa mesh file 
 
         Args:
             - model (:class:`stem.model.Model`]): The model object containing all the required info.
