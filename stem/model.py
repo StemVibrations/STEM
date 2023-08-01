@@ -420,7 +420,13 @@ class Model:
             - show_line_ids (bool): Show the line ids in the plot. (default False)
             - show_point_ids (bool): Show the point ids in the plot. (default False)
 
+        Raises:
+            - ValueError: If the geometry is not set.
+
         """
+        if self.geometry is None:
+            raise ValueError("Geometry must be set before showing the geometry")
+
         PlotUtils.show_geometry(self.ndim, self.geometry, show_volume_ids, show_surface_ids, show_line_ids,
                                 show_point_ids)
 

@@ -5,7 +5,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection, PolyCollection
 
 # import required typing classes
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 if TYPE_CHECKING:
     from stem.geometry import Geometry, Volume, Surface
 
@@ -31,7 +31,7 @@ class PlotUtils:
 
         """
         # initialize list of surface point ids
-        surface_point_ids = []
+        surface_point_ids: List[int] = []
 
         # calculate centroids of lines to show line ids
         line_centroids = []
@@ -117,7 +117,7 @@ class PlotUtils:
 
         """
         # initialize list of surface point ids
-        surface_point_ids = []
+        surface_point_ids: List[int] = []
 
         # calculate centroids of lines to show line ids
         line_centroids = []
