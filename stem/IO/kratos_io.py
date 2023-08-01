@@ -224,7 +224,7 @@ class KratosIO:
             - outputs (List[:class:`stem.output.Output`]): The list of output processes objects to write in outputs.
             - mesh_file_name (str): The name of the mesh file.
             - materials_file_name (str): The name of the materials file.
-            - project_file_name (str): name of the project parameters file. Defaults to `ProjectParamaeters.json`.
+            - project_file_name (str): name of the project parameters file. Defaults to `ProjectParameters.json`.
             - output_folder (str): folder to store the project parameters file. Defaults to the working directory.
 
         Returns:
