@@ -110,7 +110,7 @@ class KratosIO:
                 raise ValueError(f"Body model part {bmp.name} has no material assigned.")
 
             if bmp.id is None:
-                raise ValueError  # it will not rise because initialised ...
+                raise ValueError(f"Body model part {bmp.name} has no id initialised.")
 
             materials_dict["properties"].append(
                 self.material_io.create_material_dict(
@@ -272,9 +272,6 @@ class KratosIO:
             - materials_file_name (str): The name of the materials file.
             - project_file_name (str): name of the project parameters file. Defaults to `ProjectParameters.json`.
             - output_folder (str): folder to store the project parameters file. Defaults to the working directory.
-
-        Returns:
-            - project_parameters_dict (Dict[str, Any]): the dictionary containing the project parameters.
         """
 
         # write materials

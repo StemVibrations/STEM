@@ -421,10 +421,7 @@ class KratosModelIO:
         else:
             block_text = ["", f"Begin Conditions {kratos_element_type}"]
             block_text.extend(
-                [
-                    self.__write_element_line(mat_id, el)
-                    for el in process_model_part.mesh.elements
-                ]
+                [self.__write_element_line(mat_id, el) for el in process_model_part.mesh.elements]
             )
             block_text += [f"End Conditions", ""]
         return block_text
