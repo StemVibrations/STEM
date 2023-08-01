@@ -1,7 +1,7 @@
 {
     "properties": [
         {
-            "model_part_name": "PorousDomain.PorousDomain.soil1",
+            "model_part_name": "PorousDomain.soil1",
             "properties_id": 1,
             "Material": {
                 "constitutive_law": {

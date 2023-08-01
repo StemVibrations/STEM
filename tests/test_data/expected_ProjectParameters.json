@@ -56,13 +56,14 @@
             "solver_type": "amgcl",
             "scaling": true,
             "tolerance": 1e-08,
-            "max_iterations": 500
+            "max_iteration": 500
         },
         "problem_domain_sub_model_part_list": [
             "soil1"
         ],
         "processes_sub_model_part_list": [
-            "load1"
+            "load1",
+            "no_displacement"
         ],
         "body_domain_sub_model_part_list": [
             "soil1"
@@ -107,7 +108,37 @@
         ]
     },
     "processes": {
-        "constraints_process_list": [],
+        "constraints_process_list": [
+            {
+                "python_module": "apply_vector_constraint_table_process",
+                "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+                "process_name": "ApplyVectorConstraintTableProcess",
+                "Parameters": {
+                    "active": [
+                        true,
+                        true,
+                        true
+                    ],
+                    "is_fixed": [
+                        true,
+                        true,
+                        true
+                    ],
+                    "value": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "model_part_name": "PorousDomain.no_displacement",
+                    "variable_name": "DISPLACEMENT",
+                    "table": [
+                        0,
+                        0,
+                        0
+                    ]
+                }
+            }
+        ],
         "loads_process_list": [
             {
                 "python_module": "apply_vector_constraint_table_process",

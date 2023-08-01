@@ -1,5 +1,7 @@
 import json
 import numpy.testing as npt
+
+from stem.boundary import DisplacementConstraint
 from stem.load import LineLoad
 from stem.model import Model
 from stem.model_part import *
@@ -55,6 +57,14 @@ class TestKratosModelIO:
         # add soil layer and line load and mesh them
         model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
         model.add_load_by_coordinates(load_coordinates, line_load, "load1")
+
+        # add pin parameters
+        no_displacement_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True],
+                                                            value=[0, 0, 0])
+
+        # add boundary conditions in 0d, 1d and 2d
+        model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "no_displacement")
+
         model.synchronise_geometry()
 
         model.set_mesh_size(1)
@@ -85,7 +95,7 @@ class TestKratosModelIO:
         # define expected block text
         expected_text_body = ['', 'Begin SubModelPart soil1', '  Begin SubModelPartTables', '  End SubModelPartTables',
                               '  Begin SubModelPartNodes', '  1', '  2', '  3', '  4', '  5', '  End SubModelPartNodes',
-                              '  Begin SubModelPartElements', '  2', '  3', '  4', '  5',
+                              '  Begin SubModelPartElements', '  3', '  4', '  5', '  6',
                               '  End SubModelPartElements', 'End SubModelPart', '']
         # assert the objects to be equal
         npt.assert_equal(actual=actual_text_body, desired=expected_text_body)
@@ -97,8 +107,8 @@ class TestKratosModelIO:
         # define expected block text
         expected_text_load = ['', 'Begin SubModelPart load1', '  Begin SubModelPartTables',
                               '  End SubModelPartTables', '  Begin SubModelPartNodes', '  3', '  4',
-                              '  End SubModelPartNodes', '  Begin SubModelPartConditions', '  1',
-                              '  End SubModelPartConditions', 'Begin SubModelPart', '']
+                              '  End SubModelPartNodes', '  Begin SubModelPartConditions', '  2',
+                              '  End SubModelPartConditions', 'End SubModelPart', '']
 
         # assert the objects to be equal
         npt.assert_equal(actual=actual_text_load, desired=expected_text_load)
