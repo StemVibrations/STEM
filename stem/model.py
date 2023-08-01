@@ -416,6 +416,16 @@ class Model:
 
     def show_geometry(self, show_volume_ids: bool = False, show_surface_ids: bool = False, show_line_ids: bool = False,
                       show_point_ids: bool = False):
+        """
+        Show the 2D or 3D geometry in a plot.
+
+        Args:
+            - show_volume_ids (bool): Show the volume ids in the plot. (default False)
+            - show_surface_ids (bool): Show the surface ids in the plot. (default False)
+            - show_line_ids (bool): Show the line ids in the plot. (default False)
+            - show_point_ids (bool): Show the point ids in the plot. (default False)
+
+        """
         PlotUtils.show_geometry(self.ndim, self.geometry, show_volume_ids, show_surface_ids, show_line_ids,
                                 show_point_ids)
 

@@ -12,8 +12,23 @@ if TYPE_CHECKING:
 class PlotUtils:
 
     @staticmethod
-    def __add_2d_surface_to_plot(geometry: Geometry,  surface: Surface, show_surface_ids,
+    def __add_2d_surface_to_plot(geometry: 'Geometry',  surface: 'Surface', show_surface_ids,
                                  show_line_ids, show_point_ids, ax):
+        """
+        Adds a 2D surface to a plot
+
+        Args:
+            - geometry (stem.geometry.Geometry): geometry object
+            - surface (stem.geometry.Surface): surface object
+            - show_surface_ids (bool): flag to show surface ids
+            - show_line_ids (bool): flag to show line ids
+            - show_point_ids (bool): flag to show point ids
+            - ax (matplotlib.axes.Axes): axes object to which the surface is added
+
+        Returns:
+            - NDArray[float]: surface centroid
+
+        """
         # initialize list of surface point ids
         surface_point_ids = []
 
@@ -83,7 +98,23 @@ class PlotUtils:
 
 
     @staticmethod
-    def __add_3d_surface_to_plot(geometry: Geometry, surface: Surface, show_surface_ids, show_line_ids, show_point_ids, ax):
+    def __add_3d_surface_to_plot(geometry: 'Geometry', surface: 'Surface', show_surface_ids, show_line_ids,
+                                 show_point_ids, ax):
+        """
+        Adds a 3D surface to a plot.
+
+        Args:
+            - geometry (stem.geometry.Geometry): geometry object
+            - surface (stem.geometry.Surface): surface object
+            - show_surface_ids (bool): flag to show surface ids
+            - show_line_ids (bool): flag to show line ids
+            - show_point_ids (bool): flag to show point ids
+            - ax (mpl_toolkits.mplot3d.axes3d.Axes3D): axes object to which the surface is added
+
+        Returns:
+            - NDArray[float]: surface centroid
+
+        """
         # initialize list of surface point ids
         surface_point_ids = []
 
@@ -154,8 +185,21 @@ class PlotUtils:
 
 
     @staticmethod
-    def __add_3d_volume_to_plot(geometry: Geometry, volume: Volume, show_volume_ids, show_surface_ids, show_line_ids,
-                                show_point_ids, ax):
+    def __add_3d_volume_to_plot(geometry: 'Geometry', volume: 'Volume', show_volume_ids, show_surface_ids,
+                                show_line_ids, show_point_ids, ax):
+        """
+        Adds a 3D volume to a matplotlib figure.
+
+        Args:
+            - geometry (:class:`stem.geometry.Geometry`): Geometry object
+            - volume (:class:`stem.geometry.Volume`): Volume object
+            - show_volume_ids (bool): Show volume ids
+            - show_surface_ids (bool): Show surface ids
+            - show_line_ids (bool): Show line ids
+            - show_point_ids (bool): Show point ids
+            - ax (mpl_toolkits.mplot3d.axes3d.Axes3D): Axes object to which the volume is added
+
+        """
         # initialize list of surface centroids which are required to plot the surface ids
         all_surface_centroids = []
 
@@ -175,7 +219,7 @@ class PlotUtils:
                     color='black', fontsize=14, fontweight='bold')
 
     @staticmethod
-    def show_geometry(ndim: int, geometry: Geometry, show_volume_ids: bool = False,show_surface_ids: bool = False,
+    def show_geometry(ndim: int, geometry: 'Geometry', show_volume_ids: bool = False,show_surface_ids: bool = False,
                       show_line_ids: bool = False, show_point_ids: bool = False):
         """
         Show the geometry of the model in a matplotlib plot.
