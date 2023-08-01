@@ -4,6 +4,7 @@ from mpl_toolkits.mplot3d import Axes3D
 # Axes3D import has side effects, it enables using projection='3d' in add_subplot
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection, PolyCollection
 
+# import required typing classes
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from stem.geometry import Geometry, Volume, Surface
