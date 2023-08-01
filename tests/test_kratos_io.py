@@ -167,7 +167,7 @@ class TestKratosModelIO:
                                                                 displacement_absolute_tolerance=1e-7)
         strategy_type = NewtonRaphsonStrategy(min_iterations=5, max_iterations=30, number_cycles=50)
         scheme_type = NewmarkScheme(newmark_beta=0.35, newmark_gamma=0.4, newmark_theta=0.6)
-        linear_solver_settings = Amgcl(tolerance=1e-8, max_iteration=500, scaling=True)
+        linear_solver_settings = Amgcl(tolerance=1e-8, max_iteration=500, scaling=False)
         stress_initialisation_type = StressInitialisationType.NONE
         solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
                                          stress_initialisation_type=stress_initialisation_type,
