@@ -1,11 +1,6 @@
 from typing import List, Sequence, Dict, Any, Optional, Union
-from enum import Enum
-from dataclasses import dataclass
-from typing import List, Sequence, Dict, Any, Optional, Union, get_args
 
-import numpy as np
 import numpy.typing as npty
-
 import numpy as np
 
 from gmsh_utils import gmsh_IO
