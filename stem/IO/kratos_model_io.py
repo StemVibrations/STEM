@@ -45,7 +45,8 @@ class KratosModelIO:
 
     @staticmethod
     def __is_body_model_part(model_part: ModelPart):
-        """Check whether the model part is a body model part.
+        """
+        Check whether the model part is a body model part.
 
         Args:
             - model_part (:class:`stem.model_part.ModelPart`): the model part
