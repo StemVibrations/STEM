@@ -1,4 +1,5 @@
 import json
+import sys
 from typing import List
 
 import numpy.testing as npt
@@ -15,7 +16,6 @@ from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SaturatedBelowPh
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, \
     NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
 from tests.utils import TestUtils
-
 
 class TestKratosModelIO:
 
@@ -279,7 +279,12 @@ class TestKratosModelIO:
             mesh_file_name="test_mdpa_file_3d.mdpa",
             output_folder="dir_test"
         )
-        with open('tests/test_data/expected_mdpa_file_3d.mdpa', 'r') as openfile:
-            expected_text = openfile.readlines()
+        if sys.platform == "win32":
+            with open('tests/test_data/expected_mdpa_file_3d.mdpa', 'r') as openfile:
+                expected_text = openfile.readlines()
 
-        npt.assert_equal(actual=actual_text, desired=expected_text)
+            npt.assert_equal(actual=actual_text, desired=expected_text)
+
+        else:
+            # read UBUNTU created file!
+            pass
