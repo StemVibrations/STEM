@@ -17,6 +17,8 @@ from stem.solver import AnalysisType, SolutionType, TimeIntegration, Displacemen
     NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
 from tests.utils import TestUtils
 
+IS_WINDOWS = sys.platform == "win32"
+
 class TestKratosModelIO:
 
     @pytest.fixture(autouse=True)
@@ -256,6 +258,8 @@ class TestKratosModelIO:
 
         npt.assert_equal(actual=actual_text, desired=expected_text)
 
+    @pytest.mark.skipif(not IS_WINDOWS, reason="Ubuntu provides different mehsing order. Only windows is tested"
+                                               "disabled")
     def test_write_mdpa_file_3d(
         self,
         create_default_3d_model_and_mesh:Model,
@@ -279,12 +283,7 @@ class TestKratosModelIO:
             mesh_file_name="test_mdpa_file_3d.mdpa",
             output_folder="dir_test"
         )
-        if sys.platform == "win32":
-            with open('tests/test_data/expected_mdpa_file_3d.mdpa', 'r') as openfile:
-                expected_text = openfile.readlines()
+        with open('tests/test_data/expected_mdpa_file_3d.mdpa', 'r') as openfile:
+            expected_text = openfile.readlines()
 
-            npt.assert_equal(actual=actual_text, desired=expected_text)
-
-        else:
-            # read UBUNTU created file!
-            pass
+        npt.assert_equal(actual=actual_text, desired=expected_text)

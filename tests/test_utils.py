@@ -1,5 +1,6 @@
 import numpy as np
 import numpy.testing as npt
+import pytest
 
 from stem.utils import Utils
 from tests.utils import TestUtils
@@ -129,6 +130,7 @@ class TestUtilsStem:
         actual_dict_1 = Utils.merge(dict1a, dict1b)
         expected_dict_1 = {1: {"a": "A"}, 2: {"c": "C", "b": "B"}, 3: {"d": "D"}}
 
+        # expect it raises an error
         TestUtils.assert_dictionary_almost_equal(expected_dict_1, actual_dict_1)
 
         # test 2: conflicts in arguments, merge common keys argument into a list
@@ -136,14 +138,11 @@ class TestUtilsStem:
         dict2a = {1: {"a": [1, 2, 3]}, 2: {"b": "B"}}
         dict2b = {1: {"a": [5, 6]}, 2: {"b": "D"}, 3: {"d": "D"}}
 
-        actual_dict_2 = Utils.merge(dict2a, dict2b)
-        expected_dict_2 = {
-            1: {"a": [1, 2, 3, 5, 6]},
-            2: {"b": ["B", "D"]},
-            3: {"d": "D"},
-        }
-
-        TestUtils.assert_dictionary_almost_equal(expected_dict_2, actual_dict_2)
+        # expect it raises an error
+        with pytest.raises(
+                ValueError, match="Conflict of merging keys at 2->b. Two non sequence vlaues have been found."
+        ):
+            Utils.merge(dict2a, dict2b)
 
         # test 3: conflicts in arguments, merge common keys argument into a list
         # list of lists is preserved into a list of list + 2 extra elements

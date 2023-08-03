@@ -130,13 +130,10 @@ class Utils:
         they are concatenated in a list
 
         Args:
-            a (Dict[str,Any]): first dictionary
-            b (Dict[str,Any]): second dictionary
-            path (List[str]): object to help navigate the deeper layers of the dictionary.
-                Always place it as None
+           - sequences (Sequence[Sequence[Any]]): sequences to chain
 
         Returns:
-            a (Dict[str,Any]): updated dictionary with the additional dictionary `b`
+            - Iterator[Any]: chained sequences
 
         """
         for seq in sequences:
@@ -165,14 +162,12 @@ class Utils:
                     Utils.merge(a[key], b[key], path + [str(key)])
                 elif a[key] == b[key]:
                     pass  # same leaf value
+                elif any([not Utils.is_non_str_sequence(val) for val in (a[key], b[key])]):
+                    # if none of them is a sequence and are found at the same key, then something went wrong.
+                    # this should not be merge silently.
+                    raise ValueError(f"Conflict of merging keys at {'->'.join(path + [str(key)])}. Two non sequence "
+                                     f"vlaues have been found.")
                 else:
-                    # a[key] is not a sequence: convert a[key] to list
-                    if not Utils.is_non_str_sequence(a[key]):
-                        a[key] = list(a[key])
-                    # b[key] is not a sequence: convert b[key] to list
-                    if not Utils.is_non_str_sequence(b[key]):
-                        b[key] = list(b[key])
-                    # chain them into a list
                     a[key] = list(Utils.chain_sequence([a[key], b[key]]))
             else:
                 a[key] = b[key]

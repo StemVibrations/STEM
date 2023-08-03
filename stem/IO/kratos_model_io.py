@@ -463,7 +463,8 @@ class KratosModelIO:
         return block_text
 
     def __write_elements_model(self, model: Model):
-        """returns the mdpa block related to elements.
+        """
+        Returns the mdpa block related to elements.
 
         Args:
             - model (:class:`stem.model.Model`): the model object containing the info on the elements.
@@ -494,7 +495,8 @@ class KratosModelIO:
         return block_text
 
     def __write_conditions_model(self, model: Model):
-        """returns the mdpa block related to conditions.
+        """
+        Returns the mdpa block related to conditions.
 
         Args:
             - model (:class:`stem.model.Model`): the model object containing the info on the conditions.
@@ -528,7 +530,8 @@ class KratosModelIO:
         return block_text
 
     def __write_submodel_parts(self, model: Model):
-        """returns the mdpa block related to conditions.
+        """
+        Returns the mdpa block related to the submodel parts of process and body model parts.
 
         Args:
             - model (:class:`stem.model.Model`): the model object containing the info on the conditions.
