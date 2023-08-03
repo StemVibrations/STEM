@@ -2,11 +2,15 @@ from typing import Sequence, Optional, Dict, List
 
 import numpy as np
 
-from stem.load import LineLoad, MovingLoad, SurfaceLoad
+from stem.soil_material import SoilMaterial
+from stem.structural_material import *
+from stem.load import LineLoad, MovingLoad, SurfaceLoad, PointLoad, GravityLoad
+from stem.additional_processes import AdditionalProcessesParametersABC
 from stem.mesh import Element, Node
 from stem.model import Model
 from stem.model_part import ModelPart, BodyModelPart
-from stem.boundary import AbsorbingBoundary
+from stem.boundary import AbsorbingBoundary, DisplacementConstraint, RotationConstraint
+from stem.solver import AnalysisType
 
 
 class KratosModelIO:
@@ -288,8 +292,7 @@ class KratosModelIO:
         line = _fmt.format(node.id, *node_coords)
         return line
 
-    @staticmethod
-    def __map_gmsh_element_to_kratos(model: Model, model_part: ModelPart):
+    def __map_gmsh_element_to_kratos(self, model: Model, model_part: ModelPart):
         """Return the corresponding element type based on the analysis type, the model part (condition or body)
         and type of element (e.g. rod vs beam or line load vs moving load).
 
@@ -305,6 +308,14 @@ class KratosModelIO:
         Returns:
             - str: the Kratos element type
         """
+
+        # get number of dimensions of the model
+        if model.ndim != 2 and model.ndim != 3:
+            raise ValueError(
+                f"Model dimension {model.ndim} is not supported. Only 2D and 3D are supported."
+            )
+        else:
+            n_dimensions = model.ndim
 
         # Check if mesh is initialised
         if model_part.mesh is None:
@@ -324,16 +335,16 @@ class KratosModelIO:
                 f"Model part {model_part.name} has more than 1 element type assigned."
                 f"\n{element_part_type}. Error."
             )
-        element_part = str(element_part_type[0])
 
-        # TODO
-        #  infer element type based on:
-        #  model.project_parameters.settings
-        #  model.ndim
-        #  model_part.parameters OR body_model_part.material
-        #  use __is_body_model_part to discriminate and __check_if_process_writes_conditions
+        # get number of nodes per element
+        n_nodes_element = len(model_part.mesh.elements[0].node_ids)
+        # check analysis type
+        analysis_type = model.project_parameters.settings.analysis_type
 
-        return "DUMMY"
+        # get element name from model part (body or condition)
+        element_name = model_part.get_element_name(n_dimensions, n_nodes_element, analysis_type)
+
+        return element_name
 
     def write_elements_body_model_part(
         self, body_model_part: BodyModelPart, mat_id: int, kratos_element_type: str
