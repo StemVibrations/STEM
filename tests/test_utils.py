@@ -140,7 +140,7 @@ class TestUtilsStem:
 
         # expect it raises an error
         with pytest.raises(
-                ValueError, match="Conflict of merging keys at 2->b. Two non sequence vlaues have been found."
+                ValueError, match="Conflict of merging keys at 2->b. Two non sequence values have been found."
         ):
             Utils.merge(dict2a, dict2b)
 
