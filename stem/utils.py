@@ -166,7 +166,7 @@ class Utils:
                     # if none of them is a sequence and are found at the same key, then something went wrong.
                     # this should not be merge silently.
                     raise ValueError(f"Conflict of merging keys at {'->'.join(path + [str(key)])}. Two non sequence "
-                                     f"vlaues have been found.")
+                                     f"values have been found.")
                 else:
                     a[key] = list(Utils.chain_sequence([a[key], b[key]]))
             else:
