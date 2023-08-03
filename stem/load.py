@@ -29,6 +29,32 @@ class PointLoad(LoadParametersABC):
 
 
 @dataclass
+class LineLoad(LoadParametersABC):
+    """
+    Class containing the load parameters for a line load
+
+    Attributes:
+        - active (List[bool]): Activate/deactivate load for each direction.
+        - value (List[float]): Entity of the load in the 3 directions [N].
+    """
+    active: List[bool] = field(default_factory=lambda: [True, True, True])
+    value: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+
+
+@dataclass
+class SurfaceLoad(LoadParametersABC):
+    """
+    Class containing the load parameters for a surface load
+
+    Attributes:
+        - active (List[bool]): Activate/deactivate load for each direction.
+        - value (List[float]): Entity of the load in the 3 directions [N].
+    """
+    active: List[bool] = field(default_factory=lambda: [True, True, True])
+    value: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+
+
+@dataclass
 class MovingLoad(LoadParametersABC):
     """
     Class containing the load parameters for a moving load.
@@ -53,23 +79,18 @@ class MovingLoad(LoadParametersABC):
     offset: float = 0.0
 
 
-class Load:
+@dataclass
+class GravityLoad(LoadParametersABC):
     """
-    Class containing load information acting on a body part
+    Class containing the load parameters for a gravity load.
+
+    Inheritance:
+        - :class:`LoadParametersABC`
 
     Attributes:
-        - name (str): name of the load
-        - load_parameters (:class:`LoadParametersABC`): class containing load parameters
+        - active (List[bool]): Activate/deactivate load for each direction. Input True only in the vertical direction.
+        - value (List[float]): Entity of the gravity acceleration in the 3 directions [m/s^2]. Should be -9.81 only in
+            the vertical direction
     """
-
-    def __init__(self, name: str, load_parameters: LoadParametersABC):
-        """
-        Constructor of the load class
-
-        Args:
-            - name (str): name of the load
-            - load_parameters (:class:`LoadParametersABC`): class containing load parameters
-        """
-
-        self.name: str = name
-        self.load_parameters: LoadParametersABC = load_parameters
+    active: List[bool] = field(default_factory=lambda: [False, False, False])
+    value: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])

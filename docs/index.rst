@@ -63,6 +63,20 @@ Alternatively, you can install the requirements manually with the following comm
 
    pip install -r requirements.txt
 
+
+STEM interface definitions
+==========================
+STEM has interface definitions to interact with the model, and allow the extension of the model and the use
+of different train and material models:
+   * :ref:`uvec`
+   * :ref:`umat`
+
+
+How to contribute
+=================
+If you want contribute to STEM please follow the steps defined in :doc:`contributions`.
+
+
 STEM team
 =========
 STEM is a research programme that results from a collaboration between the following partners:
