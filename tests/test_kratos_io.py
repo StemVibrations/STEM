@@ -17,7 +17,8 @@ from stem.solver import AnalysisType, SolutionType, TimeIntegration, Displacemen
     NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
 from tests.utils import TestUtils
 
-IS_WINDOWS = sys.platform == "win32"
+IS_LINUX = sys.platform == "linux"
+
 
 class TestKratosModelIO:
 
@@ -258,7 +259,7 @@ class TestKratosModelIO:
 
         npt.assert_equal(actual=actual_text, desired=expected_text)
 
-    @pytest.mark.skipif(not IS_WINDOWS, reason="Ubuntu provides different mehsing order. Only windows is tested"
+    @pytest.mark.skipif(IS_LINUX, reason="Ubuntu provides different mehsing order. Only windows is tested"
                                                "disabled")
     def test_write_mdpa_file_3d(
         self,
