@@ -287,3 +287,46 @@ class TestKratosModelIO:
             expected_text = openfile.readlines()
 
         npt.assert_equal(actual=actual_text, desired=expected_text)
+
+    def test_write_input_files_for_kratos(
+        self,
+        create_default_2d_model_and_mesh:Model,
+        create_default_solver_settings:Problem,
+        create_default_outputs: List[Output]
+    ):
+        """
+        Test correct writing of the mdpa file (mesh) for the default model and solver settings.
+
+        Args:
+            - create_default_2d_model_and_mesh (:class:`stem.model.Model`): the default 2D model of a square \
+                soil layer and a line load.
+            - create_default_solver_settings (:class:`stem.solver.Problem`): the Problem object containing the \
+                solver settings.
+            - create_default_outputs (List[:class:`stem.output.Output`]): list of default output processes.
+        """
+        model = create_default_2d_model_and_mesh
+        kratos_io = KratosIO(ndim=model.ndim)
+        model.project_parameters = create_default_solver_settings
+
+        kratos_io.write_input_files_for_kratos(
+            model=model,
+            outputs=create_default_outputs,
+            mesh_file_name="test_mdpa_file.mdpa"
+        )
+
+        # test mdpa
+        with open('./test_mdpa_file.mdpa', 'r') as openfile:
+            actual_text = openfile.readlines()
+        with open('tests/test_data/expected_mdpa_file.mdpa', 'r') as openfile:
+            expected_text = openfile.readlines()
+        npt.assert_equal(actual=actual_text, desired=expected_text)
+
+        # test json material
+        actual_dict = json.load(open('./MaterialParameters.json', 'r'))
+        expected_dict = json.load(open('tests/test_data/expected_MaterialParameters.json', 'r'))
+        TestUtils.assert_dictionary_almost_equal(expected=expected_dict, actual=actual_dict)
+
+        # test json project
+        actual_dict = json.load(open('./ProjectParameters.json', 'r'))
+        expected_dict = json.load(open('tests/test_data/expected_ProjectParameters.json', 'r'))
+        TestUtils.assert_dictionary_almost_equal(expected=expected_dict, actual=actual_dict)

@@ -45,7 +45,7 @@ class KratosIO:
         self.model_io = KratosModelIO(self.ndim, DOMAIN)
         self.solver_io = KratosSolverIO(self.ndim, DOMAIN)
 
-    def write_mesh_to_mdpa(self, model: Model, mesh_file_name: str, output_folder="."):
+    def write_mesh_to_mdpa(self, model: Model, mesh_file_name: str, output_folder="./"):
         """Saves mesh data to mdpa file.
 
         Args:
@@ -78,7 +78,7 @@ class KratosIO:
         self,
         model: Model,
         materials_file_name: str = "MaterialParameters.json",
-        output_folder: str = "."
+        output_folder: str = "./"
     ):
         """
         Writes the material parameters to json format for Kratos.
@@ -94,7 +94,7 @@ class KratosIO:
             - ValueError: if material id is not initialised
 
         Returns:
-            - materials_dict[str, Any]: dictionary containing the material parameters' dictionary.
+            - materials_dict Dict([str, Any]): dictionary containing the material parameters' dictionary.
         """
 
         materials_dict: Dict[str, Any] = {"properties": []}
@@ -212,7 +212,7 @@ class KratosIO:
         mesh_file_name: str,
         materials_file_name: str,
         project_file_name: str = "ProjectParameters.json",
-        output_folder: str = "."
+        output_folder: str = "./"
     ):
         """
         Writes project parameters to json file
@@ -259,7 +259,7 @@ class KratosIO:
         mesh_file_name: str,
         materials_file_name: str = "MaterialParameters.json",
         project_file_name: str = "ProjectParameters.json",
-        output_folder: str = ".",
+        output_folder: str = "./"
     ):
         """
         Writes all required input files for a Kratos simulation, i.e: project parameters json; material parameters json and the mdpa mesh file 
@@ -274,7 +274,7 @@ class KratosIO:
         """
 
         # write materials
-        self.write_material_parameters_json(model, output_folder, materials_file_name)
+        self.write_material_parameters_json(model, materials_file_name, output_folder)
 
         # write project parameters
         self.write_project_parameters_json(
@@ -282,8 +282,8 @@ class KratosIO:
             outputs,
             mesh_file_name,
             materials_file_name,
-            output_folder,
             project_file_name,
+            output_folder
         )
 
         # write mdpa files
