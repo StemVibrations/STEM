@@ -2,6 +2,8 @@ from typing import List, Any, Optional, Union
 from dataclasses import dataclass, field
 from abc import ABC
 
+from stem.solver import AnalysisType
+
 
 @dataclass
 class SoilFormulationParametersABC(ABC):
@@ -246,3 +248,19 @@ class SoilMaterial:
     constitutive_law: SoilConstitutiveLawABC
     retention_parameters: RetentionLawABC
     fluid_properties: FluidProperties = field(default_factory=FluidProperties)
+
+    @staticmethod
+    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+
+            # for higher order elements, pore pressure is calculated on a lower order than displacements
+            if (n_dim_model == 2 and n_nodes_element > 4) or (n_dim_model == 3 and n_nodes_element > 8):
+                element_name = f"SmallStrainUPwDiffOrderElement{n_dim_model}D{n_nodes_element}N"
+            else:
+                element_name = f"UPwSmallStrainElement{n_dim_model}D{n_nodes_element}N"
+
+        else:
+            raise ValueError(f"Analysis type {analysis_type} is not implemented yet for soil material.")
+
+        return element_name

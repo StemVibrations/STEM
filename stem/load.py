@@ -1,6 +1,8 @@
 from typing import List, Dict, Any, Union, Optional
 from dataclasses import dataclass, field
-from abc import ABC
+from abc import ABC, abstractmethod
+
+from stem.solver import AnalysisType
 
 
 @dataclass
@@ -8,7 +10,11 @@ class LoadParametersABC(ABC):
     """
     Abstract base class for load parameters
     """
-    pass
+
+    @staticmethod
+    @abstractmethod
+    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+        raise Exception("abstract method 'get_element_name' of load parameters class is called")
 
 
 @dataclass
@@ -27,6 +33,34 @@ class PointLoad(LoadParametersABC):
     active: List[bool]
     value: List[float]
 
+    @staticmethod
+    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+        """
+        Static method to get the element name for a point load. Point load does not have a name.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model (2 or 3)
+            - n_nodes_element (int): The number of nodes per element (2, 3 or 4)
+            - analysis_type (str):
+
+        Returns:
+            - None
+
+
+        """
+
+        if n_dim_model != 2 and n_dim_model != 3:
+            raise Exception("Point load can only be applied to 2 or 3 dimensional models")
+
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+            if n_nodes_element != 1:
+                raise Exception("Point load can only be applied to 1 node elements")
+        else:
+            raise Exception("Point load can only be applied in mechanical or mechanical groundwater flow analysis")
+
+        # Point load does not have a name
+        return None
+
 
 @dataclass
 class LineLoad(LoadParametersABC):
@@ -40,6 +74,41 @@ class LineLoad(LoadParametersABC):
     active: List[bool]
     value: List[float]
 
+    @staticmethod
+    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+        """
+        Static method to get the element name for a line load. Line load does not have a name.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model (2 or 3)
+            - n_nodes_element (int): The number of nodes per element (2, 3 or 4)
+            - analysis_type (str):
+
+        Returns:
+            - str: The element name for a line load
+
+
+        """
+        if n_dim_model != 2 and n_dim_model != 3:
+            raise Exception("Line load can only be applied to 2 or 3 dimensional models")
+
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+
+            if n_nodes_element != 2 or n_nodes_element != 3:
+                raise Exception("Line load can only be applied to 2 or 3 node elements")
+            else:
+                if n_dim_model == 2 and n_nodes_element > 2:
+                    # 2d quadratic line load is set on outer nodes, but displacement is calculated on all nodes for
+                    # stability reasons
+                    element_name = f"LineLoadDiffOrderCondition{n_dim_model}D{n_nodes_element}N"
+                else:
+                    element_name = f"StructuralMechanicsApplication.LineLoadCondition{n_dim_model}D{n_nodes_element}N"
+
+        else:
+            raise Exception("Line load can only be applied in mechanical or mechanical groundwater flow analysis")
+
+        return element_name
+
 
 @dataclass
 class SurfaceLoad(LoadParametersABC):
@@ -52,6 +121,24 @@ class SurfaceLoad(LoadParametersABC):
     """
     active: List[bool]
     value: List[float]
+
+    @staticmethod
+    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+
+        if n_dim_model != 3:
+            raise Exception("Surface load can only be applied in 3D models")
+
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+            if n_nodes_element == 3 and n_nodes_element == 4:
+
+                element_name = f"UPwFaceLoadCondition{n_dim_model}D{n_nodes_element}N"
+
+            else:
+                element_name = f"SurfaceLoadDiffOrderCondition{n_dim_model}D{n_nodes_element}N"
+        else:
+            raise Exception("Surface load can only be applied in mechanical or mechanical groundwater flow analysis")
+
+        return element_name
 
 
 @dataclass
@@ -78,6 +165,23 @@ class MovingLoad(LoadParametersABC):
     origin: List[float]
     offset: float = 0.0
 
+    @staticmethod
+    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+
+        if n_dim_model != 2 and n_dim_model != 3:
+            raise Exception("Moving load can only be applied in 2D or 3D models")
+
+        if n_nodes_element != 2 or n_nodes_element != 3:
+            raise Exception("Moving load can only be applied to 2 or 3 node elements")
+
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+            element_name = f"StructuralMechanicsApplication.MovingLoadCondition{n_dim_model}D{n_nodes_element}N"
+
+        else:
+            raise Exception("Moving load can only be applied in mechanical or mechanical groundwater flow analysis")
+
+        return element_name
+
 
 @dataclass
 class GravityLoad(LoadParametersABC):
@@ -94,3 +198,14 @@ class GravityLoad(LoadParametersABC):
     """
     active: List[bool]
     value: List[float]
+
+    @staticmethod
+    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+            # gravity load doesnt need an element name
+            element_name = None
+        else:
+            raise Exception("Gravity load can only be applied in mechanical or mechanical groundwater flow analysis")
+
+        return element_name

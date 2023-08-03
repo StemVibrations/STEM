@@ -1,6 +1,8 @@
 from typing import List, Any, Optional, Union
 from dataclasses import dataclass, field
-from abc import ABC
+from abc import ABC, abstractmethod
+
+from stem.solver import AnalysisType
 
 @dataclass
 class StructuralParametersABC(ABC):
@@ -8,6 +10,12 @@ class StructuralParametersABC(ABC):
     Abstract base class for structural material parameters
     """
     pass
+
+
+    @staticmethod
+    @abstractmethod
+    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+        raise Exception("abstract method 'get_element_name' of structural parameters class is called")
 
 
 @dataclass
@@ -51,6 +59,21 @@ class EulerBeam(StructuralParametersABC):
             if self.TORSIONAL_INERTIA is None:
                 raise ValueError("The torsional inertia (TORSIONAL_INERTIA) is not defined.")
 
+    @staticmethod
+    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+
+            if n_nodes_element == 2:
+                element_name = f"GeoCrBeamElement{n_dim_model}D{n_nodes_element}N"
+            else:
+                raise ValueError(
+                    f"Only 2 node Euler beam elements are supported. {n_nodes_element} nodes were provided."
+                )
+        else:
+            raise ValueError(f"Analysis type {analysis_type} is not implemented yet for soil material.")
+
+        return element_name
+
 
 @dataclass
 class ElasticSpringDamper(StructuralParametersABC):
@@ -72,6 +95,20 @@ class ElasticSpringDamper(StructuralParametersABC):
     NODAL_DAMPING_COEFFICIENT: List[float]
     NODAL_ROTATIONAL_DAMPING_COEFFICIENT: List[float]
 
+    @staticmethod
+    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+
+            if n_nodes_element == 2:
+                element_name = f"StructuralMechanicsApplication.SpringDamperElement{n_dim_model}D"
+            else:
+                raise ValueError(
+                     f"Only 2 noded elastic spring damper elements are supported. {n_nodes_element} nodes were provided."
+                )
+        else:
+            raise ValueError(f"Analysis type {analysis_type} is not implemented yet for soil material.")
+
+        return element_name
 
 @dataclass
 class NodalConcentrated(StructuralParametersABC):
@@ -90,6 +127,21 @@ class NodalConcentrated(StructuralParametersABC):
     NODAL_MASS: float
     NODAL_DAMPING_COEFFICIENT: List[float]
 
+    @staticmethod
+    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+
+            if n_nodes_element == 1:
+                element_name = f"StructuralMechanicsApplication.NodalConcentratedElement{n_dim_model}D1N"
+            else:
+                raise ValueError(f"Only 1 noded nodal concentrated elements are supported. {n_nodes_element} "
+                                 f"nodes were provided.")
+        else:
+            raise ValueError(f"Analysis type {analysis_type} is not implemented yet for soil material.")
+
+        return element_name
+
 @dataclass
 class StructuralMaterial:
     """
@@ -101,3 +153,8 @@ class StructuralMaterial:
     """
     name: str
     material_parameters: StructuralParametersABC
+
+    def get_element_name(self, n_dim_model, n_nodes_element, analysis_type):
+
+        return self.material_parameters.get_element_name(n_dim_model, n_nodes_element, analysis_type)
+
