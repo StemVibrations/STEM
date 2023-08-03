@@ -35,10 +35,10 @@ class ModelPart:
         self.__name: str = name
         self.geometry: Optional[Geometry] = None
         self.parameters: Optional[
-            Union[LoadParametersABC, BoundaryParametersABC,AdditionalProcessesParametersABC]
+            Union[LoadParametersABC, BoundaryParametersABC, AdditionalProcessesParametersABC]
         ] = None
         self.mesh: Optional[Mesh] = None
-        self.id : Optional[int] = None
+        self.id: Optional[int] = None
 
     @property
     def name(self):

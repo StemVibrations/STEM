@@ -2,6 +2,8 @@ from typing import List, Dict, Any, Union, Optional
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 
+from stem.solver import AnalysisType
+
 
 @dataclass
 class BoundaryParametersABC(ABC):
@@ -21,6 +23,11 @@ class BoundaryParametersABC(ABC):
             - bool
         """
         raise Exception("abstract method 'is_constraint' of boundary parameters class is called")
+
+    @staticmethod
+    @abstractmethod
+    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+        raise Exception("abstract method 'get_element_name' of boundary parameters class is called")
 
 
 @dataclass
@@ -51,6 +58,31 @@ class DisplacementConstraint(BoundaryParametersABC):
         """
         return True
 
+    @staticmethod
+    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+        """
+        Static method to get the element name for a displacement constraint. Displacement constraint does not have a
+        name.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model (2 or 3)
+            - n_nodes_element (int): The number of nodes per element
+            - analysis_type (str):
+
+        Returns:
+            - None
+
+        """
+
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+            # displacement constraint does not have an element name
+            element_name = None
+        else:
+            raise Exception("Displacement constraint can only be applied in mechanical or mechanical groundwater "
+                            "flow analysis")
+
+        return element_name
+
 
 @dataclass
 class RotationConstraint(BoundaryParametersABC):
@@ -80,6 +112,31 @@ class RotationConstraint(BoundaryParametersABC):
         """
         return True
 
+    @staticmethod
+    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+        """
+        Static method to get the element name for a rotation constraint. Rotation constraint does not have a
+        name.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model (2 or 3)
+            - n_nodes_element (int): The number of nodes per element
+            - analysis_type (str):
+
+        Returns:
+            - None
+
+        """
+
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+            # rotation constraint does not have an element name
+            element_name = None
+        else:
+            raise Exception("Rotation constraint can only be applied in mechanical or mechanical groundwater "
+                            "flow analysis")
+
+        return element_name
+
 
 @dataclass
 class AbsorbingBoundary(BoundaryParametersABC):
@@ -108,3 +165,36 @@ class AbsorbingBoundary(BoundaryParametersABC):
             - bool
         """
         return False
+
+
+    @staticmethod
+    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+        """
+        Static method to get the element name for an absorbing boundary.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model (2 or 3)
+            - n_nodes_element (int): The number of nodes per element
+            - analysis_type (str):
+
+        Returns:
+            - str: The element name
+
+        """
+
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+
+            if n_dim_model != 2 or n_dim_model != 3:
+                raise ValueError(f"Absorbing boundary conditions are only implemented for 2D and 3D geometries.")
+
+            if n_dim_model == 3 and n_nodes_element > 4:
+                raise ValueError(f"Absorbing boundary conditions are not implemented for quadratic elements in a "
+                                 f"3D geometry.")
+            else:
+                element_name = f"UPwLysmerAbsorbingCondition{n_dim_model}D{n_nodes_element}N"
+
+        else:
+            raise Exception("Absorbing boundary conditions can only be applied in mechanical or mechanical "
+                            "groundwater flow analysis")
+
+        return element_name
