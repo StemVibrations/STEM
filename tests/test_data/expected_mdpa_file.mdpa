@@ -3,6 +3,16 @@ Begin Properties 1
 End Properties
 
 
+Begin Table 1
+  1   0.0000   0.0000
+  2   1.0000   5.0000
+  3   2.0000   10.0000
+  4   3.0000   5.0000
+  5   4.0000   0.0000
+  6   5.0000   0.0000
+End Table
+
+
 Begin Nodes
   1   0.0000000000  0.0000000000  0.0000000000
   2   1.0000000000  0.0000000000  0.0000000000
@@ -46,6 +56,7 @@ End SubModelPart
 
 Begin SubModelPart load1
   Begin SubModelPartTables
+  1
   End SubModelPartTables
   Begin SubModelPartNodes
   3

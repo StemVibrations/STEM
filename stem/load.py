@@ -1,7 +1,7 @@
 from typing import List, Dict, Any, Union, Optional
 from dataclasses import dataclass, field
 from abc import ABC
-
+from stem.table import Table
 
 @dataclass
 class LoadParametersABC(ABC):
@@ -21,11 +21,13 @@ class PointLoad(LoadParametersABC):
 
     Attributes:
         - active (List[bool]): Activate/deactivate load for each direction.
-        - value (List[float]): Entity of the load in the 3 directions [N].
+        - value (Union[List[float], List[:class:`stem.table.Table`]]): Entity of the load in the 3 directions [N]. \
+            It can be either a list of floats, if the load is time-independent, or a list of table which specify the \
+            amplitude of the load [N] over time [s] for each direction.
     """
 
     active: List[bool]
-    value: List[float]
+    value: Union[List[float], List[Table]]
 
 
 @dataclass
@@ -35,10 +37,12 @@ class LineLoad(LoadParametersABC):
 
     Attributes:
         - active (List[bool]): Activate/deactivate load for each direction.
-        - value (List[float]): Entity of the load in the 3 directions [N].
+        - value (Union[List[float], List[:class:`stem.table.Table`]]): Entity of the load in the 3 directions [N]. \
+            It can be either a list of floats, if the load is time-independent, or a list of table which specify the \
+            amplitude of the load [N] over time [s] for each direction.
     """
     active: List[bool]
-    value: List[float]
+    value: Union[List[float], List[Table]]
 
 
 @dataclass
@@ -48,10 +52,12 @@ class SurfaceLoad(LoadParametersABC):
 
     Attributes:
         - active (List[bool]): Activate/deactivate load for each direction.
-        - value (List[float]): Entity of the load in the 3 directions [N].
+        - value (Union[List[float], List[:class:`stem.table.Table`]]): Entity of the load in the 3 directions [N]. \
+            It can be either a list of floats, if the load is time-independent, or a list of table which specify the \
+            amplitude of the load [N] over time [s] for each direction.
     """
     active: List[bool]
-    value: List[float]
+    value: Union[List[float], List[Table]]
 
 
 @dataclass

@@ -158,7 +158,7 @@
                     "model_part_name": "PorousDomain.load1",
                     "variable_name": "LINE_LOAD",
                     "table": [
-                        0,
+                        1,
                         0,
                         0
                     ]

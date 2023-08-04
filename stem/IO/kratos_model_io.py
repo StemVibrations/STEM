@@ -3,17 +3,21 @@ from typing import Sequence, Optional, List
 import numpy as np
 
 from stem.boundary import AbsorbingBoundary
-from stem.load import LineLoad, MovingLoad, SurfaceLoad
+from stem.load import LineLoad, MovingLoad, SurfaceLoad, PointLoad
 from stem.mesh import Element, Node
 from stem.model import Model
 from stem.model_part import ModelPart, BodyModelPart
+from stem.table import Table
+from stem.utils import Utils
 
 # indentation between entries in the mdpa file. Defaults to 2.
 INDENTATION = 2
 # format for integers
 FORMAT_INTEGER: str = "{:d}"
-# format for floats
-FORMAT_FLOAT: str = " {:.10f}"
+# format for floats (long)
+FORMAT_FLOAT_LONG: str = " {:.10f}"
+# format for floats (short)
+FORMAT_FLOAT_SHORT: str = " {:.4f}"
 
 
 class KratosModelIO:
@@ -89,7 +93,7 @@ class KratosModelIO:
                     pmp.id = cc
 
     @staticmethod
-    def initialise_body_model_part_ids(model: Model):
+    def __initialise_body_model_part_ids(model: Model):
         """
         Initialise or reset the body model part ids if some are initialised and some are not.
 
@@ -106,8 +110,65 @@ class KratosModelIO:
             for ix, bmp in enumerate(model.body_model_parts):
                 bmp.id = ix + 1
 
+    @staticmethod
+    def __get_unique_tables_process_model_part(process_model_part:ModelPart):
+        """
+        Retrieve all the unique tables in the model.
+
+        Args:
+            - process_model_part (:class:`stem.model_part.ModelPart`]): the process model part containing \
+                the tables.
+
+        Returns:
+            - tables (List[:class:`stem.table.Table`]): list of the tables in the process model part.
+        """
+
+        tables: List[Table] = []
+        if isinstance(process_model_part.parameters, (PointLoad, LineLoad, SurfaceLoad)):
+            for vv in process_model_part.parameters.value:
+                if isinstance(vv, Table):
+                    tables.append(vv)
+
+        return Utils.get_unique_objects(tables)
+
+    def __get_unique_tables(self, model:Model):
+        """
+        Retrieve all the unique tables in the model.
+
+        Args:
+            - model (:class:`stem.model.Model`]): the model object containing the info on the loads.
+
+        Returns:
+            - tables (List[:class:`stem.table.Table`]): list of the unique table objects in the models
+        """
+
+        tables: List[Table] = []
+        for pmp in model.process_model_parts:
+            tables.extend(self.__get_unique_tables_process_model_part(pmp))
+
+        return Utils.get_unique_objects(tables)
+
+    def __initialise_table_ids(self, model:Model):
+        """
+        Initialise or reset the id of the tables contained in the load parameters objects.
+
+        Args:
+            - model (:class:`stem.model.Model`]): the model object containing the body model parts.
+
+        """
+
+        unique_tables = self.__get_unique_tables(model)
+        for ix, table in enumerate(unique_tables):
+            table.id = ix + 1
+
+    def initialise_model_ids(self, model):
+
+        self.__initialise_table_ids(model)
+        self.__initialise_process_model_part_ids(model)
+        self.__initialise_body_model_part_ids(model)
+
+    @staticmethod
     def __write_submodel_block(
-        self,
         buffer: List[str],
         block_name: str,
         block_entities: Optional[Sequence[int]] = None,
@@ -213,12 +274,14 @@ class KratosModelIO:
 
         # initialise block
         block_text = ["", f"Begin SubModelPart {process_model_part.name}"]
+
+        entities = [table.id for table in self.__get_unique_tables_process_model_part(process_model_part)]
         block_text = self.__write_submodel_block(
-            block_text, block_name="Tables", block_entities=None
+            block_text, block_name="Tables", block_entities=entities
         )
 
-        # write nodes
         entities = [node.id for node in process_model_part.mesh.nodes]
+        # write nodes
         block_text = self.__write_submodel_block(
             block_text, block_name="Nodes", block_entities=entities
         )
@@ -276,10 +339,63 @@ class KratosModelIO:
         # assemble format for nodal string
         #   node_id  coordinate_1 coordinate_2 coordinate_3
         _fmt = f"{space}{FORMAT_INTEGER}{space}" + " ".join(
-            [FORMAT_FLOAT] * len(node_coords)
+            [FORMAT_FLOAT_LONG] * len(node_coords)
         )
         line = _fmt.format(node.id, *node_coords)
         return line
+
+    @staticmethod
+    def __write_table_line(step_j: int, time_j: float, amplitude_j: float):
+        """
+        Write the line for a Kratos table.
+
+        Args:
+            step_j (int): step number at the j-th line of the table
+            time_j (float): time step at the j-th line of the table
+            amplitude_j (float): amplitude at the j-th line of the table
+
+        Returns:
+            str: string corresponding to a line in a table for Kratos.
+
+        """
+        # simplify space syntax
+        space = " " * INDENTATION
+        # assemble format for table string at line j
+        #   step_j  time_j amplitude_j
+        _fmt = f"{space}{FORMAT_INTEGER}{space}{FORMAT_FLOAT_SHORT}{space}{FORMAT_FLOAT_SHORT}"
+        return _fmt.format(step_j, time_j, amplitude_j)
+
+    def __write_table_block(self, table: Table):
+        """
+        Writes a table to the mdpa format for Kratos.
+
+        Args:
+            - table (:class:`stem.table.Table`): table object to write to Kratos.
+
+        Returns:
+            - block_text (List[str]): list of strings for the table. Each element is a line in the mdpa file.
+        """
+
+        # check initialisation of id
+        if table.id is None:
+            raise ValueError("Table id not initialised!")
+
+        # check sequences or arrays have the same size
+        len_vals = [len(getattr(table, _attr)) for _attr in ("steps", "time", "amplitude")]
+        _attr_has_different_length = [(len_val - len_vals[0]) != 0 for len_val in len_vals]
+        if any(_attr_has_different_length):
+            raise ValueError("Table has attributes steps, time and amplitude with mismatching size!")
+
+        # initialise block
+        block_text = ["", f"Begin Table {table.id}"]
+        block_text.extend(
+            [
+                self.__write_table_line(table.steps[ix], table.time[ix], table.amplitude[ix])
+                for ix in range(len(table.steps))
+            ]
+        )
+        block_text += [f"End Table", ""]
+        return block_text
 
     @staticmethod
     def __map_gmsh_element_to_kratos(model: Model, model_part: ModelPart):
@@ -440,6 +556,24 @@ class KratosModelIO:
         block_text += ["End Nodes", ""]
         return block_text
 
+    def __write_all_tables(self, model):
+        """
+        Writes tables to mdpa format.
+
+        Args:
+            - model (:class:`stem.model.Model`): the model object containing the info on the tables.
+
+        Returns:
+            - block_text (List[str]): list of strings for the mdpa file. Each element is a line in the mdpa file.
+        """
+        unique_tables = self.__get_unique_tables(model)
+        # sort by key
+
+        block_text = []
+        for table in unique_tables:
+            block_text.extend(self.__write_table_block(table))
+        return block_text
+
     @staticmethod
     def __write_property_ids(model: Model):
         """
@@ -565,11 +699,14 @@ class KratosModelIO:
 
         # initialise process model part ids
         self.__initialise_process_model_part_ids(model)
-        self.initialise_body_model_part_ids(model)
-
+        self.__initialise_body_model_part_ids(model)
+        self.__initialise_table_ids(model)
         block_text = []
         # retrieve the materials in the model and write mdpa text blocks
         block_text.extend(self.__write_property_ids(model))
+
+        # write the table block
+        block_text.extend(self.__write_all_tables(model))
 
         # retrieve the unique nodes of all the model parts
         block_text.extend(self.__write_all_nodes(model))

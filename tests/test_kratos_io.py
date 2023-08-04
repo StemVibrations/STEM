@@ -2,6 +2,7 @@ import json
 import sys
 from typing import List
 
+import numpy as np
 import numpy.testing as npt
 import pytest
 from gmsh_utils import gmsh_IO
@@ -15,6 +16,7 @@ from stem.output import NodalOutput, GaussPointOutput, GiDOutputParameters, Outp
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, \
     NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
+from stem.table import Table
 from tests.utils import TestUtils
 
 IS_LINUX = sys.platform == "linux"
@@ -53,8 +55,12 @@ class TestKratosModelIO:
         soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
                                      retention_parameters=SaturatedBelowPhreaticLevelLaw())
 
+        # define tables
+        _time = np.array([0, 1, 2, 3, 4, 5])
+        _amplitude1 = np.array([0, 5, 10, 5, 0, 0])
+        table1 = Table(steps=np.arange(len(_time)) + 1, time=_time, amplitude=_amplitude1)
         # define load properties
-        line_load = LineLoad(active=[False, True, False], value=[0, -20, 0])
+        line_load = LineLoad(active=[False, True, False], value=[table1, -20, 0])
 
         # create model
         model = Model(ndim)
@@ -95,8 +101,12 @@ class TestKratosModelIO:
         soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
                                      retention_parameters=SaturatedBelowPhreaticLevelLaw())
 
+        # define tables
+        _time = np.array([0, 1, 2, 3, 4, 5])
+        _amplitude1 = np.array([0, 5, 10, 5, 0, 0])
+        table1 = Table(steps=np.arange(len(_time)) + 1, time=_time, amplitude=_amplitude1)
         # define load properties
-        surface_load = SurfaceLoad(active=[False, True, False], value=[0, -20, 0])
+        surface_load = SurfaceLoad(active=[False, True, False], value=[table1, -20, 0])
 
         # create model
         model = Model(ndim)

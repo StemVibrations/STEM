@@ -36,17 +36,6 @@
                     "table": [0, 0, 0]
                 }
             },  {
-            "python_module": "apply_vector_constraint_table_process",
-            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
-            "process_name":  "ApplyVectorConstraintTableProcess",
-            "Parameters":    {
-                "model_part_name": "PorousDomain.test_gravity_load",
-                "variable_name":   "VOLUME_ACCELERATION",
-                "active":          [false,true,false],
-                "value":           [0.0,-9.81,0.0],
-                "table":           [0,0,0]
-                }
-            },  {
             "python_module": "set_moving_load_process",
             "kratos_module": "StructuralMechanicsApplication",
             "process_name": "SetMovingLoadProcess",
@@ -56,7 +45,7 @@
                 "load": [0.0, -10, 0.0],
                 "direction": [1.0, 0.0, -1.0],
                 "velocity": 5.0,
-                "origin": [0.0, 1.0, 2.0],
+                "origin": [1.0, 0.1, 0.0],
                 "offset": 3.0
                 }
             }

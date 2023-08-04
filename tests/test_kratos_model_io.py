@@ -1,3 +1,4 @@
+import numpy as np
 import numpy.testing as npt
 import pytest
 from gmsh_utils import gmsh_IO
@@ -8,7 +9,7 @@ from stem.load import LineLoad
 from stem.model import Model
 from stem.model_part import *
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
-
+from stem.table import Table
 
 class TestKratosModelIO:
 
@@ -42,9 +43,13 @@ class TestKratosModelIO:
         constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
         soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
                                      retention_parameters=SaturatedBelowPhreaticLevelLaw())
+        # define tables
+        _time = np.array([0, 1, 2, 3, 4, 5])
+        _amplitude1 = np.array([0, 5, 10, 5, 0, 0])
+        table1 = Table(steps=np.arange(len(_time)) + 1, time=_time, amplitude=_amplitude1)
 
         # define load properties
-        line_load = LineLoad(active=[False, True, False], value=[0, -20, 0])
+        line_load = LineLoad(active=[False, True, False], value=[table1, -20, 0])
 
         # create model
         model = Model(ndim)
@@ -83,6 +88,9 @@ class TestKratosModelIO:
         # IO object
         model_part_io = KratosModelIO(ndim=model.ndim, domain="PorousDomain")
 
+        # initialise ids for table, materials and processes
+        model_part_io.initialise_model_ids(model)
+
         # generate text block body model part: soil1
         actual_text_body = model_part_io.write_submodelpart_body_model_part(
             body_model_part=body_model_part_to_write
@@ -100,7 +108,7 @@ class TestKratosModelIO:
             process_model_part=process_model_part_to_write
         )
         # define expected block text
-        expected_text_load = ['', 'Begin SubModelPart load1', '  Begin SubModelPartTables',
+        expected_text_load = ['', 'Begin SubModelPart load1', '  Begin SubModelPartTables', '  1',
                               '  End SubModelPartTables', '  Begin SubModelPartNodes', '  3', '  4',
                               '  End SubModelPartNodes', '  Begin SubModelPartConditions', '  2',
                               '  End SubModelPartConditions', 'End SubModelPart', '']
@@ -120,6 +128,9 @@ class TestKratosModelIO:
 
         # IO object
         model_part_io = KratosModelIO(ndim=model.ndim, domain="PorousDomain")
+
+        # initialise ids for table, materials and processes
+        model_part_io.initialise_model_ids(model)
 
         # generate text block body model part: soil1
         actual_text_body = model_part_io.write_mdpa_text(model=model)
