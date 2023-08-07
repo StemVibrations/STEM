@@ -2,7 +2,7 @@ from typing import Sequence, Optional, List
 
 import numpy as np
 
-from stem.boundary import AbsorbingBoundary
+from stem.boundary import AbsorbingBoundary, DisplacementConstraint, RotationConstraint
 from stem.load import LineLoad, MovingLoad, SurfaceLoad, PointLoad
 from stem.mesh import Element, Node
 from stem.model import Model
@@ -124,7 +124,8 @@ class KratosModelIO:
         """
 
         tables: List[Table] = []
-        if isinstance(process_model_part.parameters, (PointLoad, LineLoad, SurfaceLoad)):
+        if isinstance(process_model_part.parameters, (PointLoad, LineLoad, SurfaceLoad, DisplacementConstraint,
+                                                      RotationConstraint)):
             for vv in process_model_part.parameters.value:
                 if isinstance(vv, Table):
                     tables.append(vv)

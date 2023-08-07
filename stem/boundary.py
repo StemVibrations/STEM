@@ -2,6 +2,8 @@ from typing import List, Dict, Any, Union, Optional
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 
+from stem.table import Table
+
 
 @dataclass
 class BoundaryParametersABC(ABC):
@@ -34,12 +36,14 @@ class DisplacementConstraint(BoundaryParametersABC):
     Attributes:
         - active (List[bool]): Activate/deactivate constraint for each direction.
         - is_fixed (List[bool]): Specify if constraint is fixed for each direction.
-        - value (List[float]): Displacement constraint for direction [m].
+        - value (Union[List[float], List[:class:`stem.table.Table`]]): Displacement value for direction [m]. \
+            It can be either a list of floats, if the load is time-independent, or a list of table which specify the \
+            amplitude of the displacement [m] over time [s] for each direction.
     """
 
     active: List[bool]
     is_fixed: List[bool]
-    value: List[float]
+    value: Union[List[float], List[Table]]
 
     @property
     def is_constraint(self) -> bool:
@@ -63,12 +67,15 @@ class RotationConstraint(BoundaryParametersABC):
     Attributes:
         - active (List[bool]): Activate/deactivate constraint for each direction.
         - is_fixed (List[bool]): Specify if constraint is fixed around each axis.
-        - value (List[float]): Rotation constraint around x, y and axis.
+        - value (List[float]): Rotation constraint
+        - value (Union[List[float], List[:class:`stem.table.Table`]]): Rotation value around x, y and z axis [Rad]. \
+            It can be either a list of floats, if the load is time-independent, or a list of table which specify the \
+            amplitude of the rotation [Rad] over time [s] around each axis.
     """
 
     active: List[bool]
     is_fixed: List[bool]
-    value: List[float]
+    value: Union[List[float], List[Table]]
 
     @property
     def is_constraint(self) -> bool:

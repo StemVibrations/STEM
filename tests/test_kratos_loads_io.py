@@ -4,7 +4,6 @@ import numpy as np
 
 from stem.IO.kratos_io import KratosIO
 from stem.model import Model
-from stem.IO.kratos_loads_io import KratosLoadsIO
 from stem.load import *
 from tests.utils import TestUtils
 
@@ -127,7 +126,7 @@ class TestKratosLoadsIO:
         test_dictionary = kratos_io.write_project_parameters_json(
             model=model,
             outputs=[],
-            mesh_file_name="test_load_parameters.json",
+            mesh_file_name="test_load_parameters.mdpa",
             materials_file_name=""
         )
 

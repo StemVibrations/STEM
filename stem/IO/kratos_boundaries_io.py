@@ -1,7 +1,8 @@
-from typing import Any, Dict, Union
 from copy import deepcopy
+from typing import Any, Dict, Union, List
 
 from stem.boundary import *
+from stem.table import Table
 
 
 class KratosBoundariesIO:
@@ -12,6 +13,55 @@ class KratosBoundariesIO:
         - domain (str): name of the Kratos domain
 
     """
+
+    @staticmethod
+    def __create_value_and_table(part_name:str, parameters: BoundaryParametersABC):
+        """
+        Assemble values and tables for the boundary condition from the `value` attribute of the boundary parameters.
+        Tables describe if an imposed displacement/rotation is time-dependant, and values if the displacement/rotation
+        is at specific instant (or even fixed if is_fixed = True for the direction).
+        For any direction either a table or a value are given, therefore if the type of `parameters.value` is
+        `[float, Table, float]`, the returned tables and values sequences will be:
+        `value = [float, 0, float]`
+        `table = [0, Table, 0]`
+
+        Args:
+            - part_name (str): name of the model part on which the boundary is applied.
+            - parameters (:class:`stem.boundary.BoundaryParametersABC`): boundary parameters object.
+
+        Raises:
+            - ValueError: if table ids are not initialised.
+            - ValueError: when element in `parameters.value` is not of type int, float or Table.
+            - ValueError: when provided parameters class doesn't implement values (e.g. AbsorbingBoundary).
+
+        Returns:
+            - _value (List[Union[float, int]]): list of values for the boundary condition (constraint)
+            - _table (List[Union[float, int, :class:`stem.table.Table`]]): list of tables for the boundary condition \
+                (constraint)
+        """
+
+        _value: List[Union[float, int]] = []
+        _table: List[Union[float, int, Table]] = []
+
+        if hasattr(parameters, "value"):
+
+            for vv in parameters.value:
+                if isinstance(vv, Table):
+                    if vv.id is None:
+                        raise ValueError(f"Table id is not initialised for values in {parameters.__class__.__name__}"
+                                         f" for part {part_name}.")
+                    _table.append(vv.id)
+                    _value.append(0)
+                elif isinstance(vv, (int, float)):
+                    _table.append(0)
+                    _value.append(vv)
+                else:
+                    raise ValueError(f"Value in parameters `value` is not either a Table object,a float or "
+                                     f"integer from class {parameters.__class__.__name__} for part {part_name}.")
+        else:
+            raise ValueError(f"Attribute `value` is not implemented by class {parameters.__class__.__name__}.")
+
+        return _value, _table
 
     def __init__(self, domain: str):
         """
@@ -46,7 +96,11 @@ class KratosBoundariesIO:
 
         boundary_dict["Parameters"]["model_part_name"] = f"{self.domain}.{part_name}"
         boundary_dict["Parameters"]["variable_name"] = "DISPLACEMENT"
-        boundary_dict["Parameters"]["table"] = [0, 0, 0]
+
+        # get tables and values
+        _value, _table = self.__create_value_and_table(part_name, parameters)
+        boundary_dict["Parameters"]["table"] = _table
+        boundary_dict["Parameters"]["value"] = _value
 
         return boundary_dict
 
@@ -74,7 +128,11 @@ class KratosBoundariesIO:
 
         boundary_dict["Parameters"]["model_part_name"] = f"{self.domain}.{part_name}"
         boundary_dict["Parameters"]["variable_name"] = "ROTATION"
-        boundary_dict["Parameters"]["table"] = [0, 0, 0]
+
+        # get tables and values
+        _value, _table = self.__create_value_and_table(part_name, parameters)
+        boundary_dict["Parameters"]["table"] = _table
+        boundary_dict["Parameters"]["value"] = _value
 
         return boundary_dict
 
