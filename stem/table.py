@@ -30,12 +30,12 @@ class Table:
     __id: Optional[int] = None
 
     @property
-    def id(self) -> int:
+    def id(self) -> Optional[int]:
         """
         Getter for the id of the table.
 
         Returns:
-            - int: The id of the table.
+            - Optional[int]: The id of the table.
 
         """
         return self.__id
