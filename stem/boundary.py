@@ -36,14 +36,15 @@ class DisplacementConstraint(BoundaryParametersABC):
     Attributes:
         - active (List[bool]): Activate/deactivate constraint for each direction.
         - is_fixed (List[bool]): Specify if constraint is fixed for each direction.
-        - value (Union[List[float], List[:class:`stem.table.Table`]]): Displacement value for direction [m]. \
-            It can be either a list of floats, if the load is time-independent, or a list of table which specify the \
-            amplitude of the displacement [m] over time [s] for each direction.
+        - value (List[Union[float, :class:`stem.table.Table`]]): Displacement value for direction [m]. \
+            It should be a list of either float or table for each displacement. If a float is specified, the \
+            displacement is time-independent, otherwise the table specifies the amplitude of the amplitude of the \
+            displacement [m] over time [s] for each direction.
     """
 
     active: List[bool]
     is_fixed: List[bool]
-    value: Union[List[float], List[Table]]
+    value: List[Union[float, Table]]
 
     @property
     def is_constraint(self) -> bool:
@@ -68,14 +69,15 @@ class RotationConstraint(BoundaryParametersABC):
         - active (List[bool]): Activate/deactivate constraint for each direction.
         - is_fixed (List[bool]): Specify if constraint is fixed around each axis.
         - value (List[float]): Rotation constraint
-        - value (Union[List[float], List[:class:`stem.table.Table`]]): Rotation value around x, y and z axis [Rad]. \
-            It can be either a list of floats, if the load is time-independent, or a list of table which specify the \
-            amplitude of the rotation [Rad] over time [s] around each axis.
+        - value (List[Union[float, :class:`stem.table.Table`]]): Rotation value around x, y and z axis [Rad]. \
+            It should be a list of either float or table for each direction. If a float is specified, the rotation is \
+            time-independent, otherwise the table specifies the amplitude of the rotation [Rad] over
+            time [s] around each axis.
     """
 
     active: List[bool]
     is_fixed: List[bool]
-    value: Union[List[float], List[Table]]
+    value: List[Union[float, Table]]
 
     @property
     def is_constraint(self) -> bool:
