@@ -1,9 +1,5 @@
 import json
 
-import shutil
-
-import pytest
-
 from stem.IO.kratos_output_io import KratosOutputsIO
 from stem.output import *
 from tests.utils import TestUtils

@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Sequence, Dict, Any, List, Union
 
 import numpy as np
 
@@ -112,3 +112,63 @@ class Utils:
 
         # Check if the scalar projection is between 0 and 1 (inclusive)
         return 0 <= scalar_projection <= 1
+
+    @staticmethod
+    def is_non_str_sequence(seq:object):
+        """
+        check whether object is a sequence but also not a string
+
+        Returns:
+            - bool: whether the sequence but also not a string
+        """
+        return isinstance(seq, Sequence) and not isinstance(seq, str)
+
+    @staticmethod
+    def chain_sequence(sequences: Sequence[Sequence[Any]]):
+        """
+        merges dictionary b into dictionary a. if existing keywords conflict it assumes
+        they are concatenated in a list
+
+        Args:
+           - sequences (Sequence[Sequence[Any]]): sequences to chain
+
+        Returns:
+            - Iterator[Any]: chained sequences
+
+        """
+        for seq in sequences:
+            yield from seq
+
+    @staticmethod
+    def merge(a: Dict[Any, Any], b: Dict[Any, Any], path: Union[List[str], Any] = None):
+        """
+        merges dictionary b into dictionary a. if existing keywords conflict it assumes
+        they are concatenated in a list
+
+        Args:
+            - a (Dict[str,Any]): first dictionary
+            - b (Dict[str,Any]): second dictionary
+            - path (List[str]): object to help navigate the deeper layers of the dictionary. \
+                Always place it as None
+
+        Returns:
+            - a (Dict[str,Any]): updated dictionary with the additional dictionary `b`
+        """
+        if path is None:
+            path = []
+        for key in b:
+            if key in a:
+                if isinstance(a[key], dict) and isinstance(b[key], dict):
+                    Utils.merge(a[key], b[key], path + [str(key)])
+                elif a[key] == b[key]:
+                    pass  # same leaf value
+                elif any([not Utils.is_non_str_sequence(val) for val in (a[key], b[key])]):
+                    # if none of them is a sequence and are found at the same key, then something went wrong.
+                    # this should not be merge silently.
+                    raise ValueError(f"Conflict of merging keys at {'->'.join(path + [str(key)])}. Two non sequence "
+                                     f"values have been found.")
+                else:
+                    a[key] = list(Utils.chain_sequence([a[key], b[key]]))
+            else:
+                a[key] = b[key]
+        return a

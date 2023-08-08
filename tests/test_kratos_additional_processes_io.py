@@ -1,7 +1,5 @@
 import json
 
-import pytest
-
 from stem.IO.kratos_additional_processes_io import KratosAdditionalProcessesIO
 from stem.additional_processes import *
 from tests.utils import TestUtils
