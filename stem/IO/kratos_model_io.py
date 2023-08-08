@@ -1,4 +1,4 @@
-from typing import Sequence, Optional, List
+from typing import Sequence, Optional, List, Union
 
 import numpy as np
 
@@ -110,6 +110,7 @@ class KratosModelIO:
             for ix, bmp in enumerate(model.body_model_parts):
                 bmp.id = ix + 1
 
+
     @staticmethod
     def __get_unique_tables_process_model_part(process_model_part:ModelPart):
         """
@@ -156,9 +157,16 @@ class KratosModelIO:
         Args:
             - model (:class:`stem.model.Model`]): the model object containing the body model parts.
 
+        Raises:
+            - ValueError: if tables do not have unique labels.
         """
 
         unique_tables = self.__get_unique_tables(model)
+        unique_tables_name = [tb.name for tb in unique_tables]
+
+        if len(np.unique(unique_tables_name)) != len(unique_tables):
+            raise ValueError("Tables must have different labels!")
+
         for ix, table in enumerate(unique_tables):
             table.id = ix + 1
 
@@ -346,25 +354,28 @@ class KratosModelIO:
         return line
 
     @staticmethod
-    def __write_table_line(step_j: int, time_j: float, amplitude_j: float):
+    def __write_table_line(step_j: Union[int,float], amplitude_j: float, step_type:str):
         """
         Write the line for a Kratos table.
 
         Args:
-            step_j (int): step number at the j-th line of the table
-            time_j (float): time step at the j-th line of the table
-            amplitude_j (float): amplitude at the j-th line of the table
+            - step_j (Union[int, float]): step number or time step at the j-th line of the table
+            - amplitude_j (float): amplitude at the j-th line of the table
+            - step_type (str): step type of the table (either `time` or `step`).
 
         Returns:
-            str: string corresponding to a line in a table for Kratos.
+            - str: string corresponding to a line in a table for Kratos.
 
         """
         # simplify space syntax
         space = " " * INDENTATION
         # assemble format for table string at line j
-        #   step_j  time_j amplitude_j
-        _fmt = f"{space}{FORMAT_INTEGER}{space}{FORMAT_FLOAT_SHORT}{space}{FORMAT_FLOAT_SHORT}"
-        return _fmt.format(step_j, time_j, amplitude_j)
+        #   step_j/time_j amplitude_j
+        if step_type == "time":
+            _fmt = f"{space}{FORMAT_FLOAT_SHORT}{space}{FORMAT_FLOAT_SHORT}"
+        else:
+            _fmt = f"{space}{FORMAT_INTEGER}{space}{FORMAT_FLOAT_SHORT}"
+        return _fmt.format(step_j, amplitude_j)
 
     def __write_table_block(self, table: Table):
         """
@@ -381,19 +392,15 @@ class KratosModelIO:
         if table.id is None:
             raise ValueError("Table id not initialised!")
 
-        # check sequences or arrays have the same size
-        len_vals = [len(getattr(table, _attr)) for _attr in ("steps", "time", "amplitude")]
-        _attr_has_different_length = [(len_val - len_vals[0]) != 0 for len_val in len_vals]
-        if any(_attr_has_different_length):
-            raise ValueError("Table has attributes steps, time and amplitude with mismatching size!")
+        time_or_step = " TIME " if table.step_type.lower() == "time" else " "
 
         # initialise block
-        block_text = ["", f"Begin Table {table.id}"]
+        block_text = ["", f"Begin Table {table.id}{time_or_step}{table.name}"]
         block_text.extend(
             [
-                self.__write_table_line(table.steps[ix], table.time[ix], table.amplitude[ix])
-                for ix in range(len(table.steps))
-            ]
+                self.__write_table_line(table.step[ix], table.amplitude[ix], table.step_type)
+                for ix in range(len(table.step))
+             ]
         )
         block_text += [f"End Table", ""]
         return block_text

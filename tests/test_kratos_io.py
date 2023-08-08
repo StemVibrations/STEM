@@ -56,9 +56,9 @@ class TestKratosModelIO:
                                      retention_parameters=SaturatedBelowPhreaticLevelLaw())
 
         # define tables
-        _time = np.array([0, 1, 2, 3, 4, 5])
+        _time = np.arange(6)*0.5
         _amplitude1 = np.array([0, 5, 10, 5, 0, 0])
-        table1 = Table(steps=np.arange(len(_time)) + 1, time=_time, amplitude=_amplitude1)
+        table1 = Table(step=_time, amplitude=_amplitude1, name="Table_1")
         # define load properties
         line_load = LineLoad(active=[False, True, False], value=[table1, -20, 0])
 
@@ -102,9 +102,9 @@ class TestKratosModelIO:
                                      retention_parameters=SaturatedBelowPhreaticLevelLaw())
 
         # define tables
-        _time = np.array([0, 1, 2, 3, 4, 5])
+        _time = np.arange(6)*0.5
         _amplitude1 = np.array([0, 5, 10, 5, 0, 0])
-        table1 = Table(steps=np.arange(len(_time)) + 1, time=_time, amplitude=_amplitude1)
+        table1 = Table(step=_time, amplitude=_amplitude1, name="Table_1")
         # define load properties
         surface_load = SurfaceLoad(active=[False, True, False], value=[table1, -20, 0])
 

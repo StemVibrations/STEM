@@ -31,10 +31,10 @@ class TestKratosBoundariesIO:
         _time = np.array([0, 1, 2, 3, 4, 5])
 
         _amplitude1 = np.array([0, 5, 10, 5, 0, 0])
-        table1 = Table(steps=np.arange(len(_time))+1, time=_time, amplitude=_amplitude1)
+        table1 = Table(step=_time, amplitude=_amplitude1, name="Table_1")
 
         _amplitude2 = np.array([0, -5, 5, -5, 0, 0])
-        table2 = Table(steps=np.arange(len(_time))+1, time=_time, amplitude=_amplitude2)
+        table2 = Table(step=_time, amplitude=_amplitude2, name="Table_2")
 
         # Displacements
         fix_displacements_parameters = DisplacementConstraint(
