@@ -29,7 +29,7 @@ class KratosLoadsIO:
         For any direction either a table or a value are given, therefore if the type of `parameters.value` is
         `[float, Table, float]`, the returned tables and values sequences will be:
         `value = [float, 0, float]`
-        `table = [0, Table, 0]`
+        `table = [0, Table.id, 0]`
 
         Args:
             - part_name (str): name of the model part on which the load is applied.

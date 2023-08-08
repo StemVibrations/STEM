@@ -354,28 +354,23 @@ class KratosModelIO:
         return line
 
     @staticmethod
-    def __write_table_line(step_j: Union[int,float], amplitude_j: float, step_type:str):
+    def __write_table_line(time: float, value: float):
         """
         Write the line for a Kratos table.
 
         Args:
-            - step_j (Union[int, float]): step number or time step at the j-th line of the table
-            - amplitude_j (float): amplitude at the j-th line of the table
-            - step_type (str): step type of the table (either `time` or `step`).
+            - time (Union[int, float]): time at the j-th line of the table
+            - value (float): value at the j-th line of the table
 
         Returns:
             - str: string corresponding to a line in a table for Kratos.
-
         """
         # simplify space syntax
         space = " " * INDENTATION
         # assemble format for table string at line j
-        #   step_j/time_j amplitude_j
-        if step_type == "time":
-            _fmt = f"{space}{FORMAT_FLOAT_SHORT}{space}{FORMAT_FLOAT_SHORT}"
-        else:
-            _fmt = f"{space}{FORMAT_INTEGER}{space}{FORMAT_FLOAT_SHORT}"
-        return _fmt.format(step_j, amplitude_j)
+        #   time value
+        _fmt = f"{space}{FORMAT_FLOAT_SHORT}{space}{FORMAT_FLOAT_SHORT}"
+        return _fmt.format(time, value)
 
     def __write_table_block(self, table: Table):
         """
@@ -392,14 +387,12 @@ class KratosModelIO:
         if table.id is None:
             raise ValueError("Table id not initialised!")
 
-        time_or_step = " TIME " if table.step_type.lower() == "time" else " "
-
         # initialise block
-        block_text = ["", f"Begin Table {table.id}{time_or_step}{table.name}"]
+        block_text = ["", f"Begin Table {table.id} TIME {table.name}"]
         block_text.extend(
             [
-                self.__write_table_line(table.step[ix], table.amplitude[ix], table.step_type)
-                for ix in range(len(table.step))
+                self.__write_table_line(table.times[ix], table.values[ix])
+                for ix in range(len(table.values))
              ]
         )
         block_text += [f"End Table", ""]
