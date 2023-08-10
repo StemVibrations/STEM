@@ -388,7 +388,7 @@ class KratosModelIO:
             raise ValueError("Table id not initialised!")
 
         # initialise block
-        block_text = ["", f"Begin Table {table.id} TIME {table.name}"]
+        block_text = ["", f"Begin Table {table.id} TIME VALUE"]
         block_text.extend(
             [
                 self.__write_table_line(table.times[ix], table.values[ix])
