@@ -26,7 +26,18 @@ class BoundaryParametersABC(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
+        """
+        Abstract static method to get the element name for a boundary condition.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model
+            - n_nodes_element (int): The number of nodes per element
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type.
+
+        Raises:
+            - Exception: abstract method is called
+        """
         raise Exception("abstract method 'get_element_name' of boundary parameters class is called")
 
 
@@ -59,7 +70,7 @@ class DisplacementConstraint(BoundaryParametersABC):
         return True
 
     @staticmethod
-    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
         """
         Static method to get the element name for a displacement constraint. Displacement constraint does not have a
         name.
@@ -67,10 +78,13 @@ class DisplacementConstraint(BoundaryParametersABC):
         Args:
             - n_dim_model (int): The number of dimensions of the model (2 or 3)
             - n_nodes_element (int): The number of nodes per element
-            - analysis_type (str):
+            - analysis_type (stem.solver.AnalysisType): The analysis type.
+
+        Raises:
+            - ValueError: Displacement constraint can only be applied in mechanical or mechanical groundwater flow
 
         Returns:
-            - None
+            - None: Displacement constraint does not have a name
 
         """
 
@@ -78,7 +92,7 @@ class DisplacementConstraint(BoundaryParametersABC):
             # displacement constraint does not have an element name
             element_name = None
         else:
-            raise Exception("Displacement constraint can only be applied in mechanical or mechanical groundwater "
+            raise ValueError("Displacement constraint can only be applied in mechanical or mechanical groundwater "
                             "flow analysis")
 
         return element_name
@@ -113,18 +127,21 @@ class RotationConstraint(BoundaryParametersABC):
         return True
 
     @staticmethod
-    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
         """
         Static method to get the element name for a rotation constraint. Rotation constraint does not have a
         name.
 
         Args:
-            - n_dim_model (int): The number of dimensions of the model (2 or 3)
+            - n_dim_model (int): The number of dimensions of the model
             - n_nodes_element (int): The number of nodes per element
-            - analysis_type (str):
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type.
+
+        Raises:
+            - ValueError: Rotation constraint can only be applied in mechanical or mechanical groundwater flow
 
         Returns:
-            - None
+            - None: Rotation constraint does not have a name
 
         """
 
@@ -132,8 +149,8 @@ class RotationConstraint(BoundaryParametersABC):
             # rotation constraint does not have an element name
             element_name = None
         else:
-            raise Exception("Rotation constraint can only be applied in mechanical or mechanical groundwater "
-                            "flow analysis")
+            raise ValueError("Rotation constraint can only be applied in mechanical or mechanical groundwater "
+                             "flow analysis")
 
         return element_name
 
@@ -166,16 +183,21 @@ class AbsorbingBoundary(BoundaryParametersABC):
         """
         return False
 
-
     @staticmethod
-    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
         """
         Static method to get the element name for an absorbing boundary.
 
         Args:
             - n_dim_model (int): The number of dimensions of the model (2 or 3)
             - n_nodes_element (int): The number of nodes per element
-            - analysis_type (str):
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type.
+
+        Raises:
+            - ValueError: Absorbing boundary conditions are only implemented for 2D and 3D geometries.
+            - ValueError: Absorbing boundary conditions are not implemented for quadratic elements in a 3D geometry.
+            - Exception: Absorbing boundary conditions can only be applied in mechanical or mechanical groundwater \
+                flow analysis
 
         Returns:
             - str: The element name
