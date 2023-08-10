@@ -72,8 +72,12 @@ class KratosOutputsIO:
                 f"Accepted inputs are `binary`, `ascii` or `hdf5`."
             )
 
+        model_part_name = f"{self.domain}"
+        if part_name is not None:
+            model_part_name += f".{part_name}"
+
         parameters_dict = {
-            "model_part_name": f"{self.domain}.{part_name}",
+            "model_part_name": model_part_name,
             "output_name": __output_path_gid,
             "postprocess_parameters": {
                 "result_file_configuration": {
@@ -126,8 +130,7 @@ class KratosOutputsIO:
             - output_dir (Path): output path for the VTK output
             - output_name (str): Name for the output file. This parameter is ignored by
                 VTK output process.
-            - output_parameters (:class:`stem.output.VtkOutputParameters`): class containing VTK output
-                  parameters
+            - output_parameters (:class:`stem.output.VtkOutputParameters`): class containing VTK output parameters
 
         Returns:
             - Dict[str, Any]: dictionary containing the output parameters in Kratos format
@@ -135,9 +138,12 @@ class KratosOutputsIO:
 
         _output_path = output_dir
         __output_path_vtk = str(_output_path).replace("\\", "/")
+        model_part_name = f"{self.domain}"
+        if part_name is not None:
+            model_part_name += f".{part_name}"
 
         parameters_dict = {
-            "model_part_name": f"{self.domain}.{part_name}",
+            "model_part_name":model_part_name,
             "output_path": __output_path_vtk,
             "file_format": output_parameters.file_format,
             "output_precision": output_parameters.output_precision,
@@ -196,13 +202,17 @@ class KratosOutputsIO:
 
         __output_path_json = str(_output_path).replace("\\", "/")
 
+        model_part_name = f"{self.domain}"
+        if part_name is not None:
+            model_part_name += f".{part_name}"
+
         # initialize output dictionary
         output_dict: Dict[str, Any] = {
             "python_module": "json_output_process",
             "kratos_module": "KratosMultiphysics",
             "process_name": "JsonOutputProcess",
             "Parameters": {
-                "model_part_name": f"{self.domain}.{part_name}",
+                "model_part_name": model_part_name,
                 "output_file_name": __output_path_json,
                 "output_variables": [op.name for op in output_parameters.nodal_results],
                 "gauss_points_output_variables": [

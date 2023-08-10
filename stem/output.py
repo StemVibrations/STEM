@@ -246,10 +246,13 @@ class Output:
         - part_name (str): name of the model part
         - output_dir (str): Optional input. output directory for the relative or \
               absolute path to the output file. The path will be created if it does \
-              not exist yet. If not specified, the files it corresponds to the working \
-              directory. \n
-              example1='test1' results in the test1 output folder relative to current folder as '.test1'\
-              example2='path1/path2/test2' saves the outputs in 'current_folder/path1/path2/test2' \
+              not exist yet. \n
+              [NOTE]: for VTK file type, the content of the target directory will be deleted. Do not specify the \
+              current working folder. If not specified, the output directory is created in vtk output \
+              starting from the working folder. \n
+              For the other file types, if output_dir is None, than the current directory is assumed.
+              example1='test1' results in the test1 output folder relative to current folder as './test1'\
+              example2='path1/path2/test2' saves the outputs in './path1/path2/test2' \
               example3='C:/Documents/yourproject/test3' saves the outputs in 'C:/Documents/yourproject/test3'.
         - output_name (str): Optional input. Name for the output file. This parameter is \
               used by GiD and JSON outputs while is ignored in VTK. If the name is not \
@@ -259,9 +262,9 @@ class Output:
 
     def __init__(
         self,
-        part_name: str,
         output_parameters: OutputParametersABC,
-        output_dir: str = "",
+        part_name: Optional[str] = None,
+        output_dir: Optional[str] = None,
         output_name: str = "",
     ):
         """
@@ -273,6 +276,16 @@ class Output:
             - output_dir (str): path to the output files
             - output_parameters (:class:`OutputParametersABC`): class containing output parameters
         """
+
+        # validation for VTK
+        if output_dir is None:
+            if isinstance(output_parameters, VtkOutputParameters):
+                if part_name is None:
+                    output_dir = "./output_VTK_full_model"
+                else:
+                    output_dir = "./output_VTK_" + part_name
+            elif isinstance(output_parameters, (GiDOutputParameters, JsonOutputParameters)):
+                output_dir = "./"
 
         self.output_name: str = output_name
         self.part_name: str = part_name
