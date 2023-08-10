@@ -5,7 +5,7 @@
             "process_name": "GiDOutputProcess",
             "Parameters":    {
                 "model_part_name": "PorousDomain.test_gid_output",
-                "output_name": "dir_test/test_gid1",
+                "output_name": "test_gid1",
                 "postprocess_parameters": {
                     "result_file_configuration": {
                         "gidpost_flags":       {
@@ -62,7 +62,7 @@
             "process_name": "VtkOutputProcess",
             "Parameters":    {
                 "model_part_name": "PorousDomain.test_vtk_output",
-                "output_path": "dir_test/test_vtk1",
+                "output_path": "output_vtk_test_vtk_output",
                 "file_format" :  "binary",
                 "output_precision" : 8,
                 "output_control_type" :  "step",
@@ -77,7 +77,7 @@
             "process_name": "VtkOutputProcess",
             "Parameters":    {
                 "model_part_name": "PorousDomain.test_vtk_output",
-                "output_path": "dir_test/test_vtk2",
+                "output_path": "test_vtk1/output_vtk_test_vtk_output",
                 "file_format" :  "ascii",
                 "output_precision" : 8,
                 "output_control_type" :  "step",
@@ -95,7 +95,7 @@
             "process_name": "JsonOutputProcess",
             "Parameters": {
                 "model_part_name": "PorousDomain.test_json_output1",
-                "output_file_name": "dir_test/test_json_output1.json",
+                "output_file_name": "test_json_output1.json",
                 "output_variables": [
                     "DISPLACEMENT",
                     "TOTAL_DISPLACEMENT"

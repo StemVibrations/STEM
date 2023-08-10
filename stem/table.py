@@ -14,17 +14,12 @@ class Table:
     two point of the sequence/array.
 
     Attributes:
-        - name (str): label of the table object.
         - values (Union[Sequence[float], npty.NDArray[np.float64]]): alues of the load/constraint.
-        - times (Union[Sequence[Union[int,float]], npty.NDArray[Union[np.float64, np.int_]]]): time [s]
+        - times (Union[Sequence[Union[int,float]], npty.NDArray[Union[np.float64, np.int_]]]): time [s] \
             corresponding to the values specified.
-        - step_type (str): step type specified for the step variable. Select either `step` if simulation step id \
-            (integers) are provided or `time`, if time steps in seconds are provided. \
-             Currently only `time` is supported.
         - __id (Optional[int]): unique identifier for the table.
     """
 
-    name: str
     values: Union[Sequence[Union[int, float]], npty.NDArray[Union[np.float64, np.int_]]]
     times: Union[Sequence[float], npty.NDArray[np.float64]]
     __id: Optional[int] = None
@@ -60,6 +55,6 @@ class Table:
         """
 
         if len(self.times) != len(self.values):
-            raise ValueError(f"Dimension mismatch between times and values in table: {self.name}\n"
+            raise ValueError(f"Dimension mismatch between times and values in table:\n"
                              f" - times: {len(self.times)}\n"
                              f" - values: {len(self.values)}\n")

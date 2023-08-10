@@ -110,11 +110,10 @@ class KratosModelIO:
             for ix, bmp in enumerate(model.body_model_parts):
                 bmp.id = ix + 1
 
-
     @staticmethod
     def __get_unique_tables_process_model_part(process_model_part:ModelPart):
         """
-        Retrieve all the unique tables in the model.
+        Retrieve all the memory-unique tables in the model part.
 
         Args:
             - process_model_part (:class:`stem.model_part.ModelPart`]): the process model part containing \
@@ -135,7 +134,7 @@ class KratosModelIO:
 
     def __get_unique_tables(self, model:Model):
         """
-        Retrieve all the unique tables in the model.
+        Retrieve all the memory-unique tables in the model.
 
         Args:
             - model (:class:`stem.model.Model`]): the model object containing the info on the loads.
@@ -157,15 +156,9 @@ class KratosModelIO:
         Args:
             - model (:class:`stem.model.Model`]): the model object containing the body model parts.
 
-        Raises:
-            - ValueError: if tables do not have unique labels.
         """
 
         unique_tables = self.__get_unique_tables(model)
-        unique_tables_name = [tb.name for tb in unique_tables]
-
-        if len(np.unique(unique_tables_name)) != len(unique_tables):
-            raise ValueError("Tables must have different labels!")
 
         for ix, table in enumerate(unique_tables):
             table.id = ix + 1
@@ -388,7 +381,7 @@ class KratosModelIO:
             raise ValueError("Table id not initialised!")
 
         # initialise block
-        block_text = ["", f"Begin Table {table.id} TIME {table.name}"]
+        block_text = ["", f"Begin Table {table.id} TIME VALUE"]
         block_text.extend(
             [
                 self.__write_table_line(table.times[ix], table.values[ix])

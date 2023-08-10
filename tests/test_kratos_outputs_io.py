@@ -73,7 +73,6 @@ class TestKratosOutputsIO:
         # create Load objects and store in the list
         gid_output_process1 = Output(
             part_name="test_gid_output",
-            output_dir=r"dir_test",
             output_name=r"test_gid1",
             output_parameters=gid_output_parameters1,
         )
@@ -85,19 +84,17 @@ class TestKratosOutputsIO:
         )
         vtk_output_process1 = Output(
             part_name="test_vtk_output",
-            output_dir=r"dir_test\test_vtk1",
             output_parameters=vtk_output_parameters1,
         )
         vtk_output_process2 = Output(
             part_name="test_vtk_output",
-            output_dir=r"dir_test\test_vtk2",
+            output_dir=r"test_vtk1",
             output_parameters=vtk_output_parameters2,
         )
 
         json_output_process1 = Output(
             part_name="test_json_output1",
             output_name="test_json_output1",
-            output_dir="dir_test",
             output_parameters=json_output_parameters1,
         )
 
