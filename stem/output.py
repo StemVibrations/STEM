@@ -269,9 +269,9 @@ class Output:
                 example2='path1/path2/test2' saves the outputs in './path1/path2/test2' \
                 example3='C:/Documents/yourproject/test3' saves the outputs in 'C:/Documents/yourproject/test3'.
 
-                [NOTE]: for VTK file type, the content of the target directory will be deleted. Do not specify the \
-                current working folder. If not specified, an output directory is created based on the submodelpart
-                specified.
+                [NOTE]: for VTK file type, the content of the target directory will be deleted. Therefore do not specify the \
+                current working folder as an output directory. If not specified, an output directory is created based on the \
+                submodelpart specified.
                 For GID and JSON output file types, if output_dir is None, than the current directory is assumed.
 
             - output_name (Optional[str]): Name for the output file. This parameter is \
