@@ -3,7 +3,7 @@ Begin Properties 1
 End Properties
 
 
-Begin Table 1 TIME Table_1
+Begin Table 1 TIME VALUE
    0.0000   0.0000
    0.5000   5.0000
    1.0000   10.0000

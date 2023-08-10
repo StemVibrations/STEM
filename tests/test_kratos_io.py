@@ -58,7 +58,7 @@ class TestKratosModelIO:
         # define tables
         _time = np.arange(6)*0.5
         _value1 = np.array([0, 5, 10, 5, 0, 0])
-        table1 = Table(times=_time, values=_value1, name="Table_1")
+        table1 = Table(times=_time, values=_value1)
         # define load properties
         line_load = LineLoad(active=[False, True, False], value=[table1, -20, 0])
 
@@ -104,7 +104,7 @@ class TestKratosModelIO:
         # define tables
         _time = np.arange(6)*0.5
         _value1 = np.array([0, 5, 10, 5, 0, 0])
-        table1 = Table(times=_time, values=_value1, name="Table_1")
+        table1 = Table(times=_time, values=_value1)
         # define load properties
         surface_load = SurfaceLoad(active=[False, True, False], value=[table1, -20, 0])
 
