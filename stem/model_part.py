@@ -8,6 +8,7 @@ from stem.structural_material import StructuralMaterial
 
 from stem.geometry import Geometry
 from stem.mesh import Mesh
+from stem.solver import AnalysisType
 
 
 class ModelPart:
@@ -62,14 +63,14 @@ class ModelPart:
 
         self.geometry = Geometry.create_geometry_from_gmsh_group(geo_data, name)
 
-    def get_element_name(self, n_dim_model, n_nodes_element, analysis_type):
+    def get_element_name(self, n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
         """
-        Get the element name of the model part
+        Get the element name of the model part. Only loads and boundary conditions currently may have an element name.
 
         Args:
             - n_dim_model (int): The number of dimensions of the model (2 or 3)
             - n_nodes_element (int): The number of nodes per element
-            - analysis_type (str):
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type of the model
 
         Returns:
             - str: element name of the model part
@@ -109,14 +110,14 @@ class BodyModelPart(ModelPart):
 
         self.material: Optional[Union[SoilMaterial, StructuralMaterial]] = None
 
-    def get_element_name(self, n_dim_model, n_nodes_element, analysis_type):
+    def get_element_name(self, n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
         """
         Get the element name of the elements within the model part
 
         Args:
             - n_dim_model (int): The number of dimensions of the model (2 or 3)
             - n_nodes_element (int): The number of nodes per element
-            - analysis_type (str):
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type of the model
 
         Returns:
             - str: element name of the model part
