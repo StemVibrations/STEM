@@ -196,7 +196,7 @@ class AbsorbingBoundary(BoundaryParametersABC):
         Raises:
             - ValueError: Absorbing boundary conditions are only implemented for 2D and 3D geometries.
             - ValueError: Absorbing boundary conditions are not implemented for quadratic elements in a 3D geometry.
-            - Exception: Absorbing boundary conditions can only be applied in mechanical or mechanical groundwater \
+            - ValueError: Absorbing boundary conditions can only be applied in mechanical or mechanical groundwater \
                 flow analysis
 
         Returns:
@@ -216,7 +216,7 @@ class AbsorbingBoundary(BoundaryParametersABC):
                 element_name = f"UPwLysmerAbsorbingCondition{n_dim_model}D{n_nodes_element}N"
 
         else:
-            raise Exception("Absorbing boundary conditions can only be applied in mechanical or mechanical "
+            raise ValueError("Absorbing boundary conditions can only be applied in mechanical or mechanical "
                             "groundwater flow analysis")
 
         return element_name
