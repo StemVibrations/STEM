@@ -243,21 +243,10 @@ class Output:
     Class containing output information for postprocessing
 
     Attributes:
-        - part_name (str): name of the model part
-        - output_dir (str): Optional input. output directory for the relative or \
-              absolute path to the output file. The path will be created if it does \
-              not exist yet. \n
-              [NOTE]: for VTK file type, the content of the target directory will be deleted. Do not specify the \
-              current working folder. If not specified, the output directory is created in vtk output \
-              starting from the working folder. \n
-              For the other file types, if output_dir is None, than the current directory is assumed.
-              example1='test1' results in the test1 output folder relative to current folder as './test1'\
-              example2='path1/path2/test2' saves the outputs in './path1/path2/test2' \
-              example3='C:/Documents/yourproject/test3' saves the outputs in 'C:/Documents/yourproject/test3'.
-        - output_name (str): Optional input. Name for the output file. This parameter is \
-              used by GiD and JSON outputs while is ignored in VTK. If the name is not \
-              given, the part_name is used instead.
-        - output_parameters (:class:`OutputParametersABC`): class containing the output parameters
+        - output_parameters (:class:`OutputParametersABC`): class containing output parameters
+        - part_name (Optional[str]): name of the model part
+        - output_dir (Optional[str]): path to the output files
+        - output_name (Optional[str]): name for the output file
     """
 
     def __init__(
@@ -265,16 +254,30 @@ class Output:
         output_parameters: OutputParametersABC,
         part_name: Optional[str] = None,
         output_dir: Optional[str] = None,
-        output_name: str = "",
+        output_name: Optional[str] = None
     ):
         """
         Constructor of the output process class
 
         Args:
-            - part_name (str): name of the model part
-            - output_name (str): name for the output file
-            - output_dir (str): path to the output files
-            - output_parameters (:class:`OutputParametersABC`): class containing output parameters
+            - output_parameters (:class:`OutputParametersABC`): class containing the output parameters
+            - part_name (Optional[str]): name of the submodelpart to be given in output. If None, all the model is
+                provided in  output.
+            - output_dir (Optional[str]): output directory for the relative or absolute path to the output file. The \
+                path will be created if it does not exist yet. \n
+
+                example1='test1' results in the test1 output folder relative to current folder as './test1'\
+                example2='path1/path2/test2' saves the outputs in './path1/path2/test2' \
+                example3='C:/Documents/yourproject/test3' saves the outputs in 'C:/Documents/yourproject/test3'.
+
+                [NOTE]: for VTK file type, the content of the target directory will be deleted. Do not specify the \
+                current working folder. If not specified, an output directory is created based on the submodelpart
+                specified.
+                For GID and JSON output file types, if output_dir is None, than the current directory is assumed.
+
+            - output_name (Optional[str]): Name for the output file. This parameter is \
+                  used by GiD and JSON outputs while is ignored in VTK. If the name is not \
+                  given, the part_name is used instead.
         """
 
         # validation for VTK
@@ -287,7 +290,7 @@ class Output:
             elif isinstance(output_parameters, (GiDOutputParameters, JsonOutputParameters)):
                 output_dir = "./"
 
-        self.output_name: str = output_name
-        self.part_name: str = part_name
-        self.output_dir: Path = Path(output_dir)
-        self.output_parameters: OutputParametersABC = output_parameters
+        self.output_parameters = output_parameters
+        self.part_name = part_name
+        self.output_dir = Path(output_dir)
+        self.output_name = output_name
