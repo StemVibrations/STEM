@@ -93,7 +93,7 @@ class DisplacementConstraint(BoundaryParametersABC):
             element_name = None
         else:
             raise ValueError("Displacement constraint can only be applied in mechanical or mechanical groundwater "
-                            "flow analysis")
+                             "flow analysis")
 
         return element_name
 
@@ -206,7 +206,7 @@ class AbsorbingBoundary(BoundaryParametersABC):
 
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
 
-            if n_dim_model != 2 or n_dim_model != 3:
+            if n_dim_model != 2 and n_dim_model != 3:
                 raise ValueError(f"Absorbing boundary conditions are only implemented for 2D and 3D geometries.")
 
             if n_dim_model == 3 and n_nodes_element > 4:

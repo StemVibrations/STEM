@@ -115,7 +115,7 @@ class LineLoad(LoadParametersABC):
 
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
 
-            if n_nodes_element != 2 or n_nodes_element != 3:
+            if n_nodes_element != 2 and n_nodes_element != 3:
                 raise ValueError("Line load can only be applied to 2 or 3 node elements")
             else:
                 if n_dim_model == 2 and n_nodes_element > 2:
@@ -162,7 +162,7 @@ class SurfaceLoad(LoadParametersABC):
             raise ValueError("Surface load can only be applied in 3D models")
 
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
-            if n_nodes_element == 3 and n_nodes_element == 4:
+            if n_nodes_element == 3 or n_nodes_element == 4:
 
                 element_name = f"UPwFaceLoadCondition{n_dim_model}D{n_nodes_element}N"
 
@@ -220,7 +220,7 @@ class MovingLoad(LoadParametersABC):
         if n_dim_model != 2 and n_dim_model != 3:
             raise ValueError("Moving load can only be applied in 2D or 3D models")
 
-        if n_nodes_element != 2 or n_nodes_element != 3:
+        if n_nodes_element != 2 and n_nodes_element != 3:
             raise ValueError("Moving load can only be applied to 2 or 3 node elements")
 
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
