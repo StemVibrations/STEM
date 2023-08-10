@@ -6,9 +6,18 @@ from stem.soil_material import SoilMaterial
 from stem.structural_material import *
 from stem.load import LineLoad, MovingLoad, SurfaceLoad, PointLoad, GravityLoad
 from stem.additional_processes import AdditionalProcessesParametersABC
+from stem.boundary import AbsorbingBoundary
+from stem.load import LineLoad, MovingLoad, SurfaceLoad
 from stem.mesh import Element, Node
 from stem.model import Model
 from stem.model_part import ModelPart, BodyModelPart
+
+# indentation between entries in the mdpa file. Defaults to 2.
+INDENTATION = 2
+# format for integers
+FORMAT_INTEGER: str = "{:d}"
+# format for floats
+FORMAT_FLOAT: str = " {:.10f}"
 from stem.boundary import AbsorbingBoundary, DisplacementConstraint, RotationConstraint
 from stem.solver import AnalysisType
 
@@ -25,10 +34,7 @@ class KratosModelIO:
     def __init__(
         self,
         ndim: int,
-        domain: str,
-        ind: int = 2,
-        format_int: str = "{:d}",
-        format_float: str = " {:.10f}",
+        domain: str
     ):
         """
         Class to write Kratos problem parts in mpda format.
@@ -36,20 +42,14 @@ class KratosModelIO:
         Args:
             - ndim (int): The number of dimensions of the problem (2 or 3).
             - domain (str): The name of the Kratos domain.
-            - ind (int): indentation between entries in the mdpa file. Defaults to 2.
-            - format_int (int): Format for integers (ids) in the mdpa file. Defaults to {:d}.
-            - format_float (int): Format for float (coordinates) in the mdpa file.
-                Defaults to {:d}.
         """
         self.ndim: int = ndim
         self.domain: str = domain
-        self.ind = ind
-        self.format_int = format_int
-        self.format_float = format_float
 
     @staticmethod
     def __is_body_model_part(model_part: ModelPart):
-        """Check whether the model part is a body model part.
+        """
+        Check whether the model part is a body model part.
 
         Args:
             - model_part (:class:`stem.model_part.ModelPart`): the model part
@@ -84,38 +84,31 @@ class KratosModelIO:
             - model (:class:`stem.model.Model`]): the model object containing the process model parts.
 
         """
-        if any([pmp.id is None for pmp in model.process_model_parts]):
-            print(
-                f"WARNING: Some of the process model parts have ids and some doesn't."
-                f"Ids are reset back."
-            )
-
-        cc = 0
-        for pmp in model.process_model_parts:
-            # if the process writes condition add an id
-            if self.__check_if_process_writes_conditions(pmp):
-                cc += 1
-                pmp.id = cc
+        # some process model parts are never initialised because they do not write conditions.
+        # if some process model parts, there's no need for initialisation
+        if all([pmp.id is None for pmp in model.process_model_parts]):
+            cc = 0
+            for pmp in model.process_model_parts:
+                # if the process writes condition add an id
+                if self.__check_if_process_writes_conditions(pmp):
+                    cc += 1
+                    pmp.id = cc
 
     @staticmethod
     def initialise_body_model_part_ids(model: Model):
         """
-        Initialise or reset the process model part ids if some are initialised and some are not.
+        Initialise or reset the body model part ids if some are initialised and some are not.
 
         Args:
-            - model (:class:`stem.model.Model`]): the model object containing the process model parts.
+            - model (:class:`stem.model.Model`]): the model object containing the body model parts.
 
         """
 
-        _check_initialised = [pmp.id is None for pmp in model.body_model_parts]
+        # differently from process model parts, all the body model parts need to have an ids.
+        _check_not_initialised = [bmp.id is None for bmp in model.body_model_parts]
 
-        if all(_check_initialised) or any(_check_initialised):
-            if any(_check_initialised):
-                print(
-                    f"WARNING: Some of the process model parts have ids or no id at all."
-                    f"Ids are initialised."
-                )
-
+        if any(_check_not_initialised):
+            # some or all ids are missing, therefore all ids are re-initialised
             for ix, bmp in enumerate(model.body_model_parts):
                 bmp.id = ix + 1
 
@@ -130,7 +123,7 @@ class KratosModelIO:
 
         Args:
             - buffer (List[str]): buffer containing the submodelpart info to be updated with the current block.
-            - block_name (str): block name, it can be one of
+            - block_name (str): block name, it can be one of Tables, Nodes, Elements or Conditions.
             - block_entities (Optional[Sequence[int]]): ids to be written to the block. If None, an empty block is written.
 
         Returns:
@@ -138,12 +131,12 @@ class KratosModelIO:
         """
 
         # check if mesh is initialised
-        sp = " " * self.ind
-        buffer.append(f"{sp}Begin SubModelPart{block_name}")
+        space = " " * INDENTATION
+        buffer.append(f"{space}Begin SubModelPart{block_name}")
         if block_entities is not None:
-            fmt = f"{sp}{self.format_int}"
+            fmt = f"{space}{FORMAT_INTEGER}"
             buffer += [fmt.format(entity) for entity in block_entities]
-        buffer.append(f"{sp}End SubModelPart{block_name}")
+        buffer.append(f"{space}End SubModelPart{block_name}")
         return buffer
 
     def write_submodelpart_body_model_part(self, body_model_part: BodyModelPart):
@@ -248,7 +241,8 @@ class KratosModelIO:
         block_text += [f"End SubModelPart", ""]
         return block_text
 
-    def __write_element_line(self, mat_id: int, element: Element):
+    @staticmethod
+    def __write_element_line(mat_id: int, element: Element):
         """
         Writes an element to the mdpa format for Kratos
 
@@ -260,18 +254,19 @@ class KratosModelIO:
             - line (str): string representing an element (or condition) in Kratos.
         """
         # simplify space syntax
-        sp = " " * self.ind
+        space = " " * INDENTATION
         _node_ids = element.node_ids
         # assemble format for element/condition string
         # `  element_id  property_id  node_1 node_2 node_3 ... node_N`
         # where N=number of nodes of the element/condition
-        _fmt = f"{sp}{self.format_int}{sp}{self.format_int}{sp}" + " ".join(
-            [self.format_int] * len(_node_ids)
+        _fmt = f"{space}{FORMAT_INTEGER}{space}{FORMAT_INTEGER}{space}" + " ".join(
+            [FORMAT_INTEGER] * len(_node_ids)
         )
         line = _fmt.format(element.id, mat_id, *_node_ids)
         return line
 
-    def __write_node_line(self, node: Node):
+    @staticmethod
+    def __write_node_line(node: Node):
         """
         Writes a node to the mdpa format for Kratos
 
@@ -282,18 +277,20 @@ class KratosModelIO:
             - line: string representing a node in Kratos.
         """
         # simplify space syntax
-        sp = " " * self.ind
+        space = " " * INDENTATION
         node_coords = node.coordinates
         # assemble format for nodal string
         #   node_id  coordinate_1 coordinate_2 coordinate_3
-        _fmt = f"{sp}{self.format_int}{sp}" + " ".join(
-            [self.format_float] * len(node_coords)
+        _fmt = f"{space}{FORMAT_INTEGER}{space}" + " ".join(
+            [FORMAT_FLOAT] * len(node_coords)
         )
         line = _fmt.format(node.id, *node_coords)
         return line
 
-    def __map_gmsh_element_to_kratos(self, model: Model, model_part: ModelPart):
-        """Return the corresponding element type based on the analysis type, the model part (condition or body)
+    @staticmethod
+    def __map_gmsh_element_to_kratos(model: Model, model_part: ModelPart):
+        """
+        Returns the corresponding element type based on the analysis type, the model part (condition or body)
         and type of element (e.g. rod vs beam or line load vs moving load).
 
         Args:
@@ -432,10 +429,7 @@ class KratosModelIO:
         else:
             block_text = ["", f"Begin Conditions {kratos_element_type}"]
             block_text.extend(
-                [
-                    self.__write_element_line(mat_id, el)
-                    for el in process_model_part.mesh.elements
-                ]
+                [self.__write_element_line(mat_id, el) for el in process_model_part.mesh.elements]
             )
             block_text += [f"End Conditions", ""]
         return block_text
@@ -483,7 +477,8 @@ class KratosModelIO:
         return block_text
 
     def __write_elements_model(self, model: Model):
-        """returns the mdpa block related to elements.
+        """
+        Returns the mdpa block related to elements.
 
         Args:
             - model (:class:`stem.model.Model`): the model object containing the info on the elements.
@@ -514,7 +509,8 @@ class KratosModelIO:
         return block_text
 
     def __write_conditions_model(self, model: Model):
-        """returns the mdpa block related to conditions.
+        """
+        Returns the mdpa block related to conditions.
 
         Args:
             - model (:class:`stem.model.Model`): the model object containing the info on the conditions.
@@ -548,7 +544,8 @@ class KratosModelIO:
         return block_text
 
     def __write_submodel_parts(self, model: Model):
-        """returns the mdpa block related to conditions.
+        """
+        Returns the mdpa block related to the submodel parts of process and body model parts.
 
         Args:
             - model (:class:`stem.model.Model`): the model object containing the info on the conditions.

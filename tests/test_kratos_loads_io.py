@@ -2,7 +2,6 @@ import json
 
 from stem.IO.kratos_loads_io import KratosLoadsIO
 from stem.load import *
-
 from tests.utils import TestUtils
 
 

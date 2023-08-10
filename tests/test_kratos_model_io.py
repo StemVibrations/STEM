@@ -4,6 +4,7 @@ import pytest
 import numpy.testing as npt
 from gmsh_utils import gmsh_IO
 
+from stem.IO.kratos_model_io import KratosModelIO
 from stem.boundary import DisplacementConstraint
 from stem.load import LineLoad
 from stem.model import Model
@@ -32,7 +33,6 @@ class TestKratosModelIO:
 
         """
         gmsh_IO.GmshIO().finalize_gmsh()
-
 
     @pytest.fixture
     def create_default_2d_model_and_mesh(self):

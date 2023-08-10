@@ -1,19 +1,18 @@
 import json
 from functools import reduce
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 
 from stem.IO.kratos_boundaries_io import KratosBoundariesIO
 from stem.IO.kratos_loads_io import KratosLoadsIO
 from stem.IO.kratos_material_io import KratosMaterialIO
-from stem.IO.kratos_output_io import KratosOutputsIO
 from stem.IO.kratos_model_io import KratosModelIO
+from stem.IO.kratos_output_io import KratosOutputsIO
 from stem.IO.kratos_solver_io import KratosSolverIO
 from stem.boundary import BoundaryParametersABC
 from stem.load import LoadParametersABC
 from stem.model import Model
 from stem.output import Output
-from stem.solver import Problem
 from stem.utils import Utils
 
 DOMAIN = "PorousDomain"
@@ -46,7 +45,7 @@ class KratosIO:
         self.model_io = KratosModelIO(self.ndim, DOMAIN)
         self.solver_io = KratosSolverIO(self.ndim, DOMAIN)
 
-    def write_mesh_to_mdpa(self, model: Model, mesh_file_name: str, output_folder="."):
+    def write_mesh_to_mdpa(self, model: Model, mesh_file_name: str, output_folder="./"):
         """Saves mesh data to mdpa file.
 
         Args:
@@ -79,7 +78,7 @@ class KratosIO:
         self,
         model: Model,
         materials_file_name: str = "MaterialParameters.json",
-        output_folder: str = "."
+        output_folder: str = "./"
     ):
         """
         Writes the material parameters to json format for Kratos.
@@ -95,7 +94,7 @@ class KratosIO:
             - ValueError: if material id is not initialised
 
         Returns:
-            - materials_dict[str, Any]: dictionary containing the material parameters' dictionary.
+            - materials_dict Dict([str, Any]): dictionary containing the material parameters' dictionary.
         """
 
         materials_dict: Dict[str, Any] = {"properties": []}
@@ -110,7 +109,7 @@ class KratosIO:
                 raise ValueError(f"Body model part {bmp.name} has no material assigned.")
 
             if bmp.id is None:
-                raise ValueError  # it will not rise because initialised ...
+                raise ValueError(f"Body model part {bmp.name} has no id initialised.")
 
             materials_dict["properties"].append(
                 self.material_io.create_material_dict(
@@ -213,7 +212,7 @@ class KratosIO:
         mesh_file_name: str,
         materials_file_name: str,
         project_file_name: str = "ProjectParameters.json",
-        output_folder: str = "."
+        output_folder: str = "./"
     ):
         """
         Writes project parameters to json file
@@ -260,10 +259,10 @@ class KratosIO:
         mesh_file_name: str,
         materials_file_name: str = "MaterialParameters.json",
         project_file_name: str = "ProjectParameters.json",
-        output_folder: str = ".",
+        output_folder: str = "./"
     ):
         """
-        Writes files for Kratos given a model object and required outpus
+        Writes all required input files for a Kratos simulation, i.e: project parameters json; material parameters json and the mdpa mesh file 
 
         Args:
             - model (:class:`stem.model.Model`]): The model object containing all the required info.
@@ -272,13 +271,10 @@ class KratosIO:
             - materials_file_name (str): The name of the materials file.
             - project_file_name (str): name of the project parameters file. Defaults to `ProjectParameters.json`.
             - output_folder (str): folder to store the project parameters file. Defaults to the working directory.
-
-        Returns:
-            - project_parameters_dict (Dict[str, Any]): the dictionary containing the project parameters.
         """
 
         # write materials
-        self.write_material_parameters_json(model, output_folder, materials_file_name)
+        self.write_material_parameters_json(model, materials_file_name, output_folder)
 
         # write project parameters
         self.write_project_parameters_json(
@@ -286,8 +282,8 @@ class KratosIO:
             outputs,
             mesh_file_name,
             materials_file_name,
-            output_folder,
             project_file_name,
+            output_folder
         )
 
         # write mdpa files

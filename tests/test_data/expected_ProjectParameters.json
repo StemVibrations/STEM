@@ -54,7 +54,7 @@
         "displacement_absolute_tolerance": 1e-07,
         "linear_solver_settings": {
             "solver_type": "amgcl",
-            "scaling": true,
+            "scaling": false,
             "tolerance": 1e-08,
             "max_iteration": 500
         },

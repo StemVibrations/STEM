@@ -295,15 +295,14 @@ class Model:
         # get the complete geometry
         self.__get_geometry_from_geo_data(self.gmsh_io.geo_data)
 
-    def set_mesh_size(self, element_size:float):
-        """Set the element size to dimension (m).
+    def set_mesh_size(self, element_size: float):
+        """
+        Set the element size to dimension [m].
 
         Args:
-            element_size (float): the desired element size in m.
-
+            - element_size (float): the desired element size [m].
         """
         self.mesh_settings.element_size = element_size
-
 
     def generate_mesh(self):
         """
@@ -412,10 +411,11 @@ class Model:
         self.synchronise_geometry()
 
     def get_all_model_parts(self):
-        """Returns both body and process model parts in the model.
+        """
+        Returns both body and process model parts in the model.
 
         Returns:
-            all_model_parts (List[:class:`stem.model_part.ModelPart`]): list of all the model parts.
+            - all_model_parts (List[:class:`stem.model_part.ModelPart`]): list of all the model parts.
         """
         all_model_parts = []
         all_model_parts.extend(self.process_model_parts)
@@ -423,7 +423,8 @@ class Model:
         return all_model_parts
 
     def get_all_nodes(self):
-        """Retrieve all the unique nodes in the model mesh.
+        """
+        Retrieve all the unique nodes in the model mesh.
 
         Returns:
             - node_dict (Dict[int, :class:`stem.mesh.Node`]): dictionary containing nodes id and nodes objects.

@@ -1,9 +1,8 @@
 import json
 
 from stem.IO.kratos_solver_io import KratosSolverIO
-from stem.solver import *
 from stem.model_part import ModelPart, BodyModelPart
-
+from stem.solver import *
 from tests.utils import TestUtils
 
 

@@ -6,7 +6,6 @@ pth_kratos = r"C:\Please\Define\Installation\Directory\Of\Kratos"
 materialfname = "MaterialParameters.json"
 projectfname = "ProjectParameters.json"
 meshfname = "test_simple_dynamic.mdpa"
-run_only: bool = True
 
 # --------------------------------------------------------------------------------------------------------------------
 sys.path.append(os.path.join(pth_kratos, "KratosGeoMechanics"))
@@ -18,16 +17,14 @@ from KratosMultiphysics.GeoMechanicsApplication.geomechanics_analysis import (
 )
 
 project_folder = "dir_test"
+# -------------------------------------------------------------------------------------
+# run Kratos!!
 
-if run_only:
-    # -------------------------------------------------------------------------------------
-    # run Kratos!!
+os.chdir(project_folder)
 
-    os.chdir(project_folder)
+with open(projectfname, "r") as parameter_file:
+    parameters = KratosMultiphysics.Parameters(parameter_file.read())
 
-    with open(projectfname, "r") as parameter_file:
-        parameters = KratosMultiphysics.Parameters(parameter_file.read())
-
-    model = KratosMultiphysics.Model()
-    simulation = GeoMechanicsAnalysis(model, parameters)
-    simulation.Run()
+model = KratosMultiphysics.Model()
+simulation = GeoMechanicsAnalysis(model, parameters)
+simulation.Run()
