@@ -55,7 +55,7 @@ class KratosOutputsIO:
         if output_name is None or output_name == "":
             output_name = f"{part_name}"
 
-        _output_path = output_dir.joinpath(output_name)
+        _output_path = Path(output_dir).joinpath(output_name)
         __output_path_gid = str(_output_path).replace("\\", "/")
 
         if output_parameters.file_format == "binary":
@@ -136,7 +136,7 @@ class KratosOutputsIO:
             - Dict[str, Any]: dictionary containing the output parameters in Kratos format
         """
 
-        _output_path = output_dir
+        _output_path = Path(output_dir)
         __output_path_vtk = str(_output_path).replace("\\", "/")
         model_part_name = f"{self.domain}"
         if part_name is not None:
@@ -194,9 +194,10 @@ class KratosOutputsIO:
             output_name = f"{part_name}" + ".json"
 
         # create the target folder for json or simulation will not run.
-        output_dir.mkdir(parents=True, exist_ok=True)
+        _output_dir = Path(output_dir)
+        _output_dir.mkdir(parents=True, exist_ok=True)
 
-        _output_path = output_dir.joinpath(output_name)
+        _output_path = _output_dir.joinpath(output_name)
         if _output_path.suffix == "":
             _output_path = _output_path.with_suffix(".json")
 

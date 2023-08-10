@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
 from typing import List, Optional
 
 
@@ -292,5 +291,5 @@ class Output:
 
         self.output_parameters = output_parameters
         self.part_name = part_name
-        self.output_dir = Path(output_dir)
+        self.output_dir = output_dir
         self.output_name = output_name
