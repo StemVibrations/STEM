@@ -14,7 +14,18 @@ class StructuralParametersABC(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
+        """
+        Abstract static method to get the element name for a structural material.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model
+            - n_nodes_element (int): The number of nodes per element
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type.
+
+        Raises:
+            - Exception: abstract method is called
+        """
         raise Exception("abstract method 'get_element_name' of structural parameters class is called")
 
 
@@ -60,7 +71,23 @@ class EulerBeam(StructuralParametersABC):
                 raise ValueError("The torsional inertia (TORSIONAL_INERTIA) is not defined.")
 
     @staticmethod
-    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
+        """
+        Static method to get the element name for an Euler beam element.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model
+            - n_nodes_element (int): The number of nodes per element
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type.
+
+        Raises:
+            - ValueError: If the number of nodes per element is not 2
+            - ValueError: If the analysis type is not implemented yet for Euler beam elements.
+
+        Returns:
+            - str: The element name
+
+        """
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
 
             if n_nodes_element == 2:
@@ -97,6 +124,21 @@ class ElasticSpringDamper(StructuralParametersABC):
 
     @staticmethod
     def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+        """
+        Static method to get the element name for an elastic spring damper element.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model
+            - n_nodes_element (int): The number of nodes per element
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type.
+
+        Raises:
+            - ValueError: If the number of nodes per element is not 2
+            - ValueError: If the analysis type is not implemented yet for elastic spring damper elements.
+
+        Returns:
+            - str: The element name
+        """
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
 
             if n_nodes_element == 2:
@@ -109,6 +151,7 @@ class ElasticSpringDamper(StructuralParametersABC):
             raise ValueError(f"Analysis type {analysis_type} is not implemented yet for soil material.")
 
         return element_name
+
 
 @dataclass
 class NodalConcentrated(StructuralParametersABC):
@@ -128,12 +171,24 @@ class NodalConcentrated(StructuralParametersABC):
     NODAL_DAMPING_COEFFICIENT: List[float]
 
     @staticmethod
-    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
+        """
+        Get the element name for the nodal concentrated element
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model (2 or 3)
+            - n_nodes_element (int): The number of nodes of the element (1)
+            - analysis_type (AnalysisType): The analysis type of the model
+
+        Raises:
+            - ValueError: If the number of nodes per element is not 1
+            - ValueError: If the analysis type is not implemented yet for nodal concentrated elements.
+        """
 
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
 
             if n_nodes_element == 1:
-                element_name = f"StructuralMechanicsApplication.NodalConcentratedElement{n_dim_model}D1N"
+                element_name = f"NodalConcentratedElement{n_dim_model}D1N"
             else:
                 raise ValueError(f"Only 1 noded nodal concentrated elements are supported. {n_nodes_element} "
                                  f"nodes were provided.")
@@ -141,6 +196,7 @@ class NodalConcentrated(StructuralParametersABC):
             raise ValueError(f"Analysis type {analysis_type} is not implemented yet for soil material.")
 
         return element_name
+
 
 @dataclass
 class StructuralMaterial:
@@ -154,7 +210,19 @@ class StructuralMaterial:
     name: str
     material_parameters: StructuralParametersABC
 
-    def get_element_name(self, n_dim_model, n_nodes_element, analysis_type):
+    def get_element_name(self, n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
+        """
+        Get the element name for the structural material
+
+        Args:
+            - n_dim_model (int): The dimension of the model.
+            - n_nodes_element (int): The number of nodes per element.
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type.
+
+        Returns:
+            - str: The element name.
+
+        """
 
         return self.material_parameters.get_element_name(n_dim_model, n_nodes_element, analysis_type)
 
