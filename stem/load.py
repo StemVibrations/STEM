@@ -13,7 +13,19 @@ class LoadParametersABC(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
+        """
+        Abstract static method to get the element name for a load.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model
+            - n_nodes_element (int): The number of nodes per element
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type.
+
+        Raises:
+            - Exception: abstract method is called
+
+        """
         raise Exception("abstract method 'get_element_name' of load parameters class is called")
 
 
@@ -34,17 +46,21 @@ class PointLoad(LoadParametersABC):
     value: List[float]
 
     @staticmethod
-    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
         """
         Static method to get the element name for a point load. Point load does not have a name.
 
         Args:
             - n_dim_model (int): The number of dimensions of the model (2 or 3)
-            - n_nodes_element (int): The number of nodes per element (2, 3 or 4)
-            - analysis_type (str):
+            - n_nodes_element (int): The number of nodes per element (1)
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type
+
+        Raises:
+            - ValueError: If the number of dimensions is not 2 or 3
+            - ValueError: If the number of nodes per element is not 1
 
         Returns:
-            - None
+            - None: Point load does not have a name
 
 
         """
@@ -75,14 +91,19 @@ class LineLoad(LoadParametersABC):
     value: List[float]
 
     @staticmethod
-    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
         """
         Static method to get the element name for a line load. Line load does not have a name.
 
         Args:
             - n_dim_model (int): The number of dimensions of the model (2 or 3)
-            - n_nodes_element (int): The number of nodes per element (2, 3 or 4)
-            - analysis_type (str):
+            - n_nodes_element (int): The number of nodes per element (2, 3)
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type
+
+        Raises:
+            - ValueError: If the number of dimensions is not 2 or 3
+            - ValueError: If the number of nodes per element is not 2 or 3
+            - ValueError: If the analysis type is not mechanical or mechanical groundwater flow
 
         Returns:
             - str: The element name for a line load
@@ -90,22 +111,22 @@ class LineLoad(LoadParametersABC):
 
         """
         if n_dim_model != 2 and n_dim_model != 3:
-            raise Exception("Line load can only be applied to 2 or 3 dimensional models")
+            raise ValueError("Line load can only be applied to 2 or 3 dimensional models")
 
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
 
             if n_nodes_element != 2 or n_nodes_element != 3:
-                raise Exception("Line load can only be applied to 2 or 3 node elements")
+                raise ValueError("Line load can only be applied to 2 or 3 node elements")
             else:
                 if n_dim_model == 2 and n_nodes_element > 2:
                     # 2d quadratic line load is set on outer nodes, but displacement is calculated on all nodes for
                     # stability reasons
                     element_name = f"LineLoadDiffOrderCondition{n_dim_model}D{n_nodes_element}N"
                 else:
-                    element_name = f"StructuralMechanicsApplication.LineLoadCondition{n_dim_model}D{n_nodes_element}N"
+                    element_name = f"LineLoadCondition{n_dim_model}D{n_nodes_element}N"
 
         else:
-            raise Exception("Line load can only be applied in mechanical or mechanical groundwater flow analysis")
+            raise ValueError("Line load can only be applied in mechanical or mechanical groundwater flow analysis")
 
         return element_name
 
@@ -123,10 +144,22 @@ class SurfaceLoad(LoadParametersABC):
     value: List[float]
 
     @staticmethod
-    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
+        """
+        Static method to get the element name for a surface load.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model (3)
+            - n_nodes_element (int): The number of nodes per element
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type
+
+        Raises:
+            - ValueError: If the number of dimensions is not 3
+            - ValueError: If the analysis type is not mechanical or mechanical groundwater flow
+        """
 
         if n_dim_model != 3:
-            raise Exception("Surface load can only be applied in 3D models")
+            raise ValueError("Surface load can only be applied in 3D models")
 
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
             if n_nodes_element == 3 and n_nodes_element == 4:
@@ -136,7 +169,7 @@ class SurfaceLoad(LoadParametersABC):
             else:
                 element_name = f"SurfaceLoadDiffOrderCondition{n_dim_model}D{n_nodes_element}N"
         else:
-            raise Exception("Surface load can only be applied in mechanical or mechanical groundwater flow analysis")
+            raise ValueError("Surface load can only be applied in mechanical or mechanical groundwater flow analysis")
 
         return element_name
 
@@ -166,19 +199,35 @@ class MovingLoad(LoadParametersABC):
     offset: float = 0.0
 
     @staticmethod
-    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
+        """
+        Static method to get the element name for a moving load.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model (2 or 3)
+            - n_nodes_element (int): The number of nodes per element (2, 3)
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type
+
+        Raises:
+            - ValueError: If the number of dimensions is not 2 or 3
+            - ValueError: If the number of nodes per element is not 2 or 3
+            - ValueError: If the analysis type is not mechanical or mechanical groundwater flow
+
+        Returns:
+            - str: The element name for a moving load
+        """
 
         if n_dim_model != 2 and n_dim_model != 3:
-            raise Exception("Moving load can only be applied in 2D or 3D models")
+            raise ValueError("Moving load can only be applied in 2D or 3D models")
 
         if n_nodes_element != 2 or n_nodes_element != 3:
-            raise Exception("Moving load can only be applied to 2 or 3 node elements")
+            raise ValueError("Moving load can only be applied to 2 or 3 node elements")
 
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
-            element_name = f"StructuralMechanicsApplication.MovingLoadCondition{n_dim_model}D{n_nodes_element}N"
+            element_name = f"MovingLoadCondition{n_dim_model}D{n_nodes_element}N"
 
         else:
-            raise Exception("Moving load can only be applied in mechanical or mechanical groundwater flow analysis")
+            raise ValueError("Moving load can only be applied in mechanical or mechanical groundwater flow analysis")
 
         return element_name
 
@@ -201,11 +250,25 @@ class GravityLoad(LoadParametersABC):
 
     @staticmethod
     def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+        """
+        Static method to get the element name for a gravity load.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model
+            - n_nodes_element (int): The number of nodes per element
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type
+
+        Raises:
+            - ValueError: If the analysis type is not mechanical or mechanical groundwater flow
+
+        Returns:
+            - None: Gravity load doesn't need an element name
+        """
 
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
             # gravity load doesnt need an element name
             element_name = None
         else:
-            raise Exception("Gravity load can only be applied in mechanical or mechanical groundwater flow analysis")
+            raise ValueError("Gravity load can only be applied in mechanical or mechanical groundwater flow analysis")
 
         return element_name
