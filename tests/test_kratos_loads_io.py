@@ -2,7 +2,6 @@ import json
 
 from stem.IO.kratos_loads_io import KratosLoadsIO
 from stem.load import *
-
 from tests.utils import TestUtils
 
 
@@ -38,7 +37,7 @@ class TestKratosLoadsIO:
 
         # collect the part names and parameters into a dictionary
         # TODO: change later when model part is implemented
-        all_boundary_parameters = {
+        all_load_parameters = {
             "test_point_load": point_load_parameters,
             "test_line_load": line_load_parameters,
             "test_surface_load": surface_load_parameters,
@@ -56,7 +55,7 @@ class TestKratosLoadsIO:
         # TODO: when model part are implemented, generate file through kratos_io
         boundaries_io = KratosLoadsIO(domain="PorousDomain")
 
-        for part_name, part_parameters in all_boundary_parameters.items():
+        for part_name, part_parameters in all_load_parameters.items():
             _parameters = boundaries_io.create_load_dict(
                 part_name=part_name, parameters=part_parameters
             )

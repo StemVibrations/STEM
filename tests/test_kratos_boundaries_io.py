@@ -1,7 +1,5 @@
 import json
 
-import pytest
-
 from stem.IO.kratos_boundaries_io import KratosBoundariesIO
 from stem.boundary import *
 from tests.utils import TestUtils

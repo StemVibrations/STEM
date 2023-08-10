@@ -1,10 +1,14 @@
-from typing import Tuple
 import pickle
+from typing import Tuple
 
+import numpy.testing as npt
 import pytest
 
-from stem.model import *
+from stem.boundary import *
 from stem.geometry import *
+from stem.model import *
+from stem.solver import *
+from tests.utils import TestUtils
 
 
 class TestModel:
@@ -31,19 +35,64 @@ class TestModel:
 
         geometry = Geometry()
 
-        geometry.points = [Point.create([0, 0, 0], 1),
-                           Point.create([1, 0, 0], 2),
-                           Point.create([1, 1, 0], 3),
-                           Point.create([0, 1, 0], 4)]
+        geometry.points = {1: Point.create([0, 0, 0], 1),
+                           2: Point.create([1, 0, 0], 2),
+                           3: Point.create([1, 1, 0], 3),
+                           4: Point.create([0, 1, 0], 4)}
 
-        geometry.lines = [Line.create([1, 2], 1),
-                          Line.create([2, 3], 2),
-                          Line.create([3, 4], 3),
-                          Line.create([4, 1], 4)]
+        geometry.lines = {1: Line.create([1, 2], 1),
+                          2: Line.create([2, 3], 2),
+                          3: Line.create([3, 4], 3),
+                          4: Line.create([4, 1], 4)}
 
-        geometry.surfaces = [Surface.create([1,2,3,4], 1)]
+        geometry.surfaces = {1: Surface.create([1,2,3,4], 1)}
 
-        geometry.volumes = []
+        geometry.volumes = {}
+
+        return geometry
+
+
+    @pytest.fixture
+    def expected_geometry_single_layer_3D(self):
+        """
+        Sets expected geometry data for a 3D geometry group. The group is a geometry of a cube.
+
+        Returns:
+            - :class:`stem.geometry.Geometry`: geometry of a 3D cube
+        """
+
+        geometry = Geometry()
+
+        geometry.points = {1, Point.create([0, 0, 0], 1),
+                           5, Point.create([0, 0, 1], 5),
+                           6, Point.create([1, 0, 1], 6),
+                           2, Point.create([1, 0, 0], 2),
+                           7, Point.create([1, 1, 1], 7),
+                           3, Point.create([1, 1, 0], 3),
+                           8, Point.create([0, 1, 1], 8),
+                           4, Point.create([0, 1, 0], 4)}
+
+        geometry.lines = {5, Line.create([1, 5], 5),
+                          7, Line.create([5, 6], 7),
+                          6, Line.create([2, 6], 6),
+                          1, Line.create([1, 2], 1),
+                          9, Line.create([6, 7], 9),
+                          8, Line.create([3, 7], 8),
+                          2, Line.create([2, 3], 2),
+                          11, Line.create([7, 8], 11),
+                          10, Line.create([4, 8], 10),
+                          3, Line.create([3, 4], 3),
+                          12, Line.create([8, 5], 12),
+                          4, Line.create([4, 1], 4)}
+
+        geometry.surfaces = {2, Surface.create([5, 7, -6, -1], 2),
+                             3, Surface.create([6, 9, -8, -2], 3),
+                             4, Surface.create([8,11, -10, -3], 4),
+                             5, Surface.create([10, 12, -5, -4], 5),
+                             1, Surface.create([1, 2, 3, 4], 1),
+                             6, Surface.create([7, 9, 11, 12], 6)}
+
+        geometry.volumes = {1, Volume.create([-2, -3, -4, -5, -1, 6], 1)}
 
         return geometry
 
@@ -58,36 +107,38 @@ class TestModel:
 
         geometry = Geometry()
 
-        geometry.points = [Point.create([0, 0, 0], 1),
-                           Point.create([0, 0, 1], 5),
-                           Point.create([1, 0, 1], 6),
-                           Point.create([1, 0, 0], 2),
-                           Point.create([1, 1, 1], 7),
-                           Point.create([1, 1, 0], 3),
-                           Point.create([0, 1, 1], 8),
-                           Point.create([0, 1, 0], 4)]
+        geometry.points = {1: Point.create([0, 0, 0], 1),
+                           5: Point.create([0, 0, 1], 5),
+                           6: Point.create([1, 0, 1], 6),
+                           2: Point.create([1, 0, 0], 2),
+                           7: Point.create([1, 1, 1], 7),
+                           3: Point.create([1, 1, 0], 3),
+                           8: Point.create([0, 1, 1], 8),
+                           4: Point.create([0, 1, 0], 4)}
 
-        geometry.lines = [Line.create([1, 5], 5),
-                          Line.create([5, 6], 7),
-                          Line.create([2, 6], 6),
-                          Line.create([1, 2], 1),
-                          Line.create([6, 7], 9),
-                          Line.create([3, 7], 8),
-                          Line.create([2, 3], 2),
-                          Line.create([7, 8], 11),
-                          Line.create([4, 8], 10),
-                          Line.create([3, 4], 3),
-                          Line.create([8, 5], 12),
-                          Line.create([4, 1], 4)]
+        geometry.lines = {5: Line.create([1, 5], 5),
+                          7: Line.create([5, 6], 7),
+                          6: Line.create([2, 6], 6),
+                          1: Line.create([1, 2], 1),
+                          9: Line.create([6, 7], 9),
+                          8: Line.create([3, 7], 8),
+                          2: Line.create([2, 3], 2),
+                          11: Line.create([7, 8], 11),
+                          10: Line.create([4, 8], 10),
+                          3: Line.create([3, 4], 3),
+                          12: Line.create([8, 5], 12),
+                          4: Line.create([4, 1], 4)}
 
-        geometry.surfaces = [Surface.create([5, 7, -6, -1], 2),
-                             Surface.create([6, 9, -8, -2], 3),
-                             Surface.create([8,11, -10, -3], 4),
-                             Surface.create([10, 12, -5, -4], 5),
-                             Surface.create([1, 2, 3, 4], 1),
-                             Surface.create([7, 9, 11, 12], 6)]
+        geometry.surfaces = {2: Surface.create([5, 7, -6, -1], 2),
+                             3: Surface.create([6, 9, -8, -2], 3),
+                             4: Surface.create([8, 11, -10, -3], 4),
+                             5: Surface.create([10, 12, -5, -4], 5),
+                             1: Surface.create([1, 2, 3, 4], 1),
+                             6: Surface.create([7, 9, 11, 12], 6)}
 
-        geometry.volumes = [Volume.create([-2, -3, -4, -5, -1, 6], 1)]
+        # The volumes list converted to a dictionary
+        geometry.volumes = {1: Volume.create([-2, -3, -4, -5, -1, 6], 1)}
+
 
         return geometry
 
@@ -102,36 +153,38 @@ class TestModel:
 
         """
 
+        # geometry_1
         geometry_1 = Geometry()
+        geometry_1.points = {1: Point.create([0, 0, 0], 1),
+                             2: Point.create([1, 0, 0], 2),
+                             3: Point.create([1, 1, 0], 3),
+                             4: Point.create([0, 1, 0], 4)}
 
-        geometry_1.points = [Point.create([0, 0, 0], 1),
-                             Point.create([1, 0, 0], 2),
-                             Point.create([1, 1, 0], 3),
-                             Point.create([0, 1, 0], 4)]
+        geometry_1.lines = {1: Line.create([1, 2], 1),
+                            2: Line.create([2, 3], 2),
+                            3: Line.create([3, 4], 3),
+                            4: Line.create([4, 1], 4)}
 
-        geometry_1.lines = [Line.create([1, 2], 1),
-                            Line.create([2, 3], 2),
-                            Line.create([3, 4], 3),
-                            Line.create([4, 1], 4)]
+        geometry_1.surfaces = {1: Surface.create([1, 2, 3, 4], 1)}
 
-        geometry_1.surfaces = [Surface.create([1, 2, 3, 4], 1)]
+        geometry_1.volumes = {}
 
-        geometry_1.volumes = []
-
+        # geometry_2
         geometry_2 = Geometry()
-        geometry_2.points = [Point.create([1, 1, 0], 3),
-                             Point.create([0, 1, 0], 4),
-                             Point.create([0, 2, 0], 5),
-                             Point.create([1, 2, 0], 6)]
 
-        geometry_2.lines = [Line.create([3, 4], 3),
-                            Line.create([4, 5], 5),
-                            Line.create([5, 6], 6),
-                            Line.create([6, 3], 7)]
+        geometry_2.points = {5: Point.create([1, 2, 0], 5),
+                             6: Point.create([0, 2, 0], 6),
+                             4: Point.create([0, 1, 0], 4),
+                             3: Point.create([1, 1, 0], 3)}
 
-        geometry_2.surfaces = [Surface.create([3, 5, 6, 7], 2)]
+        geometry_2.lines = {5: Line.create([5, 6],5),
+                            6: Line.create([6, 4], 6),
+                            3: Line.create([3, 4], 3),
+                            7: Line.create([3, 5], 7)}
 
-        geometry_2.volumes = []
+        geometry_2.surfaces = {2: Surface.create([5, 6, -3, 7], 2)}
+
+        geometry_2.volumes = {}
 
         return geometry_1, geometry_2
 
@@ -148,61 +201,108 @@ class TestModel:
         # create expected geometry layer 1
         geometry_1 = Geometry()
 
-        geometry_1.points = [Point.create([0, 0, 0], 1),
-                             Point.create([1, 0, 0], 2),
-                             Point.create([1, 1, 0], 3),
-                             Point.create([0.5, 1, 0], 4),
-                             Point.create([0, 1, 0], 5)]
+        geometry_1.points = {
+            1: Point.create([0, 0, 0], 1),
+            2: Point.create([1, 0, 0], 2),
+            3: Point.create([1, 1, 0], 3),
+            4: Point.create([0.5, 1, 0], 4),
+            5: Point.create([0, 1, 0], 5)
+        }
 
-        geometry_1.lines = [Line.create([1, 2], 1),
-                            Line.create([2, 3], 2),
-                            Line.create([3, 4], 3),
-                            Line.create([4, 5], 4),
-                            Line.create([5, 1], 5)]
+        geometry_1.lines = {
+            1: Line.create([1, 2], 1),
+            2: Line.create([2, 3], 2),
+            3: Line.create([3, 4], 3),
+            4: Line.create([4, 5], 4),
+            5: Line.create([5, 1], 5)
+        }
 
-        geometry_1.surfaces = [Surface.create([1, 2, 3, 4, 5], 1)]
+        geometry_1.surfaces = {
+            1: Surface.create([1, 2, 3, 4, 5], 1)
+        }
 
-        geometry_1.volumes = []
-
-        # create expected geometry layer 2
         geometry_2 = Geometry()
-        geometry_2.points = [Point.create([1, 1, 0], 3),
-                             Point.create([0.5, 1, 0], 4),
-                             Point.create([0.5, 2, 0], 6),
-                             Point.create([1, 2, 0], 7)]
+        geometry_2.points = {
+            6: Point.create([1.0, 2.0, 0.0], 6),
+            7: Point.create([0.5, 2.0, 0.0], 7),
+            4: Point.create([0.5, 1, 0], 4),
+            3: Point.create([1, 1, 0], 3)
+        }
 
-        geometry_2.lines = [Line.create([3, 4], 3),
-                            Line.create([4, 6], 6),
-                            Line.create([6, 7], 7),
-                            Line.create([7, 3], 8)]
+        geometry_2.lines = {
+            6: Line.create([6, 7], 6),
+            7: Line.create([7, 4], 7),
+            3: Line.create([3, 4], 3),
+            8: Line.create([3, 6], 8)
+        }
 
-        geometry_2.surfaces = [Surface.create([3, 6, 7, 8], 2)]
+        geometry_2.surfaces = {
+            2: Surface.create([6, 7, -3, 8], 2)
+        }
 
-        geometry_2.volumes = []
+        geometry_2.volumes = {}
 
         # create expected full geometry
         full_geometry = Geometry()
-        full_geometry.points = [Point.create([0, 0, 0], 1),
-                                Point.create([1, 0, 0], 2),
-                                Point.create([1, 1, 0], 3),
-                                Point.create([0.5, 1, 0], 4),
-                                Point.create([0, 1, 0], 5),
-                                Point.create([0.5, 2, 0], 6),
-                                Point.create([1, 2, 0], 7)]
+        full_geometry.points = {
+            1: Point.create([0, 0, 0], 1),
+            2: Point.create([1, 0, 0], 2),
+            3: Point.create([1, 1, 0], 3),
+            4: Point.create([0.5, 1, 0], 4),
+            5: Point.create([0, 1, 0], 5),
+            6: Point.create([1, 2, 0], 6),
+            7: Point.create([0.5, 2, 0], 7)
+        }
 
-        full_geometry.lines = [Line.create([1, 2], 1),
-                               Line.create([2, 3], 2),
-                               Line.create([3, 4], 3),
-                               Line.create([4, 5], 4),
-                               Line.create([5, 1], 5),
-                               Line.create([4, 6], 6),
-                               Line.create([6, 7], 7),
-                               Line.create([7, 3], 8)]
+        full_geometry.lines = {
+            1: Line.create([1, 2], 1),
+            2: Line.create([2, 3], 2),
+            3: Line.create([3, 4], 3),
+            4: Line.create([4, 5], 4),
+            5: Line.create([5, 1], 5),
+            6: Line.create([6, 7], 6),
+            7: Line.create([7, 4], 7),
+            8: Line.create([3, 6], 8)
+        }
 
-        full_geometry.surfaces = [Surface.create([1, 2, 3, 4, 5], 1),
-                                  Surface.create([3, 6, 7, 8], 2)]
+        full_geometry.surfaces = {
+            1: Surface.create([1, 2, 3, 4, 5], 1),
+            2: Surface.create([6, 7, -3, 8], 2)
+        }
+
+        full_geometry.volumes = {}
 
         return geometry_1, geometry_2, full_geometry
+
+    @pytest.fixture
+    def expected_geometry_line_load(self):
+        """
+        Sets expected geometry data for a 1D geometry group. The group is a geometry of a multi-line.
+
+        Returns:
+            - :class:`stem.geometry.Geometry`: geometry of a 1D multi-line
+        """
+
+        geometry = Geometry()
+
+        geometry.points = {
+            1: Point.create([0, 0, 0], 1),
+            2: Point.create([3, 0, 0], 2),
+            3: Point.create([4, -1, 0], 3),
+            4: Point.create([10, -1, 0], 4)
+        }
+
+        geometry.lines = {
+            1: Line.create([1, 2], 1),
+            2: Line.create([2, 3], 2),
+            3: Line.create([3, 4], 3)
+        }
+
+        geometry.surfaces = {}
+
+        geometry.volumes = {}
+
+        return geometry
 
     @pytest.fixture
     def create_default_2d_soil_material(self):
@@ -210,7 +310,7 @@ class TestModel:
         Create a default soil material for a 2D geometry.
 
         Returns:
-            :class:`stem.models.soil.SoilMaterial`: default soil material
+            - :class:`stem.soil_material.SoilMaterial`: default soil material
 
         """
         # define soil material
@@ -227,7 +327,7 @@ class TestModel:
         Create a default soil material for a 3D geometry.
 
         Returns:
-            :class:`stem.models.soil.SoilMaterial`: default soil material
+            - :class:`stem.soil_material.SoilMaterial`: default soil material
 
         """
         # define soil material
@@ -239,80 +339,149 @@ class TestModel:
         return soil_material
 
     @pytest.fixture
+    def create_default_point_load_parameters(self):
+        """
+        Create a default point load parameters.
+
+        Returns:
+            - :class:`stem.load.PointLoad`: default point load
+
+        """
+        # define soil material
+        return PointLoad(active=[False, True, False], value=[0, -200, 0])
+
+    @pytest.fixture
+    def create_default_line_load_parameters(self):
+        """
+        Create a default line load parameters.
+
+        Returns:
+            - :class:`stem.load.PointLoad`: default point load
+
+        """
+        # define soil material
+        return LineLoad(active=[False, True, False], value=[0, -20, 0])
+
+    @pytest.fixture
+    def create_default_surface_load_parameters(self):
+        """
+        Create a default surface load properties.
+
+        Returns:
+            - :class:`stem.load.SurfaceLoad`: default surface load
+
+        """
+        # define soil material
+        return SurfaceLoad(active=[False, True, False], value=[0, -2, 0])
+
+    @pytest.fixture
+    def create_default_moving_load_parameters(self):
+        """
+        Create a default surface load properties.
+
+        Returns:
+            - :class:`stem.load.SurfaceLoad`: default surface load
+
+        """
+        # define soil material
+        return MovingLoad(
+            origin=[3.5, -0.5, 0.0],
+            load=[0.0, -10.0, 0.0],
+            velocity=5.0,
+            offset=3.0,
+            direction=[1, 1, 1]
+        )
+
+    @pytest.fixture
     def expected_geometry_two_layers_3D_extruded(self):
         """
         Expected geometry data for a 3D geometry create from 2D extrusion. The geometry is 2 stacked blocks, where the
         top and bottom blocks are in different groups.
 
         Returns:
-            Tuple[:class:`stem.geometry.Geometry`,:class:`stem.geometry.Geometry`]: expected geometry data
+            - Tuple[:class:`stem.geometry.Geometry`,:class:`stem.geometry.Geometry`]: expected geometry data
         """
 
         geometry_1 = Geometry()
+        geometry_1.points = {
+            1: Point.create([0, 0, 0], 1),
+            2: Point.create([0, 0, 1], 2),
+            4: Point.create([1, 0, 1], 4),
+            3: Point.create([1, 0, 0], 3),
+            6: Point.create([1, 1, 1], 6),
+            5: Point.create([1, 1, 0], 5),
+            8: Point.create([0, 1, 1], 8),
+            7: Point.create([0, 1, 0], 7)
+        }
 
-        geometry_1.points = [Point.create([0, 0, 0], 1),
-                           Point.create([0, 0, 1], 2),
-                           Point.create([1, 0, 1], 4),
-                           Point.create([1, 0, 0], 3),
-                           Point.create([1, 1, 1], 6),
-                           Point.create([1, 1, 0], 5),
-                           Point.create([0, 1, 1], 8),
-                           Point.create([0, 1, 0], 7)]
+        geometry_1.lines = {
+            1: Line.create([1, 2], 1),
+            4: Line.create([2, 4], 4),
+            2: Line.create([3, 4], 2),
+            3: Line.create([1, 3], 3),
+            7: Line.create([4, 6], 7),
+            5: Line.create([5, 6], 5),
+            6: Line.create([3, 5], 6),
+            10: Line.create([6, 8], 10),
+            8: Line.create([7, 8], 8),
+            9: Line.create([5, 7], 9),
+            12: Line.create([8, 2], 12),
+            11: Line.create([7, 1], 11)
+        }
 
-        geometry_1.lines = [Line.create([1, 2], 1),
-                          Line.create([2, 4], 4),
-                          Line.create([3, 4], 2),
-                          Line.create([1, 3], 3),
-                          Line.create([4, 6], 7),
-                          Line.create([5, 6], 5),
-                          Line.create([3, 5], 6),
-                          Line.create([6, 8], 10),
-                          Line.create([7, 8], 8),
-                          Line.create([5, 7], 9),
-                          Line.create([8, 2], 12),
-                          Line.create([7, 1], 11)]
+        geometry_1.surfaces = {
+            1: Surface.create([1, 4, -2, -3], 1),
+            2: Surface.create([2, 7, -5, -6], 2),
+            3: Surface.create([5, 10, -8, -9], 3),
+            4: Surface.create([8, 12, -1, -11], 4),
+            5: Surface.create([3, 6, 9, 11], 5),
+            6: Surface.create([4, 7, 10, 12], 6)
+        }
 
-        geometry_1.surfaces = [Surface.create([1, 4, -2, -3], 1),
-                             Surface.create([2, 7, -5, -6], 2),
-                             Surface.create([5, 10, -8, -9], 3),
-                             Surface.create([8, 12, -1, -11], 4),
-                             Surface.create([3, 6, 9, 11], 5),
-                             Surface.create([4, 7, 10, 12], 6)]
-
-        geometry_1.volumes = [Volume.create([-1, -2, -3, -4, -5, 6], 1)]
+        geometry_1.volumes = {
+            1: Volume.create([-1, -2, -3, -4, -5, 6], 1)
+        }
 
         geometry_2 = Geometry()
 
-        geometry_2.points = [Point.create([1., 1., 0.], 5),
-                             Point.create([1., 1., 1.], 6),
-                             Point.create([0.0, 1., 1.], 8),
-                             Point.create([0, 1., 0.], 7),
-                             Point.create([0., 2., 1], 10),
-                             Point.create([0., 2., 0], 9),
-                             Point.create([1, 2., 1], 12),
-                             Point.create([1, 2., 0], 11)]
+        geometry_2.points = {
+            9: Point.create([1.0, 2.0, 0.0], 9),
+            10: Point.create([1., 2., 1.], 10),
+            12: Point.create([0.0, 2., 1.], 12),
+            11: Point.create([0, 2., 0.], 11),
+            8: Point.create([0., 1., 1], 8),
+            7: Point.create([0., 1., 0], 7),
+            5: Point.create([1, 1., 0], 5),
+            6: Point.create([1, 1., 1], 6)
+        }
 
-        geometry_2.lines = [Line.create([5, 6], 5),
-                            Line.create([6, 8], 10),
-                            Line.create([7, 8], 8),
-                            Line.create([5, 7], 9),
-                            Line.create([8, 10], 15),
-                            Line.create([9, 10], 13),
-                            Line.create([7, 9], 14),
-                            Line.create([10, 12], 18),
-                            Line.create([11, 12], 16),
-                            Line.create([9, 11], 17),
-                            Line.create([12, 6], 20),
-                            Line.create([11, 5], 19)]
+        geometry_2.lines = {
+            13: Line.create([9, 10], 13),
+            16: Line.create([10, 12], 16),
+            14: Line.create([11, 12], 14),
+            15: Line.create([9, 11], 15),
+            18: Line.create([12, 8], 18),
+            8: Line.create([7, 8], 8),
+            17: Line.create([11, 7], 17),
+            5: Line.create([5, 6], 5),
+            10: Line.create([6, 8], 10),
+            9: Line.create([5, 7], 9),
+            20: Line.create([6, 10], 20),
+            19: Line.create([5, 9], 19)
+        }
 
-        geometry_2.surfaces = [Surface.create([5, 10, -8, -9], 3),
-                               Surface.create([8, 15, -13, -14], 7),
-                               Surface.create([13, 18, -16, -17], 8),
-                               Surface.create([16, 20, -5, -19], 9),
-                               Surface.create([9, 14, 17, 19], 10),
-                               Surface.create([10, 15, 18, 20], 11)]
+        geometry_2.surfaces = {
+            7: Surface.create([13, 16, -14, -15], 7),
+            8: Surface.create([14, 18, -8, -17], 8),
+            3: Surface.create([5, 10, -8, -9], 3),
+            9: Surface.create([5, 20, -13, -19], 9),
+            10: Surface.create([15, 17, -9, 19], 10),
+            11: Surface.create([16, 18, -10, 20], 11)
+        }
 
-        geometry_2.volumes = [Volume.create([3, 7, 8, 9, 10, -11], 2)]
+        geometry_2.volumes = {
+            2: Volume.create([-7, -8, 3, -9, -10, 11], 2)
+        }
 
         return geometry_1, geometry_2
 
@@ -323,73 +492,104 @@ class TestModel:
         and bottom blocks are in different groups.
 
         Returns:
-            Tuple[:class:`stem.geometry.Geometry`,:class:`stem.geometry.Geometry`]: expected geometry data
+            - Tuple[:class:`stem.geometry.Geometry`,:class:`stem.geometry.Geometry`]: expected geometry data
         """
 
         geometry_1 = Geometry()
-        geometry_1.volumes = [Volume.create([-10, 39, 26, 30, 34, 38], 1)]
-        geometry_1.surfaces = [Surface.create([5, 6, 7, 8], 10),
-                               Surface.create([19, 20, 21, 22], 39),
-                               Surface.create([5, 25, -19, -24], 26),
-                               Surface.create([6, 29, -20, -25], 30),
-                               Surface.create([7, 33, -21, -29], 34),
-                               Surface.create([8, 24, -22, -33], 38)]
+        geometry_1.volumes = {
+            1: Volume.create([-10, 39, 26, 30, 34, 38], 1)
+        }
 
-        geometry_1.lines = [Line.create([1, 2], 5),
-                            Line.create([2, 3], 6),
-                            Line.create([3, 4], 7),
-                            Line.create([4, 1], 8),
-                            Line.create([13, 14], 19),
-                            Line.create([14, 18], 20),
-                            Line.create([18, 22], 21),
-                            Line.create([22, 13], 22),
-                            Line.create([2, 14], 25),
-                            Line.create([1, 13], 24),
-                            Line.create([3, 18], 29),
-                            Line.create([4, 22], 33)]
+        geometry_1.surfaces = {
+            10: Surface.create([5, 6, 7, 8], 10),
+            39: Surface.create([19, 20, 21, 22], 39),
+            26: Surface.create([5, 25, -19, -24], 26),
+            30: Surface.create([6, 29, -20, -25], 30),
+            34: Surface.create([7, 33, -21, -29], 34),
+            38: Surface.create([8, 24, -22, -33], 38)
+        }
 
-        geometry_1.points = [Point.create([0., 0., 0.], 1),
-                             Point.create([0.5, 0., 0.], 2),
-                             Point.create([0.5, 1., 0.], 3),
-                             Point.create([0., 1., 0.], 4),
-                             Point.create([0., 0., -0.5], 13),
-                             Point.create([0.5, 0., -0.5], 14),
-                             Point.create([0.5, 1., -0.5], 18),
-                             Point.create([0., 1., -0.5], 22)]
+        geometry_1.lines = {
+            5: Line.create([1, 2], 5),
+            6: Line.create([2, 3], 6),
+            7: Line.create([3, 4], 7),
+            8: Line.create([4, 1], 8),
+            19: Line.create([13, 14], 19),
+            20: Line.create([14, 18], 20),
+            21: Line.create([18, 22], 21),
+            22: Line.create([22, 13], 22),
+            25: Line.create([2, 14], 25),
+            24: Line.create([1, 13], 24),
+            29: Line.create([3, 18], 29),
+            33: Line.create([4, 22], 33)
+        }
+
+        geometry_1.points = {
+            1: Point.create([0., 0., 0.], 1),
+            2: Point.create([0.5, 0., 0.], 2),
+            3: Point.create([0.5, 1., 0.], 3),
+            4: Point.create([0., 1., 0.], 4),
+            13: Point.create([0., 0., -0.5], 13),
+            14: Point.create([0.5, 0., -0.5], 14),
+            18: Point.create([0.5, 1., -0.5], 18),
+            22: Point.create([0., 1., -0.5], 22)
+        }
 
         geometry_2 = Geometry()
-        geometry_2.volumes = [Volume.create([-17, 61, -48, -34, -56, -60], 2)]
+        geometry_2.volumes = {
+            2: Volume.create([-17, 61, -48, -34, -56, -60], 2)
+        }
 
-        geometry_2.surfaces = [Surface.create([-13, -7, -15, -14],17),
-                               Surface.create([41, -21, 43, 44], 61),
-                               Surface.create([-13, 33, -41, -46], 48),
-                               Surface.create([7, 33, -21, -29], 34),
-                               Surface.create([-15, 55, -43, -29], 56),
-                               Surface.create([-14, 46, -44, -55], 60)]
+        geometry_2.surfaces = {
+            17: Surface.create([-13, -7, -15, -14], 17),
+            61: Surface.create([41, -21, 43, 44], 61),
+            48: Surface.create([-13, 33, -41, -46], 48),
+            34: Surface.create([7, 33, -21, -29], 34),
+            56: Surface.create([-15, 55, -43, -29], 56),
+            60: Surface.create([-14, 46, -44, -55], 60)
+        }
 
-        geometry_2.lines = [Line.create([4, 11], 13),
-                            Line.create([3, 4], 7),
-                            Line.create([12, 3], 15),
-                            Line.create([11, 12], 14),
-                            Line.create([23, 22], 41),
-                            Line.create([18, 22], 21),
-                            Line.create([18, 32], 43),
-                            Line.create([32, 23], 44),
-                            Line.create([4, 22], 33),
-                            Line.create([11, 23], 46),
-                            Line.create([3, 18], 29),
-                            Line.create([12, 32], 55)]
+        geometry_2.lines = {
+            13: Line.create([4, 11], 13),
+            7: Line.create([3, 4], 7),
+            15: Line.create([12, 3], 15),
+            14: Line.create([11, 12], 14),
+            41: Line.create([23, 22], 41),
+            21: Line.create([18, 22], 21),
+            43: Line.create([18, 32], 43),
+            44: Line.create([32, 23], 44),
+            33: Line.create([4, 22], 33),
+            46: Line.create([11, 23], 46),
+            29: Line.create([3, 18], 29),
+            55: Line.create([12, 32], 55)
+        }
 
-        geometry_2.points = [Point.create([0., 1., 0.], 4),
-                             Point.create([0., 2., 0.], 11),
-                             Point.create([0.5, 1., 0.], 3),
-                             Point.create([0.5, 2., 0.], 12),
-                             Point.create([0., 2., -0.5], 23),
-                             Point.create([0., 1., -0.5], 22),
-                             Point.create([0.5, 1., -0.5], 18),
-                             Point.create([0.5, 2., -0.5], 32)]
+        geometry_2.points = {
+            4: Point.create([0., 1., 0.], 4),
+            11: Point.create([0., 2., 0.], 11),
+            3: Point.create([0.5, 1., 0.], 3),
+            12: Point.create([0.5, 2., 0.], 12),
+            23: Point.create([0., 2., -0.5], 23),
+            22: Point.create([0., 1., -0.5], 22),
+            18: Point.create([0.5, 1., -0.5], 18),
+            32: Point.create([0.5, 2., -0.5], 32)
+        }
 
         return geometry_1, geometry_2
+
+    @pytest.fixture(autouse=True)
+    def close_gmsh(self):
+        """
+        Initializer to close gmsh if it was not closed before. In case a test fails, the destroyer method is not called
+        on the Model object and gmsh keeps on running. Therefore, nodes, lines, surfaces and volumes ids are not
+        reset to one. This causes also the next test after the failed one to fail as well, which has nothing to do
+        the test itself.
+
+        Returns:
+            - None
+
+        """
+        gmsh_IO.GmshIO().finalize_gmsh()
 
     def test_add_single_soil_layer_2D(self, expected_geometry_single_layer_2D: Geometry,
                                       create_default_2d_soil_material: SoilMaterial):
@@ -426,19 +626,7 @@ class TestModel:
         expected_geometry = expected_geometry_single_layer_2D
 
         # check if points are added correctly
-        for generated_point, expected_point in zip(generated_geometry.points, expected_geometry.points):
-            assert generated_point.id == expected_point.id
-            assert pytest.approx(generated_point.coordinates) == expected_point.coordinates
-
-        # check if lines are added correctly
-        for generated_line, expected_line in zip(generated_geometry.lines, expected_geometry.lines):
-            assert generated_line.id == expected_line.id
-            assert generated_line.point_ids == expected_line.point_ids
-
-        # check if surfaces are added correctly
-        for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
-            assert generated_surface.id == expected_surface.id
-            assert generated_surface.line_ids == expected_surface.line_ids
+        TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
     def test_add_single_soil_layer_3D(self, expected_geometry_single_layer_3D: Geometry,
                                       create_default_3d_soil_material: SoilMaterial):
@@ -476,24 +664,7 @@ class TestModel:
         expected_geometry = expected_geometry_single_layer_3D
 
         # check if points are added correctly
-        for generated_point, expected_point in zip(generated_geometry.points, expected_geometry.points):
-            assert generated_point.id == expected_point.id
-            assert pytest.approx(generated_point.coordinates) == expected_point.coordinates
-
-        # check if lines are added correctly
-        for generated_line, expected_line in zip(generated_geometry.lines, expected_geometry.lines):
-            assert generated_line.id == expected_line.id
-            assert generated_line.point_ids == expected_line.point_ids
-
-        # check if surfaces are added correctly
-        for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
-            assert generated_surface.id == expected_surface.id
-            assert generated_surface.line_ids == expected_surface.line_ids
-
-        # check if volumes are added correctly
-        for generated_volume, expected_volume in zip(generated_geometry.volumes, expected_geometry.volumes):
-            assert generated_volume.id == expected_volume.id
-            assert generated_volume.surface_ids == expected_volume.surface_ids
+        TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
     def test_add_multiple_soil_layers_2D(self, expected_geometry_two_layers_2D: Tuple[Geometry, Geometry],
                                          create_default_2d_soil_material: SoilMaterial):
@@ -539,20 +710,7 @@ class TestModel:
             generated_geometry = model.body_model_parts[i].geometry
             expected_geometry = expected_geometry_two_layers_2D[i]
 
-            # check if points are added correctly
-            for generated_point, expected_point in zip(generated_geometry.points, expected_geometry.points):
-                assert generated_point.id == expected_point.id
-                assert pytest.approx(generated_point.coordinates) == expected_point.coordinates
-
-            # check if lines are added correctly
-            for generated_line, expected_line in zip(generated_geometry.lines, expected_geometry.lines):
-                assert generated_line.id == expected_line.id
-                assert generated_line.point_ids == expected_line.point_ids
-
-            # check if surfaces are added correctly
-            for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
-                assert generated_surface.id == expected_surface.id
-                assert generated_surface.line_ids == expected_surface.line_ids
+            TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
     def test_add_multiple_soil_layers_3D(self, expected_geometry_two_layers_3D_extruded: Tuple[Geometry, Geometry],
                                          create_default_3d_soil_material: SoilMaterial):
@@ -602,20 +760,7 @@ class TestModel:
             generated_geometry = model.body_model_parts[i].geometry
             expected_geometry = expected_geometry_two_layers_3D_extruded[i]
 
-            # check if points are added correctly
-            for generated_point, expected_point in zip(generated_geometry.points, expected_geometry.points):
-                assert generated_point.id == expected_point.id
-                assert pytest.approx(generated_point.coordinates) == expected_point.coordinates
-
-            # check if lines are added correctly
-            for generated_line, expected_line in zip(generated_geometry.lines, expected_geometry.lines):
-                assert generated_line.id == expected_line.id
-                assert generated_line.point_ids == expected_line.point_ids
-
-            # check if surfaces are added correctly
-            for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
-                assert generated_surface.id == expected_surface.id
-                assert generated_surface.line_ids == expected_surface.line_ids
+            TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
     def test_add_all_layers_from_geo_file_2D(self, expected_geometry_two_layers_2D: Tuple[Geometry, Geometry]):
         """
@@ -647,20 +792,7 @@ class TestModel:
             generated_geometry = model.body_model_parts[i].geometry
             expected_geometry = expected_geometry_two_layers_2D[i]
 
-            # check if points are added correctly
-            for generated_point, expected_point in zip(generated_geometry.points, expected_geometry.points):
-                assert generated_point.id == expected_point.id
-                assert pytest.approx(generated_point.coordinates) == expected_point.coordinates
-
-            # check if lines are added correctly
-            for generated_line, expected_line in zip(generated_geometry.lines, expected_geometry.lines):
-                assert generated_line.id == expected_line.id
-                assert generated_line.point_ids == expected_line.point_ids
-
-            # check if surfaces are added correctly
-            for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
-                assert generated_surface.id == expected_surface.id
-                assert generated_surface.line_ids == expected_surface.line_ids
+            TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
     def test_add_all_layers_from_geo_file_3D(self, expected_geometry_two_layers_3D_geo_file: Tuple[Geometry, Geometry]):
         """
@@ -697,20 +829,7 @@ class TestModel:
             generated_geometry = all_model_parts[i].geometry
             expected_geometry = expected_geometry_two_layers_3D_geo_file[i]
 
-            # check if points are added correctly
-            for generated_point, expected_point in zip(generated_geometry.points, expected_geometry.points):
-                assert generated_point.id == expected_point.id
-                assert pytest.approx(generated_point.coordinates) == expected_point.coordinates
-
-            # check if lines are added correctly
-            for generated_line, expected_line in zip(generated_geometry.lines, expected_geometry.lines):
-                assert generated_line.id == expected_line.id
-                assert generated_line.point_ids == expected_line.point_ids
-
-            # check if surfaces are added correctly
-            for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
-                assert generated_surface.id == expected_surface.id
-                assert generated_surface.line_ids == expected_surface.line_ids
+            TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
     def test_synchronise_geometry_2D(self, expected_geometry_two_layers_2D_after_sync: Tuple[Geometry, Geometry],
                                    create_default_2d_soil_material: SoilMaterial):
@@ -755,20 +874,7 @@ class TestModel:
         for generated_geometry, expected_geometry in zip(generated_geometries,
                                                          expected_geometry_two_layers_2D_after_sync):
 
-            # check if points are added correctly
-            for generated_point, expected_point in zip(generated_geometry.points, expected_geometry.points):
-                assert generated_point.id == expected_point.id
-                assert pytest.approx(generated_point.coordinates) == expected_point.coordinates
-
-            # check if lines are added correctly
-            for generated_line, expected_line in zip(generated_geometry.lines, expected_geometry.lines):
-                assert generated_line.id == expected_line.id
-                assert generated_line.point_ids == expected_line.point_ids
-
-            # check if surfaces are added correctly
-            for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
-                assert generated_surface.id == expected_surface.id
-                assert generated_surface.line_ids == expected_surface.line_ids
+            TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
     def test_synchronise_geometry_3D(self, create_default_3d_soil_material: SoilMaterial):
         """
@@ -779,8 +885,6 @@ class TestModel:
             - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
 
         """
-
-        import json
 
         # define layer coordinates
         ndim = 3
@@ -815,22 +919,727 @@ class TestModel:
         for generated_geometry, expected_geometry in zip(generated_geometries,
                                                          expected_geometry_two_layers_3D_after_sync):
 
-            # check if points are added correctly
-            for generated_point, expected_point in zip(generated_geometry.points, expected_geometry.points):
-                assert generated_point.id == expected_point.id
-                assert pytest.approx(generated_point.coordinates) == expected_point.coordinates
+            TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
-            # check if lines are added correctly
-            for generated_line, expected_line in zip(generated_geometry.lines, expected_geometry.lines):
-                assert generated_line.id == expected_line.id
-                assert generated_line.point_ids == expected_line.point_ids
+    def test_add_point_loads_to_2_points(self, create_default_point_load_parameters: PointLoad):
+        """
+        Test if a single soil point load is added correctly to the model. Two points are generated
+        and a single load is created and added to the model.
 
-            # check if surfaces are added correctly
-            for generated_surface, expected_surface in zip(generated_geometry.surfaces, expected_geometry.surfaces):
-                assert generated_surface.id == expected_surface.id
-                assert generated_surface.line_ids == expected_surface.line_ids
+        Args:
+            - create_default_point_load_properties (:class:`stem.load.PointLoad`): default point load parameters
 
-            # check if volumes are added correctly
-            for generated_volume, expected_volume in zip(generated_geometry.volumes, expected_geometry.volumes):
-                assert generated_volume.id == expected_volume.id
-                assert generated_volume.surface_ids == expected_volume.surface_ids
+        """
+
+        ndim = 3
+
+        point_coordinates = [(-0.5, 0, 0), (0.5, 0, 0)]
+
+        # define soil material
+        load_parameters = create_default_point_load_parameters
+
+        # create model
+        model = Model(ndim)
+        # add point load
+        model.add_load_by_coordinates(point_coordinates, load_parameters, "point_load_1")
+
+        # check if layer is added correctly
+        assert len(model.process_model_parts) == 1
+        assert model.process_model_parts[0].name == "point_load_1"
+        TestUtils.assert_dictionary_almost_equal(
+            model.process_model_parts[0].parameters.__dict__,
+            load_parameters.__dict__
+        )
+
+        # check if geometry is added correctly
+        generated_geometry = model.process_model_parts[0].geometry
+        expected_geometry = Geometry(
+            points={1:Point.create([-0.5, 0, 0], 1), 2: Point.create([0.5, 0, 0], 2)}
+        )
+
+        TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
+
+    def test_add_line_load_to_3_edges(self, expected_geometry_line_load: Geometry,
+                                      create_default_line_load_parameters: PointLoad):
+        """
+        Test if a line load is added correctly to the model when applied on 3 edges. 4 points are generated
+        and a single soil material is created and added to the model.
+
+        Args:
+            - expected_geometry_line_load (:class:`stem.geometry.Geometry`): expected geometry of the model
+            - create_default_line_load_parameters (:class:`stem.load.LineLoad`): default line load parameters
+
+        """
+
+        ndim = 3
+
+        point_coordinates = [(0, 0, 0), (3, 0, 0), (4, -1, 0), (10, -1, 0)]
+
+        # define soil material
+        load_parameters = create_default_line_load_parameters
+
+        # create model
+        model = Model(ndim)
+        # add line load
+        model.add_load_by_coordinates(point_coordinates, load_parameters, "line_load_1")
+
+        # check if layer is added correctly
+        assert len(model.process_model_parts) == 1
+        assert model.process_model_parts[0].name == "line_load_1"
+        TestUtils.assert_dictionary_almost_equal(
+            model.process_model_parts[0].parameters.__dict__,
+            load_parameters.__dict__
+        )
+        # check if geometry is added correctly
+        generated_geometry = model.process_model_parts[0].geometry
+        expected_geometry = expected_geometry_line_load
+
+        TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
+
+    def test_add_moving_point_load(self, expected_geometry_line_load: Geometry,
+                                   create_default_moving_load_parameters: MovingLoad):
+        """
+        Test if a single soil point load is added correctly to the model. Two points are generated
+        and a single load is created and added to the model.
+
+        Args:
+            - expected_geometry_line_load (:class:`stem.geometry.Geometry`): expected geometry of the model
+            - create_default_moving_load_parameters (:class:`stem.load.MovingLoad`): default moving load parameters
+
+        """
+
+        ndim = 3
+
+        point_coordinates = [(0, 0, 0), (3, 0, 0), (4, -1, 0), (10, -1, 0)]
+        # origin is in (3.5, -0.5, 0) thus in the trajectory
+
+        # define soil material
+        load_parameters = create_default_moving_load_parameters
+
+        # create model
+        model = Model(ndim)
+        # add moving load
+        model.add_load_by_coordinates(point_coordinates, load_parameters, "moving_load_1")
+
+        # check if layer is added correctly
+        assert len(model.process_model_parts) == 1
+        assert model.process_model_parts[0].name == "moving_load_1"
+        TestUtils.assert_dictionary_almost_equal(
+            model.process_model_parts[0].parameters.__dict__,
+            load_parameters.__dict__
+        )
+
+        # check if geometry is added correctly
+        generated_geometry = model.process_model_parts[0].geometry
+        expected_geometry = expected_geometry_line_load
+
+        TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
+
+    def test_validation_coordinates(self):
+        """
+        Test that validation raises and error if the points are not correctly specified.
+        """
+
+        ndim = 3
+        model = Model(ndim=ndim)
+
+        # test inputs for numpy arrays:
+        # test for 2D-array, correct number of coordinates (shape 3,2)
+        model.validate_coordinates(np.zeros((2,3)))
+
+        # test for incorrect number of coordinates in array (shape 3,2)
+        with pytest.raises(ValueError, match=f"Coordinates should be 3D but 2 coordinates were given."):
+            model.validate_coordinates(np.zeros((3,2)))
+
+        # test for incorrect number of dimension in array (1-D array)
+        with pytest.raises(ValueError, match=f"Coordinates are not a sequence of a sequence or a 2D array."):
+            model.validate_coordinates(np.arange(3))
+
+        # test inputs for sequence of floats:
+        # test for incorrect number of coordinates
+        with pytest.raises(ValueError, match=f"Coordinates should be 3D but 4 coordinates were given."):
+            model.validate_coordinates([(0.0, 0.0, 0.0, 4.0)])
+
+        # test for incorrect type (Sequence of float instead of Sequence[Sequence[float]])
+        with pytest.raises(ValueError, match="Coordinates are not a sequence of a sequence or a 2D array."):
+            model.validate_coordinates([0.0, 0.0, 0.0])
+
+    def test_validation_moving_load(self, create_default_moving_load_parameters:MovingLoad):
+        """
+        Test validation of moving load when points is not collinear to the trajectory.
+
+        Args:
+            - create_default_moving_load_parameters (:class:`stem.load.MovingLoad`): default moving load parameters
+
+        """
+
+        ndim = 3
+
+        point_coordinates = [(0.0, 0, 0), (1, 0, 0), (2, 0, 0), (4, 0, 0)]
+        # origin is in (1.5, 0.5, 0) thus not in the trajectory
+
+        # define soil material
+        load_parameters = create_default_moving_load_parameters
+        # create model
+        model = Model(ndim)
+
+        with pytest.raises(ValueError, match="Origin is not in the trajectory of the moving load."):
+            model.add_load_by_coordinates(
+                point_coordinates, load_parameters, "moving_load_1"
+            )
+
+    def test_generate_mesh_with_only_a_body_model_part_2d(self, create_default_2d_soil_material: SoilMaterial):
+        """
+        Test if the mesh is generated correctly in 2D if there is only one body model part.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+        model = Model(2)
+
+        # add soil material
+        soil_material = create_default_2d_soil_material
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
+        model.synchronise_geometry()
+
+        # generate mesh
+        model.generate_mesh()
+
+        mesh = model.body_model_parts[0].mesh
+
+        assert mesh.ndim == 2
+
+        unique_element_ids = []
+        # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
+        # correct and if the element ids are unique and if the number of nodes per element is correct
+        assert len(mesh.elements) == 162
+        for element in mesh.elements:
+            assert element.element_type == "TRIANGLE_3N"
+            assert element.id not in unique_element_ids
+            assert len(element.node_ids) == 3
+            unique_element_ids.append(element.id)
+
+        # check if nodes are generated correctly, i.e. if there are nodes in the mesh and if the node ids are unique
+        # and if the number of coordinates per node is correct
+        unique_node_ids = []
+        assert len(mesh.nodes) == 98
+        for node in mesh.nodes:
+            assert node.id not in unique_node_ids
+            assert len(node.coordinates) == 3
+            unique_node_ids.append(node.id)
+
+    def test_generate_mesh_with_only_a_body_model_part_3d(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if the mesh is generated correctly in 3D if there is only one body model part.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+        model = Model(3)
+        model.extrusion_length = [0, 0, 1]
+
+        # add soil material
+        soil_material = create_default_3d_soil_material
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
+        model.synchronise_geometry()
+
+        # generate mesh
+        model.generate_mesh()
+
+        mesh = model.body_model_parts[0].mesh
+
+        assert mesh.ndim == 3
+
+        unique_element_ids = []
+        # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
+        # correct and if the element ids are unique and if the number of nodes per element is correct
+        assert len(mesh.elements) == 1120
+        for element in mesh.elements:
+            assert element.element_type == "TETRAHEDRON_4N"
+            assert element.id not in unique_element_ids
+            assert len(element.node_ids) == 4
+            unique_element_ids.append(element.id)
+
+        # check if nodes are generated correctly, i.e. if there are nodes in the mesh and if the node ids are unique
+        # and if the number of coordinates per node is correct
+        unique_node_ids = []
+        assert len(mesh.nodes) == 340
+        for node in mesh.nodes:
+            assert node.id not in unique_node_ids
+            assert len(node.coordinates) == 3
+            unique_node_ids.append(node.id)
+
+    def test_generate_mesh_with_body_and_process_model_part(self, create_default_2d_soil_material: SoilMaterial):
+        """
+        Test if the mesh is generated correctly in the body model part and a process model part.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+        """
+        model = Model(2)
+
+        # add soil material
+        soil_material = create_default_2d_soil_material
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
+
+        # add process geometry
+        gmsh_process_input = {"process_0d": {"coordinates": [[0, 0.5, 0]], "ndim": 0}}
+        model.gmsh_io.generate_geometry(gmsh_process_input, "")
+
+        # create process model part
+        process_model_part = ModelPart("process_0d")
+
+        # set the geometry of the process model part
+        process_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, "process_0d")
+
+        # add process model part
+        model.process_model_parts.append(process_model_part)
+
+        # synchronise geometry and generate mesh
+        model.synchronise_geometry()
+        model.generate_mesh()
+
+        # check mesh of body model part
+        mesh_body = model.body_model_parts[0].mesh
+
+        assert mesh_body.ndim == 2
+
+        unique_element_ids = []
+        # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
+        # correct and if the element ids are unique and if the number of nodes per element is correct
+        assert len(mesh_body.elements) == 162
+        for element in mesh_body.elements:
+            assert element.element_type == "TRIANGLE_3N"
+            assert element.id not in unique_element_ids
+            assert len(element.node_ids) == 3
+            unique_element_ids.append(element.id)
+
+        # check if nodes are generated correctly, i.e. if there are nodes in the mesh and if the node ids are unique
+        # and if the number of coordinates per node is correct
+        unique_body_node_ids = []
+        assert len(mesh_body.nodes) == 98
+        for node in mesh_body.nodes:
+            assert node.id not in unique_body_node_ids
+            assert len(node.coordinates) == 3
+            unique_body_node_ids.append(node.id)
+
+        # check process model part
+        mesh_process = model.process_model_parts[0].mesh
+
+        assert mesh_process.ndim == 0
+
+        # check elements of process model part, i.e. if the number of elements is correct and if the element type is
+        # correct and if the element ids are unique and if the number of nodes per element is correct
+        assert len(mesh_process.elements) == 1
+        for element in mesh_process.elements:
+            assert element.element_type == "POINT_1N"
+            assert element.id == 1
+            assert element.id not in unique_element_ids
+            assert len(element.node_ids) == 1
+            unique_element_ids.append(element.id)
+
+        # check nodes of process model part, i.e. if there is 1 node in the mesh and if the node ids are present in the
+        # body mesh and if the number of coordinates per node is correct
+        assert len(mesh_process.nodes) == 1
+        for node in mesh_process.nodes:
+
+            # check if node is also available in the body mesh
+            assert node.id in unique_body_node_ids
+            assert len(node.coordinates) == 3
+
+    def test_validate_expected_success(self):
+        """
+        Test if the model is validated correctly. A model is created with two process model parts which both have
+        a unique name.
+
+        """
+
+        model = Model(2)
+
+        model_part1 = ModelPart("test1")
+        model_part2 = ModelPart("test2")
+
+        model.process_model_parts = [model_part1, model_part2]
+
+        model.validate()
+
+    def test_validate_expected_fail_non_unique_names(self):
+        """
+        Test if the model is validated correctly. A model is created with two process model parts which both have
+        the same name. This should raise a ValueError.
+
+        """
+
+        model = Model(2)
+
+        model_part1 = ModelPart("test")
+        model_part2 = ModelPart("test")
+
+        model.process_model_parts = [model_part1, model_part2]
+
+        pytest.raises(ValueError, model.validate)
+
+    def test_validate_expected_fail_no_name(self):
+        """
+        Test if the model is validated correctly. A model is created with a process model part which does not contain
+        a name. This should raise a ValueError.
+
+        """
+
+        model = Model(2)
+
+        model_part1 = ModelPart(None)
+        model.process_model_parts = [model_part1]
+
+        pytest.raises(ValueError, model.validate)
+
+    def test_add_boundary_condition_by_geometry_ids(self,create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if a boundary condition is added correctly to the model. A boundary condition is added to the model by
+        specifying the geometry ids to which the boundary condition should be applied.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+
+
+        # create a 3D model
+        model = Model(3)
+        model.extrusion_length = [0, 0, 1]
+
+        # create multiple boundary condition parameters
+        no_rotation_parameters = RotationConstraint(active=[True, True, True], is_fixed=[True, True, True],
+                                                    value=[0, 0, 0])
+
+        absorbing_parameters = AbsorbingBoundary(absorbing_factors=[1,1], virtual_thickness=0)
+
+        no_displacement_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True],
+                                                            value=[0, 0, 0])
+
+        # add body model part
+        soil_material = create_default_3d_soil_material
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "test_soil")
+
+
+        # add boundary conditions in 0d, 1d and 2d
+        model.add_boundary_condition_by_geometry_ids(0, [1, 2], no_rotation_parameters, "no_rotation")
+        model.add_boundary_condition_by_geometry_ids(1, [8], absorbing_parameters, "absorbing")
+        model.add_boundary_condition_by_geometry_ids(2, [1, 2], no_displacement_parameters, "no_displacement")
+
+        model.synchronise_geometry()
+
+        # set expected parameters of the boundary conditions
+        expected_0d_model_part_parameters = RotationConstraint(active=[True, True, True], is_fixed=[True, True, True],
+                                                               value=[0, 0, 0])
+
+        expected_1d_model_part_parameters = AbsorbingBoundary(absorbing_factors=[1, 1], virtual_thickness=0)
+
+        expected_2d_model_part_parameters = DisplacementConstraint(active=[True, True, True],
+                                                                   is_fixed=[True, True, True], value=[0, 0, 0])
+
+        # set expected geometry 0d boundary condition
+        expected_boundary_points = {1: Point.create([0, 0, 0], 1), 2:  Point.create([1, 0, 0], 2)}
+        expected_boundary_lines = {1: Line.create([1, 2], 1)}
+        expected_boundary_surfaces = {}
+        expected_boundary_volumes = {}
+
+        expected_boundary_geometry_0d = Geometry(expected_boundary_points, expected_boundary_lines,
+                                                 expected_boundary_surfaces, expected_boundary_volumes)
+
+        # set expected geometry 1d boundary condition
+        expected_boundary_points = {3: Point.create([1, 1, 0], 3), 7: Point.create([1, 1, 1], 7)}
+        expected_boundary_lines = {8: Line.create([3, 7], 8)}
+        expected_boundary_surfaces = {}
+        expected_boundary_volumes = {}
+
+        expected_boundary_geometry_1d = Geometry(expected_boundary_points, expected_boundary_lines,
+                                                 expected_boundary_surfaces, expected_boundary_volumes)
+
+        # set expected geometry 2d boundary condition
+
+        expected_boundary_geometry_2d = Geometry()
+        expected_boundary_geometry_2d.points = {
+            1: Point.create([0, 0, 0], 1),
+            2: Point.create([1, 0, 0], 2),
+            3: Point.create([1, 1, 0], 3),
+            4: Point.create([0, 1, 0], 4),
+            5: Point.create([0, 0, 1], 5),
+            6: Point.create([1, 0, 1], 6)
+        }
+
+        expected_boundary_geometry_2d.lines = {
+            1: Line.create([1, 2], 1),
+            2: Line.create([2, 3], 2),
+            3: Line.create([3, 4], 3),
+            4: Line.create([4, 1], 4),
+            5: Line.create([1, 5], 5),
+            7: Line.create([5, 6], 7),
+            6: Line.create([2, 6], 6)
+        }
+
+        expected_boundary_geometry_2d.surfaces = {
+            1: Surface.create([1, 2, 3, 4], 1),
+            2: Surface.create([5, 7, -6, -1], 2)
+        }
+
+        expected_boundary_geometry_2d.volumes = {}
+
+        # collect all expected geometries
+        all_expected_geometries = [expected_boundary_geometry_0d, expected_boundary_geometry_1d,
+                                      expected_boundary_geometry_2d]
+
+        # check 0d parameters
+        npt.assert_allclose(model.process_model_parts[0].parameters.active, expected_0d_model_part_parameters.active)
+        npt.assert_allclose(model.process_model_parts[0].parameters.is_fixed, expected_0d_model_part_parameters.is_fixed)
+        npt.assert_allclose(model.process_model_parts[0].parameters.value, expected_0d_model_part_parameters.value)
+
+        # check 1d parameters
+        npt.assert_allclose(model.process_model_parts[1].parameters.absorbing_factors,
+                            expected_1d_model_part_parameters.absorbing_factors)
+        npt.assert_allclose(model.process_model_parts[1].parameters.virtual_thickness,
+                            expected_1d_model_part_parameters.virtual_thickness)
+
+        # check 2d parameters
+        npt.assert_allclose(model.process_model_parts[2].parameters.active, expected_2d_model_part_parameters.active)
+        npt.assert_allclose(model.process_model_parts[2].parameters.is_fixed, expected_2d_model_part_parameters.is_fixed)
+        npt.assert_allclose(model.process_model_parts[2].parameters.value, expected_2d_model_part_parameters.value)
+
+        for expected_geometry, model_part in zip(all_expected_geometries, model.process_model_parts):
+
+            TestUtils.assert_almost_equal_geometries(expected_geometry, model_part.geometry)
+
+
+    def test_add_gravity_load_1d_and_2d(self, create_default_2d_soil_material: SoilMaterial):
+        """
+        Test if a gravity load is added correctly to the model in a 2d space containing 1d and 2d elements. A gravity
+        load is generated and added to the model.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+
+        # create model
+        model = Model(2)
+
+        # add a 2d layer
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0)], create_default_2d_soil_material, "soil1")
+
+        # add a 1d layer
+        layer_settings = {"beam": {"ndim": 1,
+                                   "element_size": -1,
+                                   "coordinates": [[0, 0, 0], [1, 0, 0]]}}
+
+        model.gmsh_io.generate_geometry(layer_settings, "")
+        model.synchronise_geometry()
+
+        # add 1d model part to model
+        body_model_part = BodyModelPart("beam")
+        body_model_part.material = EulerBeam(ndim=2, YOUNG_MODULUS=1e6, POISSON_RATIO=0.3, DENSITY=1, CROSS_AREA=1,
+                                             I33=1)
+        body_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, "beam")
+
+        model.body_model_parts.append(body_model_part)
+
+        # add gravity load
+        model._Model__add_gravity_load()
+
+        assert len(model.process_model_parts) == 2
+        assert model.process_model_parts[0].name == "gravity_load_1d"
+        assert model.process_model_parts[1].name == "gravity_load_2d"
+
+        # setup expected geometries for 1d and 2d
+        expected_geometry_points_1d = {1: Point.create([0, 0, 0],1), 2: Point.create([1, 0, 0], 2)}
+        expected_geometry_lines_1d = {1: Line.create([1, 2], 1)}
+        expected_geometry_gravity_1d = Geometry(expected_geometry_points_1d, expected_geometry_lines_1d, {}, {})
+
+        expected_geometry_points_2d = {1: Point.create([0, 0, 0], 1), 2: Point.create([1, 0, 0], 2),
+                                       3: Point.create([1, 1, 0], 3)}
+        expected_geometry_lines_2d = {1: Line.create([1, 2], 1), 2: Line.create([2, 3], 2), 3: Line.create([3, 1], 3)}
+        expected_geometry_surfaces_2d = {1: Surface.create([1, 2, 3], 1)}
+        expected_geometry_gravity_2d = Geometry(expected_geometry_points_2d, expected_geometry_lines_2d,
+                                                expected_geometry_surfaces_2d, {})
+
+        expected_geometries = [expected_geometry_gravity_1d, expected_geometry_gravity_2d]
+
+        # check if all process model parts are correct
+        for model_part in model.process_model_parts:
+
+            # check if parameters are added correctly
+            npt.assert_allclose(model_part.parameters.value, [0, -9.81, 0])
+            npt.assert_allclose(model_part.parameters.active, [True, True, True])
+
+            # check if geometry is added correctly
+            generated_model_part = model_part.geometry
+
+            TestUtils.assert_almost_equal_geometries(expected_geometries[0], generated_model_part)
+
+    def test_add_gravity_load_two_layers_same_dimension(self, create_default_2d_soil_material: SoilMaterial):
+        """
+        Test if a gravity load is added correctly to the model in a 2d space containing 2 layers. A gravity load is
+        generated and added to the model.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+
+        # create model
+        model = Model(2)
+
+        # add a 2d layer
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0)], create_default_2d_soil_material, "soil1")
+        model.add_soil_layer_by_coordinates([(1, 0, 0), (0, 0, 0), (1, -1, 0)], create_default_2d_soil_material, "soil2")
+
+        model.synchronise_geometry()
+
+        # add gravity load
+        model._Model__add_gravity_load(-12,0)
+
+        assert len(model.process_model_parts) == 1
+
+        generated_geometry = model.process_model_parts[0].geometry
+
+        # check if number of points, lines, surfaces are correct, i.e. if the number of points, lines, surfaces are the
+        # same as the number of points, lines, surfaces of the model geometry
+        assert len(generated_geometry.points) == len(model.geometry.points) == 4
+        assert len(generated_geometry.lines) == len(model.geometry.lines) == 5
+        assert len(generated_geometry.surfaces) == len(model.geometry.surfaces) == 2
+
+        assert model.process_model_parts[0].name == "gravity_load_2d"
+        npt.assert_allclose(model.process_model_parts[0].parameters.value, [-12, 0, 0])
+        npt.assert_allclose(model.process_model_parts[0].parameters.active, [True, True, True])
+
+    def test_add_gravity_load_3d(self, create_default_3d_soil_material):
+        """
+        Test if a gravity load is added correctly to the model in a 3d space. A gravity load is generated and added to
+        the model.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+
+        # create model
+        model = Model(3)
+        model.extrusion_length = [0, 0, 1]
+
+        # add a 2d layer
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0)], create_default_3d_soil_material, "soil1")
+
+        model.synchronise_geometry()
+
+        # add gravity load
+        model._Model__add_gravity_load(vertical_axis=2, gravity_value=-10)
+
+        assert len(model.process_model_parts) == 1
+
+        generated_geometry = model.process_model_parts[0].geometry
+
+        # check if number of points, lines, surfaces are correct, i.e. if the number of points, lines, surfaces and
+        # volumes are the same as the number of points, lines, surfaces and volumes of the model geometry
+        assert len(generated_geometry.points) == len(model.geometry.points) == 6
+        assert len(generated_geometry.lines) == len(model.geometry.lines) == 9
+        assert len(generated_geometry.surfaces) == len(model.geometry.surfaces) == 5
+        assert len(generated_geometry.volumes) == len(model.geometry.volumes) == 1
+
+        assert model.process_model_parts[0].name == "gravity_load_3d"
+        npt.assert_allclose(model.process_model_parts[0].parameters.value, [0, 0, -10])
+        npt.assert_allclose(model.process_model_parts[0].parameters.active, [True, True, True])
+
+    def test_setup_stress_initialisation(self, create_default_2d_soil_material: SoilMaterial):
+        """
+        Test if the stress initialisation is set up correctly. A model is created with a soil layer. It is checked if
+        gravity is added in case the K0 procedure or gravity loading is used.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+
+        # set up solver settings
+        analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
+
+        solution_type = SolutionType.QUASI_STATIC
+
+        time_integration = TimeIntegration(start_time=0.0, end_time=1.0, delta_time=0.1, reduction_factor=0.5,
+                                           increase_factor=2.0, max_delta_time_factor=500)
+
+        convergence_criterion = DisplacementConvergenceCriteria()
+
+        stress_initialisation_type = StressInitialisationType.NONE
+
+        solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
+                                         stress_initialisation_type=stress_initialisation_type,
+                                         time_integration=time_integration,
+                                         is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
+                                         convergence_criteria=convergence_criterion)
+
+        # set up problem data
+        problem_data = Problem(problem_name="test", number_of_threads=2, settings=solver_settings)
+
+        model_no_gravity = Model(2)
+        model_no_gravity.project_parameters = problem_data
+
+        # set up soil material
+        soil_material = create_default_2d_soil_material
+        model_no_gravity.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0)], soil_material, "soil1")
+        model_no_gravity.synchronise_geometry()
+
+        # setup_stress_initialisation
+        model_no_gravity._Model__setup_stress_initialisation()
+
+        model_k0 = Model(2)
+        model_k0.project_parameters = problem_data
+
+        model_k0.project_parameters.settings.stress_initialisation_type = StressInitialisationType.K0_PROCEDURE
+        model_k0.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0)], soil_material, "soil1")
+        model_k0.synchronise_geometry()
+
+        # setup_stress_initialisation
+        model_k0._Model__setup_stress_initialisation()
+
+        model_gravity_loading = Model(2)
+        model_gravity_loading.project_parameters = problem_data
+
+        model_gravity_loading.project_parameters.settings.stress_initialisation_type = \
+            StressInitialisationType.GRAVITY_LOADING
+        model_gravity_loading.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0)], soil_material, "soil1")
+        model_gravity_loading.synchronise_geometry()
+
+        # setup_stress_initialisation
+        model_gravity_loading._Model__setup_stress_initialisation()
+
+        assert len(model_no_gravity.process_model_parts) == 0
+        assert len(model_k0.process_model_parts) == 1
+        assert len(model_gravity_loading.process_model_parts) == 1
+
+        assert model_k0.process_model_parts[0].name == "gravity_load_2d"
+        assert model_gravity_loading.process_model_parts[0].name == "gravity_load_2d"
+
+    def test_setup_stress_initialisation_without_project_parameters(self):
+        """
+        A model is created without project parameters. It is
+        checked if a ValueError is raised while setting up the stress initialisation.
+
+        """
+        # create model
+        model = Model(2)
+
+        # test if value error is raised
+        with pytest.raises(ValueError,
+                           match=r"Project parameters must be set before setting up the stress initialisation"):
+            model._Model__setup_stress_initialisation()
+
+    @pytest.mark.skip("Not implemented yet")
+    def test_post_setup(self):
+        pass

@@ -1,9 +1,8 @@
 import json
 
 from stem.IO.kratos_solver_io import KratosSolverIO
-from stem.solver import *
 from stem.model_part import ModelPart, BodyModelPart
-
+from stem.solver import *
 from tests.utils import TestUtils
 
 
@@ -31,7 +30,7 @@ class TestKratosSolverIO:
 
         scheme_type = NewmarkScheme(newmark_beta=0.35, newmark_gamma=0.4, newmark_theta=0.6)
 
-        linear_solver_settings = Amgcl(tolerance=1e-8, max_iterations=500, scaling=True)
+        linear_solver_settings = Amgcl(tolerance=1e-8, max_iteration=500, scaling=True)
 
         stress_initialisation_type = StressInitialisationType.NONE
 
@@ -48,11 +47,9 @@ class TestKratosSolverIO:
         problem_data = Problem(problem_name="test", number_of_threads=2, settings=solver_settings)
 
         # create model parts
-        model_part1 = ModelPart()
-        model_part1.name = "ModelPart1"
+        model_part1 = ModelPart("ModelPart1")
 
-        body_model_part1 = BodyModelPart()
-        body_model_part1.name = "BodyModelPart1"
+        body_model_part1 = BodyModelPart("BodyModelPart1")
 
         model_parts = [model_part1, body_model_part1]
 
