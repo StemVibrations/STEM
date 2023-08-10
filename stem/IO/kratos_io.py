@@ -1,7 +1,7 @@
 import json
 from functools import reduce
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 from stem.IO.kratos_boundaries_io import KratosBoundariesIO
 from stem.IO.kratos_loads_io import KratosLoadsIO
@@ -99,8 +99,8 @@ class KratosIO:
 
         materials_dict: Dict[str, Any] = {"properties": []}
 
-        # check if ids are initialised
-        self.model_io.initialise_body_model_part_ids(model)
+        # initialise the model ids
+        self.model_io.initialise_model_ids(model)
 
         # iterate over the body model parts and create materials
         for bmp in model.body_model_parts:
@@ -145,8 +145,10 @@ class KratosIO:
             - Dict[str, Any]: dictionary containing the part of the project parameters
                 dictionary related to problem data and solver settings.
         """
+
         if model.project_parameters is None:
-            raise ValueError("Model has no solver settings defined.")
+            print("WARNING: Solver settings are undefined in model.")
+            return {"output_processes": {}, "processes": {}}
 
         return self.solver_io.create_settings_dictionary(
             model.project_parameters,
@@ -155,20 +157,21 @@ class KratosIO:
             model.get_all_model_parts(),
         )
 
-    def __write_output_processes(self, outputs: List[Output]):
+    def __write_output_processes(self, outputs: Optional[List[Output]]=None):
         """
         Creates a dictionary containing the output settings.
 
         Args:
-            - outputs (List[:class:`stem.output.Output`]): The list of output processes objects to write in outputs.
+            - outputs (Optional[List[:class:`stem.output.Output`]]): The list of output processes objects to write \
+                in outputs.
 
         Returns:
             - Dict[str, Any]: dictionary containing the part of the project parameters dictionary related to outputs
         """
-        return self.outputs_io.create_output_process_dictionary(outputs=outputs)
-
-    def __write_input_processes(self):
-        pass
+        if outputs is None or len(outputs) == 0:
+            return {"output_processes": {}, "processes": {}}
+        else:
+            return self.outputs_io.create_output_process_dictionary(outputs=outputs)
 
     def __write_loads_and_constraints(self, model: Model):
         """
@@ -229,6 +232,9 @@ class KratosIO:
         Returns:
             - project_parameters_dict (Dict[str, Any]): the dictionary containing the project parameters.
         """
+        # initialise material, tables and process model part ids
+        self.model_io.initialise_model_ids(model)
+
         # get the solver dictionary
         solver_dict = self.__write_solver_settings(
             model, mesh_file_name, materials_file_name

@@ -163,6 +163,10 @@ class Model:
         if isinstance(load_parameters, MovingLoad):
             self.__validate_moving_load_parameters(coordinates, load_parameters)
 
+        # elif isinstance(load_parameters, (PointLoad, LineLoad, SurfaceLoad)):
+        #     # TODO self.__validate_load_coordinates(coordinates)
+        #     pass
+
         # create input for gmsh
         if isinstance(load_parameters, PointLoad):
             gmsh_input = {name: {"coordinates": coordinates, "ndim": 0}}

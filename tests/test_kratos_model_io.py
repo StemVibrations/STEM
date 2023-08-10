@@ -1,3 +1,4 @@
+import numpy as np
 import numpy.testing as npt
 import pytest
 from gmsh_utils import gmsh_IO
@@ -8,7 +9,7 @@ from stem.load import LineLoad
 from stem.model import Model
 from stem.model_part import *
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
-
+from stem.table import Table
 
 class TestKratosModelIO:
 
@@ -36,22 +37,36 @@ class TestKratosModelIO:
         """
         ndim=2
         layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
-        load_coordinates = [layer_coordinates[2], layer_coordinates[3]]
+
+        load_coordinates_top = [(1, 1, 0), (0, 1, 0)]  # top
+        load_coordinates_bottom = [(0, 0, 0), (1, 0, 0)]  # bottom
+        load_coordinates_left = [(0, 1, 0), (0, 0, 0)]  # left
+        load_coordinates_right = [(1, 0, 0), (1, 1, 0)]  # right
         # define soil material
         soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
         constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
         soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
                                      retention_parameters=SaturatedBelowPhreaticLevelLaw())
+        # define tables
+        _time = np.arange(6)*0.5
+        _value1 = np.array([0, 5, 10, 5, 0, 0])
+        table1 = Table(times=_time, values=_value1)
+        table2 = Table(times=_time, values=-_value1)
 
         # define load properties
-        line_load = LineLoad(active=[False, True, False], value=[0, -20, 0])
+        line_load1 = LineLoad(active=[False, True, False], value=[0, table1, 0])
+        line_load2 = LineLoad(active=[True, False, False], value=[table2, 0, 0])
 
         # create model
         model = Model(ndim)
 
         # add soil layer and line load and mesh them
         model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
-        model.add_load_by_coordinates(load_coordinates, line_load, "load1")
+
+        model.add_load_by_coordinates(load_coordinates_top, line_load1, "load_top")
+        model.add_load_by_coordinates(load_coordinates_bottom, line_load1, "load_bottom")
+        model.add_load_by_coordinates(load_coordinates_left, line_load2, "load_left")
+        model.add_load_by_coordinates(load_coordinates_right, line_load2, "load_right")
 
         # add pin parameters
         no_displacement_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True],
@@ -83,6 +98,9 @@ class TestKratosModelIO:
         # IO object
         model_part_io = KratosModelIO(ndim=model.ndim, domain="PorousDomain")
 
+        # initialise ids for table, materials and processes
+        model_part_io.initialise_model_ids(model)
+
         # generate text block body model part: soil1
         actual_text_body = model_part_io.write_submodelpart_body_model_part(
             body_model_part=body_model_part_to_write
@@ -90,7 +108,7 @@ class TestKratosModelIO:
         # define expected block text
         expected_text_body = ['', 'Begin SubModelPart soil1', '  Begin SubModelPartTables', '  End SubModelPartTables',
                               '  Begin SubModelPartNodes', '  1', '  2', '  3', '  4', '  5', '  End SubModelPartNodes',
-                              '  Begin SubModelPartElements', '  3', '  4', '  5', '  6',
+                              '  Begin SubModelPartElements', '  5', '  6', '  7', '  8',
                               '  End SubModelPartElements', 'End SubModelPart', '']
         # assert the objects to be equal
         npt.assert_equal(actual=actual_text_body, desired=expected_text_body)
@@ -100,9 +118,9 @@ class TestKratosModelIO:
             process_model_part=process_model_part_to_write
         )
         # define expected block text
-        expected_text_load = ['', 'Begin SubModelPart load1', '  Begin SubModelPartTables',
+        expected_text_load = ['', 'Begin SubModelPart load_top', '  Begin SubModelPartTables', '  1',
                               '  End SubModelPartTables', '  Begin SubModelPartNodes', '  3', '  4',
-                              '  End SubModelPartNodes', '  Begin SubModelPartConditions', '  2',
+                              '  End SubModelPartNodes', '  Begin SubModelPartConditions', '  3',
                               '  End SubModelPartConditions', 'End SubModelPart', '']
 
         # assert the objects to be equal
@@ -120,6 +138,9 @@ class TestKratosModelIO:
 
         # IO object
         model_part_io = KratosModelIO(ndim=model.ndim, domain="PorousDomain")
+
+        # initialise ids for table, materials and processes
+        model_part_io.initialise_model_ids(model)
 
         # generate text block body model part: soil1
         actual_text_body = model_part_io.write_mdpa_text(model=model)

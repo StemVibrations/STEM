@@ -172,3 +172,16 @@ class Utils:
             else:
                 a[key] = b[key]
         return a
+
+    @staticmethod
+    def get_unique_objects(input_sequence: Sequence[object]):
+        """
+        Get the unique objects, i.e., the objects that share the same memory location.
+
+        Args:
+            - input_sequence (Sequence[object]): full list of possible duplicate objects
+
+        Returns:
+            - List[object]: list of unique objects
+        """
+        return list({id(obj): obj for obj in input_sequence}.values())
