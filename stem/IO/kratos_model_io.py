@@ -2,11 +2,7 @@ from typing import Sequence, Optional, Dict, List
 
 import numpy as np
 
-from stem.soil_material import SoilMaterial
 from stem.structural_material import *
-from stem.load import LineLoad, MovingLoad, SurfaceLoad, PointLoad, GravityLoad
-from stem.additional_processes import AdditionalProcessesParametersABC
-from stem.boundary import AbsorbingBoundary
 from stem.load import LineLoad, MovingLoad, SurfaceLoad
 from stem.mesh import Element, Node
 from stem.model import Model
@@ -18,8 +14,7 @@ INDENTATION = 2
 FORMAT_INTEGER: str = "{:d}"
 # format for floats
 FORMAT_FLOAT: str = " {:.10f}"
-from stem.boundary import AbsorbingBoundary, DisplacementConstraint, RotationConstraint
-from stem.solver import AnalysisType
+from stem.boundary import AbsorbingBoundary
 
 
 class KratosModelIO:
