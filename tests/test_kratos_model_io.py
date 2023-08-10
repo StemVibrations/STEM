@@ -1,14 +1,17 @@
 import json
+
+import pytest
 import numpy.testing as npt
+from gmsh_utils import gmsh_IO
 
 from stem.boundary import DisplacementConstraint
 from stem.load import LineLoad
 from stem.model import Model
 from stem.model_part import *
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
-from gmsh_utils import gmsh_IO
 
-import pytest
+from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, \
+    NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
 
 from tests.utils import TestUtils
 from stem.IO.kratos_model_io import KratosModelIO
@@ -51,8 +54,30 @@ class TestKratosModelIO:
         # define load properties
         line_load = LineLoad(active=[False, True, False], value=[0, -20, 0])
 
+        # set up solver settings
+        analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
+
+        solution_type = SolutionType.QUASI_STATIC
+
+        time_integration = TimeIntegration(start_time=0.0, end_time=1.0, delta_time=0.1, reduction_factor=0.5,
+                                           increase_factor=2.0, max_delta_time_factor=500)
+
+        convergence_criterion = DisplacementConvergenceCriteria()
+
+        stress_initialisation_type = StressInitialisationType.NONE
+
+        solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
+                                         stress_initialisation_type=stress_initialisation_type,
+                                         time_integration=time_integration,
+                                         is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
+                                         convergence_criteria=convergence_criterion)
+
+        # set up problem data
+        project_parameters = Problem(problem_name="test", number_of_threads=2, settings=solver_settings)
+
         # create model
         model = Model(ndim)
+        model.project_parameters = project_parameters
 
         # add soil layer and line load and mesh them
         model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
