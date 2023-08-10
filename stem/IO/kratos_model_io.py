@@ -110,7 +110,6 @@ class KratosModelIO:
             for ix, bmp in enumerate(model.body_model_parts):
                 bmp.id = ix + 1
 
-
     @staticmethod
     def __get_unique_tables_process_model_part(process_model_part:ModelPart):
         """
@@ -160,10 +159,6 @@ class KratosModelIO:
         """
 
         unique_tables = self.__get_unique_tables(model)
-        unique_tables_name = [tb.name for tb in unique_tables]
-
-        if len(np.unique(unique_tables_name)) != len(unique_tables):
-            raise ValueError("Tables must have different labels!")
 
         for ix, table in enumerate(unique_tables):
             table.id = ix + 1
