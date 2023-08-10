@@ -48,26 +48,36 @@ class TestKratosModelIO:
         """
         ndim=2
         layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
-        load_coordinates = [layer_coordinates[2], layer_coordinates[3]]
+
+        load_coordinates_top = [(1, 1, 0), (0, 1, 0)]  # top
+        load_coordinates_bottom = [(0, 0, 0), (1, 0, 0)]  # bottom
+        load_coordinates_left = [(0, 1, 0), (0, 0, 0)]  # left
+        load_coordinates_right = [(1, 0, 0), (1, 1, 0)]  # right
         # define soil material
         soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
         constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
         soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
                                      retention_parameters=SaturatedBelowPhreaticLevelLaw())
-
         # define tables
         _time = np.arange(6)*0.5
         _value1 = np.array([0, 5, 10, 5, 0, 0])
         table1 = Table(times=_time, values=_value1)
+        table2 = Table(times=_time, values=-_value1)
+
         # define load properties
-        line_load = LineLoad(active=[False, True, False], value=[table1, -20, 0])
+        line_load1 = LineLoad(active=[False, True, False], value=[0, table1, 0])
+        line_load2 = LineLoad(active=[True, False, False], value=[table2, 0, 0])
 
         # create model
         model = Model(ndim)
 
         # add soil layer and line load and mesh them
         model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
-        model.add_load_by_coordinates(load_coordinates, line_load, "load1")
+
+        model.add_load_by_coordinates(load_coordinates_top, line_load1, "load_top")
+        model.add_load_by_coordinates(load_coordinates_bottom, line_load1, "load_bottom")
+        model.add_load_by_coordinates(load_coordinates_left, line_load2, "load_left")
+        model.add_load_by_coordinates(load_coordinates_right, line_load2, "load_right")
 
         # add pin parameters
         no_displacement_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True],
@@ -94,7 +104,8 @@ class TestKratosModelIO:
         """
         ndim=3
         layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
-        load_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+        load_coordinates_bottom = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+        load_coordinates_top = [(0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1)]
         # define soil material
         soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
         constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
@@ -104,9 +115,14 @@ class TestKratosModelIO:
         # define tables
         _time = np.arange(6)*0.5
         _value1 = np.array([0, 5, 10, 5, 0, 0])
-        table1 = Table(times=_time, values=_value1)
+        table1 = Table(times=_time, values=-_value1)
+        table2 = Table(times=_time, values=_value1)
+
         # define load properties
-        surface_load = SurfaceLoad(active=[False, True, False], value=[table1, -20, 0])
+
+        # define load properties
+        surface_load_top = SurfaceLoad(active=[False, True, False], value=[0, table1, 0])
+        surface_load_bottom = SurfaceLoad(active=[False, True, False], value=[0, table2, 0])
 
         # create model
         model = Model(ndim)
@@ -114,11 +130,12 @@ class TestKratosModelIO:
 
         # add soil layer and line load and mesh them
         model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
-        model.add_load_by_coordinates(load_coordinates, surface_load, "load1")
+        model.add_load_by_coordinates(load_coordinates_top, surface_load_top, "load_top")
+        model.add_load_by_coordinates(load_coordinates_bottom, surface_load_bottom, "load_bottom")
 
         # add pin parameters
         no_displacement_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True],
-                                                            value=[0, 0, 0])
+                                                            value=[0, table2, 0])
 
         # add boundary conditions in 0d, 1d and 2d
         model.add_boundary_condition_by_geometry_ids(2, [6], no_displacement_parameters, "no_displacement")
@@ -129,7 +146,6 @@ class TestKratosModelIO:
         model.generate_mesh()
 
         return model
-    
 
     @pytest.fixture
     def create_default_outputs(self):
