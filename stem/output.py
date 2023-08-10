@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 from typing import List, Optional
 
 
@@ -269,10 +270,11 @@ class Output:
                 example2='path1/path2/test2' saves the outputs in './path1/path2/test2' \
                 example3='C:/Documents/yourproject/test3' saves the outputs in 'C:/Documents/yourproject/test3'.
 
-                [NOTE]: for VTK file type, the content of the target directory will be deleted. Therefore do not specify the \
-                current working folder as an output directory. If not specified, an output directory is created based on the \
-                submodelpart specified.
-                For GID and JSON output file types, if output_dir is None, than the current directory is assumed.
+                if output_dir is None, then the current directory is assumed.
+
+                [NOTE]: for VTK file type, the content of the target directory will be deleted. Therefore a subfolder is
+                always appended to the specified output directory to avoid erasing important memory content.
+                The appended folder is defined based on the submodelpart name specified.
 
             - output_name (Optional[str]): Name for the output file. This parameter is \
                   used by GiD and JSON outputs while is ignored in VTK. If the name is not \
@@ -281,15 +283,17 @@ class Output:
 
         # validation for VTK
         if output_dir is None:
-            if isinstance(output_parameters, VtkOutputParameters):
-                if part_name is None:
-                    output_dir = "./output_VTK_full_model"
-                else:
-                    output_dir = "./output_VTK_" + part_name
-            elif isinstance(output_parameters, (GiDOutputParameters, JsonOutputParameters)):
-                output_dir = "./"
+            output_dir = "./"
+
+        new_output_dir = Path(output_dir)
+
+        if isinstance(output_parameters, VtkOutputParameters):
+            if part_name is None:
+                new_output_dir = new_output_dir.joinpath("output_vtk_full_model")
+            else:
+                new_output_dir = new_output_dir.joinpath("output_vtk_" + part_name)
 
         self.output_parameters = output_parameters
         self.part_name = part_name
-        self.output_dir = output_dir
+        self.output_dir = new_output_dir
         self.output_name = output_name
