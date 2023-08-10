@@ -16,7 +16,7 @@ class Table:
     Attributes:
         - name (str): label of the table object.
         - values (Union[Sequence[float], npty.NDArray[np.float64]]): alues of the load/constraint.
-        - times (Union[Sequence[Union[int,float]], npty.NDArray[Union[np.float64, np.int_]]]): time [s]
+        - times (Union[Sequence[Union[int,float]], npty.NDArray[Union[np.float64, np.int_]]]): time [s] \
             corresponding to the values specified.
         - step_type (str): step type specified for the step variable. Select either `step` if simulation step id \
             (integers) are provided or `time`, if time steps in seconds are provided. \

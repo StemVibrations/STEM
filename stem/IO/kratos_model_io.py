@@ -114,7 +114,7 @@ class KratosModelIO:
     @staticmethod
     def __get_unique_tables_process_model_part(process_model_part:ModelPart):
         """
-        Retrieve all the unique tables in the model.
+        Retrieve all the memory-unique tables in the model part.
 
         Args:
             - process_model_part (:class:`stem.model_part.ModelPart`]): the process model part containing \
@@ -135,7 +135,7 @@ class KratosModelIO:
 
     def __get_unique_tables(self, model:Model):
         """
-        Retrieve all the unique tables in the model.
+        Retrieve all the memory-unique tables in the model.
 
         Args:
             - model (:class:`stem.model.Model`]): the model object containing the info on the loads.
@@ -157,8 +157,6 @@ class KratosModelIO:
         Args:
             - model (:class:`stem.model.Model`]): the model object containing the body model parts.
 
-        Raises:
-            - ValueError: if tables do not have unique labels.
         """
 
         unique_tables = self.__get_unique_tables(model)
