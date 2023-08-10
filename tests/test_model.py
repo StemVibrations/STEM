@@ -1116,9 +1116,9 @@ class TestModel:
         # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
         # correct and if the element ids are unique and if the number of nodes per element is correct
         assert len(mesh.elements) == 162
-        for element in mesh.elements:
+        for element_id, element in mesh.elements.items():
             assert element.element_type == "TRIANGLE_3N"
-            assert element.id not in unique_element_ids
+            assert element_id not in unique_element_ids
             assert len(element.node_ids) == 3
             unique_element_ids.append(element.id)
 
@@ -1126,8 +1126,8 @@ class TestModel:
         # and if the number of coordinates per node is correct
         unique_node_ids = []
         assert len(mesh.nodes) == 98
-        for node in mesh.nodes:
-            assert node.id not in unique_node_ids
+        for node_id, node in mesh.nodes.items():
+            assert node_id not in unique_node_ids
             assert len(node.coordinates) == 3
             unique_node_ids.append(node.id)
 
@@ -1160,9 +1160,10 @@ class TestModel:
         # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
         # correct and if the element ids are unique and if the number of nodes per element is correct
         assert len(mesh.elements) == 1120
-        for element in mesh.elements:
+
+        for element_id, element in mesh.elements.items():
             assert element.element_type == "TETRAHEDRON_4N"
-            assert element.id not in unique_element_ids
+            assert element_id not in unique_element_ids
             assert len(element.node_ids) == 4
             unique_element_ids.append(element.id)
 
@@ -1170,8 +1171,8 @@ class TestModel:
         # and if the number of coordinates per node is correct
         unique_node_ids = []
         assert len(mesh.nodes) == 340
-        for node in mesh.nodes:
-            assert node.id not in unique_node_ids
+        for node_id, node in mesh.nodes.items():
+            assert node_id not in unique_node_ids
             assert len(node.coordinates) == 3
             unique_node_ids.append(node.id)
 
@@ -1216,18 +1217,20 @@ class TestModel:
         # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
         # correct and if the element ids are unique and if the number of nodes per element is correct
         assert len(mesh_body.elements) == 162
-        for element in mesh_body.elements:
+
+        for element_id, element in mesh_body.elements.items():
             assert element.element_type == "TRIANGLE_3N"
-            assert element.id not in unique_element_ids
+            assert element_id not in unique_element_ids
             assert len(element.node_ids) == 3
-            unique_element_ids.append(element.id)
+            unique_element_ids.append(element_id)
 
         # check if nodes are generated correctly, i.e. if there are nodes in the mesh and if the node ids are unique
         # and if the number of coordinates per node is correct
         unique_body_node_ids = []
         assert len(mesh_body.nodes) == 98
-        for node in mesh_body.nodes:
-            assert node.id not in unique_body_node_ids
+
+        for node_id, node in mesh_body.nodes.items():
+            assert node_id not in unique_body_node_ids
             assert len(node.coordinates) == 3
             unique_body_node_ids.append(node.id)
 
@@ -1239,20 +1242,19 @@ class TestModel:
         # check elements of process model part, i.e. if the number of elements is correct and if the element type is
         # correct and if the element ids are unique and if the number of nodes per element is correct
         assert len(mesh_process.elements) == 1
-        for element in mesh_process.elements:
+        for element_id, element in mesh_process.elements.items():
             assert element.element_type == "POINT_1N"
-            assert element.id == 1
-            assert element.id not in unique_element_ids
+            assert element_id == 1
+            assert element_id not in unique_element_ids
             assert len(element.node_ids) == 1
             unique_element_ids.append(element.id)
 
         # check nodes of process model part, i.e. if there is 1 node in the mesh and if the node ids are present in the
         # body mesh and if the number of coordinates per node is correct
         assert len(mesh_process.nodes) == 1
-        for node in mesh_process.nodes:
-
+        for node_id, node in mesh_process.nodes.items():
             # check if node is also available in the body mesh
-            assert node.id in unique_body_node_ids
+            assert node_id in unique_body_node_ids
             assert len(node.coordinates) == 3
 
     def test_validate_expected_success(self):

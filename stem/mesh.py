@@ -113,15 +113,15 @@ class Mesh:
 
     Attributes:
         - ndim (int): number of dimensions of the mesh
-        - nodes (List[Node]): node id followed by node coordinates in an array
-        - elements (List[Element]): element id followed by connectivities in an array
+        - nodes (Dict[int, Node]): dictionary of node ids followed by node coordinates in an array
+        - elements (Dict[int, Element]): dictionary of element ids followed by connectivities in an array
 
     """
     def __init__(self, ndim: int):
 
         self.ndim: int = ndim
-        self.nodes: List[Node] = []
-        self.elements: List[Element] = []
+        self.nodes: Dict[int, Node] = {}
+        self.elements: Dict[int, Element] = {}
 
     @classmethod
     def create_mesh_from_gmsh_group(cls, mesh_data: Dict[str, Any], group_name: str):
@@ -150,13 +150,14 @@ class Mesh:
         group_element_type = group_data["element_type"]
 
         element_type_data = mesh_data["elements"][group_element_type]
+        # TODO: reorder element nodes to be counter-clockwise
 
         # create element per element id
-        elements = [Element(element_id, group_element_type, element_type_data[element_id])
-                    for element_id in group_element_ids]
+        elements = {element_id: Element(element_id, group_element_type, element_type_data[element_id])
+                    for element_id in group_element_ids}
 
         # create node per node id
-        nodes = [Node(node_id, mesh_data["nodes"][node_id]) for node_id in group_node_ids]
+        nodes = {node_id: Node(node_id, mesh_data["nodes"][node_id]) for node_id in group_node_ids}
 
         # add nodes and elements to mesh object
         mesh = cls(group_data["ndim"])
