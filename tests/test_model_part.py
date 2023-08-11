@@ -1,3 +1,6 @@
+import re
+
+import pytest
 
 from stem.load import PointLoad, LineLoad, SurfaceLoad, MovingLoad, GravityLoad
 from stem.boundary import DisplacementConstraint, RotationConstraint, AbsorbingBoundary
@@ -24,6 +27,16 @@ class TestModelPart:
         assert point_load_part.get_element_name(2, 1, AnalysisType.MECHANICAL) is None
         assert point_load_part.get_element_name(3, 1, AnalysisType.MECHANICAL) is None
 
+        # wrong point input
+        with pytest.raises(ValueError, match= "Point load can only be applied in mechanical or mechanical groundwater "
+                                              "flow analysis"):
+            assert point_load_part.get_element_name(2, 1, AnalysisType.GROUNDWATER_FLOW) is None
+
+        # wrong ndim nnodes combination
+        with pytest.raises(ValueError, match=re.escape(r'In 2 dimensions, only [1] noded Point load elements are supported. '
+                                              r'2 nodes were provided.')):
+            assert point_load_part.get_element_name(2, 2, AnalysisType.MECHANICAL) is None
+
         # check line load names
         line_load = LineLoad([True, True, True], [0, 0, 0])
         line_load_part = ModelPart("line_load_part")
@@ -33,6 +46,17 @@ class TestModelPart:
         assert line_load_part.get_element_name(3, 2, AnalysisType.MECHANICAL) == "LineLoadCondition3D2N"
         assert line_load_part.get_element_name(2, 3, AnalysisType.MECHANICAL) == "LineLoadDiffOrderCondition2D3N"
         assert line_load_part.get_element_name(3, 3, AnalysisType.MECHANICAL) == "LineLoadCondition3D3N"
+
+        # wrong line_load input
+        with pytest.raises(ValueError, match= "Line load can only be applied in mechanical or mechanical groundwater "
+                                              "flow analysis"):
+            assert line_load_part.get_element_name(2, 2, AnalysisType.GROUNDWATER_FLOW) is None
+
+        # wrong ndim nnodes combination
+        with pytest.raises(ValueError,
+                           match=re.escape(r'In 2 dimensions, only [2, 3] noded Line load elements are supported. '
+                                           r'4 nodes were provided.')):
+            assert line_load_part.get_element_name(2, 4, AnalysisType.MECHANICAL) is None
 
         # check surface load names
         surface_load = SurfaceLoad([True, True, True], [0, 0, 0])
@@ -44,6 +68,17 @@ class TestModelPart:
         assert surface_load_part.get_element_name(3, 6, AnalysisType.MECHANICAL) == "SurfaceLoadDiffOrderCondition3D6N"
         assert surface_load_part.get_element_name(3, 8, AnalysisType.MECHANICAL) == "SurfaceLoadDiffOrderCondition3D8N"
 
+        # wrong line_load input
+        with pytest.raises(ValueError, match= "Surface load can only be applied in mechanical or mechanical groundwater "
+                                              "flow analysis"):
+            assert surface_load_part.get_element_name(3, 3, AnalysisType.GROUNDWATER_FLOW) is None
+
+        # wrong ndim nnodes combination
+        with pytest.raises(ValueError,
+                           match=re.escape('In 3 dimensions, only [3, 4, 6, 8] noded Surface load elements are '
+                                           'supported. 9 nodes were provided.')):
+            assert surface_load_part.get_element_name(3, 9, AnalysisType.MECHANICAL) is None
+
         # check moving load names
         moving_load = MovingLoad([10, 10, 10], [1, 1, 1], 1, [0, 0, 0])
         moving_load_part = ModelPart("moving_load_part")
@@ -54,12 +89,23 @@ class TestModelPart:
         assert moving_load_part.get_element_name(2, 3, AnalysisType.MECHANICAL) == "MovingLoadCondition2D3N"
         assert moving_load_part.get_element_name(3, 3, AnalysisType.MECHANICAL) == "MovingLoadCondition3D3N"
 
-        # gravity load does not have element names
-        moving_load = GravityLoad([True, True, True], [0, 0, 0])
-        moving_load_part = ModelPart("moving_load_part")
-        moving_load_part.parameters = moving_load
+        # wrong line_load input
+        with pytest.raises(ValueError, match= "Moving load can only be applied in mechanical or mechanical groundwater "
+                                              "flow analysis"):
+            assert moving_load_part.get_element_name(2, 2, AnalysisType.GROUNDWATER_FLOW) is None
 
-        assert moving_load_part.get_element_name(2, 2, AnalysisType.MECHANICAL) is None
+        # wrong ndim nnodes combination
+        with pytest.raises(ValueError,
+                           match=re.escape('In 3 dimensions, only [2, 3] noded Moving load elements are supported. '
+                                           '4 nodes were provided.')):
+            assert moving_load_part.get_element_name(3, 4, AnalysisType.MECHANICAL) is None
+
+        # gravity load does not have element names
+        gravity_load = GravityLoad([True, True, True], [0, 0, 0])
+        gravity_load_part = ModelPart("moving_load_part")
+        gravity_load_part.parameters = gravity_load
+
+        assert gravity_load_part.get_element_name(2, 2, AnalysisType.MECHANICAL) is None
 
     def test_get_element_name_boundaries(self):
         """

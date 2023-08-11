@@ -76,7 +76,7 @@ class PointLoad(LoadParametersABC):
                                              "Point load")
 
         if analysis_type != AnalysisType.MECHANICAL_GROUNDWATER_FLOW and analysis_type != AnalysisType.MECHANICAL:
-            raise Exception("Point load can only be applied in mechanical or mechanical groundwater flow analysis")
+            raise ValueError("Point load can only be applied in mechanical or mechanical groundwater flow analysis")
 
         # Point load does not have a name
         return None
