@@ -150,6 +150,7 @@ class SmallStrainUmatLaw(SoilConstitutiveLawABC):
         - STATE_VARIABLES (list): The state variables of the umat.
     """
     UMAT_NAME: str
+    UMAT_NUMBER: int
     IS_FORTRAN_UMAT: bool
     UMAT_PARAMETERS: List[Any]
     STATE_VARIABLES: List[Any]
@@ -170,6 +171,7 @@ class SmallStrainUdsmLaw(SoilConstitutiveLawABC):
         - UDSM_PARAMETERS (list): The parameters of the udsm.
     """
     UDSM_NAME: str
+    UDSM_NUMBER: int
     UDSM_NUMBER: int
     IS_FORTRAN_UDSM: bool
     UDSM_PARAMETERS: List[Any]
