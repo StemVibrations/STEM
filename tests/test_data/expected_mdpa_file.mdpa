@@ -44,7 +44,7 @@ Begin Nodes
 End Nodes
 
 
-Begin Elements DUMMY
+Begin Elements UPwSmallStrainElement2D3N
   5  1  2 5 1
   6  1  1 5 4
   7  1  3 5 2
@@ -52,22 +52,22 @@ Begin Elements DUMMY
 End Elements
 
 
-Begin Conditions DUMMY
+Begin Conditions LineLoadCondition2D2N
   3  1  3 4
 End Conditions
 
 
-Begin Conditions DUMMY
+Begin Conditions LineLoadCondition2D2N
   1  2  1 2
 End Conditions
 
 
-Begin Conditions DUMMY
+Begin Conditions LineLoadCondition2D2N
   4  3  4 1
 End Conditions
 
 
-Begin Conditions DUMMY
+Begin Conditions LineLoadCondition2D2N
   2  4  2 3
 End Conditions
 

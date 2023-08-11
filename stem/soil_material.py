@@ -2,6 +2,9 @@ from typing import List, Any, Optional, Union
 from dataclasses import dataclass, field
 from abc import ABC
 
+from stem.solver import AnalysisType
+from stem.utils import Utils
+
 
 @dataclass
 class SoilFormulationParametersABC(ABC):
@@ -246,3 +249,41 @@ class SoilMaterial:
     constitutive_law: SoilConstitutiveLawABC
     retention_parameters: RetentionLawABC
     fluid_properties: FluidProperties = field(default_factory=FluidProperties)
+
+    @staticmethod
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
+        """
+        Function to get the element name based on the number of dimensions, the number of nodes and the analysis type.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model.
+            - n_nodes_element (int): The number of nodes per element.
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type.
+
+        Raises:
+            - ValueError: If the analysis type is not implemented yet for nodal concentrated elements.
+
+        Returns:
+            - element_name (str): The name of the element.
+
+        """
+
+        available_node_dim_combinations = {
+            2: [3, 4, 6, 8],
+            3: [4, 8, 10, 20],
+        }
+        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations,
+                                             "Soil")
+
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+
+            # for higher order elements, pore pressure is calculated on a lower order than displacements
+            if (n_dim_model == 2 and n_nodes_element > 4) or (n_dim_model == 3 and n_nodes_element > 8):
+                element_name = f"SmallStrainUPwDiffOrderElement{n_dim_model}D{n_nodes_element}N"
+            else:
+                element_name = f"UPwSmallStrainElement{n_dim_model}D{n_nodes_element}N"
+
+        else:
+            raise ValueError(f"Analysis type {analysis_type} is not implemented yet for soil material.")
+
+        return element_name

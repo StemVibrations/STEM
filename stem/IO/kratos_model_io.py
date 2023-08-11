@@ -1,7 +1,9 @@
-from typing import Sequence, Optional, List, Union
+from typing import Sequence, Optional, Dict, List, Union
 
 import numpy as np
 
+from stem.structural_material import *
+from stem.load import LineLoad, MovingLoad, SurfaceLoad
 from stem.boundary import AbsorbingBoundary, DisplacementConstraint, RotationConstraint
 from stem.load import LineLoad, MovingLoad, SurfaceLoad, PointLoad
 from stem.mesh import Element, Node
@@ -410,6 +412,14 @@ class KratosModelIO:
             - str: the Kratos element type
         """
 
+        # get number of dimensions of the model
+        if model.ndim != 2 and model.ndim != 3:
+            raise ValueError(
+                f"Model dimension {model.ndim} is not supported. Only 2D and 3D are supported."
+            )
+        else:
+            n_dimensions = model.ndim
+
         # Check if mesh is initialised
         if model_part.mesh is None:
             raise ValueError(
@@ -428,16 +438,21 @@ class KratosModelIO:
                 f"Model part {model_part.name} has more than 1 element type assigned."
                 f"\n{element_part_type}. Error."
             )
-        element_part = str(element_part_type[0])
 
-        # TODO
-        #  infer element type based on:
-        #  model.project_parameters.settings
-        #  model.ndim
-        #  model_part.parameters OR body_model_part.material
-        #  use __is_body_model_part to discriminate and __check_if_process_writes_conditions
+        # get number of nodes per element
+        n_nodes_element = len(model_part.mesh.elements[0].node_ids)
 
-        return "DUMMY"
+        # check analysis type
+        if model.project_parameters is not None:
+            analysis_type = model.project_parameters.settings.analysis_type
+            # get element name from model part (body or condition)
+            element_name = model_part.get_element_name(n_dimensions, n_nodes_element, analysis_type)
+        else:
+            raise ValueError(
+                f"Analysis type not specified in the model. Please initialise the model with the analysis type."
+            )
+
+        return element_name
 
     def write_elements_body_model_part(
         self, body_model_part: BodyModelPart, mat_id: int, kratos_element_type: str

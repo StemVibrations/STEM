@@ -1,5 +1,4 @@
-from itertools import combinations
-from typing import Sequence, Dict, Any, List, Union
+from typing import Sequence, Dict, Any, List, Union, Optional
 
 import numpy as np
 
@@ -9,6 +8,36 @@ class Utils:
     Class containing utility methods.
 
     """
+    @staticmethod
+    def check_ndim_nnodes_combinations(n_dim: int, n_nodes_element: Optional[int],
+                                       available_combinations: Dict[int, List[Any]],
+                                       class_name: str):
+        """
+        Check if the combination of number of dimensions and number of nodes per element is supported.
+
+        Args:
+            - n_dim (int): number of dimensions
+            - n_nodes_element (int): number of nodes per element
+            - available_combinations (Dict[int, List[int]]): dictionary containing the supported combinations of number\
+               of dimensions and number of nodes per element
+            - class_name (str): name of the class to be checked
+
+        Raises:
+            - ValueError: when the number of dimensions is not supported.
+            - ValueError: when the combination of number of dimensions and number of nodes per element is not supported.
+
+        """
+        # check if the number of dimensions is supported
+        if n_dim not in available_combinations.keys():
+            raise ValueError(f"Number of dimensions {n_dim} is not supported for {class_name} elements. Supported "
+                             f"dimensions are {list(available_combinations.keys())}.")
+
+        # check if the number of nodes per element is supported
+        if n_nodes_element not in available_combinations[n_dim]:
+            raise ValueError(
+                f"In {n_dim} dimensions, only {available_combinations[n_dim]} noded {class_name} elements are "
+                f"supported. {n_nodes_element} nodes were provided."
+            )
 
     @staticmethod
     def are_2d_coordinates_clockwise(coordinates: Sequence[Sequence[float]]):
