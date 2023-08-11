@@ -30,12 +30,12 @@ class TestModelPart:
         # wrong point input
         with pytest.raises(ValueError, match= "Point load can only be applied in mechanical or mechanical groundwater "
                                               "flow analysis"):
-            assert point_load_part.get_element_name(2, 1, AnalysisType.GROUNDWATER_FLOW) is None
+            point_load_part.get_element_name(2, 1, AnalysisType.GROUNDWATER_FLOW)
 
         # wrong ndim nnodes combination
         with pytest.raises(ValueError, match=re.escape(r'In 2 dimensions, only [1] noded Point load elements are supported. '
                                               r'2 nodes were provided.')):
-            assert point_load_part.get_element_name(2, 2, AnalysisType.MECHANICAL) is None
+            point_load_part.get_element_name(2, 2, AnalysisType.MECHANICAL)
 
         # check line load names
         line_load = LineLoad([True, True, True], [0, 0, 0])
@@ -50,13 +50,13 @@ class TestModelPart:
         # wrong line_load input
         with pytest.raises(ValueError, match= "Line load can only be applied in mechanical or mechanical groundwater "
                                               "flow analysis"):
-            assert line_load_part.get_element_name(2, 2, AnalysisType.GROUNDWATER_FLOW) is None
+            line_load_part.get_element_name(2, 2, AnalysisType.GROUNDWATER_FLOW)
 
         # wrong ndim nnodes combination
         with pytest.raises(ValueError,
                            match=re.escape(r'In 2 dimensions, only [2, 3] noded Line load elements are supported. '
                                            r'4 nodes were provided.')):
-            assert line_load_part.get_element_name(2, 4, AnalysisType.MECHANICAL) is None
+            line_load_part.get_element_name(2, 4, AnalysisType.MECHANICAL)
 
         # check surface load names
         surface_load = SurfaceLoad([True, True, True], [0, 0, 0])
@@ -68,16 +68,16 @@ class TestModelPart:
         assert surface_load_part.get_element_name(3, 6, AnalysisType.MECHANICAL) == "SurfaceLoadDiffOrderCondition3D6N"
         assert surface_load_part.get_element_name(3, 8, AnalysisType.MECHANICAL) == "SurfaceLoadDiffOrderCondition3D8N"
 
-        # wrong line_load input
+        # wrong surface_load input
         with pytest.raises(ValueError, match= "Surface load can only be applied in mechanical or mechanical groundwater "
                                               "flow analysis"):
-            assert surface_load_part.get_element_name(3, 3, AnalysisType.GROUNDWATER_FLOW) is None
+            surface_load_part.get_element_name(3, 3, AnalysisType.GROUNDWATER_FLOW)
 
         # wrong ndim nnodes combination
         with pytest.raises(ValueError,
                            match=re.escape('In 3 dimensions, only [3, 4, 6, 8] noded Surface load elements are '
                                            'supported. 9 nodes were provided.')):
-            assert surface_load_part.get_element_name(3, 9, AnalysisType.MECHANICAL) is None
+            surface_load_part.get_element_name(3, 9, AnalysisType.MECHANICAL)
 
         # check moving load names
         moving_load = MovingLoad([10, 10, 10], [1, 1, 1], 1, [0, 0, 0])
@@ -89,16 +89,16 @@ class TestModelPart:
         assert moving_load_part.get_element_name(2, 3, AnalysisType.MECHANICAL) == "MovingLoadCondition2D3N"
         assert moving_load_part.get_element_name(3, 3, AnalysisType.MECHANICAL) == "MovingLoadCondition3D3N"
 
-        # wrong line_load input
+        # wrong moving_load input
         with pytest.raises(ValueError, match= "Moving load can only be applied in mechanical or mechanical groundwater "
                                               "flow analysis"):
-            assert moving_load_part.get_element_name(2, 2, AnalysisType.GROUNDWATER_FLOW) is None
+            moving_load_part.get_element_name(2, 2, AnalysisType.GROUNDWATER_FLOW)
 
         # wrong ndim nnodes combination
         with pytest.raises(ValueError,
                            match=re.escape('In 3 dimensions, only [2, 3] noded Moving load elements are supported. '
                                            '4 nodes were provided.')):
-            assert moving_load_part.get_element_name(3, 4, AnalysisType.MECHANICAL) is None
+            moving_load_part.get_element_name(3, 4, AnalysisType.MECHANICAL)
 
         # gravity load does not have element names
         gravity_load = GravityLoad([True, True, True], [0, 0, 0])
@@ -122,12 +122,34 @@ class TestModelPart:
 
         assert displacement_constraint_part.get_element_name(2, 2, AnalysisType.MECHANICAL) is None
 
+        # wrong displacement_constraint input
+        with pytest.raises(ValueError, match= "Displacement constraint can only be applied in mechanical or mechanical "
+                                              "groundwater flow analysis"):
+            displacement_constraint_part.get_element_name(2, 2, AnalysisType.GROUNDWATER_FLOW)
+
+        # wrong ndim nnodes combination
+        with pytest.raises(ValueError,
+                           match=re.escape('Number of dimensions 1 is not supported for Displacement constraint '
+                                           'elements. Supported dimensions are [2, 3].')):
+            displacement_constraint_part.get_element_name(1, 4, AnalysisType.MECHANICAL)
+
         # rotation constraint does not have element names
         rotation_constraint = RotationConstraint([True, True, True],[True, True, True], [0, 0, 0])
         rotation_constraint_part = ModelPart("rotation_constraint_part")
         rotation_constraint_part.parameters = rotation_constraint
 
         assert rotation_constraint_part.get_element_name(2, 2, AnalysisType.MECHANICAL) is None
+
+        # wrong rotation_constraint input
+        with pytest.raises(ValueError, match= "Rotation constraint can only be applied in mechanical or mechanical "
+                                              "groundwater flow analysis"):
+            rotation_constraint_part.get_element_name(2, 2, AnalysisType.GROUNDWATER_FLOW)
+
+        # wrong ndim nnodes combination
+        with pytest.raises(ValueError,
+                           match=re.escape('Number of dimensions 1 is not supported for Rotation constraint elements. '
+                                           'Supported dimensions are [2, 3].')):
+            rotation_constraint_part.get_element_name(1, 4, AnalysisType.MECHANICAL)
 
         # check absorbing boundary names
         absorbing_boundary = AbsorbingBoundary([1, 1], 1)
@@ -143,6 +165,17 @@ class TestModelPart:
         assert (absorbing_boundary_part.get_element_name(3, 4, AnalysisType.MECHANICAL)
                 == "UPwLysmerAbsorbingCondition3D4N")
 
+        # wrong absorbing_boundary input
+        with pytest.raises(ValueError, match= "Absorbing boundary conditions can only be applied in mechanical or "
+                                              "mechanical groundwater flow analysis"):
+            absorbing_boundary_part.get_element_name(2, 2, AnalysisType.GROUNDWATER_FLOW)
+
+        # wrong ndim nnodes combination
+        with pytest.raises(ValueError,
+                           match=re.escape('In 3 dimensions, only [3, 4] noded Absorbing boundary elements are '
+                                           'supported. 6 nodes were provided.')):
+            absorbing_boundary_part.get_element_name(3, 6, AnalysisType.MECHANICAL)
+
     def test_get_element_name_bodies(self):
         """
         Tests the available element names for the body model parts, i.e. the soil and the structure.
@@ -153,7 +186,6 @@ class TestModelPart:
         soil_part = BodyModelPart("soil")
         soil_part.material = soil
 
-        #todo 2n element not allowed
         assert soil_part.get_element_name(2, 3, AnalysisType.MECHANICAL) == "UPwSmallStrainElement2D3N"
         assert soil_part.get_element_name(2, 4, AnalysisType.MECHANICAL) == "UPwSmallStrainElement2D4N"
         assert soil_part.get_element_name(2, 6, AnalysisType.MECHANICAL) == "SmallStrainUPwDiffOrderElement2D6N"
@@ -164,6 +196,17 @@ class TestModelPart:
         assert soil_part.get_element_name(3, 10, AnalysisType.MECHANICAL) == "SmallStrainUPwDiffOrderElement3D10N"
         assert soil_part.get_element_name(3, 20, AnalysisType.MECHANICAL) == "SmallStrainUPwDiffOrderElement3D20N"
 
+        # wrong soil input
+        with pytest.raises(ValueError, match= 'Analysis type AnalysisType.GROUNDWATER_FLOW is not implemented yet for '
+                                              'soil material.'):
+            soil_part.get_element_name(2, 3, AnalysisType.GROUNDWATER_FLOW)
+
+        # wrong ndim nnodes combination
+        with pytest.raises(ValueError,
+                           match=re.escape('In 3 dimensions, only [4, 8, 10, 20] noded Soil elements are supported. '
+                                           '6 nodes were provided.')):
+            soil_part.get_element_name(3, 6, AnalysisType.MECHANICAL)
+
         # check beam element names
         beam = StructuralMaterial(name="beam", material_parameters=EulerBeam(2, 1, 1, 1, 1, 1))
         beam_part = BodyModelPart("beam")
@@ -171,6 +214,18 @@ class TestModelPart:
 
         assert beam_part.get_element_name(2, 2, AnalysisType.MECHANICAL) == "GeoCrBeamElement2D2N"
         assert beam_part.get_element_name(3, 2, AnalysisType.MECHANICAL) == "GeoCrBeamElement3D2N"
+
+        # wrong beam input
+
+        with pytest.raises(ValueError, match= 'Analysis type AnalysisType.GROUNDWATER_FLOW is not implemented '
+                                              'for euler beams.'):
+            beam_part.get_element_name(2, 2, AnalysisType.GROUNDWATER_FLOW)
+
+        # wrong ndim nnodes combination
+        with pytest.raises(ValueError,
+                           match=re.escape('In 3 dimensions, only [2] noded Euler beam elements are supported. '
+                                           '6 nodes were provided.')):
+            beam_part.get_element_name(3, 6, AnalysisType.MECHANICAL)
 
         # check ElasticSpringDamper Element names
         spring = StructuralMaterial(name="spring", material_parameters=ElasticSpringDamper([0, 0, 0], [0, 0, 0],
@@ -181,6 +236,16 @@ class TestModelPart:
         assert spring_part.get_element_name(2, 2, AnalysisType.MECHANICAL) == "SpringDamperElement2D"
         assert spring_part.get_element_name(3, 2, AnalysisType.MECHANICAL) == "SpringDamperElement3D"
 
+        with pytest.raises(ValueError, match= 'Analysis type AnalysisType.GROUNDWATER_FLOW is not implemented '
+                                              'for elastic spring dampers.'):
+            spring_part.get_element_name(2, 2, AnalysisType.GROUNDWATER_FLOW)
+
+        # wrong ndim nnodes combination
+        with pytest.raises(ValueError,
+                           match=re.escape('In 3 dimensions, only [2] noded Elastic spring damper elements are '
+                                           'supported. 6 nodes were provided.')):
+            spring_part.get_element_name(3, 6, AnalysisType.MECHANICAL)
+
         # check nodal concentrated element names
         nodal_concentrated = StructuralMaterial(name="nodal_concentrated",
                                                 material_parameters=NodalConcentrated([0, 0, 0], 0, [0, 0, 0]))
@@ -189,6 +254,16 @@ class TestModelPart:
 
         assert nodal_concentrated_part.get_element_name(2, 1, AnalysisType.MECHANICAL) == "NodalConcentratedElement2D1N"
         assert nodal_concentrated_part.get_element_name(3, 1, AnalysisType.MECHANICAL) == "NodalConcentratedElement3D1N"
+
+        with pytest.raises(ValueError, match= 'Analysis type AnalysisType.GROUNDWATER_FLOW is not implemented for nodal '
+                                              'concentrated elements.'):
+            nodal_concentrated_part.get_element_name(2, 1, AnalysisType.GROUNDWATER_FLOW)
+
+        # wrong ndim nnodes combination
+        with pytest.raises(ValueError,
+                           match=re.escape('In 3 dimensions, only [1] noded Nodal concentrated elements are supported. '
+                                           '6 nodes were provided.')):
+            nodal_concentrated_part.get_element_name(3, 6, AnalysisType.MECHANICAL)
 
 
 

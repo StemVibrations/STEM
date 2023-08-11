@@ -29,7 +29,8 @@ class Utils:
         """
         # check if the number of dimensions is supported
         if n_dim not in available_combinations.keys():
-            raise ValueError(f"Number of dimensions {n_dim} is not supported for {class_name} elements.")
+            raise ValueError(f"Number of dimensions {n_dim} is not supported for {class_name} elements. Supported "
+                             f"dimensions are {list(available_combinations.keys())}.")
 
         # check if the number of nodes per element is supported
         if n_nodes_element not in available_combinations[n_dim]:

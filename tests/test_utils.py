@@ -21,7 +21,8 @@ class TestUtilsStem:
         Utils.check_ndim_nnodes_combinations(2,2, {2: [2]}, "test")
 
         # non valid n_dim
-        with pytest.raises(ValueError, match=f"Number of dimensions 3 is not supported for failed_test elements."):
+        with pytest.raises(ValueError, match=re.escape(f"Number of dimensions 3 is not supported for failed_test "
+                                                       f"elements. Supported dimensions are [2].")):
             Utils.check_ndim_nnodes_combinations(3,2, {2: [2]},
                                                  "failed_test")
 

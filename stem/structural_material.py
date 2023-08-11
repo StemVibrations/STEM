@@ -98,7 +98,7 @@ class EulerBeam(StructuralParametersABC):
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
             element_name = f"GeoCrBeamElement{n_dim_model}D{n_nodes_element}N"
         else:
-            raise ValueError(f"Analysis type {analysis_type} is not implemented yet for soil material.")
+            raise ValueError(f"Analysis type {analysis_type} is not implemented for euler beams.")
 
         return element_name
 
@@ -150,7 +150,7 @@ class ElasticSpringDamper(StructuralParametersABC):
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
             element_name = f"SpringDamperElement{n_dim_model}D"
         else:
-            raise ValueError(f"Analysis type {analysis_type} is not implemented yet for soil material.")
+            raise ValueError(f"Analysis type {analysis_type} is not implemented for elastic spring dampers.")
 
         return element_name
 
@@ -196,7 +196,7 @@ class NodalConcentrated(StructuralParametersABC):
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
             element_name = f"NodalConcentratedElement{n_dim_model}D1N"
         else:
-            raise ValueError(f"Analysis type {analysis_type} is not implemented yet for nodal concentrated elements.")
+            raise ValueError(f"Analysis type {analysis_type} is not implemented for nodal concentrated elements.")
 
         return element_name
 
