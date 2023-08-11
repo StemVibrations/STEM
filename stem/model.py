@@ -336,36 +336,50 @@ class Model:
                     # process doesn't write condition elements. Skip!
                     continue
 
-                matched_elements = self.find_matching_body_elements_for_process_model_part(pmp)
-                self.check_order_process_model_part(matched_elements)
+                # match the condition elements with the body elements on which the conditions are applied
+                matched_elements = self.__find_matching_body_elements_for_process_model_part(pmp)
+                # check the ordering of the nodes of the conditions. If it does not match flip the order.
+                self.__check_order_process_model_part(matched_elements)
 
     @staticmethod
     def __get_model_part_element_nodes(model_part: ModelPart):
         """
-        Extract the nodes of each of the elements in
+        Extract the nodes of each of the elements in a model part.
         Args:
-            model_part (:class:`stem.model_part.ModelPart`): model part from which element nodes needs to be extracted.
+            - model_part (:class:`stem.model_part.ModelPart`): model part from which element nodes needs to be
+                extracted.
 
         Returns:
-            np.ndarray: array containing the nodes of the elements in the model_part
+            - np.ndarray: array containing the nodes of the elements in the model_part
         """
+        if model_part.mesh:
+            return np.array([el.node_ids for el in model_part.mesh.elements.values()])
 
-        return np.array([el.node_ids for el in model_part.mesh.elements.values()])
-
-    def find_matching_body_elements_for_process_model_part(self, process_model_part, check_all_coupled:bool=False):
+    def __find_matching_body_elements_for_process_model_part(
+            self, process_model_part: ModelPart, check_all_coupled: bool = False
+    ):
         """
+        For a process model part, tries finds the matching body elements on which the condition elements are applied.
 
         Args:
-            process_model_part:
-            check_all_coupled:
+            - process_model_part (:class:`stem.model_part.ModelPart`): model part from which element nodes needs to be
+                extracted.
+            - check_all_coupled (bool): checks if the condition element are applied to a body model part and raises an
+                error in case. Defaults to False.
+        Raises:
+            - ValueError: if mesh is not initialised yet.
+            - ValueError: if condition elements don't have a corresponding body element.
 
         Returns:
-
+            - matched_elements (Dict[:class:`stem.mesh.Element`, :class:`stem.mesh.Element`]): Dictionary containing
+                the matched condition and body element parts.
         """
         nodes_elements_to_couple_pmp = self.__get_model_part_element_nodes(process_model_part)
         num_nodes_pmp = nodes_elements_to_couple_pmp.shape[1]
 
-        pmp_element_ids = list(process_model_part.mesh.elements.keys())
+        if process_model_part.mesh is None:
+            raise ValueError("Mesh not yet initialised.")
+        pmp_element_ids = np.array(list(process_model_part.mesh.elements.keys()))
 
         matched_elements: Dict[Element, Element] = {}
 
@@ -376,6 +390,9 @@ class Model:
                 break
 
             nodes_el_bmp = self.__get_model_part_element_nodes(bmp)
+            if bmp.mesh is None:
+                raise ValueError("Mesh not yet initialised.")
+
             bmp_element_ids = list(bmp.mesh.elements.keys())
             match_array_4d = nodes_elements_to_couple_pmp == nodes_el_bmp[..., np.newaxis, np.newaxis]
 
@@ -409,18 +426,17 @@ class Model:
             if len(nodes_elements_to_couple_pmp) != 0:
                 raise ValueError("Some process model parts remain uncoupled! Error. Process model part not applied"
                                  "On a body model part")
-                # for _el_idx in elements_idxs:
-                #     coupled_elements[]
+
         return matched_elements
 
     @staticmethod
-    def check_order_process_model_part(matched_elements:Dict[Element,Element]):
+    def __check_order_process_model_part(matched_elements: Dict[Element, Element]):
         """
-
+        Check if the order of the elements the keys of matched_elements are oriented in the same order of the nodes in
+        the values of matched_elements. If not, the order of the nodes is flipped.
         Args:
-            matched_elements:
-
-        Returns:
+            - matched_elements (Dict[:class:`stem.mesh.Element`, :class:`stem.mesh.Element`]): Dictionary containing
+                the matched condition and body element parts.
 
         """
 
@@ -432,7 +448,9 @@ class Model:
             #  from a 2D quadratic beam (3 nodes) , it should return 2.
             #  from a 2D triangular quadratic element (6 nodes) it should return 3.
             n_nodes = len(nodes_process_element)
+            # append the first (n_nodes-1) elements at the back of to the list (to make a cycle)
             target_list = nodes_body_element + nodes_body_element[:(n_nodes-1)]
+            # pick only the corner nodes, the mid-point nodes related to the higher order do not matter.
             source_list = nodes_process_element[:n_nodes]
 
             if not Utils.has_matching_combination(target_list, source_list):
@@ -504,8 +522,9 @@ class Model:
         body_model_part_names = [body_model_part.name for body_model_part in self.body_model_parts]
 
         # get geometry ids and ndim for each body model part
-        model_parts_geometry_ids = np.array([self.gmsh_io.geo_data["physical_groups"][name]["geometry_ids"] for name in
-                                    body_model_part_names])
+        model_parts_geometry_ids = np.array(
+            [self.gmsh_io.geo_data["physical_groups"][name]["geometry_ids"] for name in body_model_part_names]
+        )
 
         model_parts_ndim = np.array([self.gmsh_io.geo_data["physical_groups"][name]["ndim"]
                                      for name in body_model_part_names]).ravel()
@@ -583,7 +602,6 @@ class Model:
         PlotUtils.show_geometry(self.ndim, self.geometry, show_volume_ids, show_surface_ids, show_line_ids,
                                 show_point_ids)
 
-
     def __setup_stress_initialisation(self):
         """
         Set up the stress initialisation. For K0 procedure and gravity loading, a gravity load is added to the model.
@@ -621,21 +639,23 @@ class Model:
         self.__setup_stress_initialisation()
 
 
-    def show_mesh(self, settings:dict):
+    def show_mesh(self, settings:Dict[str, Any]):
 
         """
-        Show the geometry of the model in a matplotlib plot.
+        Show the mesh of the model in a matplotlib plot. only available for 2D models.
 
         Args:
-            - ndim (int): Number of dimensions of the geometry. Either 2 or 3.
-            - geometry (:class:`stem.geometry.Geometry`): Geometry object.
-            - show_volume_ids (bool): If True, the volume ids are shown in the plot.
-            - show_surface_ids (bool): If True, the surface ids are shown in the plot.
-            - show_line_ids (bool): If True, the line ids are shown in the plot.
-            - show_point_ids (bool): If True, the point ids are shown in the plot.
+            - settings (Dict[str, Any]):
+
+        Raises:
+            - NotImplementedError: when is run for 3D models
 
         """
-        if self.mesh_settings.element_size is not None:
+
+        if self.ndim == 3:
+            raise NotImplementedError("Mesh visualiser not yet implemented for 3D models.")
+
+        if not self.mesh_settings.element_size:
             offset = self.mesh_settings.element_size / 20
         else:
             offset = 0.05
@@ -648,13 +668,6 @@ class Model:
 
         if self.ndim == 2:
             ax = fig.add_subplot(111)
-
-            # for surface in mesh.nodes:
-            #     PlotUtils.__add_2d_surface_to_plot(geometry, surface, show_surface_ids, show_line_ids,
-            #                                        show_point_ids, ax)
-
-        elif self.ndim == 3:
-            raise NotImplementedError("Mesh visualiser not yet implemented for 3D models.")
             # ax = fig.add_subplot(111, projection='3d')
 
         all_nodes = self.get_all_nodes()
@@ -677,7 +690,7 @@ class Model:
                     else:
                         x_values, y_values = zip(*vertices)
                         _color = "darkred"
-                        plt.plot(x_values, y_values, c=_color, lw=1, alpha=0.35)
+                        plt.plot(x_values, y_values, c=_color, lw=2, alpha=0.35)
                     if "show_element_ids" in settings_opts and settings["show_element_ids"]:
                         if len(vertices) > 2:
                             ax.text(centroid[0], centroid[1], "$e_{"+str(_id)+"}$",

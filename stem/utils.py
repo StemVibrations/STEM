@@ -197,8 +197,14 @@ class Utils:
         Returns:
 
         """
-        n = len(list2)
-        for combo in combinations(list1, n):
-            if list(combo) == list2:
-                return True
+        n1 = len(list1)
+        n2 = len(list2)
+        if n1 < n2:
+            raise ValueError("first list should be larger or equal to check for a match")
+        elif n1 == n2:
+            return list1 == list2
+        else:
+            for ix in range(n1-n2+1):
+                if list1[ix:ix+n2] == list2:
+                    return True
         return False

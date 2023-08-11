@@ -1257,9 +1257,11 @@ class TestModel:
             assert node_id in unique_body_node_ids
             assert len(node.coordinates) == 3
 
-    def test_generate_mesh_2d_2_layers_and_lineload(self,
-                                                    create_default_line_load_parameters: LineLoad,
-                                                    create_default_2d_soil_material: SoilMaterial):
+    def test_generate_mesh_2d_2_layers_and_lineload(
+            self,
+            create_default_line_load_parameters: LineLoad,
+            create_default_2d_soil_material: SoilMaterial
+    ):
         """
         Test if the mesh is generated correctly in 2D for 2 layers plus lineload and fixed bottom.
 
