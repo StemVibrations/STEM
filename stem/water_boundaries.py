@@ -115,7 +115,7 @@ class WaterBoundary:
         """
         Constructor of the class
 
-    Args:
+        Args:
             - water_boundary (:class:`WaterBoundaryParameters`): Water boundary parameters
 
         """
