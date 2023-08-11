@@ -34,8 +34,8 @@ class Utils:
         # check if the number of nodes per element is supported
         if n_nodes_element not in available_combinations[n_dim]:
             raise ValueError(
-                f"In {n_dim} dimensions, only {available_combinations[n_dim]} noded {class_name} elements are supported.\
-                {n_nodes_element} nodes were provided."
+                f"In {n_dim} dimensions, only {available_combinations[n_dim]} noded {class_name} elements are "
+                f"supported. {n_nodes_element} nodes were provided."
             )
 
     @staticmethod

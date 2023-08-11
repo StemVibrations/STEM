@@ -1,3 +1,5 @@
+import re
+
 import numpy as np
 import numpy.testing as npt
 import pytest
@@ -7,6 +9,29 @@ from tests.utils import TestUtils
 
 
 class TestUtilsStem:
+
+    def test_check_ndim_nnodes_combinations(self):
+        """
+        Test the check which checks if the combination of n_dim and n_nodes is valid for a certain element type.
+        It checks for valid input, invalid n_dim and invalid n_nodes.
+
+        """
+
+        # successful checks
+        Utils.check_ndim_nnodes_combinations(2,2, {2: [2]}, "test")
+
+        # non valid n_dim
+        with pytest.raises(ValueError, match=f"Number of dimensions 3 is not supported for failed_test elements."):
+            Utils.check_ndim_nnodes_combinations(3,2, {2: [2]},
+                                                 "failed_test")
+
+        # non valid n_nodes for dim
+        with pytest.raises(ValueError, match=re.escape(f"In 2 dimensions, only [3, 4, 5] noded failed_test_2 elements "
+                                                       f"are supported. 2 nodes were provided.")):
+            Utils.check_ndim_nnodes_combinations(2,2, {2: [3,4,5]},
+                                                 "failed_test_2")
+
+
     def test_is_clockwise(self):
         """
         Test the check which checks if coordinates are given in clockwise order
