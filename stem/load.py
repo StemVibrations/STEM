@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 
 from stem.solver import AnalysisType
 from stem.table import Table
+from stem.utils import Utils
 
 @dataclass
 class LoadParametersABC(ABC):
@@ -59,8 +60,7 @@ class PointLoad(LoadParametersABC):
             - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type
 
         Raises:
-            - ValueError: If the number of dimensions is not 2 or 3
-            - ValueError: If the number of nodes per element is not 1
+            - ValueError: If the analysis type is not mechanical or mechanical groundwater flow
 
         Returns:
             - None: Point load does not have a name
@@ -68,13 +68,14 @@ class PointLoad(LoadParametersABC):
 
         """
 
-        if n_dim_model != 2 and n_dim_model != 3:
-            raise Exception("Point load can only be applied to 2 or 3 dimensional models")
+        available_node_dim_combinations = {
+            2: [1],
+            3: [1],
+        }
+        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations,
+                                             "Point load")
 
-        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
-            if n_nodes_element != 1:
-                raise Exception("Point load can only be applied to 1 node elements")
-        else:
+        if analysis_type != AnalysisType.MECHANICAL_GROUNDWATER_FLOW and analysis_type != AnalysisType.MECHANICAL:
             raise Exception("Point load can only be applied in mechanical or mechanical groundwater flow analysis")
 
         # Point load does not have a name
@@ -107,30 +108,27 @@ class LineLoad(LoadParametersABC):
             - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type
 
         Raises:
-            - ValueError: If the number of dimensions is not 2 or 3
-            - ValueError: If the number of nodes per element is not 2 or 3
             - ValueError: If the analysis type is not mechanical or mechanical groundwater flow
 
         Returns:
             - str: The element name for a line load
 
-
         """
-        if n_dim_model != 2 and n_dim_model != 3:
-            raise ValueError("Line load can only be applied to 2 or 3 dimensional models")
+
+        available_node_dim_combinations = {
+            2: [2, 3],
+            3: [2, 3],
+        }
+        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations,
+                                             "Line load")
 
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
-
-            if n_nodes_element != 2 and n_nodes_element != 3:
-                raise ValueError("Line load can only be applied to 2 or 3 node elements")
+            if n_dim_model == 2 and n_nodes_element > 2:
+                # 2d quadratic line load is set on outer nodes, but displacement is calculated on all nodes for
+                # stability reasons
+                element_name = f"LineLoadDiffOrderCondition{n_dim_model}D{n_nodes_element}N"
             else:
-                if n_dim_model == 2 and n_nodes_element > 2:
-                    # 2d quadratic line load is set on outer nodes, but displacement is calculated on all nodes for
-                    # stability reasons
-                    element_name = f"LineLoadDiffOrderCondition{n_dim_model}D{n_nodes_element}N"
-                else:
-                    element_name = f"LineLoadCondition{n_dim_model}D{n_nodes_element}N"
-
+                element_name = f"LineLoadCondition{n_dim_model}D{n_nodes_element}N"
         else:
             raise ValueError("Line load can only be applied in mechanical or mechanical groundwater flow analysis")
 
@@ -163,18 +161,18 @@ class SurfaceLoad(LoadParametersABC):
             - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type
 
         Raises:
-            - ValueError: If the number of dimensions is not 3
             - ValueError: If the analysis type is not mechanical or mechanical groundwater flow
         """
 
-        if n_dim_model != 3:
-            raise ValueError("Surface load can only be applied in 3D models")
+        available_node_dim_combinations = {
+            3: [3, 4, 6, 8],
+        }
+        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations,
+                                             "Surface load")
 
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
             if n_nodes_element == 3 or n_nodes_element == 4:
-
                 element_name = f"UPwFaceLoadCondition{n_dim_model}D{n_nodes_element}N"
-
             else:
                 element_name = f"SurfaceLoadDiffOrderCondition{n_dim_model}D{n_nodes_element}N"
         else:
@@ -226,15 +224,15 @@ class MovingLoad(LoadParametersABC):
             - str: The element name for a moving load
         """
 
-        if n_dim_model != 2 and n_dim_model != 3:
-            raise ValueError("Moving load can only be applied in 2D or 3D models")
-
-        if n_nodes_element != 2 and n_nodes_element != 3:
-            raise ValueError("Moving load can only be applied to 2 or 3 node elements")
+        available_node_dim_combinations = {
+            2: [2, 3],
+            3: [2, 3],
+        }
+        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations,
+                                             "Moving load")
 
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
             element_name = f"MovingLoadCondition{n_dim_model}D{n_nodes_element}N"
-
         else:
             raise ValueError("Moving load can only be applied in mechanical or mechanical groundwater flow analysis")
 
