@@ -1,13 +1,29 @@
-import pprint
 from typing import Dict, Any
 
 import numpy.testing as npt
-import pytest
-
 from stem.geometry import Geometry
-
+from stem.soil_material import SoilMaterial, OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
 
 class TestUtils:
+
+    @staticmethod
+    def create_default_soil_material(ndim: int):
+        """
+        Creates a default soil material.
+
+        Args:
+            - ndim (int): number of dimensions of the model
+
+        Returns:
+            - :class:`stem.soil_material.SoilMaterial`: default soil material
+
+        """
+        soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
+        constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
+        soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
+                                     retention_parameters=SaturatedBelowPhreaticLevelLaw())
+
+        return soil_material
 
     @staticmethod
     def assert_dictionary_almost_equal(expected: Dict[Any, Any], actual: Dict[Any, Any]):

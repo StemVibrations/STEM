@@ -50,7 +50,7 @@ Begin Nodes
 End Nodes
 
 
-Begin Elements DUMMY
+Begin Elements UPwSmallStrainElement3D4N
   13  1  16 17 18 15
   14  1  14 18 17 15
   15  1  17 16 13 15
@@ -78,7 +78,7 @@ Begin Elements DUMMY
 End Elements
 
 
-Begin Conditions DUMMY
+Begin Conditions UPwFaceLoadCondition3D3N
   9  1  10 19 9
   10  1  9 19 12
   11  1  11 19 10
@@ -86,7 +86,7 @@ Begin Conditions DUMMY
 End Conditions
 
 
-Begin Conditions DUMMY
+Begin Conditions UPwFaceLoadCondition3D3N
   1  2  2 13 1
   2  2  1 13 4
   3  2  3 13 2
