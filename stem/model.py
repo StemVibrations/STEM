@@ -652,6 +652,10 @@ class Model:
 
         """
 
+        # settings options:
+        settings_opts = list(settings.keys())
+
+        # validate inputs
         if self.ndim == 3:
             raise NotImplementedError("Mesh visualiser not yet implemented for 3D models.")
 
@@ -659,12 +663,15 @@ class Model:
             offset = self.mesh_settings.element_size / 20
         else:
             offset = 0.05
+
+        if "fontsize" not in settings_opts:
+            fontsize = 10
+        else:
+            fontsize = settings["fontsize"]
+
         # np.array(y_values) + _offset
         # Initialize figure in 3D
         fig = plt.figure()
-
-        # settings options:
-        settings_opts = list(settings.keys())
 
         if self.ndim == 2:
             ax = fig.add_subplot(111)
@@ -675,7 +682,7 @@ class Model:
             vertex = node.coordinates[:self.ndim]
             plt.plot(*vertex, 'ko')
             if "show_node_ids" in settings_opts and settings["show_node_ids"]:
-                ax.text(vertex[0] + offset, vertex[1] + offset, "$n_{" + str(_id) + "}$", color="black", fontsize=10)
+                ax.text(vertex[0] + offset, vertex[1] + offset, "$n_{" + str(_id) + "}$", color="black", fontsize=fontsize)
 
         for mp in self.get_all_model_parts():
             if mp.mesh.elements is not None:
@@ -694,10 +701,10 @@ class Model:
                     if "show_element_ids" in settings_opts and settings["show_element_ids"]:
                         if len(vertices) > 2:
                             ax.text(centroid[0], centroid[1], "$e_{"+str(_id)+"}$",
-                                    color=_color, fontsize=10, fontweight='bold')
+                                    color=_color, fontsize=fontsize, fontweight='bold')
                         else:
-                            ax.text(centroid[0]+ offset, centroid[1]+ offset, "$e_{"+str(_id)+"}$",
-                                    color=_color, fontsize=10, fontweight='bold')
+                            ax.text(centroid[0] + offset, centroid[1]+ offset, "$e_{"+str(_id)+"}$",
+                                    color=_color, fontsize=fontsize, fontweight='bold')
 
         # set x and y labels
         ax.set_xlabel("x coordinates [m]")
