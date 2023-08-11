@@ -105,7 +105,7 @@ class WaterBoundary:
     """
     Class containing water boundary information acting on a body part
 
-    Attributes:
+    Args:
         - water_boundary (:class:`WaterBoundaryParameters`): Water boundary parameters
         - type (str): Type of water boundary
 
@@ -115,7 +115,7 @@ class WaterBoundary:
         """
         Constructor of the class
 
-        Attributes:
+    Args:
             - water_boundary (:class:`WaterBoundaryParameters`): Water boundary parameters
 
         """
