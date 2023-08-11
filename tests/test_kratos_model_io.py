@@ -94,6 +94,8 @@ class TestKratosModelIO:
         # create model
         model = Model(ndim)
 
+        w = 4
+        h = 1
         soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
         constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
         soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
@@ -102,10 +104,10 @@ class TestKratosModelIO:
         line_load1 = LineLoad(active=[False, True, False], value=[0, -20, 0])
 
         # add soil layers
-        model.add_soil_layer_by_coordinates([(0, 0, 0), (4, 0, 0), (4, 1, 0), (0, 1, 0)], soil_material, "layer1")
-        model.add_soil_layer_by_coordinates([(0, 1, 0), (4, 1, 0), (4, 2, 0), (0, 2, 0)], soil_material, "layer2")
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (w, 0, 0), (w, h, 0), (0, h, 0)], soil_material, "layer1")
+        model.add_soil_layer_by_coordinates([(0, h, 0), (w, h, 0), (w, 2*h, 0), (0, 2*h, 0)], soil_material, "layer2")
 
-        model.add_load_by_coordinates([(0, 2, 0), (4, 2, 0)], line_load1, "lineload1")
+        model.add_load_by_coordinates([(0, 2*h, 0), (w, 2*h, 0)], line_load1, "lineload1")
 
         # add pin parameters
         no_displacement_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True],
