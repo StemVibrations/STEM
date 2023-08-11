@@ -82,6 +82,45 @@ class TestKratosModelIO:
 
         return model
 
+    @pytest.fixture
+    def create_default_2d_2_layers_model_and_mesh(self):
+        """
+        Sets expected geometry data for a 3D geometry group. The group is a geometry of a cube.
+
+        Returns:
+            - :class:`stem.geometry.Geometry`: geometry of a 3D cube
+        """
+        ndim=2
+        # create model
+        model = Model(ndim)
+
+        soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
+        constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
+        soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
+                                     retention_parameters=SaturatedBelowPhreaticLevelLaw())
+        # define load properties
+        line_load1 = LineLoad(active=[False, True, False], value=[0, -20, 0])
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (4, 0, 0), (4, 1, 0), (0, 1, 0)], soil_material, "layer1")
+        model.add_soil_layer_by_coordinates([(0, 1, 0), (4, 1, 0), (4, 2, 0), (0, 2, 0)], soil_material, "layer2")
+
+        model.add_load_by_coordinates([(0, 2, 0), (4, 2, 0)], line_load1, "lineload1")
+
+        # add pin parameters
+        no_displacement_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True],
+                                                            value=[0, 0, 0])
+
+        # add boundary conditions in 0d, 1d and 2d
+        model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "no_displacement")
+
+        model.synchronise_geometry()
+
+        model.set_mesh_size(1)
+        model.generate_mesh()
+
+        return model
+
     def test_create_submodelpart_text(self, create_default_2d_model_and_mesh:Model):
         """
         Test the creation of the mdpa text of a model part
@@ -147,6 +186,34 @@ class TestKratosModelIO:
 
         # define expected block text
         with open('tests/test_data/expected_mdpa_file.mdpa', 'r') as openfile:
+            expected_text_body = openfile.readlines()
+
+        expected_text_body = [line.rstrip() for line in expected_text_body]
+        # assert the objects to be equal
+        npt.assert_equal(actual=actual_text_body, desired=expected_text_body)
+
+    def test_write_mdpa_text_2_layers(self, create_default_2d_2_layers_model_and_mesh):
+        """
+        Test the creation of the mdpa text of the whole model for two soil layers, a line load and a fixed bottom
+        constraint.
+
+        Args:
+            - create_default_2d_model_and_mesh (:class:`stem.model.Model`): the default model to use in testing
+        """
+        # load the default 2D model
+        model = create_default_2d_2_layers_model_and_mesh
+
+        # IO object
+        model_part_io = KratosModelIO(ndim=model.ndim, domain="PorousDomain")
+
+        # initialise ids for table, materials and processes
+        model_part_io.initialise_model_ids(model)
+
+        # generate text block body model part: soil1
+        actual_text_body = model_part_io.write_mdpa_text(model=model)
+
+        # define expected block text
+        with open('tests/test_data/expected_mdpa_file_2_layers.mdpa', 'r') as openfile:
             expected_text_body = openfile.readlines()
 
         expected_text_body = [line.rstrip() for line in expected_text_body]

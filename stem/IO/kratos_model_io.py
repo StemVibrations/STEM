@@ -231,13 +231,13 @@ class KratosModelIO:
         )
 
         # write nodes
-        entities = [node.id for node in body_model_part.mesh.nodes]
+        entities = [node.id for node in body_model_part.mesh.nodes.values()]
         block_text = self.__write_submodel_block(
             block_text, block_name="Nodes", block_entities=entities
         )
 
         # write elements
-        entities = [el.id for el in body_model_part.mesh.elements]
+        entities = [el.id for el in body_model_part.mesh.elements.values()]
         block_text = self.__write_submodel_block(
             block_text, block_name="Elements", block_entities=entities
         )
@@ -282,7 +282,7 @@ class KratosModelIO:
             block_text, block_name="Tables", block_entities=entities
         )
 
-        entities = [node.id for node in process_model_part.mesh.nodes]
+        entities = [node.id for node in process_model_part.mesh.nodes.values()]
         # write nodes
         block_text = self.__write_submodel_block(
             block_text, block_name="Nodes", block_entities=entities
@@ -291,7 +291,7 @@ class KratosModelIO:
         # write conditions if the process has written condition elements above!
         if (process_model_part.mesh.elements is not None) and self.__check_if_process_writes_conditions(process_model_part):
             # check if part contains elements
-            entities = [el.id for el in process_model_part.mesh.elements]
+            entities = [el.id for el in process_model_part.mesh.elements.values()]
             # model part is process model part and
             block_text = self.__write_submodel_block(
                 block_text, block_name="Conditions", block_entities=entities
@@ -420,7 +420,7 @@ class KratosModelIO:
 
         # check unique_elements
         element_part_type = np.unique(
-            [element.element_type for element in model_part.mesh.elements]
+            [element.element_type for element in model_part.mesh.elements.values()]
         )
 
         if len(element_part_type) > 1:
@@ -477,7 +477,7 @@ class KratosModelIO:
         block_text.extend(
             [
                 self.__write_element_line(mat_id, el)
-                for el in body_model_part.mesh.elements
+                for el in body_model_part.mesh.elements.values()
             ]
         )
         block_text += [f"End Elements", ""]
@@ -525,7 +525,7 @@ class KratosModelIO:
         else:
             block_text = ["", f"Begin Conditions {kratos_element_type}"]
             block_text.extend(
-                [self.__write_element_line(mat_id, el) for el in process_model_part.mesh.elements]
+                [self.__write_element_line(mat_id, el) for el in process_model_part.mesh.elements.values()]
             )
             block_text += [f"End Conditions", ""]
         return block_text

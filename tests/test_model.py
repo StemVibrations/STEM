@@ -1257,6 +1257,51 @@ class TestModel:
             assert node_id in unique_body_node_ids
             assert len(node.coordinates) == 3
 
+    def test_generate_mesh_2d_2_layers_and_lineload(self,
+                                                    create_default_line_load_parameters: LineLoad,
+                                                    create_default_2d_soil_material: SoilMaterial):
+        """
+        Test if the mesh is generated correctly in 2D for 2 layers plus lineload and fixed bottom.
+
+        Args:
+            - create_default_line_load_parameters (:class:`stem.load.LineLoad`): default line load parameters
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+        model = Model(2)
+
+        # add soil material
+        soil_material = create_default_2d_soil_material
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (4, 0, 0), (4, 1, 0), (0, 1, 0)], soil_material, "layer1")
+        model.add_soil_layer_by_coordinates([(0, 1, 0), (4, 1, 0), (4, 2, 0), (0, 2, 0)], soil_material, "layer2")
+
+        model.add_load_by_coordinates([(0, 2, 0), (4, 2, 0)], create_default_line_load_parameters, "lineload1")
+        model.synchronise_geometry()
+
+        # generate mesh
+        model.generate_mesh()
+
+        # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
+        # correct, the elements are counterclockwise and the number of nodes per element is correct
+        #
+        # check that the elements are all written counterclockwise
+        nodes = model.get_all_nodes()
+        for bmp in model.body_model_parts:
+
+            for element_id, element in bmp.mesh.elements.items():
+                coordinates = [nodes[ii].coordinates for ii in element.node_ids]
+                assert not Utils.are_2d_coordinates_clockwise(coordinates)
+                assert element.element_type == "TRIANGLE_3N"
+                assert len(element.node_ids) == 3
+
+        # assert that the condition elements are written in the correct order
+        ids_process_model_part = np.array([el.node_ids for el in model.process_model_parts[0].mesh.elements.values()])
+        npt.assert_equal(ids_process_model_part[0, :], [5, 29])
+        npt.assert_equal(ids_process_model_part[4, :], [32, 33])
+        npt.assert_equal(ids_process_model_part[8, :], [36, 6])
+
     def test_validate_expected_success(self):
         """
         Test if the model is validated correctly. A model is created with two process model parts which both have
@@ -1418,7 +1463,6 @@ class TestModel:
         for expected_geometry, model_part in zip(all_expected_geometries, model.process_model_parts):
 
             TestUtils.assert_almost_equal_geometries(expected_geometry, model_part.geometry)
-
 
     def test_add_gravity_load_1d_and_2d(self, create_default_2d_soil_material: SoilMaterial):
         """

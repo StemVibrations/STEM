@@ -38,7 +38,7 @@ class ModelPart:
             Union[LoadParametersABC, BoundaryParametersABC,AdditionalProcessesParametersABC]
         ] = None
         self.mesh: Optional[Mesh] = None
-        self.id : Optional[int] = None
+        self.id: Optional[int] = None
 
     @property
     def name(self):

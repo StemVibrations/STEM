@@ -1,3 +1,4 @@
+from itertools import combinations
 from typing import Sequence, Dict, Any, List, Union
 
 import numpy as np
@@ -185,3 +186,19 @@ class Utils:
             - List[object]: list of unique objects
         """
         return list({id(obj): obj for obj in input_sequence}.values())
+
+    @staticmethod
+    def has_matching_combination(list1, list2):
+        """
+        Args:
+            list1:
+            list2:
+
+        Returns:
+
+        """
+        n = len(list2)
+        for combo in combinations(list1, n):
+            if list(combo) == list2:
+                return True
+        return False

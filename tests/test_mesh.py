@@ -34,12 +34,12 @@ class TestMesh:
         assert generated_mesh.ndim == expected_mesh.ndim
 
         # Check the nodes
-        for generated_node, expected_node in zip(generated_mesh.nodes, expected_mesh.nodes):
+        for generated_node, expected_node in zip(generated_mesh.nodes.values(), expected_mesh.nodes):
             assert generated_node.id == expected_node.id
             assert pytest.approx(generated_node.coordinates) == expected_node.coordinates
 
         # Check the elements
-        for generated_element, expected_element in zip(generated_mesh.elements, expected_mesh.elements):
+        for generated_element, expected_element in zip(generated_mesh.elements.values(), expected_mesh.elements):
             assert generated_element.id == expected_element.id
             assert generated_element.element_type == expected_element.element_type
             assert generated_element.node_ids == expected_element.node_ids
@@ -73,12 +73,12 @@ class TestMesh:
         assert generated_mesh.ndim == expected_mesh.ndim
 
         # Check the nodes
-        for generated_node, expected_node in zip(generated_mesh.nodes, expected_mesh.nodes):
+        for generated_node, expected_node in zip(generated_mesh.nodes.values(), expected_mesh.nodes):
             assert generated_node.id == expected_node.id
             assert pytest.approx(generated_node.coordinates) == expected_node.coordinates
 
         # Check the elements
-        for generated_element, expected_element in zip(generated_mesh.elements, expected_mesh.elements):
+        for generated_element, expected_element in zip(generated_mesh.elements.values(), expected_mesh.elements):
             assert generated_element.id == expected_element.id
             assert generated_element.element_type == expected_element.element_type
             assert generated_element.node_ids == expected_element.node_ids
@@ -117,12 +117,12 @@ class TestMesh:
         assert generated_mesh.ndim == expected_mesh.ndim
 
         # Check the nodes
-        for generated_node, expected_node in zip(generated_mesh.nodes, expected_mesh.nodes):
+        for generated_node, expected_node in zip(generated_mesh.nodes.values(), expected_mesh.nodes):
             assert generated_node.id == expected_node.id
             assert pytest.approx(generated_node.coordinates) == expected_node.coordinates
 
         # Check the elements
-        for generated_element, expected_element in zip(generated_mesh.elements, expected_mesh.elements):
+        for generated_element, expected_element in zip(generated_mesh.elements.values(), expected_mesh.elements):
             assert generated_element.id == expected_element.id
             assert generated_element.element_type == expected_element.element_type
             assert generated_element.node_ids == expected_element.node_ids
@@ -170,12 +170,12 @@ class TestMesh:
         assert generated_mesh.ndim == expected_mesh.ndim
 
         # Check the nodes
-        for generated_node, expected_node in zip(generated_mesh.nodes, expected_mesh.nodes):
+        for generated_node, expected_node in zip(generated_mesh.nodes.values(), expected_mesh.nodes):
             assert generated_node.id == expected_node.id
             assert pytest.approx(generated_node.coordinates) == expected_node.coordinates
 
         # Check the elements
-        for generated_element, expected_element in zip(generated_mesh.elements, expected_mesh.elements):
+        for generated_element, expected_element in zip(generated_mesh.elements.values(), expected_mesh.elements):
             assert generated_element.id == expected_element.id
             assert generated_element.element_type == expected_element.element_type
             assert generated_element.node_ids == expected_element.node_ids

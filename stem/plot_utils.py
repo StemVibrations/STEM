@@ -6,6 +6,9 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection, PolyCollection
 
 # import required typing classes
 from typing import TYPE_CHECKING, List
+
+from stem.mesh import Mesh
+
 if TYPE_CHECKING:
     from stem.geometry import Geometry, Volume, Surface
 
@@ -183,7 +186,6 @@ class PlotUtils:
         ax.add_collection3d(poly)
 
         return surface_centroid
-
 
     @staticmethod
     def __add_3d_volume_to_plot(geometry: 'Geometry', volume: 'Volume', show_volume_ids, show_surface_ids,

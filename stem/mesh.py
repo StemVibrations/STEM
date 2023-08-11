@@ -5,6 +5,8 @@ from dataclasses import dataclass
 import numpy as np
 import numpy.typing as npt
 
+from stem.utils import Utils
+
 
 class ElementShape(Enum):
     """
@@ -150,14 +152,23 @@ class Mesh:
         group_element_type = group_data["element_type"]
 
         element_type_data = mesh_data["elements"][group_element_type]
-        # TODO: reorder element nodes to be counter-clockwise
-
-        # create element per element id
-        elements = {element_id: Element(element_id, group_element_type, element_type_data[element_id])
-                    for element_id in group_element_ids}
 
         # create node per node id
-        nodes = {node_id: Node(node_id, mesh_data["nodes"][node_id]) for node_id in group_node_ids}
+        nodes: Dict[int, Node] = {node_id: Node(node_id, mesh_data["nodes"][node_id]) for node_id in group_node_ids}
+
+        # add each element, but first check if counterclockwise
+        # revert the node id order if it is not
+        elements: Dict[int, Element] = {}
+        # create element per element id
+        for element_id in group_element_ids:
+
+            node_ids_element = element_type_data[element_id]
+            # flip the element nodes if they are not anti-clockwise, and only if mesh entity has more than 2 nodes.
+            if group_data["ndim"] == 2 and len(node_ids_element) > 2:
+                coordinates = [nodes[ii].coordinates for ii in node_ids_element]
+                if Utils.are_2d_coordinates_clockwise(coordinates):
+                    node_ids_element = node_ids_element[::-1]
+            elements[element_id] = Element(element_id, group_element_type, node_ids_element)
 
         # add nodes and elements to mesh object
         mesh = cls(group_data["ndim"])

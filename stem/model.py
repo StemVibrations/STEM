@@ -4,13 +4,15 @@ import numpy.typing as npty
 import numpy as np
 
 from gmsh_utils import gmsh_IO
+from matplotlib import pyplot as plt
+from matplotlib.collections import PolyCollection
 
 from stem.model_part import ModelPart, BodyModelPart
 from stem.soil_material import *
 from stem.structural_material import *
 from stem.boundary import *
 from stem.geometry import Geometry
-from stem.mesh import Mesh, MeshSettings, Node
+from stem.mesh import Mesh, MeshSettings, Node, Element
 from stem.load import *
 from stem.solver import Problem, StressInitialisationType
 from stem.utils import Utils
@@ -313,7 +315,6 @@ class Model:
 
         """
 
-        # generate mesh
         self.gmsh_io.generate_mesh(self.ndim, element_size=self.mesh_settings.element_size,
                                    order=self.mesh_settings.element_order)
 
@@ -325,6 +326,117 @@ class Model:
         # add the mesh to each model part
         for model_part in all_model_parts:
             model_part.mesh = Mesh.create_mesh_from_gmsh_group(self.gmsh_io.mesh_data, model_part.name)
+
+        # adjust mesh of the condition elements if they are 2D elements and model is 2D
+        if self.ndim == 2:
+
+            for pmp in self.process_model_parts:
+
+                if not isinstance(pmp.parameters, (LineLoad, MovingLoad, SurfaceLoad, AbsorbingBoundary)):
+                    # process doesn't write condition elements. Skip!
+                    continue
+
+                matched_elements = self.find_matching_body_elements_for_process_model_part(pmp)
+                self.check_order_process_model_part(matched_elements)
+
+    @staticmethod
+    def __get_model_part_element_nodes(model_part: ModelPart):
+        """
+        Extract the nodes of each of the elements in
+        Args:
+            model_part (:class:`stem.model_part.ModelPart`): model part from which element nodes needs to be extracted.
+
+        Returns:
+            np.ndarray: array containing the nodes of the elements in the model_part
+        """
+
+        return np.array([el.node_ids for el in model_part.mesh.elements.values()])
+
+    def find_matching_body_elements_for_process_model_part(self, process_model_part, check_all_coupled:bool=False):
+        """
+
+        Args:
+            process_model_part:
+            check_all_coupled:
+
+        Returns:
+
+        """
+        nodes_elements_to_couple_pmp = self.__get_model_part_element_nodes(process_model_part)
+        num_nodes_pmp = nodes_elements_to_couple_pmp.shape[1]
+
+        pmp_element_ids = list(process_model_part.mesh.elements.keys())
+
+        matched_elements: Dict[Element, Element] = {}
+
+        for bmp in self.body_model_parts:
+
+            if len(nodes_elements_to_couple_pmp) == 0:
+                # finished matching elements
+                break
+
+            nodes_el_bmp = self.__get_model_part_element_nodes(bmp)
+            bmp_element_ids = list(bmp.mesh.elements.keys())
+            match_array_4d = nodes_elements_to_couple_pmp == nodes_el_bmp[..., np.newaxis, np.newaxis]
+
+            # broadcast __eq__ operation to elements of pmp vs elements of bmp
+            bool_array_2d = np.sum(np.sum(match_array_4d, axis=-1), axis=1) == num_nodes_pmp
+
+            # find (i) for all the elements in pmp (column of bool_array) if there is match for any of the
+            # elements in bmp (row of bool_array)
+
+            if not bool_array_2d.any():
+                # no match for any of the row!
+                continue
+            else:
+                matched_idxs = np.where(bool_array_2d.T)
+                # find the matched process model part indices
+                process_elements_idxs = np.unique(matched_idxs[0])
+                # find the matched body model part indices
+                body_elements_idxs = [np.where(column)[0][0] for column in bool_array_2d[:, process_elements_idxs].T]
+
+                # get the corresponding element ids
+                pmp_elements_ids_match = [pmp_element_ids[ix] for ix in process_elements_idxs]
+                body_elements_ids_match = [bmp_element_ids[ix] for ix in body_elements_idxs]
+                for id_pel, id_bel in zip(pmp_elements_ids_match, body_elements_ids_match):
+                    matched_elements[process_model_part.mesh.elements[id_pel]] = bmp.mesh.elements[id_bel]
+
+                # remove the matched elements from the list to couple
+                nodes_elements_to_couple_pmp = np.delete(nodes_elements_to_couple_pmp, process_elements_idxs)
+                pmp_element_ids = np.delete(pmp_element_ids, process_elements_idxs)
+
+        if check_all_coupled:
+            if len(nodes_elements_to_couple_pmp) != 0:
+                raise ValueError("Some process model parts remain uncoupled! Error. Process model part not applied"
+                                 "On a body model part")
+                # for _el_idx in elements_idxs:
+                #     coupled_elements[]
+        return matched_elements
+
+    @staticmethod
+    def check_order_process_model_part(matched_elements:Dict[Element,Element]):
+        """
+
+        Args:
+            matched_elements:
+
+        Returns:
+
+        """
+
+        for process_element, body_element in matched_elements.items():
+
+            nodes_process_element = [_id for _id in process_element.node_ids]
+            nodes_body_element = [_id for _id in body_element.node_ids]
+            # TODO: a function to get the number of nodes of the elements nevertheless the integration order.
+            #  from a 2D quadratic beam (3 nodes) , it should return 2.
+            #  from a 2D triangular quadratic element (6 nodes) it should return 3.
+            n_nodes = len(nodes_process_element)
+            target_list = nodes_body_element + nodes_body_element[:(n_nodes-1)]
+            source_list = nodes_process_element[:n_nodes]
+
+            if not Utils.has_matching_combination(target_list, source_list):
+                process_element.node_ids = nodes_process_element[::-1]
 
     def __validate_model_part_names(self):
         """
@@ -420,7 +532,7 @@ class Model:
         Returns:
             - all_model_parts (List[:class:`stem.model_part.ModelPart`]): list of all the model parts.
         """
-        all_model_parts = []
+        all_model_parts: List[ModelPart] = []
         all_model_parts.extend(self.process_model_parts)
         all_model_parts.extend(self.body_model_parts)
         return all_model_parts
@@ -437,9 +549,7 @@ class Model:
         for mp in self.get_all_model_parts():
             if mp.mesh is None:
                 raise ValueError('Geometry has not been meshed yet! Please first run the Model.generate_mesh method.')
-            for nn in mp.mesh.nodes:
-                if not nn in node_dict.keys():
-                    node_dict[nn.id] = nn
+            node_dict.update(mp.mesh.nodes)
 
         return node_dict
 
@@ -509,3 +619,78 @@ class Model:
         self.validate()
 
         self.__setup_stress_initialisation()
+
+
+    def show_mesh(self, settings:dict):
+
+        """
+        Show the geometry of the model in a matplotlib plot.
+
+        Args:
+            - ndim (int): Number of dimensions of the geometry. Either 2 or 3.
+            - geometry (:class:`stem.geometry.Geometry`): Geometry object.
+            - show_volume_ids (bool): If True, the volume ids are shown in the plot.
+            - show_surface_ids (bool): If True, the surface ids are shown in the plot.
+            - show_line_ids (bool): If True, the line ids are shown in the plot.
+            - show_point_ids (bool): If True, the point ids are shown in the plot.
+
+        """
+        if self.mesh_settings.element_size is not None:
+            offset = self.mesh_settings.element_size / 20
+        else:
+            offset = 0.05
+        # np.array(y_values) + _offset
+        # Initialize figure in 3D
+        fig = plt.figure()
+
+        # settings options:
+        settings_opts = list(settings.keys())
+
+        if self.ndim == 2:
+            ax = fig.add_subplot(111)
+
+            # for surface in mesh.nodes:
+            #     PlotUtils.__add_2d_surface_to_plot(geometry, surface, show_surface_ids, show_line_ids,
+            #                                        show_point_ids, ax)
+
+        elif self.ndim == 3:
+            raise NotImplementedError("Mesh visualiser not yet implemented for 3D models.")
+            # ax = fig.add_subplot(111, projection='3d')
+
+        all_nodes = self.get_all_nodes()
+        for _id, node in all_nodes.items():
+            vertex = node.coordinates[:self.ndim]
+            plt.plot(*vertex, 'ko')
+            if "show_node_ids" in settings_opts and settings["show_node_ids"]:
+                ax.text(vertex[0] + offset, vertex[1] + offset, "$n_{" + str(_id) + "}$", color="black", fontsize=10)
+
+        for mp in self.get_all_model_parts():
+            if mp.mesh.elements is not None:
+                for _id, element in mp.mesh.elements.items():
+                    vertices = [all_nodes[_id].coordinates[:self.ndim] for _id in element.node_ids]
+                    centroid = np.mean(np.array(vertices), axis=0)
+                    if len(vertices) > 2:
+                        _color = "darkblue"
+                        poly = PolyCollection([np.array(vertices)], facecolors=_color, linewidths=1, edgecolors='black',
+                                              alpha=0.35)
+                        ax.add_collection(poly)
+                    else:
+                        x_values, y_values = zip(*vertices)
+                        _color = "darkred"
+                        plt.plot(x_values, y_values, c=_color, lw=1, alpha=0.35)
+                    if "show_element_ids" in settings_opts and settings["show_element_ids"]:
+                        if len(vertices) > 2:
+                            ax.text(centroid[0], centroid[1], "$e_{"+str(_id)+"}$",
+                                    color=_color, fontsize=10, fontweight='bold')
+                        else:
+                            ax.text(centroid[0]+ offset, centroid[1]+ offset, "$e_{"+str(_id)+"}$",
+                                    color=_color, fontsize=10, fontweight='bold')
+
+        # set x and y labels
+        ax.set_xlabel("x coordinates [m]")
+        ax.set_ylabel("y coordinates [m]")
+
+        # set equal aspect ratio to equal axes
+        ax.set_aspect('equal')
+
+        fig.show()
