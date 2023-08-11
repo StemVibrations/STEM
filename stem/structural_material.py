@@ -142,7 +142,7 @@ class ElasticSpringDamper(StructuralParametersABC):
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
 
             if n_nodes_element == 2:
-                element_name = f"StructuralMechanicsApplication.SpringDamperElement{n_dim_model}D"
+                element_name = f"SpringDamperElement{n_dim_model}D"
             else:
                 raise ValueError(
                      f"Only 2 noded elastic spring damper elements are supported. {n_nodes_element} nodes were provided."
