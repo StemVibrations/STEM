@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 
 from stem.solver import AnalysisType
+from stem.utils import Utils
 
 @dataclass
 class StructuralParametersABC(ABC):
@@ -10,7 +11,6 @@ class StructuralParametersABC(ABC):
     Abstract base class for structural material parameters
     """
     pass
-
 
     @staticmethod
     @abstractmethod
@@ -81,21 +81,22 @@ class EulerBeam(StructuralParametersABC):
             - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type.
 
         Raises:
-            - ValueError: If the number of nodes per element is not 2
             - ValueError: If the analysis type is not implemented yet for Euler beam elements.
 
         Returns:
             - str: The element name
 
         """
-        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
 
-            if n_nodes_element == 2:
-                element_name = f"GeoCrBeamElement{n_dim_model}D{n_nodes_element}N"
-            else:
-                raise ValueError(
-                    f"Only 2 node Euler beam elements are supported. {n_nodes_element} nodes were provided."
-                )
+        available_node_dim_combinations = {
+            2: [2],
+            3: [2],
+        }
+        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations,
+                                             "Euler beam")
+
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+            element_name = f"GeoCrBeamElement{n_dim_model}D{n_nodes_element}N"
         else:
             raise ValueError(f"Analysis type {analysis_type} is not implemented yet for soil material.")
 
@@ -133,20 +134,21 @@ class ElasticSpringDamper(StructuralParametersABC):
             - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type.
 
         Raises:
-            - ValueError: If the number of nodes per element is not 2
             - ValueError: If the analysis type is not implemented yet for elastic spring damper elements.
 
         Returns:
             - str: The element name
         """
-        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
 
-            if n_nodes_element == 2:
-                element_name = f"SpringDamperElement{n_dim_model}D"
-            else:
-                raise ValueError(
-                     f"Only 2 noded elastic spring damper elements are supported. {n_nodes_element} nodes were provided."
-                )
+        available_node_dim_combinations = {
+            2: [2],
+            3: [2],
+        }
+        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations,
+                                             "Elastic spring damper")
+
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+            element_name = f"SpringDamperElement{n_dim_model}D"
         else:
             raise ValueError(f"Analysis type {analysis_type} is not implemented yet for soil material.")
 
@@ -181,19 +183,20 @@ class NodalConcentrated(StructuralParametersABC):
             - analysis_type (AnalysisType): The analysis type of the model
 
         Raises:
-            - ValueError: If the number of nodes per element is not 1
             - ValueError: If the analysis type is not implemented yet for nodal concentrated elements.
         """
 
-        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+        available_node_dim_combinations = {
+            2: [1],
+            3: [1],
+        }
+        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations,
+                                             "Nodal concentrated")
 
-            if n_nodes_element == 1:
-                element_name = f"NodalConcentratedElement{n_dim_model}D1N"
-            else:
-                raise ValueError(f"Only 1 noded nodal concentrated elements are supported. {n_nodes_element} "
-                                 f"nodes were provided.")
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+            element_name = f"NodalConcentratedElement{n_dim_model}D1N"
         else:
-            raise ValueError(f"Analysis type {analysis_type} is not implemented yet for soil material.")
+            raise ValueError(f"Analysis type {analysis_type} is not implemented yet for nodal concentrated elements.")
 
         return element_name
 

@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 
 from stem.solver import AnalysisType
+from stem.utils import Utils
 
 
 @dataclass
@@ -88,6 +89,13 @@ class DisplacementConstraint(BoundaryParametersABC):
 
         """
 
+        available_node_dim_combinations = {
+            2: [None],
+            3: [None],
+        }
+        Utils.check_ndim_nnodes_combinations(n_dim_model, None, available_node_dim_combinations,
+                                             "Displacement constraint")
+
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
             # displacement constraint does not have an element name
             element_name = None
@@ -144,6 +152,12 @@ class RotationConstraint(BoundaryParametersABC):
             - None: Rotation constraint does not have a name
 
         """
+        available_node_dim_combinations = {
+            2: [None],
+            3: [None],
+        }
+        Utils.check_ndim_nnodes_combinations(n_dim_model, None, available_node_dim_combinations,
+                                             "Rotation constraint")
 
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
             # rotation constraint does not have an element name
@@ -194,8 +208,6 @@ class AbsorbingBoundary(BoundaryParametersABC):
             - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type.
 
         Raises:
-            - ValueError: Absorbing boundary conditions are only implemented for 2D and 3D geometries.
-            - ValueError: Absorbing boundary conditions are not implemented for quadratic elements in a 3D geometry.
             - ValueError: Absorbing boundary conditions can only be applied in mechanical or mechanical groundwater \
                 flow analysis
 
@@ -204,17 +216,15 @@ class AbsorbingBoundary(BoundaryParametersABC):
 
         """
 
+        available_node_dim_combinations = {
+            2: [2, 3],
+            3: [3, 4],
+        }
+        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations,
+                                             "Absorbing boundary")
+
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
-
-            if n_dim_model != 2 and n_dim_model != 3:
-                raise ValueError(f"Absorbing boundary conditions are only implemented for 2D and 3D geometries.")
-
-            if n_dim_model == 3 and n_nodes_element > 4:
-                raise ValueError(f"Absorbing boundary conditions are not implemented for quadratic elements in a "
-                                 f"3D geometry.")
-            else:
-                element_name = f"UPwLysmerAbsorbingCondition{n_dim_model}D{n_nodes_element}N"
-
+            element_name = f"UPwLysmerAbsorbingCondition{n_dim_model}D{n_nodes_element}N"
         else:
             raise ValueError("Absorbing boundary conditions can only be applied in mechanical or mechanical "
                             "groundwater flow analysis")
