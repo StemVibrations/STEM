@@ -71,7 +71,6 @@ class InterpolateLineBoundary(WaterBoundaryParameters):
     Class containing the boundary parameters for a interpolate line boundary condition.
 
     """
-    pass
 
     @property
     def type(self):
