@@ -441,11 +441,16 @@ class KratosModelIO:
 
         # get number of nodes per element
         n_nodes_element = len(model_part.mesh.elements[0].node_ids)
-        # check analysis type
-        analysis_type = model.project_parameters.settings.analysis_type
 
-        # get element name from model part (body or condition)
-        element_name = model_part.get_element_name(n_dimensions, n_nodes_element, analysis_type)
+        # check analysis type
+        if model.project_parameters is not None:
+            analysis_type = model.project_parameters.settings.analysis_type
+            # get element name from model part (body or condition)
+            element_name = model_part.get_element_name(n_dimensions, n_nodes_element, analysis_type)
+        else:
+            raise ValueError(
+                f"Analysis type not specified in the model. Please initialise the model with the analysis type."
+            )
 
         return element_name
 

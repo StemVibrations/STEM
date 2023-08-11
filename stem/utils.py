@@ -10,7 +10,7 @@ class Utils:
     """
     @staticmethod
     def check_ndim_nnodes_combinations(n_dim: int, n_nodes_element: Optional[int],
-                                       available_combinations: Dict[int, List[Optional[int]]],
+                                       available_combinations: Dict[int, List[Any]],
                                        class_name: str):
         """
         Check if the combination of number of dimensions and number of nodes per element is supported.

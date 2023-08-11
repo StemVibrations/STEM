@@ -124,4 +124,5 @@ class BodyModelPart(ModelPart):
 
         """
 
-        return self.material.get_element_name(n_dim_model, n_nodes_element, analysis_type)
+        if self.material is not None:
+            return self.material.get_element_name(n_dim_model, n_nodes_element, analysis_type)
