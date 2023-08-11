@@ -3,6 +3,38 @@ Begin Properties 1
 End Properties
 
 
+Begin Properties 2
+End Properties
+
+
+Begin Properties 3
+End Properties
+
+
+Begin Properties 4
+End Properties
+
+
+Begin Table 1 TIME VALUE
+   0.0000   0.0000
+   0.5000   5.0000
+   1.0000   10.0000
+   1.5000   5.0000
+   2.0000   0.0000
+   2.5000   0.0000
+End Table
+
+
+Begin Table 2 TIME VALUE
+   0.0000   0.0000
+   0.5000   -5.0000
+   1.0000   -10.0000
+   1.5000   -5.0000
+   2.0000   0.0000
+   2.5000   0.0000
+End Table
+
+
 Begin Nodes
   1   0.0000000000  0.0000000000  0.0000000000
   2   1.0000000000  0.0000000000  0.0000000000
@@ -13,15 +45,30 @@ End Nodes
 
 
 Begin Elements UPwSmallStrainElement2D3N
-  3  1  2 5 1
-  4  1  1 5 4
-  5  1  3 5 2
-  6  1  4 5 3
+  5  1  2 5 1
+  6  1  1 5 4
+  7  1  3 5 2
+  8  1  4 5 3
 End Elements
 
 
 Begin Conditions LineLoadCondition2D2N
-  2  1  3 4
+  3  1  3 4
+End Conditions
+
+
+Begin Conditions LineLoadCondition2D2N
+  1  2  1 2
+End Conditions
+
+
+Begin Conditions LineLoadCondition2D2N
+  4  3  4 1
+End Conditions
+
+
+Begin Conditions LineLoadCondition2D2N
+  2  4  2 3
 End Conditions
 
 
@@ -36,20 +83,63 @@ Begin SubModelPart soil1
   5
   End SubModelPartNodes
   Begin SubModelPartElements
-  3
-  4
   5
   6
+  7
+  8
   End SubModelPartElements
 End SubModelPart
 
 
-Begin SubModelPart load1
+Begin SubModelPart load_top
   Begin SubModelPartTables
+  1
   End SubModelPartTables
   Begin SubModelPartNodes
   3
   4
+  End SubModelPartNodes
+  Begin SubModelPartConditions
+  3
+  End SubModelPartConditions
+End SubModelPart
+
+
+Begin SubModelPart load_bottom
+  Begin SubModelPartTables
+  1
+  End SubModelPartTables
+  Begin SubModelPartNodes
+  1
+  2
+  End SubModelPartNodes
+  Begin SubModelPartConditions
+  1
+  End SubModelPartConditions
+End SubModelPart
+
+
+Begin SubModelPart load_left
+  Begin SubModelPartTables
+  2
+  End SubModelPartTables
+  Begin SubModelPartNodes
+  1
+  4
+  End SubModelPartNodes
+  Begin SubModelPartConditions
+  4
+  End SubModelPartConditions
+End SubModelPart
+
+
+Begin SubModelPart load_right
+  Begin SubModelPartTables
+  2
+  End SubModelPartTables
+  Begin SubModelPartNodes
+  2
+  3
   End SubModelPartNodes
   Begin SubModelPartConditions
   2

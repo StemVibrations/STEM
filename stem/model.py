@@ -1,9 +1,7 @@
-from enum import Enum
-from dataclasses import dataclass
-from typing import List, Sequence, Dict, Any, Optional, Union, get_args
+from typing import List, Sequence, Dict, Any, Optional, Union
 
-import numpy as np
 import numpy.typing as npty
+import numpy as np
 
 from gmsh_utils import gmsh_IO
 
@@ -16,6 +14,7 @@ from stem.mesh import Mesh, MeshSettings, Node
 from stem.load import *
 from stem.solver import Problem, StressInitialisationType
 from stem.utils import Utils
+from stem.plot_utils import PlotUtils
 
 
 class Model:
@@ -163,6 +162,10 @@ class Model:
         self.validate_coordinates(coordinates)
         if isinstance(load_parameters, MovingLoad):
             self.__validate_moving_load_parameters(coordinates, load_parameters)
+
+        # elif isinstance(load_parameters, (PointLoad, LineLoad, SurfaceLoad)):
+        #     # TODO self.__validate_load_coordinates(coordinates)
+        #     pass
 
         # create input for gmsh
         if isinstance(load_parameters, PointLoad):
@@ -449,6 +452,28 @@ class Model:
 
         self.__validate_model_part_names()
 
+    def show_geometry(self, show_volume_ids: bool = False, show_surface_ids: bool = False, show_line_ids: bool = False,
+                      show_point_ids: bool = False):
+        """
+        Show the 2D or 3D geometry in a plot.
+
+        Args:
+            - show_volume_ids (bool): Show the volume ids in the plot. (default False)
+            - show_surface_ids (bool): Show the surface ids in the plot. (default False)
+            - show_line_ids (bool): Show the line ids in the plot. (default False)
+            - show_point_ids (bool): Show the point ids in the plot. (default False)
+
+        Raises:
+            - ValueError: If the geometry is not set.
+
+        """
+        if self.geometry is None:
+            raise ValueError("Geometry must be set before showing the geometry")
+
+        PlotUtils.show_geometry(self.ndim, self.geometry, show_volume_ids, show_surface_ids, show_line_ids,
+                                show_point_ids)
+
+
     def __setup_stress_initialisation(self):
         """
         Set up the stress initialisation. For K0 procedure and gravity loading, a gravity load is added to the model.
@@ -484,6 +509,3 @@ class Model:
         self.validate()
 
         self.__setup_stress_initialisation()
-
-
-

@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 
 from stem.solver import AnalysisType
-
+from stem.table import Table
 
 @dataclass
 class LoadParametersABC(ABC):
@@ -39,11 +39,14 @@ class PointLoad(LoadParametersABC):
 
     Attributes:
         - active (List[bool]): Activate/deactivate load for each direction.
-        - value (List[float]): Entity of the load in the 3 directions [N].
+        - value (List[Union[float, :class:`stem.table.Table`]]): Entity of the load in the 3 directions [N]. \
+            It should be a list of either float or table for each load. If a float is specified, the \
+            load is time-independent, otherwise the table specifies the amplitude of the \
+            load [N] over time [s] for each direction.
     """
 
     active: List[bool]
-    value: List[float]
+    value: List[Union[float, Table]]
 
     @staticmethod
     def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
@@ -85,10 +88,13 @@ class LineLoad(LoadParametersABC):
 
     Attributes:
         - active (List[bool]): Activate/deactivate load for each direction.
-        - value (List[float]): Entity of the load in the 3 directions [N].
+        - value (List[Union[float, :class:`stem.table.Table`]]): Entity of the load in the 3 directions [N/m]. \
+            It should be a list of either float or table for each load. If a float is specified, the \
+            load is time-independent, otherwise the table specifies the amplitude of the \
+            load [N/m] over time [s] for each direction.
     """
     active: List[bool]
-    value: List[float]
+    value: List[Union[float, Table]]
 
     @staticmethod
     def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
@@ -138,10 +144,13 @@ class SurfaceLoad(LoadParametersABC):
 
     Attributes:
         - active (List[bool]): Activate/deactivate load for each direction.
-        - value (List[float]): Entity of the load in the 3 directions [N].
+        - value (List[Union[float, :class:`stem.table.Table`]]): Entity of the load in the 3 directions [Pa]. \
+            It should be a list of either float or table for each load. If a float is specified, the \
+            load is time-independent, otherwise the table specifies the amplitude of the \
+            load [Pa] over time [s] for each direction.
     """
     active: List[bool]
-    value: List[float]
+    value: Union[List[float], List[Table]]
 
     @staticmethod
     def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):

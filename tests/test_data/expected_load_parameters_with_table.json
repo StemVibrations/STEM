@@ -1,0 +1,55 @@
+{
+    "processes":
+    {
+        "loads_process_list": [
+            {
+                "python_module": "apply_vector_constraint_table_process",
+                "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+                "process_name": "ApplyVectorConstraintTableProcess",
+                "Parameters": {
+                    "model_part_name": "PorousDomain.test_point_load",
+                    "variable_name": "POINT_LOAD",
+                    "active": [true, false, true],
+                    "value": [0, -20.0, 0.0],
+                    "table": [1, 0, 0]
+                }
+            }, {
+                "python_module": "apply_vector_constraint_table_process",
+                "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+                "process_name": "ApplyVectorConstraintTableProcess",
+                "Parameters": {
+                    "model_part_name": "PorousDomain.test_line_load",
+                    "variable_name": "LINE_LOAD",
+                    "active": [false, true, false],
+                    "value": [-10.0, 0.0, 30.0],
+                    "table": [0, 2, 0]
+                }
+            },  {
+                "python_module": "apply_vector_constraint_table_process",
+                "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+                "process_name": "ApplyVectorConstraintTableProcess",
+                "Parameters": {
+                    "model_part_name": "PorousDomain.test_surface_load",
+                    "variable_name": "SURFACE_LOAD",
+                    "active": [false, false, true],
+                    "value": [0.0, 0.0, -200.0],
+                    "table": [0, 0, 0]
+                }
+            },  {
+            "python_module": "set_moving_load_process",
+            "kratos_module": "StructuralMechanicsApplication",
+            "process_name": "SetMovingLoadProcess",
+            "Parameters": {
+                "model_part_name": "PorousDomain.test_moving_load",
+                "variable_name": "POINT_LOAD",
+                "load": [0.0, -10, 0.0],
+                "direction": [1.0, 0.0, -1.0],
+                "velocity": 5.0,
+                "origin": [1.0, 0.1, 0.0],
+                "offset": 3.0
+                }
+            }
+        ],
+        "constraints_process_list": []
+    }
+}

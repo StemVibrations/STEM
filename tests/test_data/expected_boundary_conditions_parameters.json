@@ -11,7 +11,7 @@
                     "active": [true, true, false],
                     "is_fixed": [true, true, false],
                     "value": [0.0, 0.0, 0.0],
-                    "table": [0, 0, 0]
+                    "table": [0, 1, 0]
                 }
             },
             {
@@ -24,7 +24,7 @@
                     "active": [false, false, true],
                     "is_fixed": [false, false, true],
                     "value": [0.0, 0.0, 0.0],
-                    "table": [0, 0, 0]
+                    "table": [2, 0, 0]
                 }
             }
         ],
