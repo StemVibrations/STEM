@@ -440,7 +440,7 @@ class KratosModelIO:
             )
 
         # get number of nodes per element
-        n_nodes_element = len(model_part.mesh.elements[0].node_ids)
+        n_nodes_element = len(next(iter(model_part.mesh.elements.values())).node_ids)
 
         # check analysis type
         if model.project_parameters is not None:

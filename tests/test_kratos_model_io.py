@@ -140,13 +140,34 @@ class TestKratosModelIO:
 
         model.add_load_by_coordinates([(0, 2*h, 0), (w, 2*h, 0)], line_load1, "lineload1")
 
+        # set up solver settings
+        analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
+
+        solution_type = SolutionType.QUASI_STATIC
+
+        time_integration = TimeIntegration(start_time=0.0, end_time=1.0, delta_time=0.1, reduction_factor=0.5,
+                                           increase_factor=2.0, max_delta_time_factor=500)
+
+        convergence_criterion = DisplacementConvergenceCriteria()
+
+        stress_initialisation_type = StressInitialisationType.NONE
+
+        solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
+                                         stress_initialisation_type=stress_initialisation_type,
+                                         time_integration=time_integration,
+                                         is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
+                                         convergence_criteria=convergence_criterion)
+
+        # set up problem data
+        project_parameters = Problem(problem_name="test", number_of_threads=2, settings=solver_settings)
+
         # add pin parameters
         no_displacement_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True],
                                                             value=[0, 0, 0])
 
         # add boundary conditions in 0d, 1d and 2d
         model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "no_displacement")
-
+        model.project_parameters = project_parameters
         model.synchronise_geometry()
 
         model.set_mesh_size(1)

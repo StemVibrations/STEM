@@ -143,6 +143,21 @@ class TestUtilsStem:
 
         npt.assert_equal(expected_sequence, actual_sequence)
 
+    def test_has_matching_combination(self):
+        """
+        Test matching combination
+        """
+        sub_list1 = [1, 5]
+        sub_list2 = [5, 1]
+        sub_list3 = [1, 3, 4]
+        sub_list4 = [1, 3, 5]
+
+        list_tst = [1, 3, 4, 5, 1]
+        assert not Utils.has_matching_combination(list_tst, sub_list1)
+        assert Utils.has_matching_combination(list_tst, sub_list2)
+        assert Utils.has_matching_combination(list_tst, sub_list3)
+        assert not Utils.has_matching_combination(list_tst, sub_list4)
+
     def test_merge(self):
         """
         Test merging of dictionaries
