@@ -46,10 +46,11 @@ class KratosIO:
         self.solver_io = KratosSolverIO(self.ndim, DOMAIN)
 
     def write_mesh_to_mdpa(self, model: Model, mesh_file_name: str, output_folder="./"):
-        """Saves mesh data to mdpa file.
+        """
+        Saves mesh data to mdpa file.
 
         Args:
-            - model (:class:`stem.model.Model`]): The model object containing all the required info on the \
+            - model (:class:`stem.model.Model`): The model object containing all the required info on the \
                 materials.
             - mesh_file_name (str): The name of the mesh file to store the mdpa file.
             - output_folder (str): folder to store the project parameters file. Defaults to the working directory.
@@ -66,7 +67,7 @@ class KratosIO:
         output_folder_pth.mkdir(exist_ok=True, parents=True)
 
         output_path = output_folder_pth.joinpath(mesh_file_name)
-        # if no suffix or wron suffix change to mdpa
+        # if no suffix or wrong suffix change to mdpa
         output_path = output_path.with_suffix(".mdpa")
 
         with open(output_path, "w") as _buf:
@@ -84,9 +85,9 @@ class KratosIO:
         Writes the material parameters to json format for Kratos.
 
         Args:
-            - model (:class:`stem.model.Model`]): The model object containing all the required info on the \
+            - model (:class:`stem.model.Model`): The model object containing all the required info on the \
                 materials.
-            - materials_file_name (str): name of the material parameters file. Defaults to `MaterialParamaeters.json`.
+            - materials_file_name (str): name of the material parameters file. Defaults to `MaterialParameters.json`.
             - output_folder (str): folder to store the material parameters file. Defaults to the working directory.
 
         Raises:
@@ -134,7 +135,7 @@ class KratosIO:
         Creates a dictionary containing the solver settings.
 
         Args:
-            - model (:class:`stem.model.Model`]): The model object containing the solver data and model parts.
+            - model (:class:`stem.model.Model`): The model object containing the solver data and model parts.
             - mesh_file_name (str): The name of the mesh file.
             - materials_file_name (str): The name of the materials parameters json file.
 
@@ -157,7 +158,7 @@ class KratosIO:
             model.get_all_model_parts(),
         )
 
-    def __write_output_processes(self, outputs: Optional[List[Output]]=None):
+    def __write_output_processes(self, outputs: Optional[List[Output]] = None):
         """
         Creates a dictionary containing the output settings.
 
@@ -178,7 +179,7 @@ class KratosIO:
         Creates a dictionary containing the loads and boundary conditions.
 
         Args:
-            - model (:class:`stem.model.Model`]): The model object containing the process model parts.
+            - model (:class:`stem.model.Model`): The model object containing the process model parts.
 
         Returns:
             - Dict[str, Any]: dictionary containing the part of the project parameters dictionary related \
@@ -221,7 +222,7 @@ class KratosIO:
         Writes project parameters to json file
 
         Args:
-            - model (:class:`stem.model.Model`]): The model object containing all the required info, i.e. \
+            - model (:class:`stem.model.Model`): The model object containing all the required info, i.e. \
                 body and process model parts, boundary conditions, solver settings and problem data.
             - outputs (List[:class:`stem.output.Output`]): The list of output processes objects to write in outputs.
             - mesh_file_name (str): The name of the mesh file.
@@ -268,10 +269,11 @@ class KratosIO:
         output_folder: str = "./"
     ):
         """
-        Writes all required input files for a Kratos simulation, i.e: project parameters json; material parameters json and the mdpa mesh file 
+        Writes all required input files for a Kratos simulation, i.e: project parameters json; material parameters json
+        and the mdpa mesh file
 
         Args:
-            - model (:class:`stem.model.Model`]): The model object containing all the required info.
+            - model (:class:`stem.model.Model`): The model object containing all the required info.
             - outputs (List[:class:`stem.output.Output`]): The list of output processes objects to write in outputs.
             - mesh_file_name (str): The name of the mesh file.
             - materials_file_name (str): The name of the materials file.

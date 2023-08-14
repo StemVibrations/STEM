@@ -37,7 +37,7 @@ class KratosModelIO:
         domain: str
     ):
         """
-        Class to write Kratos problem parts in mpda format.
+        Class to write Kratos problem parts in mdpa format.
 
         Args:
             - ndim (int): The number of dimensions of the problem (2 or 3).
@@ -696,7 +696,7 @@ class KratosModelIO:
 
     def write_mdpa_text(self, model: Model):
         """
-        Returns the  mesh data to mdpa format as list of strings representing each a line in the mpda file.
+        Returns the  mesh data to mdpa format as list of strings representing each a line in the mdpa file.
 
         Args:
             - model (:class:`stem.model.Model`): The model object containing all the required info on the \

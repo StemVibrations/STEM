@@ -23,8 +23,8 @@ class MeshSettings:
     Attributes:
         - element_size (float): The element size (default -1, which means that gmsh determines the size).
         - element_shape (:class:`ElementShape`): The element shape. TRIANGLE for triangular elements and \
-         tetrahedral elements,  QUADRILATERAL for quadrilateral elements and hexahedral elements. (default TRIANGLE)
-         - __element_order (int): The element order. 1 for linear elements, 2 for quadratic elements. (default 1)
+            tetrahedral elements,  QUADRILATERAL for quadrilateral elements and hexahedral elements. (default TRIANGLE)
+        - __element_order (int): The element order. 1 for linear elements, 2 for quadratic elements. (default 1)
     """
 
     def __init__(self, element_size: float = -1, element_order: int = 1,

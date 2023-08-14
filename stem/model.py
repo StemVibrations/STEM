@@ -497,10 +497,10 @@ class Model:
 
     def post_setup(self):
         """
-        Post setup of the model. \
-            - Synchronise the geometry. \
-            - Generate the mesh. \
-            - Validate the model. \
+        Post setup of the model.
+            - Synchronise the geometry.
+            - Generate the mesh.
+            - Validate the model.
             - Set up the stress initialisation.
 
         """
