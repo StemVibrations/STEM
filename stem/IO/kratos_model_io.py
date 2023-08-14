@@ -81,7 +81,7 @@ class KratosModelIO:
         Initialise or reset the process model part ids if some are initialised and some are not.
 
         Args:
-            - model (:class:`stem.model.Model`]): the model object containing the process model parts.
+            - model (:class:`stem.model.Model`): the model object containing the process model parts.
 
         """
         # some process model parts are never initialised because they do not write conditions.
@@ -100,7 +100,7 @@ class KratosModelIO:
         Initialise or reset the body model part ids if some are initialised and some are not.
 
         Args:
-            - model (:class:`stem.model.Model`]): the model object containing the body model parts.
+            - model (:class:`stem.model.Model`): the model object containing the body model parts.
 
         """
 
@@ -118,7 +118,7 @@ class KratosModelIO:
         Retrieve all the memory-unique tables in the model part.
 
         Args:
-            - process_model_part (:class:`stem.model_part.ModelPart`]): the process model part containing \
+            - process_model_part (:class:`stem.model_part.ModelPart`): the process model part containing \
                 the tables.
 
         Returns:
@@ -139,7 +139,7 @@ class KratosModelIO:
         Retrieve all the memory-unique tables in the model.
 
         Args:
-            - model (:class:`stem.model.Model`]): the model object containing the info on the loads.
+            - model (:class:`stem.model.Model`): the model object containing the info on the loads.
 
         Returns:
             - tables (List[:class:`stem.table.Table`]): list of the unique table objects in the models
@@ -156,7 +156,7 @@ class KratosModelIO:
         Initialise or reset the id of the tables contained in the load parameters objects.
 
         Args:
-            - model (:class:`stem.model.Model`]): the model object containing the body model parts.
+            - model (:class:`stem.model.Model`): the model object containing the body model parts.
 
         """
 
@@ -405,8 +405,10 @@ class KratosModelIO:
             - model_part (:class:`stem.model_part.ModelPart`): the model part
 
         Raises:
+            - ValueError: if model dimension is not 2 or 3
             - ValueError: if mesh not initialised first
             - ValueError: if element types are not unique in the model part.
+            - ValueError: if the analysis type is not specified.
 
         Returns:
             - str: the Kratos element type

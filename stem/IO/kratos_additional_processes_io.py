@@ -6,7 +6,7 @@ from stem.additional_processes import *
 
 class KratosAdditionalProcessesIO:
     """
-    Class containing methods to write boundary conditions to Kratos
+    Class containing methods for additional Kratos processes
 
     Attributes:
         - domain (str): name of the Kratos domain
@@ -59,7 +59,7 @@ class KratosAdditionalProcessesIO:
 
         Args:
             - part_name (str): part name where the boundary condition is applied
-            - parameters (:class:`stem.additional_processes.AdditionalProcessesParametersABC`): additional process
+            - parameters (:class:`stem.additional_processes.AdditionalProcessesParametersABC`): additional process \
                 parameters object
 
         Returns:

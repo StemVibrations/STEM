@@ -13,7 +13,7 @@ class ElementShape(Enum):
 
     """
     TRIANGLE = "triangle"
-    QUADRILATURAL = "quadrilateral"
+    QUADRILATERAL = "quadrilateral"
 
 
 class MeshSettings:
@@ -22,7 +22,7 @@ class MeshSettings:
 
     Attributes:
         - element_size (float): The element size (default -1, which means that gmsh determines the size).
-        - element_shape (:class:`stem.model.ElementShape`): The element shape. TRIANGLE for triangular elements and \
+        - element_shape (:class:`ElementShape`): The element shape. TRIANGLE for triangular elements and \
          tetrahedral elements,  QUADRILATERAL for quadrilateral elements and hexahedral elements. (default TRIANGLE)
          - __element_order (int): The element order. 1 for linear elements, 2 for quadratic elements. (default 1)
     """
@@ -35,7 +35,7 @@ class MeshSettings:
         Args:
             - element_size (float): The element size (default -1, which means that gmsh determines the size).
             - element_order (int): The element order. 1 for linear elements, 2 for quadratic elements. (default 1)
-            - element_shape (:class:`stem.model.ElementShape`): The element shape. TRIANGLE for triangular elements and \
+            - element_shape (:class:`ElementShape`): The element shape. TRIANGLE for triangular elements and \
             tetrahedral elements,  QUADRILATERAL for quadrilateral elements and hexahedral elements. (default TRIANGLE)
         """
         self.element_size: float = element_size
@@ -164,29 +164,3 @@ class Mesh:
         mesh.elements = elements
 
         return mesh
-
-    def prepare_data_for_kratos(self, mesh_data: Dict[str, Any]) \
-            -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.int64]]:
-        """
-        Prepares mesh data for Kratos
-
-        Args:
-            - mesh_data (Dict[str, Any]): dictionary of mesh data
-
-
-        Returns:
-            - nodes (npt.NDArray[np.float64]): node id followed by node coordinates in an array
-            - elements (npt.NDArray[np.int64]): element id followed by connectivities in an array
-        """
-
-        # create array of nodes where each row is represented by [id, x,y,z]
-        nodes = np.concatenate((mesh_data["nodes"]["ids"][:, None], mesh_data["nodes"]["coordinates"]), axis=1)
-
-        all_elements_list = []
-        # create array of elements where each row is represented by [id, node connectivities]
-        for v in mesh_data["elements"].values():
-            all_elements_list.append(np.concatenate((v["element_ids"][:, None], v["element_nodes"]), axis=1))
-
-        all_elements = np.array(all_elements_list).astype(int)
-
-        return nodes, all_elements

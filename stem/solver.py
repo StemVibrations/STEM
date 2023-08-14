@@ -380,6 +380,13 @@ class LinearSolverSettingsABC(ABC):
     @property
     @abc.abstractmethod
     def solver_type(self):
+        """
+        Abstract property for returning the solver type
+
+        Raises:
+            - Exception: abstract class of linear solver settings is called
+
+        """
         raise Exception("abstract class of linear solver settings is called")
 
 
