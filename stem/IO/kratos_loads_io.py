@@ -218,6 +218,9 @@ class KratosLoadsIO:
             - part_name (str): name of the model part on which the load is applied
             - parameters (:class:`stem.load.LoadParametersABC`): load parameters object
 
+        Raises:
+            - NotImplementedError: if the load type is not implemented
+
         Returns:
             - Dict[str, Any]: dictionary containing the load parameters
         """
@@ -234,4 +237,4 @@ class KratosLoadsIO:
         elif isinstance(parameters, GravityLoad):
             return self.__create_gravity_load_dict(part_name, parameters)
         else:
-            raise NotImplementedError
+            raise NotImplementedError(f"Load type {type(parameters)} not implemented")

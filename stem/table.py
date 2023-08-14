@@ -14,8 +14,8 @@ class Table:
     two point of the sequence/array.
 
     Attributes:
-        - values (Union[Sequence[float], npty.NDArray[np.float64]]): alues of the load/constraint.
-        - times (Union[Sequence[Union[int,float]], npty.NDArray[Union[np.float64, np.int_]]]): time [s] \
+        - values (Union[Sequence[float], npty.NDArray[np.float64]]): values of the load/constraint.
+        - times (Union[Sequence[Union[int,float]], npty.NDArray[Union[np.float64, np.int64]]]): time [s] \
             corresponding to the values specified.
         - __id (Optional[int]): unique identifier for the table.
     """

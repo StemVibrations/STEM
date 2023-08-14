@@ -27,6 +27,9 @@ def set_default_steel_rail_material(ndim: int, rail_type: RailTypes) -> Structur
         - ndim (int): number of dimensions of the problem (either 2 or 3)
         - rail_type (:class:`RailTypes`): instance of the enumeration to describe the rail type
 
+    Raises:
+        - ValueError: if the rail type is not implemented
+
     Returns:
         - :class:`stem.structural_material.StructuralMaterial`
     """
@@ -48,7 +51,7 @@ def set_default_steel_rail_material(ndim: int, rail_type: RailTypes) -> Structur
             parameters["I22"] = 5.123e-06
             parameters["TORSIONAL_INERTIA"] = 3.550e-05
     else:
-        raise ValueError
+        raise ValueError(f"Rail type {rail_type} is not implemented")
 
     name = f"default_elastic_{rail_type.name}_{ndim}D"
     beam_object = EulerBeam(

@@ -13,16 +13,15 @@ class BoundaryParametersABC(ABC):
     Abstract base class for boundary parameters
     """
 
-    pass
-
     @property
     @abstractmethod
     def is_constraint(self) -> bool:
         """
         Property which indicates if boundary condition is a constraint.
-        
-        Returns:
-            - bool
+
+        Raises:
+            - Exception: abstract method is called
+
         """
         raise Exception("abstract method 'is_constraint' of boundary parameters class is called")
 
@@ -83,7 +82,7 @@ class DisplacementConstraint(BoundaryParametersABC):
         Args:
             - n_dim_model (int): The number of dimensions of the model (2 or 3)
             - n_nodes_element (int): The number of nodes per element
-            - analysis_type (stem.solver.AnalysisType): The analysis type.
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type.
 
         Raises:
             - ValueError: Displacement constraint can only be applied in mechanical or mechanical groundwater flow
@@ -124,7 +123,7 @@ class RotationConstraint(BoundaryParametersABC):
         - value (List[float]): Rotation constraint
         - value (List[Union[float, :class:`stem.table.Table`]]): Rotation value around x, y and z axis [Rad]. \
             It should be a list of either float or table for each direction. If a float is specified, the rotation is \
-            time-independent, otherwise the table specifies the amplitude of the rotation [Rad] over
+            time-independent, otherwise the table specifies the amplitude of the rotation [Rad] over \
             time [s] around each axis.
     """
 

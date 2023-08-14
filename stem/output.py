@@ -115,14 +115,15 @@ class OutputParametersABC(ABC):
     Abstract class for the definition of user output parameters (GiD, VTK, json).
     """
 
-    pass
-
     @abstractmethod
     def validate(self):
         """
         Abstract method for validating user inputs
+
+        Raises:
+            - Exception: Abstract method for validate output parameters is called
         """
-        pass
+        raise Exception("Abstract method for validate output parameters is called")
 
 
 @dataclass

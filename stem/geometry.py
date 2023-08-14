@@ -38,7 +38,7 @@ class Point(GeometricalObjectABC):
         Constructor for the point class.
 
         Args:
-            id (int): The id of the point.
+            - id (int): The id of the point.
         """
         self.__id: int = id
         self.coordinates: Sequence[float] = []

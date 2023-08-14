@@ -141,7 +141,8 @@ class Model:
 
         self.body_model_parts.append(body_model_part)
 
-    def add_load_by_coordinates(self, coordinates: Sequence[Sequence[float]], load_parameters: LoadParametersABC, name: str):
+    def add_load_by_coordinates(self, coordinates: Sequence[Sequence[float]], load_parameters: LoadParametersABC,
+                                name: str):
         """
         Adds a load to the model by giving a sequence of 3D coordinates. For a 2D model, the third coordinate is
         ignored.
@@ -496,10 +497,10 @@ class Model:
 
     def post_setup(self):
         """
-        Post setup of the model. \
-            - Synchronise the geometry. \
-            - Generate the mesh. \
-            - Validate the model. \
+        Post setup of the model.
+            - Synchronise the geometry.
+            - Generate the mesh.
+            - Validate the model.
             - Set up the stress initialisation.
 
         """
