@@ -1,13 +1,11 @@
 import json
 
-import pytest
-
 from stem.IO.kratos_additional_processes_io import KratosAdditionalProcessesIO
 from stem.additional_processes import *
 from tests.utils import TestUtils
 
 
-class KratosAdditionalProcessesIO:
+class TestKratosAdditionalProcessesIO:
 
     def test_create_additional_processes_dictionaries(self):
         """
@@ -17,7 +15,7 @@ class KratosAdditionalProcessesIO:
         # define constraints
 
         # Absorbing boundaries
-        excavation_parameters = Excavation(deactivate_soil_part=True)
+        excavation_parameters = Excavation(deactivate_body_model_part=True)
 
         # collect the part names and parameters into a dictionary
         # TODO: change later when model part is implemented

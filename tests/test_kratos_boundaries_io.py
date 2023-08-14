@@ -1,9 +1,11 @@
 import json
 
-import pytest
+import numpy as np
 
-from stem.IO.kratos_boundaries_io import KratosBoundariesIO
+from stem.IO.kratos_io import KratosIO
 from stem.boundary import *
+from stem.model import Model
+from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
 from tests.utils import TestUtils
 
 
@@ -14,20 +16,38 @@ class TestKratosBoundariesIO:
         Test the creation of the boundary condition dictionaries for the
         ProjectParameters.json file
         """
-        # define constraints
+
+        # initialise model
+        model = Model(ndim=2)
+        # define a simple square
+
+        layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+        # define soil material
+        soil_formulation = OnePhaseSoil(2, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
+        constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
+        soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
+                                     retention_parameters=SaturatedBelowPhreaticLevelLaw())
+        # define tables
+        _time = np.array([0, 1, 2, 3, 4, 5])
+
+        _value1 = np.array([0, 5, 10, 5, 0, 0])
+        table1 = Table(times=_time, values=_value1)
+
+        _value2 = np.array([0, -5, 5, -5, 0, 0])
+        table2 = Table(times=_time, values=_value2)
 
         # Displacements
         fix_displacements_parameters = DisplacementConstraint(
             active=[True, True, False],
             is_fixed=[True, True, False],
-            value=[0.0, 0.0, 0.0],
+            value=[0.0, table1, 0.0],
         )
 
         # Rotations
         fix_rotations_parameters = RotationConstraint(
             active=[False, False, True],
             is_fixed=[False, False, True],
-            value=[0.0, 0.0, 0.0],
+            value=[table2, 0.0, 0.0],
         )
 
         # Absorbing boundaries
@@ -35,38 +55,31 @@ class TestKratosBoundariesIO:
             absorbing_factors=[1.0, 1.0], virtual_thickness=1000.0
         )
 
-        # collect the part names and parameters into a dictionary
-        # TODO: change later when model part is implemented
-        all_boundary_parameters = {
-            "test_displacement_constraint":fix_displacements_parameters,
-            "test_rotation_constraint":fix_rotations_parameters,
-            "test_absorbing_boundaries":absorbing_boundaries_parameters
-        }
+        # add dummy soil layer
+        model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "dummy_soil")
+        # add loads to process model parts:
+        model.add_boundary_condition_by_geometry_ids(1, [1], fix_displacements_parameters,
+                                                     'test_displacement_constraint')
+        model.add_boundary_condition_by_geometry_ids(1, [2], fix_rotations_parameters, 'test_rotation_constraint')
+        model.add_boundary_condition_by_geometry_ids(1, [3], absorbing_boundaries_parameters,
+                                                     'test_absorbing_boundaries')
+        model.synchronise_geometry()
+        # write dictionary for the load(s)
+        kratos_io = KratosIO(ndim=model.ndim)
 
-        # initialize process dictionary
-        test_dictionary: Dict[str, Any] = {
-            "processes": {"constraints_process_list": [], "loads_process_list": []}
-        }
-
-        # write dictionary for the boundary(/ies)
-        boundaries_io = KratosBoundariesIO(domain="PorousDomain")
-        # TODO: when model part are implemented, generate file through kratos_io
-
-        for part_name, part_parameters in all_boundary_parameters.items():
-            _parameters = boundaries_io.create_boundary_condition_dict(
-                part_name=part_name, parameters=part_parameters
-            )
-            _key = "loads_process_list"
-            if part_parameters.is_constraint:
-                _key = "constraints_process_list"
-            test_dictionary["processes"][_key].append(_parameters)
+        test_dictionary = kratos_io.write_project_parameters_json(
+            model=model,
+            outputs=[],
+            mesh_file_name="test_load_parameters.mdpa",
+            materials_file_name=""
+        )
 
         # load expected dictionary from the json
-        expected_load_parameters_json = json.load(
+        expected_boundary_parameters_json = json.load(
             open("tests/test_data/expected_boundary_conditions_parameters.json")
         )
 
         # assert the objects to be equal
         TestUtils.assert_dictionary_almost_equal(
-            expected_load_parameters_json, test_dictionary
+            expected_boundary_parameters_json, test_dictionary
         )

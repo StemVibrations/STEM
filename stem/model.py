@@ -1,8 +1,8 @@
 from typing import List, Sequence, Dict, Any, Optional, Union
-from enum import Enum
-from dataclasses import dataclass
 
+import numpy.typing as npty
 import numpy as np
+
 from gmsh_utils import gmsh_IO
 
 from stem.model_part import ModelPart, BodyModelPart
@@ -10,9 +10,11 @@ from stem.soil_material import *
 from stem.structural_material import *
 from stem.boundary import *
 from stem.geometry import Geometry
-from stem.mesh import Mesh, MeshSettings
+from stem.mesh import Mesh, MeshSettings, Node
 from stem.load import *
 from stem.solver import Problem, StressInitialisationType
+from stem.utils import Utils
+from stem.plot_utils import PlotUtils
 
 
 class Model:
@@ -20,10 +22,13 @@ class Model:
     A class to represent the main model.
 
     Attributes:
-        project_parameters (dict): A dictionary containing the project parameters.
-        solver (Solver): The solver used to solve the problem.
-        body_model_parts (list): A list containing the body model parts.
-        process_model_parts (list): A list containing the process model parts.
+        - ndim (int): Number of dimensions of the model
+        - project_parameters (dict): A dictionary containing the project parameters.
+        - solver (:class:`stem.solver.Solver`): The solver used to solve the problem.
+        - geometry (Optional[:class:`stem.geometry.Geometry`]) The geometry of the whole model.
+        - body_model_parts (List[:class:`stem.model_part.BodyModelPart`]): A list containing the body model parts.
+        - process_model_parts (List[:class:`stem.model_part.ModelPart`]): A list containing the process model parts.
+        - extrusion_length (Optional[Sequence[float]]): The extrusion length in x, y and z direction
 
     """
     def __init__(self, ndim: int):
@@ -188,7 +193,13 @@ class Model:
                 :class:`stem.structural_material.StructuralMaterial`]): The material parameters of the soil layer.
             - name (str): The name of the soil layer.
 
+        Raises:
+            - ValueError: if extrusion_length is not specified.
         """
+
+        # sort coordinates in anti-clockwise order, such that elements in mesh are also in anti-clockwise order
+        if Utils.are_2d_coordinates_clockwise(coordinates):
+            coordinates = coordinates[::-1]
 
         gmsh_input = {name: {"coordinates": coordinates, "ndim": self.ndim}}
         # check if extrusion length is specified in 3D
@@ -209,6 +220,114 @@ class Model:
         body_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
 
         self.body_model_parts.append(body_model_part)
+
+    def add_load_by_coordinates(self, coordinates: Sequence[Sequence[float]], load_parameters: LoadParametersABC,
+                                name: str):
+        """
+        Adds a load to the model by giving a sequence of 3D coordinates. For a 2D model, the third coordinate is
+        ignored.
+
+        Args:
+            - coordinates (Sequence[Sequence[float]]): The coordinates of the load.
+            - load_parameters (:class:`stem.load.LoadParametersABC`): The parameters of the load.
+            - name (str): The name of the load part.
+
+        Raises:
+            - ValueError: if load_parameters is not of one of the classes PointLoad, MovingLoad, LineLoad
+                          or SurfaceLoad.
+        """
+
+        # todo add validation that load is applied on a body model part
+
+        # validation of inputs
+        self.validate_coordinates(coordinates)
+        if isinstance(load_parameters, MovingLoad):
+            self.__validate_moving_load_parameters(coordinates, load_parameters)
+
+        # elif isinstance(load_parameters, (PointLoad, LineLoad, SurfaceLoad)):
+        #     # TODO self.__validate_load_coordinates(coordinates)
+        #     pass
+
+        # create input for gmsh
+        if isinstance(load_parameters, PointLoad):
+            gmsh_input = {name: {"coordinates": coordinates, "ndim": 0}}
+        elif isinstance(load_parameters, LineLoad) or isinstance(load_parameters, MovingLoad):
+            gmsh_input = {name: {"coordinates": coordinates, "ndim": 1}}
+        elif isinstance(load_parameters, SurfaceLoad):
+            gmsh_input = {name: {"coordinates": coordinates, "ndim": 2}}
+        else:
+            raise ValueError(f'Invalid load_parameters ({load_parameters.__class__.__name__}) object'
+                             f' provided for the load {name}. Expected one of PointLoad, MovingLoad,'
+                             f' LineLoad or SurfaceLoad.')
+
+        self.gmsh_io.generate_geometry(gmsh_input, "")
+
+        # create model part
+        model_part = ModelPart(name)
+        model_part.parameters = load_parameters
+
+        # set the geometry of the model part
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
+
+        self.process_model_parts.append(model_part)
+
+    @staticmethod
+    def validate_coordinates(coordinates: Union[Sequence[Sequence[float]], npty.NDArray[np.float64]]):
+        """
+        Validates the coordinates in input.
+
+        Args:
+            - coordinates (Sequence[Sequence[float]]): The coordinates of the load.
+
+        Raises:
+            - ValueError: if coordinates is not convertible to a 2D array (i.e. a sequence of sequences)
+            - ValueError: if the number of elements (number of coordinates) is not 3.
+        """
+
+        # if is not an array, make it array!
+
+        if not isinstance(coordinates, np.ndarray):
+            coordinates = np.array(coordinates)
+
+        if len(coordinates.shape) != 2:
+            raise ValueError(f"Coordinates are not a sequence of a sequence or a 2D array.")
+
+        if coordinates.shape[1] != 3:
+            raise ValueError(f"Coordinates should be 3D but {coordinates.shape[1]} coordinates were given.")
+
+    @staticmethod
+    def __validate_moving_load_parameters(coordinates: Sequence[Sequence[float]], load_parameters: MovingLoad):
+        """
+        Validates the coordinates in input for the moving load and the trajectory (collinearity of the
+        points and if the origin is between the point).
+
+        Args:
+            - coordinates (Sequence[Sequence[float]]): The start-end coordinate of the moving load.
+            - parameters (:class:`stem.load.LoadParametersABC`): The parameters of the load.
+
+        Raises:
+            - ValueError: if moving load origin is not on trajectory
+        """
+
+        # iterate over each line constituting the trajectory
+        for ix in range(len(coordinates)-1):
+
+            # check origin is collinear to the edges of the line
+            collinear_check = Utils.is_collinear(
+                point=load_parameters.origin, start_point=coordinates[ix],end_point=coordinates[ix+1]
+            )
+            # check origin is between the edges of the line (edges included)
+            is_between_check = Utils.is_point_between_points(
+                point=load_parameters.origin, start_point=coordinates[ix], end_point=coordinates[ix+1]
+            )
+            # check if point complies
+            is_on_line = collinear_check and is_between_check
+            # exit at the first success of the test (point in the line)
+            if is_on_line:
+                return
+
+        # none of the lines contain the origin, then raise an error
+        raise ValueError(f"Origin is not in the trajectory of the moving load.")
 
     def add_boundary_condition_by_geometry_ids(self, ndim_boundary: int, geometry_ids: Sequence[int],
                                                boundary_parameters: BoundaryParametersABC, name: str):
@@ -259,6 +378,15 @@ class Model:
 
         # get the complete geometry
         self.__get_geometry_from_geo_data(self.gmsh_io.geo_data)
+
+    def set_mesh_size(self, element_size: float):
+        """
+        Set the element size to dimension [m].
+
+        Args:
+            - element_size (float): the desired element size [m].
+        """
+        self.mesh_settings.element_size = element_size
 
     def generate_mesh(self):
         """
@@ -366,6 +494,36 @@ class Model:
 
         self.synchronise_geometry()
 
+    def get_all_model_parts(self):
+        """
+        Returns both body and process model parts in the model.
+
+        Returns:
+            - all_model_parts (List[:class:`stem.model_part.ModelPart`]): list of all the model parts.
+        """
+        all_model_parts = []
+        all_model_parts.extend(self.process_model_parts)
+        all_model_parts.extend(self.body_model_parts)
+        return all_model_parts
+
+    def get_all_nodes(self):
+        """
+        Retrieve all the unique nodes in the model mesh.
+
+        Returns:
+            - node_dict (Dict[int, :class:`stem.mesh.Node`]): dictionary containing nodes id and nodes objects.
+        """
+
+        node_dict: Dict[int, Node] = {}
+        for mp in self.get_all_model_parts():
+            if mp.mesh is None:
+                raise ValueError('Geometry has not been meshed yet! Please first run the Model.generate_mesh method.')
+            for nn in mp.mesh.nodes:
+                if not nn in node_dict.keys():
+                    node_dict[nn.id] = nn
+
+        return node_dict
+
     def validate(self):
         """
         Validate the model. \
@@ -374,6 +532,28 @@ class Model:
         """
 
         self.__validate_model_part_names()
+
+    def show_geometry(self, show_volume_ids: bool = False, show_surface_ids: bool = False, show_line_ids: bool = False,
+                      show_point_ids: bool = False):
+        """
+        Show the 2D or 3D geometry in a plot.
+
+        Args:
+            - show_volume_ids (bool): Show the volume ids in the plot. (default False)
+            - show_surface_ids (bool): Show the surface ids in the plot. (default False)
+            - show_line_ids (bool): Show the line ids in the plot. (default False)
+            - show_point_ids (bool): Show the point ids in the plot. (default False)
+
+        Raises:
+            - ValueError: If the geometry is not set.
+
+        """
+        if self.geometry is None:
+            raise ValueError("Geometry must be set before showing the geometry")
+
+        PlotUtils.show_geometry(self.ndim, self.geometry, show_volume_ids, show_surface_ids, show_line_ids,
+                                show_point_ids)
+
 
     def __setup_stress_initialisation(self):
         """
@@ -397,10 +577,10 @@ class Model:
 
     def post_setup(self):
         """
-        Post setup of the model. \
-            - Synchronise the geometry. \
-            - Generate the mesh. \
-            - Validate the model. \
+        Post setup of the model.
+            - Synchronise the geometry.
+            - Generate the mesh.
+            - Validate the model.
             - Set up the stress initialisation.
 
         """

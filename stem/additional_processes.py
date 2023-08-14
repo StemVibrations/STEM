@@ -20,7 +20,7 @@ class Excavation(AdditionalProcessesParametersABC):
         - :class:`AdditionalProcessesParametersABC`
 
     Attributes:
-        - deactivate_soil_part (bool): Deactivate or not the body model part
+        - deactivate_body_model_part (bool): Deactivate or not the body model part
     """
 
-    deactivate_soil_part: bool
+    deactivate_body_model_part: bool

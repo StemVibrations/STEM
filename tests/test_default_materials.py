@@ -2,7 +2,6 @@ import json
 
 from stem.IO.kratos_material_io import KratosMaterialIO
 from stem.default_materials import DefaultMaterial
-
 from tests.utils import TestUtils
 
 

@@ -56,7 +56,7 @@
             "solver_type":      "amgcl",
             "scaling":          true,
             "tolerance":        1e-08,
-            "max_iterations":   500
+            "max_iteration":   500
         },
         "problem_domain_sub_model_part_list": [
             "BodyModelPart1"

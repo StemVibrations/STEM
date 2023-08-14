@@ -24,7 +24,6 @@ mesh_name = "geometry"
 mesh_output_dir = "./"
 
 
-
 gmsh_io = GmshIO()
 
 gmsh_io.generate_gmsh_mesh(input_points, extrusion_length, element_size, dims, name_label, mesh_name, mesh_output_dir,
