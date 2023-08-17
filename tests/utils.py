@@ -55,7 +55,10 @@ class TestUtils:
                         npt.assert_allclose(v_i, actual_i)
 
             else:
-                npt.assert_allclose(v, actual[k])
+                if v is None:
+                    assert actual[k] is None
+                else:
+                    npt.assert_allclose(v, actual[k])
 
     @staticmethod
     def assert_almost_equal_geometries(expected_geometry: Geometry, actual_geometry:Geometry):

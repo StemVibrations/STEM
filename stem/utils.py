@@ -1,6 +1,7 @@
 from typing import Sequence, Dict, Any, List, Union, Optional
 
 import numpy as np
+import numpy.typing as npt
 
 
 class Utils:
@@ -215,3 +216,28 @@ class Utils:
             - List[object]: list of unique objects
         """
         return list({id(obj): obj for obj in input_sequence}.values())
+
+
+    @staticmethod
+    def calculate_centre_of_mass(coordinates: npt.NDArray) -> npt.NDArray:
+        """
+        Calculate the centre of mass of a polygon.
+
+        Args:
+            - coordinates (npt.NDArray): coordinates of the points of a polygon
+
+        Returns:
+            - npt.NDArray: coordinates of the centre of mass
+
+        """
+
+        # calculate length of attached lines to each point
+        diff1 = np.diff(np.vstack((coordinates[-1], coordinates)), axis=0)
+        diff2 = np.diff(np.vstack((coordinates, coordinates[0])), axis=0)
+        diff3 = diff1 + diff2
+
+        # weigh for each point is the sum of the length of the attached lines
+        weights = np.sqrt(np.sum(diff3 ** 2, axis=1))
+        normalised_weights = weights / np.sum(weights)
+
+        return coordinates.T.dot(normalised_weights[:, None])

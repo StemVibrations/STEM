@@ -5,6 +5,7 @@ import numpy as np
 
 from gmsh_utils import gmsh_IO
 
+import stem.global_variables as global_variables
 from stem.model_part import ModelPart, BodyModelPart
 from stem.soil_material import *
 from stem.structural_material import *
@@ -41,87 +42,80 @@ class Model:
         self.body_model_parts: List[BodyModelPart] = []
         self.process_model_parts: List[ModelPart] = []
 
-
-    def generate_track(self, sleeper_distance: float, n_sleepers: int, rail_parameters: EulerBeam,
-                       sleeper_parameters: NodalConcentrated, rail_pad_parameters: ElasticSpringDamper):
+    def generate_straight_track(self, sleeper_distance: float, n_sleepers: int, rail_parameters: EulerBeam,
+                       sleeper_parameters: NodalConcentrated, rail_pad_parameters: ElasticSpringDamper,
+                                origin_point: np.ndarray, direction_vector: np.ndarray, name):
         """
         Generates a track geometry. With rail, rail-pads and sleepers as mass elements.
 
         Args:
-            sleeper_distance (float): distance between sleepers
-            n_sleepers (int): number of sleepers
+            - sleeper_distance (float): distance between sleepers
+            - n_sleepers (int): number of sleepers
+            - rail_parameters (EulerBeam): rail parameters
+            - sleeper_parameters (NodalConcentrated): sleeper parameters
+            - rail_pad_parameters (ElasticSpringDamper): rail pad parameters
+            - origin_point (np.ndarray): origin point of the track
+            - direction_vector (np.ndarray): direction vector of the track
 
         Returns:
+            - np.ndarray: coordinates of the sleepers, i.e. the bottom coordinates of the track
 
         """
 
-        origin_point = np.array([1, 1, 1])
-        direction_vector = np.array([1, 2, 0])
+        rail_name = f"rail_{name}"
+        sleeper_name = f"sleeper_{name}"
+        rail_pads_name = f"rail_pads_{name}"
 
         normalized_direction_vector = direction_vector / np.linalg.norm(direction_vector)
 
-        rotation_matrix = np.diag(normalized_direction_vector)
-
-        rail_length = sleeper_distance * n_sleepers
-        rail_end_coords = np.array([origin_point,
-                                    origin_point + normalized_direction_vector * rail_length])
-
-        # # rail_end_coords = np.array([rail_end_local_distance, y_local_coords, z_local_coords]).T
-        # rail_end_coords = np.array([origin_point, end_global_coordinates]).T
-
-        rail_local_distance = np.linspace(0, sleeper_distance * n_sleepers, n_sleepers + 1)
+        rail_local_distance = np.linspace(0, sleeper_distance * (n_sleepers - 1), n_sleepers)
         sleeper_local_coords = np.copy(rail_local_distance)
 
         # todo kratos allows for a 0 thickness rail pad height, however gmsh needs to deal with fragmentation,
         # so we add a small height to prevent wrong fragmentation. Investigate the possibility to reset the thickness to
         # zero after the mesh is generated
-
         rail_pad_height = 0.1
 
-        # todo transfer from local to global coordinates, currently local coordinates are used
-        # global rail coordinates
-
+        # set rail geometry
         rail_global_coords = rail_local_distance[:, None].dot(normalized_direction_vector[None, :]) + origin_point
+        rail_global_coords[:, global_variables.GRAVITY_AXIS] += rail_pad_height
 
-        rail_geo_settings = {"rail": {"coordinates": rail_global_coords, "ndim": 1}}
+        rail_geo_settings = {rail_name: {"coordinates": rail_global_coords, "ndim": 1}}
         self.gmsh_io.generate_geometry(rail_geo_settings, "")
 
-
-        # global sleeper coordinates
+        # set sleepers geometry
         sleeper_global_coords = sleeper_local_coords[:, None].dot(normalized_direction_vector[None, :]) + origin_point
-        # y coord is vertical direction
-        vertical_direction = 1
-        sleeper_global_coords[:, vertical_direction] -= rail_pad_height
 
-        sleeper_geo_settings = {"sleeper": {"coordinates": sleeper_global_coords, "ndim": 0}}
+        sleeper_geo_settings = {sleeper_name: {"coordinates": sleeper_global_coords, "ndim": 0}}
         self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
 
-        # create rail pad lines
+        # create rail pad geometries
         top_point_ids = self.gmsh_io.make_points(rail_global_coords)
         bot_point_ids = self.gmsh_io.make_points(sleeper_global_coords)
 
         rail_pad_line_ids = [self.gmsh_io.create_line([top_point_id, bot_point_id])
                              for top_point_id, bot_point_id in zip(top_point_ids, bot_point_ids)]
 
-        self.gmsh_io.add_physical_group("rail_pads", 1, rail_pad_line_ids)
+        self.gmsh_io.add_physical_group(rail_pads_name, 1, rail_pad_line_ids)
 
+        # create rail, sleeper, and rail_pad body model parts
+        rail_model_part = BodyModelPart(rail_name)
+        rail_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_name)
+        rail_model_part.material = rail_parameters
 
-        rail_model_part = BodyModelPart("rail")
-        rail_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, "rail")
+        sleeper_model_part = BodyModelPart(sleeper_name)
+        sleeper_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, sleeper_name)
+        sleeper_model_part.material = sleeper_parameters
 
-        sleeper_model_part = BodyModelPart("sleeper")
-        sleeper_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, "sleeper")
-
-        rail_pads_model_part = BodyModelPart("rail_pads")
-        rail_pads_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, "rail_pads")
+        rail_pads_model_part = BodyModelPart(rail_pads_name)
+        rail_pads_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_pads_name)
+        rail_pads_model_part.material = rail_pad_parameters
 
         self.body_model_parts.append(rail_model_part)
         self.body_model_parts.append(sleeper_model_part)
         self.body_model_parts.append(rail_pads_model_part)
 
-        a=1+1
-
-
+        return sleeper_global_coords
 
     def __del__(self):
         """
@@ -454,19 +448,15 @@ class Model:
         # add gravity load to process model parts
         self.process_model_parts.append(model_part)
 
-    def __add_gravity_load(self, gravity_value: float = -9.81, vertical_axis: int = 1):
+    def __add_gravity_load(self):
         """
         Add a gravity load to the complete model.
-
-        Args:
-            - gravity_value (float): The gravity value [m/s^2]. (default -9.81)
-            - vertical_axis (int): The vertical axis of the model. x=>0, y=>1, z=>2. (default y, 1)
 
         """
 
         # set gravity load at vertical axis
         gravity_load_values: List[float] = [0, 0, 0]
-        gravity_load_values[vertical_axis] = gravity_value
+        gravity_load_values[global_variables.GRAVITY_AXIS] = -global_variables.GRAVITY_VALUE
         gravity_load = GravityLoad(value=gravity_load_values, active=[True, True, True])
 
         # get all body model part names
@@ -554,7 +544,6 @@ class Model:
         PlotUtils.show_geometry(self.ndim, self.geometry, show_volume_ids, show_surface_ids, show_line_ids,
                                 show_point_ids)
 
-
     def __setup_stress_initialisation(self):
         """
         Set up the stress initialisation. For K0 procedure and gravity loading, a gravity load is added to the model.
@@ -594,75 +583,40 @@ class Model:
 
 if __name__ == '__main__':
 
-    # from collections.abc import Sequence
-    import numpy as np
-    from typing import get_args
-    import numpy.typing as npt
+    model = Model(2)
+
+    rail_parameters = EulerBeam(2, 1, 1, 1, 1 ,1)
+    rail_pad_parameters = ElasticSpringDamper([1,1,1], [1,1,1], [1,1,1], [1,1,1])
+    sleeper_parameters = NodalConcentrated([1,1,1], 1, [1,1,1])
+
+    origin_point = np.array([0.0, 0, 0])
+    direction_vector = np.array([1, 0, 0])
+
+    ndim = 2
+    soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
+    constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
+    soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
+                                 retention_parameters=SaturatedBelowPhreaticLevelLaw())
+    model.add_soil_layer_by_coordinates([[0, 0, 0], [7, 0, 0], [7, -3, 0], [0, -3, 0]], soil_material,
+                                        "soil")
+
+    connection_coordinates = model.generate_straight_track(0.6, 10, rail_parameters, sleeper_parameters,
+                                               rail_pad_parameters, origin_point, direction_vector,"track_1")
+
+    origin_point2 = connection_coordinates[-1]
+    # direction_vector2 = np.array([-1, -1, 0])
+    # connection_coordinates2 = model.generate_straight_track(0.6, 10, rail_parameters, sleeper_parameters,
+    #                                            rail_pad_parameters, origin_point2, direction_vector2, "track_2")
+
+    model.synchronise_geometry()
 
 
-    a= np.array([1,2,3,4])
-    b=np.array([1,2,6,4])
+    model.show_geometry(show_point_ids=True, show_line_ids=True, show_surface_ids=True, show_volume_ids=True)
 
-    np.testing.assert_array_equal(a,b)
-    c = a==b
-
-    d=1+1
+    a=1+1
+    model.gmsh_io.generate_extract_mesh(2, "track", "./",True,
+                              True)
 
 
-    def a_test(a: Union[Sequence[Sequence[int]], npt.NDArray[np.int64]]):
-
-        print(a)
-
-        b=1+1
-        pass
-
-
-    c = a_test([[1.1,2,3],[4,5,6]])
-
-    # npt.NDArray[np.float64, np.int64]
-    #
-    # npt.NDArray[np.int64]
-
-    class A:
-        def __init__(self):
-            self.a = 1
-
-    class B:
-        def __init__(self):
-            self.b = 2
-
-    # c: Union[A, B]
-
-
-    a1 = A()
-    b1 = B()
-
-
-    # tmp = isinstance(a1, Union[A, B])
-    tmp2 = isinstance(a1, (A, B))
-    # tmp3 = (isinstance(a1, A) or isinstance(a1, B))
-
-    # a = np.array([1,2,3])
-    a= ([1,2,3],[4,5,6])
-
-    # test = isinstance(a, (float))
-
-
-    b=1+1
-    # coords = np.array([(0,0,"abs"), (1,1,1)], dtype=float)
-
-    # assert coords.shape[1] == 3
-
-    #
-    # model = Model(2)
-    #
-    # rail_parameters = EulerBeam(2, 1, 1, 1, 1 ,1)
-    # rail_pad_parameters = ElasticSpringDamper([1,1,1], [1,1,1], [1,1,1], [1,1,1])
-    # sleeper_parameters = NodalConcentrated([1,1,1], 1, [1,1,1])
-    #
-    # rail_nodes = model.generate_track(0.6, 10)
-    #
-    #
-    #
     # print(rail_nodes)
 

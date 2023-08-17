@@ -2,6 +2,9 @@ from typing import List, Dict, Any, Union, Optional
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 
+import numpy as np
+
+import stem.global_variables as global_variables
 from stem.solver import AnalysisType
 from stem.table import Table
 from stem.utils import Utils
@@ -252,8 +255,16 @@ class GravityLoad(LoadParametersABC):
         - value (List[float]): Entity of the gravity acceleration in the 3 directions [m/s^2]. Should be -9.81 only in \
             the vertical direction
     """
-    active: List[bool]
-    value: List[float]
+    active: List[bool] = field(default_factory=lambda: [True, True, True])
+    value: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+
+    def __post_init__(self):
+        """
+        Adds global gravity acceleration if it is not defined
+
+        """
+        if np.allclose(self.value,[0, 0, 0]):
+            self.value[global_variables.GRAVITY_AXIS] = -global_variables.GRAVITY_VALUE
 
     @staticmethod
     def get_element_name(n_dim_model, n_nodes_element, analysis_type):
