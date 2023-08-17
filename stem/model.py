@@ -638,79 +638,18 @@ class Model:
 
         self.__setup_stress_initialisation()
 
-
-    def show_mesh(self, settings:Dict[str, Any]):
-
+    def show_mesh(self, **kwargs):
         """
         Show the mesh of the model in a matplotlib plot. only available for 2D models.
-
-        Args:
-            - settings (Dict[str, Any]):
 
         Raises:
             - NotImplementedError: when is run for 3D models
 
         """
 
-        # settings options:
-        settings_opts = list(settings.keys())
-
-        # validate inputs
-        if self.ndim == 3:
-            raise NotImplementedError("Mesh visualiser not yet implemented for 3D models.")
-
-        if not self.mesh_settings.element_size:
-            offset = self.mesh_settings.element_size / 20
-        else:
-            offset = 0.05
-
-        if "fontsize" not in settings_opts:
-            fontsize = 10
-        else:
-            fontsize = settings["fontsize"]
-
-        # np.array(y_values) + _offset
-        # Initialize figure in 3D
-        fig = plt.figure()
-
-        if self.ndim == 2:
-            ax = fig.add_subplot(111)
-            # ax = fig.add_subplot(111, projection='3d')
-
-        all_nodes = self.get_all_nodes()
-        for _id, node in all_nodes.items():
-            vertex = node.coordinates[:self.ndim]
-            plt.plot(*vertex, 'ko')
-            if "show_node_ids" in settings_opts and settings["show_node_ids"]:
-                ax.text(vertex[0] + offset, vertex[1] + offset, "$n_{" + str(_id) + "}$", color="black", fontsize=fontsize)
-
-        for mp in self.get_all_model_parts():
-            if mp.mesh.elements is not None:
-                for _id, element in mp.mesh.elements.items():
-                    vertices = [all_nodes[_id].coordinates[:self.ndim] for _id in element.node_ids]
-                    centroid = np.mean(np.array(vertices), axis=0)
-                    if len(vertices) > 2:
-                        _color = "darkblue"
-                        poly = PolyCollection([np.array(vertices)], facecolors=_color, linewidths=1, edgecolors='black',
-                                              alpha=0.35)
-                        ax.add_collection(poly)
-                    else:
-                        x_values, y_values = zip(*vertices)
-                        _color = "darkred"
-                        plt.plot(x_values, y_values, c=_color, lw=2, alpha=0.35)
-                    if "show_element_ids" in settings_opts and settings["show_element_ids"]:
-                        if len(vertices) > 2:
-                            ax.text(centroid[0], centroid[1], "$e_{"+str(_id)+"}$",
-                                    color=_color, fontsize=fontsize, fontweight='bold')
-                        else:
-                            ax.text(centroid[0] + offset, centroid[1]+ offset, "$e_{"+str(_id)+"}$",
-                                    color=_color, fontsize=fontsize, fontweight='bold')
-
-        # set x and y labels
-        ax.set_xlabel("x coordinates [m]")
-        ax.set_ylabel("y coordinates [m]")
-
-        # set equal aspect ratio to equal axes
-        ax.set_aspect('equal')
-
-        fig.show()
+        PlotUtils.show_mesh(
+            ndim=self.ndim,
+            body_model_parts=self.body_model_parts,
+            process_model_parts=self.process_model_parts,
+            **kwargs
+        )

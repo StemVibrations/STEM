@@ -1350,7 +1350,7 @@ class TestModel:
 
         pytest.raises(ValueError, model.validate)
 
-    def test_add_boundary_condition_by_geometry_ids(self,create_default_3d_soil_material: SoilMaterial):
+    def test_add_boundary_condition_by_geometry_ids(self, create_default_3d_soil_material: SoilMaterial):
         """
         Test if a boundary condition is added correctly to the model. A boundary condition is added to the model by
         specifying the geometry ids to which the boundary condition should be applied.

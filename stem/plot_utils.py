@@ -5,9 +5,10 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection, PolyCollection
 
 # import required typing classes
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Optional
 
 from stem.mesh import Mesh
+from stem.model_part import BodyModelPart, ModelPart
 
 if TYPE_CHECKING:
     from stem.geometry import Geometry, Volume, Surface
@@ -286,6 +287,83 @@ class PlotUtils:
 
             # set z label
             ax.set_zlabel("z coordinates [m]")
+
+        # set equal aspect ratio to equal axes
+        ax.set_aspect('equal')
+
+        fig.show()
+
+    @staticmethod
+    def show_mesh(ndim: int, body_model_parts: List[BodyModelPart], process_model_parts: List[ModelPart],
+                  show_node_ids: bool = False, show_element_ids: bool = False, fontsize:int=10,
+                  element_size:Optional[float]=None):
+        """
+        Show the mesh of the model in a matplotlib plot.
+
+        Args:
+            - ndim (int): Number of dimensions of the mesh. Either 2 or 3.
+            - body_model_parts (List[:class:`stem.model_part.BodyModelPart`]): list of process body model parts to plot
+            - process_model_parts (List[:class:`stem.model_part.ModelPart`]): list of process model parts to plot.
+            - show_node_ids (bool): If True, the node ids are shown in the plot.
+            - show_element_ids (bool): If True, the element ids are shown in the plot.
+            - fontsize (int): Set the dimension of the fontsize.
+            - element_size (int): dimension of the elements in the model (used to shift the text).
+        """
+        # validate inputs
+        if ndim == 3:
+            raise NotImplementedError("Mesh visualiser not yet implemented for 3D models.")
+
+        if element_size is not None:
+            offset = element_size / 20
+        else:
+            offset = 0.05
+
+        # np.array(y_values) + _offset
+        # Initialize figure in 3D
+        fig = plt.figure()
+
+        if ndim == 2:
+            ax = fig.add_subplot(111)
+            # ax = fig.add_subplot(111, projection='3d')
+
+        all_model_parts = process_model_parts + body_model_parts
+        all_nodes = {}
+        for mp in all_model_parts:
+            if mp.mesh is None:
+                raise ValueError('Geometry has not been meshed yet! Please first run the Model.generate_mesh method.')
+            all_nodes.update(mp.mesh.nodes)
+
+        for _id, node in all_nodes.items():
+            vertex = node.coordinates[:ndim]
+            plt.plot(*vertex, 'ko')
+            if show_node_ids:
+                ax.text(vertex[0] + offset, vertex[1] + offset, "$n_{" + str(_id) + "}$", color="black", fontsize=fontsize)
+
+        for mp in all_model_parts:
+            if mp.mesh.elements is not None:
+                for _id, element in mp.mesh.elements.items():
+                    vertices = [all_nodes[_id].coordinates[:ndim] for _id in element.node_ids]
+                    centroid = np.mean(np.array(vertices), axis=0)
+                    if len(vertices) > 2:
+                        _color = "darkblue"
+                        poly = PolyCollection([np.array(vertices)], facecolors=_color, linewidths=1, edgecolors='black',
+                                              alpha=0.35)
+                        ax.add_collection(poly)
+                    else:
+                        x_values, y_values = zip(*vertices)
+                        _color = "darkred"
+                        plt.plot(x_values, y_values, c=_color, lw=2, alpha=0.35)
+                    if show_element_ids:
+                        if len(vertices) > 2:
+                            ax.text(centroid[0], centroid[1], "$e_{"+str(_id)+"}$",
+                                    color=_color, fontsize=fontsize, fontweight='bold')
+                        else:
+                            ax.text(centroid[0] + offset, centroid[1]+ offset, "$e_{"+str(_id)+"}$",
+                                    color=_color, fontsize=fontsize, fontweight='bold')
+
+        # set x and y labels
+        ax.set_xlabel("x coordinates [m]")
+        ax.set_ylabel("y coordinates [m]")
 
         # set equal aspect ratio to equal axes
         ax.set_aspect('equal')
