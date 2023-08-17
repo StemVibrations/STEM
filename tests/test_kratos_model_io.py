@@ -125,8 +125,8 @@ class TestKratosModelIO:
         # create model
         model = Model(ndim)
 
-        w = 4
-        h = 1
+        w = 4 # width soil layer
+        h = 1 # height soil layer
         soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
         constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
         soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,

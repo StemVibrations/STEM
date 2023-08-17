@@ -6,9 +6,6 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection, PolyCollection
 
 # import required typing classes
 from typing import TYPE_CHECKING, List
-
-from stem.mesh import Mesh
-
 if TYPE_CHECKING:
     from stem.geometry import Geometry, Volume, Surface
 

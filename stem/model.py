@@ -350,9 +350,9 @@ class Model:
                 extracted.
 
         Returns:
-            - np.ndarray: array containing the nodes of the elements in the model_part
+            - np.ndarray[int]: array containing the nodes of the elements in the model_part
         """
-        if model_part.mesh:
+        if model_part.mesh is not None:
             return np.array([el.node_ids for el in model_part.mesh.elements.values()])
 
     def __find_matching_body_elements_for_process_model_part(
@@ -413,8 +413,8 @@ class Model:
                 body_elements_idxs = [np.where(column)[0][0] for column in bool_array_2d[:, process_elements_idxs].T]
 
                 # get the corresponding element ids
-                pmp_elements_ids_match = [pmp_element_ids[ix] for ix in process_elements_idxs]
-                body_elements_ids_match = [bmp_element_ids[ix] for ix in body_elements_idxs]
+                pmp_elements_ids_match = pmp_element_ids[process_elements_idxs]
+                body_elements_ids_match = bmp_element_ids[body_elements_idxs]
                 for id_pel, id_bel in zip(pmp_elements_ids_match, body_elements_ids_match):
                     matched_elements[process_model_part.mesh.elements[id_pel]] = bmp.mesh.elements[id_bel]
 
@@ -450,7 +450,7 @@ class Model:
             n_nodes = len(nodes_process_element)
             # append the first (n_nodes-1) elements at the back of to the list (to make a cycle)
             target_list = nodes_body_element + nodes_body_element[:(n_nodes-1)]
-            # pick only the corner nodes, the mid-point nodes related to the higher order do not matter.
+            # pick only the corner nodes, the mid-point nodes related to the higher order do not matter for quadratic elements.
             source_list = nodes_process_element[:n_nodes]
 
             if not Utils.has_matching_combination(target_list, source_list):
@@ -669,13 +669,10 @@ class Model:
         else:
             fontsize = settings["fontsize"]
 
-        # np.array(y_values) + _offset
-        # Initialize figure in 3D
         fig = plt.figure()
 
         if self.ndim == 2:
             ax = fig.add_subplot(111)
-            # ax = fig.add_subplot(111, projection='3d')
 
         all_nodes = self.get_all_nodes()
         for _id, node in all_nodes.items():
