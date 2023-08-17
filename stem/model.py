@@ -41,6 +41,7 @@ class Model:
         self.gmsh_io = gmsh_IO.GmshIO()
         self.body_model_parts: List[BodyModelPart] = []
         self.process_model_parts: List[ModelPart] = []
+        self.extrusion_length: Optional[Sequence[float]] = None
 
     def generate_straight_track(self, sleeper_distance: float, n_sleepers: int, rail_parameters: EulerBeam,
                        sleeper_parameters: NodalConcentrated, rail_pad_parameters: ElasticSpringDamper,
@@ -579,44 +580,3 @@ class Model:
         self.validate()
 
         self.__setup_stress_initialisation()
-
-
-if __name__ == '__main__':
-
-    model = Model(2)
-
-    rail_parameters = EulerBeam(2, 1, 1, 1, 1 ,1)
-    rail_pad_parameters = ElasticSpringDamper([1,1,1], [1,1,1], [1,1,1], [1,1,1])
-    sleeper_parameters = NodalConcentrated([1,1,1], 1, [1,1,1])
-
-    origin_point = np.array([0.0, 0, 0])
-    direction_vector = np.array([1, 0, 0])
-
-    ndim = 2
-    soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
-    constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
-    soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
-                                 retention_parameters=SaturatedBelowPhreaticLevelLaw())
-    model.add_soil_layer_by_coordinates([[0, 0, 0], [7, 0, 0], [7, -3, 0], [0, -3, 0]], soil_material,
-                                        "soil")
-
-    connection_coordinates = model.generate_straight_track(0.6, 10, rail_parameters, sleeper_parameters,
-                                               rail_pad_parameters, origin_point, direction_vector,"track_1")
-
-    origin_point2 = connection_coordinates[-1]
-    # direction_vector2 = np.array([-1, -1, 0])
-    # connection_coordinates2 = model.generate_straight_track(0.6, 10, rail_parameters, sleeper_parameters,
-    #                                            rail_pad_parameters, origin_point2, direction_vector2, "track_2")
-
-    model.synchronise_geometry()
-
-
-    model.show_geometry(show_point_ids=True, show_line_ids=True, show_surface_ids=True, show_volume_ids=True)
-
-    a=1+1
-    model.gmsh_io.generate_extract_mesh(2, "track", "./",True,
-                              True)
-
-
-    # print(rail_nodes)
-
