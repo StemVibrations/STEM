@@ -15,7 +15,7 @@ class KratosBoundariesIO:
     """
 
     @staticmethod
-    def __create_value_and_table(part_name:str, parameters: BoundaryParametersABC):
+    def __create_value_and_table(part_name: str, parameters: BoundaryParametersABC):
         """
         Assemble values and tables for the boundary condition from the `value` attribute of the boundary parameters.
         Tables describe if an imposed displacement/rotation is time-dependant, and values if the displacement/rotation
