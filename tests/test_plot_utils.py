@@ -3,6 +3,7 @@ import pytest
 from stem.model import Model
 from stem.soil_material import SoilMaterial, OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
 from stem.plot_utils import PlotUtils
+from stem.geometry import Point, Line
 
 # plots are not shown in the CI, but can be enabled for local testing
 SHOW_PLOTS = False
@@ -48,7 +49,8 @@ class TestPlotUtils:
                                      retention_parameters=SaturatedBelowPhreaticLevelLaw())
         return soil_material
 
-    def create_geometry_and_plot(self, ndim: int, material: SoilMaterial):
+    @staticmethod
+    def create_geometry(ndim: int, material: SoilMaterial):
         """
         Create a geometry and plots it.
 
@@ -78,8 +80,7 @@ class TestPlotUtils:
         # synchronise geometry
         model.synchronise_geometry()
 
-        # show geometry
-        PlotUtils.show_geometry(model.ndim, model.geometry, True, True, True, True)
+        return model
 
     @pytest.mark.skipif(not SHOW_PLOTS, reason="Plotting is disabled")
     def test_plot_geometry_2D(self, create_default_2d_soil_material: SoilMaterial):
@@ -92,7 +93,34 @@ class TestPlotUtils:
         """
 
         # create geometry and plot it
-        self.create_geometry_and_plot(2, create_default_2d_soil_material)
+        model = self.create_geometry(2, create_default_2d_soil_material)
+
+        # show geometry
+        PlotUtils.show_geometry(model.ndim, model.geometry, True, True, True, True)
+
+    @pytest.mark.skipif(not SHOW_PLOTS, reason="Plotting is disabled")
+    def test_plot_geometry_with_loose_lines_2D(self, create_default_2d_soil_material: SoilMaterial):
+        """
+        Test the plot of a 2D geometry, including loose lines.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+
+        """
+
+        new_points = {10: Point.create([0, 3, 0],10),
+                        11: Point.create([1, 3, 0],11)}
+        new_lines = {10: Line.create([10, 11],10)}
+
+        # create geometry and plot it
+        model = self.create_geometry(2, create_default_2d_soil_material)
+
+        # add loose line to geometry
+        model.geometry.points.update(new_points)
+        model.geometry.lines.update(new_lines)
+
+        # show geometry
+        PlotUtils.show_geometry(model.ndim, model.geometry, True, True, True, True)
 
     @pytest.mark.skipif(not SHOW_PLOTS, reason="Plotting is disabled")
     def test_plot_geometry_3D(self, create_default_3d_soil_material: SoilMaterial):
@@ -104,5 +132,33 @@ class TestPlotUtils:
 
         """
 
+        # create geometry
+        model = self.create_geometry(3, create_default_3d_soil_material)
+
+        # show geometry
+        PlotUtils.show_geometry(model.ndim, model.geometry, True, True, True, True)
+
+    @pytest.mark.skipif(not SHOW_PLOTS, reason="Plotting is disabled")
+    def test_plot_geometry_with_loose_lines_3D(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test the plot of a 2D geometry, including loose lines.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+
+        """
+
+        new_points = {100: Point.create([0, 3, 0], 100),
+                      110: Point.create([1, 3, 0], 110)}
+        new_lines = {100: Line.create([100, 110], 100)}
+
         # create geometry and plot it
-        self.create_geometry_and_plot(3, create_default_3d_soil_material)
+        model = self.create_geometry(3, create_default_3d_soil_material)
+
+        # add loose line to geometry
+        model.geometry.points.update(new_points)
+        model.geometry.lines.update(new_lines)
+
+        # show geometry
+        PlotUtils.show_geometry(model.ndim, model.geometry, True, True,
+                                True, True)
