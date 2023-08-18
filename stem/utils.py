@@ -217,11 +217,10 @@ class Utils:
         """
         return list({id(obj): obj for obj in input_sequence}.values())
 
-
     @staticmethod
     def calculate_centre_of_mass(coordinates: npt.NDArray) -> npt.NDArray:
         """
-        Calculate the centre of mass of a polygon.
+        Calculate the centre of mass of a closed polygon.
 
         Args:
             - coordinates (npt.NDArray): coordinates of the points of a polygon
@@ -230,14 +229,20 @@ class Utils:
             - npt.NDArray: coordinates of the centre of mass
 
         """
+        # add first point to the end of the array to close the polygon
+        connected_coordinates = np.vstack((coordinates[-1], coordinates))
 
         # calculate length of attached lines to each point
-        diff1 = np.diff(np.vstack((coordinates[-1], coordinates)), axis=0)
-        diff2 = np.diff(np.vstack((coordinates, coordinates[0])), axis=0)
-        diff3 = diff1 + diff2
+        diff = np.diff(connected_coordinates, axis=0)
 
-        # weigh for each point is the sum of the length of the attached lines
-        weights = np.sqrt(np.sum(diff3 ** 2, axis=1))
+        # calculate middle coordinates of each line
+        middle_coordinates = (connected_coordinates[1:] + connected_coordinates[:-1]) / 2
+
+        # calculate weights of each line, which is the length of the line
+        weights = np.sqrt(np.sum(diff ** 2, axis=1))
+
+        # normalise weights
         normalised_weights = weights / np.sum(weights)
 
-        return coordinates.T.dot(normalised_weights[:, None])
+        # centre of mass is the weighted average of the middle coordinates
+        return middle_coordinates.T.dot(normalised_weights[:, None])[:, 0]
