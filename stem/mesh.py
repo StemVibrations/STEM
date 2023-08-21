@@ -1,9 +1,5 @@
-from typing import Dict, List, Tuple, Sequence, Union, Any, Optional
+from typing import Dict, List, Sequence, Any
 from enum import Enum
-from dataclasses import dataclass
-
-import numpy as np
-import numpy.typing as npt
 
 
 class ElementShape(Enum):
@@ -83,7 +79,15 @@ class Node:
         - coordinates (Sequence[float]): node coordinates
 
     """
+
     def __init__(self, id: int, coordinates: Sequence[float]):
+        """
+        Initialize the node.
+
+        Args:
+            id (int): Node id
+            coordinates (Sequence[float]): Node coordinates
+        """
         self.id: int = id
         self.coordinates: Sequence[float] = coordinates
 
@@ -94,11 +98,20 @@ class Element:
 
     Attributes:
         - id (int): element id
-        - element_type (str): element type
+        - element_type (str): Gmsh element type
         - node_ids (Sequence[int]): node ids
 
     """
+
     def __init__(self, id: int, element_type: str, node_ids: Sequence[int]):
+        """
+        Initialize the element.
+
+        Args:
+            id (int): Element id
+            element_type (str): Gmsh-element type
+            node_ids (Sequence[int]): Node connectivities
+        """
         self.id: int = id
         self.element_type: str = element_type
         self.node_ids: Sequence[int] = node_ids
@@ -113,18 +126,42 @@ class Mesh:
 
     Attributes:
         - ndim (int): number of dimensions of the mesh
-        - nodes (List[Node]): node id followed by node coordinates in an array
-        - elements (List[Element]): element id followed by connectivities in an array
+        - nodes (List[Node]): node id followed by node coordinates in a list
+        - elements (List[Element]): element id followed by connectivities in a list
 
     """
     def __init__(self, ndim: int):
+        """
+        Initialize the mesh.
+
+        Args:
+            ndim (int): number of dimensions of the mesh
+        """
 
         self.ndim: int = ndim
         self.nodes: List[Node] = []
         self.elements: List[Element] = []
 
+    def __getattribute__(self, item: str):
+        """
+        Overrides the getattribute method of the object class.
+
+        Args:
+            - item (str): The name of the attribute.
+
+        Returns:
+            - Any: The attribute.
+
+        """
+        # Make sure that the create_mesh_from_gmsh_group method cannot be
+        # called on an initialised mesh instance
+        if item == "create_mesh_from_gmsh_group":
+            raise AttributeError(f"Cannot call class method: {item} from an initialised mesh instance.")
+        else:
+            return super().__getattribute__(item)
+
     @classmethod
-    def create_mesh_from_gmsh_group(cls, mesh_data: Dict[str, Any], group_name: str):
+    def create_mesh_from_gmsh_group(cls, mesh_data: Dict[str, Any], group_name: str) -> "Mesh":
         """
         Creates a mesh object from gmsh group
 

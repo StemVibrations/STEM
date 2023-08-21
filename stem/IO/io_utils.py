@@ -1,4 +1,4 @@
-from typing import Sequence, Dict, Any, List, Union, Optional, TYPE_CHECKING
+from typing import Sequence, Dict, Any, List, Union, Optional, Tuple
 from pathlib import Path
 import json
 from copy import deepcopy
@@ -31,7 +31,8 @@ class IOUtils:
         json.dump(dictionary, open(output_path_file, "w"), indent=4)
 
     @staticmethod
-    def create_value_and_table(part_name: str, parameters: Union["LoadParametersABC", "BoundaryParametersABC"]):
+    def create_value_and_table(part_name: str, parameters: Union["LoadParametersABC", "BoundaryParametersABC"]) \
+            -> Tuple[List[float], List[int]]:
         """
         Assemble values and tables for the boundary condition from the `value` attribute of the boundary parameters.
         If the displacement or rotation is time-dependent, a `table` is required. If the displacement or rotation is
@@ -49,13 +50,13 @@ class IOUtils:
             - ValueError: when provided parameters class doesn't implement values (e.g. AbsorbingBoundary).
 
         Returns:
-            - _value (List[Union[float, int]]): list of values for the boundary condition or load
-            - _table (List[Union[float, int, :class:`stem.table.Table`]]): list of tables for the boundary condition \
+            - _value (List[float]): list of values for the boundary condition or load
+            - _table (List[int]): list of table ids for the boundary condition \
                 or load
         """
 
-        _value: List[Union[float, int]] = []
-        _table: List[Union[float, int, Table]] = []
+        _value: List[float] = []
+        _table: List[int] = []
 
         if hasattr(parameters, "value"):
 
@@ -67,11 +68,11 @@ class IOUtils:
                         raise ValueError(f"Table id is not initialised for values in {parameters.__class__.__name__}"
                                          f" in model part: {part_name}.")
                     _table.append(vv.id)
-                    _value.append(0)
+                    _value.append(0.0)
                 # if a value is provided, the table is set to 0
                 elif isinstance(vv, (int, float)):
                     _table.append(0)
-                    _value.append(vv)
+                    _value.append(float(vv))
                 else:
                     raise ValueError(f"'value' attribute in {parameters.__class__.__name__} in model part: "
                                      f"{part_name} is neither a Table object, nor a float nor an integer.")

@@ -24,69 +24,6 @@ class KratosBoundariesIO:
         """
         self.domain = domain
 
-    # def __create_displacement_constraint_dict(
-    #     self, part_name: str, parameters: DisplacementConstraint
-    # ) -> Dict[str, Any]:
-    #     """
-    #     Creates a dictionary containing the displacement constraint parameters
-    #
-    #     Args:
-    #         - part_name (str): part name where the boundary condition is applied
-    #         - parameters (:class:`stem.boundary.DisplacementConstraint`): displacement constraint parameters object
-    #     Returns:
-    #         - Dict[str, Any]: dictionary containing the boundary parameters
-    #     """
-    #
-    #     # initialize boundary dictionary
-    #     boundary_dict: Dict[str, Any] = {
-    #         "python_module": "apply_vector_constraint_table_process",
-    #         "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
-    #         "process_name": "ApplyVectorConstraintTableProcess",
-    #         "Parameters": deepcopy(parameters.__dict__),
-    #     }
-    #
-    #     boundary_dict["Parameters"]["model_part_name"] = f"{self.domain}.{part_name}"
-    #     boundary_dict["Parameters"]["variable_name"] = "DISPLACEMENT"
-    #
-    #     # get tables and values
-    #     _value, _table = IOUtils.create_value_and_table(part_name, parameters)
-    #     boundary_dict["Parameters"]["table"] = _table
-    #     boundary_dict["Parameters"]["value"] = _value
-    #
-    #     return boundary_dict
-    #
-    # def __create_rotation_constraint_dict(
-    #     self, part_name: str, parameters: RotationConstraint
-    # ) -> Dict[str, Any]:
-    #     """
-    #     Creates a dictionary containing the rotation constraint parameters
-    #
-    #     Args:
-    #         - part_name (str): part name where the boundary condition is applied
-    #         - parameters (:class:`stem.boundary.RotationConstraint`): rotation constraint parameters object
-    #
-    #     Returns:
-    #         - Dict[str, Any]: dictionary containing the boundary parameters
-    #     """
-    #
-    #     # initialize boundary dictionary
-    #     boundary_dict: Dict[str, Any] = {
-    #         "python_module": "apply_vector_constraint_table_process",
-    #         "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
-    #         "process_name": "ApplyVectorConstraintTableProcess",
-    #         "Parameters": deepcopy(parameters.__dict__),
-    #     }
-    #
-    #     boundary_dict["Parameters"]["model_part_name"] = f"{self.domain}.{part_name}"
-    #     boundary_dict["Parameters"]["variable_name"] = "ROTATION"
-    #
-    #     # get tables and values
-    #     _value, _table = IOUtils.create_value_and_table(part_name, parameters)
-    #     boundary_dict["Parameters"]["table"] = _table
-    #     boundary_dict["Parameters"]["value"] = _value
-    #
-    #     return boundary_dict
-
     def __create_absorbing_boundary_dict(
         self, part_name: str, parameters: AbsorbingBoundary
     ) -> Dict[str, Any]:

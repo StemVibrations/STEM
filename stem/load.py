@@ -20,7 +20,7 @@ class LoadParametersABC(ABC):
 
         Args:
             - n_dim_model (int): The number of dimensions of the model
-            - n_nodes_element (int): The number of nodes per element
+            - n_nodes_element (int): The number of nodes per condition-element
             - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type.
 
         Raises:
@@ -56,7 +56,7 @@ class PointLoad(LoadParametersABC):
 
         Args:
             - n_dim_model (int): The number of dimensions of the model (2 or 3)
-            - n_nodes_element (int): The number of nodes per element (1)
+            - n_nodes_element (int): The number of nodes per condition-element (1)
             - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type
 
         Raises:
@@ -100,11 +100,11 @@ class LineLoad(LoadParametersABC):
     @staticmethod
     def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
         """
-        Static method to get the element name for a line load. Line load does not have a name.
+        Static method to get the element name for a line load.
 
         Args:
             - n_dim_model (int): The number of dimensions of the model (2 or 3)
-            - n_nodes_element (int): The number of nodes per element (2, 3)
+            - n_nodes_element (int): The number of nodes per condition-element (2, 3)
             - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type
 
         Raises:
@@ -157,7 +157,7 @@ class SurfaceLoad(LoadParametersABC):
 
         Args:
             - n_dim_model (int): The number of dimensions of the model (3)
-            - n_nodes_element (int): The number of nodes per element
+            - n_nodes_element (int): The number of nodes per condition-element
             - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type
 
         Raises:
@@ -212,12 +212,10 @@ class MovingLoad(LoadParametersABC):
 
         Args:
             - n_dim_model (int): The number of dimensions of the model (2 or 3)
-            - n_nodes_element (int): The number of nodes per element (2, 3)
+            - n_nodes_element (int): The number of nodes per condition-element (2, 3)
             - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type
 
         Raises:
-            - ValueError: If the number of dimensions is not 2 or 3
-            - ValueError: If the number of nodes per element is not 2 or 3
             - ValueError: If the analysis type is not mechanical or mechanical groundwater flow
 
         Returns:
@@ -269,13 +267,11 @@ class GravityLoad(LoadParametersABC):
             - ValueError: If the analysis type is not mechanical or mechanical groundwater flow
 
         Returns:
-            - None: Gravity load doesn't need an element name
+            - None: Gravity load does not have a name
         """
 
-        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
-            # gravity load doesnt need an element name
-            element_name = None
-        else:
-            raise ValueError("Gravity load can only be applied in mechanical or mechanical groundwater flow analysis")
+        if analysis_type != AnalysisType.MECHANICAL_GROUNDWATER_FLOW and analysis_type != AnalysisType.MECHANICAL:
+            raise ValueError("Point load can only be applied in mechanical or mechanical groundwater flow analysis")
 
-        return element_name
+        # Gravity load does not have a name
+        return None

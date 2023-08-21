@@ -43,6 +43,23 @@ class Point(GeometricalObjectABC):
         self.__id: int = id
         self.coordinates: Sequence[float] = []
 
+    def __getattribute__(self, item: str):
+        """
+        Overrides the getattribute method of the object class.
+
+        Args:
+            - item (str): The name of the attribute.
+
+        Returns:
+            - Any: The attribute.
+
+        """
+        # make sure that the create method cannot be called on an initialised point instance
+        if item == "create":
+            raise AttributeError("Cannot call create method on an initialised point instance.")
+        else:
+            return super().__getattribute__(item)
+
     @classmethod
     def create(cls, coordinates: Sequence[float], id: int):
         """
@@ -71,17 +88,6 @@ class Point(GeometricalObjectABC):
         """
         return self.__id
 
-    @id.setter
-    def id(self, value: int):
-        """
-        Setter for the id of the point.
-
-        Args:
-            - value (int): The id of the point.
-
-        """
-        self.__id = value
-
 
 class Line(GeometricalObjectABC):
     """
@@ -105,6 +111,23 @@ class Line(GeometricalObjectABC):
         """
         self.__id: int = id
         self.point_ids: Sequence[int] = []
+
+    def __getattribute__(self, item: str):
+        """
+        Overrides the getattribute method of the object class.
+
+        Args:
+            - item (str): The name of the attribute.
+
+        Returns:
+            - Any: The attribute.
+
+        """
+        # make sure that the create method cannot be called on an initialised line instance
+        if item == "create":
+            raise AttributeError("Cannot call create method on an initialised line instance.")
+        else:
+            return super().__getattribute__(item)
 
     @classmethod
     def create(cls, point_ids: Sequence[int], id: int):
@@ -134,17 +157,6 @@ class Line(GeometricalObjectABC):
         """
         return self.__id
 
-    @id.setter
-    def id(self, value: int):
-        """
-        Setter for the id of the line.
-
-        Args:
-            - value (int): The id of the line.
-
-        """
-        self.__id = value
-
 
 class Surface(GeometricalObjectABC):
     """
@@ -162,6 +174,23 @@ class Surface(GeometricalObjectABC):
         self.__id: int = id
         self.line_ids: Sequence[int] = []
 
+    def __getattribute__(self, item: str):
+        """
+        Overrides the getattribute method of the object class.
+
+        Args:
+            - item (str): The name of the attribute.
+
+        Returns:
+            - Any: The attribute.
+
+        """
+        # make sure that the create method cannot be called on an initialised surface instance
+        if item == "create":
+            raise AttributeError("Cannot call create method on an initialised surface instance.")
+        else:
+            return super().__getattribute__(item)
+
     @property
     def id(self) -> int:
         """
@@ -172,25 +201,14 @@ class Surface(GeometricalObjectABC):
         """
         return self.__id
 
-    @id.setter
-    def id(self, value: int):
-        """
-        Setter for the id of the surface.
-
-        Args:
-            - value (int): The id of the surface.
-
-        """
-        self.__id = value
-
     @classmethod
     def create(cls, line_ids: Sequence[int], id: int):
         """
         Creates a surface object from a list of line ids and a surface id.
 
         Args:
-            - line_ids (Sequence[int]): A sequence of three or more integers representing the ids of the lines that make\
-                up the surface.
+            - line_ids (Sequence[int]): A sequence of three or more integers representing the ids of the lines that\
+              make up the surface.
             - id (int): The id of the surface.
 
         Returns:
@@ -218,6 +236,23 @@ class Volume(GeometricalObjectABC):
         self.__id: int = id
         self.surface_ids: Sequence[int] = []
 
+    def __getattribute__(self, item: str):
+        """
+        Overrides the getattribute method of the object class.
+
+        Args:
+            - item (str): The name of the attribute.
+
+        Returns:
+            - Any: The attribute.
+
+        """
+        # make sure that the create method cannot be called on an initialised volume instance
+        if item == "create":
+            raise AttributeError("Cannot call create method on an initialised volume instance.")
+        else:
+            return super().__getattribute__(item)
+
     @property
     def id(self) -> int:
         """
@@ -227,17 +262,6 @@ class Volume(GeometricalObjectABC):
             - int: The id of the volume.
         """
         return self.__id
-
-    @id.setter
-    def id(self, value: int):
-        """
-        Setter for the id of the volume.
-
-        Args:
-            - value (int): The id of the volume.
-
-        """
-        self.__id = value
 
     @classmethod
     def create(cls, surface_ids: Sequence[int], id: int):
@@ -276,6 +300,24 @@ class Geometry:
         self.surfaces: Dict[int, Surface] = surfaces
         self.volumes: Dict[int, Volume] = volumes
 
+    def __getattribute__(self, item: str):
+        """
+        Overrides the getattribute method of the object class.
+
+        Args:
+            - item (str): The name of the attribute.
+
+        Returns:
+            - Any: The attribute.
+
+        """
+        # Make sure that the create_geometry_from_geo_data method  and the create_geometry_from_gmsh_group cannot be
+        # called on an initialised geometry instance
+        if item == "create_geometry_from_geo_data" or item == "create_geometry_from_gmsh_group":
+            raise AttributeError(f"Cannot call class method: {item} from an initialised geometry instance.")
+        else:
+            return super().__getattribute__(item)
+
     @staticmethod
     def __get_unique_entities_by_ids(entities: Sequence[GeometricalObjectABC]):
         """
@@ -285,7 +327,7 @@ class Geometry:
             - entities (Sequence[:class:`GeometricalObjectABC`]): An Sequence of geometrical entities.
 
         Returns:
-            - Sequence[:class:`GeometricalObjectABC`]: A sequence of unique geometrical entities entities.
+            - Sequence[:class:`GeometricalObjectABC`]: A sequence of unique geometrical entities.
 
         """
         unique_entity_ids = []
@@ -310,10 +352,10 @@ class Geometry:
         """
 
         # create point
-        return Point.create(geo_data["points"][point_id],point_id)
+        return Point.create(geo_data["points"][point_id], point_id)
 
     @staticmethod
-    def __set_line(geo_data: Dict[str,Any], line_id: int):
+    def __set_line(geo_data: Dict[str, Any], line_id: int):
         """
         Creates a line from the geometry data.
 
@@ -364,7 +406,7 @@ class Geometry:
         return surface, lines, points
 
     @classmethod
-    def create_geometry_from_geo_data(cls, geo_data: Dict[str,Any]):
+    def create_geometry_from_geo_data(cls, geo_data: Dict[str, Any]):
         """
         Creates the geometry from gmsh geo_data
 
@@ -383,7 +425,7 @@ class Geometry:
 
         # add volumes to geometry
         for key, value in geo_data["volumes"].items():
-            volumes[key] = Volume.create(value,key)
+            volumes[key] = Volume.create(value, key)
 
         # add surfaces to geometry
         for key, value in geo_data["surfaces"].items():
@@ -463,3 +505,12 @@ class Geometry:
                 volumes[id] = volume
 
         return cls(points, lines, surfaces, volumes)
+
+
+if __name__ == "__main__":
+
+    point = Point.create([0,0,0],1)
+
+    point2 = point.create([0,0,0],2)
+    a =point.__getattribute__('create')
+    a=1+1

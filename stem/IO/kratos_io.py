@@ -33,6 +33,7 @@ FORMAT_FLOAT_LONG: str = " {:.10f}"
 # format for floats (short)
 FORMAT_FLOAT_SHORT: str = " {:.4f}"
 
+
 class KratosIO:
     """
     Class containing methods to write mesh and problem data to Kratos
@@ -62,9 +63,7 @@ class KratosIO:
         self.loads_io = KratosLoadsIO(DOMAIN)
         self.boundaries_io = KratosBoundariesIO(DOMAIN)
         self.outputs_io = KratosOutputsIO(DOMAIN)
-        # self.model_io = KratosModelIO(self.ndim, DOMAIN)
         self.solver_io = KratosSolverIO(self.ndim, DOMAIN)
-
 
     @staticmethod
     def __is_body_model_part(model_part: ModelPart):
@@ -80,7 +79,7 @@ class KratosIO:
         return isinstance(model_part, BodyModelPart)
 
     @staticmethod
-    def __check_if_process_writes_conditions(process_model_part: ModelPart):
+    def __check_if_process_writes_conditions(process_model_part: ModelPart) -> bool:
         """
         Check whether process needs to write condition elements. For example PointLoad,
         Excavation and DisplacementConstraint do not need condition elements.
@@ -91,49 +90,40 @@ class KratosIO:
         Returns:
             - bool: whether the process model part writes condition elements
         """
-        return isinstance(
-            process_model_part.parameters,
-            (LineLoad, MovingLoad, SurfaceLoad, AbsorbingBoundary),
-        )
+        return isinstance(process_model_part.parameters, (LineLoad, MovingLoad, SurfaceLoad, AbsorbingBoundary))
 
     def __initialise_process_model_part_ids(self, model: Model):
         """
-        Initialise or reset the process model part ids if some are initialised and some are not.
+        Resets the process model part ids.
 
         Args:
             - model (:class:`stem.model.Model`): the model object containing the process model parts.
 
         """
-        # some process model parts are never initialised because they do not write conditions.
-        # if some process model parts, there's no need for initialisation
-        if all([pmp.id is None for pmp in model.process_model_parts]):
-            cc = 0
-            for pmp in model.process_model_parts:
-                # if the process writes condition add an id
-                if self.__check_if_process_writes_conditions(pmp):
-                    cc += 1
-                    pmp.id = cc
+
+        # reset all condition ids
+        new_id = 0
+        for pmp in model.process_model_parts:
+            # if the process writes condition add an id
+            if self.__check_if_process_writes_conditions(pmp):
+                new_id += 1
+                pmp.id = new_id
 
     @staticmethod
     def __initialise_body_model_part_ids(model: Model):
         """
-        Initialise or reset the body model part ids if some are initialised and some are not.
+        Resets the body model part ids.
 
         Args:
             - model (:class:`stem.model.Model`): the model object containing the body model parts.
 
         """
-
-        # differently from process model parts, all the body model parts need to have an ids.
-        _check_not_initialised = [bmp.id is None for bmp in model.body_model_parts]
-
-        if any(_check_not_initialised):
-            # some or all ids are missing, therefore all ids are re-initialised
-            for ix, bmp in enumerate(model.body_model_parts):
-                bmp.id = ix + 1
+        # reset all body model part ids
+        for ix, bmp in enumerate(model.body_model_parts):
+            bmp.id = ix + 1
 
     @staticmethod
-    def __get_unique_tables_process_model_part(process_model_part:ModelPart):
+    def __get_unique_tables_process_model_part(process_model_part: ModelPart) -> List[Table]:
         """
         Retrieve all the memory-unique tables in the model part.
 
@@ -154,7 +144,7 @@ class KratosIO:
 
         return Utils.get_unique_objects(tables)
 
-    def __get_unique_tables(self, model:Model):
+    def __get_unique_tables(self, model: Model) -> List[Table]:
         """
         Retrieve all the memory-unique tables in the model.
 
@@ -171,7 +161,7 @@ class KratosIO:
 
         return Utils.get_unique_objects(tables)
 
-    def __initialise_table_ids(self, model:Model):
+    def __initialise_table_ids(self, model: Model):
         """
         Initialise or reset the id of the tables contained in the load parameters objects.
 
@@ -185,40 +175,50 @@ class KratosIO:
         for ix, table in enumerate(unique_tables):
             table.id = ix + 1
 
-    def initialise_model_ids(self, model):
+    def initialise_model_ids(self, model: Model):
+        """
+        Initialise the ids of the model parts and tables.
+
+        Args:
+            model (:class:`stem.model.Model`): the model object containing the model parts and tables.
+
+        """
 
         self.__initialise_table_ids(model)
         self.__initialise_process_model_part_ids(model)
         self.__initialise_body_model_part_ids(model)
 
     @staticmethod
-    def __write_submodel_block(
-        buffer: List[str],
-        block_name: str,
-        block_entities: Optional[Sequence[int]] = None,
-    ):
+    def __write_sub_model_part_block(buffer: List[str], block_name: str,
+                                     block_entities: Optional[Sequence[int]] = None) -> List[str]:
         """
-        Helping function to write the submodel blocks for the model parts.
+        Helping function to write the sub-model part blocks for the model parts.
 
         Args:
-            - buffer (List[str]): buffer containing the submodelpart info to be updated with the current block.
+            - buffer (List[str]): buffer containing the sub-model part info to be updated with the current block.
             - block_name (str): block name, it can be one of Tables, Nodes, Elements or Conditions.
-            - block_entities (Optional[Sequence[int]]): ids to be written to the block. If None, an empty block is written.
+            - block_entities (Optional[Sequence[int]]): ids to be written to the block. If None, an empty block is
+            written.
 
         Returns:
             - buffer (List[str]): updated buffer with info of the current block.
         """
 
-        # check if mesh is initialised
+        # define indentation
         space = " " * INDENTATION
+
+        # append header
         buffer.append(f"{space}Begin SubModelPart{block_name}")
+        # write block entities
         if block_entities is not None:
             fmt = f"{space}{FORMAT_INTEGER}"
             buffer += [fmt.format(entity) for entity in block_entities]
+
+        # append footer
         buffer.append(f"{space}End SubModelPart{block_name}")
         return buffer
 
-    def write_submodelpart_body_model_part(self, body_model_part: BodyModelPart):
+    def write_submodelpart_body_model_part(self, body_model_part: BodyModelPart) -> List[str]:
         """
         Writes the submodelpart block for a body model part (physical parts with materials).
 
@@ -248,25 +248,27 @@ class KratosIO:
 
         # initialise block
         block_text = ["", f"Begin SubModelPart {body_model_part.name}"]
-        block_text = self.__write_submodel_block(
+
+        # write tables
+        block_text = self.__write_sub_model_part_block(
             block_text, block_name="Tables", block_entities=None
         )
 
         # write nodes
         entities = [node.id for node in body_model_part.mesh.nodes]
-        block_text = self.__write_submodel_block(
+        block_text = self.__write_sub_model_part_block(
             block_text, block_name="Nodes", block_entities=entities
         )
 
         # write elements
         entities = [el.id for el in body_model_part.mesh.elements]
-        block_text = self.__write_submodel_block(
+        block_text = self.__write_sub_model_part_block(
             block_text, block_name="Elements", block_entities=entities
         )
         block_text += [f"End SubModelPart", ""]
         return block_text
 
-    def write_submodelpart_process_model_part(self, process_model_part: ModelPart):
+    def write_submodelpart_process_model_part(self, process_model_part: ModelPart) -> List[str]:
         """
         Writes the submodelpart block for a process model part (loads, boundary conditions or
         additional processes such as excavations).
@@ -299,23 +301,24 @@ class KratosIO:
         # initialise block
         block_text = ["", f"Begin SubModelPart {process_model_part.name}"]
 
+        # write tables
         entities = [table.id for table in self.__get_unique_tables_process_model_part(process_model_part)]
-        block_text = self.__write_submodel_block(
+        block_text = self.__write_sub_model_part_block(
             block_text, block_name="Tables", block_entities=entities
         )
 
-        entities = [node.id for node in process_model_part.mesh.nodes]
         # write nodes
-        block_text = self.__write_submodel_block(
+        entities = [node.id for node in process_model_part.mesh.nodes]
+        block_text = self.__write_sub_model_part_block(
             block_text, block_name="Nodes", block_entities=entities
         )
 
-        # write conditions if the process has written condition elements above!
-        if (process_model_part.mesh.elements is not None) and self.__check_if_process_writes_conditions(process_model_part):
-            # check if part contains elements
+        # write conditions if the process contains condition elements
+        if ((process_model_part.mesh.elements is not None) and
+                self.__check_if_process_writes_conditions(process_model_part)):
+            # write conditions
             entities = [el.id for el in process_model_part.mesh.elements]
-            # model part is process model part and
-            block_text = self.__write_submodel_block(
+            block_text = self.__write_sub_model_part_block(
                 block_text, block_name="Conditions", block_entities=entities
             )
 
@@ -323,7 +326,7 @@ class KratosIO:
         return block_text
 
     @staticmethod
-    def __write_element_line(mat_id: int, element: Element):
+    def __write_element_line(mat_id: int, element: Element) -> str:
         """
         Writes an element to the mdpa format for Kratos
 
@@ -347,7 +350,7 @@ class KratosIO:
         return line
 
     @staticmethod
-    def __write_node_line(node: Node):
+    def __write_node_line(node: Node) -> str:
         """
         Writes a node to the mdpa format for Kratos
 
@@ -369,7 +372,7 @@ class KratosIO:
         return line
 
     @staticmethod
-    def __write_table_line(time: float, value: float):
+    def __write_table_line(time: float, value: float) -> str:
         """
         Write the line for a Kratos table.
 
@@ -378,7 +381,7 @@ class KratosIO:
             - value (float): value at the j-th line of the table
 
         Returns:
-            - str: string corresponding to a line in a table for Kratos.
+            - str: string corresponding to the j-th line in a table for Kratos.
         """
         # simplify space syntax
         space = " " * INDENTATION
@@ -387,12 +390,15 @@ class KratosIO:
         _fmt = f"{space}{FORMAT_FLOAT_SHORT}{space}{FORMAT_FLOAT_SHORT}"
         return _fmt.format(time, value)
 
-    def __write_table_block(self, table: Table):
+    def __write_table_block(self, table: Table) -> List[str]:
         """
         Writes a table to the mdpa format for Kratos.
 
         Args:
             - table (:class:`stem.table.Table`): table object to write to Kratos.
+
+        Raises:
+            - ValueError: if table id is not initialised.
 
         Returns:
             - block_text (List[str]): list of strings for the table. Each element is a line in the mdpa file.
@@ -414,7 +420,7 @@ class KratosIO:
         return block_text
 
     @staticmethod
-    def __map_gmsh_element_to_kratos(model: Model, model_part: ModelPart):
+    def __map_gmsh_element_to_kratos(model: Model, model_part: ModelPart) -> str:
         """
         Returns the corresponding element type based on the analysis type, the model part (condition or body)
         and type of element (e.g. rod vs beam or line load vs moving load).
@@ -447,7 +453,7 @@ class KratosIO:
             raise ValueError(
                 f"Model part {model_part.name} has not been meshed."
                 f"Before creating the mdpa file, the model part needs to be meshed."
-                f"Please run Model.mesh_"
+                f"Please run Model.generate_mesh()"
             )
 
         # check unique_elements
@@ -476,9 +482,28 @@ class KratosIO:
 
         return element_name
 
-    def write_elements_body_model_part(
-        self, body_model_part: BodyModelPart, mat_id: int, kratos_element_type: str
-    ):
+    @staticmethod
+    def __check_if_mesh_is_present_in_model_part(model_part: ModelPart):
+        """
+        Check if the mesh is present in the model part.
+
+        Args:
+            - model_part (:class:`stem.model_part.ModelPart`): the model part
+
+        Raises:
+            - ValueError: if mesh not initialised first
+
+        """
+        # check if mesh is initialised
+        if model_part.mesh is None:
+            raise ValueError(
+                f"Model part {model_part.name} has not been meshed."
+                f"Before creating the mdpa file, the model part needs to be meshed."
+                f"Please run Model.generate_mesh()"
+            )
+
+    def write_elements_body_model_part(self, body_model_part: BodyModelPart, mat_id: int, kratos_element_type: str) \
+            -> List[str]:
         """
         Writes the elements of the body model part to the mdpa file
 
@@ -489,7 +514,6 @@ class KratosIO:
 
         Raises:
             - ValueError: if model part is not a body model part
-            - ValueError: if mesh not initialised first
 
         Returns:
             - block_text (List[str]): list of strings for the elements of the body model part. \
@@ -501,13 +525,8 @@ class KratosIO:
                 f"Model part {body_model_part.name} is not a body model part!"
             )
 
-        # check if mesh is initialised
-        if body_model_part.mesh is None:
-            raise ValueError(
-                f"Model part {body_model_part.name} has not been meshed."
-                f"Before creating the mdpa file, the model part needs to be meshed."
-                f"Please run Model.generate_mesh()"
-            )
+        # validate if mesh is present
+        self.__check_if_mesh_is_present_in_model_part(body_model_part)
 
         # initialise block
         block_text = ["", f"Begin Elements {kratos_element_type}"]
@@ -520,9 +539,8 @@ class KratosIO:
         block_text += [f"End Elements", ""]
         return block_text
 
-    def write_conditions_process_model_part(
-        self, process_model_part: ModelPart, mat_id: int, kratos_element_type: str
-    ):
+    def write_conditions_process_model_part(self, process_model_part: ModelPart, mat_id: int,
+                                            kratos_element_type: str) -> List[str]:
         """
         Writes the conditions of the process model part to the mdpa file.
 
@@ -545,19 +563,12 @@ class KratosIO:
                 f"Model part {process_model_part.name} is not a process model part!"
             )
 
-        # check if mesh is initialised
-        if process_model_part.mesh is None:
-            raise ValueError(
-                f"Model part {process_model_part.name} has not been meshed."
-                f"Before creating the mdpa file, the model part needs to be meshed."
-                f"Please run Model.generate_mesh()"
-            )
+        # validate if mesh is present
+        self.__check_if_mesh_is_present_in_model_part(process_model_part)
 
         # no elements to write to conditions or process doesn't write condition elements
-        if (
-            process_model_part.mesh.elements is None
-            or not self.__check_if_process_writes_conditions(process_model_part)
-        ):
+        if (process_model_part.mesh.elements is None
+                or not self.__check_if_process_writes_conditions(process_model_part)):
             block_text = []
         else:
             block_text = ["", f"Begin Conditions {kratos_element_type}"]
@@ -567,7 +578,7 @@ class KratosIO:
             block_text += [f"End Conditions", ""]
         return block_text
 
-    def __write_all_nodes(self, model):
+    def __write_all_nodes(self, model: Model) -> List[str]:
         """
         Writes nodes to mdpa format.
 
@@ -587,7 +598,7 @@ class KratosIO:
         block_text += ["End Nodes", ""]
         return block_text
 
-    def __write_all_tables(self, model):
+    def __write_all_tables(self, model: Model) -> List[str]:
         """
         Writes tables to mdpa format.
 
@@ -597,42 +608,39 @@ class KratosIO:
         Returns:
             - block_text (List[str]): list of strings for the mdpa file. Each element is a line in the mdpa file.
         """
-        unique_tables = self.__get_unique_tables(model)
-        # sort by key
 
+        unique_tables = self.__get_unique_tables(model)
         block_text = []
         for table in unique_tables:
             block_text.extend(self.__write_table_block(table))
         return block_text
 
     @staticmethod
-    def __write_property_ids(model: Model):
+    def __write_property_ids(model: Model) -> List[str]:
         """
         Writes the block initialising the material ids (properties).
 
         Args:
-            - model (:class:`stem.model.Model`): the model object containing the info on the materials.
+            - model (:class:`stem.model.Model`): the model object containing the info of the materials.
 
         Returns:
             - block_text (List[str]): list of strings for the mdpa file. Each element is a line in the mdpa file.
         """
         # get the unique ids in material and conditions
-        ids_to_write = list(
-            set([mp.id for mp in model.get_all_model_parts() if mp.id is not None])
-        )
-        # get the unique ids and write properties
+        ids_to_write = list(set([mp.id for mp in model.get_all_model_parts() if mp.id is not None]))
 
+        # get the unique ids and write properties
         block_text = []
         for _id in np.sort(ids_to_write):
             block_text.extend(["", f"Begin Properties {_id}", "End Properties", ""])
         return block_text
 
-    def __write_elements_model(self, model: Model):
+    def __write_elements_model(self, model: Model) -> List[str]:
         """
         Returns the mdpa block related to elements.
 
         Args:
-            - model (:class:`stem.model.Model`): the model object containing the info on the elements.
+            - model (:class:`stem.model.Model`): the model object containing the info of the elements.
 
         Raises:
             - ValueError: if id of body model part is not initialised.
@@ -659,12 +667,12 @@ class KratosIO:
             )
         return block_text
 
-    def __write_conditions_model(self, model: Model):
+    def __write_conditions_model(self, model: Model) -> List[str]:
         """
         Returns the mdpa block related to conditions.
 
         Args:
-            - model (:class:`stem.model.Model`): the model object containing the info on the conditions.
+            - model (:class:`stem.model.Model`): the model object containing the info of the conditions.
 
         Raises:
             - ValueError: if id of process model part is not initialised.
@@ -694,12 +702,12 @@ class KratosIO:
             )
         return block_text
 
-    def __write_submodel_parts(self, model: Model):
+    def __write_submodel_parts(self, model: Model) -> List[str]:
         """
         Returns the mdpa block related to the submodel parts of process and body model parts.
 
         Args:
-            - model (:class:`stem.model.Model`): the model object containing the info on the conditions.
+            - model (:class:`stem.model.Model`): the model object containing the info of the conditions.
 
         Returns:
             - block_text (List[str]): list of strings for the mdpa file. Each element is a line in the mdpa file.
@@ -714,15 +722,12 @@ class KratosIO:
 
         return block_text
 
-    def write_mdpa_text(self, model: Model):
+    def write_mdpa_text(self, model: Model) -> List[str]:
         """
         Returns the  mesh data to mdpa format as list of strings representing each a line in the mdpa file.
 
         Args:
-            - model (:class:`stem.model.Model`): The model object containing all the required info on the \
-                materials.
-            - mesh_file_name (str): The name of the mesh file to store the mdpa file.
-            - output_folder (str): folder to store the project parameters file. Defaults to the working directory.
+            - model (:class:`stem.model.Model`): The model object containing all the required info of the model parts.
 
         Returns:
             - block_text (List[str]): list of strings for the mdpa file. Each element is a line in the mdpa file.
@@ -753,8 +758,7 @@ class KratosIO:
 
         return block_text
 
-
-    def write_mesh_to_mdpa(self, model: Model, mesh_file_name: str, output_folder="./"):
+    def write_mesh_to_mdpa(self, model: Model, mesh_file_name: str, output_folder="./") -> List[str]:
         """
         Saves mesh data to mdpa file.
 
@@ -785,7 +789,7 @@ class KratosIO:
         return output_formatted_txt
 
     def write_material_parameters_json(self, model: Model, materials_file_name: str = "MaterialParameters.json",
-                                       output_folder: str = "./"):
+                                       output_folder: str = "./") -> Dict[str, Any]:
         """
         Writes the material parameters to json format for Kratos.
 
@@ -830,9 +834,8 @@ class KratosIO:
 
         return materials_dict
 
-    def __create_solver_settings_dictionary(
-        self, model: Model, mesh_file_name: str, materials_file_name: str
-    ):
+    def __create_solver_settings_dictionary(self, model: Model, mesh_file_name: str, materials_file_name: str) \
+            -> Dict[str, Any]:
         """
         Creates a dictionary containing the solver settings.
 
@@ -862,7 +865,7 @@ class KratosIO:
             model.get_all_model_parts(),
         )
 
-    def __create_output_process_dictionary(self, outputs: Optional[List[Output]] = None):
+    def __create_output_process_dictionary(self, outputs: Optional[List[Output]] = None) -> Dict[str, Any]:
         """
         Creates a dictionary containing the output settings.
 
@@ -878,7 +881,7 @@ class KratosIO:
         else:
             return self.outputs_io.create_output_process_dictionary(outputs=outputs)
 
-    def __create_loads_and_boundary_conditions_dictionary(self, model: Model):
+    def __create_loads_and_boundary_conditions_dictionary(self, model: Model) -> Dict[str, Any]:
         """
         Creates a dictionary containing the loads and boundary conditions.
 
@@ -917,7 +920,7 @@ class KratosIO:
 
     def write_project_parameters_json(self, model: Model, outputs: List[Output], mesh_file_name: str,
                                       materials_file_name: str, project_file_name: str = "ProjectParameters.json",
-                                      output_folder: str = "./"):
+                                      output_folder: str = "./") -> Dict[str, Any]:
         """
         Writes project parameters to json file
 
