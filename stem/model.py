@@ -45,18 +45,18 @@ class Model:
 
     def generate_straight_track(self, sleeper_distance: float, n_sleepers: int, rail_parameters: EulerBeam,
                        sleeper_parameters: NodalConcentrated, rail_pad_parameters: ElasticSpringDamper,
-                                origin_point: np.ndarray, direction_vector: np.ndarray, name):
+                                origin_point: Sequence[float], direction_vector: Sequence[float], name):
         """
         Generates a track geometry. With rail, rail-pads and sleepers as mass elements.
 
         Args:
             - sleeper_distance (float): distance between sleepers
             - n_sleepers (int): number of sleepers
-            - rail_parameters (EulerBeam): rail parameters
-            - sleeper_parameters (NodalConcentrated): sleeper parameters
-            - rail_pad_parameters (ElasticSpringDamper): rail pad parameters
-            - origin_point (np.ndarray): origin point of the track
-            - direction_vector (np.ndarray): direction vector of the track
+            - rail_parameters (:class:`stem.structural_material.EulerBeam`): rail parameters
+            - sleeper_parameters (:class:`stem.structural_material.NodalConcentrated`): sleeper parameters
+            - rail_pad_parameters (:class:`stem.structural_material.ElasticSpringDamper`): rail pad parameters
+            - origin_point (Sequence[float]): origin point of the track
+            - direction_vector (Sequence[float]): direction vector of the track
 
         Returns:
             - np.ndarray: coordinates of the sleepers, i.e. the bottom coordinates of the track
