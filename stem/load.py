@@ -50,7 +50,7 @@ class PointLoad(LoadParametersABC):
     value: List[Union[float, Table]]
 
     @staticmethod
-    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> None:
         """
         Static method to get the element name for a point load. Point load does not have a name.
 
@@ -98,7 +98,7 @@ class LineLoad(LoadParametersABC):
     value: List[Union[float, Table]]
 
     @staticmethod
-    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> str:
         """
         Static method to get the element name for a line load.
 
@@ -151,7 +151,7 @@ class SurfaceLoad(LoadParametersABC):
     value: Union[List[float], List[Table]]
 
     @staticmethod
-    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> str:
         """
         Static method to get the element name for a surface load.
 
@@ -206,7 +206,7 @@ class MovingLoad(LoadParametersABC):
     offset: float = 0.0
 
     @staticmethod
-    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> str:
         """
         Static method to get the element name for a moving load.
 
@@ -254,7 +254,7 @@ class GravityLoad(LoadParametersABC):
     value: List[float]
 
     @staticmethod
-    def get_element_name(n_dim_model, n_nodes_element, analysis_type):
+    def get_element_name(n_dim_model, n_nodes_element, analysis_type) -> None:
         """
         Static method to get the element name for a gravity load.
 

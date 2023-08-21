@@ -85,7 +85,7 @@ class TestGeometry:
         geo_data = gmsh_io.geo_data
 
         # Create the geometry from the gmsh group
-        geometry = Geometry().create_geometry_from_gmsh_group(geo_data, "point_group")
+        geometry = Geometry.create_geometry_from_gmsh_group(geo_data, "point_group")
 
         # Assert that the geometry is created correctly
         assert len(geometry.points) == len(expected_geo_data_0D["points"])
@@ -108,7 +108,7 @@ class TestGeometry:
         geo_data = gmsh_io.geo_data
 
         # Create the geometry from the gmsh group
-        geometry = Geometry().create_geometry_from_gmsh_group(geo_data, "line_group")
+        geometry = Geometry.create_geometry_from_gmsh_group(geo_data, "line_group")
 
         # Assert that the geometry is created correctly
         assert len(geometry.points) == len(expected_geo_data_1D["points"])
@@ -136,7 +136,7 @@ class TestGeometry:
         geo_data = gmsh_io.geo_data
 
         # Create the geometry from the gmsh group
-        geometry = Geometry().create_geometry_from_gmsh_group(geo_data, "group_2")
+        geometry = Geometry.create_geometry_from_gmsh_group(geo_data, "group_2")
 
         # Assert that the geometry is created correctly
         assert len(geometry.points) == len(expected_geo_data_2D["points"])
@@ -169,7 +169,7 @@ class TestGeometry:
         geo_data = gmsh_io.geo_data
 
         # Create the geometry from the gmsh group
-        geometry = Geometry().create_geometry_from_gmsh_group(geo_data, "group_2")
+        geometry = Geometry.create_geometry_from_gmsh_group(geo_data, "group_2")
 
         # Assert that the geometry is created correctly
         assert len(geometry.points) == len(expected_geo_data_3D["points"])
@@ -204,7 +204,7 @@ class TestGeometry:
         geo_data = expected_geo_data_3D
 
         # Create the geometry from the gmsh group
-        geometry = Geometry().create_geometry_from_geo_data(geo_data)
+        geometry = Geometry.create_geometry_from_geo_data(geo_data)
 
         # Assert that the geometry is created correctly
         assert len(geometry.points) == len(expected_geo_data_3D["points"])

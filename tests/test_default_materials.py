@@ -17,7 +17,7 @@ class TestDefaultMaterials:
             DefaultMaterial.Rail_60E1_3D.value
         ]
 
-        all_materials = {m_obj.name:m_obj for m_obj in default_materials}
+        all_materials = {m_obj.name: m_obj for m_obj in default_materials}
 
         # write json file
         material_io = KratosMaterialIO(ndim=ndim, domain="PorousDomain")

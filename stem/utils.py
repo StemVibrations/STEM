@@ -1,4 +1,4 @@
-from typing import Sequence, Dict, Any, List, Union, Optional
+from typing import Sequence, Dict, Any, List, Union, Optional, Generator
 
 import numpy as np
 
@@ -13,13 +13,13 @@ class Utils:
                                        available_combinations: Dict[int, List[Any]],
                                        class_name: str):
         """
-        Check if the combination of number of dimensions and number of nodes per element is supported.
+        Check if the combination of number of global dimensions and number of nodes per element is supported.
 
         Args:
             - n_dim (int): number of dimensions
-            - n_nodes_element (int): number of nodes per element
+            - n_nodes_element (int): number of nodes per element or condition-element
             - available_combinations (Dict[int, List[int]]): dictionary containing the supported combinations of number\
-               of dimensions and number of nodes per element
+               of dimensions and number of nodes per element or condition-element
             - class_name (str): name of the class to be checked
 
         Raises:
@@ -40,7 +40,7 @@ class Utils:
             )
 
     @staticmethod
-    def are_2d_coordinates_clockwise(coordinates: Sequence[Sequence[float]]):
+    def are_2d_coordinates_clockwise(coordinates: Sequence[Sequence[float]]) -> bool:
         """
         Checks if the 2D coordinates are given in clockwise order. If the signed area is positive, the coordinates
         are given in clockwise order.
@@ -63,7 +63,7 @@ class Utils:
         return signed_area > 0.0
 
     @staticmethod
-    def check_dimensions(points:Sequence[Sequence[float]]):
+    def check_dimensions(points:Sequence[Sequence[float]]) -> None:
         """
 
         Check if points have the same dimensions (2D or 3D).
@@ -74,6 +74,9 @@ class Utils:
         Raises:
             - ValueError: when the points have different dimensions.
             - ValueError: when the dimension is not either 2 or 3D.
+
+        Returns:
+            - None
         """
 
         lengths = [len(point) for point in points]
@@ -85,7 +88,7 @@ class Utils:
 
     @staticmethod
     def is_collinear(point: Sequence[float], start_point: Sequence[float], end_point: Sequence[float],
-                     a_tol: float = 1e-06):
+                     a_tol: float = 1e-06) -> bool:
         """
         Check if point is aligned with the other two on a line. Points must have the same dimension (2D or 3D)
 
@@ -114,7 +117,7 @@ class Utils:
         return np.sum(np.abs(cross_product)) < a_tol
 
     @staticmethod
-    def is_point_between_points(point:Sequence[float], start_point:Sequence[float], end_point:Sequence[float]):
+    def is_point_between_points(point:Sequence[float], start_point:Sequence[float], end_point:Sequence[float]) -> bool:
         """
         Check if point is between the other two. Points must have the same dimension (2D or 3D).
 
@@ -144,7 +147,7 @@ class Utils:
         return 0 <= scalar_projection <= 1
 
     @staticmethod
-    def is_non_str_sequence(seq:object):
+    def is_non_str_sequence(seq: object) -> bool:
         """
         check whether object is a sequence but also not a string
 
@@ -154,35 +157,34 @@ class Utils:
         return isinstance(seq, Sequence) and not isinstance(seq, str)
 
     @staticmethod
-    def chain_sequence(sequences: Sequence[Sequence[Any]]):
+    def chain_sequence(sequences: Sequence[Sequence[Any]]) -> Generator[Sequence[Any], Sequence[Any], None]:
         """
-        merges dictionary b into dictionary a. if existing keywords conflict it assumes
-        they are concatenated in a list
+        Chains sequences together
 
         Args:
            - sequences (Sequence[Sequence[Any]]): sequences to chain
 
         Returns:
-            - Iterator[Any]: chained sequences
+            - Generator[Sequence[Any], Sequence[Any], None]: generator for chaining sequences
 
         """
         for seq in sequences:
             yield from seq
 
     @staticmethod
-    def merge(a: Dict[Any, Any], b: Dict[Any, Any], path: Union[List[str], Any] = None):
+    def merge(a: Dict[Any, Any], b: Dict[Any, Any], path: Union[List[str], Any] = None) -> Dict[Any, Any]:
         """
         merges dictionary b into dictionary a. if existing keywords conflict it assumes
         they are concatenated in a list
 
         Args:
-            - a (Dict[str,Any]): first dictionary
-            - b (Dict[str,Any]): second dictionary
+            - a (Dict[Any,Any]): first dictionary
+            - b (Dict[Any,Any]): second dictionary
             - path (List[str]): object to help navigate the deeper layers of the dictionary. \
                 Always place it as None
 
         Returns:
-            - a (Dict[str,Any]): updated dictionary with the additional dictionary `b`
+            - a (Dict[Any,Any]): updated dictionary with the additional dictionary `b`
         """
         if path is None:
             path = []
@@ -194,7 +196,7 @@ class Utils:
                     pass  # same leaf value
                 elif any([not Utils.is_non_str_sequence(val) for val in (a[key], b[key])]):
                     # if none of them is a sequence and are found at the same key, then something went wrong.
-                    # this should not be merge silently.
+                    # this should not be merged silently.
                     raise ValueError(f"Conflict of merging keys at {'->'.join(path + [str(key)])}. Two non sequence "
                                      f"values have been found.")
                 else:
@@ -204,7 +206,7 @@ class Utils:
         return a
 
     @staticmethod
-    def get_unique_objects(input_sequence: Sequence[object]):
+    def get_unique_objects(input_sequence: Sequence[object]) -> List[object]:
         """
         Get the unique objects, i.e., the objects that share the same memory location.
 

@@ -43,7 +43,7 @@ class MeshSettings:
         self.__element_order: int = element_order
 
     @property
-    def element_order(self):
+    def element_order(self) -> int:
         """
         Get the element order.
 
@@ -142,7 +142,7 @@ class Mesh:
         self.nodes: List[Node] = []
         self.elements: List[Element] = []
 
-    def __getattribute__(self, item: str):
+    def __getattribute__(self, item: str) -> Any:
         """
         Overrides the getattribute method of the object class.
 

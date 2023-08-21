@@ -246,7 +246,7 @@ class Output:
     Attributes:
         - output_parameters (:class:`OutputParametersABC`): class containing output parameters
         - part_name (Optional[str]): name of the model part
-        - output_dir (Optional[str]): path to the output files
+        - output_dir (str): path to the output files
         - output_name (Optional[str]): name for the output file
     """
 
@@ -254,7 +254,7 @@ class Output:
         self,
         output_parameters: OutputParametersABC,
         part_name: Optional[str] = None,
-        output_dir: Optional[str] = None,
+        output_dir: str = "./",
         output_name: Optional[str] = None
     ):
         """
@@ -281,10 +281,6 @@ class Output:
                   used by GiD and JSON outputs while is ignored in VTK. If the name is not \
                   given, the part_name is used instead.
         """
-
-        # validation for VTK
-        if output_dir is None:
-            output_dir = "./"
 
         new_output_dir = Path(output_dir)
 

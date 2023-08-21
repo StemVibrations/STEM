@@ -74,7 +74,7 @@ class DisplacementConstraint(BoundaryParametersABC):
         return True
 
     @staticmethod
-    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> None:
         """
         Static method to get the element name for a displacement constraint. Displacement constraint does not have a
         name.
@@ -142,7 +142,7 @@ class RotationConstraint(BoundaryParametersABC):
         return True
 
     @staticmethod
-    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> None:
         """
         Static method to get the element name for a rotation constraint. Rotation constraint does not have a
         name.
@@ -205,7 +205,7 @@ class AbsorbingBoundary(BoundaryParametersABC):
         return False
 
     @staticmethod
-    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> str:
         """
         Static method to get the element name for an absorbing boundary.
 

@@ -42,7 +42,7 @@ class ModelPart:
         self.id: Optional[int] = None
 
     @property
-    def name(self):
+    def name(self) -> str:
         """
         Get the name of the model part
 
@@ -63,7 +63,7 @@ class ModelPart:
 
         self.geometry = Geometry.create_geometry_from_gmsh_group(geo_data, name)
 
-    def get_element_name(self, n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
+    def get_element_name(self, n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
         """
         Get the element name of the model part. Only loads and boundary conditions currently may have an element name.
 
@@ -73,7 +73,7 @@ class ModelPart:
             - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type of the model
 
         Returns:
-            - str: element name of the model part
+            - Optional[str]: element name of the model part
 
         """
 
@@ -110,7 +110,7 @@ class BodyModelPart(ModelPart):
 
         self.material: Optional[Union[SoilMaterial, StructuralMaterial]] = None
 
-    def get_element_name(self, n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
+    def get_element_name(self, n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
         """
         Get the element name of the elements within the model part
 
@@ -120,7 +120,7 @@ class BodyModelPart(ModelPart):
             - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type of the model
 
         Returns:
-            - str: element name of the model part
+            - Optional[str]: element name of the model part
 
         """
 

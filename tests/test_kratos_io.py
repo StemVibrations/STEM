@@ -314,12 +314,9 @@ class TestKratosModelIO:
 
         npt.assert_equal(actual=actual_text, desired=expected_text)
 
-    def test_write_input_files_for_kratos(
-        self,
-        create_default_2d_model_and_mesh:Model,
-        create_default_solver_settings:Problem,
-        create_default_outputs: List[Output]
-    ):
+    def test_write_input_files_for_kratos(self, create_default_2d_model_and_mesh: Model,
+                                          create_default_solver_settings: Problem,
+                                          create_default_outputs: List[Output]):
         """
         Test correct writing of the mdpa file (mesh) for the default model and solver settings.
 
