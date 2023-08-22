@@ -1,12 +1,11 @@
 import pickle
 from typing import Tuple
 import platform
+import re
 
-import numpy as np
 import numpy.testing as npt
 import pytest
 
-from stem.boundary import *
 from stem.geometry import *
 from stem.model import *
 from stem.solver import *
@@ -1081,7 +1080,8 @@ class TestModel:
             with pytest.raises(TypeError, match=f"can't convert complex to float"):
                 model.validate_coordinates([(0.0, 0.0, 0.0), (0.0, 1j, 0.0)])
         elif platform.system() == "Linux":
-            with pytest.raises(TypeError, match=f"float() argument must be a string or a real number, not 'complex'"):
+            with pytest.raises(TypeError, match=re.escape(f"float() argument must be a string or a real number, "
+                                                          f"not 'complex'")):
                 model.validate_coordinates([(0.0, 0.0, 0.0), (0.0, 1j, 0.0)])
         else:
             raise NotImplementedError(f"Platform {platform.system()} is not supported.")
@@ -1089,8 +1089,6 @@ class TestModel:
         # test for strings
         with pytest.raises(ValueError, match=f"could not convert string to float: 'test'"):
             model.validate_coordinates([(0.0, 0.0, 0.0), (0.0, "test", 0.0)])
-
-
 
     def test_validation_moving_load(self, create_default_moving_load_parameters:MovingLoad):
         """
