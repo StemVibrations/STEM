@@ -1,10 +1,10 @@
 import pytest
 
+import numpy.testing as npt
 from stem.mesh import *
 
 
 class TestMesh:
-
     def test_create_0d_mesh_from_gmsh_group(self):
         """
         Test the creation of a 0D mesh from a gmsh group.
@@ -12,13 +12,14 @@ class TestMesh:
         """
 
         # Set up the mesh data
-        mesh_data = {"ndim": 0,
-                     "nodes": {1: [0, 0, 0], 2: [0.5, 0, 0]},
-                     "elements": {"POINT_1N": {1: [1], 2: [2]}},
-                     "physical_groups": {"points_group": {"ndim": 0,
-                                                          'element_ids': [1, 2],
-                                                          "node_ids": [1, 2],
-                                                          "element_type": "POINT_1N"}}}
+        mesh_data = {
+            "ndim": 0,
+            "nodes": {1: [0, 0, 0], 2: [0.5, 0, 0]},
+            "elements": {"POINT_1N": {1: [1], 2: [2]}},
+            "physical_groups": {
+                "points_group": {"ndim": 0, "element_ids": [1, 2], "node_ids": [1, 2], "element_type": "POINT_1N"}
+            },
+        }
 
         # Create the mesh from the gmsh group
         generated_mesh = Mesh.create_mesh_from_gmsh_group(mesh_data, "points_group")
@@ -51,13 +52,14 @@ class TestMesh:
         """
 
         # Set up the mesh data
-        mesh_data = {"ndim": 1,
-                     "nodes": {1: [0, 0, 0], 2: [0.5, 0, 0], 3: [1, 0, 0]},
-                     "elements": {"LINE_2N": {1: [1, 2], 2: [2, 3]}},
-                     "physical_groups": {"lines_group": {"ndim": 1,
-                                                         'element_ids': [1, 2],
-                                                         "node_ids": [1, 2, 3],
-                                                         "element_type": "LINE_2N"}}}
+        mesh_data = {
+            "ndim": 1,
+            "nodes": {1: [0, 0, 0], 2: [0.5, 0, 0], 3: [1, 0, 0]},
+            "elements": {"LINE_2N": {1: [1, 2], 2: [2, 3]}},
+            "physical_groups": {
+                "lines_group": {"ndim": 1, "element_ids": [1, 2], "node_ids": [1, 2, 3], "element_type": "LINE_2N"}
+            },
+        }
 
         # Create the mesh from the gmsh group
         generated_mesh = Mesh.create_mesh_from_gmsh_group(mesh_data, "lines_group")
@@ -90,24 +92,37 @@ class TestMesh:
         """
 
         # Set up the mesh data
-        mesh_data = {"ndim": 2,
-                     "nodes": {1: [0, 0, 0], 2: [0.5, 0, 0], 3: [1, 0, 0],
-                               4: [0, 0.5, 0], 5: [0.5, 0.5, 0], 6: [1, 0.5, 0]},
-                     "elements": {"TRIANGLE_3N": {1: [1, 2, 4], 2: [2, 3, 5], 3: [3, 6, 5]}},
-                     "physical_groups": {"triangles_group": {"ndim": 2,
-                                                             'element_ids': [1, 2, 3],
-                                                             "node_ids": [1, 2, 3, 4, 5, 6],
-                                                             "element_type": "TRIANGLE_3N"}}}
+        mesh_data = {
+            "ndim": 2,
+            "nodes": {1: [0, 0, 0], 2: [0.5, 0, 0], 3: [1, 0, 0], 4: [0, 0.5, 0], 5: [0.5, 0.5, 0], 6: [1, 0.5, 0]},
+            "elements": {"TRIANGLE_3N": {1: [1, 2, 4], 2: [2, 3, 5], 3: [3, 6, 5]}},
+            "physical_groups": {
+                "triangles_group": {
+                    "ndim": 2,
+                    "element_ids": [1, 2, 3],
+                    "node_ids": [1, 2, 3, 4, 5, 6],
+                    "element_type": "TRIANGLE_3N",
+                }
+            },
+        }
 
         # Create the mesh from the gmsh group
         generated_mesh = Mesh.create_mesh_from_gmsh_group(mesh_data, "triangles_group")
 
         # set expected mesh
-        expected_nodes = [Node(1, [0, 0, 0]), Node(2, [0.5, 0, 0]), Node(3, [1, 0, 0]),
-                          Node(4, [0, 0.5, 0]), Node(5, [0.5, 0.5, 0]), Node(6, [1, 0.5, 0])]
-        expected_elements = [Element(1, "TRIANGLE_3N", [1, 2, 4]),
-                             Element(2, "TRIANGLE_3N", [2, 3, 5]),
-                             Element(3, "TRIANGLE_3N", [3, 6, 5])]
+        expected_nodes = [
+            Node(1, [0, 0, 0]),
+            Node(2, [0.5, 0, 0]),
+            Node(3, [1, 0, 0]),
+            Node(4, [0, 0.5, 0]),
+            Node(5, [0.5, 0.5, 0]),
+            Node(6, [1, 0.5, 0]),
+        ]
+        expected_elements = [
+            Element(1, "TRIANGLE_3N", [1, 2, 4]),
+            Element(2, "TRIANGLE_3N", [2, 3, 5]),
+            Element(3, "TRIANGLE_3N", [3, 6, 5]),
+        ]
 
         expected_mesh = Mesh(2)
         expected_mesh.nodes = expected_nodes
@@ -134,33 +149,69 @@ class TestMesh:
         """
 
         # Set up the mesh data
-        mesh_data = {"ndim": 3,
-                     "nodes": {1: [0, 0, 0], 2: [0.5, 0, 0], 3: [1, 0, 0],
-                               4: [0, 0.5, 0], 5: [0.5, 0.5, 0], 6: [1, 0.5, 0],
-                               7: [0, 0, 0.5], 8: [0.5, 0, 0.5], 9: [1, 0, 0.5],
-                               10: [0, 0.5, 0.5], 11: [0.5, 0.5, 0.5], 12: [1, 0.5, 0.5]},
-                     "elements": {"TETRAHEDRON_4N": {1: [1, 2, 4, 7], 2: [2, 3, 5, 8], 3: [3, 6, 5, 9],
-                                                     4: [4, 5, 7, 10], 5: [5, 6, 8, 11], 6: [6, 9, 11, 8]}},
-                     "physical_groups": {"tetrahedral_group": {"ndim": 3,
-                                                               'element_ids': [1, 2, 3, 4, 5, 6],
-                                                               "node_ids": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-                                                               "element_type": "TETRAHEDRON_4N"}}}
+        mesh_data = {
+            "ndim": 3,
+            "nodes": {
+                1: [0, 0, 0],
+                2: [0.5, 0, 0],
+                3: [1, 0, 0],
+                4: [0, 0.5, 0],
+                5: [0.5, 0.5, 0],
+                6: [1, 0.5, 0],
+                7: [0, 0, 0.5],
+                8: [0.5, 0, 0.5],
+                9: [1, 0, 0.5],
+                10: [0, 0.5, 0.5],
+                11: [0.5, 0.5, 0.5],
+                12: [1, 0.5, 0.5],
+            },
+            "elements": {
+                "TETRAHEDRON_4N": {
+                    1: [1, 2, 4, 7],
+                    2: [2, 3, 5, 8],
+                    3: [3, 6, 5, 9],
+                    4: [4, 5, 7, 10],
+                    5: [5, 6, 8, 11],
+                    6: [6, 9, 11, 8],
+                }
+            },
+            "physical_groups": {
+                "tetrahedral_group": {
+                    "ndim": 3,
+                    "element_ids": [1, 2, 3, 4, 5, 6],
+                    "node_ids": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                    "element_type": "TETRAHEDRON_4N",
+                }
+            },
+        }
 
         # Create the mesh from the gmsh group
         generated_mesh = Mesh.create_mesh_from_gmsh_group(mesh_data, "tetrahedral_group")
 
         # set expected mesh
-        expected_nodes = [Node(1, [0, 0, 0]), Node(2, [0.5, 0, 0]), Node(3, [1, 0, 0]),
-                          Node(4, [0, 0.5, 0]), Node(5, [0.5, 0.5, 0]), Node(6, [1, 0.5, 0]),
-                          Node(7, [0, 0, 0.5]), Node(8, [0.5, 0, 0.5]), Node(9, [1, 0, 0.5]),
-                          Node(10, [0, 0.5, 0.5]), Node(11, [0.5, 0.5, 0.5]), Node(12, [1, 0.5, 0.5])]
+        expected_nodes = [
+            Node(1, [0, 0, 0]),
+            Node(2, [0.5, 0, 0]),
+            Node(3, [1, 0, 0]),
+            Node(4, [0, 0.5, 0]),
+            Node(5, [0.5, 0.5, 0]),
+            Node(6, [1, 0.5, 0]),
+            Node(7, [0, 0, 0.5]),
+            Node(8, [0.5, 0, 0.5]),
+            Node(9, [1, 0, 0.5]),
+            Node(10, [0, 0.5, 0.5]),
+            Node(11, [0.5, 0.5, 0.5]),
+            Node(12, [1, 0.5, 0.5]),
+        ]
 
-        expected_elements = [Element(1, "TETRAHEDRON_4N", [1, 2, 4, 7]),
-                             Element(2, "TETRAHEDRON_4N", [2, 3, 5, 8]),
-                             Element(3, "TETRAHEDRON_4N", [3, 6, 5, 9]),
-                             Element(4, "TETRAHEDRON_4N", [4, 5, 7, 10]),
-                             Element(5, "TETRAHEDRON_4N", [5, 6, 8, 11]),
-                             Element(6, "TETRAHEDRON_4N", [6, 9, 11, 8])]
+        expected_elements = [
+            Element(1, "TETRAHEDRON_4N", [1, 2, 4, 7]),
+            Element(2, "TETRAHEDRON_4N", [2, 3, 5, 8]),
+            Element(3, "TETRAHEDRON_4N", [3, 6, 5, 9]),
+            Element(4, "TETRAHEDRON_4N", [4, 5, 7, 10]),
+            Element(5, "TETRAHEDRON_4N", [5, 6, 8, 11]),
+            Element(6, "TETRAHEDRON_4N", [6, 9, 11, 8]),
+        ]
 
         expected_mesh = Mesh(3)
         expected_mesh.nodes = expected_nodes
@@ -187,17 +238,67 @@ class TestMesh:
         """
 
         # Set up the mesh data
-        mesh_data = {"ndim": 0,
-                     "nodes": {1: [0, 0, 0], 2: [0.5, 0, 0]},
-                     "elements": {"POINT_1N": {1: [1], 2: [2]}},
-                     "physical_groups": {"points_group": {"ndim": 0,
-                                                          'element_ids': [1, 2],
-                                                          "node_ids": [1, 2],
-                                                          "element_type": "POINT_1N"}}}
+        mesh_data = {
+            "ndim": 0,
+            "nodes": {1: [0, 0, 0], 2: [0.5, 0, 0]},
+            "elements": {"POINT_1N": {1: [1], 2: [2]}},
+            "physical_groups": {
+                "points_group": {"ndim": 0, "element_ids": [1, 2], "node_ids": [1, 2], "element_type": "POINT_1N"}
+            },
+        }
 
         # Create the mesh from the gmsh group
         with pytest.raises(ValueError):
             Mesh.create_mesh_from_gmsh_group(mesh_data, "non_existing_group")
+
+
+    def test_flip_mesh_order(self):
+        """
+        Tests that element node ids are flipped in the right way.
+        """
+
+        quad_linear = Element(1, "QUADRANGLE_4N", [1, 2, 3, 4])
+        quad_quad = Element(2, "QUADRANGLE_8N", [1, 2, 3, 4, 5, 6, 7, 8])
+
+        tri_linear = Element(3, "TRIANGLE_3N", [1, 2, 3])
+        tri_quad = Element(4, "TRIANGLE_6N", [1, 2, 3, 4, 5, 6])
+
+        line_linear = Element(5, "LINE_2N", [1, 2])
+        line_quad = Element(6, "LINE_3N", [1, 2, 3])
+        mesh = Mesh(ndim=2)
+
+        elements_to_flip = [quad_linear, quad_quad, tri_linear, tri_quad, line_linear, line_quad]
+
+        for element in elements_to_flip:
+            mesh.flip_node_order(element)
+
+        expected_nodes = [
+            [4, 3, 2, 1],
+            [4, 3, 2, 1, 8, 7, 6, 5],
+            [3, 2, 1],
+            [3, 2, 1, 6, 5, 4],
+            [2, 1],
+            [2, 1, 3],
+        ]
+
+
+        for element,expected_nodes_element in zip(elements_to_flip, expected_nodes):
+            np.testing.assert_equal(element.node_ids, expected_nodes_element)
+
+        not_implemented_elements = [
+            "TETRAHEDRON_4N",
+            "HEXAHEDRON_8N",
+            "TETRAHEDRON_10N",
+            "HEXAHEDRON_20N",
+        ]
+
+        # check for raising errors for unsupported elements
+
+        for not_implemented_element in not_implemented_elements:
+            with pytest.raises(
+                    NotImplementedError
+            ):
+                mesh.flip_node_order(Element(999, not_implemented_element, [1,2,3]))
 
 
 class TestMeshSettings:
@@ -213,7 +314,6 @@ class TestMeshSettings:
 
         # test if ValueError is raised when element_order is not 1 or 2
         with pytest.raises(ValueError):
-
             MeshSettings(element_order=3)
 
     def test_validation_element_order_after_initialisation_expected_raise(self):

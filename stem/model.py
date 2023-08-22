@@ -1,11 +1,10 @@
 from typing import List, Sequence, Dict, Any, Optional, Union
+import re
 
 import numpy.typing as npty
 import numpy as np
 
 from gmsh_utils import gmsh_IO
-from matplotlib import pyplot as plt
-from matplotlib.collections import PolyCollection
 
 from stem.model_part import ModelPart, BodyModelPart
 from stem.soil_material import *
@@ -33,6 +32,7 @@ class Model:
         - extrusion_length (Optional[Sequence[float]]): The extrusion length in x, y and z direction
 
     """
+
     def __init__(self, ndim: int):
         self.ndim: int = ndim
         self.project_parameters: Optional[Problem] = None
@@ -85,7 +85,6 @@ class Model:
         # Create geometry and model part for each physical group in the gmsh geo_data
         model_part: Union[ModelPart, BodyModelPart]
         for group_name in geo_data["physical_groups"].keys():
-
             # create model part, if the group name is in the body names, create a body model part, otherwise a process
             # model part
             if group_name in body_names:
@@ -102,9 +101,12 @@ class Model:
             else:
                 self.process_model_parts.append(model_part)
 
-    def add_soil_layer_by_coordinates(self, coordinates: Sequence[Sequence[float]],
-                       material_parameters: Union[SoilMaterial, StructuralMaterial], name: str,
-                       ):
+    def add_soil_layer_by_coordinates(
+        self,
+        coordinates: Sequence[Sequence[float]],
+        material_parameters: Union[SoilMaterial, StructuralMaterial],
+        name: str,
+    ):
         """
         Adds a soil layer to the model by giving a sequence of 2D coordinates. In 3D the 2D geometry is extruded in
         the direction of the extrusion_length
@@ -143,7 +145,9 @@ class Model:
 
         self.body_model_parts.append(body_model_part)
 
-    def add_load_by_coordinates(self, coordinates: Sequence[Sequence[float]], load_parameters: LoadParametersABC, name: str):
+    def add_load_by_coordinates(
+        self, coordinates: Sequence[Sequence[float]], load_parameters: LoadParametersABC, name: str
+    ):
         """
         Adds a load to the model by giving a sequence of 3D coordinates. For a 2D model, the third coordinate is
         ignored.
@@ -177,9 +181,11 @@ class Model:
         elif isinstance(load_parameters, SurfaceLoad):
             gmsh_input = {name: {"coordinates": coordinates, "ndim": 2}}
         else:
-            raise ValueError(f'Invalid load_parameters ({load_parameters.__class__.__name__}) object'
-                             f' provided for the load {name}. Expected one of PointLoad, MovingLoad,'
-                             f' LineLoad or SurfaceLoad.')
+            raise ValueError(
+                f"Invalid load_parameters ({load_parameters.__class__.__name__}) object"
+                f" provided for the load {name}. Expected one of PointLoad, MovingLoad,"
+                f" LineLoad or SurfaceLoad."
+            )
 
         self.gmsh_io.generate_geometry(gmsh_input, "")
 
@@ -231,15 +237,14 @@ class Model:
         """
 
         # iterate over each line constituting the trajectory
-        for ix in range(len(coordinates)-1):
-
+        for ix in range(len(coordinates) - 1):
             # check origin is collinear to the edges of the line
             collinear_check = Utils.is_collinear(
-                point=load_parameters.origin, start_point=coordinates[ix],end_point=coordinates[ix+1]
+                point=load_parameters.origin, start_point=coordinates[ix], end_point=coordinates[ix + 1]
             )
             # check origin is between the edges of the line (edges included)
             is_between_check = Utils.is_point_between_points(
-                point=load_parameters.origin, start_point=coordinates[ix], end_point=coordinates[ix+1]
+                point=load_parameters.origin, start_point=coordinates[ix], end_point=coordinates[ix + 1]
             )
             # check if point complies
             is_on_line = collinear_check and is_between_check
@@ -250,8 +255,9 @@ class Model:
         # none of the lines contain the origin, then raise an error
         raise ValueError(f"Origin is not in the trajectory of the moving load.")
 
-    def add_boundary_condition_by_geometry_ids(self, ndim_boundary: int, geometry_ids: Sequence[int],
-                                               boundary_parameters: BoundaryParametersABC, name: str):
+    def add_boundary_condition_by_geometry_ids(
+        self, ndim_boundary: int, geometry_ids: Sequence[int], boundary_parameters: BoundaryParametersABC, name: str
+    ):
         """
         Add a boundary condition to the model by giving the geometry ids of the boundary condition.
 
@@ -315,8 +321,9 @@ class Model:
 
         """
 
-        self.gmsh_io.generate_mesh(self.ndim, element_size=self.mesh_settings.element_size,
-                                   order=self.mesh_settings.element_order)
+        self.gmsh_io.generate_mesh(
+            self.ndim, element_size=self.mesh_settings.element_size, order=self.mesh_settings.element_order
+        )
 
         # collect all model parts
         all_model_parts: List[Union[BodyModelPart, ModelPart]] = []
@@ -329,22 +336,19 @@ class Model:
 
         # adjust mesh of the condition elements if they are 2D elements and model is 2D
         if self.ndim == 2:
-
             for pmp in self.process_model_parts:
+                # check if process writes line condition elements (they are the only one that needs to be flipped).
 
-                if not isinstance(pmp.parameters, (LineLoad, MovingLoad, SurfaceLoad, AbsorbingBoundary)):
-                    # process doesn't write condition elements. Skip!
-                    continue
-
-                # match the condition elements with the body elements on which the conditions are applied
-                matched_elements = self.__find_matching_body_elements_for_process_model_part(pmp)
-                # check the ordering of the nodes of the conditions. If it does not match flip the order.
-                self.__check_order_process_model_part(matched_elements)
+                if isinstance(pmp.parameters, (LineLoad, MovingLoad, AbsorbingBoundary)):
+                    # match the condition elements with the body elements on which the conditions are applied
+                    matched_elements = self.__find_matching_body_elements_for_process_model_part(pmp)
+                    # check the ordering of the nodes of the conditions. If it does not match flip the order.
+                    self.__check_order_process_model_part(matched_elements)
 
     @staticmethod
     def __get_model_part_element_nodes(model_part: ModelPart):
         """
-        Extract the nodes of each of the elements in a model part.
+        Extract the node ids of each of the elements in a model part.
         Args:
             - model_part (:class:`stem.model_part.ModelPart`): model part from which element nodes needs to be
                 extracted.
@@ -356,7 +360,7 @@ class Model:
             return np.array([el.node_ids for el in model_part.mesh.elements.values()])
 
     def __find_matching_body_elements_for_process_model_part(
-            self, process_model_part: ModelPart, check_all_coupled: bool = False
+        self, process_model_part: ModelPart, check_all_coupled: bool = False
     ):
         """
         For a process model part, tries finds the matching body elements on which the condition elements are applied.
@@ -374,87 +378,120 @@ class Model:
             - matched_elements (Dict[:class:`stem.mesh.Element`, :class:`stem.mesh.Element`]): Dictionary containing
                 the matched condition and body element parts.
         """
-        nodes_elements_to_couple_pmp = self.__get_model_part_element_nodes(process_model_part)
-        num_nodes_pmp = nodes_elements_to_couple_pmp.shape[1]
-
+        # validation step for process model part
         if process_model_part.mesh is None:
             raise ValueError("Mesh not yet initialised.")
-        pmp_element_ids = np.array(list(process_model_part.mesh.elements.keys()))
 
+        # get all the node ids for all the elements in the process model (pmp) part and the indices of each element in
+        # the array
+        unmatched_elements_pmp = self.__get_model_part_element_nodes(process_model_part)
+        pmp_element_indices = np.array(list(process_model_part.mesh.elements.keys()))
+
+        # initialise matching dictionary: process_element --> body_element
         matched_elements: Dict[Element, Element] = {}
 
+        # loop over the body model parts (bmp) to match the elements of the process model part
         for bmp in self.body_model_parts:
 
-            if len(nodes_elements_to_couple_pmp) == 0:
-                # finished matching elements
-                break
-
-            nodes_el_bmp = self.__get_model_part_element_nodes(bmp)
+            # validation step for body model part
             if bmp.mesh is None:
                 raise ValueError("Mesh not yet initialised.")
 
-            bmp_element_ids = list(bmp.mesh.elements.keys())
-            match_array_4d = nodes_elements_to_couple_pmp == nodes_el_bmp[..., np.newaxis, np.newaxis]
+            # if there is nothing to match, break the loop
+            if len(unmatched_elements_pmp) == 0:
+                # finished matching elements
+                break
 
-            # broadcast __eq__ operation to elements of pmp vs elements of bmp
-            bool_array_2d = np.sum(np.sum(match_array_4d, axis=-1), axis=1) == num_nodes_pmp
+            # get the node ids for the elements in the current body model part and their ids
+            nodes_el_bmp = self.__get_model_part_element_nodes(bmp)
+            bmp_element_ids = np.array(list(bmp.mesh.elements.keys()))
 
-            # find (i) for all the elements in pmp (column of bool_array) if there is match for any of the
-            # elements in bmp (row of bool_array)
+            # initialised matched ids and indices for the element of the pmp
+            matched_id_process_to_body = {}
+            matched_indices_process_element = []
+            # for each process element, check if there is a match with the current body part elements
+            for ix, (element_id_j, nodes_element_j) in enumerate(zip(pmp_element_indices, unmatched_elements_pmp)):
+                # find the indexes of the element in the body model parts that contains the node ids of the current
+                # process model part
+                found_index = np.where(
+                    np.sum(np.isin(nodes_el_bmp, nodes_element_j), axis=1) == len(nodes_element_j)
+                )
+                # from the first match, retriv the element id of the body model part and the index of the process
+                # model part, to remove it later from the unmatched_elements
+                if len(found_index[0]) > 0:
+                    matched_id_process_to_body[element_id_j] = bmp_element_ids[found_index[0].tolist()[0]]
+                    matched_indices_process_element.append(ix)
 
-            if not bool_array_2d.any():
-                # no match for any of the row!
-                continue
-            else:
-                matched_idxs = np.where(bool_array_2d.T)
-                # find the matched process model part indices
-                process_elements_idxs = np.unique(matched_idxs[0])
-                # find the matched body model part indices
-                body_elements_idxs = [np.where(column)[0][0] for column in bool_array_2d[:, process_elements_idxs].T]
+            # if there is match, couple the element objects together in the matched_elements dictionary
+            # then remove the matched process model part elements from node array (unmatched_elements_pmp)
+            # and indices (pmp_element_ids)
+            if len(matched_id_process_to_body) > 0:
 
-                # get the corresponding element ids
-                pmp_elements_ids_match = pmp_element_ids[process_elements_idxs]
-                body_elements_ids_match = bmp_element_ids[body_elements_idxs]
-                for id_pel, id_bel in zip(pmp_elements_ids_match, body_elements_ids_match):
+                for id_pel, id_bel in matched_id_process_to_body.items():
                     matched_elements[process_model_part.mesh.elements[id_pel]] = bmp.mesh.elements[id_bel]
 
-                # remove the matched elements from the list to couple
-                nodes_elements_to_couple_pmp = np.delete(nodes_elements_to_couple_pmp, process_elements_idxs)
-                pmp_element_ids = np.delete(pmp_element_ids, process_elements_idxs)
+                # matched indices
+                process_elements_idxs = np.array(list(matched_indices_process_element))
+                unmatched_elements_pmp = np.delete(unmatched_elements_pmp, process_elements_idxs, axis=0)
+                pmp_element_indices = np.delete(pmp_element_indices, process_elements_idxs)
 
         if check_all_coupled:
-            if len(nodes_elements_to_couple_pmp) != 0:
-                raise ValueError("Some process model parts remain uncoupled! Error. Process model part not applied"
-                                 "On a body model part")
+            if len(unmatched_elements_pmp) != 0:
+                raise ValueError(
+                    "Some process model parts remain uncoupled! Error. Process model part not applied"
+                    "on a body model part."
+                )
 
         return matched_elements
 
-    @staticmethod
-    def __check_order_process_model_part(matched_elements: Dict[Element, Element]):
+    def __check_order_process_model_part(self, matched_elements: Dict[Element, Element]):
         """
         Check if the order of the elements the keys of matched_elements are oriented in the same order of the nodes in
         the values of matched_elements. If not, the order of the nodes is flipped.
         Args:
             - matched_elements (Dict[:class:`stem.mesh.Element`, :class:`stem.mesh.Element`]): Dictionary containing
                 the matched condition and body element parts.
-
+        Raises:
+            - ValueError: if elements are not of same order (linear, quadratic, cubic, ...)
+            - ValueError: if condition element is not a 2D. Re-ordering is only required for line elements.
         """
+
+        mesh_obj = Mesh(self.ndim)
 
         for process_element, body_element in matched_elements.items():
 
             nodes_process_element = [_id for _id in process_element.node_ids]
             nodes_body_element = [_id for _id in body_element.node_ids]
-            # TODO: a function to get the number of nodes of the elements nevertheless the integration order.
-            #  from a 2D quadratic beam (3 nodes) , it should return 2.
-            #  from a 2D triangular quadratic element (6 nodes) it should return 3.
-            n_nodes = len(nodes_process_element)
-            # append the first (n_nodes-1) elements at the back of to the list (to make a cycle)
-            target_list = nodes_body_element + nodes_body_element[:(n_nodes-1)]
-            # pick only the corner nodes, the mid-point nodes related to the higher order do not matter for quadratic elements.
-            source_list = nodes_process_element[:n_nodes]
 
+            # element info such as order, number of edges, element types etc.
+            process_el_info = mesh_obj.get_element_info(process_element)
+            body_el_info = mesh_obj.get_element_info(body_element)
+
+            # if elements have different order, it's an error...
+            if body_el_info["order"] != process_el_info["order"]:
+                raise ValueError(
+                    f"Mismatch in element order between process element ({process_el_info['order']}) and body "
+                    f"element order ({body_el_info['order']})."
+                )
+            # get the number of vertices of the body element
+            n_vert_bel = body_el_info['n_vertices']
+            # get the number of vertices of the process element.
+            # We only do this for line element, therefore we expect 2 vertices.
+            n_vert_pel = process_el_info['n_vertices']
+            if n_vert_pel != 2:
+                raise ValueError("Matched for elements different than line is not required, nor supported.")
+            # append the first (n_nodes-1) node ids at the back of to the list (to make a cycle)
+            target_list = nodes_body_element[:n_vert_bel]
+            target_list.append(target_list[0])
+
+            # pick only the corner nodes, the mid-point nodes related to the higher order do
+            # not matter for quadratic elements.
+            source_list = nodes_process_element[:n_vert_pel]
+
+            # check if order of nodes in process element follows the body elements.
+            # if not, flip the order of the process element
             if not Utils.has_matching_combination(target_list, source_list):
-                process_element.node_ids = nodes_process_element[::-1]
+                mesh_obj.flip_node_order(process_element)
 
     def __validate_model_part_names(self):
         """
@@ -526,8 +563,9 @@ class Model:
             [self.gmsh_io.geo_data["physical_groups"][name]["geometry_ids"] for name in body_model_part_names]
         )
 
-        model_parts_ndim = np.array([self.gmsh_io.geo_data["physical_groups"][name]["ndim"]
-                                     for name in body_model_part_names]).ravel()
+        model_parts_ndim = np.array(
+            [self.gmsh_io.geo_data["physical_groups"][name]["ndim"] for name in body_model_part_names]
+        ).ravel()
 
         # add gravity load as physical group per dimension
         body_geometries_1d = model_parts_geometry_ids[model_parts_ndim == 1].ravel()
@@ -567,7 +605,7 @@ class Model:
         node_dict: Dict[int, Node] = {}
         for mp in self.get_all_model_parts():
             if mp.mesh is None:
-                raise ValueError('Geometry has not been meshed yet! Please first run the Model.generate_mesh method.')
+                raise ValueError("Geometry has not been meshed yet! Please first run the Model.generate_mesh method.")
             node_dict.update(mp.mesh.nodes)
 
         return node_dict
@@ -581,8 +619,13 @@ class Model:
 
         self.__validate_model_part_names()
 
-    def show_geometry(self, show_volume_ids: bool = False, show_surface_ids: bool = False, show_line_ids: bool = False,
-                      show_point_ids: bool = False):
+    def show_geometry(
+        self,
+        show_volume_ids: bool = False,
+        show_surface_ids: bool = False,
+        show_line_ids: bool = False,
+        show_point_ids: bool = False,
+    ):
         """
         Show the 2D or 3D geometry in a plot.
 
@@ -599,8 +642,9 @@ class Model:
         if self.geometry is None:
             raise ValueError("Geometry must be set before showing the geometry")
 
-        PlotUtils.show_geometry(self.ndim, self.geometry, show_volume_ids, show_surface_ids, show_line_ids,
-                                show_point_ids)
+        PlotUtils.show_geometry(
+            self.ndim, self.geometry, show_volume_ids, show_surface_ids, show_line_ids, show_point_ids
+        )
 
     def __setup_stress_initialisation(self):
         """
@@ -615,11 +659,9 @@ class Model:
             raise ValueError("Project parameters must be set before setting up the stress initialisation")
 
         # add gravity load if K0 procedure or gravity loading is used
-        if (self.project_parameters.settings.stress_initialisation_type ==
-            StressInitialisationType.K0_PROCEDURE) or \
-                (self.project_parameters.settings.stress_initialisation_type ==
-                 StressInitialisationType.GRAVITY_LOADING):
-
+        if (self.project_parameters.settings.stress_initialisation_type == StressInitialisationType.K0_PROCEDURE) or (
+            self.project_parameters.settings.stress_initialisation_type == StressInitialisationType.GRAVITY_LOADING
+        ):
             self.__add_gravity_load()
 
     def post_setup(self):
@@ -651,5 +693,5 @@ class Model:
             ndim=self.ndim,
             body_model_parts=self.body_model_parts,
             process_model_parts=self.process_model_parts,
-            **kwargs
+            **kwargs,
         )

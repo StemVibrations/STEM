@@ -92,7 +92,6 @@ class TestKratosModelIO:
         model.generate_mesh()
 
         return model
-    
 
     @pytest.fixture
     def create_default_3d_model_and_mesh(self):
@@ -212,9 +211,9 @@ class TestKratosModelIO:
 
     def test_write_project_parameters_json(
         self,
-        create_default_2d_model_and_mesh:Model,
-        create_default_outputs:List[Output],
-        create_default_solver_settings:Problem
+        create_default_2d_model_and_mesh: Model,
+        create_default_outputs: List[Output],
+        create_default_solver_settings: Problem
     ):
         """
         Test correct writing of the project parameters for the default output, model and settings.
@@ -242,7 +241,7 @@ class TestKratosModelIO:
 
     def test_write_material_parameters_json(
         self,
-        create_default_2d_model_and_mesh:Model
+        create_default_2d_model_and_mesh: Model
     ):
         """
         Test correct writing of the material parameters for the default model.
@@ -259,8 +258,8 @@ class TestKratosModelIO:
 
     def test_write_mdpa_file_2d(
         self,
-        create_default_2d_model_and_mesh:Model,
-        create_default_solver_settings:Problem
+        create_default_2d_model_and_mesh: Model,
+        create_default_solver_settings: Problem
     ):
         """
         Test correct writing of the mdpa file (mesh) for the default model and solver settings.
@@ -288,8 +287,8 @@ class TestKratosModelIO:
     @pytest.mark.skipif(IS_LINUX, reason="Linux provides different meshing order. The test is not run on Ubuntu")
     def test_write_mdpa_file_3d(
         self,
-        create_default_3d_model_and_mesh:Model,
-        create_default_solver_settings:Problem
+        create_default_3d_model_and_mesh: Model,
+        create_default_solver_settings: Problem
     ):
         """
         Test correct writing of the mdpa file (mesh) for the default model and solver settings.
@@ -316,8 +315,8 @@ class TestKratosModelIO:
 
     def test_write_input_files_for_kratos(
         self,
-        create_default_2d_model_and_mesh:Model,
-        create_default_solver_settings:Problem,
+        create_default_2d_model_and_mesh: Model,
+        create_default_solver_settings: Problem,
         create_default_outputs: List[Output]
     ):
         """

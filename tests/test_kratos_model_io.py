@@ -175,7 +175,7 @@ class TestKratosModelIO:
 
         return model
 
-    def test_create_submodelpart_text(self, create_default_2d_model_and_mesh:Model):
+    def test_create_submodelpart_text(self, create_default_2d_model_and_mesh: Model):
         """
         Test the creation of the mdpa text of a model part
 
@@ -219,7 +219,7 @@ class TestKratosModelIO:
         # assert the objects to be equal
         npt.assert_equal(actual=actual_text_load, desired=expected_text_load)
 
-    def test_write_mdpa_text(self, create_default_2d_model_and_mesh):
+    def test_write_mdpa_text(self, create_default_2d_model_and_mesh: Model):
         """
         Test the creation of the mdpa text of the whole model
 
@@ -246,7 +246,7 @@ class TestKratosModelIO:
         # assert the objects to be equal
         npt.assert_equal(actual=actual_text_body, desired=expected_text_body)
 
-    def test_write_mdpa_text_2_layers(self, create_default_2d_2_layers_model_and_mesh):
+    def test_write_mdpa_text_2_layers(self, create_default_2d_2_layers_model_and_mesh: Model):
         """
         Test the creation of the mdpa text of the whole model for two soil layers, a line load and a fixed bottom
         constraint.

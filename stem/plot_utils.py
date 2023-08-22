@@ -313,18 +313,17 @@ class PlotUtils:
         if ndim == 3:
             raise NotImplementedError("Mesh visualiser not yet implemented for 3D models.")
 
+        # offset for shifting the element and node labels
         if element_size is not None:
             offset = element_size / 20
         else:
             offset = 0.05
 
-        # np.array(y_values) + _offset
-        # Initialize figure in 3D
+        # Initialize figure
         fig = plt.figure()
 
         if ndim == 2:
             ax = fig.add_subplot(111)
-            # ax = fig.add_subplot(111, projection='3d')
 
         all_model_parts = process_model_parts + body_model_parts
         all_nodes = {}
@@ -333,32 +332,42 @@ class PlotUtils:
                 raise ValueError('Geometry has not been meshed yet! Please first run the Model.generate_mesh method.')
             all_nodes.update(mp.mesh.nodes)
 
-        for _id, node in all_nodes.items():
+        for node_id, node in all_nodes.items():
+            # get the vertex of the node.
             vertex = node.coordinates[:ndim]
             plt.plot(*vertex, 'ko')
             if show_node_ids:
-                ax.text(vertex[0] + offset, vertex[1] + offset, "$n_{" + str(_id) + "}$", color="black", fontsize=fontsize)
+                ax.text(vertex[0] + offset, vertex[1] + offset, "$n_{" + str(node_id) + "}$", color="black", fontsize=fontsize)
 
         for mp in all_model_parts:
+
+            if mp.mesh is None:
+                raise ValueError('Geometry has not been meshed yet! Please first run the Model.generate_mesh method.')
+
             if mp.mesh.elements is not None:
-                for _id, element in mp.mesh.elements.items():
-                    vertices = [all_nodes[_id].coordinates[:ndim] for _id in element.node_ids]
+                for element_id, element in mp.mesh.elements.items():
+                    # get the vertices of the element and the centroid.
+                    vertices = [all_nodes[node_id].coordinates[:ndim] for node_id in element.node_ids]
                     centroid = np.mean(np.array(vertices), axis=0)
+                    # for polygons, we plot a blue polygon.
                     if len(vertices) > 2:
                         _color = "darkblue"
                         poly = PolyCollection([np.array(vertices)], facecolors=_color, linewidths=1, edgecolors='black',
                                               alpha=0.35)
                         ax.add_collection(poly)
+                    # for lines, we plot a line.
                     else:
                         x_values, y_values = zip(*vertices)
                         _color = "darkred"
                         plt.plot(x_values, y_values, c=_color, lw=2, alpha=0.35)
                     if show_element_ids:
+                        # for polygons, it is okay to have the element id printed in the center.
                         if len(vertices) > 2:
-                            ax.text(centroid[0], centroid[1], "$e_{"+str(_id)+"}$",
+                            ax.text(centroid[0], centroid[1], "$e_{"+str(element_id)+"}$",
                                     color=_color, fontsize=fontsize, fontweight='bold')
+                        # for lines, we shift slightly the text, depending on the element size.
                         else:
-                            ax.text(centroid[0] + offset, centroid[1]+ offset, "$e_{"+str(_id)+"}$",
+                            ax.text(centroid[0] + offset, centroid[1]+ offset, "$e_{"+str(element_id)+"}$",
                                     color=_color, fontsize=fontsize, fontweight='bold')
 
         # set x and y labels

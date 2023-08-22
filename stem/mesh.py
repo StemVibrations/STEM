@@ -1,3 +1,4 @@
+import re
 from typing import Dict, List, Tuple, Sequence, Union, Any, Optional
 from enum import Enum
 from dataclasses import dataclass
@@ -14,6 +15,7 @@ class ElementShape(Enum):
     quadrilateral elements and hexahedral elements.
 
     """
+
     TRIANGLE = "triangle"
     QUADRILATURAL = "quadrilateral"
 
@@ -29,8 +31,9 @@ class MeshSettings:
          - __element_order (int): The element order. 1 for linear elements, 2 for quadratic elements. (default 1)
     """
 
-    def __init__(self, element_size: float = -1, element_order: int = 1,
-                 element_shape: ElementShape = ElementShape.TRIANGLE):
+    def __init__(
+        self, element_size: float = -1, element_order: int = 1, element_shape: ElementShape = ElementShape.TRIANGLE
+    ):
         """
         Initialize the mesh settings.
 
@@ -85,6 +88,7 @@ class Node:
         - coordinates (Sequence[float]): node coordinates
 
     """
+
     def __init__(self, id: int, coordinates: Sequence[float]):
         self.id: int = id
         self.coordinates: Sequence[float] = coordinates
@@ -100,6 +104,7 @@ class Element:
         - node_ids (Sequence[int]): node ids
 
     """
+
     def __init__(self, id: int, element_type: str, node_ids: Sequence[int]):
         self.id: int = id
         self.element_type: str = element_type
@@ -119,8 +124,8 @@ class Mesh:
         - elements (Dict[int, Element]): dictionary of element ids followed by connectivities in an array
 
     """
-    def __init__(self, ndim: int):
 
+    def __init__(self, ndim: int):
         self.ndim: int = ndim
         self.nodes: Dict[int, Node] = {}
         self.elements: Dict[int, Element] = {}
@@ -155,20 +160,24 @@ class Mesh:
 
         # create node per node id
         nodes: Dict[int, Node] = {node_id: Node(node_id, mesh_data["nodes"][node_id]) for node_id in group_node_ids}
-
+        # mesh object for static methods
+        mesh = Mesh(ndim=group_data["ndim"])
         # add each element, but first check if counterclockwise
         # revert the node id order if it is not
         elements: Dict[int, Element] = {}
         # create element per element id
         for element_id in group_element_ids:
-
             node_ids_element = element_type_data[element_id]
-            # flip the element nodes if they are not anti-clockwise, and only if mesh entity has more than 2 nodes.
-            if group_data["ndim"] == 2 and len(node_ids_element) > 2:
-                coordinates = [nodes[ii].coordinates for ii in node_ids_element]
-                if Utils.are_2d_coordinates_clockwise(coordinates):
-                    node_ids_element = node_ids_element[::-1]
             elements[element_id] = Element(element_id, group_element_type, node_ids_element)
+
+            # check of nodes for 2D mesh
+            if group_data["ndim"] == 2:
+                element_info = mesh.get_element_info(element=elements[element_id])
+                # flip the element nodes if they are not anti-clockwise, and only if mesh entity has more than 2 nodes.
+                if element_info["n_vertices"] > 2:
+                    coordinates = [nodes[ii].coordinates for ii in node_ids_element]
+                    if Utils.are_2d_coordinates_clockwise(coordinates):
+                        mesh.flip_node_order(element=elements[element_id])
 
         # add nodes and elements to mesh object
         mesh = cls(group_data["ndim"])
@@ -177,8 +186,93 @@ class Mesh:
 
         return mesh
 
-    def prepare_data_for_kratos(self, mesh_data: Dict[str, Any]) \
-            -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.int64]]:
+    @staticmethod
+    def get_element_info(element: Element):
+        """
+        Returns:
+        """
+        element_type = element.element_type
+        element_shape = element_type.split("_")[0]
+        element_nodes = int(re.findall(r"\d+", element_type)[0])
+        element_order = 1  # linear by default, if not found otherwise
+
+        if (
+            (element_shape == "LINE" and element_nodes > 2)
+            or (element_shape == "TRIANGLE" and element_nodes > 3)
+            or (element_shape == "QUADRANGLE" and element_nodes > 4)
+        ):
+            element_order = 2
+
+        elif (
+            (element_shape == "LINE" and element_nodes > 3)
+            or (element_shape == "TRIANGLE" and element_nodes > 6)
+            or (element_shape == "QUADRANGLE" and element_nodes > 8)
+        ):
+            raise NotImplementedError("Cubic element are not implemented yet!")
+
+        if element_shape == "POINT":
+            n_vertices = 1
+            n_edges = 0
+        elif element_shape == "LINE":
+            n_vertices = 2
+            n_edges = 1
+        elif element_shape == "TRIANGLE":
+            n_vertices = 3
+            n_edges = 3
+        elif element_shape == "QUADRANGLE":
+            n_vertices = 4
+            n_edges = 4
+        else:
+            raise NotImplementedError(f"Edges are not supported (not 2D) for the element type: {element_type}")
+
+        info = {
+            "shape": element_shape,
+            "n_vertices": n_vertices,
+            "n_edges": n_edges,
+            "n_nodes": element_nodes,
+            "order": element_order,
+        }
+
+        return info
+
+    def flip_node_order(self, element: Element):
+        """
+        Returns:
+        """
+        element_info = self.get_element_info(element)
+        n_vert = element_info["n_vertices"]
+        n_edges = element_info["n_edges"]
+        # make list from sequence
+        element.node_ids = [node_id for node_id in element.node_ids]
+        element.node_ids[:n_vert] = element.node_ids[(n_vert - 1)::-1]
+
+        # if quadratic or cubic, flip also the mid nodes
+        if element_info["order"] == 2:
+            element.node_ids[n_vert:] = element.node_ids[: (n_vert - 1): -1]
+
+        elif element_info["order"] == 3:
+            # number of mid-point nodes
+            nmp = element_info["order"] - 1
+            # loop over the edges:
+            nodes_on_the_edges = element.node_ids[n_vert : n_vert + nmp * n_edges]
+            inner_nodes = element.node_ids[n_vert + nmp * n_edges :]
+
+            # make groups per edge, flip the group internally, and flip all the groups
+            group_mpn = []
+            for ix in range(n_edges):
+                _st = ix * nmp
+                _end = _st + nmp
+                group_mpn.append(nodes_on_the_edges[_st:_end][::-1])
+            # flip the groups
+            group_mpn = group_mpn[::-1]
+            # flatten the list
+            flipped_nodes_on_the_edges = [nn for group in group_mpn for nn in group]
+            # replace original node ids
+            element.node_ids[n_vert : n_vert + nmp * n_edges] = flipped_nodes_on_the_edges
+            # TODO: how to treat internal nodes, if present?
+
+    @staticmethod
+    def prepare_data_for_kratos(mesh_data: Dict[str, Any]) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.int64]]:
         """
         Prepares mesh data for Kratos
 

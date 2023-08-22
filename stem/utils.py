@@ -217,23 +217,25 @@ class Utils:
         return list({id(obj): obj for obj in input_sequence}.values())
 
     @staticmethod
-    def has_matching_combination(list1, list2):
+    def has_matching_combination(target_list: List[Any], test_list: List[Any]):
         """
+        Check if test_list is a subset of target_list in the same order.
         Args:
-            list1:
-            list2:
+            - target_list (List[Any]): list to be checked for a sequence match.
+            - test_list (List[Any]): list containing the object sequence to check.
 
         Returns:
 
         """
-        n1 = len(list1)
-        n2 = len(list2)
-        if n1 < n2:
+        len_target_list = len(target_list)
+        len_test_list = len(test_list)
+
+        if len_target_list < len_test_list:
             raise ValueError("first list should be larger or equal to check for a match")
-        elif n1 == n2:
-            return list1 == list2
+        elif len_target_list == len_test_list:
+            return target_list == test_list
         else:
-            for ix in range(n1-n2+1):
-                if list1[ix:ix+n2] == list2:
+            for ix in range(len_target_list - len_test_list + 1):
+                if target_list[ix:ix + len_test_list] == test_list:
                     return True
         return False

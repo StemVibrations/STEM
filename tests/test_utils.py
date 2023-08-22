@@ -158,6 +158,9 @@ class TestUtilsStem:
         assert Utils.has_matching_combination(list_tst, sub_list3)
         assert not Utils.has_matching_combination(list_tst, sub_list4)
 
+        # expect it raises an error (test_List is larger than target_List)
+        with pytest.raises(ValueError, match="first list should be larger or equal to check for a match"):
+            Utils.has_matching_combination(sub_list4, list_tst)
     def test_merge(self):
         """
         Test merging of dictionaries

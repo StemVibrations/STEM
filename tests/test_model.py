@@ -1299,6 +1299,16 @@ class TestModel:
                 assert len(element.node_ids) == 3
 
         # assert that the condition elements are written in the correct order
+        # also check if condition is fully applied on a body model part.
+        mapper_process_mp = model._Model__find_matching_body_elements_for_process_model_part(
+            process_model_part=model.process_model_parts[0], check_all_coupled=True
+        )
+        actual_ids = [(el_p.id, el_b.id) for el_p, el_b in mapper_process_mp.items()]
+        expected_ids = [(1, 85), (2, 116), (3, 125), (4, 95), (5, 96), (6, 124), (7, 98), (8, 100), (9, 83)]
+
+        np.testing.assert_equal(desired=expected_ids, actual=actual_ids)
+
+        # check order of nodes is consistent with what expected.
         ids_process_model_part = np.array([el.node_ids for el in model.process_model_parts[0].mesh.elements.values()])
         npt.assert_equal(ids_process_model_part[0, :], [5, 29])
         npt.assert_equal(ids_process_model_part[4, :], [32, 33])
@@ -1359,7 +1369,6 @@ class TestModel:
             - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
 
         """
-
 
         # create a 3D model
         model = Model(3)
