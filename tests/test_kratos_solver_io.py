@@ -66,6 +66,33 @@ class TestKratosSolverIO:
         # assert that the settings dictionary is as expected
         TestUtils.assert_dictionary_almost_equal(expected_solver_settings, test_dict)
 
+        # check variants of the settings dictionary
+        # 1. analysis type = MECHANICAL
+        problem_data.settings.analysis_type = AnalysisType.MECHANICAL
+        test_dict = solver_io.create_settings_dictionary(problem_data, "mesh_test_name", "material_test_name.json",
+                                                         model_parts)
+
+        assert test_dict["solver_settings"]["solver_type"] == "U_Pw"
+
+        # 2. analysis type = GROUNDWATER_FLOW
+        problem_data.settings.analysis_type = AnalysisType.GROUNDWATER_FLOW
+        test_dict = solver_io.create_settings_dictionary(problem_data, "mesh_test_name", "material_test_name.json",
+                                                         model_parts)
+
+        assert test_dict["solver_settings"]["solver_type"] == "Pw"
+
+        # 3. solution type = STATIC
+        problem_data.settings.solution_type = SolutionType.QUASI_STATIC
+
+        test_dict = solver_io.create_settings_dictionary(problem_data, "mesh_test_name", "material_test_name.json",
+                                                         model_parts)
+
+        assert test_dict["solver_settings"]["solution_type"] == "quasi_static"
+
+
+
+
+
 
 
 

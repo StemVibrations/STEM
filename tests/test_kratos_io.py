@@ -41,12 +41,13 @@ class TestKratosModelIO:
     @pytest.fixture
     def create_default_2d_model_and_mesh(self):
         """
-        Sets expected geometry data for a 3D geometry group. The group is a geometry of a cube.
+        Sets expected geometry data for a 2D geometry group. And it sets a time dependent line load at the top and
+        bottom and another line load at the sides. The group is a geometry of a square.
 
         Returns:
-            - :class:`stem.model.Model`: the default 2D model of a square soil layer and a line load.
+            - :class:`stem.model.Model`: the default 2D model of a square soil layer and line loads.
         """
-        ndim=2
+        ndim = 2
         layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
 
         load_coordinates_top = [(1, 1, 0), (0, 1, 0)]  # top
@@ -92,17 +93,17 @@ class TestKratosModelIO:
         model.generate_mesh()
 
         return model
-    
 
     @pytest.fixture
     def create_default_3d_model_and_mesh(self):
         """
-        Sets expected geometry data for a 3D geometry group. The group is a geometry of a cube.
+        Sets expected geometry data for a 3D geometry group. It sets a surface load on the bottom and another load
+        at the top. The group is a geometry of a cube.
 
         Returns:
             - :class:`stem.model.Model`: the default 3D model of a cube soil and a surface load.
         """
-        ndim=3
+        ndim = 3
         layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
         load_coordinates_bottom = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
         load_coordinates_top = [(0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1)]
@@ -257,13 +258,9 @@ class TestKratosModelIO:
         expected_dict = json.load(open("tests/test_data/expected_MaterialParameters.json", 'r'))
         TestUtils.assert_dictionary_almost_equal(expected_dict, actual_dict)
 
-    def test_write_mdpa_file_2d(
-        self,
-        create_default_2d_model_and_mesh:Model,
-        create_default_solver_settings:Problem
-    ):
+    def test_write_mdpa_file_2d(self, create_default_2d_model_and_mesh: Model, create_default_solver_settings: Problem):
         """
-        Test correct writing of the mdpa file (mesh) for the default model and solver settings.
+        Test correct writing of the mdpa file (mesh) for the default model and solver settings in 2D.
 
         Args:
             - create_default_2d_model_and_mesh (:class:`stem.model.Model`): the default 2D model of a square \
@@ -286,13 +283,9 @@ class TestKratosModelIO:
         npt.assert_equal(actual=actual_text, desired=expected_text)
 
     @pytest.mark.skipif(IS_LINUX, reason="Linux provides different meshing order. The test is not run on Ubuntu")
-    def test_write_mdpa_file_3d(
-        self,
-        create_default_3d_model_and_mesh:Model,
-        create_default_solver_settings:Problem
-    ):
+    def test_write_mdpa_file_3d(self, create_default_3d_model_and_mesh: Model, create_default_solver_settings: Problem):
         """
-        Test correct writing of the mdpa file (mesh) for the default model and solver settings.
+        Test correct writing of the mdpa file (mesh) for the default model and solver settings in 3D.
 
         Args:
             - create_default_3d_model_and_mesh (:class:`stem.model.Model`): the default 3D model of a cube \
@@ -322,7 +315,7 @@ class TestKratosModelIO:
 
         Args:
             - create_default_2d_model_and_mesh (:class:`stem.model.Model`): the default 2D model of a square \
-                soil layer and a line load.
+                soil layer line loads.
             - create_default_solver_settings (:class:`stem.solver.Problem`): the Problem object containing the \
                 solver settings.
             - create_default_outputs (List[:class:`stem.output.Output`]): list of default output processes.

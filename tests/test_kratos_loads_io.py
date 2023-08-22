@@ -2,7 +2,7 @@ import json
 
 import numpy as np
 
-from stem.IO.kratos_io import KratosIO
+from stem.IO.kratos_loads_io import KratosLoadsIO
 from stem.model import Model
 from stem.load import *
 from tests.utils import TestUtils
@@ -50,15 +50,16 @@ class TestKratosLoadsIO:
         model.add_load_by_coordinates(moving_load_coords, moving_point_load_parameters, 'test_moving_load')
         model.synchronise_geometry()
 
-        # write dictionary for the load(s)
-        kratos_io = KratosIO(ndim=model.ndim)
+        # create load process dictionary
+        kratos_loads_io = KratosLoadsIO(domain="PorousDomain")
 
-        test_dictionary = kratos_io.write_project_parameters_json(
-            model=model,
-            outputs=[],
-            mesh_file_name="test_load_parameters.json",
-            materials_file_name=""
-        )
+        loads_processes = [kratos_loads_io.create_load_dict("test_point_load", point_load_parameters),
+                           kratos_loads_io.create_load_dict("test_line_load", line_load_parameters),
+                           kratos_loads_io.create_load_dict("test_surface_load", surface_load_parameters),
+                           kratos_loads_io.create_load_dict("test_moving_load", moving_point_load_parameters)]
+
+        test_dictionary = {"loads_process_list": loads_processes,
+                            "constraints_process_list": []}
 
         # load expected dictionary from the json
         expected_load_parameters_json = json.load(
@@ -67,7 +68,7 @@ class TestKratosLoadsIO:
 
         # assert the objects to be equal
         TestUtils.assert_dictionary_almost_equal(
-            expected_load_parameters_json, test_dictionary
+            expected_load_parameters_json["processes"], test_dictionary
         )
 
     def test_create_load_process_dict_with_tables(self):
@@ -89,9 +90,11 @@ class TestKratosLoadsIO:
 
         _value1 = np.array([0, 5, 10, 5, 0, 0])
         table1 = Table(times=_time, values=_value1)
+        table1.id = 1
 
         _value2 = np.array([0, -5, 5, -5, 0, 0])
         table2 = Table(times=_time, values=_value2)
+        table2.id = 2
 
         # define load(s) parameters
         # point load
@@ -120,15 +123,16 @@ class TestKratosLoadsIO:
         model.add_load_by_coordinates(moving_load_coords, moving_point_load_parameters, 'test_moving_load')
         model.synchronise_geometry()
 
-        # write dictionary for the load(s)
-        kratos_io = KratosIO(ndim=model.ndim)
+        # create load process dictionary
+        kratos_loads_io = KratosLoadsIO(domain="PorousDomain")
 
-        test_dictionary = kratos_io.write_project_parameters_json(
-            model=model,
-            outputs=[],
-            mesh_file_name="test_load_parameters.mdpa",
-            materials_file_name=""
-        )
+        loads_processes = [kratos_loads_io.create_load_dict("test_point_load", point_load_parameters),
+                           kratos_loads_io.create_load_dict("test_line_load", line_load_parameters),
+                           kratos_loads_io.create_load_dict("test_surface_load", surface_load_parameters),
+                           kratos_loads_io.create_load_dict("test_moving_load", moving_point_load_parameters)]
+
+        test_dictionary = {"loads_process_list": loads_processes,
+                           "constraints_process_list": []}
 
         # load expected dictionary from the json
         expected_load_parameters_json = json.load(
@@ -137,5 +141,5 @@ class TestKratosLoadsIO:
 
         # assert the objects to be equal
         TestUtils.assert_dictionary_almost_equal(
-            expected_load_parameters_json, test_dictionary
+            expected_load_parameters_json["processes"], test_dictionary
         )

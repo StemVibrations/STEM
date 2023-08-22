@@ -220,10 +220,10 @@ class PlotUtils:
                     color='black', fontsize=14, fontweight='bold')
 
     @staticmethod
-    def show_geometry(ndim: int, geometry: 'Geometry', show_volume_ids: bool = False,show_surface_ids: bool = False,
-                      show_line_ids: bool = False, show_point_ids: bool = False):
+    def create_geometry_figure(ndim: int, geometry: 'Geometry', show_volume_ids: bool = False, show_surface_ids: bool = False,
+                               show_line_ids: bool = False, show_point_ids: bool = False) -> plt.Figure:
         """
-        Show the geometry of the model in a matplotlib plot.
+        Creates the geometry of the model in a matplotlib plot.
 
         Args:
             - ndim (int): Number of dimensions of the geometry. Either 2 or 3.
@@ -232,6 +232,9 @@ class PlotUtils:
             - show_surface_ids (bool): If True, the surface ids are shown in the plot.
             - show_line_ids (bool): If True, the line ids are shown in the plot.
             - show_point_ids (bool): If True, the point ids are shown in the plot.
+
+        Returns:
+            - plt.Figure: Figure object
 
         """
         # Initialize figure in 3D
@@ -288,4 +291,4 @@ class PlotUtils:
         # set equal aspect ratio to equal axes
         ax.set_aspect('equal')
 
-        fig.show()
+        return fig
