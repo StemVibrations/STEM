@@ -1,6 +1,5 @@
 import pickle
 from typing import Tuple
-import platform
 import re
 
 import numpy.testing as npt
@@ -1075,16 +1074,13 @@ class TestModel:
                                              f"but inf was given."):
             model.validate_coordinates([(0.0, 0.0, 0.0), (0.0, np.inf, 0.0)])
 
-        # test for complex numbers
-        if platform.system() == "Windows":
-            with pytest.raises(TypeError, match=f"can't convert complex to float"):
-                model.validate_coordinates([(0.0, 0.0, 0.0), (0.0, 1j, 0.0)])
-        elif platform.system() == "Linux":
-            with pytest.raises(TypeError, match=re.escape(f"float() argument must be a string or a real number, "
-                                                          f"not 'complex'")):
-                model.validate_coordinates([(0.0, 0.0, 0.0), (0.0, 1j, 0.0)])
-        else:
-            raise NotImplementedError(f"Platform {platform.system()} is not supported.")
+        # test for complex numbers, different error messages for different python versions and operating systems
+        message_option_1 = f"can't convert complex to float"
+        message_option_2 = f"float() argument must be a string or a real number, not 'complex'"
+
+        with pytest.raises(TypeError,
+                           match=f"{message_option_1}|{re.escape(message_option_2)}"):
+            model.validate_coordinates([(0.0, 0.0, 0.0), (0.0, 1j, 0.0)])
 
         # test for strings
         with pytest.raises(ValueError, match=f"could not convert string to float: 'test'"):
