@@ -181,7 +181,7 @@ class Utils:
             - a (Dict[Any,Any]): first dictionary
             - b (Dict[Any,Any]): second dictionary
             - path (List[str]): object to help navigate the deeper layers of the dictionary. \
-                Always place it as None
+                Initially this has to be None
 
         Returns:
             - a (Dict[Any,Any]): updated dictionary with the additional dictionary `b`

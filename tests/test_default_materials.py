@@ -14,7 +14,10 @@ class TestDefaultMaterials:
         default_materials = [
             DefaultMaterial.Rail_46E3_3D.value,
             DefaultMaterial.Rail_54E1_3D.value,
-            DefaultMaterial.Rail_60E1_3D.value
+            DefaultMaterial.Rail_60E1_3D.value,
+            DefaultMaterial.Rail_46E3_2D.value,
+            DefaultMaterial.Rail_54E1_2D.value,
+            DefaultMaterial.Rail_60E1_2D.value
         ]
 
         all_materials = {m_obj.name: m_obj for m_obj in default_materials}
