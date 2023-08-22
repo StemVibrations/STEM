@@ -5,6 +5,7 @@ from stem.model import Model
 from stem.soil_material import SoilMaterial, OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
 from stem.plot_utils import PlotUtils
 
+
 class TestPlotUtils:
     """
     Test class for the :class:`stem.plot_utils.PlotUtils` class.
@@ -12,7 +13,7 @@ class TestPlotUtils:
     """
 
     @pytest.fixture
-    def create_default_2d_soil_material(self):
+    def create_default_2d_soil_material(self) -> SoilMaterial:
         """
         Create a default soil material for a 2D geometry.
 
@@ -29,7 +30,7 @@ class TestPlotUtils:
         return soil_material
 
     @pytest.fixture
-    def create_default_3d_soil_material(self):
+    def create_default_3d_soil_material(self) -> SoilMaterial:
         """
         Create a default soil material for a 3D geometry.
 
@@ -46,7 +47,7 @@ class TestPlotUtils:
         return soil_material
 
     @staticmethod
-    def create_geometry_plot_and_assert(ndim: int, material: SoilMaterial):
+    def create_geometry_plot_and_assert(ndim: int, material: SoilMaterial) -> None:
         """
         Create a geometry and plots it.
 
