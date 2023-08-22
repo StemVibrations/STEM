@@ -1,5 +1,5 @@
 from typing import List, Dict, Any, Union, Optional
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from abc import ABC, abstractmethod
 
 from stem.solver import AnalysisType

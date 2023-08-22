@@ -7,9 +7,6 @@ from stem.table import Table
 from stem.boundary import BoundaryParametersABC
 from stem.load import LoadParametersABC
 
-import numpy as np
-
-
 class IOUtils:
 
     @staticmethod
