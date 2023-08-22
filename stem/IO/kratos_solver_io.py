@@ -236,7 +236,7 @@ class KratosSolverIO:
         return solver_settings_dict
 
     def create_settings_dictionary(self, problem_data: Problem, mesh_file_name: str, materials_file_name: str,
-                                   model_parts: List[ModelPart]):
+                                   model_parts: List[ModelPart]) -> Dict[str, Any]:
         """
         Creates a dictionary containing the solver settings
 

@@ -39,38 +39,6 @@ class TestKratosModelIO:
         gmsh_IO.GmshIO().finalize_gmsh()
 
     @pytest.fixture
-    def create_default_solver_settings(self) -> Problem:
-        """
-        Sets default solver settings. Which are required to write the mesh and project parameters.
-
-        Returns:
-            - :class:`stem.solver.Problem`: the Problem object containing the solver settings.
-
-        """
-        # set up solver settings
-        analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
-
-        solution_type = SolutionType.QUASI_STATIC
-
-        stress_initialisation_type = StressInitialisationType.NONE
-
-        time_integration = TimeIntegration(start_time=0.0, end_time=1.0, delta_time=0.1, reduction_factor=0.5,
-                                           increase_factor=2.0, max_delta_time_factor=500)
-
-        convergence_criteria = DisplacementConvergenceCriteria()
-
-        solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
-                                         stress_initialisation_type=stress_initialisation_type,
-                                         time_integration=time_integration,
-                                         is_stiffness_matrix_constant=False, are_mass_and_damping_constant=False,
-                                         convergence_criteria=convergence_criteria)
-
-        # set up problem data
-        return Problem(problem_name="test", number_of_threads=2, settings=solver_settings)
-
-
-
-    @pytest.fixture
     def create_default_2d_model_and_mesh(self) -> Model:
         """
         Sets expected geometry data for a 2D geometry group. And it sets a time dependent line load at the top and
@@ -423,18 +391,17 @@ class TestKratosModelIO:
         # assert the objects to be equal
         npt.assert_equal(actual=actual_text_load, desired=expected_text_load)
 
-    def test_write_mdpa_text(self, create_default_2d_model_and_mesh: Model, create_default_solver_settings: Problem):
+    def test_write_mdpa_text(self, create_default_2d_model_and_mesh: Model):
         """
         Test the creation of the mdpa text of the whole model
 
         Args:
             - create_default_2d_model_and_mesh (:class:`stem.model.Model`): the default model to use in testing
-            - create_default_solver_settings (:class:`stem.solver.Problem`): the Problem object containing the \
-                solver settings.
+
         """
         # load the default 2D model
         model = create_default_2d_model_and_mesh
-        model.project_parameters = create_default_solver_settings
+        model.project_parameters = TestUtils.create_default_solver_settings()
 
         # IO object
         kratos_io = KratosIO(ndim=model.ndim)

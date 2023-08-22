@@ -14,7 +14,7 @@ class LoadParametersABC(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
         """
         Abstract static method to get the element name for a load.
 
@@ -50,7 +50,7 @@ class PointLoad(LoadParametersABC):
     value: List[Union[float, Table]]
 
     @staticmethod
-    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> None:
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
         """
         Static method to get the element name for a point load. Point load does not have a name.
 
@@ -98,7 +98,7 @@ class LineLoad(LoadParametersABC):
     value: List[Union[float, Table]]
 
     @staticmethod
-    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> str:
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
         """
         Static method to get the element name for a line load.
 
@@ -111,7 +111,7 @@ class LineLoad(LoadParametersABC):
             - ValueError: If the analysis type is not mechanical or mechanical groundwater flow
 
         Returns:
-            - str: The element name for a line load
+            - Optional[str]: The element name for a line load
 
         """
 
@@ -151,7 +151,7 @@ class SurfaceLoad(LoadParametersABC):
     value: Union[List[float], List[Table]]
 
     @staticmethod
-    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> str:
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
         """
         Static method to get the element name for a surface load.
 
@@ -162,6 +162,9 @@ class SurfaceLoad(LoadParametersABC):
 
         Raises:
             - ValueError: If the analysis type is not mechanical or mechanical groundwater flow
+
+        Returns:
+            - Optional[str]: The element name for a surface load
         """
 
         available_node_dim_combinations = {
@@ -206,7 +209,7 @@ class MovingLoad(LoadParametersABC):
     offset: float = 0.0
 
     @staticmethod
-    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> str:
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
         """
         Static method to get the element name for a moving load.
 
@@ -219,7 +222,7 @@ class MovingLoad(LoadParametersABC):
             - ValueError: If the analysis type is not mechanical or mechanical groundwater flow
 
         Returns:
-            - str: The element name for a moving load
+            - Optional[str]: The element name for a moving load
         """
 
         available_node_dim_combinations = {
@@ -254,7 +257,7 @@ class GravityLoad(LoadParametersABC):
     value: List[float]
 
     @staticmethod
-    def get_element_name(n_dim_model, n_nodes_element, analysis_type) -> None:
+    def get_element_name(n_dim_model, n_nodes_element, analysis_type) -> Optional[str]:
         """
         Static method to get the element name for a gravity load.
 

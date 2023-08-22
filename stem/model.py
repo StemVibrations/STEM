@@ -1,5 +1,4 @@
 from typing import List, Sequence, Dict, Any, Optional, Union
-from numbers import Number
 
 import numpy.typing as npty
 import numpy as np
@@ -16,6 +15,9 @@ from stem.load import *
 from stem.solver import Problem, StressInitialisationType
 from stem.utils import Utils
 from stem.plot_utils import PlotUtils
+
+
+NUMBER_TYPES = (int, float, np.int64, np.float64)
 
 
 class Model:
@@ -217,7 +219,7 @@ class Model:
         # check if coordinates are real numbers
         for coordinate in coordinates:
             for i in coordinate:
-                if not isinstance(i, Number) or np.isnan(i) or np.isinf(i):
+                if not isinstance(i, NUMBER_TYPES) or np.isnan(i) or np.isinf(i):
                     raise ValueError(f"Coordinates should be a sequence of sequence of real numbers, "
                                      f"but {i} was given.")
 
@@ -450,9 +452,9 @@ class Model:
         for mp in self.get_all_model_parts():
             if mp.mesh is None:
                 raise ValueError('Geometry has not been meshed yet! Please first run the Model.generate_mesh method.')
-            for nn in mp.mesh.nodes:
-                if not nn in node_dict.keys():
-                    node_dict[nn.id] = nn
+            for node in mp.mesh.nodes:
+                if not node.id in node_dict.keys():
+                    node_dict[node.id] = node
 
         return node_dict
 
