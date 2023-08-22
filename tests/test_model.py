@@ -1,5 +1,6 @@
 import pickle
 from typing import Tuple
+import platform
 
 import numpy as np
 import numpy.testing as npt
@@ -1050,7 +1051,7 @@ class TestModel:
 
         # test for incorrect number of coordinates in array (shape 3,2)
         with pytest.raises(ValueError, match=f"Coordinates should be 3D but 2 coordinates were given."):
-            model.validate_coordinates(np.zeros((3,2)))
+            model.validate_coordinates(np.zeros((3, 2)))
 
         # test for incorrect number of dimension in array (1-D array)
         with pytest.raises(ValueError, match=f"Coordinates are not a sequence of a sequence or a 2D array."):
@@ -1076,8 +1077,14 @@ class TestModel:
             model.validate_coordinates([(0.0, 0.0, 0.0), (0.0, np.inf, 0.0)])
 
         # test for complex numbers
-        with pytest.raises(TypeError, match=f"can't convert complex to float"):
-            model.validate_coordinates([(0.0, 0.0, 0.0), (0.0, 1j, 0.0)])
+        if platform.system() == "Windows":
+            with pytest.raises(TypeError, match=f"can't convert complex to float"):
+                model.validate_coordinates([(0.0, 0.0, 0.0), (0.0, 1j, 0.0)])
+        elif platform.system() == "Linux":
+            with pytest.raises(TypeError, match=f"float() argument must be a string or a real number, not 'complex'"):
+                model.validate_coordinates([(0.0, 0.0, 0.0), (0.0, 1j, 0.0)])
+        else:
+            raise NotImplementedError(f"Platform {platform.system()} is not supported.")
 
         # test for strings
         with pytest.raises(ValueError, match=f"could not convert string to float: 'test'"):
