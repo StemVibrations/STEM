@@ -223,10 +223,10 @@ class PlotUtils:
                     color='black', fontsize=14, fontweight='bold')
 
     @staticmethod
-    def show_geometry(ndim: int, geometry: 'Geometry', show_volume_ids: bool = False,show_surface_ids: bool = False,
-                      show_line_ids: bool = False, show_point_ids: bool = False):
+    def create_geometry_figure(ndim: int, geometry: 'Geometry', show_volume_ids: bool = False, show_surface_ids: bool = False,
+                               show_line_ids: bool = False, show_point_ids: bool = False) -> plt.Figure:
         """
-        Show the geometry of the model in a matplotlib plot.
+        Creates the geometry of the model in a matplotlib plot.
 
         Args:
             - ndim (int): Number of dimensions of the geometry. Either 2 or 3.
@@ -235,6 +235,9 @@ class PlotUtils:
             - show_surface_ids (bool): If True, the surface ids are shown in the plot.
             - show_line_ids (bool): If True, the line ids are shown in the plot.
             - show_point_ids (bool): If True, the point ids are shown in the plot.
+
+        Returns:
+            - plt.Figure: Figure object
 
         """
         # Initialize figure in 3D
@@ -291,14 +294,14 @@ class PlotUtils:
         # set equal aspect ratio to equal axes
         ax.set_aspect('equal')
 
-        fig.show()
+        return fig
 
     @staticmethod
     def show_mesh(ndim: int, body_model_parts: List[BodyModelPart], process_model_parts: List[ModelPart],
                   show_node_ids: bool = False, show_element_ids: bool = False, fontsize:int=10,
-                  element_size:Optional[float]=None):
+                  element_size: Optional[float] = None) -> plt.Figure:
         """
-        Show the mesh of the model in a matplotlib plot.
+        Creates the mesh of the model in a matplotlib plot.
 
         Args:
             - ndim (int): Number of dimensions of the mesh. Either 2 or 3.
@@ -308,10 +311,15 @@ class PlotUtils:
             - show_element_ids (bool): If True, the element ids are shown in the plot.
             - fontsize (int): Set the dimension of the fontsize.
             - element_size (int): dimension of the elements in the model (used to shift the text).
+        Raises:
+            - NotImplementedError: if model is 3D. For such mesh please use gmsh to visualise the mesh.
+        Returns:
+            - plt.Figure: Figure object
         """
         # validate inputs
         if ndim == 3:
-            raise NotImplementedError("Mesh visualiser not yet implemented for 3D models.")
+            raise NotImplementedError("Mesh visualiser not yet implemented for 3D models."
+                                      "For 3D models it is recommended to use gmsh instead.")
 
         # offset for shifting the element and node labels
         if element_size is not None:
@@ -377,4 +385,4 @@ class PlotUtils:
         # set equal aspect ratio to equal axes
         ax.set_aspect('equal')
 
-        fig.show()
+        return fig

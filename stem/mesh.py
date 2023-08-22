@@ -1,13 +1,11 @@
 import re
 from typing import Dict, List, Tuple, Sequence, Union, Any, Optional
 from enum import Enum
-from dataclasses import dataclass
 
 import numpy as np
 import numpy.typing as npt
 
 from stem.utils import Utils
-
 
 class ElementShape(Enum):
     """
@@ -17,7 +15,7 @@ class ElementShape(Enum):
     """
 
     TRIANGLE = "triangle"
-    QUADRILATURAL = "quadrilateral"
+    QUADRILATERAL = "quadrilateral"
 
 
 class MeshSettings:
@@ -26,9 +24,9 @@ class MeshSettings:
 
     Attributes:
         - element_size (float): The element size (default -1, which means that gmsh determines the size).
-        - element_shape (:class:`stem.model.ElementShape`): The element shape. TRIANGLE for triangular elements and \
-         tetrahedral elements,  QUADRILATERAL for quadrilateral elements and hexahedral elements. (default TRIANGLE)
-         - __element_order (int): The element order. 1 for linear elements, 2 for quadratic elements. (default 1)
+        - element_shape (:class:`ElementShape`): The element shape. TRIANGLE for triangular elements and \
+            tetrahedral elements,  QUADRILATERAL for quadrilateral elements and hexahedral elements. (default TRIANGLE)
+        - __element_order (int): The element order. 1 for linear elements, 2 for quadratic elements. (default 1)
     """
 
     def __init__(
@@ -40,7 +38,7 @@ class MeshSettings:
         Args:
             - element_size (float): The element size (default -1, which means that gmsh determines the size).
             - element_order (int): The element order. 1 for linear elements, 2 for quadratic elements. (default 1)
-            - element_shape (:class:`stem.model.ElementShape`): The element shape. TRIANGLE for triangular elements and \
+            - element_shape (:class:`ElementShape`): The element shape. TRIANGLE for triangular elements and \
             tetrahedral elements,  QUADRILATERAL for quadrilateral elements and hexahedral elements. (default TRIANGLE)
         """
         self.element_size: float = element_size
@@ -52,7 +50,7 @@ class MeshSettings:
         self.__element_order: int = element_order
 
     @property
-    def element_order(self):
+    def element_order(self) -> int:
         """
         Get the element order.
 
@@ -88,8 +86,14 @@ class Node:
         - coordinates (Sequence[float]): node coordinates
 
     """
-
     def __init__(self, id: int, coordinates: Sequence[float]):
+        """
+        Initialize the node.
+
+        Args:
+            id (int): Node id
+            coordinates (Sequence[float]): Node coordinates
+        """
         self.id: int = id
         self.coordinates: Sequence[float] = coordinates
 
@@ -100,12 +104,20 @@ class Element:
 
     Attributes:
         - id (int): element id
-        - element_type (str): element type
+        - element_type (str): Gmsh element type
         - node_ids (Sequence[int]): node ids
 
     """
 
     def __init__(self, id: int, element_type: str, node_ids: Sequence[int]):
+        """
+        Initialize the element.
+
+        Args:
+            id (int): Element id
+            element_type (str): Gmsh-element type
+            node_ids (Sequence[int]): Node connectivities
+        """
         self.id: int = id
         self.element_type: str = element_type
         self.node_ids: Sequence[int] = node_ids
@@ -126,12 +138,37 @@ class Mesh:
     """
 
     def __init__(self, ndim: int):
+        """
+        Initialize the mesh.
+
+        Args:
+            ndim (int): number of dimensions of the mesh
+        """
+
         self.ndim: int = ndim
         self.nodes: Dict[int, Node] = {}
         self.elements: Dict[int, Element] = {}
 
+    def __getattribute__(self, item: str) -> Any:
+        """
+        Overrides the getattribute method of the object class.
+
+        Args:
+            - item (str): The name of the attribute.
+
+        Returns:
+            - Any: The attribute.
+
+        """
+        # Make sure that the create_mesh_from_gmsh_group method cannot be
+        # called on an initialised mesh instance
+        if item == "create_mesh_from_gmsh_group":
+            raise AttributeError(f"Cannot call class method: {item} from an initialised mesh instance.")
+        else:
+            return super().__getattribute__(item)
+
     @classmethod
-    def create_mesh_from_gmsh_group(cls, mesh_data: Dict[str, Any], group_name: str):
+    def create_mesh_from_gmsh_group(cls, mesh_data: Dict[str, Any], group_name: str) -> "Mesh":
         """
         Creates a mesh object from gmsh group
 

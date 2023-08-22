@@ -1,10 +1,10 @@
 import pickle
 from typing import Tuple
+import re
 
 import numpy.testing as npt
 import pytest
 
-from stem.boundary import *
 from stem.geometry import *
 from stem.model import *
 from stem.solver import *
@@ -1049,7 +1049,7 @@ class TestModel:
 
         # test for incorrect number of coordinates in array (shape 3,2)
         with pytest.raises(ValueError, match=f"Coordinates should be 3D but 2 coordinates were given."):
-            model.validate_coordinates(np.zeros((3,2)))
+            model.validate_coordinates(np.zeros((3, 2)))
 
         # test for incorrect number of dimension in array (1-D array)
         with pytest.raises(ValueError, match=f"Coordinates are not a sequence of a sequence or a 2D array."):
@@ -1063,6 +1063,28 @@ class TestModel:
         # test for incorrect type (Sequence of float instead of Sequence[Sequence[float]])
         with pytest.raises(ValueError, match="Coordinates are not a sequence of a sequence or a 2D array."):
             model.validate_coordinates([0.0, 0.0, 0.0])
+
+        # test for nan numbers
+        with pytest.raises(ValueError, match=f"Coordinates should be a sequence of sequence of real numbers, "
+                                             f"but nan was given."):
+            model.validate_coordinates([(0.0, 0.0, 0.0), (0.0, np.NAN, 0.0)])
+
+        # test for inf numbers
+        with pytest.raises(ValueError, match=f"Coordinates should be a sequence of sequence of real numbers, "
+                                             f"but inf was given."):
+            model.validate_coordinates([(0.0, 0.0, 0.0), (0.0, np.inf, 0.0)])
+
+        # test for complex numbers, different error messages for different python versions and operating systems
+        message_option_1 = f"can't convert complex to float"
+        message_option_2 = f"float() argument must be a string or a real number, not 'complex'"
+
+        with pytest.raises(TypeError,
+                           match=f"{message_option_1}|{re.escape(message_option_2)}"):
+            model.validate_coordinates([(0.0, 0.0, 0.0), (0.0, 1j, 0.0)])
+
+        # test for strings
+        with pytest.raises(ValueError, match=f"could not convert string to float: 'test'"):
+            model.validate_coordinates([(0.0, 0.0, 0.0), (0.0, "test", 0.0)])
 
     def test_validation_moving_load(self, create_default_moving_load_parameters:MovingLoad):
         """
@@ -1596,7 +1618,7 @@ class TestModel:
         model.synchronise_geometry()
 
         # add gravity load
-        model._Model__add_gravity_load(vertical_axis=2, gravity_value=-10)
+        model._Model__add_gravity_load(vertical_axis=2, gravity_acceleration=-10)
 
         assert len(model.process_model_parts) == 1
 

@@ -106,6 +106,9 @@ class TwoPhaseSoil(SoilFormulationParametersABC):
     def __post_init__(self):
         """
         Check if the permeability parameters are defined for the correct number of dimensions
+
+        Raises:
+            - ValueError: If the permeability parameters are not defined for the correct number of dimensions
         """
         if self.ndim == 2:
             # set permeability_yz and permeability_zx to None as they are not used in 2D
@@ -251,7 +254,7 @@ class SoilMaterial:
     fluid_properties: FluidProperties = field(default_factory=FluidProperties)
 
     @staticmethod
-    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> str:
         """
         Function to get the element name based on the number of dimensions, the number of nodes and the analysis type.
 
