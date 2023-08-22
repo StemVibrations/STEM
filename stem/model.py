@@ -24,8 +24,7 @@ class Model:
 
     Attributes:
         - ndim (int): Number of dimensions of the model
-        - project_parameters (dict): A dictionary containing the project parameters.
-        - solver (:class:`stem.solver.Solver`): The solver used to solve the problem.
+        - project_parameters (:class:`stem.solver.Problem): Object containing the problem data and solver settings.
         - geometry (Optional[:class:`stem.geometry.Geometry`]) The geometry of the whole model.
         - body_model_parts (List[:class:`stem.model_part.BodyModelPart`]): A list containing the body model parts.
         - process_model_parts (List[:class:`stem.model_part.ModelPart`]): A list containing the process model parts.
@@ -41,7 +40,6 @@ class Model:
         """
         self.ndim: int = ndim
         self.project_parameters: Optional[Problem] = None
-        self.solver = None
         self.geometry: Optional[Geometry] = None
         self.mesh_settings: MeshSettings = MeshSettings()
         self.gmsh_io = gmsh_IO.GmshIO()
@@ -484,8 +482,9 @@ class Model:
         if self.geometry is None:
             raise ValueError("Geometry must be set before showing the geometry")
 
-        PlotUtils.show_geometry(self.ndim, self.geometry, show_volume_ids, show_surface_ids, show_line_ids,
-                                show_point_ids)
+        fig = PlotUtils.create_geometry_figure(self.ndim, self.geometry, show_volume_ids, show_surface_ids, show_line_ids,
+                                               show_point_ids)
+        fig.show()
 
     def __setup_stress_initialisation(self):
         """
@@ -522,11 +521,3 @@ class Model:
         self.validate()
 
         self.__setup_stress_initialisation()
-
-if __name__ == '__main__':
-    import numbers
-    a = numbers.Number()
-
-    isinstance(1, numbers.Number())
-    a = np.random.rand(3).astype(np.float64)
-    print(isinstance(a, np.floating))
