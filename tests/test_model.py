@@ -1,6 +1,7 @@
 import pickle
 from typing import Tuple
 
+import numpy as np
 import numpy.testing as npt
 import pytest
 
@@ -1064,6 +1065,26 @@ class TestModel:
         with pytest.raises(ValueError, match="Coordinates are not a sequence of a sequence or a 2D array."):
             model.validate_coordinates([0.0, 0.0, 0.0])
 
+        # test for nan numbers
+        with pytest.raises(ValueError, match=f"Coordinates should be a sequence of sequence of real numbers, "
+                                             f"but nan was given."):
+            model.validate_coordinates([(0.0, 0.0, 0.0), (0.0, np.NAN, 0.0)])
+
+        # test for inf numbers
+        with pytest.raises(ValueError, match=f"Coordinates should be a sequence of sequence of real numbers, "
+                                             f"but inf was given."):
+            model.validate_coordinates([(0.0, 0.0, 0.0), (0.0, np.inf, 0.0)])
+
+        # test for complex numbers
+        with pytest.raises(TypeError, match=f"can't convert complex to float"):
+            model.validate_coordinates([(0.0, 0.0, 0.0), (0.0, 1j, 0.0)])
+
+        # test for strings
+        with pytest.raises(ValueError, match=f"could not convert string to float: 'test'"):
+            model.validate_coordinates([(0.0, 0.0, 0.0), (0.0, "test", 0.0)])
+
+
+
     def test_validation_moving_load(self, create_default_moving_load_parameters:MovingLoad):
         """
         Test validation of moving load when points is not collinear to the trajectory.
@@ -1539,7 +1560,7 @@ class TestModel:
         model.synchronise_geometry()
 
         # add gravity load
-        model._Model__add_gravity_load(vertical_axis=2, gravity_value=-10)
+        model._Model__add_gravity_load(vertical_axis=2, gravity_acceleration=-10)
 
         assert len(model.process_model_parts) == 1
 

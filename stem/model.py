@@ -204,12 +204,6 @@ class Model:
             - ValueError: if the number of elements (number of coordinates) is not 3.
         """
 
-        # check if coordinates are real numbers
-        for coordinate in coordinates:
-            for i in coordinate:
-                if not isinstance(i, Number) or np.isnan(i) or np.isinf(i) or np.iscomplex(i):
-                    raise ValueError(f"Coordinates should be a sequence of real numbers, but {i} was given.")
-
         # if is not an array, make it array!
         if not isinstance(coordinates, np.ndarray):
             coordinates = np.array(coordinates, dtype=np.float64)
@@ -219,6 +213,13 @@ class Model:
 
         if coordinates.shape[1] != 3:
             raise ValueError(f"Coordinates should be 3D but {coordinates.shape[1]} coordinates were given.")
+
+        # check if coordinates are real numbers
+        for coordinate in coordinates:
+            for i in coordinate:
+                if not isinstance(i, Number) or np.isnan(i) or np.isinf(i):
+                    raise ValueError(f"Coordinates should be a sequence of sequence of real numbers, "
+                                     f"but {i} was given.")
 
     @staticmethod
     def __validate_moving_load_parameters(coordinates: Sequence[Sequence[float]], load_parameters: MovingLoad) -> None:
