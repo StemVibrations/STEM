@@ -2,7 +2,6 @@ import json
 
 from stem.IO.kratos_material_io import KratosMaterialIO
 from stem.default_materials import DefaultMaterial
-
 from tests.utils import TestUtils
 
 
@@ -15,10 +14,13 @@ class TestDefaultMaterials:
         default_materials = [
             DefaultMaterial.Rail_46E3_3D.value,
             DefaultMaterial.Rail_54E1_3D.value,
-            DefaultMaterial.Rail_60E1_3D.value
+            DefaultMaterial.Rail_60E1_3D.value,
+            DefaultMaterial.Rail_46E3_2D.value,
+            DefaultMaterial.Rail_54E1_2D.value,
+            DefaultMaterial.Rail_60E1_2D.value
         ]
 
-        all_materials = {m_obj.name:m_obj for m_obj in default_materials}
+        all_materials = {m_obj.name: m_obj for m_obj in default_materials}
 
         # write json file
         material_io = KratosMaterialIO(ndim=ndim, domain="PorousDomain")
@@ -40,5 +42,5 @@ class TestDefaultMaterials:
 
         # compare json files using custom dictionary comparison
         TestUtils.assert_dictionary_almost_equal(
-            test_dict, expected_material_parameters_json
+            expected_material_parameters_json, test_dict
         )

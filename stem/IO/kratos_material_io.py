@@ -1,4 +1,3 @@
-import json
 from typing import Dict, Union, Any, List
 from copy import deepcopy
 
@@ -31,7 +30,8 @@ class KratosMaterialIO:
         keys are moved to the UDSM_NAME and IS_FORTRAN_UDSM keys, as this can be recognized by Kratos.
 
         Args:
-            - material (:class:`stem.soil_material.SoilConstitutiveLawABC`): soil constitutive law object containing the material parameters for UMAT
+            - material (:class:`stem.soil_material.SoilConstitutiveLawABC`): soil constitutive law object containing \
+                the material parameters for UMAT
 
         Returns:
             - Dict[str, Any]: dictionary containing the material parameters
@@ -51,7 +51,8 @@ class KratosMaterialIO:
         the UMAT_PARAMETERS key, as this can be recognized by Kratos.
 
         Args:
-            - material (:class:`stem.soil_material.SoilConstitutiveLawABC`): soil constitutive law object containing the material parameters for UDSM
+            - material (:class:`stem.soil_material.SoilConstitutiveLawABC`): soil constitutive law object containing \
+                the material parameters for UDSM
 
         Returns:
             - Dict[str, Any]: dictionary containing the material parameters
@@ -70,8 +71,8 @@ class KratosMaterialIO:
         and NODAL_ROTATIONAL_DAMPING_RATIO keys, as this can be recognized by Kratos.
 
         Args:
-            - material (:class:`stem.structural_material.StructuralParametersABC`): material object containing the material parameters for an elastic
-                spring damper material
+            - material (:class:`stem.structural_material.StructuralParametersABC`): material object containing the \
+                material parameters for an elastics pring damper material
 
         Returns:
             - Dict[str, Any]: dictionary containing the material parameters
@@ -91,8 +92,8 @@ class KratosMaterialIO:
         NODAL_DAMPING_COEFFICIENT key is moved to the NODAL_DAMPING_RATIO key, as this can be recognized by Kratos.
 
         Args:
-            - material (:class:`stem.structural_material.StructuralParametersABC`): material object containing the material parameters for the nodal
-                concentrated material.
+            - material (:class:`stem.structural_material.StructuralParametersABC`): material object containing the \
+                material parameters for the nodal concentrated material.
 
         Returns:
             - Dict[str, Any]: dictionary containing the material parameters
@@ -303,7 +304,8 @@ class KratosMaterialIO:
         Creates a dictionary containing the euler beam parameters
 
         Args:
-            - material (:class:`stem.structural_material.StructuralParametersABC`): Material object containing the material parameters
+            - material (:class:`stem.structural_material.StructuralParametersABC`): Material object containing the \
+            material parameters
 
         Returns:
             - Dict[str, Any]: Dictionary containing the euler beam parameters
@@ -364,9 +366,12 @@ class KratosMaterialIO:
 
         Args:
             - part_name (str): name of the body model part for the material
-            - material (Union[:class:`stem.soil_material.SoilMaterial`,
+            - material (Union[:class:`stem.soil_material.SoilMaterial`, \
                               :class:`stem.soil_material.StructuralMaterial`]): material object
             - material_id (int): material id
+
+        Raises:
+            - ValueError: if material is not of either SoilMaterial or StructuralMaterial type
 
         Returns:
             - Dict[str, Any]: dictionary containing the material parameters

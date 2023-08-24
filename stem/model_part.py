@@ -1,9 +1,15 @@
 from typing import Optional, Union, Dict, Any
 
+from stem.additional_processes import AdditionalProcessesParametersABC
+from stem.boundary import BoundaryParametersABC
+from stem.load import LoadParametersABC
 from stem.soil_material import SoilMaterial
 from stem.structural_material import StructuralMaterial
 
-from stem.geometry import Geometry, Volume, Surface, Line, Point
+from stem.geometry import Geometry
+from stem.mesh import Mesh
+from stem.solver import AnalysisType
+
 
 class ModelPart:
     """
@@ -11,21 +17,40 @@ class ModelPart:
     like excavation.
 
     Attributes:
-        - name (str): name of the model part
-        - nodes (np.array or None): node id followed by node coordinates in an array
-        - elements (np.array or None): element id followed by connectivities in an array
-        - conditions (np.array or None): condition id followed by connectivities in an array
+        - __name (str): name of the model part
         - geometry (Optional[:class:`stem.geometry.Geometry`]): geometry of the model part
-        - parameters (dict): dictionary containing the model part parameters
+        - parameters (Optional[Union[:class:`stem.load.LoadParametersABC`, \
+            :class:`stem.boundary.BoundaryParametersABC`, \
+            :class:`stem.additional_processes.AdditionalProcessesParametersABC`]]): process parameters containing the \
+            model part parameters.
+        - mesh (Optional[:class:`stem.mesh.Mesh`]): mesh of the model part
+        - id (Optional[int]): the id of the model part
     """
-    def __init__(self):
-        self.name = None
-        self.nodes = None
-        self.elements = None
-        self.conditions = None
+    def __init__(self, name: str):
+        """
+        Initialize the model part
 
+        Args:
+            - name (str): name of the model part
+        """
+        self.__name: str = name
         self.geometry: Optional[Geometry] = None
-        self.parameters = {}
+        self.parameters: Optional[
+            Union[LoadParametersABC, BoundaryParametersABC, AdditionalProcessesParametersABC]
+        ] = None
+        self.mesh: Optional[Mesh] = None
+        self.id: Optional[int] = None
+
+    @property
+    def name(self) -> str:
+        """
+        Get the name of the model part
+
+        Returns:
+            - str: name of the model part
+
+        """
+        return self.__name
 
     def get_geometry_from_geo_data(self, geo_data: Dict[str, Any], name: str):
         """
@@ -38,25 +63,68 @@ class ModelPart:
 
         self.geometry = Geometry.create_geometry_from_gmsh_group(geo_data, name)
 
+    def get_element_name(self, n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
+        """
+        Get the element name of the model part. Only loads and boundary conditions currently may have an element name.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model (2 or 3)
+            - n_nodes_element (int): The number of nodes per element
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type of the model
+
+        Returns:
+            - Optional[str]: element name of the model part
+
+        """
+
+        if isinstance(self.parameters, (LoadParametersABC, BoundaryParametersABC)):
+            return self.parameters.get_element_name(n_dim_model, n_nodes_element, analysis_type)
+        else:
+            return None
+
 
 class BodyModelPart(ModelPart):
     """
     This class contains model parts which are part of the body, e.g. a soil layer or track components.
 
-        Inheritance:
+    Inheritance:
         - :class:`ModelPart`
 
     Attributes:
-        - name (str): name of the model part
-        - nodes (np.array or None): node id followed by node coordinates in an array
-        - elements (np.array or None): element id followed by connectivities in an array
-        - conditions (np.array or None): condition id followed by connectivities in an array
-        - parameters (dict): dictionary containing the model part parameters
+        - __name (str): name of the model part
+        - geometry (Optional[:class:`stem.geometry.Geometry`]): geometry of the model part
+        - mesh (Optional[:class:`stem.mesh.Mesh`]): mesh of the model part
+        - parameters (Dict[str, Any]): dictionary containing the model part parameters
         - material (Union[:class:`stem.soil_material.SoilMaterial`, \
             :class:`stem.structural_material.StructuralMaterial`]): material of the model part
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name: str):
+        """
+        Initialize the body model part
+
+        Args:
+            - name (str): name of the body model part
+        """
+        super().__init__(name)
 
         self.material: Optional[Union[SoilMaterial, StructuralMaterial]] = None
+
+    def get_element_name(self, n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
+        """
+        Get the element name of the elements within the model part
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model (2 or 3)
+            - n_nodes_element (int): The number of nodes per element
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type of the model
+
+        Returns:
+            - Optional[str]: element name of the model part
+
+        """
+
+        if self.material is not None:
+            return self.material.get_element_name(n_dim_model, n_nodes_element, analysis_type)
+        else:
+            return None

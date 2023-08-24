@@ -1,5 +1,3 @@
-import json
-from copy import deepcopy
 from pathlib import Path
 from typing import List, Dict, Tuple, Union, Any
 
@@ -30,13 +28,8 @@ class KratosOutputsIO:
         """
         self.domain = domain
 
-    def __create_gid_output_dict(
-        self,
-        part_name: str,
-        output_dir: Path,
-        output_name: str,
-        output_parameters: GiDOutputParameters,
-    ) -> Dict[str, Any]:
+    def __create_gid_output_dict(self, part_name: str, output_dir: Path, output_name: str,
+                                 output_parameters: GiDOutputParameters) -> Dict[str, Any]:
         """
         Creates a dictionary containing the output parameters to produce outputs in GiD
         format. To visualize the outputs, the software GiD is required.
@@ -46,7 +39,7 @@ class KratosOutputsIO:
             - output_dir (Path): output path for the GiD output
             - output_name (str): Name for the output file.
             - output_parameters (:class:`stem.output.GiDOutputParameters`): class containing GiD output
-                  parameters
+                  parameters.
 
         Returns:
             - Dict[str, Any]: dictionary containing the output parameters in Kratos format
@@ -55,8 +48,8 @@ class KratosOutputsIO:
         if output_name is None or output_name == "":
             output_name = f"{part_name}"
 
-        _output_path = output_dir.joinpath(output_name)
-        __output_path_gid = str(_output_path).replace("\\", "/")
+        output_path = output_dir.joinpath(output_name)
+        output_path_gid = Path(output_path).as_posix()
 
         if output_parameters.file_format == "binary":
             gid_post_mode = "GiD_PostBinary"
@@ -72,9 +65,13 @@ class KratosOutputsIO:
                 f"Accepted inputs are `binary`, `ascii` or `hdf5`."
             )
 
+        model_part_name = f"{self.domain}"
+        if part_name is not None:
+            model_part_name += f".{part_name}"
+
         parameters_dict = {
-            "model_part_name": f"{self.domain}.{part_name}",
-            "output_name": __output_path_gid,
+            "model_part_name": model_part_name,
+            "output_name": output_path_gid,
             "postprocess_parameters": {
                 "result_file_configuration": {
                     "gidpost_flags": {
@@ -110,13 +107,8 @@ class KratosOutputsIO:
 
         return output_dict
 
-    def __create_vtk_output_dict(
-        self,
-        part_name: str,
-        output_dir: Path,
-        output_name: str,
-        output_parameters: VtkOutputParameters,
-    ) -> Dict[str, Any]:
+    def __create_vtk_output_dict(self, part_name: str, output_dir: Path, output_name: str,
+                                 output_parameters: VtkOutputParameters) -> Dict[str, Any]:
         """
         Creates a dictionary containing the output parameters to produce outputs in vtk
         format. The format can be visualized e.g., using Paraview.
@@ -126,19 +118,20 @@ class KratosOutputsIO:
             - output_dir (Path): output path for the VTK output
             - output_name (str): Name for the output file. This parameter is ignored by
                 VTK output process.
-            - output_parameters (:class:`stem.output.VtkOutputParameters`): class containing VTK output
-                  parameters
+            - output_parameters (:class:`stem.output.VtkOutputParameters`): class containing VTK output parameters
 
         Returns:
             - Dict[str, Any]: dictionary containing the output parameters in Kratos format
         """
 
-        _output_path = output_dir
-        __output_path_vtk = str(_output_path).replace("\\", "/")
+        output_path_vtk = Path(output_dir).as_posix()
+        model_part_name = f"{self.domain}"
+        if part_name is not None:
+            model_part_name += f".{part_name}"
 
         parameters_dict = {
-            "model_part_name": f"{self.domain}.{part_name}",
-            "output_path": __output_path_vtk,
+            "model_part_name": model_part_name,
+            "output_path": output_path_vtk,
             "file_format": output_parameters.file_format,
             "output_precision": output_parameters.output_precision,
             "output_control_type": output_parameters.output_control_type,
@@ -161,13 +154,8 @@ class KratosOutputsIO:
 
         return output_dict
 
-    def __create_json_output_dict(
-        self,
-        part_name,
-        output_dir: Path,
-        output_name: str,
-        output_parameters: JsonOutputParameters,
-    ) -> Dict[str, Any]:
+    def __create_json_output_dict(self, part_name, output_dir: Path, output_name: str,
+                                  output_parameters: JsonOutputParameters) -> Dict[str, Any]:
         """
         Creates a dictionary containing the output parameters to produce outputs in
         JSON format.
@@ -178,7 +166,7 @@ class KratosOutputsIO:
             - output_name (str): Name for the output file. If not needed, the name is
                   taken as the part_name.
             - output_parameters (:class:`stem.output.JsonOutputParameters`): class containing JSON output
-                  parameters
+                  parameters.
 
         Returns:
             - Dict[str, Any]: dictionary containing the output parameters in Kratos format
@@ -190,11 +178,15 @@ class KratosOutputsIO:
         # create the target folder for json or simulation will not run.
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        _output_path = output_dir.joinpath(output_name)
-        if _output_path.suffix == "":
-            _output_path = _output_path.with_suffix(".json")
+        output_path = output_dir.joinpath(output_name)
+        if output_path.suffix == "":
+            output_path = output_path.with_suffix(".json")
 
-        __output_path_json = str(_output_path).replace("\\", "/")
+        output_path_json = Path(output_path).as_posix()
+
+        model_part_name = f"{self.domain}"
+        if part_name is not None:
+            model_part_name += f".{part_name}"
 
         # initialize output dictionary
         output_dict: Dict[str, Any] = {
@@ -202,12 +194,13 @@ class KratosOutputsIO:
             "kratos_module": "KratosMultiphysics",
             "process_name": "JsonOutputProcess",
             "Parameters": {
-                "model_part_name": f"{self.domain}.{part_name}",
-                "output_file_name": __output_path_json,
+                "model_part_name": model_part_name,
+                "output_file_name": output_path_json,
                 "output_variables": [op.name for op in output_parameters.nodal_results],
                 "gauss_points_output_variables": [
                     op.name for op in output_parameters.gauss_point_results
                 ],
+                "time_frequency": output_parameters.time_frequency,
             },
         }
         return output_dict

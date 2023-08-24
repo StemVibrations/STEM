@@ -1,14 +1,33 @@
 from typing import List, Dict, Any, Union, Optional
-from dataclasses import dataclass, field
-from abc import ABC
+from dataclasses import dataclass
+from abc import ABC, abstractmethod
 
+from stem.solver import AnalysisType
+from stem.table import Table
+from stem.utils import Utils
 
 @dataclass
 class LoadParametersABC(ABC):
     """
     Abstract base class for load parameters
     """
-    pass
+
+    @staticmethod
+    @abstractmethod
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
+        """
+        Abstract static method to get the element name for a load.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model
+            - n_nodes_element (int): The number of nodes per condition-element
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type.
+
+        Raises:
+            - Exception: abstract method is called
+
+        """
+        raise Exception("abstract method 'get_element_name' of load parameters class is called")
 
 
 @dataclass
@@ -21,11 +40,46 @@ class PointLoad(LoadParametersABC):
 
     Attributes:
         - active (List[bool]): Activate/deactivate load for each direction.
-        - value (List[float]): Entity of the load in the 3 directions [N].
+        - value (List[Union[float, :class:`stem.table.Table`]]): Entity of the load in the 3 directions [N]. \
+            It should be a list of either float or table for each load. If a float is specified, the \
+            load is time-independent, otherwise the table specifies the amplitude of the \
+            load [N] over time [s] for each direction.
     """
 
-    active: List[bool] = field(default_factory=lambda: [True, True, True])
-    value: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+    active: List[bool]
+    value: List[Union[float, Table]]
+
+    @staticmethod
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
+        """
+        Static method to get the element name for a point load. Point load does not have a name.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model (2 or 3)
+            - n_nodes_element (int): The number of nodes per condition-element (1)
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type
+
+        Raises:
+            - ValueError: If the analysis type is not mechanical or mechanical groundwater flow
+
+        Returns:
+            - None: Point load does not have a name
+
+
+        """
+
+        available_node_dim_combinations = {
+            2: [1],
+            3: [1],
+        }
+        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations,
+                                             "Point load")
+
+        if analysis_type != AnalysisType.MECHANICAL_GROUNDWATER_FLOW and analysis_type != AnalysisType.MECHANICAL:
+            raise ValueError("Point load can only be applied in mechanical or mechanical groundwater flow analysis")
+
+        # Point load does not have a name
+        return None
 
 
 @dataclass
@@ -35,10 +89,50 @@ class LineLoad(LoadParametersABC):
 
     Attributes:
         - active (List[bool]): Activate/deactivate load for each direction.
-        - value (List[float]): Entity of the load in the 3 directions [N].
+        - value (List[Union[float, :class:`stem.table.Table`]]): Entity of the load in the 3 directions [N/m]. \
+            It should be a list of either float or table for each load. If a float is specified, the \
+            load is time-independent, otherwise the table specifies the amplitude of the \
+            load [N/m] over time [s] for each direction.
     """
-    active: List[bool] = field(default_factory=lambda: [True, True, True])
-    value: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+    active: List[bool]
+    value: List[Union[float, Table]]
+
+    @staticmethod
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
+        """
+        Static method to get the element name for a line load.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model (2 or 3)
+            - n_nodes_element (int): The number of nodes per condition-element (2, 3)
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type
+
+        Raises:
+            - ValueError: If the analysis type is not mechanical or mechanical groundwater flow
+
+        Returns:
+            - Optional[str]: The element name for a line load
+
+        """
+
+        available_node_dim_combinations = {
+            2: [2, 3],
+            3: [2, 3],
+        }
+        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations,
+                                             "Line load")
+
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+            if n_dim_model == 2 and n_nodes_element > 2:
+                # 2d quadratic line load is set on outer nodes, but displacement is calculated on all nodes for
+                # stability reasons
+                element_name = f"LineLoadDiffOrderCondition{n_dim_model}D{n_nodes_element}N"
+            else:
+                element_name = f"LineLoadCondition{n_dim_model}D{n_nodes_element}N"
+        else:
+            raise ValueError("Line load can only be applied in mechanical or mechanical groundwater flow analysis")
+
+        return element_name
 
 
 @dataclass
@@ -48,10 +142,46 @@ class SurfaceLoad(LoadParametersABC):
 
     Attributes:
         - active (List[bool]): Activate/deactivate load for each direction.
-        - value (List[float]): Entity of the load in the 3 directions [N].
+        - value (List[Union[float, :class:`stem.table.Table`]]): Entity of the load in the 3 directions [Pa]. \
+            It should be a list of either float or table for each load. If a float is specified, the \
+            load is time-independent, otherwise the table specifies the amplitude of the \
+            load [Pa] over time [s] for each direction.
     """
-    active: List[bool] = field(default_factory=lambda: [True, True, True])
-    value: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+    active: List[bool]
+    value: Union[List[float], List[Table]]
+
+    @staticmethod
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
+        """
+        Static method to get the element name for a surface load.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model (3)
+            - n_nodes_element (int): The number of nodes per condition-element
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type
+
+        Raises:
+            - ValueError: If the analysis type is not mechanical or mechanical groundwater flow
+
+        Returns:
+            - Optional[str]: The element name for a surface load
+        """
+
+        available_node_dim_combinations = {
+            3: [3, 4, 6, 8],
+        }
+        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations,
+                                             "Surface load")
+
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+            if n_nodes_element == 3 or n_nodes_element == 4:
+                element_name = f"UPwFaceLoadCondition{n_dim_model}D{n_nodes_element}N"
+            else:
+                element_name = f"SurfaceLoadDiffOrderCondition{n_dim_model}D{n_nodes_element}N"
+        else:
+            raise ValueError("Surface load can only be applied in mechanical or mechanical groundwater flow analysis")
+
+        return element_name
 
 
 @dataclass
@@ -72,11 +202,42 @@ class MovingLoad(LoadParametersABC):
         - offset (float): Offset of the moving load [m].
     """
 
-    load: Union[List[float], List[str]] = field(default_factory=lambda: [0.0, 0.0, 0.0])
-    direction: List[float] = field(default_factory=lambda: [1, 1, 1])
-    velocity: Union[float, str] = 0.0
-    origin: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+    load: Union[List[float], List[str]]
+    direction: List[float]
+    velocity: Union[float, str]
+    origin: List[float]
     offset: float = 0.0
+
+    @staticmethod
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
+        """
+        Static method to get the element name for a moving load.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model (2 or 3)
+            - n_nodes_element (int): The number of nodes per condition-element (2, 3)
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type
+
+        Raises:
+            - ValueError: If the analysis type is not mechanical or mechanical groundwater flow
+
+        Returns:
+            - Optional[str]: The element name for a moving load
+        """
+
+        available_node_dim_combinations = {
+            2: [2, 3],
+            3: [2, 3],
+        }
+        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations,
+                                             "Moving load")
+
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+            element_name = f"MovingLoadCondition{n_dim_model}D{n_nodes_element}N"
+        else:
+            raise ValueError("Moving load can only be applied in mechanical or mechanical groundwater flow analysis")
+
+        return element_name
 
 
 @dataclass
@@ -89,8 +250,31 @@ class GravityLoad(LoadParametersABC):
 
     Attributes:
         - active (List[bool]): Activate/deactivate load for each direction. Input True only in the vertical direction.
-        - value (List[float]): Entity of the gravity acceleration in the 3 directions [m/s^2]. Should be -9.81 only in
+        - value (List[float]): Entity of the gravity acceleration in the 3 directions [m/s^2]. Should be -9.81 only in \
             the vertical direction
     """
-    active: List[bool] = field(default_factory=lambda: [False, False, False])
-    value: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+    active: List[bool]
+    value: List[float]
+
+    @staticmethod
+    def get_element_name(n_dim_model, n_nodes_element, analysis_type) -> Optional[str]:
+        """
+        Static method to get the element name for a gravity load.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model
+            - n_nodes_element (int): The number of nodes per element
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type
+
+        Raises:
+            - ValueError: If the analysis type is not mechanical or mechanical groundwater flow
+
+        Returns:
+            - None: Gravity load does not have a name
+        """
+
+        if analysis_type != AnalysisType.MECHANICAL_GROUNDWATER_FLOW and analysis_type != AnalysisType.MECHANICAL:
+            raise ValueError("Point load can only be applied in mechanical or mechanical groundwater flow analysis")
+
+        # Gravity load does not have a name
+        return None

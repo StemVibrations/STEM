@@ -1,8 +1,73 @@
-from typing import Dict, List, Tuple, Union, Any
-import numpy as np
-import numpy.typing as npt
+from typing import Dict, List, Sequence, Any
+from enum import Enum
 
-from stem.IO.kratos_io import KratosIO
+
+class ElementShape(Enum):
+    """
+    Enum class for the element shape. TRIANGLE for triangular elements and tetrahedral elements, QUADRILATERAL for
+    quadrilateral elements and hexahedral elements.
+
+    """
+    TRIANGLE = "triangle"
+    QUADRILATERAL = "quadrilateral"
+
+
+class MeshSettings:
+    """
+    A class to represent the mesh settings.
+
+    Attributes:
+        - element_size (float): The element size (default -1, which means that gmsh determines the size).
+        - element_shape (:class:`ElementShape`): The element shape. TRIANGLE for triangular elements and \
+            tetrahedral elements,  QUADRILATERAL for quadrilateral elements and hexahedral elements. (default TRIANGLE)
+        - __element_order (int): The element order. 1 for linear elements, 2 for quadratic elements. (default 1)
+    """
+
+    def __init__(self, element_size: float = -1, element_order: int = 1,
+                 element_shape: ElementShape = ElementShape.TRIANGLE):
+        """
+        Initialize the mesh settings.
+
+        Args:
+            - element_size (float): The element size (default -1, which means that gmsh determines the size).
+            - element_order (int): The element order. 1 for linear elements, 2 for quadratic elements. (default 1)
+            - element_shape (:class:`ElementShape`): The element shape. TRIANGLE for triangular elements and \
+            tetrahedral elements,  QUADRILATERAL for quadrilateral elements and hexahedral elements. (default TRIANGLE)
+        """
+        self.element_size: float = element_size
+        self.element_shape: ElementShape = element_shape
+
+        if element_order not in [1, 2]:
+            raise ValueError("The element order must be 1 or 2. Higher order elements are not supported.")
+
+        self.__element_order: int = element_order
+
+    @property
+    def element_order(self) -> int:
+        """
+        Get the element order.
+
+        Returns:
+            - int: element order
+        """
+        return self.__element_order
+
+    @element_order.setter
+    def element_order(self, element_order: int):
+        """
+        Set the element order. The element order must be 1 or 2.
+
+        Args:
+            - element_order (int): element order
+
+        Raises:
+            - ValueError: If the element order is not 1 or 2.
+        """
+
+        if element_order not in [1, 2]:
+            raise ValueError("The element order must be 1 or 2. Higher order elements are not supported.")
+
+        self.__element_order = element_order
 
 
 class Node:
@@ -11,12 +76,21 @@ class Node:
 
     Attributes:
         - id (int): node id
-        - coordinates (np.array): node coordinates
+        - coordinates (Sequence[float]): node coordinates
 
     """
-    def __init__(self, id, coordinates):
-        self.id = id
-        self.coordinates = coordinates
+
+    def __init__(self, id: int, coordinates: Sequence[float]):
+        """
+        Initialize the node.
+
+        Args:
+            id (int): Node id
+            coordinates (Sequence[float]): Node coordinates
+        """
+        self.id: int = id
+        self.coordinates: Sequence[float] = coordinates
+
 
 class Element:
     """
@@ -24,30 +98,23 @@ class Element:
 
     Attributes:
         - id (int): element id
-        - element_type (str): element type
-        - node_ids (Union[List[int], npt.NDArray[np.int64]]): node ids
+        - element_type (str): Gmsh element type
+        - node_ids (Sequence[int]): node ids
 
     """
-    def __init__(self, id: int, element_type: str, node_ids: Union[List[int], npt.NDArray[np.int64]]):
+
+    def __init__(self, id: int, element_type: str, node_ids: Sequence[int]):
+        """
+        Initialize the element.
+
+        Args:
+            id (int): Element id
+            element_type (str): Gmsh-element type
+            node_ids (Sequence[int]): Node connectivities
+        """
         self.id: int = id
         self.element_type: str = element_type
-        self.node_ids: Union[List[int], npt.NDArray[np.int64]] = node_ids
-
-
-class Condition:
-    """
-    Class containing information about a condition
-
-    Attributes:
-        - id (int): condition id
-        - element_type (str): element type
-        - node_ids (Union[List[int], npt.NDArray[np.int64]]): node ids
-
-    """
-    def __init__(self, id: int, element_type: str, node_ids: Union[List[int], npt.NDArray[np.int64]]):
-        self.id: int = id
-        self.element_type: str = element_type
-        self.node_ids: Union[List[int], npt.NDArray[np.int64]] = node_ids
+        self.node_ids: Sequence[int] = node_ids
 
 
 class Mesh:
@@ -59,68 +126,78 @@ class Mesh:
 
     Attributes:
         - ndim (int): number of dimensions of the mesh
-        - nodes (np.array or None): node id followed by node coordinates in an array
-        - elements (np.array or None): element id followed by connectivities in an array
-        - conditions (np.array or None): condition id followed by connectivities in an array
+        - nodes (List[Node]): node id followed by node coordinates in a list
+        - elements (List[Element]): element id followed by connectivities in a list
 
     """
     def __init__(self, ndim: int):
+        """
+        Initialize the mesh.
+
+        Args:
+            ndim (int): number of dimensions of the mesh
+        """
 
         self.ndim: int = ndim
-        self.nodes = None
-        self.elements = None
-        self.conditions = None
+        self.nodes: List[Node] = []
+        self.elements: List[Element] = []
 
+    def __getattribute__(self, item: str) -> Any:
+        """
+        Overrides the getattribute method of the object class.
+
+        Args:
+            - item (str): The name of the attribute.
+
+        Returns:
+            - Any: The attribute.
+
+        """
+        # Make sure that the create_mesh_from_gmsh_group method cannot be
+        # called on an initialised mesh instance
+        if item == "create_mesh_from_gmsh_group":
+            raise AttributeError(f"Cannot call class method: {item} from an initialised mesh instance.")
+        else:
+            return super().__getattribute__(item)
 
     @classmethod
-    def read_mesh_from_gmsh(cls, mesh_file_name: str) -> None:
-        #todo implement this method to read mesh from gmsh file and create a mesh object with the data read from the
-        # file.
-        pass
-
-    def prepare_data_for_kratos(self, mesh_data: Dict[str, Any]) \
-            -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.int64]]:
+    def create_mesh_from_gmsh_group(cls, mesh_data: Dict[str, Any], group_name: str) -> "Mesh":
         """
-        Prepares mesh data for Kratos
+        Creates a mesh object from gmsh group
 
         Args:
             - mesh_data (Dict[str, Any]): dictionary of mesh data
+            - group_name (str): name of the group
 
-
-        Returns:
-            - nodes (npt.NDArray[np.float64]): node id followed by node coordinates in an array
-            - elements (npt.NDArray[np.int64]): element id followed by connectivities in an array
-        """
-
-        # create array of nodes where each row is represented by [id, x,y,z]
-        nodes = np.concatenate((mesh_data["nodes"]["ids"][:, None], mesh_data["nodes"]["coordinates"]), axis=1)
-
-        all_elements_list = []
-        # create array of elements where each row is represented by [id, node connectivities]
-        for v in mesh_data["elements"].values():
-            all_elements_list.append(np.concatenate((v["element_ids"][:, None], v["element_nodes"]), axis=1))
-
-        all_elements = np.array(all_elements_list).astype(int)
-
-        return nodes, all_elements
-
-
-    def write_mesh_to_kratos_structure(self, mesh_data: Dict[str, Any], filename: str) -> None:
-        """
-        Writes mesh data to the structure which can be read by Kratos
-
-        Args:
-            - mesh_data (Dict[str, Any]): dictionary of mesh data
-            - filename (str): filename of the kratos mesh file
+        Raises:
+            - ValueError: If the group name is not found in the mesh data
 
         Returns:
+            - :class:`Mesh`: mesh object
         """
 
-        nodes, elements = self.prepare_data_for_kratos(mesh_data)
+        if group_name not in mesh_data["physical_groups"]:
+            raise ValueError(f"Group {group_name} not found in mesh data")
 
-        kratos_io = KratosIO(self.ndim)
-        kratos_io.write_mesh_to_mdpa(filename)
+        # create mesh object
+        group_data = mesh_data["physical_groups"][group_name]
 
+        group_element_ids = group_data["element_ids"]
+        group_node_ids = group_data["node_ids"]
+        group_element_type = group_data["element_type"]
 
+        element_type_data = mesh_data["elements"][group_element_type]
 
+        # create element per element id
+        elements = [Element(element_id, group_element_type, element_type_data[element_id])
+                    for element_id in group_element_ids]
 
+        # create node per node id
+        nodes = [Node(node_id, mesh_data["nodes"][node_id]) for node_id in group_node_ids]
+
+        # add nodes and elements to mesh object
+        mesh = cls(group_data["ndim"])
+        mesh.nodes = nodes
+        mesh.elements = elements
+
+        return mesh

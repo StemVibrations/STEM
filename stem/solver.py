@@ -380,6 +380,13 @@ class LinearSolverSettingsABC(ABC):
     @property
     @abc.abstractmethod
     def solver_type(self):
+        """
+        Abstract property for returning the solver type
+
+        Raises:
+            - Exception: abstract class of linear solver settings is called
+
+        """
         raise Exception("abstract class of linear solver settings is called")
 
 
@@ -395,12 +402,12 @@ class Amgcl(LinearSolverSettingsABC):
         - scaling (bool): if true, the system matrix will be scaled before solving the linear system of equations.\
             Default value is False.
         - tolerance (float): tolerance for the linear solver convergence criteria. Default value is 1e-6.
-        - max_iterations (int): maximum number of iterations for the linear solver. Default value is 1000.
+        - max_iteration (int): maximum number of iterations for the linear solver. Default value is 1000.
 
     """
     scaling: bool = False
     tolerance: float = 1e-6
-    max_iterations: int = 1000
+    max_iteration: int = 1000
 
     @property
     def solver_type(self):

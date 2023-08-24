@@ -1,12 +1,11 @@
 from typing import Any, Dict, Union
-from copy import deepcopy
 
 from stem.additional_processes import *
 
 
 class KratosAdditionalProcessesIO:
     """
-    Class containing methods to write boundary conditions to Kratos
+    Class containing methods for additional Kratos processes
 
     Attributes:
         - domain (str): name of the Kratos domain
@@ -42,11 +41,12 @@ class KratosAdditionalProcessesIO:
             "python_module": "apply_excavation_process",
             "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
             "process_name":  "ApplyExcavationProcess",
-            "Parameters": parameters.__dict__,
+            "Parameters": {},
         }
 
         boundary_dict["Parameters"]["model_part_name"] = f"{self.domain}.{part_name}"
         boundary_dict["Parameters"]["variable_name"] = "EXCAVATION"
+        boundary_dict["Parameters"]["deactivate_soil_part"] = parameters.deactivate_body_model_part
 
         return boundary_dict
 
@@ -58,7 +58,7 @@ class KratosAdditionalProcessesIO:
 
         Args:
             - part_name (str): part name where the boundary condition is applied
-            - parameters (:class:`stem.additional_processes.AdditionalProcessesParametersABC`): additional process
+            - parameters (:class:`stem.additional_processes.AdditionalProcessesParametersABC`): additional process \
                 parameters object
 
         Returns:
