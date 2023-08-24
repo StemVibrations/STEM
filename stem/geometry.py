@@ -1,9 +1,6 @@
 from typing import Dict, List, Any, Optional, Sequence
 from abc import ABC, abstractmethod
 
-import numpy as np
-
-
 class GeometricalObjectABC(ABC):
     """
     An abstract base class for all geometrical objects.

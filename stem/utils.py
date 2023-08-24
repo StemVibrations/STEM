@@ -113,8 +113,10 @@ class Utils:
 
         # cross product of the two vector
         cross_product = np.cross(vec_1, vec_2)
+
         # It should be smaller than tolerance for points to be aligned
-        return np.sum(np.abs(cross_product)) < a_tol
+        is_collinear: bool = np.sum(np.abs(cross_product)) < a_tol
+        return is_collinear
 
     @staticmethod
     def is_point_between_points(point:Sequence[float], start_point:Sequence[float], end_point:Sequence[float]) -> bool:
@@ -144,7 +146,8 @@ class Utils:
         scalar_projection = sum(v1 * v2 for v1, v2 in zip(vec_1, vec_2)) / sum(v ** 2 for v in vec_2)
 
         # Check if the scalar projection is between 0 and 1 (inclusive)
-        return 0 <= scalar_projection <= 1
+        is_between: bool = 0 <= scalar_projection <= 1
+        return is_between
 
     @staticmethod
     def is_non_str_sequence(seq: object) -> bool:
@@ -206,15 +209,15 @@ class Utils:
         return a
 
     @staticmethod
-    def get_unique_objects(input_sequence: Sequence[object]) -> List[object]:
+    def get_unique_objects(input_sequence: Sequence[Any]) -> List[Any]:
         """
         Get the unique objects, i.e., the objects that share the same memory location.
 
         Args:
-            - input_sequence (Sequence[object]): full list of possible duplicate objects
+            - input_sequence (Sequence[Any]): full list of possible duplicate objects
 
         Returns:
-            - List[object]: list of unique objects
+            - List[Any]: list of unique objects
         """
         return list({id(obj): obj for obj in input_sequence}.values())
 

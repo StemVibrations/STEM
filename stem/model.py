@@ -18,6 +18,9 @@ from stem.utils import Utils
 from stem.plot_utils import PlotUtils
 
 
+NUMBER_TYPES = (int, float, np.int64, np.float64)
+
+
 class Model:
     """
     A class to represent the main model.
@@ -103,12 +106,9 @@ class Model:
             else:
                 self.process_model_parts.append(model_part)
 
-    def add_soil_layer_by_coordinates(
-        self,
-        coordinates: Sequence[Sequence[float]],
-        material_parameters: Union[SoilMaterial, StructuralMaterial],
-        name: str,
-    ):
+    def add_soil_layer_by_coordinates(self, coordinates: Sequence[Sequence[float]],
+                       material_parameters: Union[SoilMaterial, StructuralMaterial], name: str,
+                       ):
         """
         Adds a soil layer to the model by giving a sequence of 2D coordinates. In 3D the 2D geometry is extruded in
         the direction of the extrusion_length
@@ -147,9 +147,8 @@ class Model:
 
         self.body_model_parts.append(body_model_part)
 
-    def add_load_by_coordinates(
-        self, coordinates: Sequence[Sequence[float]], load_parameters: LoadParametersABC, name: str
-    ):
+    def add_load_by_coordinates(self, coordinates: Sequence[Sequence[float]], load_parameters: LoadParametersABC,
+                                name: str):
         """
         Adds a load to the model by giving a sequence of 3D coordinates. For a 2D model, the third coordinate is
         ignored.
@@ -179,11 +178,9 @@ class Model:
         elif isinstance(load_parameters, SurfaceLoad):
             gmsh_input = {name: {"coordinates": coordinates, "ndim": 2}}
         else:
-            raise ValueError(
-                f"Invalid load_parameters ({load_parameters.__class__.__name__}) object"
-                f" provided for the load {name}. Expected one of PointLoad, MovingLoad,"
-                f" LineLoad or SurfaceLoad."
-            )
+            raise ValueError(f'Invalid load_parameters ({load_parameters.__class__.__name__}) object'
+                             f' provided for the load {name}. Expected one of PointLoad, MovingLoad,'
+                             f' LineLoad or SurfaceLoad.')
 
         self.gmsh_io.generate_geometry(gmsh_input, "")
 
@@ -223,7 +220,7 @@ class Model:
         # check if coordinates are real numbers
         for coordinate in coordinates:
             for i in coordinate:
-                if not isinstance(i, Number) or np.isnan(i) or np.isinf(i):
+                if not isinstance(i, NUMBER_TYPES) or np.isnan(i) or np.isinf(i):
                     raise ValueError(f"Coordinates should be a sequence of sequence of real numbers, "
                                      f"but {i} was given.")
 
@@ -263,9 +260,8 @@ class Model:
         # none of the lines contain the origin, then raise an error
         raise ValueError(f"Origin is not in the trajectory of the moving load.")
 
-    def add_boundary_condition_by_geometry_ids(
-        self, ndim_boundary: int, geometry_ids: Sequence[int], boundary_parameters: BoundaryParametersABC, name: str
-    ):
+    def add_boundary_condition_by_geometry_ids(self, ndim_boundary: int, geometry_ids: Sequence[int],
+                                               boundary_parameters: BoundaryParametersABC, name: str):
         """
         Add a boundary condition to the model by giving the geometry ids of the boundary condition.
 
@@ -329,9 +325,9 @@ class Model:
 
         """
 
-        self.gmsh_io.generate_mesh(
-            self.ndim, element_size=self.mesh_settings.element_size, order=self.mesh_settings.element_order
-        )
+        # generate mesh
+        self.gmsh_io.generate_mesh(self.ndim, element_size=self.mesh_settings.element_size,
+                                   order=self.mesh_settings.element_order)
 
         # collect all model parts
         all_model_parts: List[Union[BodyModelPart, ModelPart]] = []
@@ -567,13 +563,11 @@ class Model:
         body_model_part_names = [body_model_part.name for body_model_part in self.body_model_parts]
 
         # get geometry ids and ndim for each body model part
-        model_parts_geometry_ids = np.array(
-            [self.gmsh_io.geo_data["physical_groups"][name]["geometry_ids"] for name in body_model_part_names]
-        )
+        model_parts_geometry_ids = np.array([self.gmsh_io.geo_data["physical_groups"][name]["geometry_ids"] for name in
+                                    body_model_part_names])
 
-        model_parts_ndim = np.array(
-            [self.gmsh_io.geo_data["physical_groups"][name]["ndim"] for name in body_model_part_names]
-        ).ravel()
+        model_parts_ndim = np.array([self.gmsh_io.geo_data["physical_groups"][name]["ndim"]
+                                     for name in body_model_part_names]).ravel()
 
         # add gravity load as physical group per dimension
         body_geometries_1d = model_parts_geometry_ids[model_parts_ndim == 1].ravel()
@@ -630,13 +624,8 @@ class Model:
 
         self.__validate_model_part_names()
 
-    def show_geometry(
-        self,
-        show_volume_ids: bool = False,
-        show_surface_ids: bool = False,
-        show_line_ids: bool = False,
-        show_point_ids: bool = False,
-    ):
+    def show_geometry(self, show_volume_ids: bool = False, show_surface_ids: bool = False, show_line_ids: bool = False,
+                      show_point_ids: bool = False):
         """
         Show the 2D or 3D geometry in a plot.
 
@@ -653,9 +642,8 @@ class Model:
         if self.geometry is None:
             raise ValueError("Geometry must be set before showing the geometry")
 
-        fig = PlotUtils.create_geometry_figure(
-            self.ndim, self.geometry, show_volume_ids, show_surface_ids, show_line_ids, show_point_ids
-        )
+        fig = PlotUtils.create_geometry_figure(self.ndim, self.geometry, show_volume_ids, show_surface_ids, show_line_ids,
+                                               show_point_ids)
         fig.show()
 
     def __setup_stress_initialisation(self):
@@ -672,8 +660,7 @@ class Model:
 
         # add gravity load if K0 procedure or gravity loading is used
         if (self.project_parameters.settings.stress_initialisation_type == StressInitialisationType.K0_PROCEDURE) or (
-            self.project_parameters.settings.stress_initialisation_type == StressInitialisationType.GRAVITY_LOADING
-        ):
+            self.project_parameters.settings.stress_initialisation_type == StressInitialisationType.GRAVITY_LOADING):
             self.__add_gravity_load()
 
     def post_setup(self):

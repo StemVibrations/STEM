@@ -1,5 +1,5 @@
 from typing import List, Any, Optional, Union
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from abc import ABC, abstractmethod
 
 from stem.solver import AnalysisType
@@ -14,7 +14,7 @@ class StructuralParametersABC(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
         """
         Abstract static method to get the element name for a structural material.
 
@@ -73,7 +73,7 @@ class EulerBeam(StructuralParametersABC):
                 raise ValueError("The torsional inertia (TORSIONAL_INERTIA) is not defined.")
 
     @staticmethod
-    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> str:
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
         """
         Static method to get the element name for an Euler beam element.
 
@@ -86,7 +86,7 @@ class EulerBeam(StructuralParametersABC):
             - ValueError: If the analysis type is not implemented yet for Euler beam elements.
 
         Returns:
-            - str: The element name
+            - Optional[str]: The element name
 
         """
 
@@ -126,7 +126,7 @@ class ElasticSpringDamper(StructuralParametersABC):
     NODAL_ROTATIONAL_DAMPING_COEFFICIENT: List[float]
 
     @staticmethod
-    def get_element_name(n_dim_model, n_nodes_element, analysis_type) -> str:
+    def get_element_name(n_dim_model, n_nodes_element, analysis_type) -> Optional[str]:
         """
         Static method to get the element name for an elastic spring damper element.
 
@@ -139,7 +139,7 @@ class ElasticSpringDamper(StructuralParametersABC):
             - ValueError: If the analysis type is not implemented yet for elastic spring damper elements.
 
         Returns:
-            - str: The element name
+            - Optional[str]: The element name
         """
 
         available_node_dim_combinations = {
@@ -175,7 +175,7 @@ class NodalConcentrated(StructuralParametersABC):
     NODAL_DAMPING_COEFFICIENT: List[float]
 
     @staticmethod
-    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> str:
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
         """
         Get the element name for the nodal concentrated element
 
@@ -186,6 +186,9 @@ class NodalConcentrated(StructuralParametersABC):
 
         Raises:
             - ValueError: If the analysis type is not implemented yet for nodal concentrated elements.
+
+        Returns:
+            - Optional[str]: The element name
         """
 
         available_node_dim_combinations = {
@@ -215,7 +218,7 @@ class StructuralMaterial:
     name: str
     material_parameters: StructuralParametersABC
 
-    def get_element_name(self, n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> str:
+    def get_element_name(self, n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
         """
         Get the element name for the structural material
 
@@ -225,7 +228,7 @@ class StructuralMaterial:
             - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type.
 
         Returns:
-            - str: The element name.
+            - Optional[str]: The element name.
 
         """
 

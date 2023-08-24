@@ -1,4 +1,3 @@
-import json
 from functools import reduce
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Sequence
@@ -190,14 +189,14 @@ class KratosIO:
 
     @staticmethod
     def __write_sub_model_part_block(buffer: List[str], block_name: str,
-                                     block_entities: Optional[Sequence[int]] = None) -> List[str]:
+                                     block_entities: Optional[List[Optional[int]]] = None) -> List[str]:
         """
         Helping function to write the sub-model part blocks for the model parts.
 
         Args:
             - buffer (List[str]): buffer containing the sub-model part info to be updated with the current block.
             - block_name (str): block name, it can be one of Tables, Nodes, Elements or Conditions.
-            - block_entities (Optional[Sequence[int]]): ids to be written to the block. If None, an empty block is
+            - block_entities (Optional[List[Optional[int]]]): ids to be written to the block. If None, an empty block is
             written.
 
         Returns:
@@ -248,6 +247,9 @@ class KratosIO:
 
         # initialise block
         block_text = ["", f"Begin SubModelPart {body_model_part.name}"]
+
+        # define type entities
+        entities: List[Optional[int]]
 
         # write tables
         block_text = self.__write_sub_model_part_block(
@@ -421,7 +423,7 @@ class KratosIO:
         return block_text
 
     @staticmethod
-    def __map_gmsh_element_to_kratos(model: Model, model_part: ModelPart) -> str:
+    def __map_gmsh_element_to_kratos(model: Model, model_part: ModelPart) -> Optional[str]:
         """
         Returns the corresponding element type based on the analysis type, the model part (condition or body)
         and type of element (e.g. rod vs beam or line load vs moving load).
@@ -438,7 +440,7 @@ class KratosIO:
             - ValueError: if the analysis type is not specified.
 
         Returns:
-            - str: the Kratos element type
+            - Optional[str]: the Kratos element type
         """
 
         # get number of dimensions of the model
@@ -531,12 +533,13 @@ class KratosIO:
 
         # initialise block
         block_text = ["", f"Begin Elements {kratos_element_type}"]
-        block_text.extend(
-            [
-                self.__write_element_line(mat_id, el)
-                for el in body_model_part.mesh.elements.values()
-            ]
-        )
+        if body_model_part.mesh is not None:
+            block_text.extend(
+                [
+                    self.__write_element_line(mat_id, el)
+                    for el in body_model_part.mesh.elements
+                ]
+            )
         block_text += [f"End Elements", ""]
         return block_text
 
@@ -568,15 +571,18 @@ class KratosIO:
         self.__check_if_mesh_is_present_in_model_part(process_model_part)
 
         # no elements to write to conditions or process doesn't write condition elements
-        if (process_model_part.mesh.elements is None
-                or not self.__check_if_process_writes_conditions(process_model_part)):
-            block_text = []
-        else:
+
+        if ((process_model_part.mesh is not None) and (process_model_part.mesh.elements is not None)
+                and self.__check_if_process_writes_conditions(process_model_part)):
+
             block_text = ["", f"Begin Conditions {kratos_element_type}"]
             block_text.extend(
                 [self.__write_element_line(mat_id, el) for el in process_model_part.mesh.elements.values()]
             )
             block_text += [f"End Conditions", ""]
+        else:
+            block_text = []
+
         return block_text
 
     def __write_all_nodes(self, model: Model) -> List[str]:
@@ -661,11 +667,12 @@ class KratosIO:
             # get the element type
             element_type = self.__map_gmsh_element_to_kratos(model, bmp)
             # write text block with elements
-            block_text.extend(
-                self.write_elements_body_model_part(
-                    mat_id=bmp.id, kratos_element_type=element_type, body_model_part=bmp
+            if element_type is not None:
+                block_text.extend(
+                    self.write_elements_body_model_part(
+                        mat_id=bmp.id, kratos_element_type=element_type, body_model_part=bmp
+                    )
                 )
-            )
         return block_text
 
     def __write_conditions_model(self, model: Model) -> List[str]:
@@ -694,13 +701,14 @@ class KratosIO:
                 )
 
             # write text block with conditions
-            block_text.extend(
-                self.write_conditions_process_model_part(
-                    mat_id=pmp.id,
-                    kratos_element_type=condition_type,
-                    process_model_part=pmp,
+            if condition_type is not None:
+                block_text.extend(
+                    self.write_conditions_process_model_part(
+                        mat_id=pmp.id,
+                        kratos_element_type=condition_type,
+                        process_model_part=pmp,
+                    )
                 )
-            )
         return block_text
 
     def __write_submodel_parts(self, model: Model) -> List[str]:
@@ -854,10 +862,7 @@ class KratosIO:
         """
 
         if model.project_parameters is None:
-            print("WARNING: Solver settings are undefined in model.")
-            return {"output_processes": {}, "processes": {}}
-
-        # raise ValueError("Project parameters are not initialised in model.")
+            raise ValueError("Solver settings are not initialised in model.")
 
         return self.solver_io.create_settings_dictionary(
             model.project_parameters,

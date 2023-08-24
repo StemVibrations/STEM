@@ -51,51 +51,6 @@ class TestModel:
 
         return geometry
 
-
-    @pytest.fixture
-    def expected_geometry_single_layer_3D(self):
-        """
-        Sets expected geometry data for a 3D geometry group. The group is a geometry of a cube.
-
-        Returns:
-            - :class:`stem.geometry.Geometry`: geometry of a 3D cube
-        """
-
-        geometry = Geometry()
-
-        geometry.points = {1, Point.create([0, 0, 0], 1),
-                           5, Point.create([0, 0, 1], 5),
-                           6, Point.create([1, 0, 1], 6),
-                           2, Point.create([1, 0, 0], 2),
-                           7, Point.create([1, 1, 1], 7),
-                           3, Point.create([1, 1, 0], 3),
-                           8, Point.create([0, 1, 1], 8),
-                           4, Point.create([0, 1, 0], 4)}
-
-        geometry.lines = {5, Line.create([1, 5], 5),
-                          7, Line.create([5, 6], 7),
-                          6, Line.create([2, 6], 6),
-                          1, Line.create([1, 2], 1),
-                          9, Line.create([6, 7], 9),
-                          8, Line.create([3, 7], 8),
-                          2, Line.create([2, 3], 2),
-                          11, Line.create([7, 8], 11),
-                          10, Line.create([4, 8], 10),
-                          3, Line.create([3, 4], 3),
-                          12, Line.create([8, 5], 12),
-                          4, Line.create([4, 1], 4)}
-
-        geometry.surfaces = {2, Surface.create([5, 7, -6, -1], 2),
-                             3, Surface.create([6, 9, -8, -2], 3),
-                             4, Surface.create([8,11, -10, -3], 4),
-                             5, Surface.create([10, 12, -5, -4], 5),
-                             1, Surface.create([1, 2, 3, 4], 1),
-                             6, Surface.create([7, 9, 11, 12], 6)}
-
-        geometry.volumes = {1, Volume.create([-2, -3, -4, -5, -1, 6], 1)}
-
-        return geometry
-
     @pytest.fixture
     def expected_geometry_single_layer_3D(self):
         """
@@ -650,6 +605,8 @@ class TestModel:
         # create model
         model = Model(ndim)
         model.extrusion_length = [0, 0, 1]
+
+        model.project_parameters = TestUtils.create_default_solver_settings()
 
         # add soil layer
         model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
