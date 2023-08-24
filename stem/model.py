@@ -424,6 +424,8 @@ class Model:
             self.__add_gravity_model_part(gravity_load, 3, body_geometries_3d)
 
         self.synchronise_geometry()
+        self.gmsh_io.finalize_gmsh()
+
 
     def get_all_model_parts(self) -> List[Union[BodyModelPart, ModelPart]]:
         """
