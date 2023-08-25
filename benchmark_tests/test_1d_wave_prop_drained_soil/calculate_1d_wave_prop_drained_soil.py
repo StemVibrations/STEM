@@ -1,5 +1,14 @@
 import sys
 import os
+
+path_kratos = r"D:\Kratos_without_compiling"
+material_name = "MaterialParameters.json"
+project_name = "ProjectParameters.json"
+mesh_name = "test_1d_wave_prop_drained_soil.mdpa"
+
+sys.path.append(os.path.join(path_kratos, "KratosGeoMechanics"))
+sys.path.append(os.path.join(path_kratos, r"KratosGeoMechanics\libs"))
+
 import KratosMultiphysics.GeoMechanicsApplication
 from KratosMultiphysics.GeoMechanicsApplication.geomechanics_analysis import (GeoMechanicsAnalysis)
 from stem.model import Model
@@ -12,13 +21,6 @@ from stem.solver import AnalysisType, SolutionType, TimeIntegration, Displacemen
 from stem.output import NodalOutput, GaussPointOutput, VtkOutputParameters, Output
 from stem.IO.kratos_io import KratosIO
 
-path_kratos = r"D:\Kratos_without_compiling"
-material_name = "MaterialParameters.json"
-project_name = "ProjectParameters.json"
-mesh_name = "test_1d_wave_prop_drained_soil.mdpa"
-
-sys.path.append(os.path.join(path_kratos, "KratosGeoMechanics"))
-sys.path.append(os.path.join(path_kratos, r"KratosGeoMechanics\libs"))
 
 
 # Define geometry, conditions and material parameters
