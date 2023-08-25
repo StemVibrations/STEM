@@ -93,12 +93,12 @@ convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_to
                                                         displacement_absolute_tolerance=1.0E-6)
 strategy_type = NewtonRaphsonStrategy(min_iterations=6, max_iterations=15, number_cycles=100)
 scheme_type = NewmarkScheme(newmark_beta=0.25, newmark_gamma=0.5, newmark_theta=0.5)
-linear_solver_settings = Amgcl(tolerance=1e-8, max_iteration=500, scaling=False)
+linear_solver_settings = Amgcl(tolerance=1e-8, max_iteration=500, scaling=True)
 stress_initialisation_type = StressInitialisationType.NONE
 solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
                                  stress_initialisation_type=stress_initialisation_type,
                                  time_integration=time_integration,
-                                 is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
+                                 is_stiffness_matrix_constant=False, are_mass_and_damping_constant=False,
                                  convergence_criteria=convergence_criterion,
                                  strategy_type=strategy_type, scheme=scheme_type,
                                  linear_solver_settings=linear_solver_settings, rayleigh_k=6e-6,
