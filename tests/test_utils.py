@@ -5,6 +5,7 @@ import numpy.testing as npt
 import pytest
 
 from stem.utils import Utils
+from stem.mesh import Mesh, Element
 from tests.utils import TestUtils
 
 
