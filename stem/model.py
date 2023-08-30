@@ -350,7 +350,7 @@ class Model:
                 self.__check_order_process_model_part(matched_elements, process_model_part)
 
     @staticmethod
-    def __get_model_part_element_connectivities(model_part: ModelPart) -> Optional[npty.NDArray[np.int64]]:
+    def __get_model_part_element_connectivities(model_part: ModelPart) -> npty.NDArray[np.int64]:
         """
         Extract the node ids of each of the elements in a model part.
         Args:
@@ -362,6 +362,8 @@ class Model:
         """
         if model_part.mesh is not None:
             return np.array([el.node_ids for el in model_part.mesh.elements.values()])
+        else:
+            return np.array([])
 
     def __find_matching_body_elements_for_process_model_part(self, process_model_part: ModelPart) \
             -> Dict[Element, Element]:
