@@ -337,16 +337,17 @@ class Model:
         for model_part in all_model_parts:
             model_part.mesh = Mesh.create_mesh_from_gmsh_group(self.gmsh_io.mesh_data, model_part.name)
 
-        # adjust mesh of the condition elements if they are 2D elements and model is 2D
-        # if self.ndim == 2:
-        for pmp in self.process_model_parts:
-            # check if process writes line condition elements (they are the only one that needs to be flipped).
+        # per process model part, check if the condition elements are applied to a body model part and set the
+        # node ordering of the condition elements to match the body elements
+        for process_model_part in self.process_model_parts:
 
-            if isinstance(pmp.parameters, (LineLoad, MovingLoad, SurfaceLoad, AbsorbingBoundary)):
+            # only check if the process model part is a condition element
+            if isinstance(process_model_part.parameters, (LineLoad, MovingLoad, SurfaceLoad, AbsorbingBoundary)):
                 # match the condition elements with the body elements on which the conditions are applied
-                matched_elements = self.__find_matching_body_elements_for_process_model_part(pmp)
+                matched_elements = self.__find_matching_body_elements_for_process_model_part(process_model_part)
+
                 # check the ordering of the nodes of the conditions. If it does not match flip the order.
-                self.__check_order_process_model_part(matched_elements, pmp)
+                self.__check_order_process_model_part(matched_elements, process_model_part)
 
     @staticmethod
     def __get_model_part_element_connectivities(model_part: ModelPart):
@@ -463,12 +464,9 @@ class Model:
         flip_node_order = np.zeros(len(matched_elements), dtype=bool)
         for i, (process_element, body_element) in enumerate(matched_elements.items()):
 
-            connectivities_process_element = [node_id for node_id in process_element.node_ids]
-            connectivities_body_element = [node_id for node_id in body_element.node_ids]
-
             # element info such as order, number of edges, element types etc.
-            process_el_info = Mesh.get_2d_element_info(process_element.element_type)
-            body_el_info = Mesh.get_2d_element_info(body_element.element_type)
+            process_el_info = Utils.get_element_info(process_element.element_type)
+            body_el_info = Utils.get_element_info(body_element.element_type)
 
             # if elements have different order, it's an error...
             if body_el_info["order"] != process_el_info["order"]:
@@ -477,87 +475,45 @@ class Model:
                     f"element order ({body_el_info['order']})."
                 )
             # get the number of vertices of the body element
-            n_vert_bel = body_el_info['n_vertices']
-            # get the number of vertices of the process element.
-            # We only do this for line element, therefore we expect 2 vertices.
-            n_vert_pel = process_el_info['n_vertices']
-            # if n_vert_pel != 2:
-            #     raise ValueError("Matched for elements different than line is not required, nor supported.")
-            # append the first (n_nodes-1) node ids at the back of to the list (to make a cycle)
-            target_list = connectivities_body_element[:n_vert_bel]
-            target_list.extend(target_list[:-1])
+            n_vert_body_element = body_el_info['n_vertices']
 
-            # pick only the corner nodes, the mid-point nodes related to the higher order do
-            # not matter for quadratic elements.
-            source_list = connectivities_process_element[:n_vert_pel]
+            # get the number of vertices of the process element.
+            n_vert_process_element = process_el_info['n_vertices']
 
             if body_el_info["ndim"] == 1 or body_el_info["ndim"] == 2:
+
+                # pick only the corner nodes, the mid-point nodes related to the higher order do
+                # not matter for quadratic elements.
+                source_list = process_element.node_ids[:n_vert_process_element]
+
+                target_list = body_element.node_ids[:n_vert_body_element]
+                target_list.extend(target_list[:-1])
+
                 # check if order of nodes in process element follows the body elements.
                 # if not, flip the order of the process element
                 if not Utils.has_matching_combination(target_list, source_list):
-                    flip_node_order = True
-                    # Mesh.flip_node_order(process_element)
-            elif body_el_info["ndim"] == 3:
-
-                coordinates_condition = np.array([pmp.mesh.nodes[node_id].coordinates for node_id in connectivities_process_element[:n_vert_pel]])
-
-                normal_cond = np.cross(coordinates_condition[1,:] - coordinates_condition[0,:],
-                                       coordinates_condition[2,:] - coordinates_condition[0,:])
-
-                body_vertice_ids = connectivities_body_element[:n_vert_bel]
-
-                # out_of_plane_vertice, in_plane_vertice = None, None
-                # for id in body_vertice_ids:
-                #     if id not in source_list:
-                #         out_of_plane_vertice = id
-                #     else:
-                #         in_plane_vertice = id
-                #
-                #     if out_of_plane_vertice is not None and in_plane_vertice is not None:
-                #         break
-
-
-                coordinates_body_element = np.array([self.gmsh_io.mesh_data['nodes'][node_id] for node_id in body_vertice_ids])
-
-                centroid_plane = np.mean(coordinates_condition, axis=0)
-                centroid_volume = np.mean(coordinates_body_element, axis=0)
-
-                # body_inward_vector = (np.array(self.gmsh_io.mesh_data['nodes'][out_of_plane_vertice]) -
-                #                       np.array(self.gmsh_io.mesh_data['nodes'][in_plane_vertice]))
-
-                body_inward_vector = centroid_volume - centroid_plane
-
-
-                if np.dot(normal_cond, body_inward_vector) < 0:
                     flip_node_order[i] = True
 
-                    # Mesh.flip_node_order(process_element)
-                #
-                # if Utils.has_matching_combination(target_list, source_list):
-                #     flip_node_order = True
-                    # Mesh.flip_node_order(process_element)
+            elif body_el_info["ndim"] == 3:
+
+                if process_el_info["ndim"] == 1:
+                    # todo to be determined how to order the line condition, currently nodes are not re-ordered
+                    pass
+                elif process_el_info["ndim"] == 2:
+
+                    # check if the normal of the condition element is defined inwards of the body element
+                    flip_node_order[i] = Utils.is_volume_edge_defined_inwards(process_element, body_element,
+                                                                              self.gmsh_io.mesh_data["nodes"])
 
 
+
+        # flip condition elements if required
         if any(flip_node_order):
-
-            group_data = self.gmsh_io.mesh_data["physical_groups"][pmp.name]
-            group_element_ids = group_data["element_ids"]
-
+            # elements to be flipped
             elements = np.array(list(pmp.mesh.elements.values()))[flip_node_order]
-            # elements = np.array(self.gmsh_io.mesh_data["elements"][group_data["element_type"]])[flip_node_order]
 
-
-
-            Mesh.flip_node_order(process_el_info, elements)
-
-            a = elements
-
-            # for element_id, element in pmp.mesh.elements.items():
-            #     # pmp.mesh.elements[element_id].node_ids = self.gmsh_io.mesh_data["elements"][pmp.element_type][element_id]["node_ids"]
-            #     element.node_ids = self.gmsh_io.mesh_data["elements"][element.element_type][element_id]
-            # pmp.mesh.elements = {element_id: Element(element_id, group_element_type,
-            #                                                 mesh_data["elements"][group_element_type][element_id])
-            #                             for element_id in group_data["element_ids"]}
+            # flip elements
+            Utils.flip_node_order(process_el_info, elements)
 
     def __validate_model_part_names(self):
         """

@@ -244,3 +244,108 @@ class Utils:
                 if target_list[ix:ix + len_test_list] == test_list:
                     return True
         return False
+
+    @staticmethod
+    def get_element_info(gmsh_element_type):
+        """
+        Returns:
+        """
+
+        element_mapping_dict = {"POINT_1N": {"ndim": 0,
+                                             "order": 1,
+                                             "n_vertices": 1,
+                                             "reversed_order": [0]},
+                                "LINE_2N": {"ndim": 1,
+                                            "order": 1,
+                                            "n_vertices": 2,
+                                            "reversed_order": [1, 0]},
+                                "LINE_3N": {"ndim": 1,
+                                            "order": 2,
+                                            "n_vertices": 2,
+                                            "reversed_order": [1, 0, 2]},
+                                "TRIANGLE_3N": {"ndim": 2,
+                                                "order": 1,
+                                                "n_vertices": 3,
+                                                "reversed_order": [2, 1, 0]},
+                                "TRIANGLE_6N": {"ndim": 2,
+                                                "order": 2,
+                                                "n_vertices": 3,
+                                                "reversed_order": [2, 1, 0, 5, 4, 3]},
+                                "QUADRANGLE_4N": {"ndim": 2,
+                                                  "order": 1,
+                                                  "n_vertices": 4,
+                                                  "reversed_order": [1, 0, 3, 2]},
+                                "QUADRANGLE_8N": {"ndim": 2,
+                                                  "order": 2,
+                                                  "n_vertices": 4,
+                                                  "reversed_order": [1, 0, 3, 2, 4, 7, 6, 5]},
+                                "TETRAHEDRON_4N": {"ndim": 3,
+                                                   "order": 1,
+                                                   "n_vertices": 4,
+                                                   "reversed_order": [1, 0, 2, 3]},
+                                "TETRAHEDRON_10N": {"ndim": 3,
+                                                   "order": 2,
+                                                   "n_vertices": 4,
+                                                   "reversed_order": [1, 0, 2, 3, 4, 6, 5, 9, 8, 7]},
+                                "HEXAHEDRON_8N": {"ndim": 3,
+                                                  "order": 1,
+                                                  "n_vertices": 8,
+                                                  "reversed_order": [1, 0, 3, 2, 5, 4, 7, 6]},
+                                "HEXAHEDRON_20N": {"ndim": 3,
+                                                   "order": 2,
+                                                   "n_vertices": 8,
+                                                   "reversed_order": [1, 0, 3, 2,
+                                                                      5, 4, 7, 6,
+                                                                      8, 9, 10, 11,
+                                                                      12, 13, 14, 15,
+                                                                      16, 17, 18, 19]},
+                                }
+
+        # find element order
+        if gmsh_element_type not in element_mapping_dict.keys():
+            raise NotImplementedError(f"No reversed order defined for the element type: {gmsh_element_type}")
+
+        return element_mapping_dict[gmsh_element_type]
+
+    @staticmethod
+    def flip_node_order(element_info, elements):
+        """
+        Returns:
+        """
+
+        ids = [element.id for element in elements]
+        element_connectivies = np.array([element.node_ids for element in elements])
+
+        # flip the elements nodes
+        element_connectivies = element_connectivies[:, element_info["reversed_order"]]
+
+        for i, (id, element_connectivity) in enumerate(zip(ids, element_connectivies)):
+            elements[i].node_ids = list(element_connectivity)
+
+    @staticmethod
+    def is_volume_edge_defined_inwards(edge_element, body_element, nodes):
+
+        # element info such as order, number of edges, element types etc.
+        edge_el_info = Utils.get_element_info(edge_element.element_type)
+        body_el_info = Utils.get_element_info(body_element.element_type)
+
+        # calculate normal vector of edge element
+        coordinates_edge = np.array([nodes[node_id] for node_id in edge_element.node_ids[:edge_el_info["n_vertices"]]])
+
+        normal_vector_edge = np.cross(coordinates_edge[1, :] - coordinates_edge[0, :],
+                                      coordinates_edge[2, :] - coordinates_edge[0, :])
+
+        # calculate centroid of neighbouring body element
+        body_vertices_ids = body_element.node_ids[:body_el_info["n_vertices"]]
+        coordinates_body_element = np.array([nodes[node_id] for node_id in body_vertices_ids])
+        centroid_volume = np.mean(coordinates_body_element, axis=0)
+
+        # calculate centroid of edge element
+        centroid_edge = np.mean(coordinates_edge, axis=0)
+
+        # calculate vector inwards of body element
+        body_inward_vector = centroid_volume - centroid_edge
+
+        # check if normal vector of edge element is pointing inwards of body element
+        return np.dot(normal_vector_edge, body_inward_vector) < 0
+

@@ -202,3 +202,84 @@ class TestUtilsStem:
         }
 
         TestUtils.assert_dictionary_almost_equal(expected_dict_3, actual_dict_3)
+
+    def test_flip_node_order(self):
+        """
+        Tests that element node ids are flipped in the right way.
+        """
+
+        # define original mesh data
+
+        mesh_data = {
+            "ndim": 2,
+            "nodes": {1: [0, 0, 0], 2: [1.0, 0, 0], 3: [1, 1.0, 0], 4: [0, 1.0, 0],
+                      5: [0.5, 0.0, 0], 6: [1, 0.5, 0], 7: [0.5, 1, 0], 8: [0, 0.5, 0],
+                      9: [0.5, 0.5, 0]},
+            "elements": {"QUADRANGLE_4N": {1: [1, 2, 3, 4]},
+                         "QUADRANGLE_8N": {2: [1, 2, 3, 4, 5, 6, 7, 8]},
+                         "TRIANGLE_3N": {3: [1, 2, 3]},
+                         "TRIANGLE_6N": {4: [1, 2, 3, 5, 6, 9]},
+                         "LINE_2N": {5: [1, 2]},
+                         "LINE_3N": {6: [1, 2, 5]}},
+            "physical_groups": {
+                "quad_linear": {
+                    "ndim": 2,
+                    "element_ids": [1],
+                    "node_ids": [1, 2, 3, 4],
+                    "element_type": "QUADRANGLE_4N",
+                },
+                "quad_quadr": {
+                    "ndim": 2,
+                    "element_ids": [2],
+                    "node_ids": [1, 2, 3, 4, 5, 6, 7, 8],
+                    "element_type": "QUADRANGLE_8N",
+                },
+                "tri_linear": {
+                    "ndim": 2,
+                    "element_ids": [3],
+                    "node_ids": [1, 2, 3],
+                    "element_type": "TRIANGLE_3N",
+                },
+                "tri_quadr": {
+                    "ndim": 2,
+                    "element_ids": [4],
+                    "node_ids": [1, 2, 3, 5, 6, 9],
+                    "element_type": "TRIANGLE_6N",
+                },
+                "line_linear": {
+                    "ndim": 2,
+                    "element_ids": [5],
+                    "node_ids": [1, 2],
+                    "element_type": "LINE_2N",
+                },
+                "line_quadr": {
+                    "ndim": 2,
+                    "element_ids": [6],
+                    "node_ids": [1, 2, 5],
+                    "element_type": "LINE_3N"}
+            },
+        }
+
+        mesh = Mesh(ndim=2)
+
+        for element_name, element in mesh_data["elements"].items():
+            for element_id, node_ids in element.items():
+                # create element and add to mesh
+                mesh.elements[element_id] = Element(element_id, element_name, node_ids)
+
+                # reverse the node order
+                element_reversed_ordering_info = Utils.get_element_info(mesh.elements[element_id].element_type)
+                Utils.flip_node_order(element_reversed_ordering_info, [mesh.elements[element_id]])
+
+        # set expected node ordering per element
+        expected_ordering = [
+            [2, 1, 4, 3],
+            [2, 1, 4, 3, 5, 8, 7, 6],
+            [3, 2, 1],
+            [3, 2, 1, 9, 6, 5],
+            [2, 1],
+            [2, 1, 5],
+        ]
+
+        for element, expected_nodes_element in zip(list(mesh.elements.values()), expected_ordering):
+            np.testing.assert_equal(element.node_ids, expected_nodes_element)
