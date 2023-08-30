@@ -109,18 +109,18 @@ class Element:
 
     """
 
-    def __init__(self, id: int, element_type: str, node_ids: Sequence[int]):
+    def __init__(self, id: int, element_type: str, node_ids: List[int]):
         """
         Initialize the element.
 
         Args:
             id (int): Element id
             element_type (str): Gmsh-element type
-            node_ids (Sequence[int]): Node connectivities
+            node_ids (List[int]): Node connectivities
         """
         self.id: int = id
         self.element_type: str = element_type
-        self.node_ids: Sequence[int] = node_ids
+        self.node_ids: List[int] = node_ids
 
 
 class Mesh:
