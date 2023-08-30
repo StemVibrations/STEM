@@ -193,28 +193,76 @@ class Mesh:
         group_node_ids = group_data["node_ids"]
         group_element_type = group_data["element_type"]
 
-        element_type_data = mesh_data["elements"][group_element_type]
+        gmsh_elements = mesh_data["elements"][group_element_type]
 
         # create node per node id
         nodes: Dict[int, Node] = {node_id: Node(node_id, mesh_data["nodes"][node_id]) for node_id in group_node_ids}
-        # mesh object for static methods
-        mesh = Mesh(ndim=group_data["ndim"])
         # add each element, but first check if counterclockwise
         # revert the node id order if it is not
-        elements: Dict[int, Element] = {}
         # create element per element id
-        for element_id in group_element_ids:
-            node_ids_element = element_type_data[element_id]
-            elements[element_id] = Element(element_id, group_element_type, node_ids_element)
 
-            # check of nodes for 2D mesh
-            if group_data["ndim"] == 2:
-                element_info = mesh.get_element_info(element=elements[element_id])
-                # flip the element nodes if they are not anti-clockwise, and only if mesh entity has more than 2 nodes.
-                if element_info["n_vertices"] > 2:
-                    coordinates = [nodes[ii].coordinates for ii in node_ids_element]
-                    if Utils.are_2d_coordinates_clockwise(coordinates):
-                        mesh.flip_node_order(element=elements[element_id])
+        # flip_node_order = False
+        #
+        # if len(group_element_ids) == 0
+
+
+        # In 2D check if vertices of element are clockwise and flip element if they are
+        if len(group_element_ids) > 0 and group_data["ndim"] == 2:
+            element_info = Mesh.get_2d_element_info(group_element_type)
+            node_ids_element = gmsh_elements[group_element_ids[0]]
+            # node_ids_element = mesh_data["elements"][group_element_ids[0]]["element_nodes"][group_element_ids[0]]
+            coordinates = [nodes[ii].coordinates for ii in node_ids_element]
+
+            # check if vertices are clockwise and flip if they are
+            if Utils.are_2d_coordinates_clockwise(coordinates[:element_info["n_vertices"]]):
+
+                Mesh.flip_node_order(group_name, mesh_data, element_info)
+
+        # create element per element id
+        elements: Dict[int, Element] = {element_id: Element(element_id, group_element_type,
+                                                            mesh_data["elements"][group_element_type][element_id])
+                                        for element_id in group_data["element_ids"]}
+
+        # for element_id in group_element_ids:
+        #     node_ids_element = element_type_data[element_id]
+        #     elements[element_id] = Element(element_id, group_element_type, node_ids_element)
+        # #
+        # if flip_node_order:
+
+
+        #
+        #     # set all element connectivities in numpy array
+        #     element_connectivies = np.zeros((len(group_element_ids), len(element_type_data[group_element_ids[0]])),
+        #                                     dtype=int)
+        #
+        #     for i, element_id in enumerate(group_element_ids):
+        #         node_ids_element = element_type_data[element_id]
+        #         element_connectivies[i, :] = node_ids_element
+        #
+        #     # flip the elements nodes
+        #     element_connectivies = element_connectivies[:, element_info["reversed_order"]]
+        #
+        #     a=1+1
+        #
+        #
+        #
+        #
+        # mesh.flip_node_order(element=elements[group_element_ids[0]])
+
+        #
+        #
+        # for element_id in group_element_ids:
+        #     node_ids_element = element_type_data[element_id]
+        #     elements[element_id] = Element(element_id, group_element_type, node_ids_element)
+        #
+        #     # check of nodes for 2D mesh
+        #     if group_data["ndim"] == 2:
+        #         element_info = mesh.get_element_info(element=elements[element_id])
+        #         # flip the element nodes if they are not anti-clockwise, and only if mesh entity has more than 2 nodes.
+        #         if element_info["n_vertices"] > 2:
+        #             coordinates = [nodes[ii].coordinates for ii in node_ids_element]
+        #             if Utils.are_2d_coordinates_clockwise(coordinates):
+        #                 mesh.flip_node_order(element=elements[element_id])
 
         # add nodes and elements to mesh object
         mesh = cls(group_data["ndim"])
@@ -224,89 +272,83 @@ class Mesh:
         return mesh
 
     @staticmethod
-    def get_element_info(element: Element):
+    def get_2d_element_info(gmsh_element_type):
         """
         Returns:
         """
-        element_type = element.element_type
-        element_shape = element_type.split("_")[0]
-        element_nodes = int(re.findall(r"\d+", element_type)[0])
-        element_order = 1  # linear by default, if not found otherwise
 
-        if (
-            (element_shape == "LINE" and element_nodes > 2)
-            or (element_shape == "TRIANGLE" and element_nodes > 3)
-            or (element_shape == "QUADRANGLE" and element_nodes > 4)
-        ):
-            element_order = 2
+        element_mapping_dict = {"POINT_1N": {"ndim": 0,
+                                             "order": 1,
+                                             "n_vertices": 1,
+                                             "reversed_order": [0]},
+                                "LINE_2N": {"ndim": 1,
+                                            "order": 1,
+                                            "n_vertices": 2,
+                                            "reversed_order": [1, 0]},
+                                "LINE_3N": {"ndim": 1,
+                                            "order": 2,
+                                            "n_vertices": 2,
+                                            "reversed_order": [1, 0, 2]},
+                                "TRIANGLE_3N": {"ndim": 2,
+                                                "order": 1,
+                                                "n_vertices": 3,
+                                                "reversed_order": [2, 1, 0]},
+                                "TRIANGLE_6N": {"ndim": 2,
+                                                "order": 2,
+                                                "n_vertices": 3,
+                                                "reversed_order": [2, 1, 0, 5, 4, 3]},
+                                "QUADRANGLE_4N": {"ndim": 2,
+                                                  "order": 1,
+                                                  "n_vertices": 4,
+                                                  "reversed_order": [3, 2, 1, 0]},
+                                "QUADRANGLE_8N": {"ndim": 2,
+                                                  "order": 2,
+                                                  "n_vertices": 4,
+                                                  "reversed_order": [3, 2, 1, 0, 7, 6, 5, 4]},
+                                "TETRAHEDRON_4N": {"ndim": 3,
+                                                    "order": 1,
+                                                    "n_vertices": 4,
+                                                    "reversed_order": [3, 2, 1, 0]}}
 
-        elif (
-            (element_shape == "LINE" and element_nodes > 3)
-            or (element_shape == "TRIANGLE" and element_nodes > 6)
-            or (element_shape == "QUADRANGLE" and element_nodes > 8)
-        ):
-            raise NotImplementedError("Cubic element are not implemented yet!")
+        # find element order
+        if gmsh_element_type not in element_mapping_dict.keys():
+            raise NotImplementedError(f"No reversed order defined for the element type: {gmsh_element_type}")
 
-        if element_shape == "POINT":
-            n_vertices = 1
-            n_edges = 0
-        elif element_shape == "LINE":
-            n_vertices = 2
-            n_edges = 1
-        elif element_shape == "TRIANGLE":
-            n_vertices = 3
-            n_edges = 3
-        elif element_shape == "QUADRANGLE":
-            n_vertices = 4
-            n_edges = 4
-        else:
-            raise NotImplementedError(f"Edges are not supported (not 2D) for the element type: {element_type}")
+        return element_mapping_dict[gmsh_element_type]
 
-        info = {
-            "shape": element_shape,
-            "n_vertices": n_vertices,
-            "n_edges": n_edges,
-            "n_nodes": element_nodes,
-            "order": element_order,
-        }
-
-        return info
-
-    def flip_node_order(self, element: Element):
+    @staticmethod
+    # def flip_node_order(group_name, mesh_data, element_info, elements):
+    def flip_node_order(element_info,elements):
         """
         Returns:
         """
-        element_info = self.get_element_info(element)
-        n_vert = element_info["n_vertices"]
-        n_edges = element_info["n_edges"]
-        # make list from sequence
-        element.node_ids = [node_id for node_id in element.node_ids]
-        element.node_ids[:n_vert] = element.node_ids[(n_vert - 1)::-1]
 
-        # if quadratic or cubic, flip also the mid nodes
-        if element_info["order"] == 2:
-            element.node_ids[n_vert:] = element.node_ids[: (n_vert - 1): -1]
+        # group_data = mesh_data["physical_groups"][group_name]
+        # group_element_ids = group_data["element_ids"]
+        # elements = mesh_data["elements"][group_data["element_type"]]
 
-        elif element_info["order"] == 3:
-            # number of mid-point nodes
-            nmp = element_info["order"] - 1
-            # loop over the edges:
-            nodes_on_the_edges = element.node_ids[n_vert : n_vert + nmp * n_edges]
-            inner_nodes = element.node_ids[n_vert + nmp * n_edges :]
+        ids =[element.id for element in elements]
+        element_connectivies = np.array([element.node_ids for element in elements])
 
-            # make groups per edge, flip the group internally, and flip all the groups
-            group_mpn = []
-            for ix in range(n_edges):
-                _st = ix * nmp
-                _end = _st + nmp
-                group_mpn.append(nodes_on_the_edges[_st:_end][::-1])
-            # flip the groups
-            group_mpn = group_mpn[::-1]
-            # flatten the list
-            flipped_nodes_on_the_edges = [nn for group in group_mpn for nn in group]
-            # replace original node ids
-            element.node_ids[n_vert : n_vert + nmp * n_edges] = flipped_nodes_on_the_edges
-            # TODO: how to treat internal nodes, if present?
+
+        # # set all element connectivities in numpy array
+        # element_connectivies = np.zeros((len(elements), len(elements[group_element_ids[0]])),
+        #                                 dtype=int)
+
+        # get the connectivities for each element
+        # for i, element_id in enumerate(ids):
+        #     element_connectivies[i, :] = elements[element_id]
+
+        # flip the elements nodes
+        element_connectivies = element_connectivies[:, element_info["reversed_order"]]
+
+        # set the flipped connectivities back to the mesh data
+
+        for i, (id, element_connectivity) in enumerate(zip(ids, element_connectivies)):
+            elements[i].node_ids = list(element_connectivity)
+
+        # for i, element_id in enumerate(ids):
+        #     elements[element_id] = list(element_connectivies[i, :])
 
     @staticmethod
     def prepare_data_for_kratos(mesh_data: Dict[str, Any]) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.int64]]:
@@ -333,3 +375,15 @@ class Mesh:
         all_elements = np.array(all_elements_list).astype(int)
 
         return nodes, all_elements
+
+
+if __name__ == '__main__':
+
+    a = np.array([5.0, 7.0, 9.0])
+
+    new_order = [1, 0, 2]
+
+    # set values in order of list of indices
+    a = a[new_order]
+
+    print(a)

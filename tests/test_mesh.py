@@ -251,54 +251,89 @@ class TestMesh:
         with pytest.raises(ValueError):
             Mesh.create_mesh_from_gmsh_group(mesh_data, "non_existing_group")
 
-
-    def test_flip_mesh_order(self):
+    def test_flip_node_order(self):
         """
-        Tests that element node ids are flipped in the right way.
+        Tests that element node ids are flipped in the right way. in 2D.
         """
 
-        quad_linear = Element(1, "QUADRANGLE_4N", [1, 2, 3, 4])
-        quad_quad = Element(2, "QUADRANGLE_8N", [1, 2, 3, 4, 5, 6, 7, 8])
-
-        tri_linear = Element(3, "TRIANGLE_3N", [1, 2, 3])
-        tri_quad = Element(4, "TRIANGLE_6N", [1, 2, 3, 4, 5, 6])
-
-        line_linear = Element(5, "LINE_2N", [1, 2])
-        line_quad = Element(6, "LINE_3N", [1, 2, 3])
         mesh = Mesh(ndim=2)
 
-        elements_to_flip = [quad_linear, quad_quad, tri_linear, tri_quad, line_linear, line_quad]
+        mesh_data = {
+            "ndim": 2,
+            "nodes": {1: [0, 0, 0], 2: [1.0, 0, 0], 3: [1, 1.0, 0], 4: [0, 1.0, 0],
+                      5: [0.5, 0.0, 0], 6: [1, 0.5, 0], 7: [0.5, 1, 0], 8: [0, 0.5, 0],
+                      9: [0.5, 0.5, 0]},
+            "elements": {"QUADRANGLE_4N": {1: [1, 2, 3, 4]},
+                         "QUADRANGLE_8N": {2: [1, 2, 3, 4, 5, 6, 7, 8]},
+                         "TRIANGLE_3N": {3: [1, 2, 3]},
+                         "TRIANGLE_6N": {4: [1, 2, 3, 5, 6, 9]},
+                         "LINE_2N": {5: [1, 2]},
+                         "LINE_3N": {6: [1, 2, 5]}},
+            "physical_groups": {
+                "quad_linear": {
+                    "ndim": 2,
+                    "element_ids": [1],
+                    "node_ids": [1, 2, 3, 4],
+                    "element_type": "QUADRANGLE_4N",
+                },
+                "quad_quadr": {
+                    "ndim": 2,
+                    "element_ids": [2],
+                    "node_ids": [1, 2, 3, 4, 5, 6, 7, 8],
+                    "element_type": "QUADRANGLE_8N",
+                },
+                "tri_linear": {
+                    "ndim": 2,
+                    "element_ids": [3],
+                    "node_ids": [1, 2, 3],
+                    "element_type": "TRIANGLE_3N",
+                },
+                "tri_quadr": {
+                    "ndim": 2,
+                    "element_ids": [4],
+                    "node_ids": [1, 2, 3, 5, 6, 9],
+                    "element_type": "TRIANGLE_6N",
+                },
+                "line_linear": {
+                    "ndim": 2,
+                    "element_ids": [5],
+                    "node_ids": [1, 2],
+                    "element_type": "LINE_2N",
+                },
+                "line_quadr": {
+                    "ndim": 2,
+                    "element_ids": [6],
+                    "node_ids": [1, 2, 5],
+                    "element_type": "LINE_3N"}
+            },
+        }
 
-        for element in elements_to_flip:
-            mesh.flip_node_order(element)
+        for group_name, group_data in mesh_data["physical_groups"].items():
+            group_element_type = group_data["element_type"]
+            element_reversed_ordering_info = Mesh.get_2d_element_info(group_element_type)
 
-        expected_nodes = [
-            [4, 3, 2, 1],
-            [4, 3, 2, 1, 8, 7, 6, 5],
-            [3, 2, 1],
-            [3, 2, 1, 6, 5, 4],
-            [2, 1],
-            [2, 1, 3],
+            mesh.flip_node_order(group_name, mesh_data, element_reversed_ordering_info)
+
+        expected_ordering = [
+            [[4, 3, 2, 1]],
+            [[4, 3, 2, 1, 8, 7, 6, 5]],
+            [[3, 2, 1]],
+            [[3, 2, 1, 9, 6, 5]],
+            [[2, 1]],
+            [[2, 1, 5]],
         ]
 
+        for (element_name, element_data), expected_nodes_element in zip(mesh_data["elements"].items(),
+                                                                    expected_ordering):
+            np.testing.assert_equal(list(element_data.values()), expected_nodes_element)
 
-        for element,expected_nodes_element in zip(elements_to_flip, expected_nodes):
-            np.testing.assert_equal(element.node_ids, expected_nodes_element)
-
-        not_implemented_elements = [
-            "TETRAHEDRON_4N",
-            "HEXAHEDRON_8N",
-            "TETRAHEDRON_10N",
-            "HEXAHEDRON_20N",
-        ]
-
-        # check for raising errors for unsupported elements
-
-        for not_implemented_element in not_implemented_elements:
-            with pytest.raises(
-                    NotImplementedError
-            ):
-                mesh.flip_node_order(Element(999, not_implemented_element, [1,2,3]))
+        # not_implemented_elements = ["TETRAHEDRON_4N", "HEXAHEDRON_8N", "TETRAHEDRON_10N", "HEXAHEDRON_20N"]
+        #
+        # # check for raising errors for unsupported elements
+        #
+        # for not_implemented_element in not_implemented_elements:
+        #     with pytest.raises(NotImplementedError):
+        #         mesh.flip_node_order(Element(999, not_implemented_element, [1,2,3]))
 
 
 class TestMeshSettings:

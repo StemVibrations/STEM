@@ -537,7 +537,7 @@ class KratosIO:
             block_text.extend(
                 [
                     self.__write_element_line(mat_id, el)
-                    for el in body_model_part.mesh.elements
+                    for el in body_model_part.mesh.elements.values()
                 ]
             )
         block_text += [f"End Elements", ""]

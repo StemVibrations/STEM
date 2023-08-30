@@ -1,5 +1,4 @@
 from typing import List, Sequence, Dict, Any, Optional, Union
-from numbers import Number
 
 import numpy.typing as npty
 import numpy as np
@@ -339,18 +338,18 @@ class Model:
             model_part.mesh = Mesh.create_mesh_from_gmsh_group(self.gmsh_io.mesh_data, model_part.name)
 
         # adjust mesh of the condition elements if they are 2D elements and model is 2D
-        if self.ndim == 2:
-            for pmp in self.process_model_parts:
-                # check if process writes line condition elements (they are the only one that needs to be flipped).
+        # if self.ndim == 2:
+        for pmp in self.process_model_parts:
+            # check if process writes line condition elements (they are the only one that needs to be flipped).
 
-                if isinstance(pmp.parameters, (LineLoad, MovingLoad, AbsorbingBoundary)):
-                    # match the condition elements with the body elements on which the conditions are applied
-                    matched_elements = self.__find_matching_body_elements_for_process_model_part(pmp)
-                    # check the ordering of the nodes of the conditions. If it does not match flip the order.
-                    self.__check_order_process_model_part(matched_elements)
+            if isinstance(pmp.parameters, (LineLoad, MovingLoad, SurfaceLoad, AbsorbingBoundary)):
+                # match the condition elements with the body elements on which the conditions are applied
+                matched_elements = self.__find_matching_body_elements_for_process_model_part(pmp)
+                # check the ordering of the nodes of the conditions. If it does not match flip the order.
+                self.__check_order_process_model_part(matched_elements, pmp)
 
     @staticmethod
-    def __get_model_part_element_nodes(model_part: ModelPart):
+    def __get_model_part_element_connectivities(model_part: ModelPart):
         """
         Extract the node ids of each of the elements in a model part.
         Args:
@@ -388,8 +387,8 @@ class Model:
 
         # get all the node ids for all the elements in the process model (pmp) part and the indices of each element in
         # the array
-        unmatched_elements_pmp = self.__get_model_part_element_nodes(process_model_part)
-        pmp_element_indices = np.array(list(process_model_part.mesh.elements.keys()))
+        unmatched_connectivities_pmp = self.__get_model_part_element_connectivities(process_model_part)
+        pmp_element_ids = np.array(list(process_model_part.mesh.elements.keys()))
 
         # initialise matching dictionary: process_element --> body_element
         matched_elements: Dict[Element, Element] = {}
@@ -402,23 +401,23 @@ class Model:
                 raise ValueError("Mesh not yet initialised.")
 
             # if there is nothing to match, break the loop
-            if len(unmatched_elements_pmp) == 0:
+            if len(unmatched_connectivities_pmp) == 0:
                 # finished matching elements
                 break
 
             # get the node ids for the elements in the current body model part and their ids
-            nodes_el_bmp = self.__get_model_part_element_nodes(bmp)
+            bmp_connectivities = self.__get_model_part_element_connectivities(bmp)
             bmp_element_ids = np.array(list(bmp.mesh.elements.keys()))
 
             # initialised matched ids and indices for the element of the pmp
             matched_id_process_to_body = {}
             matched_indices_process_element = []
             # for each process element, check if there is a match with the current body part elements
-            for ix, (element_id_j, nodes_element_j) in enumerate(zip(pmp_element_indices, unmatched_elements_pmp)):
+            for ix, (element_id_j, nodes_element_j) in enumerate(zip(pmp_element_ids, unmatched_connectivities_pmp)):
                 # find the indexes of the element in the body model parts that contains the node ids of the current
                 # process model part
                 found_index = np.where(
-                    np.sum(np.isin(nodes_el_bmp, nodes_element_j), axis=1) == len(nodes_element_j)
+                    np.sum(np.isin(bmp_connectivities, nodes_element_j), axis=1) == len(nodes_element_j)
                 )
                 # from the first match, retriv the element id of the body model part and the index of the process
                 # model part, to remove it later from the unmatched_elements
@@ -436,11 +435,11 @@ class Model:
 
                 # matched indices
                 process_elements_idxs = np.array(list(matched_indices_process_element))
-                unmatched_elements_pmp = np.delete(unmatched_elements_pmp, process_elements_idxs, axis=0)
-                pmp_element_indices = np.delete(pmp_element_indices, process_elements_idxs)
+                unmatched_connectivities_pmp = np.delete(unmatched_connectivities_pmp, process_elements_idxs, axis=0)
+                pmp_element_ids = np.delete(pmp_element_ids, process_elements_idxs)
 
         if check_all_coupled:
-            if len(unmatched_elements_pmp) != 0:
+            if len(unmatched_connectivities_pmp) != 0:
                 raise ValueError(
                     "Some process model parts remain uncoupled! Error. Process model part not applied"
                     "on a body model part."
@@ -448,7 +447,7 @@ class Model:
 
         return matched_elements
 
-    def __check_order_process_model_part(self, matched_elements: Dict[Element, Element]):
+    def __check_order_process_model_part(self, matched_elements: Dict[Element, Element], pmp):
         """
         Check if the order of the elements the keys of matched_elements are oriented in the same order of the nodes in
         the values of matched_elements. If not, the order of the nodes is flipped.
@@ -460,16 +459,16 @@ class Model:
             - ValueError: if condition element is not a 2D. Re-ordering is only required for line elements.
         """
 
-        mesh_obj = Mesh(self.ndim)
+        # loop over the matched elements
+        flip_node_order = np.zeros(len(matched_elements), dtype=bool)
+        for i, (process_element, body_element) in enumerate(matched_elements.items()):
 
-        for process_element, body_element in matched_elements.items():
-
-            nodes_process_element = [_id for _id in process_element.node_ids]
-            nodes_body_element = [_id for _id in body_element.node_ids]
+            connectivities_process_element = [node_id for node_id in process_element.node_ids]
+            connectivities_body_element = [node_id for node_id in body_element.node_ids]
 
             # element info such as order, number of edges, element types etc.
-            process_el_info = mesh_obj.get_element_info(process_element)
-            body_el_info = mesh_obj.get_element_info(body_element)
+            process_el_info = Mesh.get_2d_element_info(process_element.element_type)
+            body_el_info = Mesh.get_2d_element_info(body_element.element_type)
 
             # if elements have different order, it's an error...
             if body_el_info["order"] != process_el_info["order"]:
@@ -482,20 +481,83 @@ class Model:
             # get the number of vertices of the process element.
             # We only do this for line element, therefore we expect 2 vertices.
             n_vert_pel = process_el_info['n_vertices']
-            if n_vert_pel != 2:
-                raise ValueError("Matched for elements different than line is not required, nor supported.")
+            # if n_vert_pel != 2:
+            #     raise ValueError("Matched for elements different than line is not required, nor supported.")
             # append the first (n_nodes-1) node ids at the back of to the list (to make a cycle)
-            target_list = nodes_body_element[:n_vert_bel]
-            target_list.append(target_list[0])
+            target_list = connectivities_body_element[:n_vert_bel]
+            target_list.extend(target_list[:-1])
 
             # pick only the corner nodes, the mid-point nodes related to the higher order do
             # not matter for quadratic elements.
-            source_list = nodes_process_element[:n_vert_pel]
+            source_list = connectivities_process_element[:n_vert_pel]
 
-            # check if order of nodes in process element follows the body elements.
-            # if not, flip the order of the process element
-            if not Utils.has_matching_combination(target_list, source_list):
-                mesh_obj.flip_node_order(process_element)
+            if body_el_info["ndim"] == 1 or body_el_info["ndim"] == 2:
+                # check if order of nodes in process element follows the body elements.
+                # if not, flip the order of the process element
+                if not Utils.has_matching_combination(target_list, source_list):
+                    flip_node_order = True
+                    # Mesh.flip_node_order(process_element)
+            elif body_el_info["ndim"] == 3:
+
+                coordinates_condition = np.array([pmp.mesh.nodes[node_id].coordinates for node_id in connectivities_process_element[:n_vert_pel]])
+
+                normal_cond = np.cross(coordinates_condition[1,:] - coordinates_condition[0,:],
+                                       coordinates_condition[2,:] - coordinates_condition[0,:])
+
+                body_vertice_ids = connectivities_body_element[:n_vert_bel]
+
+                # out_of_plane_vertice, in_plane_vertice = None, None
+                # for id in body_vertice_ids:
+                #     if id not in source_list:
+                #         out_of_plane_vertice = id
+                #     else:
+                #         in_plane_vertice = id
+                #
+                #     if out_of_plane_vertice is not None and in_plane_vertice is not None:
+                #         break
+
+
+                coordinates_body_element = np.array([self.gmsh_io.mesh_data['nodes'][node_id] for node_id in body_vertice_ids])
+
+                centroid_plane = np.mean(coordinates_condition, axis=0)
+                centroid_volume = np.mean(coordinates_body_element, axis=0)
+
+                # body_inward_vector = (np.array(self.gmsh_io.mesh_data['nodes'][out_of_plane_vertice]) -
+                #                       np.array(self.gmsh_io.mesh_data['nodes'][in_plane_vertice]))
+
+                body_inward_vector = centroid_volume - centroid_plane
+
+
+                if np.dot(normal_cond, body_inward_vector) < 0:
+                    flip_node_order[i] = True
+
+                    # Mesh.flip_node_order(process_element)
+                #
+                # if Utils.has_matching_combination(target_list, source_list):
+                #     flip_node_order = True
+                    # Mesh.flip_node_order(process_element)
+
+
+        if any(flip_node_order):
+
+            group_data = self.gmsh_io.mesh_data["physical_groups"][pmp.name]
+            group_element_ids = group_data["element_ids"]
+
+            elements = np.array(list(pmp.mesh.elements.values()))[flip_node_order]
+            # elements = np.array(self.gmsh_io.mesh_data["elements"][group_data["element_type"]])[flip_node_order]
+
+
+
+            Mesh.flip_node_order(process_el_info, elements)
+
+            a = elements
+
+            # for element_id, element in pmp.mesh.elements.items():
+            #     # pmp.mesh.elements[element_id].node_ids = self.gmsh_io.mesh_data["elements"][pmp.element_type][element_id]["node_ids"]
+            #     element.node_ids = self.gmsh_io.mesh_data["elements"][element.element_type][element_id]
+            # pmp.mesh.elements = {element_id: Element(element_id, group_element_type,
+            #                                                 mesh_data["elements"][group_element_type][element_id])
+            #                             for element_id in group_data["element_ids"]}
 
     def __validate_model_part_names(self):
         """
@@ -583,6 +645,7 @@ class Model:
             self.__add_gravity_model_part(gravity_load, 3, body_geometries_3d)
 
         self.synchronise_geometry()
+        self.gmsh_io.finalize_gmsh()
 
     def get_all_model_parts(self) -> List[Union[BodyModelPart, ModelPart]]:
         """
@@ -678,6 +741,9 @@ class Model:
         self.validate()
 
         self.__setup_stress_initialisation()
+
+        # finalize gmsh
+        self.gmsh_io.finalize_gmsh()
 
     def show_mesh(self, **kwargs):
         """
