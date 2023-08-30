@@ -350,7 +350,7 @@ class Model:
                 self.__check_order_process_model_part(matched_elements, process_model_part)
 
     @staticmethod
-    def __get_model_part_element_connectivities(model_part: ModelPart):
+    def __get_model_part_element_connectivities(model_part: ModelPart) -> Optional[npty.NDArray[np.int64]]:
         """
         Extract the node ids of each of the elements in a model part.
         Args:
@@ -358,22 +358,19 @@ class Model:
                 extracted.
 
         Returns:
-            - np.ndarray[int]: array containing the nodes of the elements in the model_part
+            - Optional[npty.NDArray[np.int64]]: array containing the nodes of the elements in the model_part
         """
         if model_part.mesh is not None:
             return np.array([el.node_ids for el in model_part.mesh.elements.values()])
 
-    def __find_matching_body_elements_for_process_model_part(
-        self, process_model_part: ModelPart, check_all_coupled: bool = False
-    ):
+    def __find_matching_body_elements_for_process_model_part(self, process_model_part: ModelPart) \
+            -> Dict[Element, Element]:
         """
         For a process model part, tries finds the matching body elements on which the condition elements are applied.
 
         Args:
             - process_model_part (:class:`stem.model_part.ModelPart`): model part from which element nodes needs to be
                 extracted.
-            - check_all_coupled (bool): checks if the condition element are applied to a body model part and raises an
-                error in case. Defaults to False.
         Raises:
             - ValueError: if mesh is not initialised yet.
             - ValueError: if condition elements don't have a corresponding body element.
@@ -439,12 +436,12 @@ class Model:
                 unmatched_connectivities_pmp = np.delete(unmatched_connectivities_pmp, process_elements_idxs, axis=0)
                 pmp_element_ids = np.delete(pmp_element_ids, process_elements_idxs)
 
-        if check_all_coupled:
-            if len(unmatched_connectivities_pmp) != 0:
-                raise ValueError(
-                    "Some process model parts remain uncoupled! Error. Process model part not applied"
-                    "on a body model part."
-                )
+        # if there are still process elements which do not share the nodes of body elements, raise an error
+        if len(unmatched_connectivities_pmp) != 0:
+            raise ValueError(
+                "Some process model parts remain uncoupled! Error. Process model part not applied"
+                "on a body model part."
+            )
 
         return matched_elements
 
@@ -455,13 +452,11 @@ class Model:
         Args:
             - matched_elements (Dict[:class:`stem.mesh.Element`, :class:`stem.mesh.Element`]): Dictionary containing
                 the matched condition and body element parts.
-        Raises:
-            - ValueError: if elements are not of same order (linear, quadratic, cubic, ...)
-            - ValueError: if condition element is not a 2D. Re-ordering is only required for line elements.
         """
 
         # loop over the matched elements
         flip_node_order = np.zeros(len(matched_elements), dtype=bool)
+        process_el_info = {}
         for i, (process_element, body_element) in enumerate(matched_elements.items()):
 
             # element info such as order, number of edges, element types etc.
@@ -505,14 +500,12 @@ class Model:
                     flip_node_order[i] = Utils.is_volume_edge_defined_inwards(process_element, body_element,
                                                                               self.gmsh_io.mesh_data["nodes"])
 
-
-
         # flip condition elements if required
         if any(flip_node_order):
             # elements to be flipped
             elements = np.array(list(pmp.mesh.elements.values()))[flip_node_order]
 
-            # flip elements
+            # flip elements, it is required that all elements in the array are of the same type
             Utils.flip_node_order(process_el_info, elements)
 
     def __validate_model_part_names(self):

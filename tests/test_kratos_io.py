@@ -127,7 +127,7 @@ class TestKratosModelIO:
 
         # create model
         model = Model(ndim)
-        model.extrusion_length = [0, 0, -1]
+        model.extrusion_length = [0, 0, 1]
 
         # add soil layer and line load and mesh them
         model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
@@ -310,6 +310,7 @@ class TestKratosModelIO:
             mesh_file_name="test_mdpa_file_3d.mdpa",
             output_folder="dir_test"
         )
+
         with open('tests/test_data/expected_mdpa_file_3d.mdpa', 'r') as openfile:
             expected_text = openfile.readlines()
 

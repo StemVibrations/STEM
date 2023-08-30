@@ -1,6 +1,9 @@
-from typing import Sequence, Dict, Any, List, Union, Optional, Generator
+from typing import Sequence, Dict, Any, List, Union, Optional, Generator, TYPE_CHECKING
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from stem.mesh import Element
 
 
 class Utils:
@@ -246,9 +249,16 @@ class Utils:
         return False
 
     @staticmethod
-    def get_element_info(gmsh_element_type):
+    def get_element_info(gmsh_element_type: str) -> Dict[str, Any]:
         """
+        Returns the element info for a certain gmsh element type. The element info contains the number of dimensions,
+        the order, the number of vertices and the reversed order of the connectivities.
+
+        Args:
+            - gmsh_element_type (str): gmsh element type
+
         Returns:
+            - Dict[str, Any]: element info
         """
 
         element_mapping_dict = {"POINT_1N": {"ndim": 0,
@@ -308,17 +318,24 @@ class Utils:
         return element_mapping_dict[gmsh_element_type]
 
     @staticmethod
-    def flip_node_order(element_info, elements):
+    def flip_node_order(element_info: Dict[str, Any], elements: Sequence['Element']):
         """
-        Returns:
+        Flips the node order of the elements
+
+        Args:
+            - element_info (Dict[str, Any]): element info
+            - elements (List[:class:`stem.mesh.Element`]): list of elements
+
         """
 
+        # retrieve element ids and connectivities
         ids = [element.id for element in elements]
         element_connectivies = np.array([element.node_ids for element in elements])
 
-        # flip the elements nodes
+        # flip the elements connectivities
         element_connectivies = element_connectivies[:, element_info["reversed_order"]]
 
+        # update the elements connectivities
         for i, (id, element_connectivity) in enumerate(zip(ids, element_connectivies)):
             elements[i].node_ids = list(element_connectivity)
 

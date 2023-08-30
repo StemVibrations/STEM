@@ -1280,8 +1280,7 @@ class TestModel:
         # assert that the condition elements are written in the correct order
         # also check if condition is fully applied on a body model part.
         mapper_process_mp = model._Model__find_matching_body_elements_for_process_model_part(
-            process_model_part=model.process_model_parts[0], check_all_coupled=True
-        )
+            process_model_part=model.process_model_parts[0])
         actual_ids = [(el_p.id, el_b.id) for el_p, el_b in mapper_process_mp.items()]
         expected_ids = [(1, 85), (2, 116), (3, 125), (4, 95), (5, 96), (6, 124), (7, 98), (8, 100), (9, 83)]
 
