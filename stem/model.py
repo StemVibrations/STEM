@@ -695,21 +695,3 @@ class Model:
 
         # finalize gmsh
         self.gmsh_io.finalize_gmsh()
-
-    def show_mesh(self, **kwargs):
-        """
-        Show the mesh of the model in a matplotlib plot. only available for 2D models.
-
-        Raises:
-            - NotImplementedError: when is run for 3D models
-
-        """
-
-        fig = PlotUtils.show_mesh(
-            ndim=self.ndim,
-            body_model_parts=self.body_model_parts,
-            process_model_parts=self.process_model_parts,
-            **kwargs,
-        )
-
-        fig.show()
