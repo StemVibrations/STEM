@@ -4,7 +4,7 @@ import os
 path_kratos = r"D:\Kratos_without_compiling"
 material_name = "MaterialParameters.json"
 project_name = "ProjectParameters.json"
-mesh_name = "test_lysmer_boundary_column3d_tetra.mdpa"
+mesh_name = "calculate_lysmer_boundary_column2d_triangle.mdpa"
 
 sys.path.append(os.path.join(path_kratos, "KratosGeoMechanics"))
 sys.path.append(os.path.join(path_kratos, r"KratosGeoMechanics\libs"))
@@ -18,7 +18,7 @@ from stem.boundary import AbsorbingBoundary
 from stem.boundary import DisplacementConstraint
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
     NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
-from stem.output import NodalOutput, GaussPointOutput, VtkOutputParameters, Output
+from stem.output import NodalOutput, VtkOutputParameters, Output
 from stem.IO.kratos_io import KratosIO
 
 
@@ -42,7 +42,7 @@ constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=E1, POISSON_RATIO=v1)
 retention_parameters1 = SaturatedBelowPhreaticLevelLaw()
 material1 = SoilMaterial("soil", soil_formulation1, constitutive_law1, retention_parameters1)
 
-# Specify the coordinates for the column: x:2m x y:2m
+# Specify the coordinates for the column: x:1m x y:10m
 layer1_coordinates = [(0, 0, 0), (1, 0, 0), (1, 10, 0), (0, 10, 0)]
 
 # Create the soil layer
@@ -145,7 +145,7 @@ kratos_io.write_project_parameters_json(
     output_folder=output_folder
 )
 
-# Write mesh to test_lysmer_boundary_column3d_tetra.mdpa file
+# Write mesh to .mdpa file
 kratos_io.write_mesh_to_mdpa(
     model=model,
     mesh_file_name="test_lysmer_boundary_column2d_triangle.mdpa",

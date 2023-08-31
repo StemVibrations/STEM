@@ -18,7 +18,7 @@ from stem.table import Table
 from stem.boundary import DisplacementConstraint
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
     NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
-from stem.output import NodalOutput, GaussPointOutput, VtkOutputParameters, Output
+from stem.output import NodalOutput, VtkOutputParameters, Output
 from stem.IO.kratos_io import KratosIO
 
 
@@ -109,12 +109,9 @@ model.project_parameters = problem
 # Define the results to be written to the output file
 
 # Nodal results
-nodal_results = [NodalOutput.DISPLACEMENT]
+nodal_results = [NodalOutput.VELOCITY]
 # Gauss point results
-gauss_point_results = [
-    GaussPointOutput.GREEN_LAGRANGE_STRAIN_TENSOR,
-    GaussPointOutput.CAUCHY_STRESS_TENSOR
-]
+gauss_point_results = []
 
 # Define the output process
 vtk_output_process = Output(

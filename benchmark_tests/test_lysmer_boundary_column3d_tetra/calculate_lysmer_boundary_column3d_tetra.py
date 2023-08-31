@@ -72,7 +72,7 @@ model.synchronise_geometry()
 
 # Show geometry and geometry ids
 model.show_geometry(show_surface_ids=True)
-# input()
+input()
 
 # Set mesh size and generate mesh
 # --------------------------------
@@ -148,7 +148,7 @@ kratos_io.write_project_parameters_json(
     output_folder=output_folder
 )
 
-# Write mesh to test_lysmer_boundary_column3d_tetra.mdpa file
+# Write mesh to .mdpa file
 kratos_io.write_mesh_to_mdpa(
     model=model,
     mesh_file_name="test_lysmer_boundary_column3d_tetra.mdpa",
