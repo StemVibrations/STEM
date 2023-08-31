@@ -288,35 +288,35 @@ class TestUtilsStem:
 
     def test_is_tetrahedron_4n_edge_defined_inwards(self):
         """
-        Tests if the 3-node triangle edge of a 4 node tetrahedron is defined inwards. It checks different orientations
+        Tests if the 3-node triangle edge of a 4 node tetrahedron is defined outwards. It checks different orientations
         of the edge element and the body element.
 
         """
 
-        edge_element_1 = Element(1, "TRIANGLE_3N", [1, 2, 3])
-        edge_element_1_reversed = Element(1, "TRIANGLE_3N", [3, 2, 1])
+        edge_element = Element(1, "TRIANGLE_3N", [1, 2, 3])
+        edge_element_reversed = Element(1, "TRIANGLE_3N", [3, 2, 1])
         body_element = Element(2, "TETRAHEDRON_4N", [1, 2, 3, 4])
         body_element_mirrored = Element(2, "TETRAHEDRON_4N", [1, 2, 3, 5])
 
         nodes = {1: [0, 0, 0], 2: [1.0, 0, 0], 3: [1, 1.0, 0], 4: [0, 0.0, 1.0], 5: [0.0, 0.0, -1.0]}
 
-        # check if edge is defined inwards in both node orders of edge element
-        assert not Utils.is_volume_edge_defined_inwards(edge_element_1, body_element, nodes)
-        assert Utils.is_volume_edge_defined_inwards(edge_element_1_reversed, body_element, nodes)
+        # check if edge is defined outwards in both node orders of edge element
+        assert not Utils.is_volume_edge_defined_outwards(edge_element, body_element, nodes)
+        assert Utils.is_volume_edge_defined_outwards(edge_element_reversed, body_element, nodes)
 
-        # check if edge is defined inwards in both node orders of edge element and a mirrored body element
-        assert Utils.is_volume_edge_defined_inwards(edge_element_1, body_element_mirrored, nodes)
-        assert not Utils.is_volume_edge_defined_inwards(edge_element_1_reversed, body_element_mirrored, nodes)
+        # check if edge is defined outwards in both node orders of edge element and a mirrored body element
+        assert Utils.is_volume_edge_defined_outwards(edge_element, body_element_mirrored, nodes)
+        assert not Utils.is_volume_edge_defined_outwards(edge_element_reversed, body_element_mirrored, nodes)
 
     def test_is_tetrahedron_10n_edge_defined_inwards(self):
         """
-        Tests if the 6-node triangle edge of a 10 node tetrahedron is defined inwards. It checks different orientations
+        Tests if the 6-node triangle edge of a 10 node tetrahedron is defined outwards. It checks different orientations
         of the edge element and the body element.
 
         """
 
-        edge_element_1 = Element(1, "TRIANGLE_6N", [1, 2, 3, 5, 6, 7])
-        edge_element_1_reversed = Element(1, "TRIANGLE_6N", [3, 2, 1, 7, 6, 5])
+        edge_element = Element(1, "TRIANGLE_6N", [1, 2, 3, 5, 6, 7])
+        edge_element_reversed = Element(1, "TRIANGLE_6N", [3, 2, 1, 7, 6, 5])
 
         body_element = Element(2, "TETRAHEDRON_10N", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
         body_element_mirrored = Element(2, "TETRAHEDRON_10N", [1, 2, 3, 11, 5, 6, 7, 12, 9, 13])
@@ -327,10 +327,74 @@ class TestUtilsStem:
                  10: [0.5, 0.0, 0.5], # new y-z plane midpoint
                  11: [0.0, 0.0, -1.0], 12: [0.0, 0.0, -0.5], 13: [0.5, 0.0, -0.5]} # mirrored y-z plane points
 
-        # check if edge is defined inwards in both node orders of edge element
-        assert not Utils.is_volume_edge_defined_inwards(edge_element_1, body_element, nodes)
-        assert Utils.is_volume_edge_defined_inwards(edge_element_1_reversed, body_element, nodes)
+        # check if edge is defined outwards in both node orders of edge element
+        assert not Utils.is_volume_edge_defined_outwards(edge_element, body_element, nodes)
+        assert Utils.is_volume_edge_defined_outwards(edge_element_reversed, body_element, nodes)
 
-        # check if edge is defined inwards in both node orders of edge element and a mirrored body element
-        assert Utils.is_volume_edge_defined_inwards(edge_element_1, body_element_mirrored, nodes)
-        assert not Utils.is_volume_edge_defined_inwards(edge_element_1_reversed, body_element_mirrored, nodes)
+        # check if edge is defined outwards in both node orders of edge element and a mirrored body element
+        assert Utils.is_volume_edge_defined_outwards(edge_element, body_element_mirrored, nodes)
+        assert not Utils.is_volume_edge_defined_outwards(edge_element_reversed, body_element_mirrored, nodes)
+
+    def test_is_hexahedron_8n_edge_defined_inwards(self):
+        """
+        Tests if the 4-node quad edge of a 8 node hexahedron is defined outwards. It checks different orientations
+        of the edge element and the body element.
+
+        """
+
+        edge_element = Element(1, "QUADRANGLE_4N", [1, 2, 3, 4])
+        edge_element_reversed = Element(1, "QUADRANGLE_4N", [4, 3, 2, 1])
+
+        body_element = Element(2, "HEXAHEDRON_8N", [1, 2, 3, 4, 5, 6, 7, 8])
+        body_element_mirrored = Element(2, "HEXAHEDRON_8N", [1, 2, 3, 4, 9, 10, 11, 12])
+
+        nodes = {1: [0, 0, 0], 2: [1.0, 0, 0], 3: [1, 1.0, 0], 4: [0, 1.0, 0],
+                 5: [0, 0, 1.0], 6: [1, 0, 1.0], 7: [1, 1, 1], 8: [0, 1, 1],
+                 9: [0.0, 0.0, -1], 10: [1.0, 0.0, -1], 11: [1, 1, -1], 12: [0.0, 1, -1]}
+
+        # check if edge is defined outwards in both node orders of edge element
+        assert not Utils.is_volume_edge_defined_outwards(edge_element, body_element, nodes)
+        assert Utils.is_volume_edge_defined_outwards(edge_element_reversed, body_element, nodes)
+
+        # check if edge is defined outwards in both node orders of edge element and a mirrored body element
+        assert Utils.is_volume_edge_defined_outwards(edge_element, body_element_mirrored, nodes)
+        assert not Utils.is_volume_edge_defined_outwards(edge_element_reversed, body_element_mirrored, nodes)
+
+    def test_is_hexahedron_20n_edge_defined_inwards(self):
+        """
+        Tests if the 8-node quad edge of a 20 node hexahedron is defined outwards. It checks different orientations
+        of the edge element and the body element.
+
+        """
+
+        edge_element_1 = Element(1, "QUADRANGLE_8N", [1, 2, 3, 4, 9, 12, 14, 10])
+        edge_element_1_reversed = Element(1, "QUADRANGLE_8N", [4, 3, 2, 1, 10, 14, 12, 9])
+
+        body_element = Element(2, "HEXAHEDRON_20N", [1, 2, 3, 4,
+                                                     5, 6, 7, 8,
+                                                     9, 10, 11, 12,
+                                                     13, 14, 15, 16,
+                                                     17, 18, 19, 20])
+
+        body_element_mirrored = Element(2, "HEXAHEDRON_20N", [1, 2, 3, 4,
+                                                              21, 22, 23, 24,
+                                                              9, 10, 25, 12,
+                                                              26, 14, 27, 28,
+                                                              29, 32, 30, 31])
+
+        nodes = {1: [0, 0, 0], 2: [1.0, 0, 0], 3: [1, 1.0, 0], 4: [0, 1.0, 0],
+                 5: [0, 0, 1.0], 6: [1, 0, 1.0], 7: [1, 1, 1], 8: [0, 1, 1],
+                 9: [0.5, 0.0, 0], 12: [1.0, 0.5, 0.0], 14: [0.5, 1, 0], 10: [0, 0.5, 0.0],
+                 11: [0, 0, 0.5], 13: [1, 0, 0.5], 15: [1, 1, 0.5], 16: [0, 1, 0.5],
+                 17: [0.5, 0.0, 1], 19: [1, 0.5, 1], 20: [0.5, 1, 1], 18: [0, 0.5, 1],
+                 21: [0, 0, -1.0], 22: [1, 0, -1.0], 23: [1, 1, -1], 24: [0, 1, -1], # mirrored vertices
+                 25: [0, 0, -0.5], 26: [1, 0, -0.5], 27: [1, 1, -0.5], 28: [0, 1, -0.5], # mirrored midpoints
+                 29: [0.5, 0.0, -1], 30: [1, 0.5, -1], 31: [0.5, 1, -1], 32: [0, 0.5, -1]} # mirrored midpoints
+
+        # check if edge is defined outwards in both node orders of edge element
+        assert not Utils.is_volume_edge_defined_outwards(edge_element_1, body_element, nodes)
+        assert Utils.is_volume_edge_defined_outwards(edge_element_1_reversed, body_element, nodes)
+
+        # check if edge is defined outwards in both node orders of edge element and a mirrored body element
+        assert Utils.is_volume_edge_defined_outwards(edge_element_1, body_element_mirrored, nodes)
+        assert not Utils.is_volume_edge_defined_outwards(edge_element_1_reversed, body_element_mirrored, nodes)
