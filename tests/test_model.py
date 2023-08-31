@@ -1,10 +1,10 @@
 import pickle
 from typing import Tuple
+import re
 
 import numpy.testing as npt
 import pytest
 
-from stem.boundary import *
 from stem.geometry import *
 from stem.model import *
 from stem.solver import *
@@ -48,51 +48,6 @@ class TestModel:
         geometry.surfaces = {1: Surface.create([1,2,3,4], 1)}
 
         geometry.volumes = {}
-
-        return geometry
-
-
-    @pytest.fixture
-    def expected_geometry_single_layer_3D(self):
-        """
-        Sets expected geometry data for a 3D geometry group. The group is a geometry of a cube.
-
-        Returns:
-            - :class:`stem.geometry.Geometry`: geometry of a 3D cube
-        """
-
-        geometry = Geometry()
-
-        geometry.points = {1, Point.create([0, 0, 0], 1),
-                           5, Point.create([0, 0, 1], 5),
-                           6, Point.create([1, 0, 1], 6),
-                           2, Point.create([1, 0, 0], 2),
-                           7, Point.create([1, 1, 1], 7),
-                           3, Point.create([1, 1, 0], 3),
-                           8, Point.create([0, 1, 1], 8),
-                           4, Point.create([0, 1, 0], 4)}
-
-        geometry.lines = {5, Line.create([1, 5], 5),
-                          7, Line.create([5, 6], 7),
-                          6, Line.create([2, 6], 6),
-                          1, Line.create([1, 2], 1),
-                          9, Line.create([6, 7], 9),
-                          8, Line.create([3, 7], 8),
-                          2, Line.create([2, 3], 2),
-                          11, Line.create([7, 8], 11),
-                          10, Line.create([4, 8], 10),
-                          3, Line.create([3, 4], 3),
-                          12, Line.create([8, 5], 12),
-                          4, Line.create([4, 1], 4)}
-
-        geometry.surfaces = {2, Surface.create([5, 7, -6, -1], 2),
-                             3, Surface.create([6, 9, -8, -2], 3),
-                             4, Surface.create([8,11, -10, -3], 4),
-                             5, Surface.create([10, 12, -5, -4], 5),
-                             1, Surface.create([1, 2, 3, 4], 1),
-                             6, Surface.create([7, 9, 11, 12], 6)}
-
-        geometry.volumes = {1, Volume.create([-2, -3, -4, -5, -1, 6], 1)}
 
         return geometry
 
@@ -651,6 +606,8 @@ class TestModel:
         model = Model(ndim)
         model.extrusion_length = [0, 0, 1]
 
+        model.project_parameters = TestUtils.create_default_solver_settings()
+
         # add soil layer
         model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
 
@@ -1049,7 +1006,7 @@ class TestModel:
 
         # test for incorrect number of coordinates in array (shape 3,2)
         with pytest.raises(ValueError, match=f"Coordinates should be 3D but 2 coordinates were given."):
-            model.validate_coordinates(np.zeros((3,2)))
+            model.validate_coordinates(np.zeros((3, 2)))
 
         # test for incorrect number of dimension in array (1-D array)
         with pytest.raises(ValueError, match=f"Coordinates are not a sequence of a sequence or a 2D array."):
@@ -1063,6 +1020,28 @@ class TestModel:
         # test for incorrect type (Sequence of float instead of Sequence[Sequence[float]])
         with pytest.raises(ValueError, match="Coordinates are not a sequence of a sequence or a 2D array."):
             model.validate_coordinates([0.0, 0.0, 0.0])
+
+        # test for nan numbers
+        with pytest.raises(ValueError, match=f"Coordinates should be a sequence of sequence of real numbers, "
+                                             f"but nan was given."):
+            model.validate_coordinates([(0.0, 0.0, 0.0), (0.0, np.NAN, 0.0)])
+
+        # test for inf numbers
+        with pytest.raises(ValueError, match=f"Coordinates should be a sequence of sequence of real numbers, "
+                                             f"but inf was given."):
+            model.validate_coordinates([(0.0, 0.0, 0.0), (0.0, np.inf, 0.0)])
+
+        # test for complex numbers, different error messages for different python versions and operating systems
+        message_option_1 = f"can't convert complex to float"
+        message_option_2 = f"float() argument must be a string or a real number, not 'complex'"
+
+        with pytest.raises(TypeError,
+                           match=f"{message_option_1}|{re.escape(message_option_2)}"):
+            model.validate_coordinates([(0.0, 0.0, 0.0), (0.0, 1j, 0.0)])
+
+        # test for strings
+        with pytest.raises(ValueError, match=f"could not convert string to float: 'test'"):
+            model.validate_coordinates([(0.0, 0.0, 0.0), (0.0, "test", 0.0)])
 
     def test_validation_moving_load(self, create_default_moving_load_parameters:MovingLoad):
         """
@@ -1116,9 +1095,9 @@ class TestModel:
         # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
         # correct and if the element ids are unique and if the number of nodes per element is correct
         assert len(mesh.elements) == 162
-        for element in mesh.elements:
+        for element_id, element in mesh.elements.items():
             assert element.element_type == "TRIANGLE_3N"
-            assert element.id not in unique_element_ids
+            assert element_id not in unique_element_ids
             assert len(element.node_ids) == 3
             unique_element_ids.append(element.id)
 
@@ -1126,8 +1105,8 @@ class TestModel:
         # and if the number of coordinates per node is correct
         unique_node_ids = []
         assert len(mesh.nodes) == 98
-        for node in mesh.nodes:
-            assert node.id not in unique_node_ids
+        for node_id, node in mesh.nodes.items():
+            assert node_id not in unique_node_ids
             assert len(node.coordinates) == 3
             unique_node_ids.append(node.id)
 
@@ -1160,9 +1139,10 @@ class TestModel:
         # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
         # correct and if the element ids are unique and if the number of nodes per element is correct
         assert len(mesh.elements) == 1120
-        for element in mesh.elements:
+
+        for element_id, element in mesh.elements.items():
             assert element.element_type == "TETRAHEDRON_4N"
-            assert element.id not in unique_element_ids
+            assert element_id not in unique_element_ids
             assert len(element.node_ids) == 4
             unique_element_ids.append(element.id)
 
@@ -1170,8 +1150,8 @@ class TestModel:
         # and if the number of coordinates per node is correct
         unique_node_ids = []
         assert len(mesh.nodes) == 340
-        for node in mesh.nodes:
-            assert node.id not in unique_node_ids
+        for node_id, node in mesh.nodes.items():
+            assert node_id not in unique_node_ids
             assert len(node.coordinates) == 3
             unique_node_ids.append(node.id)
 
@@ -1216,18 +1196,20 @@ class TestModel:
         # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
         # correct and if the element ids are unique and if the number of nodes per element is correct
         assert len(mesh_body.elements) == 162
-        for element in mesh_body.elements:
+
+        for element_id, element in mesh_body.elements.items():
             assert element.element_type == "TRIANGLE_3N"
-            assert element.id not in unique_element_ids
+            assert element_id not in unique_element_ids
             assert len(element.node_ids) == 3
-            unique_element_ids.append(element.id)
+            unique_element_ids.append(element_id)
 
         # check if nodes are generated correctly, i.e. if there are nodes in the mesh and if the node ids are unique
         # and if the number of coordinates per node is correct
         unique_body_node_ids = []
         assert len(mesh_body.nodes) == 98
-        for node in mesh_body.nodes:
-            assert node.id not in unique_body_node_ids
+
+        for node_id, node in mesh_body.nodes.items():
+            assert node_id not in unique_body_node_ids
             assert len(node.coordinates) == 3
             unique_body_node_ids.append(node.id)
 
@@ -1239,21 +1221,76 @@ class TestModel:
         # check elements of process model part, i.e. if the number of elements is correct and if the element type is
         # correct and if the element ids are unique and if the number of nodes per element is correct
         assert len(mesh_process.elements) == 1
-        for element in mesh_process.elements:
+        for element_id, element in mesh_process.elements.items():
             assert element.element_type == "POINT_1N"
-            assert element.id == 1
-            assert element.id not in unique_element_ids
+            assert element_id == 1
+            assert element_id not in unique_element_ids
             assert len(element.node_ids) == 1
             unique_element_ids.append(element.id)
 
         # check nodes of process model part, i.e. if there is 1 node in the mesh and if the node ids are present in the
         # body mesh and if the number of coordinates per node is correct
         assert len(mesh_process.nodes) == 1
-        for node in mesh_process.nodes:
-
+        for node_id, node in mesh_process.nodes.items():
             # check if node is also available in the body mesh
-            assert node.id in unique_body_node_ids
+            assert node_id in unique_body_node_ids
             assert len(node.coordinates) == 3
+
+    def test_generate_mesh_2d_2_layers_and_lineload(
+            self,
+            create_default_line_load_parameters: LineLoad,
+            create_default_2d_soil_material: SoilMaterial
+    ):
+        """
+        Test if the mesh is generated correctly in 2D for 2 layers plus lineload and fixed bottom.
+
+        Args:
+            - create_default_line_load_parameters (:class:`stem.load.LineLoad`): default line load parameters
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+        model = Model(2)
+
+        # add soil material
+        soil_material = create_default_2d_soil_material
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (4, 0, 0), (4, 1, 0), (0, 1, 0)], soil_material, "layer1")
+        model.add_soil_layer_by_coordinates([(0, 1, 0), (4, 1, 0), (4, 2, 0), (0, 2, 0)], soil_material, "layer2")
+
+        model.add_load_by_coordinates([(0, 2, 0), (4, 2, 0)], create_default_line_load_parameters, "lineload1")
+        model.synchronise_geometry()
+
+        # generate mesh
+        model.generate_mesh()
+
+        # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
+        # correct, the elements are counterclockwise and the number of nodes per element is correct
+        #
+        # check that the elements are all written counterclockwise
+        nodes = model.get_all_nodes()
+        for bmp in model.body_model_parts:
+
+            for element_id, element in bmp.mesh.elements.items():
+                coordinates = [nodes[ii].coordinates for ii in element.node_ids]
+                assert not Utils.are_2d_coordinates_clockwise(coordinates)
+                assert element.element_type == "TRIANGLE_3N"
+                assert len(element.node_ids) == 3
+
+        # assert that the condition elements are written in the correct order
+        # also check if condition is fully applied on a body model part.
+        mapper_process_mp = model._Model__find_matching_body_elements_for_process_model_part(
+            process_model_part=model.process_model_parts[0])
+        actual_ids = [(el_p.id, el_b.id) for el_p, el_b in mapper_process_mp.items()]
+        expected_ids = [(1, 85), (2, 116), (3, 125), (4, 95), (5, 96), (6, 124), (7, 98), (8, 100), (9, 83)]
+
+        np.testing.assert_equal(desired=expected_ids, actual=actual_ids)
+
+        # check order of nodes is consistent with what expected.
+        ids_process_model_part = np.array([el.node_ids for el in model.process_model_parts[0].mesh.elements.values()])
+        npt.assert_equal(ids_process_model_part[0, :], [5, 29])
+        npt.assert_equal(ids_process_model_part[4, :], [32, 33])
+        npt.assert_equal(ids_process_model_part[8, :], [36, 6])
 
     def test_validate_expected_success(self):
         """
@@ -1301,7 +1338,7 @@ class TestModel:
 
         pytest.raises(ValueError, model.validate)
 
-    def test_add_boundary_condition_by_geometry_ids(self,create_default_3d_soil_material: SoilMaterial):
+    def test_add_boundary_condition_by_geometry_ids(self, create_default_3d_soil_material: SoilMaterial):
         """
         Test if a boundary condition is added correctly to the model. A boundary condition is added to the model by
         specifying the geometry ids to which the boundary condition should be applied.
@@ -1310,7 +1347,6 @@ class TestModel:
             - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
 
         """
-
 
         # create a 3D model
         model = Model(3)
@@ -1416,7 +1452,6 @@ class TestModel:
         for expected_geometry, model_part in zip(all_expected_geometries, model.process_model_parts):
 
             TestUtils.assert_almost_equal_geometries(expected_geometry, model_part.geometry)
-
 
     def test_add_gravity_load_1d_and_2d(self, create_default_2d_soil_material: SoilMaterial):
         """
@@ -1539,7 +1574,7 @@ class TestModel:
         model.synchronise_geometry()
 
         # add gravity load
-        model._Model__add_gravity_load(vertical_axis=2, gravity_value=-10)
+        model._Model__add_gravity_load(vertical_axis=2, gravity_acceleration=-10)
 
         assert len(model.process_model_parts) == 1
 

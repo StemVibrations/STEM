@@ -1,6 +1,7 @@
 import json
 
 import numpy as np
+import numpy.typing as npt
 
 from stem.IO.kratos_io import KratosIO
 from stem.boundary import *
@@ -54,6 +55,8 @@ class TestKratosBoundariesIO:
         absorbing_boundaries_parameters = AbsorbingBoundary(
             absorbing_factors=[1.0, 1.0], virtual_thickness=1000.0
         )
+
+        model.project_parameters = TestUtils.create_default_solver_settings()
 
         # add dummy soil layer
         model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "dummy_soil")

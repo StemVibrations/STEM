@@ -5,7 +5,11 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection, PolyCollection
 
 # import required typing classes
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Optional
+
+from stem.mesh import Mesh
+from stem.model_part import BodyModelPart, ModelPart
+
 if TYPE_CHECKING:
     from stem.geometry import Geometry, Volume, Surface
 
@@ -184,7 +188,6 @@ class PlotUtils:
 
         return surface_centroid
 
-
     @staticmethod
     def __add_3d_volume_to_plot(geometry: 'Geometry', volume: 'Volume', show_volume_ids, show_surface_ids,
                                 show_line_ids, show_point_ids, ax):
@@ -220,10 +223,10 @@ class PlotUtils:
                     color='black', fontsize=14, fontweight='bold')
 
     @staticmethod
-    def show_geometry(ndim: int, geometry: 'Geometry', show_volume_ids: bool = False,show_surface_ids: bool = False,
-                      show_line_ids: bool = False, show_point_ids: bool = False):
+    def create_geometry_figure(ndim: int, geometry: 'Geometry', show_volume_ids: bool = False, show_surface_ids: bool = False,
+                               show_line_ids: bool = False, show_point_ids: bool = False) -> plt.Figure:
         """
-        Show the geometry of the model in a matplotlib plot.
+        Creates the geometry of the model in a matplotlib plot.
 
         Args:
             - ndim (int): Number of dimensions of the geometry. Either 2 or 3.
@@ -232,6 +235,9 @@ class PlotUtils:
             - show_surface_ids (bool): If True, the surface ids are shown in the plot.
             - show_line_ids (bool): If True, the line ids are shown in the plot.
             - show_point_ids (bool): If True, the point ids are shown in the plot.
+
+        Returns:
+            - plt.Figure: Figure object
 
         """
         # Initialize figure in 3D
@@ -288,4 +294,4 @@ class PlotUtils:
         # set equal aspect ratio to equal axes
         ax.set_aspect('equal')
 
-        fig.show()
+        return fig

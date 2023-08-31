@@ -39,14 +39,15 @@ class TestKratosModelIO:
         gmsh_IO.GmshIO().finalize_gmsh()
 
     @pytest.fixture
-    def create_default_2d_model_and_mesh(self):
+    def create_default_2d_model_and_mesh(self) -> Model:
         """
-        Sets expected geometry data for a 3D geometry group. The group is a geometry of a cube.
+        Sets expected geometry data for a 2D geometry group. And it sets a time dependent line load at the top and
+        bottom and another line load at the sides. The group is a geometry of a square.
 
         Returns:
-            - :class:`stem.model.Model`: the default 2D model of a square soil layer and a line load.
+            - :class:`stem.model.Model`: the default 2D model of a square soil layer and line loads.
         """
-        ndim=2
+        ndim = 2
         layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
 
         load_coordinates_top = [(1, 1, 0), (0, 1, 0)]  # top
@@ -92,17 +93,17 @@ class TestKratosModelIO:
         model.generate_mesh()
 
         return model
-    
 
     @pytest.fixture
     def create_default_3d_model_and_mesh(self):
         """
-        Sets expected geometry data for a 3D geometry group. The group is a geometry of a cube.
+        Sets expected geometry data for a 3D geometry group. It sets a surface load on the bottom and another load
+        at the top. The group is a geometry of a cube.
 
         Returns:
             - :class:`stem.model.Model`: the default 3D model of a cube soil and a surface load.
         """
-        ndim=3
+        ndim = 3
         layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
         load_coordinates_bottom = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
         load_coordinates_top = [(0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1)]
@@ -126,7 +127,7 @@ class TestKratosModelIO:
 
         # create model
         model = Model(ndim)
-        model.extrusion_length = [0, 0, -1]
+        model.extrusion_length = [0, 0, 1]
 
         # add soil layer and line load and mesh them
         model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
@@ -212,9 +213,9 @@ class TestKratosModelIO:
 
     def test_write_project_parameters_json(
         self,
-        create_default_2d_model_and_mesh:Model,
-        create_default_outputs:List[Output],
-        create_default_solver_settings:Problem
+        create_default_2d_model_and_mesh: Model,
+        create_default_outputs: List[Output],
+        create_default_solver_settings: Problem
     ):
         """
         Test correct writing of the project parameters for the default output, model and settings.
@@ -242,7 +243,7 @@ class TestKratosModelIO:
 
     def test_write_material_parameters_json(
         self,
-        create_default_2d_model_and_mesh:Model
+        create_default_2d_model_and_mesh: Model
     ):
         """
         Test correct writing of the material parameters for the default model.
@@ -259,11 +260,11 @@ class TestKratosModelIO:
 
     def test_write_mdpa_file_2d(
         self,
-        create_default_2d_model_and_mesh:Model,
-        create_default_solver_settings:Problem
+        create_default_2d_model_and_mesh: Model,
+        create_default_solver_settings: Problem
     ):
         """
-        Test correct writing of the mdpa file (mesh) for the default model and solver settings.
+        Test correct writing of the mdpa file (mesh) for the default model and solver settings in 2D.
 
         Args:
             - create_default_2d_model_and_mesh (:class:`stem.model.Model`): the default 2D model of a square \
@@ -288,11 +289,11 @@ class TestKratosModelIO:
     @pytest.mark.skipif(IS_LINUX, reason="Linux provides different meshing order. The test is not run on Ubuntu")
     def test_write_mdpa_file_3d(
         self,
-        create_default_3d_model_and_mesh:Model,
-        create_default_solver_settings:Problem
+        create_default_3d_model_and_mesh: Model,
+        create_default_solver_settings: Problem
     ):
         """
-        Test correct writing of the mdpa file (mesh) for the default model and solver settings.
+        Test correct writing of the mdpa file (mesh) for the default model and solver settings in 3D.
 
         Args:
             - create_default_3d_model_and_mesh (:class:`stem.model.Model`): the default 3D model of a cube \
@@ -309,6 +310,7 @@ class TestKratosModelIO:
             mesh_file_name="test_mdpa_file_3d.mdpa",
             output_folder="dir_test"
         )
+
         with open('tests/test_data/expected_mdpa_file_3d.mdpa', 'r') as openfile:
             expected_text = openfile.readlines()
 
@@ -316,8 +318,8 @@ class TestKratosModelIO:
 
     def test_write_input_files_for_kratos(
         self,
-        create_default_2d_model_and_mesh:Model,
-        create_default_solver_settings:Problem,
+        create_default_2d_model_and_mesh: Model,
+        create_default_solver_settings: Problem,
         create_default_outputs: List[Output]
     ):
         """
@@ -325,7 +327,7 @@ class TestKratosModelIO:
 
         Args:
             - create_default_2d_model_and_mesh (:class:`stem.model.Model`): the default 2D model of a square \
-                soil layer and a line load.
+                soil layer line loads.
             - create_default_solver_settings (:class:`stem.solver.Problem`): the Problem object containing the \
                 solver settings.
             - create_default_outputs (List[:class:`stem.output.Output`]): list of default output processes.
@@ -356,3 +358,76 @@ class TestKratosModelIO:
         actual_dict = json.load(open('./ProjectParameters.json', 'r'))
         expected_dict = json.load(open('tests/test_data/expected_ProjectParameters.json', 'r'))
         TestUtils.assert_dictionary_almost_equal(expected=expected_dict, actual=actual_dict)
+
+    def test_create_submodelpart_text(self, create_default_2d_model_and_mesh:Model):
+        """
+        Test the creation of the mdpa text of a model part
+
+        Args:
+            - create_default_2d_model_and_mesh (:class:`stem.model.Model`): the default model to use in testing
+        """
+        # load the default 2D model
+        model = create_default_2d_model_and_mesh
+
+        body_model_part_to_write = model.body_model_parts[0]
+        process_model_part_to_write = model.process_model_parts[0]
+
+        # IO object
+        kratos_io = KratosIO(ndim=model.ndim)
+
+        # initialise ids for table, materials and processes
+        kratos_io.initialise_model_ids(model)
+
+        # generate text block body model part: soil1
+        actual_text_body = kratos_io.write_submodelpart_body_model_part(
+            body_model_part=body_model_part_to_write
+        )
+        # define expected block text
+        expected_text_body = ['', 'Begin SubModelPart soil1', '  Begin SubModelPartTables', '  End SubModelPartTables',
+                              '  Begin SubModelPartNodes', '  1', '  2', '  3', '  4', '  5', '  End SubModelPartNodes',
+                              '  Begin SubModelPartElements', '  5', '  6', '  7', '  8',
+                              '  End SubModelPartElements', 'End SubModelPart', '']
+        # assert the objects to be equal
+        npt.assert_equal(actual=actual_text_body, desired=expected_text_body)
+
+        # generate text block body model part: soil1
+        actual_text_load = kratos_io.write_submodelpart_process_model_part(
+            process_model_part=process_model_part_to_write
+        )
+        # define expected block text
+        expected_text_load = ['', 'Begin SubModelPart load_top', '  Begin SubModelPartTables', '  1',
+                              '  End SubModelPartTables', '  Begin SubModelPartNodes', '  3', '  4',
+                              '  End SubModelPartNodes', '  Begin SubModelPartConditions', '  3',
+                              '  End SubModelPartConditions', 'End SubModelPart', '']
+
+        # assert the objects to be equal
+        npt.assert_equal(actual=actual_text_load, desired=expected_text_load)
+
+    def test_write_mdpa_text(self, create_default_2d_model_and_mesh: Model):
+        """
+        Test the creation of the mdpa text of the whole model
+
+        Args:
+            - create_default_2d_model_and_mesh (:class:`stem.model.Model`): the default model to use in testing
+
+        """
+        # load the default 2D model
+        model = create_default_2d_model_and_mesh
+        model.project_parameters = TestUtils.create_default_solver_settings()
+
+        # IO object
+        kratos_io = KratosIO(ndim=model.ndim)
+
+        # initialise ids for table, materials and processes
+        kratos_io.initialise_model_ids(model)
+
+        # generate text block body model part: soil1
+        actual_text_body = kratos_io.write_mdpa_text(model=model)
+
+        # define expected block text
+        with open('tests/test_data/expected_mdpa_file.mdpa', 'r') as openfile:
+            expected_text_body = openfile.readlines()
+
+        expected_text_body = [line.rstrip() for line in expected_text_body]
+        # assert the objects to be equal
+        npt.assert_equal(actual=actual_text_body, desired=expected_text_body)

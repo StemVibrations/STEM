@@ -1,6 +1,9 @@
-from typing import Sequence, Dict, Any, List, Union, Optional
+from typing import Sequence, Dict, Any, List, Union, Optional, Generator, TYPE_CHECKING
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from stem.mesh import Element
 
 
 class Utils:
@@ -13,13 +16,13 @@ class Utils:
                                        available_combinations: Dict[int, List[Any]],
                                        class_name: str):
         """
-        Check if the combination of number of dimensions and number of nodes per element is supported.
+        Check if the combination of number of global dimensions and number of nodes per element is supported.
 
         Args:
             - n_dim (int): number of dimensions
-            - n_nodes_element (int): number of nodes per element
+            - n_nodes_element (int): number of nodes per element or condition-element
             - available_combinations (Dict[int, List[int]]): dictionary containing the supported combinations of number\
-               of dimensions and number of nodes per element
+               of dimensions and number of nodes per element or condition-element
             - class_name (str): name of the class to be checked
 
         Raises:
@@ -40,7 +43,7 @@ class Utils:
             )
 
     @staticmethod
-    def are_2d_coordinates_clockwise(coordinates: Sequence[Sequence[float]]):
+    def are_2d_coordinates_clockwise(coordinates: Sequence[Sequence[float]]) -> bool:
         """
         Checks if the 2D coordinates are given in clockwise order. If the signed area is positive, the coordinates
         are given in clockwise order.
@@ -63,7 +66,7 @@ class Utils:
         return signed_area > 0.0
 
     @staticmethod
-    def check_dimensions(points:Sequence[Sequence[float]]):
+    def check_dimensions(points:Sequence[Sequence[float]]) -> None:
         """
 
         Check if points have the same dimensions (2D or 3D).
@@ -74,6 +77,9 @@ class Utils:
         Raises:
             - ValueError: when the points have different dimensions.
             - ValueError: when the dimension is not either 2 or 3D.
+
+        Returns:
+            - None
         """
 
         lengths = [len(point) for point in points]
@@ -85,7 +91,7 @@ class Utils:
 
     @staticmethod
     def is_collinear(point: Sequence[float], start_point: Sequence[float], end_point: Sequence[float],
-                     a_tol: float = 1e-06):
+                     a_tol: float = 1e-06) -> bool:
         """
         Check if point is aligned with the other two on a line. Points must have the same dimension (2D or 3D)
 
@@ -110,11 +116,13 @@ class Utils:
 
         # cross product of the two vector
         cross_product = np.cross(vec_1, vec_2)
+
         # It should be smaller than tolerance for points to be aligned
-        return np.sum(np.abs(cross_product)) < a_tol
+        is_collinear: bool = np.sum(np.abs(cross_product)) < a_tol
+        return is_collinear
 
     @staticmethod
-    def is_point_between_points(point:Sequence[float], start_point:Sequence[float], end_point:Sequence[float]):
+    def is_point_between_points(point:Sequence[float], start_point:Sequence[float], end_point:Sequence[float]) -> bool:
         """
         Check if point is between the other two. Points must have the same dimension (2D or 3D).
 
@@ -141,10 +149,11 @@ class Utils:
         scalar_projection = sum(v1 * v2 for v1, v2 in zip(vec_1, vec_2)) / sum(v ** 2 for v in vec_2)
 
         # Check if the scalar projection is between 0 and 1 (inclusive)
-        return 0 <= scalar_projection <= 1
+        is_between: bool = 0 <= scalar_projection <= 1
+        return is_between
 
     @staticmethod
-    def is_non_str_sequence(seq:object):
+    def is_non_str_sequence(seq: object) -> bool:
         """
         check whether object is a sequence but also not a string
 
@@ -154,35 +163,34 @@ class Utils:
         return isinstance(seq, Sequence) and not isinstance(seq, str)
 
     @staticmethod
-    def chain_sequence(sequences: Sequence[Sequence[Any]]):
+    def chain_sequence(sequences: Sequence[Sequence[Any]]) -> Generator[Sequence[Any], Sequence[Any], None]:
         """
-        merges dictionary b into dictionary a. if existing keywords conflict it assumes
-        they are concatenated in a list
+        Chains sequences together
 
         Args:
            - sequences (Sequence[Sequence[Any]]): sequences to chain
 
         Returns:
-            - Iterator[Any]: chained sequences
+            - Generator[Sequence[Any], Sequence[Any], None]: generator for chaining sequences
 
         """
         for seq in sequences:
             yield from seq
 
     @staticmethod
-    def merge(a: Dict[Any, Any], b: Dict[Any, Any], path: Union[List[str], Any] = None):
+    def merge(a: Dict[Any, Any], b: Dict[Any, Any], path: Union[List[str], Any] = None) -> Dict[Any, Any]:
         """
         merges dictionary b into dictionary a. if existing keywords conflict it assumes
         they are concatenated in a list
 
         Args:
-            - a (Dict[str,Any]): first dictionary
-            - b (Dict[str,Any]): second dictionary
+            - a (Dict[Any,Any]): first dictionary
+            - b (Dict[Any,Any]): second dictionary
             - path (List[str]): object to help navigate the deeper layers of the dictionary. \
-                Always place it as None
+                Initially this has to be None
 
         Returns:
-            - a (Dict[str,Any]): updated dictionary with the additional dictionary `b`
+            - a (Dict[Any,Any]): updated dictionary with the additional dictionary `b`
         """
         if path is None:
             path = []
@@ -194,7 +202,7 @@ class Utils:
                     pass  # same leaf value
                 elif any([not Utils.is_non_str_sequence(val) for val in (a[key], b[key])]):
                     # if none of them is a sequence and are found at the same key, then something went wrong.
-                    # this should not be merge silently.
+                    # this should not be merged silently.
                     raise ValueError(f"Conflict of merging keys at {'->'.join(path + [str(key)])}. Two non sequence "
                                      f"values have been found.")
                 else:
@@ -204,14 +212,187 @@ class Utils:
         return a
 
     @staticmethod
-    def get_unique_objects(input_sequence: Sequence[object]):
+    def get_unique_objects(input_sequence: Sequence[Any]) -> List[Any]:
         """
         Get the unique objects, i.e., the objects that share the same memory location.
 
         Args:
-            - input_sequence (Sequence[object]): full list of possible duplicate objects
+            - input_sequence (Sequence[Any]): full list of possible duplicate objects
 
         Returns:
-            - List[object]: list of unique objects
+            - List[Any]: list of unique objects
         """
         return list({id(obj): obj for obj in input_sequence}.values())
+
+    @staticmethod
+    def has_matching_combination(target_list: List[Any], test_list: List[Any]):
+        """
+        Check if test_list is a subset of target_list in the same order.
+        Args:
+            - target_list (List[Any]): list to be checked for a sequence match.
+            - test_list (List[Any]): list containing the object sequence to check.
+
+        Returns:
+
+        """
+        len_target_list = len(target_list)
+        len_test_list = len(test_list)
+
+        if len_target_list < len_test_list:
+            raise ValueError("first list should be larger or equal to check for a match")
+        elif len_target_list == len_test_list:
+            return target_list == test_list
+        else:
+            for ix in range(len_target_list - len_test_list + 1):
+                if target_list[ix:ix + len_test_list] == test_list:
+                    return True
+        return False
+
+    @staticmethod
+    def get_element_info(gmsh_element_type: str) -> Dict[str, Any]:
+        """
+        Returns the element info for a certain gmsh element type. The element info contains the number of dimensions,
+        the order, the number of vertices and the reversed order of the connectivities.
+
+        Args:
+            - gmsh_element_type (str): gmsh element type
+
+        Returns:
+            - Dict[str, Any]: element info
+        """
+
+        element_mapping_dict = {"POINT_1N": {"ndim": 0,
+                                             "order": 1,
+                                             "n_vertices": 1,
+                                             "reversed_order": [0]},
+                                "LINE_2N": {"ndim": 1,
+                                            "order": 1,
+                                            "n_vertices": 2,
+                                            "reversed_order": [1, 0]},
+                                "LINE_3N": {"ndim": 1,
+                                            "order": 2,
+                                            "n_vertices": 2,
+                                            "reversed_order": [1, 0, 2]},
+                                "TRIANGLE_3N": {"ndim": 2,
+                                                "order": 1,
+                                                "n_vertices": 3,
+                                                "reversed_order": [2, 1, 0]},
+                                "TRIANGLE_6N": {"ndim": 2,
+                                                "order": 2,
+                                                "n_vertices": 3,
+                                                "reversed_order": [2, 1, 0, 5, 4, 3]},
+                                "QUADRANGLE_4N": {"ndim": 2,
+                                                  "order": 1,
+                                                  "n_vertices": 4,
+                                                  "reversed_order": [1, 0, 3, 2]},
+                                "QUADRANGLE_8N": {"ndim": 2,
+                                                  "order": 2,
+                                                  "n_vertices": 4,
+                                                  "reversed_order": [1, 0, 3, 2, 4, 7, 6, 5]},
+                                "TETRAHEDRON_4N": {"ndim": 3,
+                                                   "order": 1,
+                                                   "n_vertices": 4,
+                                                   "reversed_order": [1, 0, 2, 3]},
+                                "TETRAHEDRON_10N": {"ndim": 3,
+                                                    "order": 2,
+                                                    "n_vertices": 4,
+                                                    "reversed_order": [1, 0, 2, 3, 4, 6, 5, 9, 8, 7]},
+                                "HEXAHEDRON_8N": {"ndim": 3,
+                                                  "order": 1,
+                                                  "n_vertices": 8,
+                                                  "reversed_order": [1, 0, 3, 2, 5, 4, 7, 6]},
+                                "HEXAHEDRON_20N": {"ndim": 3,
+                                                   "order": 2,
+                                                   "n_vertices": 8,
+                                                   "reversed_order": [1, 0, 3, 2,
+                                                                      5, 4, 7, 6,
+                                                                      8, 9, 10, 11,
+                                                                      12, 13, 14, 15,
+                                                                      16, 17, 18, 19]},
+                                }
+
+        # find element order
+        if gmsh_element_type not in element_mapping_dict.keys():
+            raise NotImplementedError(f"No reversed order defined for the element type: {gmsh_element_type}")
+
+        return element_mapping_dict[gmsh_element_type]
+
+    @staticmethod
+    def flip_node_order(element_info: Dict[str, Any], elements: Sequence['Element']):
+        """
+        Flips the node order of the elements
+
+        Args:
+            - element_info (Dict[str, Any]): element info
+            - elements (List[:class:`stem.mesh.Element`]): list of elements
+
+        """
+
+        # retrieve element ids and connectivities
+        ids = [element.id for element in elements]
+        element_connectivies = np.array([element.node_ids for element in elements])
+
+        # flip the elements connectivities
+        element_connectivies = element_connectivies[:, element_info["reversed_order"]]
+
+        # update the elements connectivities
+        for i, (id, element_connectivity) in enumerate(zip(ids, element_connectivies)):
+            elements[i].node_ids = list(element_connectivity)
+
+    @staticmethod
+    def is_volume_edge_defined_outwards(edge_element: 'Element', body_element: 'Element',
+                                        nodes: Dict[int, Sequence[float]]) -> Optional[bool]:
+        """
+        Checks if the normal vector of the edge element is pointing outwards of the body element.
+
+        Args:
+            - edge_element (:class:`stem.mesh.Element`): 2D edge surface element
+            - body_element (:class:`stem.mesh.Element`): 3D body volume element
+            - nodes (Dict[int, Sequence[float]]): dictionary of node ids and coordinates
+
+        Raises:
+            - ValueError: when the edge element is not a 2D element.
+            - ValueError: when the body element is not a 3D element.
+            - ValueError: when not all nodes of the edge element are part of the body element.
+
+        Returns:
+            - Optional[bool]: True if the normal vector of the edge element is pointing outwards of the body element,
+                False otherwise.
+
+        """
+
+        # element info such as order, number of edges, element types etc.
+        edge_el_info = Utils.get_element_info(edge_element.element_type)
+        body_el_info = Utils.get_element_info(body_element.element_type)
+
+        if edge_el_info["ndim"] != 2:
+            raise ValueError("Edge element should be a 2D element.")
+
+        if body_el_info["ndim"] != 3:
+            raise ValueError("Body element should be a 3D element.")
+
+        if not set(edge_element.node_ids).issubset(set(body_element.node_ids)):
+            raise ValueError("All nodes of the edge element should be part of the body element.")
+
+        # calculate normal vector of edge element
+        coordinates_edge = np.array([nodes[node_id] for node_id in edge_element.node_ids[:edge_el_info["n_vertices"]]])
+
+        normal_vector_edge = np.cross(coordinates_edge[1, :] - coordinates_edge[0, :],
+                                      coordinates_edge[2, :] - coordinates_edge[0, :])
+
+        # calculate centroid of neighbouring body element
+        body_vertices_ids = body_element.node_ids[:body_el_info["n_vertices"]]
+        coordinates_body_element = np.array([nodes[node_id] for node_id in body_vertices_ids])
+        centroid_volume = np.mean(coordinates_body_element, axis=0)
+
+        # calculate centroid of edge element
+        centroid_edge = np.mean(coordinates_edge, axis=0)
+
+        # calculate vector inwards of body element
+        body_inward_vector = centroid_volume - centroid_edge
+
+        # check if normal vector of edge element is pointing outwards of body element
+        is_outwards: bool = np.dot(normal_vector_edge, body_inward_vector) < 0
+
+        return is_outwards
+

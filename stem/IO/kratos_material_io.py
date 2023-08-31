@@ -1,4 +1,3 @@
-import json
 from typing import Dict, Union, Any, List
 from copy import deepcopy
 
@@ -125,7 +124,7 @@ class KratosMaterialIO:
             material_dict["constitutive_law"]["name"] = "GeoLinearElasticPlaneStrain2DLaw"
 
         elif self.ndim == 3:
-            material_dict["constitutive_law"]["name"] = "GeoLinearElastic3DLaw"
+            material_dict["constitutive_law"]["name"] = "LinearElastic3DLaw"
         else:
             raise ValueError("Dimension not supported")
 

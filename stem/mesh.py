@@ -1,6 +1,11 @@
-from typing import Dict, List, Sequence, Any
+import re
+from typing import Dict, List, Tuple, Sequence, Union, Any, Optional
 from enum import Enum
 
+import numpy as np
+import numpy.typing as npt
+
+from stem.utils import Utils
 
 class ElementShape(Enum):
     """
@@ -8,6 +13,7 @@ class ElementShape(Enum):
     quadrilateral elements and hexahedral elements.
 
     """
+
     TRIANGLE = "triangle"
     QUADRILATERAL = "quadrilateral"
 
@@ -23,8 +29,9 @@ class MeshSettings:
         - __element_order (int): The element order. 1 for linear elements, 2 for quadratic elements. (default 1)
     """
 
-    def __init__(self, element_size: float = -1, element_order: int = 1,
-                 element_shape: ElementShape = ElementShape.TRIANGLE):
+    def __init__(
+        self, element_size: float = -1, element_order: int = 1, element_shape: ElementShape = ElementShape.TRIANGLE
+    ):
         """
         Initialize the mesh settings.
 
@@ -43,7 +50,7 @@ class MeshSettings:
         self.__element_order: int = element_order
 
     @property
-    def element_order(self):
+    def element_order(self) -> int:
         """
         Get the element order.
 
@@ -79,7 +86,6 @@ class Node:
         - coordinates (Sequence[float]): node coordinates
 
     """
-
     def __init__(self, id: int, coordinates: Sequence[float]):
         """
         Initialize the node.
@@ -103,18 +109,18 @@ class Element:
 
     """
 
-    def __init__(self, id: int, element_type: str, node_ids: Sequence[int]):
+    def __init__(self, id: int, element_type: str, node_ids: List[int]):
         """
         Initialize the element.
 
         Args:
             id (int): Element id
             element_type (str): Gmsh-element type
-            node_ids (Sequence[int]): Node connectivities
+            node_ids (List[int]): Node connectivities
         """
         self.id: int = id
         self.element_type: str = element_type
-        self.node_ids: Sequence[int] = node_ids
+        self.node_ids: List[int] = node_ids
 
 
 class Mesh:
@@ -126,10 +132,11 @@ class Mesh:
 
     Attributes:
         - ndim (int): number of dimensions of the mesh
-        - nodes (List[Node]): node id followed by node coordinates in a list
-        - elements (List[Element]): element id followed by connectivities in a list
+        - nodes (Dict[int, Node]): dictionary of node ids followed by node coordinates in an array
+        - elements (Dict[int, Element]): dictionary of element ids followed by connectivities in an array
 
     """
+
     def __init__(self, ndim: int):
         """
         Initialize the mesh.
@@ -139,10 +146,10 @@ class Mesh:
         """
 
         self.ndim: int = ndim
-        self.nodes: List[Node] = []
-        self.elements: List[Element] = []
+        self.nodes: Dict[int, Node] = {}
+        self.elements: Dict[int, Element] = {}
 
-    def __getattribute__(self, item: str):
+    def __getattribute__(self, item: str) -> Any:
         """
         Overrides the getattribute method of the object class.
 
@@ -186,14 +193,31 @@ class Mesh:
         group_node_ids = group_data["node_ids"]
         group_element_type = group_data["element_type"]
 
-        element_type_data = mesh_data["elements"][group_element_type]
-
-        # create element per element id
-        elements = [Element(element_id, group_element_type, element_type_data[element_id])
-                    for element_id in group_element_ids]
+        gmsh_elements = mesh_data["elements"][group_element_type]
 
         # create node per node id
-        nodes = [Node(node_id, mesh_data["nodes"][node_id]) for node_id in group_node_ids]
+        nodes: Dict[int, Node] = {node_id: Node(node_id, mesh_data["nodes"][node_id]) for node_id in group_node_ids}
+
+        # create element per element id
+        elements: Dict[int, Element] = {element_id: Element(element_id, group_element_type,
+                                                            mesh_data["elements"][group_element_type][element_id])
+                                        for element_id in group_data["element_ids"]}
+
+        # In 2D check if vertices of element are clockwise and flip element if they are
+        if len(group_element_ids) > 0 and group_data["ndim"] == 2:
+            element_info = Utils.get_element_info(group_element_type)
+            node_ids_element = gmsh_elements[group_element_ids[0]]
+            # node_ids_element = mesh_data["elements"][group_element_ids[0]]["element_nodes"][group_element_ids[0]]
+            coordinates = [nodes[ii].coordinates for ii in node_ids_element]
+
+            # check if vertices are clockwise and flip if they are
+            if Utils.are_2d_coordinates_clockwise(coordinates[:element_info["n_vertices"]]):
+
+                Utils.flip_node_order(element_info, list(elements.values()))
+
+                # also flip the node order in the mesh data
+                for element_id, element in elements.items():
+                    mesh_data["elements"][group_element_type][element_id] = element.node_ids
 
         # add nodes and elements to mesh object
         mesh = cls(group_data["ndim"])

@@ -11,9 +11,11 @@ class TestKratosOutputsIO:
         Test the creation of the output process dictionary for the
         ProjectParameters.json file
         """
+
         # Nodal results
         nodal_results1 = [NodalOutput.DISPLACEMENT, NodalOutput.TOTAL_DISPLACEMENT]
         nodal_results2 = [NodalOutput.WATER_PRESSURE, NodalOutput.VOLUME_ACCELERATION]
+
         # Gauss point results
         gauss_point_results1 = [
             GaussPointOutput.VON_MISES_STRESS,
@@ -37,6 +39,13 @@ class TestKratosOutputsIO:
 
         gid_output_parameters2 = GiDOutputParameters(
             file_format="ascii",
+            output_interval=100,
+            nodal_results=nodal_results2,
+            gauss_point_results=gauss_point_results2,
+        )
+
+        gid_output_parameters3 = GiDOutputParameters(
+            file_format="hdf5",
             output_interval=100,
             nodal_results=nodal_results2,
             gauss_point_results=gauss_point_results2,
@@ -82,6 +91,12 @@ class TestKratosOutputsIO:
             output_name=r"test_gid2",
             output_parameters=gid_output_parameters2,
         )
+        gid_output_process3 = Output(
+            part_name="test_gid_output",
+            output_dir=r"dir_test",
+            output_name=r"test_gid3",
+            output_parameters=gid_output_parameters3,
+        )
         vtk_output_process1 = Output(
             part_name="test_vtk_output",
             output_parameters=vtk_output_parameters1,
@@ -111,6 +126,7 @@ class TestKratosOutputsIO:
             gid_output_process2,
             vtk_output_process2,
             json_output_process2,
+            gid_output_process3
         ]
 
         # write dictionary for the output(s)
