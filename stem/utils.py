@@ -340,10 +340,10 @@ class Utils:
             elements[i].node_ids = list(element_connectivity)
 
     @staticmethod
-    def is_volume_edge_defined_inwards(edge_element: 'Element', body_element: 'Element',
-                                       nodes: Dict[int, Sequence[float]]) -> bool:
+    def is_volume_edge_defined_outwards(edge_element: 'Element', body_element: 'Element',
+                                        nodes: Dict[int, Sequence[float]]) -> bool:
         """
-        Checks if the normal vector of the edge element is pointing inwards of the body element.
+        Checks if the normal vector of the edge element is pointing outwards of the body element.
 
         Args:
             - edge_element (:class:`stem.mesh.Element`): 2D edge surface element
@@ -356,7 +356,7 @@ class Utils:
             - ValueError: when not all nodes of the edge element are part of the body element.
 
         Returns:
-            - bool: True if the normal vector of the edge element is pointing inwards of the body element, False
+            - bool: True if the normal vector of the edge element is pointing outwards of the body element, False
                 otherwise.
 
         """
@@ -391,6 +391,6 @@ class Utils:
         # calculate vector inwards of body element
         body_inward_vector = centroid_volume - centroid_edge
 
-        # check if normal vector of edge element is pointing inwards of body element
+        # check if normal vector of edge element is pointing outwards of body element
         return np.dot(normal_vector_edge, body_inward_vector) < 0
 
