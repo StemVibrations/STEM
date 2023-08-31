@@ -33,7 +33,7 @@ model = Model(ndim)
 # Specify material model
 # Linear elastic drained soil with a Density of 2700, a Young's modulus of 50e6,
 # a Poisson ratio of 0.3 & a Porosity of 0.3 is specified.
-rho1 = 2650
+rho1 = 2.65
 por1 = 0.3
 E1 = 10.0e4
 v1 = 0.2
@@ -49,7 +49,7 @@ layer1_coordinates = [(0, 0, 0), (1, 0, 0), (1, 10, 0), (0, 10, 0)]
 model.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil")
 
 # Boundary conditions and Loads
-load_coordinates = [(0, 10, 0), (1, 10, 0)]
+load_coordinates = [(0.0, 10.0, 0), (1.0, 10.0, 0)]
 
 # Add line load
 line_load = LineLoad(active=[False, True, False], value=[0, -10, 0])
@@ -71,7 +71,7 @@ model.synchronise_geometry()
 
 # Show geometry and geometry ids
 model.show_geometry(show_line_ids=True)
-input()
+# input()
 
 # Set mesh size and generate mesh
 # --------------------------------
@@ -90,7 +90,7 @@ time_integration = TimeIntegration(start_time=0.0, end_time=0.3, delta_time=0.01
                                    increase_factor=1.0, max_delta_time_factor=1000)
 convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
                                                         displacement_absolute_tolerance=1.0e-9)
-strategy_type = NewtonRaphsonStrategy(min_iterations=6, max_iterations=15, number_cycles=100)
+strategy_type = NewtonRaphsonStrategy(min_iterations=6, max_iterations=30, number_cycles=100)
 scheme_type = NewmarkScheme(newmark_beta=0.25, newmark_gamma=0.5, newmark_theta=0.5)
 linear_solver_settings = Amgcl(tolerance=1.0e-6, max_iteration=1000, scaling=True)
 stress_initialisation_type = StressInitialisationType.NONE
@@ -104,7 +104,7 @@ solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solu
                                  rayleigh_m=0.1)
 
 # Set up problem data
-problem = Problem(problem_name="test_lysmer_boundary_column3d_tetra", number_of_threads=1, settings=solver_settings)
+problem = Problem(problem_name="test_lysmer_boundary_column2d_triangle", number_of_threads=1, settings=solver_settings)
 model.project_parameters = problem
 
 # Define the results to be written to the output file
@@ -113,9 +113,7 @@ model.project_parameters = problem
 nodal_results = [NodalOutput.DISPLACEMENT,
                  NodalOutput.VELOCITY]
 # Gauss point results
-gauss_point_results = [
-    GaussPointOutput.CAUCHY_STRESS_TENSOR
-]
+gauss_point_results = []
 
 # Define the output process
 vtk_output_process = Output(
@@ -142,7 +140,7 @@ output_folder = "inputs_kratos"
 kratos_io.write_project_parameters_json(
     model=model,
     outputs=[vtk_output_process],
-    mesh_file_name="test_lysmer_boundary_column3d_tetra.mdpa",
+    mesh_file_name="test_lysmer_boundary_column2d_triangle.mdpa",
     materials_file_name="MaterialParameters.json",
     output_folder=output_folder
 )
@@ -150,7 +148,7 @@ kratos_io.write_project_parameters_json(
 # Write mesh to test_lysmer_boundary_column3d_tetra.mdpa file
 kratos_io.write_mesh_to_mdpa(
     model=model,
-    mesh_file_name="test_lysmer_boundary_column3d_tetra.mdpa",
+    mesh_file_name="test_lysmer_boundary_column2d_triangle.mdpa",
     output_folder=output_folder
 )
 

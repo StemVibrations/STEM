@@ -38,7 +38,6 @@ por1 = 0.3
 E1 = 10.0e4
 v1 = 0.2
 soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=rho1, POROSITY=por1)
-#TODO NOTE: Linear Elastic 3D in Kratos is "LinearElastic3DLaw" and not "GeoLinearElastic3DLaw", check kratos_material_io.py
 constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=E1, POISSON_RATIO=v1)
 retention_parameters1 = SaturatedBelowPhreaticLevelLaw()
 material1 = SoilMaterial("soil", soil_formulation1, constitutive_law1, retention_parameters1)
