@@ -1,11 +1,8 @@
-import re
-from typing import Dict, List, Tuple, Sequence, Union, Any, Optional
+from typing import Dict, List, Sequence, Any
 from enum import Enum
 
-import numpy as np
-import numpy.typing as npt
-
 from stem.utils import Utils
+
 
 class ElementShape(Enum):
     """
@@ -29,9 +26,8 @@ class MeshSettings:
         - __element_order (int): The element order. 1 for linear elements, 2 for quadratic elements. (default 1)
     """
 
-    def __init__(
-        self, element_size: float = -1, element_order: int = 1, element_shape: ElementShape = ElementShape.TRIANGLE
-    ):
+    def __init__(self, element_size: float = -1, element_order: int = 1,
+                 element_shape: ElementShape = ElementShape.TRIANGLE):
         """
         Initialize the mesh settings.
 
@@ -91,8 +87,8 @@ class Node:
         Initialize the node.
 
         Args:
-            id (int): Node id
-            coordinates (Sequence[float]): Node coordinates
+            - id (int): Node id
+            - coordinates (Sequence[float]): Node coordinates
         """
         self.id: int = id
         self.coordinates: Sequence[float] = coordinates
@@ -114,9 +110,9 @@ class Element:
         Initialize the element.
 
         Args:
-            id (int): Element id
-            element_type (str): Gmsh-element type
-            node_ids (List[int]): Node connectivities
+            - id (int): Element id
+            - element_type (str): Gmsh-element type
+            - node_ids (List[int]): Node connectivities
         """
         self.id: int = id
         self.element_type: str = element_type
@@ -132,8 +128,8 @@ class Mesh:
 
     Attributes:
         - ndim (int): number of dimensions of the mesh
-        - nodes (Dict[int, Node]): dictionary of node ids followed by node coordinates in an array
-        - elements (Dict[int, Element]): dictionary of element ids followed by connectivities in an array
+        - nodes (Dict[int, :class:`Node`]): dictionary of node ids followed by the node object
+        - elements (Dict[int, :class:`Element`]): dictionary of element ids followed by the element object
 
     """
 
@@ -142,7 +138,7 @@ class Mesh:
         Initialize the mesh.
 
         Args:
-            ndim (int): number of dimensions of the mesh
+            - ndim (int): number of dimensions of the mesh
         """
 
         self.ndim: int = ndim
@@ -206,13 +202,15 @@ class Mesh:
         # In 2D check if vertices of element are clockwise and flip element if they are
         if len(group_element_ids) > 0 and group_data["ndim"] == 2:
             element_info = Utils.get_element_info(group_element_type)
+
+            # only check the first element in the group. The rest of the elements have the same node order
             node_ids_element = gmsh_elements[group_element_ids[0]]
-            # node_ids_element = mesh_data["elements"][group_element_ids[0]]["element_nodes"][group_element_ids[0]]
             coordinates = [nodes[ii].coordinates for ii in node_ids_element]
 
             # check if vertices are clockwise and flip if they are
             if Utils.are_2d_coordinates_clockwise(coordinates[:element_info["n_vertices"]]):
 
+                # flip the node order in of each element in the group
                 Utils.flip_node_order(element_info, list(elements.values()))
 
                 # also flip the node order in the mesh data

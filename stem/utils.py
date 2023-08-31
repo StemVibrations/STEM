@@ -225,27 +225,66 @@ class Utils:
         return list({id(obj): obj for obj in input_sequence}.values())
 
     @staticmethod
-    def has_matching_combination(target_list: List[Any], test_list: List[Any]):
+    def is_line_edge_in_body(edge_element: 'Element', body_element: 'Element') -> bool:
         """
-        Check if test_list is a subset of target_list in the same order.
+        Check if the edge element is a subset of the body element in the same order.
+
         Args:
-            - target_list (List[Any]): list to be checked for a sequence match.
-            - test_list (List[Any]): list containing the object sequence to check.
+            - edge_element (:class:`stem.mesh.Element`): 1D edge element
+            - body_element (:class:`stem.mesh.Element`): 1D or 2D body element
+
+        Raises:
+            - ValueError: when the edge element is not a 1D element.
+            - ValueError: when the body element is not a 1D or 2D element.
+            - ValueError: when the element order of the edge element is different from the body element.
+            - ValueError: when not all nodes of the edge element are part of the body element.
 
         Returns:
+            - bool: True if the edge element is a subset of the body element in the same order, False otherwise.
 
         """
-        len_target_list = len(target_list)
-        len_test_list = len(test_list)
 
-        if len_target_list < len_test_list:
-            raise ValueError("first list should be larger or equal to check for a match")
-        elif len_target_list == len_test_list:
-            return target_list == test_list
-        else:
-            for ix in range(len_target_list - len_test_list + 1):
-                if target_list[ix:ix + len_test_list] == test_list:
+        # element info such as order, number of edges, element types etc.
+        edge_el_info = Utils.get_element_info(edge_element.element_type)
+        body_el_info = Utils.get_element_info(body_element.element_type)
+
+        if edge_el_info["ndim"] != 1:
+            raise ValueError("Edge element should be a 1D element.")
+        if body_el_info["ndim"] != 1 and body_el_info["ndim"] != 2:
+            raise ValueError("Body element should be a 1D or 2D element.")
+
+        # if elements have different integration order, raise an error
+        if edge_el_info["order"] != body_el_info["order"]:
+            raise ValueError(
+                f"Mismatch between edge element order ({edge_el_info['order']}) and body "
+                f"element order ({body_el_info['order']})."
+            )
+
+        if not set(edge_element.node_ids).issubset(set(body_element.node_ids)):
+            raise ValueError("All nodes of the edge element should be part of the body element.")
+
+
+        # only vertices have to be checked, the rest of the nodes follows
+        edge_vertices_ids = edge_element.node_ids[:edge_el_info["n_vertices"]]
+        body_vertices_ids = body_element.node_ids[:body_el_info["n_vertices"]]
+
+        # add first vertex to the end of the list, such that all edges can be checked
+        body_vertices_ids.append(body_vertices_ids[0])
+
+        n_edge_vertices = len(edge_vertices_ids)
+        n_body_vertices = len(body_vertices_ids)
+
+        # check if order of nodes in the edge element follows the body element.
+        if n_body_vertices == n_edge_vertices:
+            return body_vertices_ids == edge_vertices_ids
+        elif n_body_vertices > n_edge_vertices:
+            for ix in range(n_body_vertices - n_edge_vertices + 1):
+
+                # check if edge vertices are part of body vertices in the same ordering
+                if body_vertices_ids[ix:ix + n_edge_vertices] == edge_vertices_ids:
                     return True
+
+        # if no match is found, return False
         return False
 
     @staticmethod

@@ -347,18 +347,19 @@ class Model:
                 matched_elements = self.__find_matching_body_elements_for_process_model_part(process_model_part)
 
                 # check the ordering of the nodes of the conditions. If it does not match flip the order.
-                self.__check_order_process_model_part(matched_elements, process_model_part)
+                self.__check_ordering_process_model_part(matched_elements, process_model_part)
 
     @staticmethod
     def __get_model_part_element_connectivities(model_part: ModelPart) -> npty.NDArray[np.int64]:
         """
         Extract the node ids of each of the elements in a model part.
+
         Args:
             - model_part (:class:`stem.model_part.ModelPart`): model part from which element nodes needs to be
                 extracted.
 
         Returns:
-            - npty.NDArray[np.int64]: array containing the nodes of the elements in the model_part
+            - npty.NDArray[np.int64]: array containing the node ids of the elements in the model_part
         """
         if model_part.mesh is not None:
             return np.array([el.node_ids for el in model_part.mesh.elements.values()])
@@ -371,7 +372,7 @@ class Model:
         For a process model part, tries finds the matching body elements on which the condition elements are applied.
 
         Args:
-            - process_model_part (:class:`stem.model_part.ModelPart`): model part from which element nodes needs to be
+            - process_model_part (:class:`stem.model_part.ModelPart`): model part from which element nodes needs to be \
                 extracted.
         Raises:
             - ValueError: if mesh is not initialised yet.
@@ -394,10 +395,10 @@ class Model:
         matched_elements: Dict[Element, Element] = {}
 
         # loop over the body model parts (bmp) to match the elements of the process model part
-        for bmp in self.body_model_parts:
+        for body_model_part in self.body_model_parts:
 
             # validation step for body model part
-            if bmp.mesh is None:
+            if body_model_part.mesh is None:
                 raise ValueError("Mesh not yet initialised.")
 
             # if there is nothing to match, break the loop
@@ -406,34 +407,38 @@ class Model:
                 break
 
             # get the node ids for the elements in the current body model part and their ids
-            bmp_connectivities = self.__get_model_part_element_connectivities(bmp)
-            bmp_element_ids = np.array(list(bmp.mesh.elements.keys()))
+            bmp_connectivities = self.__get_model_part_element_connectivities(body_model_part)
+            bmp_element_ids = np.array(list(body_model_part.mesh.elements.keys()))
 
-            # initialised matched ids and indices for the element of the pmp
-            matched_id_process_to_body = {}
+            # initialised matched ids and indices for the element of the process model part
+            matched_element_id_process_to_body = {}
             matched_indices_process_element = []
             # for each process element, check if there is a match with the current body part elements
-            for ix, (element_id_j, nodes_element_j) in enumerate(zip(pmp_element_ids, unmatched_connectivities_pmp)):
-                # find the indexes of the element in the body model parts that contains the node ids of the current
-                # process model part
-                found_index = np.where(
-                    np.sum(np.isin(bmp_connectivities, nodes_element_j), axis=1) == len(nodes_element_j)
-                )
-                # from the first match, retriv the element id of the body model part and the index of the process
-                # model part, to remove it later from the unmatched_elements
-                if len(found_index[0]) > 0:
-                    matched_id_process_to_body[element_id_j] = bmp_element_ids[found_index[0].tolist()[0]]
+            for ix, (process_element_id, process_element_connectivities) in (
+                    enumerate(zip(pmp_element_ids, unmatched_connectivities_pmp))):
+                # find the indices of the element in the body model parts that contains the node ids of the current
+                # process model part. An element is considered a match if all the nodes of the process element are also
+                # in the body element
+                found_indices = np.where(np.sum(np.isin(bmp_connectivities, process_element_connectivities), axis=1) ==
+                                         len(process_element_connectivities))[0]
+
+                # from the first match, retrieve the element id of the body model part and the element id of the process
+                # model part
+                if len(found_indices) > 0:
+                    matched_element_id_process_to_body[process_element_id] = bmp_element_ids[found_indices.tolist()[0]]
                     matched_indices_process_element.append(ix)
 
             # if there is match, couple the element objects together in the matched_elements dictionary
-            # then remove the matched process model part elements from node array (unmatched_elements_pmp)
-            # and indices (pmp_element_ids)
-            if len(matched_id_process_to_body) > 0:
+            # then remove the matched process model part elements from the unmatched_connectivities_pmp array
+            # and the pmp_element_ids array in order to avoid matching the same elements twice
+            if len(matched_element_id_process_to_body) > 0:
 
-                for id_pel, id_bel in matched_id_process_to_body.items():
-                    matched_elements[process_model_part.mesh.elements[id_pel]] = bmp.mesh.elements[id_bel]
+                for process_element_id, body_element_id in matched_element_id_process_to_body.items():
+                    matched_elements[process_model_part.mesh.elements[process_element_id]] = (
+                        body_model_part.mesh.elements)[body_element_id]
 
-                # matched indices
+                # remove the matched elements from the unmatched_elements_pmp and pmp_element_ids arrays, in order
+                # to avoid matching the same elements twice
                 process_elements_idxs = np.array(list(matched_indices_process_element))
                 unmatched_connectivities_pmp = np.delete(unmatched_connectivities_pmp, process_elements_idxs, axis=0)
                 pmp_element_ids = np.delete(pmp_element_ids, process_elements_idxs)
@@ -447,14 +452,25 @@ class Model:
 
         return matched_elements
 
-    def __check_order_process_model_part(self, matched_elements: Dict[Element, Element], pmp):
+    def __check_ordering_process_model_part(self, matched_elements: Dict[Element, Element],
+                                            process_model_part: ModelPart):
         """
-        Check if the order of the elements the keys of matched_elements are oriented in the same order of the nodes in
-        the values of matched_elements. If not, the order of the nodes is flipped.
+        Check if the node ordering of the process element matches the node ordering of the neighbouring body element.
+        If not, flip the node ordering of the process element.
+
         Args:
-            - matched_elements (Dict[:class:`stem.mesh.Element`, :class:`stem.mesh.Element`]): Dictionary containing
+            - matched_elements (Dict[:class:`stem.mesh.Element`, :class:`stem.mesh.Element`]): Dictionary containing \
                 the matched condition and body element parts.
+            - process_model_part (:class:`stem.model_part.ModelPart`): model part from which element nodes needs to be \
+                extracted.
+
+        Raises:
+            - ValueError: if mesh is not initialised yet.
+            - ValueError: if the integration order of the process element is different from the body element.
         """
+
+        if process_model_part.mesh is None:
+            raise ValueError("Mesh not yet initialised.")
 
         # loop over the matched elements
         flip_node_order = np.zeros(len(matched_elements), dtype=bool)
@@ -465,30 +481,11 @@ class Model:
             process_el_info = Utils.get_element_info(process_element.element_type)
             body_el_info = Utils.get_element_info(body_element.element_type)
 
-            # if elements have different order, it's an error...
-            if body_el_info["order"] != process_el_info["order"]:
-                raise ValueError(
-                    f"Mismatch in element order between process element ({process_el_info['order']}) and body "
-                    f"element order ({body_el_info['order']})."
-                )
-            # get the number of vertices of the body element
-            n_vert_body_element = body_el_info['n_vertices']
-
-            # get the number of vertices of the process element.
-            n_vert_process_element = process_el_info['n_vertices']
-
             if body_el_info["ndim"] == 1 or body_el_info["ndim"] == 2:
-
-                # pick only the corner nodes, the mid-point nodes related to the higher order do
-                # not matter for quadratic elements.
-                source_list = process_element.node_ids[:n_vert_process_element]
-
-                target_list = body_element.node_ids[:n_vert_body_element]
-                target_list.extend(target_list[:-1])
 
                 # check if order of nodes in process element follows the body elements.
                 # if not, flip the order of the process element
-                if not Utils.has_matching_combination(target_list, source_list):
+                if not Utils.is_line_edge_in_body(process_element, body_element):
                     flip_node_order[i] = True
 
             elif body_el_info["ndim"] == 3:
@@ -505,7 +502,7 @@ class Model:
         # flip condition elements if required
         if any(flip_node_order):
             # elements to be flipped
-            elements = np.array(list(pmp.mesh.elements.values()))[flip_node_order]
+            elements = np.array(list(process_model_part.mesh.elements.values()))[flip_node_order]
 
             # flip elements, it is required that all elements in the array are of the same type
             Utils.flip_node_order(process_el_info, elements)
@@ -539,7 +536,7 @@ class Model:
         Add a gravity model part to the complete model.
 
         Args:
-            - gravity_load (GravityLoad): The gravity load object.
+            - gravity_load (:class:`stem.load.GravityLoad`): The gravity load object.
             - ndim (int): The number of dimensions of the on which the gravity load should be applied.
             - geometry_ids (Sequence[int]): The geometry on which the gravity load should be applied.
 
