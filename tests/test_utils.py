@@ -144,24 +144,43 @@ class TestUtilsStem:
 
         npt.assert_equal(expected_sequence, actual_sequence)
 
-    def test_has_matching_combination(self):
+    def test_is_line_edge_in_body(self):
         """
-        Test matching combination
+        Test is line edge in body
         """
-        sub_list1 = [1, 5]
-        sub_list2 = [5, 1]
-        sub_list3 = [1, 3, 4]
-        sub_list4 = [1, 3, 5]
 
-        list_tst = [1, 3, 4, 5, 1]
-        assert not Utils.has_matching_combination(list_tst, sub_list1)
-        assert Utils.has_matching_combination(list_tst, sub_list2)
-        assert Utils.has_matching_combination(list_tst, sub_list3)
-        assert not Utils.has_matching_combination(list_tst, sub_list4)
+        edge_1 = Element(1, "LINE_2N", [1, 2])
+        edge_2 = Element(2, "LINE_2N", [2, 1])
+        edge_3 = Element(3, "LINE_3N", [1, 2, 5])
+        edge_4 = Element(4, "LINE_3N", [1, 3, 5])
+        edge_5 = Element(5, "LINE_2N", [1, 5])
 
-        # expect it raises an error (test_List is larger than target_List)
-        with pytest.raises(ValueError, match="first list should be larger or equal to check for a match"):
-            Utils.has_matching_combination(sub_list4, list_tst)
+        body_element_1 = Element(6, "QUADRANGLE_4N", [1, 2, 3, 4])
+        body_element_2 = Element(7, "QUADRANGLE_8N", [1, 2, 3, 4, 5, 6, 7, 8])
+        body_element_3 = Element(8, "TETRAHEDRON_4N", [1, 2, 3, 4])
+
+        assert Utils.is_line_edge_in_body(edge_1, body_element_1)
+        assert not Utils.is_line_edge_in_body(edge_2, body_element_1)
+        assert Utils.is_line_edge_in_body(edge_3, body_element_2)
+        assert not Utils.is_line_edge_in_body(edge_4, body_element_2)
+
+        # expected raise as edge element is not a 1D element
+        with pytest.raises(ValueError, match="Edge element should be a 1D element."):
+            Utils.is_line_edge_in_body(body_element_1, edge_1)
+
+        # expected raise as body element is not 1 or 2D
+        with pytest.raises(ValueError, match="Body element should be a 1D or 2D element."):
+            Utils.is_line_edge_in_body(edge_1, body_element_3)
+
+        # expected raise as edge and body element have different order elements
+        with pytest.raises(ValueError,
+                           match=re.escape("Mismatch between edge element order (2) and body element order (1).")):
+            Utils.is_line_edge_in_body(edge_3, body_element_1)
+
+        # expected raise as not all edge nodes are in body element
+        with pytest.raises(ValueError, match="All nodes of the edge element should be part of the body element."):
+            Utils.is_line_edge_in_body(edge_5, body_element_1)
+
 
     def test_merge(self):
         """
