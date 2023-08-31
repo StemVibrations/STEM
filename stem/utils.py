@@ -294,9 +294,9 @@ class Utils:
                                                    "n_vertices": 4,
                                                    "reversed_order": [1, 0, 2, 3]},
                                 "TETRAHEDRON_10N": {"ndim": 3,
-                                                   "order": 2,
-                                                   "n_vertices": 4,
-                                                   "reversed_order": [1, 0, 2, 3, 4, 6, 5, 9, 8, 7]},
+                                                    "order": 2,
+                                                    "n_vertices": 4,
+                                                    "reversed_order": [1, 0, 2, 3, 4, 6, 5, 9, 8, 7]},
                                 "HEXAHEDRON_8N": {"ndim": 3,
                                                   "order": 1,
                                                   "n_vertices": 8,
@@ -340,11 +340,39 @@ class Utils:
             elements[i].node_ids = list(element_connectivity)
 
     @staticmethod
-    def is_volume_edge_defined_inwards(edge_element, body_element, nodes):
+    def is_volume_edge_defined_inwards(edge_element: 'Element', body_element: 'Element',
+                                       nodes: Dict[int, Sequence[float]]) -> bool:
+        """
+        Checks if the normal vector of the edge element is pointing inwards of the body element.
+
+        Args:
+            - edge_element (:class:`stem.mesh.Element`): 2D edge surface element
+            - body_element (:class:`stem.mesh.Element`): 3D body volume element
+            - nodes (Dict[int, Sequence[float]]): dictionary of node ids and coordinates
+
+        Raises:
+            - ValueError: when the edge element is not a 2D element.
+            - ValueError: when the body element is not a 3D element.
+            - ValueError: when not all nodes of the edge element are part of the body element.
+
+        Returns:
+            - bool: True if the normal vector of the edge element is pointing inwards of the body element, False
+                otherwise.
+
+        """
 
         # element info such as order, number of edges, element types etc.
         edge_el_info = Utils.get_element_info(edge_element.element_type)
         body_el_info = Utils.get_element_info(body_element.element_type)
+
+        if edge_el_info["ndim"] != 2:
+            raise ValueError("Edge element should be a 2D element.")
+
+        if body_el_info["ndim"] != 3:
+            raise ValueError("Body element should be a 3D element.")
+
+        if not set(edge_element.node_ids).issubset(set(body_element.node_ids)):
+            raise ValueError("All nodes of the edge element should be part of the body element.")
 
         # calculate normal vector of edge element
         coordinates_edge = np.array([nodes[node_id] for node_id in edge_element.node_ids[:edge_el_info["n_vertices"]]])

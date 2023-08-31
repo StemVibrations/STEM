@@ -162,6 +162,7 @@ class TestUtilsStem:
         # expect it raises an error (test_List is larger than target_List)
         with pytest.raises(ValueError, match="first list should be larger or equal to check for a match"):
             Utils.has_matching_combination(sub_list4, list_tst)
+
     def test_merge(self):
         """
         Test merging of dictionaries
@@ -284,3 +285,52 @@ class TestUtilsStem:
 
         for element, expected_nodes_element in zip(list(mesh.elements.values()), expected_ordering):
             np.testing.assert_equal(element.node_ids, expected_nodes_element)
+
+    def test_is_tetrahedron_4n_edge_defined_inwards(self):
+        """
+        Tests if the 3-node triangle edge of a 4 node tetrahedron is defined inwards. It checks different orientations
+        of the edge element and the body element.
+
+        """
+
+        edge_element_1 = Element(1, "TRIANGLE_3N", [1, 2, 3])
+        edge_element_1_reversed = Element(1, "TRIANGLE_3N", [3, 2, 1])
+        body_element = Element(2, "TETRAHEDRON_4N", [1, 2, 3, 4])
+        body_element_mirrored = Element(2, "TETRAHEDRON_4N", [1, 2, 3, 5])
+
+        nodes = {1: [0, 0, 0], 2: [1.0, 0, 0], 3: [1, 1.0, 0], 4: [0, 0.0, 1.0], 5: [0.0, 0.0, -1.0]}
+
+        # check if edge is defined inwards in both node orders of edge element
+        assert not Utils.is_volume_edge_defined_inwards(edge_element_1, body_element, nodes)
+        assert Utils.is_volume_edge_defined_inwards(edge_element_1_reversed, body_element, nodes)
+
+        # check if edge is defined inwards in both node orders of edge element and a mirrored body element
+        assert Utils.is_volume_edge_defined_inwards(edge_element_1, body_element_mirrored, nodes)
+        assert not Utils.is_volume_edge_defined_inwards(edge_element_1_reversed, body_element_mirrored, nodes)
+
+    def test_is_tetrahedron_10n_edge_defined_inwards(self):
+        """
+        Tests if the 6-node triangle edge of a 10 node tetrahedron is defined inwards. It checks different orientations
+        of the edge element and the body element.
+
+        """
+
+        edge_element_1 = Element(1, "TRIANGLE_6N", [1, 2, 3, 5, 6, 7])
+        edge_element_1_reversed = Element(1, "TRIANGLE_6N", [3, 2, 1, 7, 6, 5])
+
+        body_element = Element(2, "TETRAHEDRON_10N", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+        body_element_mirrored = Element(2, "TETRAHEDRON_10N", [1, 2, 3, 11, 5, 6, 7, 12, 9, 13])
+
+        nodes = {1: [0, 0, 0], 2: [1.0, 0, 0], 3: [0.0, 1.0, 0], 4: [0, 0.0, 1.0],# vertices
+                 5: [0.5, 0.0, 0.0], 6: [0.5, 0.5, 0.0], 7: [0.0, 5.0, 0.0], # x-y plane midpoints
+                 8: [0.0, 0.0, 0.5], 9: [0.0, 0.5, 0.5],  # new x-z plane midpoints
+                 10: [0.5, 0.0, 0.5], # new y-z plane midpoint
+                 11: [0.0, 0.0, -1.0], 12: [0.0, 0.0, -0.5], 13: [0.5, 0.0, -0.5]} # mirrored y-z plane points
+
+        # check if edge is defined inwards in both node orders of edge element
+        assert not Utils.is_volume_edge_defined_inwards(edge_element_1, body_element, nodes)
+        assert Utils.is_volume_edge_defined_inwards(edge_element_1_reversed, body_element, nodes)
+
+        # check if edge is defined inwards in both node orders of edge element and a mirrored body element
+        assert Utils.is_volume_edge_defined_inwards(edge_element_1, body_element_mirrored, nodes)
+        assert not Utils.is_volume_edge_defined_inwards(edge_element_1_reversed, body_element_mirrored, nodes)

@@ -358,7 +358,7 @@ class Model:
                 extracted.
 
         Returns:
-            - Optional[npty.NDArray[np.int64]]: array containing the nodes of the elements in the model_part
+            - npty.NDArray[np.int64]: array containing the nodes of the elements in the model_part
         """
         if model_part.mesh is not None:
             return np.array([el.node_ids for el in model_part.mesh.elements.values()])
