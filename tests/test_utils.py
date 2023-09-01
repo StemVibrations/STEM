@@ -158,11 +158,17 @@ class TestUtilsStem:
         body_element_1 = Element(6, "QUADRANGLE_4N", [1, 2, 3, 4])
         body_element_2 = Element(7, "QUADRANGLE_8N", [1, 2, 3, 4, 5, 6, 7, 8])
         body_element_3 = Element(8, "TETRAHEDRON_4N", [1, 2, 3, 4])
+        body_element_4 = Element(9, "LINE_2N", [1, 2])
 
+        # check 2d body elements
         assert Utils.is_line_edge_in_body(edge_1, body_element_1)
         assert not Utils.is_line_edge_in_body(edge_2, body_element_1)
         assert Utils.is_line_edge_in_body(edge_3, body_element_2)
         assert not Utils.is_line_edge_in_body(edge_4, body_element_2)
+
+        # check 1d body elements
+        assert Utils.is_line_edge_in_body(edge_1, body_element_4)
+        assert not Utils.is_line_edge_in_body(edge_2, body_element_4)
 
         # expected raise as edge element is not a 1D element
         with pytest.raises(ValueError, match="Edge element should be a 1D element."):
@@ -305,7 +311,7 @@ class TestUtilsStem:
         for element, expected_nodes_element in zip(list(mesh.elements.values()), expected_ordering):
             np.testing.assert_equal(element.node_ids, expected_nodes_element)
 
-    def test_is_tetrahedron_4n_edge_defined_inwards(self):
+    def test_is_tetrahedron_4n_edge_defined_outwards(self):
         """
         Tests if the 3-node triangle edge of a 4 node tetrahedron is defined outwards. It checks different orientations
         of the edge element and the body element.
@@ -327,7 +333,7 @@ class TestUtilsStem:
         assert Utils.is_volume_edge_defined_outwards(edge_element, body_element_mirrored, nodes)
         assert not Utils.is_volume_edge_defined_outwards(edge_element_reversed, body_element_mirrored, nodes)
 
-    def test_is_tetrahedron_10n_edge_defined_inwards(self):
+    def test_is_tetrahedron_10n_edge_defined_outwards(self):
         """
         Tests if the 6-node triangle edge of a 10 node tetrahedron is defined outwards. It checks different orientations
         of the edge element and the body element.
@@ -354,7 +360,7 @@ class TestUtilsStem:
         assert Utils.is_volume_edge_defined_outwards(edge_element, body_element_mirrored, nodes)
         assert not Utils.is_volume_edge_defined_outwards(edge_element_reversed, body_element_mirrored, nodes)
 
-    def test_is_hexahedron_8n_edge_defined_inwards(self):
+    def test_is_hexahedron_8n_edge_defined_outwards(self):
         """
         Tests if the 4-node quad edge of a 8 node hexahedron is defined outwards. It checks different orientations
         of the edge element and the body element.
@@ -379,7 +385,7 @@ class TestUtilsStem:
         assert Utils.is_volume_edge_defined_outwards(edge_element, body_element_mirrored, nodes)
         assert not Utils.is_volume_edge_defined_outwards(edge_element_reversed, body_element_mirrored, nodes)
 
-    def test_is_hexahedron_20n_edge_defined_inwards(self):
+    def test_is_hexahedron_20n_edge_defined_outwards(self):
         """
         Tests if the 8-node quad edge of a 20 node hexahedron is defined outwards. It checks different orientations
         of the edge element and the body element.
@@ -417,3 +423,33 @@ class TestUtilsStem:
         # check if edge is defined outwards in both node orders of edge element and a mirrored body element
         assert Utils.is_volume_edge_defined_outwards(edge_element_1, body_element_mirrored, nodes)
         assert not Utils.is_volume_edge_defined_outwards(edge_element_1_reversed, body_element_mirrored, nodes)
+
+    def test_is_volume_edge_defined_outwards_exceptions(self):
+        """
+        Tests exceptions of is_volume_edge_defined_outwards
+
+        """
+
+        edge_element_1 = Element(1, "LINE_2N", [1, 2])
+        edge_element_2 = Element(2, "TRIANGLE_3N", [1, 2, 3])
+        edge_element_3 = Element(3, "TRIANGLE_3N", [1, 2, 5])
+
+
+        body_element_1 = Element(3, "TETRAHEDRON_4N", [1, 2, 3, 4])
+        body_element_2 = Element(4, "TRIANGLE_3N", [1, 2, 3])
+
+        nodes = {1: [0, 0, 0], 2: [1.0, 0, 0], 3: [1, 1.0, 0], 4: [0, 0.0, 1.0], 5: [0.0, 0.0, -1.0]}
+
+        # expected raise as edge element is not a 2D element
+        with pytest.raises(ValueError, match="Edge element should be a 2D element."):
+            Utils.is_volume_edge_defined_outwards(edge_element_1,body_element_1, nodes)
+
+        # expected raise as body element is not 3D
+        with pytest.raises(ValueError, match="Body element should be a 3D element."):
+            Utils.is_volume_edge_defined_outwards(edge_element_2, body_element_2, nodes)
+
+        # expected raise as not all nodes of edge element are in body element
+        with pytest.raises(ValueError, match="All nodes of the edge element should be part of the body element."):
+            Utils.is_volume_edge_defined_outwards(edge_element_3, body_element_1, nodes)
+
+

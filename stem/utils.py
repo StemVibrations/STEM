@@ -268,8 +268,9 @@ class Utils:
         edge_vertices_ids = edge_element.node_ids[:edge_el_info["n_vertices"]]
         body_vertices_ids = body_element.node_ids[:body_el_info["n_vertices"]]
 
-        # add first vertex to the end of the list, such that all edges can be checked
-        body_vertices_ids.append(body_vertices_ids[0])
+        # add first vertex to the end of the list, to make a closed loop for 2D elements
+        if body_el_info["ndim"] == 2:
+            body_vertices_ids.append(body_vertices_ids[0])
 
         n_edge_vertices = len(edge_vertices_ids)
         n_body_vertices = len(body_vertices_ids)
