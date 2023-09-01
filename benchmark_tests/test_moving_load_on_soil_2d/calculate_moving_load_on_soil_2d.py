@@ -4,7 +4,7 @@ import os
 path_kratos = r"D:\Kratos_without_compiling"
 material_name = "MaterialParameters.json"
 project_name = "ProjectParameters.json"
-mesh_name = "calculate_moving_load_on_soil.mdpa"
+mesh_name = "calculate_moving_load_on_soil_2d.mdpa"
 
 sys.path.append(os.path.join(path_kratos, "KratosGeoMechanics"))
 sys.path.append(os.path.join(path_kratos, r"KratosGeoMechanics\libs"))
@@ -98,7 +98,7 @@ solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solu
                                  rayleigh_m=0.0)
 
 # Set up problem data
-problem = Problem(problem_name="calculate_moving_load_on_soil", number_of_threads=1, settings=solver_settings)
+problem = Problem(problem_name="calculate_moving_load_on_soil_2d", number_of_threads=1, settings=solver_settings)
 model.project_parameters = problem
 
 # Define the results to be written to the output file
@@ -145,15 +145,15 @@ output_folder = "inputs_kratos"
 kratos_io.write_project_parameters_json(
     model=model,
     outputs=[gid_output],
-    mesh_file_name="calculate_moving_load_on_soil.mdpa",
+    mesh_file_name="calculate_moving_load_on_soil_2d.mdpa",
     materials_file_name="MaterialParameters.json",
     output_folder=output_folder
 )
 
-# Write mesh to test_1d_wave_prop_drained_soil.mdpa file
+# Write mesh to .mdpa file
 kratos_io.write_mesh_to_mdpa(
     model=model,
-    mesh_file_name="calculate_moving_load_on_soil.mdpa",
+    mesh_file_name="calculate_moving_load_on_soil_2d.mdpa",
     output_folder=output_folder
 )
 
