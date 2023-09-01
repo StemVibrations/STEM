@@ -35,7 +35,7 @@ model = Model(ndim)
 # a Poisson ratio of 0.3 & a Porosity of 0.3 is specified.
 rho1 = 2650
 por1 = 0.3
-E1 = 10.0e4
+E1 = 10.0e7
 v1 = 0.2
 soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=rho1, POROSITY=por1)
 constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=E1, POISSON_RATIO=v1)
@@ -66,8 +66,8 @@ absorbing_boundaries_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0]
 displacement_parameters = DisplacementConstraint(active=[True, True, False], is_fixed=[True, True, False], value=[0, 0, 0])
 
 # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
-model.add_boundary_condition_by_geometry_ids(2, [1], absorbing_boundaries_parameters, "abs")
-model.add_boundary_condition_by_geometry_ids(2, [2, 3, 4, 5], displacement_parameters, "sides")
+model.add_boundary_condition_by_geometry_ids(2, [5,10], absorbing_boundaries_parameters, "abs")
+model.add_boundary_condition_by_geometry_ids(2, [1, 2, 4, 7, 8, 9], displacement_parameters, "sides")
 
 
 # Synchronize geometry
