@@ -1258,7 +1258,13 @@ class TestModel:
         model.add_soil_layer_by_coordinates([(0, 0, 0), (4, 0, 0), (4, 1, 0), (0, 1, 0)], soil_material, "layer1")
         model.add_soil_layer_by_coordinates([(0, 1, 0), (4, 1, 0), (4, 2, 0), (0, 2, 0)], soil_material, "layer2")
 
-        model.add_load_by_coordinates([(0, 2, 0), (4, 2, 0)], create_default_line_load_parameters, "lineload1")
+        # add line load
+        model.add_load_by_coordinates([(4, 2, 0), (0, 2, 0)],
+                                      create_default_line_load_parameters, "line_load1")
+
+        # add same line load in reversed order
+        model.add_load_by_coordinates([(0, 2, 0), (4, 2, 0)],
+                                      create_default_line_load_parameters, "line_load2")
         model.synchronise_geometry()
 
         # generate mesh
@@ -1266,31 +1272,49 @@ class TestModel:
 
         # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
         # correct, the elements are counterclockwise and the number of nodes per element is correct
-        #
-        # check that the elements are all written counterclockwise
         nodes = model.get_all_nodes()
         for bmp in model.body_model_parts:
 
             for element_id, element in bmp.mesh.elements.items():
-                coordinates = [nodes[ii].coordinates for ii in element.node_ids]
+                coordinates = [nodes[node_id].coordinates for node_id in element.node_ids]
                 assert not Utils.are_2d_coordinates_clockwise(coordinates)
                 assert element.element_type == "TRIANGLE_3N"
                 assert len(element.node_ids) == 3
 
-        # assert that the condition elements are written in the correct order
-        # also check if condition is fully applied on a body model part.
-        mapper_process_mp = model._Model__find_matching_body_elements_for_process_model_part(
-            process_model_part=model.process_model_parts[0])
-        actual_ids = [(el_p.id, el_b.id) for el_p, el_b in mapper_process_mp.items()]
+        # Check if all condition elements have a body element neighbour
+        mapper_process_model_part_1 = model._Model__find_matching_body_elements_for_process_model_part(
+            model.process_model_parts[0])
+
+        mapper_process_model_part_2 = model._Model__find_matching_body_elements_for_process_model_part(
+            model.process_model_parts[1])
+
+        actual_element_ids_process_1 = [(process_element.id, body_element.id)
+                                        for process_element, body_element in mapper_process_model_part_1.items()]
+
+        actual_element_ids_process_2 = [(process_element.id, body_element.id)
+                                        for process_element, body_element in mapper_process_model_part_2.items()]
+
         expected_ids = [(1, 85), (2, 116), (3, 125), (4, 95), (5, 96), (6, 124), (7, 98), (8, 100), (9, 83)]
 
-        np.testing.assert_equal(desired=expected_ids, actual=actual_ids)
+        # check if the element ids are correct, process model part 1 and 2 should have the same element ids in the same
+        # order
+        np.testing.assert_equal(desired=expected_ids, actual=actual_element_ids_process_1)
+        np.testing.assert_equal(desired=expected_ids, actual=actual_element_ids_process_2)
 
         # check order of nodes is consistent with what expected.
-        ids_process_model_part = np.array([el.node_ids for el in model.process_model_parts[0].mesh.elements.values()])
-        npt.assert_equal(ids_process_model_part[0, :], [5, 29])
-        npt.assert_equal(ids_process_model_part[4, :], [32, 33])
-        npt.assert_equal(ids_process_model_part[8, :], [36, 6])
+        node_ids_process_model_part_1 = np.array([el.node_ids
+                                                  for el in model.process_model_parts[0].mesh.elements.values()])
+
+        node_ids_process_model_part_2 = np.array([el.node_ids
+                                                  for el in model.process_model_parts[1].mesh.elements.values()])
+
+        expected_process_connectivities = np.array([[5, 29], [29, 30], [30, 31], [31, 32],
+                                                    [32, 33], [33, 34], [34, 35], [35, 36], [36, 6]])
+
+        # check if the node ids are correct, process model part 1 and 2 should have the same node ids in the same
+        # order
+        npt.assert_equal(node_ids_process_model_part_1, expected_process_connectivities)
+        npt.assert_equal(node_ids_process_model_part_2, expected_process_connectivities)
 
     def test_validate_expected_success(self):
         """
@@ -1674,6 +1698,71 @@ class TestModel:
         with pytest.raises(ValueError,
                            match=r"Project parameters must be set before setting up the stress initialisation"):
             model._Model__setup_stress_initialisation()
+
+    def test_check_ordering_process_model_part_2d(self):
+        """
+        Test if the node order of the process model part is flipped, such that the nodes follow the same order as
+        the neighbour element. After filling in the nodes of the process model part in reverse order.
+
+        """
+
+        # create model
+        model = Model(2)
+
+        # manually set mesh data nodes
+        model.gmsh_io._GmshIO__mesh_data = {"nodes": {1: [0, 0, 0], 2: [1, 0, 0], 3: [1, 1, 0], 4: [0, 1, 0]}}
+
+        # manually create process model part with nodes in reverse order
+        process_element = Element(1, "LINE_2N", [2, 1])
+        process_model_part = ModelPart("process")
+        process_mesh = Mesh(1)
+        process_mesh.elements = {1: process_element}
+        process_mesh.nodes = {1: Node(1, [0, 0, 0]), 2: Node(2, [1, 0, 0])}
+        process_model_part.mesh = process_mesh
+        model.process_model_parts = [ModelPart("process")]
+
+        # create body_model_part
+        body_element = Element(2, "TRIANGLE_3N", [1, 2, 3])
+
+        # check ordering of process model part connectivities
+        mapper = {process_element: body_element}
+        model._Model__check_ordering_process_model_part(mapper, process_model_part)
+
+        # check if the node ids of the process model part are in the correct order
+        assert process_model_part.mesh.elements[1].node_ids == [1, 2]
+
+    def test_check_ordering_process_model_part_3d(self):
+        """
+        Test if the node order of the process model part is flipped, such that the normal is inwards. After filling in
+        the nodes of the process model part in outwards normal order.
+
+        """
+
+        # create model
+        model = Model(3)
+
+        # manually set mesh data nodes
+        model.gmsh_io._GmshIO__mesh_data = {"nodes": {1: [0, 0, 0], 2: [1, 0, 0], 3: [1, 1, 0], 4: [0, 0, 1]}}
+
+        # manually create process model part with nodes in outwards normal order
+        process_element = Element(1, "TRIANGLE_3N", [2, 1, 3])
+        process_model_part = ModelPart("process")
+        process_mesh = Mesh(1)
+        process_mesh.elements = {1: process_element}
+        process_mesh.nodes = {1: Node(1, [0, 0, 0]), 2: Node(2, [1, 0, 0])}
+        process_model_part.mesh = process_mesh
+        model.process_model_parts = [ModelPart("process")]
+
+        # create body_model_part
+        body_element = Element(2, "TETRAHEDRON_4N", [1, 2, 3, 4])
+
+        # check ordering of process model part connectivities
+        mapper = {process_element: body_element}
+        model._Model__check_ordering_process_model_part(mapper, process_model_part)
+
+        # check if the node ids of the process model part are in the correct order, i.e. the node order should be
+        # flipped, such that the normal is inwards
+        assert process_model_part.mesh.elements[1].node_ids == [3, 1, 2]
 
     @pytest.mark.skip("Not implemented yet")
     def test_post_setup(self):
