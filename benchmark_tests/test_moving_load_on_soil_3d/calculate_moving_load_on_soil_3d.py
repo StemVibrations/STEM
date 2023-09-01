@@ -48,8 +48,8 @@ model.extrusion_length = [0, 0, 3]
 model.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil_layer")
 
 # Define moving load
-load_coordinates = [(0.0, 0.0, 3.0), (5.0, 0.0, 3.0), (5.0, 1.0, 3.0), (0.0, 1.0, 3.0)]
-moving_load = MovingLoad(load=[0.0, 0.0, -10.0], direction=[0, 0, 1], velocity=5, origin=[0.0, 0.0, 3.0], offset=0.0)
+load_coordinates = [(0.0, 1.0, 3.0), (0.0, 0.0, 3.0), (5.0, 0.0, 3.0)]
+moving_load = MovingLoad(load=[0.0, 0.0, -10.0], direction=[1, -1, 1], velocity=5, origin=[0.0, 0.0, 3.0], offset=0.0)
 model.add_load_by_coordinates(load_coordinates, moving_load, "moving_load")
 
 # Define boundary conditions
@@ -58,7 +58,7 @@ no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
 # roller_displacement_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, False, False], value=[0, 0, 0])
 
 # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
-model.add_boundary_condition_by_geometry_ids(2, [1, 2, 3, 4, 5], no_displacement_parameters, "base_fixed")
+model.add_boundary_condition_by_geometry_ids(2, [1], no_displacement_parameters, "base_fixed")
 # model.add_boundary_condition_by_geometry_ids(1, [2, 4], roller_displacement_parameters, "roller_fixed")
 
 # Synchronize geometry
