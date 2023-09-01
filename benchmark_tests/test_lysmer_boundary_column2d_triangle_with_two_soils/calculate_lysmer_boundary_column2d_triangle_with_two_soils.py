@@ -33,9 +33,9 @@ model = Model(ndim)
 # Specify material model
 # Linear elastic drained soil with a Density of 2700, a Young's modulus of 50e6,
 # a Poisson ratio of 0.3 & a Porosity of 0.3 is specified.
-rho1 = 2.65
+rho1 = 2650
 por1 = 0.3
-E1 = 10.0e4
+E1 = 10.0e7
 v1 = 0.2
 soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=rho1, POROSITY=por1)
 constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=E1, POISSON_RATIO=v1)
