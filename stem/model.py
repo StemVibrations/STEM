@@ -491,7 +491,14 @@ class Model:
             elif body_el_info["ndim"] == 3:
 
                 if process_el_info["ndim"] == 1:
-                    # todo to be determined how to order the line condition, currently nodes are not re-ordered
+
+                    # get all line edges of the body element and check if the process element is defined on one of them
+                    # if the nodes are equal, but the node order isn't, flip the node order of the process element
+                    body_line_edges = Utils.get_volume_line_edges(body_element)
+                    for edge in body_line_edges:
+                        if set(edge) == set(process_element.node_ids):
+                            if list(edge) != process_element.node_ids:
+                                flip_node_order[i] = True
                     pass
                 elif process_el_info["ndim"] == 2:
 

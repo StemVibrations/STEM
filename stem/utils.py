@@ -289,6 +289,54 @@ class Utils:
         return False
 
     @staticmethod
+    def get_volume_line_edges(element):
+
+        element_edges_dict = {"TETRAHEDRON_4N": [[0, 1],
+                                                 [1, 2],
+                                                 [2, 0],
+                                                 [0, 3],
+                                                 [1, 3],
+                                                 [2, 3]],
+                              "TETRAHEDRON_10N": [[0, 1, 4],
+                                                  [1, 2, 5],
+                                                  [2, 0, 6],
+                                                  [0, 3, 7],
+                                                  [1, 3, 8],
+                                                  [2, 3, 9]],
+                              "HEXAHEDRON_8N": [[0, 1],
+                                                [1, 2],
+                                                [2, 3],
+                                                [3, 0],
+                                                [4, 5],
+                                                [5, 6],
+                                                [6, 7],
+                                                [7, 4],
+                                                [0, 4],
+                                                [1, 5],
+                                                [2, 6],
+                                                [3, 7]],
+                                "HEXAHEDRON_20N": [[0, 1, 8],
+                                                   [1, 2, 9],
+                                                   [2, 3, 10],
+                                                   [3, 0, 11],
+                                                   [4, 5, 16],
+                                                   [5, 6, 17],
+                                                   [6, 7, 18],
+                                                   [7, 4, 19],
+                                                   [0, 4, 12],
+                                                   [1, 5, 13],
+                                                   [2, 6, 14],
+                                                   [3, 7, 15]]}
+
+        node_ids= np.array(element.node_ids)[element_edges_dict[element.element_type]]
+
+        return node_ids
+
+
+
+
+
+    @staticmethod
     def get_element_info(gmsh_element_type: str) -> Dict[str, Any]:
         """
         Returns the element info for a certain gmsh element type. The element info contains the number of dimensions,
