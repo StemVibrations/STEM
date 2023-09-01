@@ -35,7 +35,7 @@ model = Model(ndim)
 # a Poisson ratio of 0.3 & a Porosity of 0.3 is specified.
 rho1 = 2650
 por1 = 0.3
-E1 = 10.0e4
+E1 = 10.0e7
 v1 = 0.2
 soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=rho1, POROSITY=por1)
 constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=E1, POISSON_RATIO=v1)
@@ -72,7 +72,7 @@ model.synchronise_geometry()
 
 # Show geometry and geometry ids
 model.show_geometry(show_surface_ids=True)
-input()
+# input()
 
 # Set mesh size and generate mesh
 # --------------------------------
