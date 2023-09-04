@@ -268,6 +268,15 @@ class TestUtilsStem:
         for element, expected_nodes_element in zip(list(mesh.elements.values()), expected_ordering):
             np.testing.assert_equal(element.node_ids, expected_nodes_element)
 
+    def test_flip_node_order_exception(self):
+        """
+        Tests that an exception is raised if a list with different elements is given to flip_node_order.
+        """
+
+        with pytest.raises(ValueError, match="All elements should be of the same type."):
+            Utils.flip_node_order([Element(1, "LINE_2N", [1, 2]),
+                                   Element(2, "LINE_3N", [2, 3, 4])])
+
     def test_is_tetrahedron_4n_edge_defined_outwards(self):
         """
         Tests if the 3-node triangle edge of a 4 node tetrahedron is defined outwards. It checks different orientations
