@@ -15,6 +15,7 @@ from stem.load import *
 from stem.solver import Problem, StressInitialisationType
 from stem.utils import Utils
 from stem.plot_utils import PlotUtils
+from stem.globals import ELEMENT_DATA
 
 
 NUMBER_TYPES = (int, float, np.int64, np.float64)
@@ -478,8 +479,8 @@ class Model:
         for i, (process_element, body_element) in enumerate(matched_elements.items()):
 
             # element info such as order, number of edges, element types etc.
-            process_el_info = Utils.get_element_info(process_element.element_type)
-            body_el_info = Utils.get_element_info(body_element.element_type)
+            process_el_info = ELEMENT_DATA[process_element.element_type]
+            body_el_info = ELEMENT_DATA[body_element.element_type]
 
             if body_el_info["ndim"] == 1 or body_el_info["ndim"] == 2:
 
@@ -494,7 +495,7 @@ class Model:
 
                     # get all line edges of the body element and check if the process element is defined on one of them
                     # if the nodes are equal, but the node order isn't, flip the node order of the process element
-                    body_line_edges = Utils.get_volume_line_edges(body_element)
+                    body_line_edges = Utils.get_element_edges(body_element)
                     for edge in body_line_edges:
                         if set(edge) == set(process_element.node_ids):
                             if list(edge) != process_element.node_ids:

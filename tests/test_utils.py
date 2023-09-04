@@ -6,6 +6,8 @@ import pytest
 
 from stem.utils import Utils
 from stem.mesh import Mesh, Element
+from stem.globals import ELEMENT_DATA
+
 from tests.utils import TestUtils
 
 
@@ -295,7 +297,7 @@ class TestUtilsStem:
                 mesh.elements[element_id] = Element(element_id, element_name, node_ids)
 
                 # reverse the node order
-                element_reversed_ordering_info = Utils.get_element_info(mesh.elements[element_id].element_type)
+                element_reversed_ordering_info = ELEMENT_DATA[mesh.elements[element_id].element_type]
                 Utils.flip_node_order(element_reversed_ordering_info, [mesh.elements[element_id]])
 
         # set expected node ordering per element

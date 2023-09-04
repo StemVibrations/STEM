@@ -1,6 +1,7 @@
 from typing import Dict, List, Sequence, Any
 from enum import Enum
 
+from stem.globals import ELEMENT_DATA
 from stem.utils import Utils
 
 
@@ -201,7 +202,7 @@ class Mesh:
 
         # In 2D check if vertices of element are clockwise and flip element if they are
         if len(group_element_ids) > 0 and group_data["ndim"] == 2:
-            element_info = Utils.get_element_info(group_element_type)
+            element_info = ELEMENT_DATA[group_element_type]
 
             # only check the first element in the group. The rest of the elements have the same node order
             node_ids_element = gmsh_elements[group_element_ids[0]]

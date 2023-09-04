@@ -1,6 +1,9 @@
 from typing import Sequence, Dict, Any, List, Union, Optional, Generator, TYPE_CHECKING
 
 import numpy as np
+import numpy.typing as npt
+
+from stem.globals import ELEMENT_DATA
 
 if TYPE_CHECKING:
     from stem.mesh import Element
@@ -245,8 +248,8 @@ class Utils:
         """
 
         # element info such as order, number of edges, element types etc.
-        edge_el_info = Utils.get_element_info(edge_element.element_type)
-        body_el_info = Utils.get_element_info(body_element.element_type)
+        edge_el_info = ELEMENT_DATA[edge_element.element_type]
+        body_el_info = ELEMENT_DATA[body_element.element_type]
 
         if edge_el_info["ndim"] != 1:
             raise ValueError("Edge element should be a 1D element.")
@@ -262,7 +265,6 @@ class Utils:
 
         if not set(edge_element.node_ids).issubset(set(body_element.node_ids)):
             raise ValueError("All nodes of the edge element should be part of the body element.")
-
 
         # only vertices have to be checked, the rest of the nodes follows
         edge_vertices_ids = edge_element.node_ids[:edge_el_info["n_vertices"]]
@@ -289,121 +291,22 @@ class Utils:
         return False
 
     @staticmethod
-    def get_volume_line_edges(element):
-
-        element_edges_dict = {"TETRAHEDRON_4N": [[0, 1],
-                                                 [1, 2],
-                                                 [2, 0],
-                                                 [0, 3],
-                                                 [1, 3],
-                                                 [2, 3]],
-                              "TETRAHEDRON_10N": [[0, 1, 4],
-                                                  [1, 2, 5],
-                                                  [2, 0, 6],
-                                                  [0, 3, 7],
-                                                  [1, 3, 8],
-                                                  [2, 3, 9]],
-                              "HEXAHEDRON_8N": [[0, 1],
-                                                [1, 2],
-                                                [2, 3],
-                                                [3, 0],
-                                                [4, 5],
-                                                [5, 6],
-                                                [6, 7],
-                                                [7, 4],
-                                                [0, 4],
-                                                [1, 5],
-                                                [2, 6],
-                                                [3, 7]],
-                                "HEXAHEDRON_20N": [[0, 1, 8],
-                                                   [1, 2, 9],
-                                                   [2, 3, 10],
-                                                   [3, 0, 11],
-                                                   [4, 5, 16],
-                                                   [5, 6, 17],
-                                                   [6, 7, 18],
-                                                   [7, 4, 19],
-                                                   [0, 4, 12],
-                                                   [1, 5, 13],
-                                                   [2, 6, 14],
-                                                   [3, 7, 15]]}
-
-        node_ids= np.array(element.node_ids)[element_edges_dict[element.element_type]]
-
-        return node_ids
-
-
-
-
-
-    @staticmethod
-    def get_element_info(gmsh_element_type: str) -> Dict[str, Any]:
+    def get_element_edges(element: 'Element') -> npt.NDArray[np.int64]:
         """
-        Returns the element info for a certain gmsh element type. The element info contains the number of dimensions,
-        the order, the number of vertices and the reversed order of the connectivities.
+        Gets the nodal connectivities of the line edges of elements
 
         Args:
-            - gmsh_element_type (str): gmsh element type
+            - element (:class:`stem.mesh.Element`): element object
 
         Returns:
-            - Dict[str, Any]: element info
+            - npt.NDArray[np.int64]: nodal connectivities of the line edges of the element
+
         """
 
-        element_mapping_dict = {"POINT_1N": {"ndim": 0,
-                                             "order": 1,
-                                             "n_vertices": 1,
-                                             "reversed_order": [0]},
-                                "LINE_2N": {"ndim": 1,
-                                            "order": 1,
-                                            "n_vertices": 2,
-                                            "reversed_order": [1, 0]},
-                                "LINE_3N": {"ndim": 1,
-                                            "order": 2,
-                                            "n_vertices": 2,
-                                            "reversed_order": [1, 0, 2]},
-                                "TRIANGLE_3N": {"ndim": 2,
-                                                "order": 1,
-                                                "n_vertices": 3,
-                                                "reversed_order": [2, 1, 0]},
-                                "TRIANGLE_6N": {"ndim": 2,
-                                                "order": 2,
-                                                "n_vertices": 3,
-                                                "reversed_order": [2, 1, 0, 5, 4, 3]},
-                                "QUADRANGLE_4N": {"ndim": 2,
-                                                  "order": 1,
-                                                  "n_vertices": 4,
-                                                  "reversed_order": [1, 0, 3, 2]},
-                                "QUADRANGLE_8N": {"ndim": 2,
-                                                  "order": 2,
-                                                  "n_vertices": 4,
-                                                  "reversed_order": [1, 0, 3, 2, 4, 7, 6, 5]},
-                                "TETRAHEDRON_4N": {"ndim": 3,
-                                                   "order": 1,
-                                                   "n_vertices": 4,
-                                                   "reversed_order": [1, 0, 2, 3]},
-                                "TETRAHEDRON_10N": {"ndim": 3,
-                                                    "order": 2,
-                                                    "n_vertices": 4,
-                                                    "reversed_order": [1, 0, 2, 3, 4, 6, 5, 9, 8, 7]},
-                                "HEXAHEDRON_8N": {"ndim": 3,
-                                                  "order": 1,
-                                                  "n_vertices": 8,
-                                                  "reversed_order": [1, 0, 3, 2, 5, 4, 7, 6]},
-                                "HEXAHEDRON_20N": {"ndim": 3,
-                                                   "order": 2,
-                                                   "n_vertices": 8,
-                                                   "reversed_order": [1, 0, 3, 2,
-                                                                      5, 4, 7, 6,
-                                                                      8, 9, 10, 11,
-                                                                      12, 13, 14, 15,
-                                                                      16, 17, 18, 19]},
-                                }
+        # get nodal connectivities of the line edges from the local element edges dictionary
+        node_ids = np.array(element.node_ids)[ELEMENT_DATA[element.element_type]]
 
-        # find element order
-        if gmsh_element_type not in element_mapping_dict.keys():
-            raise NotImplementedError(f"No reversed order defined for the element type: {gmsh_element_type}")
-
-        return element_mapping_dict[gmsh_element_type]
+        return node_ids
 
     @staticmethod
     def flip_node_order(element_info: Dict[str, Any], elements: Sequence['Element']):
@@ -450,8 +353,8 @@ class Utils:
         """
 
         # element info such as order, number of edges, element types etc.
-        edge_el_info = Utils.get_element_info(edge_element.element_type)
-        body_el_info = Utils.get_element_info(body_element.element_type)
+        edge_el_info = ELEMENT_DATA[edge_element.element_type]
+        body_el_info = ELEMENT_DATA[body_element.element_type]
 
         if edge_el_info["ndim"] != 2:
             raise ValueError("Edge element should be a 2D element.")
