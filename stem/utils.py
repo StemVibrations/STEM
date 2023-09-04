@@ -309,22 +309,34 @@ class Utils:
         return node_ids
 
     @staticmethod
-    def flip_node_order(element_info: Dict[str, Any], elements: Sequence['Element']):
+    def flip_node_order(elements: Sequence['Element']):
         """
-        Flips the node order of the elements
+        Flips the node order of the elements, where all elements should be of the same type.
 
         Args:
-            - element_info (Dict[str, Any]): element info
             - elements (List[:class:`stem.mesh.Element`]): list of elements
 
+        Raises:
+            - ValueError: when the elements are not of the same type.
+
         """
+
+        # return of no elements are provided
+        if len(elements) == 0:
+            return
+
+        # check if all elements are of the same type and get the element type
+        element_types = set([element.element_type for element in elements])
+        if len(element_types) > 1:
+            raise ValueError("All elements should be of the same type.")
+        element_type = list(element_types)[0]
 
         # retrieve element ids and connectivities
         ids = [element.id for element in elements]
         element_connectivies = np.array([element.node_ids for element in elements])
 
         # flip the elements connectivities
-        element_connectivies = element_connectivies[:, element_info["reversed_order"]]
+        element_connectivies = element_connectivies[:, ELEMENT_DATA[element_type]["reversed_order"]]
 
         # update the elements connectivities
         for i, (id, element_connectivity) in enumerate(zip(ids, element_connectivies)):
@@ -387,3 +399,7 @@ class Utils:
 
         return is_outwards
 
+
+if __name__ == '__main__':
+    a = set(["test", "test", "test2"])
+    b = 1+1

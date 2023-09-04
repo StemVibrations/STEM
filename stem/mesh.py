@@ -212,7 +212,7 @@ class Mesh:
             if Utils.are_2d_coordinates_clockwise(coordinates[:element_info["n_vertices"]]):
 
                 # flip the node order in of each element in the group
-                Utils.flip_node_order(element_info, list(elements.values()))
+                Utils.flip_node_order(list(elements.values()))
 
                 # also flip the node order in the mesh data
                 for element_id, element in elements.items():

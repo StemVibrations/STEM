@@ -513,7 +513,7 @@ class Model:
             elements = np.array(list(process_model_part.mesh.elements.values()))[flip_node_order]
 
             # flip elements, it is required that all elements in the array are of the same type
-            Utils.flip_node_order(process_el_info, elements)
+            Utils.flip_node_order(elements)
 
     def __validate_model_part_names(self):
         """

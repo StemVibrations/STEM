@@ -189,7 +189,6 @@ class TestUtilsStem:
         with pytest.raises(ValueError, match="All nodes of the edge element should be part of the body element."):
             Utils.is_line_edge_in_body(edge_5, body_element_1)
 
-
     def test_merge(self):
         """
         Test merging of dictionaries
@@ -297,8 +296,7 @@ class TestUtilsStem:
                 mesh.elements[element_id] = Element(element_id, element_name, node_ids)
 
                 # reverse the node order
-                element_reversed_ordering_info = ELEMENT_DATA[mesh.elements[element_id].element_type]
-                Utils.flip_node_order(element_reversed_ordering_info, [mesh.elements[element_id]])
+                Utils.flip_node_order([mesh.elements[element_id]])
 
         # set expected node ordering per element
         expected_ordering = [
