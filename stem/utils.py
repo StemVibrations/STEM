@@ -304,7 +304,7 @@ class Utils:
         """
 
         # get nodal connectivities of the line edges from the local element edges dictionary
-        node_ids = np.array(element.node_ids)[ELEMENT_DATA[element.element_type]]
+        node_ids: npt.NDArray[np.int64] = np.array(element.node_ids, dtype=int)[ELEMENT_DATA[element.element_type]]
 
         return node_ids
 
