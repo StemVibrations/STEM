@@ -475,37 +475,28 @@ class Model:
 
         # loop over the matched elements
         flip_node_order = np.zeros(len(matched_elements), dtype=bool)
-        process_el_info = {}
+
         for i, (process_element, body_element) in enumerate(matched_elements.items()):
 
             # element info such as order, number of edges, element types etc.
             process_el_info = ELEMENT_DATA[process_element.element_type]
             body_el_info = ELEMENT_DATA[body_element.element_type]
 
-            if body_el_info["ndim"] == 1 or body_el_info["ndim"] == 2:
+            if process_el_info["ndim"] == 1:
 
-                # check if order of nodes in process element follows the body elements.
-                # if not, flip the order of the process element
-                if not Utils.is_line_edge_in_body(process_element, body_element):
-                    flip_node_order[i] = True
+                # get all line edges of the body element and check if the process element is defined on one of them
+                # if the nodes are equal, but the node order isn't, flip the node order of the process element
+                body_line_edges = Utils.get_element_edges(body_element)
+                for edge in body_line_edges:
+                    if set(edge) == set(process_element.node_ids):
+                        if list(edge) != process_element.node_ids:
+                            flip_node_order[i] = True
 
-            elif body_el_info["ndim"] == 3:
+            elif body_el_info["ndim"] == 3 and process_el_info["ndim"] == 2:
 
-                if process_el_info["ndim"] == 1:
-
-                    # get all line edges of the body element and check if the process element is defined on one of them
-                    # if the nodes are equal, but the node order isn't, flip the node order of the process element
-                    body_line_edges = Utils.get_element_edges(body_element)
-                    for edge in body_line_edges:
-                        if set(edge) == set(process_element.node_ids):
-                            if list(edge) != process_element.node_ids:
-                                flip_node_order[i] = True
-                    pass
-                elif process_el_info["ndim"] == 2:
-
-                    # check if the normal of the condition element is defined outwards of the body element
-                    flip_node_order[i] = Utils.is_volume_edge_defined_outwards(process_element, body_element,
-                                                                               self.gmsh_io.mesh_data["nodes"])
+                # check if the normal of the condition element is defined outwards of the body element
+                flip_node_order[i] = Utils.is_volume_edge_defined_outwards(process_element, body_element,
+                                                                           self.gmsh_io.mesh_data["nodes"])
 
         # flip condition elements if required
         if any(flip_node_order):

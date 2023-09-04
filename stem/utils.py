@@ -228,69 +228,6 @@ class Utils:
         return list({id(obj): obj for obj in input_sequence}.values())
 
     @staticmethod
-    def is_line_edge_in_body(edge_element: 'Element', body_element: 'Element') -> bool:
-        """
-        Check if the edge element is a subset of the body element in the same order.
-
-        Args:
-            - edge_element (:class:`stem.mesh.Element`): 1D edge element
-            - body_element (:class:`stem.mesh.Element`): 1D or 2D body element
-
-        Raises:
-            - ValueError: when the edge element is not a 1D element.
-            - ValueError: when the body element is not a 1D or 2D element.
-            - ValueError: when the element order of the edge element is different from the body element.
-            - ValueError: when not all nodes of the edge element are part of the body element.
-
-        Returns:
-            - bool: True if the edge element is a subset of the body element in the same order, False otherwise.
-
-        """
-
-        # element info such as order, number of edges, element types etc.
-        edge_el_info = ELEMENT_DATA[edge_element.element_type]
-        body_el_info = ELEMENT_DATA[body_element.element_type]
-
-        if edge_el_info["ndim"] != 1:
-            raise ValueError("Edge element should be a 1D element.")
-        if body_el_info["ndim"] != 1 and body_el_info["ndim"] != 2:
-            raise ValueError("Body element should be a 1D or 2D element.")
-
-        # if elements have different integration order, raise an error
-        if edge_el_info["order"] != body_el_info["order"]:
-            raise ValueError(
-                f"Mismatch between edge element order ({edge_el_info['order']}) and body "
-                f"element order ({body_el_info['order']})."
-            )
-
-        if not set(edge_element.node_ids).issubset(set(body_element.node_ids)):
-            raise ValueError("All nodes of the edge element should be part of the body element.")
-
-        # only vertices have to be checked, the rest of the nodes follows
-        edge_vertices_ids = edge_element.node_ids[:edge_el_info["n_vertices"]]
-        body_vertices_ids = body_element.node_ids[:body_el_info["n_vertices"]]
-
-        # add first vertex to the end of the list, to make a closed loop for 2D elements
-        if body_el_info["ndim"] == 2:
-            body_vertices_ids.append(body_vertices_ids[0])
-
-        n_edge_vertices = len(edge_vertices_ids)
-        n_body_vertices = len(body_vertices_ids)
-
-        # check if order of nodes in the edge element follows the body element.
-        if n_body_vertices == n_edge_vertices:
-            return body_vertices_ids == edge_vertices_ids
-        elif n_body_vertices > n_edge_vertices:
-            for ix in range(n_body_vertices - n_edge_vertices + 1):
-
-                # check if edge vertices are part of body vertices in the same ordering
-                if body_vertices_ids[ix:ix + n_edge_vertices] == edge_vertices_ids:
-                    return True
-
-        # if no match is found, return False
-        return False
-
-    @staticmethod
     def get_element_edges(element: 'Element') -> npt.NDArray[np.int64]:
         """
         Gets the nodal connectivities of the line edges of elements
@@ -304,7 +241,8 @@ class Utils:
         """
 
         # get nodal connectivities of the line edges from the local element edges dictionary
-        node_ids: npt.NDArray[np.int64] = np.array(element.node_ids, dtype=int)[ELEMENT_DATA[element.element_type]]
+        node_ids: npt.NDArray[np.int64] = np.array(element.node_ids, dtype=int)[
+            ELEMENT_DATA[element.element_type]["edges"]]
 
         return node_ids
 
@@ -398,8 +336,3 @@ class Utils:
         is_outwards: bool = np.dot(normal_vector_edge, body_inward_vector) < 0
 
         return is_outwards
-
-
-if __name__ == '__main__':
-    a = set(["test", "test", "test2"])
-    b = 1+1
