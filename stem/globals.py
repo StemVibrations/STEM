@@ -1,8 +1,9 @@
-from typing import Dict,  Any
-
 """
 This module contains global variables used in the stem package.
 """
+
+from typing import Dict,  Any
+
 
 #: Element data for supported element types in STEM. The data contains the following information: \
 #: - ndim (int): number of dimensions
