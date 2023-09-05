@@ -257,13 +257,13 @@ class KratosIO:
         )
 
         # write nodes
-        entities = [node.id for node in body_model_part.mesh.nodes]
+        entities = list(body_model_part.mesh.nodes.keys())
         block_text = self.__write_sub_model_part_block(
             block_text, block_name="Nodes", block_entities=entities
         )
 
         # write elements
-        entities = [el.id for el in body_model_part.mesh.elements]
+        entities = list(body_model_part.mesh.elements.keys())
         block_text = self.__write_sub_model_part_block(
             block_text, block_name="Elements", block_entities=entities
         )
@@ -310,7 +310,7 @@ class KratosIO:
         )
 
         # write nodes
-        entities = [node.id for node in process_model_part.mesh.nodes]
+        entities = list(process_model_part.mesh.nodes.keys())
         block_text = self.__write_sub_model_part_block(
             block_text, block_name="Nodes", block_entities=entities
         )
@@ -319,7 +319,8 @@ class KratosIO:
         if ((process_model_part.mesh.elements is not None) and
                 self.__check_if_process_writes_conditions(process_model_part)):
             # write conditions
-            entities = [el.id for el in process_model_part.mesh.elements]
+
+            entities = list(process_model_part.mesh.elements.keys())
             block_text = self.__write_sub_model_part_block(
                 block_text, block_name="Conditions", block_entities=entities
             )
@@ -460,7 +461,7 @@ class KratosIO:
 
         # check unique_elements
         element_part_type = np.unique(
-            [element.element_type for element in model_part.mesh.elements]
+            [element.element_type for element in model_part.mesh.elements.values()]
         )
 
         if len(element_part_type) > 1:
@@ -470,8 +471,7 @@ class KratosIO:
             )
 
         # get number of nodes per element
-        n_nodes_element = len(model_part.mesh.elements[0].node_ids)
-
+        n_nodes_element = len(next(iter(model_part.mesh.elements.values())).node_ids)
 
         # check analysis type
         if model.project_parameters is not None:
@@ -537,7 +537,7 @@ class KratosIO:
             block_text.extend(
                 [
                     self.__write_element_line(mat_id, el)
-                    for el in body_model_part.mesh.elements
+                    for el in body_model_part.mesh.elements.values()
                 ]
             )
         block_text += [f"End Elements", ""]
@@ -577,7 +577,7 @@ class KratosIO:
 
             block_text = ["", f"Begin Conditions {kratos_element_type}"]
             block_text.extend(
-                [self.__write_element_line(mat_id, el) for el in process_model_part.mesh.elements]
+                [self.__write_element_line(mat_id, el) for el in process_model_part.mesh.elements.values()]
             )
             block_text += [f"End Conditions", ""]
         else:

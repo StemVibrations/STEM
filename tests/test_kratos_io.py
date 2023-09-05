@@ -127,7 +127,7 @@ class TestKratosModelIO:
 
         # create model
         model = Model(ndim)
-        model.extrusion_length = [0, 0, -1]
+        model.extrusion_length = [0, 0, 1]
 
         # add soil layer and line load and mesh them
         model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
@@ -213,9 +213,9 @@ class TestKratosModelIO:
 
     def test_write_project_parameters_json(
         self,
-        create_default_2d_model_and_mesh:Model,
-        create_default_outputs:List[Output],
-        create_default_solver_settings:Problem
+        create_default_2d_model_and_mesh: Model,
+        create_default_outputs: List[Output],
+        create_default_solver_settings: Problem
     ):
         """
         Test correct writing of the project parameters for the default output, model and settings.
@@ -243,7 +243,7 @@ class TestKratosModelIO:
 
     def test_write_material_parameters_json(
         self,
-        create_default_2d_model_and_mesh:Model
+        create_default_2d_model_and_mesh: Model
     ):
         """
         Test correct writing of the material parameters for the default model.
@@ -258,7 +258,11 @@ class TestKratosModelIO:
         expected_dict = json.load(open("tests/test_data/expected_MaterialParameters.json", 'r'))
         TestUtils.assert_dictionary_almost_equal(expected_dict, actual_dict)
 
-    def test_write_mdpa_file_2d(self, create_default_2d_model_and_mesh: Model, create_default_solver_settings: Problem):
+    def test_write_mdpa_file_2d(
+        self,
+        create_default_2d_model_and_mesh: Model,
+        create_default_solver_settings: Problem
+    ):
         """
         Test correct writing of the mdpa file (mesh) for the default model and solver settings in 2D.
 
@@ -283,7 +287,11 @@ class TestKratosModelIO:
         npt.assert_equal(actual=actual_text, desired=expected_text)
 
     @pytest.mark.skipif(IS_LINUX, reason="Linux provides different meshing order. The test is not run on Ubuntu")
-    def test_write_mdpa_file_3d(self, create_default_3d_model_and_mesh: Model, create_default_solver_settings: Problem):
+    def test_write_mdpa_file_3d(
+        self,
+        create_default_3d_model_and_mesh: Model,
+        create_default_solver_settings: Problem
+    ):
         """
         Test correct writing of the mdpa file (mesh) for the default model and solver settings in 3D.
 
@@ -302,14 +310,18 @@ class TestKratosModelIO:
             mesh_file_name="test_mdpa_file_3d.mdpa",
             output_folder="dir_test"
         )
+
         with open('tests/test_data/expected_mdpa_file_3d.mdpa', 'r') as openfile:
             expected_text = openfile.readlines()
 
         npt.assert_equal(actual=actual_text, desired=expected_text)
 
-    def test_write_input_files_for_kratos(self, create_default_2d_model_and_mesh: Model,
-                                          create_default_solver_settings: Problem,
-                                          create_default_outputs: List[Output]):
+    def test_write_input_files_for_kratos(
+        self,
+        create_default_2d_model_and_mesh: Model,
+        create_default_solver_settings: Problem,
+        create_default_outputs: List[Output]
+    ):
         """
         Test correct writing of the mdpa file (mesh) for the default model and solver settings.
 

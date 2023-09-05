@@ -1,6 +1,12 @@
-from typing import Sequence, Dict, Any, List, Union, Optional, Generator
+from typing import Sequence, Dict, Any, List, Union, Optional, Generator, TYPE_CHECKING
 
 import numpy as np
+import numpy.typing as npt
+
+from stem.globals import ELEMENT_DATA
+
+if TYPE_CHECKING:
+    from stem.mesh import Element
 
 
 class Utils:
@@ -220,3 +226,113 @@ class Utils:
             - List[Any]: list of unique objects
         """
         return list({id(obj): obj for obj in input_sequence}.values())
+
+    @staticmethod
+    def get_element_edges(element: 'Element') -> npt.NDArray[np.int64]:
+        """
+        Gets the nodal connectivities of the line edges of elements
+
+        Args:
+            - element (:class:`stem.mesh.Element`): element object
+
+        Returns:
+            - npt.NDArray[np.int64]: nodal connectivities of the line edges of the element
+
+        """
+
+        # get nodal connectivities of the line edges from the local element edges dictionary
+        node_ids: npt.NDArray[np.int64] = np.array(element.node_ids, dtype=int)[
+            ELEMENT_DATA[element.element_type]["edges"]]
+
+        return node_ids
+
+    @staticmethod
+    def flip_node_order(elements: Sequence['Element']):
+        """
+        Flips the node order of the elements, where all elements should be of the same type.
+
+        Args:
+            - elements (List[:class:`stem.mesh.Element`]): list of elements
+
+        Raises:
+            - ValueError: when the elements are not of the same type.
+
+        """
+
+        # return of no elements are provided
+        if len(elements) == 0:
+            return
+
+        # check if all elements are of the same type and get the element type
+        element_types = set([element.element_type for element in elements])
+        if len(element_types) > 1:
+            raise ValueError("All elements should be of the same type.")
+        element_type = list(element_types)[0]
+
+        # retrieve element ids and connectivities
+        ids = [element.id for element in elements]
+        element_connectivies = np.array([element.node_ids for element in elements])
+
+        # flip the elements connectivities
+        element_connectivies = element_connectivies[:, ELEMENT_DATA[element_type]["reversed_order"]]
+
+        # update the elements connectivities
+        for i, (id, element_connectivity) in enumerate(zip(ids, element_connectivies)):
+            elements[i].node_ids = list(element_connectivity)
+
+    @staticmethod
+    def is_volume_edge_defined_outwards(edge_element: 'Element', body_element: 'Element',
+                                        nodes: Dict[int, Sequence[float]]) -> Optional[bool]:
+        """
+        Checks if the normal vector of the edge element is pointing outwards of the body element.
+
+        Args:
+            - edge_element (:class:`stem.mesh.Element`): 2D edge surface element
+            - body_element (:class:`stem.mesh.Element`): 3D body volume element
+            - nodes (Dict[int, Sequence[float]]): dictionary of node ids and coordinates
+
+        Raises:
+            - ValueError: when the edge element is not a 2D element.
+            - ValueError: when the body element is not a 3D element.
+            - ValueError: when not all nodes of the edge element are part of the body element.
+
+        Returns:
+            - Optional[bool]: True if the normal vector of the edge element is pointing outwards of the body element,
+                False otherwise.
+
+        """
+
+        # element info such as order, number of edges, element types etc.
+        edge_el_info = ELEMENT_DATA[edge_element.element_type]
+        body_el_info = ELEMENT_DATA[body_element.element_type]
+
+        if edge_el_info["ndim"] != 2:
+            raise ValueError("Edge element should be a 2D element.")
+
+        if body_el_info["ndim"] != 3:
+            raise ValueError("Body element should be a 3D element.")
+
+        if not set(edge_element.node_ids).issubset(set(body_element.node_ids)):
+            raise ValueError("All nodes of the edge element should be part of the body element.")
+
+        # calculate normal vector of edge element
+        coordinates_edge = np.array([nodes[node_id] for node_id in edge_element.node_ids[:edge_el_info["n_vertices"]]])
+
+        normal_vector_edge = np.cross(coordinates_edge[1, :] - coordinates_edge[0, :],
+                                      coordinates_edge[2, :] - coordinates_edge[0, :])
+
+        # calculate centroid of neighbouring body element
+        body_vertices_ids = body_element.node_ids[:body_el_info["n_vertices"]]
+        coordinates_body_element = np.array([nodes[node_id] for node_id in body_vertices_ids])
+        centroid_volume = np.mean(coordinates_body_element, axis=0)
+
+        # calculate centroid of edge element
+        centroid_edge = np.mean(coordinates_edge, axis=0)
+
+        # calculate vector inwards of body element
+        body_inward_vector = centroid_volume - centroid_edge
+
+        # check if normal vector of edge element is pointing outwards of body element
+        is_outwards: bool = np.dot(normal_vector_edge, body_inward_vector) < 0
+
+        return is_outwards
