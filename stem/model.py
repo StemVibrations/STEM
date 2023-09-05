@@ -385,7 +385,7 @@ class Model:
         """
         # validation step for process model part
         if process_model_part.mesh is None:
-            raise ValueError("Mesh not yet initialised.")
+            raise ValueError(f"Mesh of process model part: {process_model_part.name} is not yet initialised.")
 
         # get all the node ids for all the elements in the process model (pmp) part and the indices of each element in
         # the array
@@ -400,7 +400,7 @@ class Model:
 
             # validation step for body model part
             if body_model_part.mesh is None:
-                raise ValueError("Mesh not yet initialised.")
+                raise ValueError(f"Mesh of body model part: {body_model_part.name} is not yet initialised.")
 
             # if there is nothing to match, break the loop
             if len(unmatched_connectivities_pmp) == 0:
@@ -446,10 +446,8 @@ class Model:
 
         # if there are still process elements which do not share the nodes of body elements, raise an error
         if len(unmatched_connectivities_pmp) != 0:
-            raise ValueError(
-                "Some process model parts remain uncoupled! Error. Process model part not applied"
-                "on a body model part."
-            )
+            raise ValueError(f"In process model part: {process_model_part.name}, the node ids: "
+                             f"{list(unmatched_connectivities_pmp)}, are not present in a body model part.")
 
         return matched_elements
 
@@ -471,7 +469,7 @@ class Model:
         """
 
         if process_model_part.mesh is None:
-            raise ValueError("Mesh not yet initialised.")
+            raise ValueError(f"Mesh of process model part: {process_model_part.name} is not yet initialised.")
 
         # loop over the matched elements
         flip_node_order = np.zeros(len(matched_elements), dtype=bool)

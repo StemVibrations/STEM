@@ -1,7 +1,6 @@
 import json
 
 import numpy as np
-import numpy.typing as npt
 
 from stem.IO.kratos_io import KratosIO
 from stem.boundary import *
