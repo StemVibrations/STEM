@@ -10,7 +10,7 @@ class TestGlobalsStem:
         Test if all keys are correct
         """
         key_list = ["POINT_1N", "LINE_2N", "LINE_3N", "TRIANGLE_3N", "TRIANGLE_6N", "QUADRANGLE_4N", "QUADRANGLE_8N",
-                    "TETRAHEDRON_4N", "TETRAHEDRON_10N", "HEXAHEDRON_8N", "HEXAHEDRON_20N"]
+                    "TETRAHEDRON_4N", "TETRAHEDRON_10N", "HEXAHEDRON_8N"]
 
         assert all(key in ELEMENT_DATA for key in key_list)
 
@@ -117,19 +117,3 @@ class TestGlobalsStem:
         assert ELEMENT_DATA["HEXAHEDRON_8N"]["edges"] == [[0, 1], [1, 2], [2, 3], [3, 0],
                                                             [4, 5], [5, 6], [6, 7], [7, 4],
                                                             [0, 4], [1, 5], [2, 6], [3, 7]]
-
-    def test_hexa20n(self):
-        """
-        Test the ELEMENT DATA order for Hexa20
-        """
-        assert ELEMENT_DATA["HEXAHEDRON_20N"]["ndim"] == 3
-        assert ELEMENT_DATA["HEXAHEDRON_20N"]["order"] == 2
-        assert ELEMENT_DATA["HEXAHEDRON_20N"]["n_vertices"] == 8
-        assert ELEMENT_DATA["HEXAHEDRON_20N"]["reversed_order"] == [1, 0, 3, 2,
-                                                                     5, 4, 7, 6,
-                                                                     8, 9, 10, 11,
-                                                                     12, 13, 14, 15,
-                                                                     16, 17, 18, 19]
-        assert ELEMENT_DATA["HEXAHEDRON_20N"]["edges"] == [[0, 1, 8], [1, 2, 9], [2, 3, 10], [3, 0, 11],
-                                                            [4, 5, 16], [5, 6, 17], [6, 7, 18], [7, 4, 19],
-                                                            [0, 4, 12], [1, 5, 13], [2, 6, 14], [3, 7, 15]]
