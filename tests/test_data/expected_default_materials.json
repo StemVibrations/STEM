@@ -56,6 +56,57 @@
                 }
             },
             "Tables": {}
+        },
+                {
+            "model_part_name": "PorousDomain.default_elastic_rail_46E3_2D",
+            "properties_id": 4,
+            "Material": {
+                "constitutive_law": {
+                    "name": "KratosMultiphysics.StructuralMechanicsApplication.BeamConstitutiveLaw"
+                },
+                "Variables": {
+                    "YOUNG_MODULUS": 2.1e11,
+                    "POISSON_RATIO": 0.3,
+                    "DENSITY": 7850,
+                    "CROSS_AREA":0.005944,
+                    "I33":1.606e-05
+                }
+            },
+            "Tables": {}
+        },
+        {
+            "model_part_name": "PorousDomain.default_elastic_rail_54E1_2D",
+            "properties_id": 5,
+            "Material": {
+                "constitutive_law": {
+                    "name": "KratosMultiphysics.StructuralMechanicsApplication.BeamConstitutiveLaw"
+                },
+                "Variables": {
+                    "YOUNG_MODULUS": 2.1e11,
+                    "POISSON_RATIO": 0.3,
+                    "DENSITY": 7850,
+                    "CROSS_AREA":0.006977,
+                    "I33": 2.3372e-05
+                }
+            },
+            "Tables": {}
+        },
+        {
+            "model_part_name": "PorousDomain.default_elastic_rail_60E1_2D",
+            "properties_id": 6,
+            "Material": {
+                "constitutive_law": {
+                    "name": "KratosMultiphysics.StructuralMechanicsApplication.BeamConstitutiveLaw"
+                },
+                "Variables": {
+                    "YOUNG_MODULUS": 2.1e11,
+                    "POISSON_RATIO": 0.3,
+                    "DENSITY": 7850,
+                    "CROSS_AREA":0.00767,
+                    "I33": 3.038e-05
+                }
+            },
+            "Tables": {}
         }
     ]
 }

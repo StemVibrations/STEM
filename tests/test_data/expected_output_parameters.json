@@ -55,6 +55,35 @@
                     "point_data_configuration":  []
                 }
             }
+        },
+        {
+            "python_module": "gid_output_process",
+            "kratos_module": "KratosMultiphysics",
+            "process_name": "GiDOutputProcess",
+            "Parameters":    {
+                "model_part_name": "PorousDomain.test_gid_output",
+                "output_name": "dir_test/test_gid3",
+                "postprocess_parameters": {
+                    "result_file_configuration": {
+                        "gidpost_flags":       {
+                            "WriteDeformedMeshFlag": "WriteUndeformed",
+                            "WriteConditionsFlag":   "WriteElementsOnly",
+                            "GiDPostMode":           "GiD_PostHDF5",
+                            "MultiFileFlag":         "SingleFile"
+                        },
+                        "file_label":          "step",
+                        "output_control_type": "step",
+                        "output_interval":     100,
+                        "body_output":         true,
+                        "node_output":         false,
+                        "skin_output":         false,
+                        "plane_output":        [],
+                        "nodal_results":       ["WATER_PRESSURE","VOLUME_ACCELERATION"],
+                        "gauss_point_results": ["GREEN_LAGRANGE_STRAIN_TENSOR","ENGINEERING_STRAIN_TENSOR","CAUCHY_STRESS_TENSOR","TOTAL_STRESS_TENSOR"]
+                    },
+                    "point_data_configuration":  []
+                }
+            }
         }],
         "vtk_output": [{
             "python_module": "vtk_output_process",

@@ -9,7 +9,7 @@ class Table:
 
     """
     Class to write time-dependent functions for imposed load and constraints.
-    If analysis runs outside the specified time-steps, the function is extrapolated.
+    If analysis runs outside the specified time-steps, the function is linearly extrapolated.
     If load/constraint is required to remain constant, please specify the same load/constraint value for the last
     two point of the sequence/array.
 

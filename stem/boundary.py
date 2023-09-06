@@ -1,5 +1,5 @@
 from typing import List, Dict, Any, Union, Optional
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from abc import ABC, abstractmethod
 
 from stem.solver import AnalysisType
@@ -27,7 +27,7 @@ class BoundaryParametersABC(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
         """
         Abstract static method to get the element name for a boundary condition.
 
@@ -74,7 +74,7 @@ class DisplacementConstraint(BoundaryParametersABC):
         return True
 
     @staticmethod
-    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
         """
         Static method to get the element name for a displacement constraint. Displacement constraint does not have a
         name.
@@ -142,7 +142,7 @@ class RotationConstraint(BoundaryParametersABC):
         return True
 
     @staticmethod
-    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
         """
         Static method to get the element name for a rotation constraint. Rotation constraint does not have a
         name.
@@ -205,7 +205,7 @@ class AbsorbingBoundary(BoundaryParametersABC):
         return False
 
     @staticmethod
-    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType):
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
         """
         Static method to get the element name for an absorbing boundary.
 
@@ -219,7 +219,7 @@ class AbsorbingBoundary(BoundaryParametersABC):
                 flow analysis
 
         Returns:
-            - str: The element name
+            - Optional[str]: The element name
 
         """
 

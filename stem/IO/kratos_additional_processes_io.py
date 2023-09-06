@@ -1,5 +1,4 @@
 from typing import Any, Dict, Union
-from copy import deepcopy
 
 from stem.additional_processes import *
 

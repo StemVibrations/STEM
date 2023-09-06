@@ -1,5 +1,3 @@
-import json
-from copy import deepcopy
 from pathlib import Path
 from typing import List, Dict, Tuple, Union, Any
 
@@ -30,13 +28,8 @@ class KratosOutputsIO:
         """
         self.domain = domain
 
-    def __create_gid_output_dict(
-        self,
-        part_name: str,
-        output_dir: Path,
-        output_name: str,
-        output_parameters: GiDOutputParameters,
-    ) -> Dict[str, Any]:
+    def __create_gid_output_dict(self, part_name: str, output_dir: Path, output_name: str,
+                                 output_parameters: GiDOutputParameters) -> Dict[str, Any]:
         """
         Creates a dictionary containing the output parameters to produce outputs in GiD
         format. To visualize the outputs, the software GiD is required.
@@ -56,7 +49,7 @@ class KratosOutputsIO:
             output_name = f"{part_name}"
 
         output_path = output_dir.joinpath(output_name)
-        output_path_gid = str(output_path).replace("\\", "/")
+        output_path_gid = Path(output_path).as_posix()
 
         if output_parameters.file_format == "binary":
             gid_post_mode = "GiD_PostBinary"
@@ -114,13 +107,8 @@ class KratosOutputsIO:
 
         return output_dict
 
-    def __create_vtk_output_dict(
-        self,
-        part_name: str,
-        output_dir: Path,
-        output_name: str,
-        output_parameters: VtkOutputParameters,
-    ) -> Dict[str, Any]:
+    def __create_vtk_output_dict(self, part_name: str, output_dir: Path, output_name: str,
+                                 output_parameters: VtkOutputParameters) -> Dict[str, Any]:
         """
         Creates a dictionary containing the output parameters to produce outputs in vtk
         format. The format can be visualized e.g., using Paraview.
@@ -136,7 +124,7 @@ class KratosOutputsIO:
             - Dict[str, Any]: dictionary containing the output parameters in Kratos format
         """
 
-        output_path_vtk = str(output_dir).replace("\\", "/")
+        output_path_vtk = Path(output_dir).as_posix()
         model_part_name = f"{self.domain}"
         if part_name is not None:
             model_part_name += f".{part_name}"
@@ -166,13 +154,8 @@ class KratosOutputsIO:
 
         return output_dict
 
-    def __create_json_output_dict(
-        self,
-        part_name,
-        output_dir: Path,
-        output_name: str,
-        output_parameters: JsonOutputParameters,
-    ) -> Dict[str, Any]:
+    def __create_json_output_dict(self, part_name, output_dir: Path, output_name: str,
+                                  output_parameters: JsonOutputParameters) -> Dict[str, Any]:
         """
         Creates a dictionary containing the output parameters to produce outputs in
         JSON format.
@@ -199,7 +182,7 @@ class KratosOutputsIO:
         if output_path.suffix == "":
             output_path = output_path.with_suffix(".json")
 
-        output_path_json = str(output_path).replace("\\", "/")
+        output_path_json = Path(output_path).as_posix()
 
         model_part_name = f"{self.domain}"
         if part_name is not None:

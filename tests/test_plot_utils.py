@@ -1,12 +1,10 @@
 import pytest
+from pathlib import Path
 
 from stem.model import Model
 from stem.soil_material import SoilMaterial, OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
 from stem.plot_utils import PlotUtils
 from stem.geometry import Point, Line
-
-# plots are not shown in the CI, but can be enabled for local testing
-SHOW_PLOTS = False
 
 
 class TestPlotUtils:
@@ -16,7 +14,7 @@ class TestPlotUtils:
     """
 
     @pytest.fixture
-    def create_default_2d_soil_material(self):
+    def create_default_2d_soil_material(self) -> SoilMaterial:
         """
         Create a default soil material for a 2D geometry.
 
@@ -33,7 +31,7 @@ class TestPlotUtils:
         return soil_material
 
     @pytest.fixture
-    def create_default_3d_soil_material(self):
+    def create_default_3d_soil_material(self) -> SoilMaterial:
         """
         Create a default soil material for a 3D geometry.
 
@@ -50,7 +48,7 @@ class TestPlotUtils:
         return soil_material
 
     @staticmethod
-    def create_geometry(ndim: int, material: SoilMaterial):
+    def create_geometry_plot_and_assert(ndim: int, material: SoilMaterial) -> None:
         """
         Create a geometry and plots it.
 
@@ -80,9 +78,26 @@ class TestPlotUtils:
         # synchronise geometry
         model.synchronise_geometry()
 
-        return model
+        # create figure
+        fig = PlotUtils.create_geometry_figure(model.ndim, model.geometry, True, True, True, True)
 
-    @pytest.mark.skipif(not SHOW_PLOTS, reason="Plotting is disabled")
+        # save to eps for testing
+        fig.savefig(f"tests/generated_geometry_{ndim}D.eps", format="eps", bbox_inches="tight", pad_inches=0.1)
+
+        with open(f"tests/generated_geometry_{ndim}D.eps", "r") as f:
+            generated_geometry = f.readlines()
+
+        with open(f"tests/test_data/expected_geometry_{ndim}D.eps", "r") as f:
+            expected_geometry = f.readlines()
+
+        # skip checking header lines
+        n_header_lines = 9
+        for i in range(n_header_lines, len(generated_geometry)):
+            assert generated_geometry[i] == expected_geometry[i]
+
+        # remove generated file
+        Path(f"tests/generated_geometry_{ndim}D.eps").unlink()
+
     def test_plot_geometry_2D(self, create_default_2d_soil_material: SoilMaterial):
         """
         Test the plot of a 2D geometry.
@@ -93,10 +108,7 @@ class TestPlotUtils:
         """
 
         # create geometry and plot it
-        model = self.create_geometry(2, create_default_2d_soil_material)
-
-        # show geometry
-        PlotUtils.show_geometry(model.ndim, model.geometry, True, True, True, True)
+        self.create_geometry_plot_and_assert(2, create_default_2d_soil_material)
 
     @pytest.mark.skipif(not SHOW_PLOTS, reason="Plotting is disabled")
     def test_plot_geometry_with_loose_lines_2D(self, create_default_2d_soil_material: SoilMaterial):
@@ -122,7 +134,6 @@ class TestPlotUtils:
         # show geometry
         PlotUtils.show_geometry(model.ndim, model.geometry, True, True, True, True)
 
-    @pytest.mark.skipif(not SHOW_PLOTS, reason="Plotting is disabled")
     def test_plot_geometry_3D(self, create_default_3d_soil_material: SoilMaterial):
         """
         Test the plot of a 3D geometry.
@@ -132,11 +143,8 @@ class TestPlotUtils:
 
         """
 
-        # create geometry
-        model = self.create_geometry(3, create_default_3d_soil_material)
-
-        # show geometry
-        PlotUtils.show_geometry(model.ndim, model.geometry, True, True, True, True)
+        # create geometry and plot it
+        self.create_geometry_plot_and_assert(3, create_default_3d_soil_material)
 
     @pytest.mark.skipif(not SHOW_PLOTS, reason="Plotting is disabled")
     def test_plot_geometry_with_loose_lines_3D(self, create_default_3d_soil_material: SoilMaterial):

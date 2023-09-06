@@ -3,6 +3,8 @@ from typing import Dict, Any
 import numpy.testing as npt
 from stem.geometry import Geometry
 from stem.soil_material import SoilMaterial, OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
+from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
+                         StressInitialisationType, SolverSettings, Problem)
 
 class TestUtils:
 
@@ -24,6 +26,36 @@ class TestUtils:
                                      retention_parameters=SaturatedBelowPhreaticLevelLaw())
 
         return soil_material
+
+    @staticmethod
+    def create_default_solver_settings() -> Problem:
+        """
+        Sets default solver settings. Which are required to write the mesh and project parameters.
+
+        Returns:
+            - :class:`stem.solver.Problem`: the Problem object containing the solver settings.
+
+        """
+        # set up solver settings
+        analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
+
+        solution_type = SolutionType.QUASI_STATIC
+
+        stress_initialisation_type = StressInitialisationType.NONE
+
+        time_integration = TimeIntegration(start_time=0.0, end_time=1.0, delta_time=0.1, reduction_factor=0.5,
+                                           increase_factor=2.0, max_delta_time_factor=500)
+
+        convergence_criteria = DisplacementConvergenceCriteria()
+
+        solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
+                                         stress_initialisation_type=stress_initialisation_type,
+                                         time_integration=time_integration,
+                                         is_stiffness_matrix_constant=False, are_mass_and_damping_constant=False,
+                                         convergence_criteria=convergence_criteria)
+
+        # set up problem data
+        return Problem(problem_name="test", number_of_threads=2, settings=solver_settings)
 
     @staticmethod
     def assert_dictionary_almost_equal(expected: Dict[Any, Any], actual: Dict[Any, Any]):
