@@ -15,7 +15,7 @@ from stem.load import *
 from stem.solver import Problem, StressInitialisationType
 from stem.utils import Utils
 from stem.plot_utils import PlotUtils
-from stem.globals import ELEMENT_DATA, VERTICAL_AXIS, GRAVITY_VALUE
+from stem.globals import ELEMENT_DATA, VERTICAL_AXIS, GRAVITY_VALUE, TEMP_ZERO_THICKNESS
 
 
 NUMBER_TYPES = (int, float, np.int64, np.float64)
@@ -79,14 +79,14 @@ class Model:
         rail_local_distance = np.linspace(0, sleeper_distance * (n_sleepers - 1), n_sleepers)
         sleeper_local_coords = np.copy(rail_local_distance)
 
-        # todo kratos allows for a 0 thickness rail pad height, however gmsh needs to deal with fragmentation,
-        # so we add a small height to prevent wrong fragmentation. Investigate the possibility to reset the thickness to
-        # zero after the mesh is generated
-        rail_pad_height = 0.1
+        # # todo kratos allows for a 0 thickness rail pad height, however gmsh needs to deal with fragmentation,
+        # # so we add a small height to prevent wrong fragmentation. Investigate the possibility to reset the thickness to
+        # # zero after the mesh is generated
+        # rail_pad_height = TEMP_ZERO_THICKNESS
 
         # set rail geometry
         rail_global_coords = rail_local_distance[:, None].dot(normalized_direction_vector[None, :]) + origin_point
-        rail_global_coords[:, VERTICAL_AXIS] += rail_pad_height
+        rail_global_coords[:, VERTICAL_AXIS] += TEMP_ZERO_THICKNESS
 
         rail_geo_settings = {rail_name: {"coordinates": rail_global_coords, "ndim": 1}}
         self.gmsh_io.generate_geometry(rail_geo_settings, "")
@@ -110,6 +110,7 @@ class Model:
         rail_model_part = BodyModelPart(rail_name)
         rail_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_name)
         rail_model_part.material = rail_parameters
+        rail_model_part._is_shifted = True
 
         sleeper_model_part = BodyModelPart(sleeper_name)
         sleeper_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, sleeper_name)
@@ -119,9 +120,29 @@ class Model:
         rail_pads_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_pads_name)
         rail_pads_model_part.material = rail_pad_parameters
 
+        # add physical group to gmsh
+        rail_constraint_name = f"constraint_{rail_name}"
+        rail_constraint_geometry_ids = self.gmsh_io.geo_data["physical_groups"][rail_name]["geometry_ids"]
+        self.gmsh_io.add_physical_group(f"constraint_{rail_name}", 1, rail_constraint_geometry_ids)
+
+        # create model part
+        model_part = ModelPart(rail_constraint_name)
+
+        # retrieve geometry from gmsh and add to model part
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
+
+        # add displacement_constraint in x and z direction
+        model_part.parameters = DisplacementConstraint(active=[True, True, True],  is_fixed=[True, False, True],
+                                                       value=[0, 0, 0])
+
+
         self.body_model_parts.append(rail_model_part)
         self.body_model_parts.append(sleeper_model_part)
         self.body_model_parts.append(rail_pads_model_part)
+
+        self.process_model_parts.append(model_part)
+
+
 
         return sleeper_global_coords
 
@@ -410,6 +431,13 @@ class Model:
         # add the mesh to each model part
         for model_part in all_model_parts:
             model_part.mesh = Mesh.create_mesh_from_gmsh_group(self.gmsh_io.mesh_data, model_part.name)
+
+        # Shift back the nodes of the body model parts in the vertical direction, note that this has to be done after
+        # generating the mesh for each model part
+        for model_part in self.body_model_parts:
+            if model_part.is_shifted:
+                for node in model_part.mesh.nodes.values():
+                    node.coordinates[VERTICAL_AXIS] -= TEMP_ZERO_THICKNESS
 
         # per process model part, check if the condition elements are applied to a body model part and set the
         # node ordering of the condition elements to match the body elements

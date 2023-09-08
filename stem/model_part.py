@@ -40,6 +40,7 @@ class ModelPart:
         ] = None
         self.mesh: Optional[Mesh] = None
         self.id: Optional[int] = None
+        self._is_shifted: bool = False
 
     @property
     def name(self) -> str:
@@ -81,6 +82,10 @@ class ModelPart:
             return self.parameters.get_element_name(n_dim_model, n_nodes_element, analysis_type)
         else:
             return None
+
+    @property
+    def is_shifted(self):
+        return self._is_shifted
 
 
 class BodyModelPart(ModelPart):
