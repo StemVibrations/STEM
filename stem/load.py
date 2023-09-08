@@ -1,10 +1,10 @@
 from typing import List, Dict, Any, Union, Optional
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 
 import numpy as np
 
-import stem.global_variables as global_variables
+from stem.globals import GRAVITY_VALUE, VERTICAL_AXIS
 from stem.solver import AnalysisType
 from stem.table import Table
 from stem.utils import Utils
@@ -265,7 +265,7 @@ class GravityLoad(LoadParametersABC):
 
         """
         if np.allclose(self.value,[0, 0, 0]):
-            self.value[global_variables.GRAVITY_AXIS] = -global_variables.GRAVITY_VALUE
+            self.value[VERTICAL_AXIS] = -GRAVITY_VALUE
 
     @staticmethod
     def get_element_name(n_dim_model, n_nodes_element, analysis_type) -> Optional[str]:
