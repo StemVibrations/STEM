@@ -5,7 +5,6 @@ import numpy as np
 
 from gmsh_utils import gmsh_IO
 
-import stem.global_variables as global_variables
 from stem.model_part import ModelPart, BodyModelPart
 from stem.soil_material import *
 from stem.structural_material import *
@@ -16,7 +15,7 @@ from stem.load import *
 from stem.solver import Problem, StressInitialisationType
 from stem.utils import Utils
 from stem.plot_utils import PlotUtils
-from stem.globals import ELEMENT_DATA
+from stem.globals import ELEMENT_DATA, VERTICAL_AXIS, GRAVITY_VALUE
 
 
 NUMBER_TYPES = (int, float, np.int64, np.float64)
@@ -87,7 +86,7 @@ class Model:
 
         # set rail geometry
         rail_global_coords = rail_local_distance[:, None].dot(normalized_direction_vector[None, :]) + origin_point
-        rail_global_coords[:, global_variables.GRAVITY_AXIS] += rail_pad_height
+        rail_global_coords[:, VERTICAL_AXIS] += rail_pad_height
 
         rail_geo_settings = {rail_name: {"coordinates": rail_global_coords, "ndim": 1}}
         self.gmsh_io.generate_geometry(rail_geo_settings, "")
@@ -182,8 +181,7 @@ class Model:
                 self.process_model_parts.append(model_part)
 
     def add_soil_layer_by_coordinates(self, coordinates: Sequence[Sequence[float]],
-                       material_parameters: Union[SoilMaterial, StructuralMaterial], name: str,
-                       ):
+                                      material_parameters: Union[SoilMaterial, StructuralMaterial], name: str):
         """
         Adds a soil layer to the model by giving a sequence of 2D coordinates. In 3D the 2D geometry is extruded in
         the direction of the extrusion_length
@@ -634,7 +632,7 @@ class Model:
 
         # set gravity load at vertical axis
         gravity_load_values: List[float] = [0, 0, 0]
-        gravity_load_values[global_variables.GRAVITY_AXIS] = -global_variables.GRAVITY_VALUE
+        gravity_load_values[VERTICAL_AXIS] = -GRAVITY_VALUE
         gravity_load = GravityLoad(value=gravity_load_values, active=[True, True, True])
 
         # get all body model part names
