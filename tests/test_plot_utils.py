@@ -154,7 +154,7 @@ class TestPlotUtils:
             assert generated_geometry[i] == expected_geometry[i]
 
         # remove generated file
-        Path(f"tests/generated_geometry__with_loose_lines_{ndim}D.eps").unlink()
+        Path(f"tests/generated_geometry_with_loose_lines_{ndim}D.eps").unlink()
 
     def test_plot_geometry_2D(self, create_default_2d_soil_material: SoilMaterial):
         """
