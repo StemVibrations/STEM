@@ -129,12 +129,11 @@ class Model:
         model_part = ModelPart(rail_constraint_name)
 
         # retrieve geometry from gmsh and add to model part
-        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_constraint_name)
 
         # add displacement_constraint in x and z direction
         model_part.parameters = DisplacementConstraint(active=[True, True, True],  is_fixed=[True, False, True],
                                                        value=[0, 0, 0])
-
 
         self.body_model_parts.append(rail_model_part)
         self.body_model_parts.append(sleeper_model_part)
@@ -437,7 +436,7 @@ class Model:
         for model_part in self.body_model_parts:
             if model_part.is_shifted:
                 for node in model_part.mesh.nodes.values():
-                    node.coordinates[VERTICAL_AXIS] -= TEMP_ZERO_THICKNESS
+                    node.coordinates[2] -= TEMP_ZERO_THICKNESS
 
         # per process model part, check if the condition elements are applied to a body model part and set the
         # node ordering of the condition elements to match the body elements
