@@ -7,12 +7,28 @@ from stem.model import Model
 from stem.soil_material import SoilMaterial, OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
 from stem.plot_utils import PlotUtils
 
+from gmsh_utils import gmsh_IO
+
 
 class TestPlotUtils:
     """
     Test class for the :class:`stem.plot_utils.PlotUtils` class.
 
     """
+
+    @pytest.fixture(autouse=True)
+    def close_gmsh(self):
+        """
+        Initializer to close gmsh if it was not closed before. In case a test fails, the destroyer method is not called
+        on the Model object and gmsh keeps on running. Therefore, nodes, lines, surfaces and volumes ids are not
+        reset to one. This causes also the next test after the failed one to fail as well, which has nothing to do
+        the test itself.
+
+        Returns:
+            - None
+
+        """
+        gmsh_IO.GmshIO().finalize_gmsh()
 
     @pytest.fixture
     def create_default_2d_soil_material(self) -> SoilMaterial:
@@ -106,7 +122,7 @@ class TestPlotUtils:
             assert generated_line == expected_line
 
         # remove generated file
-        Path(f"tests/generated_geometry_{ndim}D.html").unlink()
+        # Path(f"tests/generated_geometry_{ndim}D.html").unlink()
 
     def test_plot_geometry_2D(self, create_default_2d_soil_material: SoilMaterial):
         """
