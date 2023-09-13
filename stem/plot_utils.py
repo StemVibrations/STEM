@@ -35,8 +35,8 @@ class PlotUtils:
         surface_point_ids: List[int] = []
 
         # calculate centroids of lines to show line ids
-        line_centroids = []
-        for line_k in surface.line_ids:
+        line_centroids = np.zeros((len(surface.line_ids), 3))
+        for i, line_k in enumerate(surface.line_ids):
 
             # get current line
             line = geometry.lines[abs(line_k)]
@@ -49,12 +49,10 @@ class PlotUtils:
                 line_connectivities = line_connectivities[::-1]
 
             # calculate line centroid
-            line_centroids.append(np.mean([geometry.points[line_connectivities[0]].coordinates,
-                                           geometry.points[line_connectivities[1]].coordinates], axis=0))
+            line_centroids[i, :] = np.mean([geometry.points[line_connectivities[0]].coordinates,
+                                               geometry.points[line_connectivities[1]].coordinates], axis=0)
 
             surface_point_ids.extend(line_connectivities)
-
-        line_centroids = np.array(line_centroids)
 
         # get unique points within surface
         unique_points = []
@@ -75,7 +73,7 @@ class PlotUtils:
 
         # calculate surface centroid and add to list of all surface centroids which are required to calculate
         # the volume centroid
-        surface_centroid = np.mean(surface_point_coordinates, axis=0)
+        surface_centroid: npt.NDArray[np.float64] = np.mean(surface_point_coordinates, axis=0, dtype=np.float64)
 
         # show surface ids
         if show_surface_ids:
@@ -125,8 +123,8 @@ class PlotUtils:
         surface_point_ids: List[int] = []
 
         # calculate centroids of lines to show line ids
-        line_centroids = []
-        for line_k in surface.line_ids:
+        line_centroids = np.zeros((len(surface.line_ids), 3))
+        for i, line_k in enumerate(surface.line_ids):
 
             # get current line
             line = geometry.lines[abs(line_k)]
@@ -139,12 +137,10 @@ class PlotUtils:
                 line_connectivities = line_connectivities[::-1]
 
             # calculate line centroid
-            line_centroids.append(np.mean([geometry.points[line_connectivities[0]].coordinates,
-                                           geometry.points[line_connectivities[1]].coordinates], axis=0))
+            line_centroids[i, :] = np.mean([geometry.points[line_connectivities[0]].coordinates,
+                                               geometry.points[line_connectivities[1]].coordinates], axis=0)
 
             surface_point_ids.extend(line_connectivities)
-
-        line_centroids = np.array(line_centroids)
 
         # get unique points within surface
         unique_points = []
@@ -178,7 +174,7 @@ class PlotUtils:
 
         # calculate surface centroid and add to list of all surface centroids which are required to calculate
         # the volume centroid
-        surface_centroid = np.mean(surface_point_coordinates, axis=0)
+        surface_centroid: npt.NDArray[np.float64] = np.mean(surface_point_coordinates, axis=0, dtype=np.float64)
 
         # show surface ids
         if show_surface_ids:
