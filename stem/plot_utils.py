@@ -1,16 +1,10 @@
 import numpy as np
 import numpy.typing as npt
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-# Axes3D import has side effects, it enables using projection='3d' in add_subplot
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection, PolyCollection
 import plotly.graph_objects as go
 
 # import required typing classes
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List
 
-from stem.mesh import Mesh
-from stem.model_part import BodyModelPart, ModelPart
 
 if TYPE_CHECKING:
     from stem.geometry import Geometry, Volume, Surface
@@ -19,10 +13,11 @@ if TYPE_CHECKING:
 class PlotUtils:
 
     @staticmethod
-    def __add_2d_surface_to_plot(geometry: 'Geometry',  surface: 'Surface', show_surface_ids,
-                                 show_line_ids, show_point_ids, fig):
+    def __add_2d_surface_to_plot(geometry: 'Geometry',  surface: 'Surface', show_surface_ids: bool,
+                                 show_line_ids: bool, show_point_ids: bool,
+                                 fig: 'go.Figure') -> npt.NDArray[np.float64]:
         """
-        Adds a 2D surface to a plot
+        Adds a 2D surface to a plotly graph object figure
 
         Args:
             - geometry (stem.geometry.Geometry): geometry object
@@ -30,7 +25,7 @@ class PlotUtils:
             - show_surface_ids (bool): flag to show surface ids
             - show_line_ids (bool): flag to show line ids
             - show_point_ids (bool): flag to show point ids
-            - ax (matplotlib.axes.Axes): axes object to which the surface is added
+            - fig (plotly.graph_objects.Figure): graph object figure to which the surface is added
 
         Returns:
             - NDArray[float]: surface centroid
@@ -75,7 +70,7 @@ class PlotUtils:
         # add surface to plot
         closed_loop_coordinates = np.vstack((surface_point_coordinates, surface_point_coordinates[0, :]))
         fig.add_trace(go.Scatter(x=closed_loop_coordinates[:, 0], y=closed_loop_coordinates[:, 1], mode='lines+markers',
-                                 line={"color": 'black', "width": 1}, marker= {"color": 'red', "size": 5},
+                                 line={"color": 'black', "width": 1}, marker={"color": 'red', "size": 5},
                                  fill='toself', fillcolor="#ADD8E6"))
 
         # calculate surface centroid and add to list of all surface centroids which are required to calculate
@@ -103,25 +98,24 @@ class PlotUtils:
             text_array = [f"<b>p_{point_id}</b>" for point_id in geometry.points.keys()]
             point_coordinates = np.array([point.coordinates for point in geometry.points.values()])
 
-            fig.add_trace(go.Scatter(x=point_coordinates[:,0], y=point_coordinates[:,1], mode='text',
+            fig.add_trace(go.Scatter(x=point_coordinates[:, 0], y=point_coordinates[:,1], mode='text',
                                      text=text_array, textfont={"size": 14}, textposition="top right"))
 
         return surface_centroid
 
-
     @staticmethod
-    def __add_3d_surface_to_plot(geometry: 'Geometry', surface: 'Surface', show_surface_ids, show_line_ids,
-                                 show_point_ids, fig):
+    def __add_3d_surface_to_plot(geometry: 'Geometry', surface: 'Surface', show_surface_ids: bool, show_line_ids: bool,
+                                 show_point_ids: bool, fig: 'go.Figure') -> npt.NDArray[np.float64]:
         """
-        Adds a 3D surface to a plot.
+        Adds a 3D surface to a plotly graph object figure.
 
         Args:
-            - geometry (stem.geometry.Geometry): geometry object
-            - surface (stem.geometry.Surface): surface object
+            - geometry (:class:'stem.geometry.Geometry'): geometry object
+            - surface (:class:'stem.geometry.Surface'): surface object
             - show_surface_ids (bool): flag to show surface ids
             - show_line_ids (bool): flag to show line ids
             - show_point_ids (bool): flag to show point ids
-            - ax (mpl_toolkits.mplot3d.axes3d.Axes3D): axes object to which the surface is added
+            - fig (plotly.graph_objects.Figure): graph object figure to which the surface is added
 
         Returns:
             - NDArray[float]: surface centroid
@@ -178,7 +172,8 @@ class PlotUtils:
         # add surface edges to plot
         closed_loop_coordinates = np.vstack((surface_point_coordinates, surface_point_coordinates[0, :]))
         fig.add_trace(go.Scatter3d(x=closed_loop_coordinates[:, 0], y=closed_loop_coordinates[:, 1],
-                                   z=closed_loop_coordinates[:, 2], mode='lines+markers', line={"color": 'black', "width": 2},
+                                   z=closed_loop_coordinates[:, 2], mode='lines+markers', line={"color": 'black',
+                                                                                                "width": 2},
                                    marker={"color": 'red', "size": 2}))
 
         # calculate surface centroid and add to list of all surface centroids which are required to calculate
@@ -216,10 +211,10 @@ class PlotUtils:
         return surface_centroid
 
     @staticmethod
-    def __add_3d_volume_to_plot(geometry: 'Geometry', volume: 'Volume', show_volume_ids, show_surface_ids,
-                                show_line_ids, show_point_ids, fig):
+    def __add_3d_volume_to_plot(geometry: 'Geometry', volume: 'Volume', show_volume_ids: bool, show_surface_ids: bool,
+                                show_line_ids: bool, show_point_ids: bool, fig: 'go.Figure'):
         """
-        Adds a 3D volume to a matplotlib figure.
+        Adds a 3D volume to a plotly graph object figure.
 
         Args:
             - geometry (:class:`stem.geometry.Geometry`): Geometry object
@@ -228,7 +223,7 @@ class PlotUtils:
             - show_surface_ids (bool): Show surface ids
             - show_line_ids (bool): Show line ids
             - show_point_ids (bool): Show point ids
-            - ax (mpl_toolkits.mplot3d.axes3d.Axes3D): Axes object to which the volume is added
+            - fig (plotly.graph_objects.Figure): graph object figure to which the surface is added
 
         """
         # initialize list of surface centroids which are required to plot the surface ids
@@ -240,8 +235,9 @@ class PlotUtils:
             surface = geometry.surfaces[abs(surface_k)]
 
             surface_centroid = PlotUtils.__add_3d_surface_to_plot(geometry, surface, show_surface_ids, show_line_ids,
-                                                             show_point_ids, fig)
+                                                                  show_point_ids, fig)
             all_surface_centroids.append(surface_centroid)
+
         # show volume ids
         if show_volume_ids:
             volume_centroid = np.mean(all_surface_centroids, axis=0)
@@ -250,10 +246,11 @@ class PlotUtils:
                                        textposition="middle center"))
 
     @staticmethod
-    def create_geometry_figure(ndim: int, geometry: 'Geometry', show_volume_ids: bool = False, show_surface_ids: bool = False,
-                               show_line_ids: bool = False, show_point_ids: bool = False) -> go.Figure:
+    def create_geometry_figure(ndim: int, geometry: 'Geometry', show_volume_ids: bool = False,
+                               show_surface_ids: bool = False, show_line_ids: bool = False,
+                               show_point_ids: bool = False) -> 'go.Figure':
         """
-        Creates the geometry of the model in a matplotlib plot.
+        Creates the geometry of the model in a plotly graph object figure.
 
         Args:
             - ndim (int): Number of dimensions of the geometry. Either 2 or 3.
@@ -264,14 +261,11 @@ class PlotUtils:
             - show_point_ids (bool): If True, the point ids are shown in the plot.
 
         Returns:
-            - plt.Figure: Figure object
+            - plotly.graph_objects.Figure: graph object figure
 
         """
 
-
-
-        # Initialize figure in 3D
-        # fig = plt.figure()
+        # Initialize figure
         fig = go.Figure()
 
         if ndim == 2:
@@ -281,6 +275,7 @@ class PlotUtils:
                                                    show_point_ids, fig)
 
         elif ndim == 3:
+
             # loop over all volumes
             for volume_data in geometry.volumes.values():
 
@@ -290,51 +285,48 @@ class PlotUtils:
         else:
             raise ValueError("Number of dimensions should be 2 or 3")
 
-        fig.update_layout(scene=dict(xaxis={"title": "x-coordinates [m]"},
-                                     yaxis={"title": "y-coordinates [m]"},
-                                     zaxis={"title": "z-coordinates [m]"}),
-                          showlegend=False)
+        # set limits of plot
+        # extend limits with buffer, which is 10% of the difference between min and max
+        buffer = 0.1
+        all_coordinates = np.array([point.coordinates for point in geometry.points.values()])
 
-        fig.write_html("test2.html")
+        # calculate and set x and y limits
+        min_x, max_x = np.min(all_coordinates[:, 0]), np.max(all_coordinates[:, 0])
+        dx = max_x - min_x
+        min_y, max_y = np.min(all_coordinates[:, 1]), np.max(all_coordinates[:, 1])
+        dy = max_y - min_y
+
+        xlim = [min_x - buffer * dx, max_x + buffer * dx]
+        ylim = [min_y - buffer * dy, max_y + buffer * dy]
+
+        # set scene for 2D or 3D
+        if ndim == 2:
+            scene = dict(xaxis={"title": "x-coordinates [m]",
+                                "range": xlim},
+                         yaxis={"title": "y-coordinates [m]",
+                                "range": ylim})
+
+        elif ndim == 3:
+
+            # calculate and set z limits
+            min_z, max_z = np.min(all_coordinates[:, 2]), np.max(all_coordinates[:, 2])
+            dz = max_z - min_z
+
+            zlim = [min_z - buffer * dz, max_z + buffer * dz]
+
+            scene = dict(xaxis={"title": "x-coordinates [m]",
+                                "range": xlim},
+                         yaxis={"title": "y-coordinates [m]",
+                                "range": ylim},
+                         zaxis={"title": "z-coordinates [m]",
+                                "range": zlim},
+                         camera={"up": {"x": 0, "y": 1, "z": 0}})
+        else:
+            raise ValueError("Number of dimensions should be 2 or 3")
+
+        # set layout
+        fig.update_layout(scene=scene,
+                          showlegend=False,
+                          hovermode=False)
 
         return fig
-
-if __name__ == '__main__':
-
-    pass
-    # import plotly.graph_objects as go
-    #
-    # # Create data for your 3D mesh plot
-    # # Example data
-    # x = [0, 1, 2, 3]
-    # y = [0, 1, 2, 3]
-    # z = [
-    #     [1, 2, 1, 2],
-    #     [2, 3, 2, 3],
-    #     [3, 4, 3, 4],
-    #     [4, 5, 4, 5]
-    # ]
-    #
-    # # Create the 3D mesh plot
-    # fig = go.Figure()
-    #
-    # # Add the 3D mesh plot
-    # fig.add_trace(go.Mesh3d(x=x, y=y, z=z, opacity=0.7))
-    #
-    # # # Add planes on the x-y, x-z, and y-z planes
-    # # fig.add_trace(go.Surface(x=x, y=y, z=[[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], colorscale='viridis',
-    # #                          showscale=False))
-    # # fig.add_trace(go.Surface(x=x, y=[0, 0, 0, 0], z=z, colorscale='viridis', showscale=False))
-    # # fig.add_trace(go.Surface(x=[0, 0, 0, 0], y=y, z=z, colorscale='viridis', showscale=False))
-    #
-    # # Customize the layout if needed
-    # fig.update_layout(
-    #     scene=dict(
-    #         xaxis=dict(nticks=4),
-    #         yaxis=dict(nticks=4),
-    #         zaxis=dict(nticks=4),
-    #     )
-    # )
-    #
-    # # Show the figure
-    # fig.show()
