@@ -301,10 +301,13 @@ class PlotUtils:
 
         # set scene for 2D or 3D
         if ndim == 2:
-            scene = dict(xaxis={"title": "x-coordinates [m]",
-                                "range": xlim},
-                         yaxis={"title": "y-coordinates [m]",
-                                "range": ylim})
+
+            fig.update_layout(xaxis={"title": "x-coordinates [m]",
+                                     "range": xlim},
+                              yaxis={"title": "y-coordinates [m]",
+                                     "range": ylim},
+                              showlegend=False,
+                              hovermode=False)
 
         elif ndim == 3:
 
@@ -321,12 +324,13 @@ class PlotUtils:
                          zaxis={"title": "z-coordinates [m]",
                                 "range": zlim},
                          camera={"up": {"x": 0, "y": 1, "z": 0}})
+            fig.update_layout(scene=scene)
+
         else:
             raise ValueError("Number of dimensions should be 2 or 3")
 
         # set layout
-        fig.update_layout(scene=scene,
-                          showlegend=False,
+        fig.update_layout(showlegend=False,
                           hovermode=False)
 
         return fig
