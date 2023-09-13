@@ -122,7 +122,7 @@ class TestPlotUtils:
             assert generated_line == expected_line
 
         # remove generated file
-        # Path(f"tests/generated_geometry_{ndim}D.html").unlink()
+        Path(f"tests/generated_geometry_{ndim}D.html").unlink()
 
     def test_plot_geometry_2D(self, create_default_2d_soil_material: SoilMaterial):
         """
