@@ -1,9 +1,13 @@
 import pytest
 from pathlib import Path
+import codecs
+from bs4 import BeautifulSoup
 
 from stem.model import Model
 from stem.soil_material import SoilMaterial, OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
 from stem.plot_utils import PlotUtils
+
+from gmsh_utils import gmsh_IO
 
 
 class TestPlotUtils:
@@ -11,6 +15,20 @@ class TestPlotUtils:
     Test class for the :class:`stem.plot_utils.PlotUtils` class.
 
     """
+
+    @pytest.fixture(autouse=True)
+    def close_gmsh(self):
+        """
+        Initializer to close gmsh if it was not closed before. In case a test fails, the destroyer method is not called
+        on the Model object and gmsh keeps on running. Therefore, nodes, lines, surfaces and volumes ids are not
+        reset to one. This causes also the next test after the failed one to fail as well, which has nothing to do
+        the test itself.
+
+        Returns:
+            - None
+
+        """
+        gmsh_IO.GmshIO().finalize_gmsh()
 
     @pytest.fixture
     def create_default_2d_soil_material(self) -> SoilMaterial:
@@ -80,22 +98,31 @@ class TestPlotUtils:
         # create figure
         fig = PlotUtils.create_geometry_figure(model.ndim, model.geometry, True, True, True, True)
 
-        # save to eps for testing
-        fig.savefig(f"tests/generated_geometry_{ndim}D.eps", format="eps", bbox_inches="tight", pad_inches=0.1)
+        # save to html for testing
+        fig.write_html(f"tests/generated_geometry_{ndim}D.html")
 
-        with open(f"tests/generated_geometry_{ndim}D.eps", "r") as f:
-            generated_geometry = f.readlines()
+        with codecs.open(f"tests/generated_geometry_{ndim}D.html", "r", encoding="utf-8") as f:
+            generated_geometry = BeautifulSoup(f.read()).prettify()
+            generated_geometry = generated_geometry.splitlines()
 
-        with open(f"tests/test_data/expected_geometry_{ndim}D.eps", "r") as f:
-            expected_geometry = f.readlines()
+            # only compare the actual plotly object within the html file
+            generated_geometry = generated_geometry[22].split(",")
+            generated_geometry.pop(0)
 
-        # skip checking header lines
-        n_header_lines = 9
-        for i in range(n_header_lines, len(generated_geometry)):
-            assert generated_geometry[i] == expected_geometry[i]
+        with codecs.open(f"tests/test_data/expected_geometry_{ndim}D.html", "r", encoding="utf-8") as f:
+            expected_geometry = BeautifulSoup(f.read()).prettify()
+            expected_geometry = expected_geometry.splitlines()
+
+            # only compare the actual plotly object within the html file
+            expected_geometry = expected_geometry[22].split(",")
+            expected_geometry.pop(0)
+
+        # compare the actual plotly object within the html file
+        for generated_line, expected_line in zip(generated_geometry, expected_geometry):
+            assert generated_line == expected_line
 
         # remove generated file
-        Path(f"tests/generated_geometry_{ndim}D.eps").unlink()
+        Path(f"tests/generated_geometry_{ndim}D.html").unlink()
 
     def test_plot_geometry_2D(self, create_default_2d_soil_material: SoilMaterial):
         """
