@@ -90,7 +90,7 @@ model.synchronise_geometry()
 # Define moving load
 load_coordinates = [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0)]
 
-moving_load = MovingLoad(load=["0.0", "-1*t", "0.0"], direction=[1, 1, 1], velocity=1.0, origin=[0.0, 0.0, 0.0], offset=0.0)
+moving_load = MovingLoad(load=["0.0", "-1*t", "0.0"], direction=[1, 0, 0], velocity=1.0, origin=[0.0, 0.0, 0.0], offset=0.0)
 model.add_load_by_coordinates(load_coordinates, moving_load, "moving_load")
 
 # Define rotation boundary condition
@@ -114,7 +114,7 @@ model.synchronise_geometry()
 # Set mesh size and generate mesh
 # --------------------------------
 
-model.set_mesh_size(element_size=2)
+model.set_mesh_size(element_size=0.05)
 model.generate_mesh()
 
 # Define project parameters
