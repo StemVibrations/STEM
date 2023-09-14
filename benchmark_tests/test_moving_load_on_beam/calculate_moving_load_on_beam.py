@@ -31,12 +31,10 @@ from stem.IO.kratos_io import KratosIO
 # --------------------------------
 
 # Specify dimension and initiate the model
-ndim = 1
+ndim = 2
 model = Model(ndim)
 
-# Specify material model
-# Linear elastic drained soil with a Density of 2700, a Young's modulus of 50e6,
-# a Poisson ratio of 0.3 & a Porosity of 0.3 is specified.
+# Specify beam material model
 YOUNG_MODULUS = 210000000000
 POISSON_RATIO = 0.30000
 DENSITY = 7850
@@ -52,31 +50,33 @@ name = "beam"
 # Create the beam
 gmsh_input = {name: {"coordinates": beam_coordinates, "ndim": 1}}
 # check if extrusion length is specified in 3D
-Model.gmsh_io = gmsh_IO.GmshIO()
-Model.body_model_parts: List[BodyModelPart] = []
-Model.gmsh_io.generate_geometry(gmsh_input, "")
-
+# model.gmsh_io = gmsh_IO.GmshIO()
+# model.body_model_parts: List[BodyModelPart] = []
+model.gmsh_io.generate_geometry(gmsh_input, "")
+#
 # create body model part
 body_model_part = BodyModelPart(name)
 body_model_part.material = beam_material
 
 # set the geometry of the body model part
-body_model_part.get_geometry_from_geo_data(Model.gmsh_io.geo_data, name)
-Model.body_model_parts.append(body_model_part)
+body_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, name)
+model.body_model_parts.append(body_model_part)
 
 # Synchronize geometry
 model.synchronise_geometry()
 
+# TODO: add soil layer below the beam with low stiffness
+
 # Show geometry and geometry ids
 # model.show_geometry(show_point_ids=True)
-
+# input()
 # Define moving load
-load_coordinates = [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0)]
-load_values = []
-for t in np.linspace(0, 1.0, num=100, endpoint=False):
-    load_values.append(-1 * t)
+load_coordinates = [(0.0, 0.0, 0.0), (0.5, 0.0, 0.0)]
+# load_values = []
+# for t in np.linspace(0, 1.0, num=100, endpoint=False):
+#     load_values.append(-1 * t)
 
-moving_load = MovingLoad(load=[0.0, load_values, 0.0], direction=[1, 1, 1], velocity=1.0, origin=[0.0, 0.0, 0.0], offset=0.0)
+moving_load = MovingLoad(load=[0.0, "-1*t", 0.0], direction=[1, 1, 1], velocity=1.0, origin=[0.0, 0.0, 0.0], offset=0.0)
 model.add_load_by_coordinates(load_coordinates, moving_load, "moving_load")
 
 # Define rotation boundary condition
@@ -84,13 +84,11 @@ rotation_boundaries_parameters = RotationConstraint(active=[True, True, True], i
 
 # Define displacement conditions
 displacementXYZ_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True], value=[0, 0, 0])
-displacementYZ_parameters = DisplacementConstraint(active=[False, False, False], is_fixed=[False, False, False], value=[0, 0, 0])
 
 # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
 
 model.add_boundary_condition_by_geometry_ids(0, [1], rotation_boundaries_parameters, "rotation")
 model.add_boundary_condition_by_geometry_ids(0, [2], displacementXYZ_parameters, "displacementXYZ")
-model.add_boundary_condition_by_geometry_ids(0, [3], displacementYZ_parameters, "displacementYZ")
 
 # Synchronize geometry
 model.synchronise_geometry()

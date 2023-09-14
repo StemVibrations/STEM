@@ -47,7 +47,7 @@ retention_parameters1 = SaturatedBelowPhreaticLevelLaw()
 material1 = SoilMaterial("soil", soil_formulation1, constitutive_law1, retention_parameters1)
 
 # Specify the coordinates for the column: x:5m x y:1m
-layer1_coordinates = [(0.0, -0.1, 0.0), (1.0, -0.1, 0.0), (1.0, 0.1, 0.0), (0.0, 0.1, 0.0)]
+layer1_coordinates = [(0.0, -0.1, 0.0), (1.0, -0.1, 0.0), (1.0, 0, 0.0), (0.0, 0, 0.0)]
 
 # Create the soil layer
 model.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil_layer")
@@ -61,10 +61,11 @@ I33 = 0.00001
 I22 = 0.00001
 TORSIONAL_INERTIA = 0.00001
 beam_material = EulerBeam(ndim, YOUNG_MODULUS, POISSON_RATIO, DENSITY, CROSS_AREA, I33, I22, TORSIONAL_INERTIA)
+name = "beam"
+structural_material = StructuralMaterial(name, beam_material)
 
 # Specify the coordinates for the beam: x:1m x y:0m
 beam_coordinates = [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0)]
-name = "beam"
 # Create the beam
 gmsh_input = {name: {"coordinates": beam_coordinates, "ndim": 1}}
 # check if extrusion length is specified in 3D
@@ -74,7 +75,7 @@ model.gmsh_io.generate_geometry(gmsh_input, "")
 #
 # create body model part
 body_model_part = BodyModelPart(name)
-body_model_part.material = beam_material
+body_model_part.material = structural_material
 
 # set the geometry of the body model part
 body_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, name)
@@ -83,14 +84,13 @@ model.body_model_parts.append(body_model_part)
 # Synchronize geometry
 model.synchronise_geometry()
 
-# Show geometry and geometry ids
-# model.show_geometry(show_point_ids=True)
+# model.show_geometry(show_line_ids=True, show_point_ids=True)
 # input()
 
 # Define moving load
 load_coordinates = [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0)]
 
-moving_load = MovingLoad(load=[0.0, "-1*t", 0.0], direction=[1, 1, 1], velocity=1.0, origin=[0.0, 0.0, 0.0], offset=0.0)
+moving_load = MovingLoad(load=["0.0", "-1*t", "0.0"], direction=[1, 1, 1], velocity=1.0, origin=[0.0, 0.0, 0.0], offset=0.0)
 model.add_load_by_coordinates(load_coordinates, moving_load, "moving_load")
 
 # Define rotation boundary condition
@@ -101,14 +101,14 @@ displacementXYZ_parameters = DisplacementConstraint(active=[True, True, True], i
 
 # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
 
-model.add_boundary_condition_by_geometry_ids(0, [5, 6], rotation_boundaries_parameters, "rotation")
-model.add_boundary_condition_by_geometry_ids(0, [5, 6], displacementXYZ_parameters, "displacementXYZ")
+model.add_boundary_condition_by_geometry_ids(0, [3, 4], rotation_boundaries_parameters, "rotation")
+model.add_boundary_condition_by_geometry_ids(0, [3, 4], displacementXYZ_parameters, "displacementXYZ")
 
 # Synchronize geometry
 model.synchronise_geometry()
 
 # Show geometry and geometry ids
-model.show_geometry(show_line_ids=True, show_point_ids=True)
+# model.show_geometry(show_line_ids=True, show_point_ids=True)
 # input()
 
 # Set mesh size and generate mesh

@@ -29,14 +29,12 @@ ndim = 3
 model = Model(ndim)
 
 # Specify material model
-# Linear elastic drained soil with a Density of 2700, a Young's modulus of 50e6,
-# a Poisson ratio of 0.3 & a Porosity of 0.3 is specified.
-rho1 = 2.65
-por1 = 0.3
-E1 = 10e3
-v1 = 0.2
-soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=rho1, POROSITY=por1)
-constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=E1, POISSON_RATIO=v1)
+solid_density = 2650
+porosity = 0.3
+young_modulus = 10e6
+poisson_ratio = 0.2
+soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density, POROSITY=porosity)
+constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=young_modulus, POISSON_RATIO=poisson_ratio)
 retention_parameters1 = SaturatedBelowPhreaticLevelLaw()
 material_soil1 = SoilMaterial("soil", soil_formulation1, constitutive_law1, retention_parameters1)
 material_soil2 = SoilMaterial("soil2", soil_formulation1, constitutive_law1, retention_parameters1)
@@ -54,9 +52,8 @@ model.add_soil_layer_by_coordinates(soil2_coordinates, material_soil2, "soil2")
 model.add_soil_layer_by_coordinates(embankment_coordinates, material_embankment, "embankment")
 
 # Define moving load
-load_coordinates = [(0.0, 0.0, 3.0), (0.0, 10.0, 3.0)]
-# TODO: 0.75 distance in x should be in offset or coordinates or origin?
-moving_load = MovingLoad(load=[0.0, -10.0, 0.0], direction=[1, 1, 1], velocity=5, origin=[0.0, 0.0, 3.0], offset=0.75)
+load_coordinates = [(0.75, 0.0, 3.0), (0.75, 10.0, 3.0)]
+moving_load = MovingLoad(load=[0.0, -10.0, 0.0], direction=[1, 1, 1], velocity=5, origin=[0.75, 0.0, 3.0], offset=0.0)
 model.add_load_by_coordinates(load_coordinates, moving_load, "moving_load")
 
 # Define boundary conditions
