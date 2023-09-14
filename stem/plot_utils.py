@@ -3,11 +3,9 @@ import numpy.typing as npt
 import plotly.graph_objects as go
 
 # import required typing classes
-from typing import TYPE_CHECKING, List
+from typing import List
 
-
-if TYPE_CHECKING:
-    from stem.geometry import Geometry, Volume, Surface
+from stem.geometry import Geometry, Volume, Surface
 
 
 class PlotUtils:
