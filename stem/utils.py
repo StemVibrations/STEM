@@ -1,6 +1,9 @@
 from typing import Sequence, Dict, Any, List, Union, Optional, Generator, TYPE_CHECKING
 
 import numpy as np
+import numpy.typing as npt
+
+from stem.globals import ELEMENT_DATA
 
 if TYPE_CHECKING:
     from stem.mesh import Element
@@ -225,115 +228,53 @@ class Utils:
         return list({id(obj): obj for obj in input_sequence}.values())
 
     @staticmethod
-    def has_matching_combination(target_list: List[Any], test_list: List[Any]):
+    def get_element_edges(element: 'Element') -> npt.NDArray[np.int64]:
         """
-        Check if test_list is a subset of target_list in the same order.
+        Gets the nodal connectivities of the line edges of elements
+
         Args:
-            - target_list (List[Any]): list to be checked for a sequence match.
-            - test_list (List[Any]): list containing the object sequence to check.
+            - element (:class:`stem.mesh.Element`): element object
 
         Returns:
+            - npt.NDArray[np.int64]: nodal connectivities of the line edges of the element
 
         """
-        len_target_list = len(target_list)
-        len_test_list = len(test_list)
 
-        if len_target_list < len_test_list:
-            raise ValueError("first list should be larger or equal to check for a match")
-        elif len_target_list == len_test_list:
-            return target_list == test_list
-        else:
-            for ix in range(len_target_list - len_test_list + 1):
-                if target_list[ix:ix + len_test_list] == test_list:
-                    return True
-        return False
+        # get nodal connectivities of the line edges from the local element edges dictionary
+        node_ids: npt.NDArray[np.int64] = np.array(element.node_ids, dtype=int)[
+            ELEMENT_DATA[element.element_type]["edges"]]
+
+        return node_ids
 
     @staticmethod
-    def get_element_info(gmsh_element_type: str) -> Dict[str, Any]:
+    def flip_node_order(elements: Sequence['Element']):
         """
-        Returns the element info for a certain gmsh element type. The element info contains the number of dimensions,
-        the order, the number of vertices and the reversed order of the connectivities.
+        Flips the node order of the elements, where all elements should be of the same type.
 
         Args:
-            - gmsh_element_type (str): gmsh element type
-
-        Returns:
-            - Dict[str, Any]: element info
-        """
-
-        element_mapping_dict = {"POINT_1N": {"ndim": 0,
-                                             "order": 1,
-                                             "n_vertices": 1,
-                                             "reversed_order": [0]},
-                                "LINE_2N": {"ndim": 1,
-                                            "order": 1,
-                                            "n_vertices": 2,
-                                            "reversed_order": [1, 0]},
-                                "LINE_3N": {"ndim": 1,
-                                            "order": 2,
-                                            "n_vertices": 2,
-                                            "reversed_order": [1, 0, 2]},
-                                "TRIANGLE_3N": {"ndim": 2,
-                                                "order": 1,
-                                                "n_vertices": 3,
-                                                "reversed_order": [2, 1, 0]},
-                                "TRIANGLE_6N": {"ndim": 2,
-                                                "order": 2,
-                                                "n_vertices": 3,
-                                                "reversed_order": [2, 1, 0, 5, 4, 3]},
-                                "QUADRANGLE_4N": {"ndim": 2,
-                                                  "order": 1,
-                                                  "n_vertices": 4,
-                                                  "reversed_order": [1, 0, 3, 2]},
-                                "QUADRANGLE_8N": {"ndim": 2,
-                                                  "order": 2,
-                                                  "n_vertices": 4,
-                                                  "reversed_order": [1, 0, 3, 2, 4, 7, 6, 5]},
-                                "TETRAHEDRON_4N": {"ndim": 3,
-                                                   "order": 1,
-                                                   "n_vertices": 4,
-                                                   "reversed_order": [1, 0, 2, 3]},
-                                "TETRAHEDRON_10N": {"ndim": 3,
-                                                    "order": 2,
-                                                    "n_vertices": 4,
-                                                    "reversed_order": [1, 0, 2, 3, 4, 6, 5, 9, 8, 7]},
-                                "HEXAHEDRON_8N": {"ndim": 3,
-                                                  "order": 1,
-                                                  "n_vertices": 8,
-                                                  "reversed_order": [1, 0, 3, 2, 5, 4, 7, 6]},
-                                "HEXAHEDRON_20N": {"ndim": 3,
-                                                   "order": 2,
-                                                   "n_vertices": 8,
-                                                   "reversed_order": [1, 0, 3, 2,
-                                                                      5, 4, 7, 6,
-                                                                      8, 9, 10, 11,
-                                                                      12, 13, 14, 15,
-                                                                      16, 17, 18, 19]},
-                                }
-
-        # find element order
-        if gmsh_element_type not in element_mapping_dict.keys():
-            raise NotImplementedError(f"No reversed order defined for the element type: {gmsh_element_type}")
-
-        return element_mapping_dict[gmsh_element_type]
-
-    @staticmethod
-    def flip_node_order(element_info: Dict[str, Any], elements: Sequence['Element']):
-        """
-        Flips the node order of the elements
-
-        Args:
-            - element_info (Dict[str, Any]): element info
             - elements (List[:class:`stem.mesh.Element`]): list of elements
 
+        Raises:
+            - ValueError: when the elements are not of the same type.
+
         """
+
+        # return of no elements are provided
+        if len(elements) == 0:
+            return
+
+        # check if all elements are of the same type and get the element type
+        element_types = set([element.element_type for element in elements])
+        if len(element_types) > 1:
+            raise ValueError("All elements should be of the same type.")
+        element_type = list(element_types)[0]
 
         # retrieve element ids and connectivities
         ids = [element.id for element in elements]
         element_connectivies = np.array([element.node_ids for element in elements])
 
         # flip the elements connectivities
-        element_connectivies = element_connectivies[:, element_info["reversed_order"]]
+        element_connectivies = element_connectivies[:, ELEMENT_DATA[element_type]["reversed_order"]]
 
         # update the elements connectivities
         for i, (id, element_connectivity) in enumerate(zip(ids, element_connectivies)):
@@ -362,8 +303,8 @@ class Utils:
         """
 
         # element info such as order, number of edges, element types etc.
-        edge_el_info = Utils.get_element_info(edge_element.element_type)
-        body_el_info = Utils.get_element_info(body_element.element_type)
+        edge_el_info = ELEMENT_DATA[edge_element.element_type]
+        body_el_info = ELEMENT_DATA[body_element.element_type]
 
         if edge_el_info["ndim"] != 2:
             raise ValueError("Edge element should be a 2D element.")
@@ -395,4 +336,3 @@ class Utils:
         is_outwards: bool = np.dot(normal_vector_edge, body_inward_vector) < 0
 
         return is_outwards
-

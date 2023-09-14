@@ -286,7 +286,6 @@ class TestKratosModelIO:
 
         npt.assert_equal(actual=actual_text, desired=expected_text)
 
-    @pytest.mark.skipif(IS_LINUX, reason="Linux provides different meshing order. The test is not run on Ubuntu")
     def test_write_mdpa_file_3d(
         self,
         create_default_3d_model_and_mesh: Model,
@@ -311,8 +310,12 @@ class TestKratosModelIO:
             output_folder="dir_test"
         )
 
-        with open('tests/test_data/expected_mdpa_file_3d.mdpa', 'r') as openfile:
-            expected_text = openfile.readlines()
+        if IS_LINUX:
+            with open('tests/test_data/expected_mdpa_file_3d_linux.mdpa', 'r') as openfile:
+                expected_text = openfile.readlines()
+        else:
+            with open('tests/test_data/expected_mdpa_file_3d.mdpa', 'r') as openfile:
+                expected_text = openfile.readlines()
 
         npt.assert_equal(actual=actual_text, desired=expected_text)
 

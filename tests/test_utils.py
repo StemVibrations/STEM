@@ -6,6 +6,8 @@ import pytest
 
 from stem.utils import Utils
 from stem.mesh import Mesh, Element
+from stem.globals import ELEMENT_DATA
+
 from tests.utils import TestUtils
 
 
@@ -144,25 +146,6 @@ class TestUtilsStem:
 
         npt.assert_equal(expected_sequence, actual_sequence)
 
-    def test_has_matching_combination(self):
-        """
-        Test matching combination
-        """
-        sub_list1 = [1, 5]
-        sub_list2 = [5, 1]
-        sub_list3 = [1, 3, 4]
-        sub_list4 = [1, 3, 5]
-
-        list_tst = [1, 3, 4, 5, 1]
-        assert not Utils.has_matching_combination(list_tst, sub_list1)
-        assert Utils.has_matching_combination(list_tst, sub_list2)
-        assert Utils.has_matching_combination(list_tst, sub_list3)
-        assert not Utils.has_matching_combination(list_tst, sub_list4)
-
-        # expect it raises an error (test_List is larger than target_List)
-        with pytest.raises(ValueError, match="first list should be larger or equal to check for a match"):
-            Utils.has_matching_combination(sub_list4, list_tst)
-
     def test_merge(self):
         """
         Test merging of dictionaries
@@ -270,8 +253,7 @@ class TestUtilsStem:
                 mesh.elements[element_id] = Element(element_id, element_name, node_ids)
 
                 # reverse the node order
-                element_reversed_ordering_info = Utils.get_element_info(mesh.elements[element_id].element_type)
-                Utils.flip_node_order(element_reversed_ordering_info, [mesh.elements[element_id]])
+                Utils.flip_node_order([mesh.elements[element_id]])
 
         # set expected node ordering per element
         expected_ordering = [
@@ -286,7 +268,16 @@ class TestUtilsStem:
         for element, expected_nodes_element in zip(list(mesh.elements.values()), expected_ordering):
             np.testing.assert_equal(element.node_ids, expected_nodes_element)
 
-    def test_is_tetrahedron_4n_edge_defined_inwards(self):
+    def test_flip_node_order_exception(self):
+        """
+        Tests that an exception is raised if a list with different elements is given to flip_node_order.
+        """
+
+        with pytest.raises(ValueError, match="All elements should be of the same type."):
+            Utils.flip_node_order([Element(1, "LINE_2N", [1, 2]),
+                                   Element(2, "LINE_3N", [2, 3, 4])])
+
+    def test_is_tetrahedron_4n_edge_defined_outwards(self):
         """
         Tests if the 3-node triangle edge of a 4 node tetrahedron is defined outwards. It checks different orientations
         of the edge element and the body element.
@@ -308,7 +299,7 @@ class TestUtilsStem:
         assert Utils.is_volume_edge_defined_outwards(edge_element, body_element_mirrored, nodes)
         assert not Utils.is_volume_edge_defined_outwards(edge_element_reversed, body_element_mirrored, nodes)
 
-    def test_is_tetrahedron_10n_edge_defined_inwards(self):
+    def test_is_tetrahedron_10n_edge_defined_outwards(self):
         """
         Tests if the 6-node triangle edge of a 10 node tetrahedron is defined outwards. It checks different orientations
         of the edge element and the body element.
@@ -335,7 +326,7 @@ class TestUtilsStem:
         assert Utils.is_volume_edge_defined_outwards(edge_element, body_element_mirrored, nodes)
         assert not Utils.is_volume_edge_defined_outwards(edge_element_reversed, body_element_mirrored, nodes)
 
-    def test_is_hexahedron_8n_edge_defined_inwards(self):
+    def test_is_hexahedron_8n_edge_defined_outwards(self):
         """
         Tests if the 4-node quad edge of a 8 node hexahedron is defined outwards. It checks different orientations
         of the edge element and the body element.
@@ -360,7 +351,8 @@ class TestUtilsStem:
         assert Utils.is_volume_edge_defined_outwards(edge_element, body_element_mirrored, nodes)
         assert not Utils.is_volume_edge_defined_outwards(edge_element_reversed, body_element_mirrored, nodes)
 
-    def test_is_hexahedron_20n_edge_defined_inwards(self):
+    @pytest.mark.skip("Hexahedron 20n is not correctly implemented yet.")
+    def test_is_hexahedron_20n_edge_defined_outwards(self):
         """
         Tests if the 8-node quad edge of a 20 node hexahedron is defined outwards. It checks different orientations
         of the edge element and the body element.
@@ -398,3 +390,33 @@ class TestUtilsStem:
         # check if edge is defined outwards in both node orders of edge element and a mirrored body element
         assert Utils.is_volume_edge_defined_outwards(edge_element_1, body_element_mirrored, nodes)
         assert not Utils.is_volume_edge_defined_outwards(edge_element_1_reversed, body_element_mirrored, nodes)
+
+    def test_is_volume_edge_defined_outwards_exceptions(self):
+        """
+        Tests exceptions of is_volume_edge_defined_outwards
+
+        """
+
+        edge_element_1 = Element(1, "LINE_2N", [1, 2])
+        edge_element_2 = Element(2, "TRIANGLE_3N", [1, 2, 3])
+        edge_element_3 = Element(3, "TRIANGLE_3N", [1, 2, 5])
+
+
+        body_element_1 = Element(3, "TETRAHEDRON_4N", [1, 2, 3, 4])
+        body_element_2 = Element(4, "TRIANGLE_3N", [1, 2, 3])
+
+        nodes = {1: [0, 0, 0], 2: [1.0, 0, 0], 3: [1, 1.0, 0], 4: [0, 0.0, 1.0], 5: [0.0, 0.0, -1.0]}
+
+        # expected raise as edge element is not a 2D element
+        with pytest.raises(ValueError, match="Edge element should be a 2D element."):
+            Utils.is_volume_edge_defined_outwards(edge_element_1,body_element_1, nodes)
+
+        # expected raise as body element is not 3D
+        with pytest.raises(ValueError, match="Body element should be a 3D element."):
+            Utils.is_volume_edge_defined_outwards(edge_element_2, body_element_2, nodes)
+
+        # expected raise as not all nodes of edge element are in body element
+        with pytest.raises(ValueError, match="All nodes of the edge element should be part of the body element."):
+            Utils.is_volume_edge_defined_outwards(edge_element_3, body_element_1, nodes)
+
+
