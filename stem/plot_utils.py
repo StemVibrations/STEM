@@ -1,9 +1,9 @@
+# import required typing classes
+from typing import List
+
 import numpy as np
 import numpy.typing as npt
 import plotly.graph_objects as go
-
-# import required typing classes
-from typing import List
 
 from stem.geometry import Geometry, Volume, Surface
 
