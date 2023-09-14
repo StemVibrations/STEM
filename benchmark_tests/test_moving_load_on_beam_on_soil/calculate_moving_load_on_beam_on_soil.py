@@ -13,10 +13,7 @@ sys.path.append(os.path.join(path_kratos, r"KratosGeoMechanics\libs"))
 
 import KratosMultiphysics.GeoMechanicsApplication
 from KratosMultiphysics.GeoMechanicsApplication.geomechanics_analysis import (GeoMechanicsAnalysis)
-# import KratosMultiphysics.StructuralMechanicsApplication
-# from KratosMultiphysics.StructuralMechanicsApplication.structural_mechanics_analysis import StructuralMechanicsAnalysis
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
-from gmsh_utils import gmsh_IO
 from stem.model import Model
 from stem.model_part import BodyModelPart
 from stem.structural_material import *

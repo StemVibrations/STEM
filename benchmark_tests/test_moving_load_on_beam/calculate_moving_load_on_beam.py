@@ -12,9 +12,7 @@ sys.path.append(os.path.join(path_kratos, "KratosGeoMechanics"))
 sys.path.append(os.path.join(path_kratos, r"KratosGeoMechanics\libs"))
 
 import KratosMultiphysics.GeoMechanicsApplication
-import KratosMultiphysics.StructuralMechanicsApplication
-from KratosMultiphysics.StructuralMechanicsApplication.structural_mechanics_analysis import StructuralMechanicsAnalysis
-from gmsh_utils import gmsh_IO
+from KratosMultiphysics.GeoMechanicsApplication.geomechanics_analysis import (GeoMechanicsAnalysis)
 from stem.model import Model
 from stem.model_part import BodyModelPart
 from stem.structural_material import *
@@ -43,20 +41,18 @@ I33 = 0.00001
 I22 = 0.00001
 TORSIONAL_INERTIA = 0.00001
 beam_material = EulerBeam(ndim, YOUNG_MODULUS, POISSON_RATIO, DENSITY, CROSS_AREA, I33, I22, TORSIONAL_INERTIA)
-
+name = "beam"
+structural_material = StructuralMaterial(name, beam_material)
 # Specify the coordinates for the beam: x:1m x y:0m
 beam_coordinates = [(0, 0, 0), (1, 0, 0)]
-name = "beam"
 # Create the beam
 gmsh_input = {name: {"coordinates": beam_coordinates, "ndim": 1}}
 # check if extrusion length is specified in 3D
-# model.gmsh_io = gmsh_IO.GmshIO()
-# model.body_model_parts: List[BodyModelPart] = []
 model.gmsh_io.generate_geometry(gmsh_input, "")
 #
 # create body model part
 body_model_part = BodyModelPart(name)
-body_model_part.material = beam_material
+body_model_part.material = structural_material
 
 # set the geometry of the body model part
 body_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, name)
@@ -65,18 +61,13 @@ model.body_model_parts.append(body_model_part)
 # Synchronize geometry
 model.synchronise_geometry()
 
-# TODO: add soil layer below the beam with low stiffness
-
 # Show geometry and geometry ids
 # model.show_geometry(show_point_ids=True)
 # input()
 # Define moving load
 load_coordinates = [(0.0, 0.0, 0.0), (0.5, 0.0, 0.0)]
-# load_values = []
-# for t in np.linspace(0, 1.0, num=100, endpoint=False):
-#     load_values.append(-1 * t)
 
-moving_load = MovingLoad(load=[0.0, "-1*t", 0.0], direction=[1, 1, 1], velocity=1.0, origin=[0.0, 0.0, 0.0], offset=0.0)
+moving_load = MovingLoad(load=["0.0", "-1*t", "0.0"], direction=[1, 1, 1], velocity=1.0, origin=[0.0, 0.0, 0.0], offset=0.0)
 model.add_load_by_coordinates(load_coordinates, moving_load, "moving_load")
 
 # Define rotation boundary condition
@@ -100,7 +91,7 @@ model.synchronise_geometry()
 # Set mesh size and generate mesh
 # --------------------------------
 
-model.set_mesh_size(element_size=2)
+model.set_mesh_size(element_size=0.05)
 model.generate_mesh()
 
 # Define project parameters
@@ -195,5 +186,5 @@ with open(project_name, "r") as parameter_file:
     parameters = KratosMultiphysics.Parameters(parameter_file.read())
 
 model = KratosMultiphysics.Model()
-simulation = StructuralMechanicsAnalysis(model, parameters)
+simulation = GeoMechanicsAnalysis(model, parameters)
 simulation.Run()
