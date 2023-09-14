@@ -43,7 +43,7 @@ material_embankment = SoilMaterial("embankment", soil_formulation1, constitutive
 # Specify the coordinates for the column: x:2m x y:2m x z:10m
 soil1_coordinates = [(0.0, 0.0, 0.0), (5.0, 0.0, 0.0), (5.0, 1.0, 0.0), (0.0, 1.0, 0.0)]
 soil2_coordinates = [(0.0, 1.0, 0.0), (5.0, 1.0, 0.0), (5.0, 2.0, 0.0), (0.0, 2.0, 0.0)]
-embankment_coordinates = [(0.0, 2.0, 0.0), (3.0, 2.0, 0.0), (1.5, 3.0, 0.0), (0, 3.0, 0.0)]
+embankment_coordinates = [(0.0, 2.0, 0.0), (3.0, 2.0, 0.0), (1.5, 3.0, 0.0), (0.75, 3.0, 0.0), (0, 3.0, 0.0)]
 model.extrusion_length = [0, 0, 10]
 
 # Create the soil layer
