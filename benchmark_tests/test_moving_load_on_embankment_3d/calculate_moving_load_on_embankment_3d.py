@@ -41,10 +41,10 @@ material_soil2 = SoilMaterial("soil2", soil_formulation1, constitutive_law1, ret
 material_embankment = SoilMaterial("embankment", soil_formulation1, constitutive_law1, retention_parameters1)
 
 # Specify the coordinates for the column: x:2m x y:2m x z:10m
-soil1_coordinates = [(0.0, 0.0, 0.0), (5.0, 0.0, 0.0), (5.0, 0.0, 1.0), (0.0, 0.0, 1.0)]
-soil2_coordinates = [(0.0, 0.0, 1.0), (5.0, 0.0, 1.0), (5.0, 0.0, 2.0), (0.0, 0.0, 2.0)]
-embankment_coordinates = [(0.0, 0.0, 2.0), (3.0, 0.0, 2.0), (1.5, 0.0, 3.0), (0, 0.0, 3.0)]
-model.extrusion_length = [0, 10, 0]
+soil1_coordinates = [(0.0, 0.0, 0.0), (5.0, 0.0, 0.0), (5.0, 1.0, 0.0), (0.0, 1.0, 0.0)]
+soil2_coordinates = [(0.0, 1.0, 0.0), (5.0, 1.0, 0.0), (5.0, 2.0, 0.0), (0.0, 2.0, 0.0)]
+embankment_coordinates = [(0.0, 2.0, 0.0), (3.0, 2.0, 0.0), (1.5, 3.0, 0.0), (0, 3.0, 0.0)]
+model.extrusion_length = [0, 0, 10]
 
 # Create the soil layer
 model.add_soil_layer_by_coordinates(soil1_coordinates, material_soil1, "soil1")
@@ -52,8 +52,8 @@ model.add_soil_layer_by_coordinates(soil2_coordinates, material_soil2, "soil2")
 model.add_soil_layer_by_coordinates(embankment_coordinates, material_embankment, "embankment")
 
 # Define moving load
-load_coordinates = [(0.75, 0.0, 3.0), (0.75, 10.0, 3.0)]
-moving_load = MovingLoad(load=[0.0, -10.0, 0.0], direction=[1, 1, 1], velocity=5, origin=[0.75, 0.0, 3.0], offset=0.0)
+load_coordinates = [(0.75, 3.0, 0.0), (0.75, 3.0, 10.0)]
+moving_load = MovingLoad(load=[0.0, -10.0, 0.0], direction=[1, 1, 1], velocity=5, origin=[0.75, 3.0, 0.0], offset=0.0)
 model.add_load_by_coordinates(load_coordinates, moving_load, "moving_load")
 
 # Define boundary conditions
@@ -63,7 +63,7 @@ roller_displacement_parameters = DisplacementConstraint(active=[True, True, True
 
 # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
 model.add_boundary_condition_by_geometry_ids(2, [1], no_displacement_parameters, "base_fixed")
-# model.add_boundary_condition_by_geometry_ids(1, [2, 4, 5, 6], roller_displacement_parameters, "roller_fixed")
+model.add_boundary_condition_by_geometry_ids(2, [2, 4, 5, 6, 7, 10, 11, 12, 15, 16, 17], roller_displacement_parameters, "roller_fixed")
 
 # Synchronize geometry
 model.synchronise_geometry()
