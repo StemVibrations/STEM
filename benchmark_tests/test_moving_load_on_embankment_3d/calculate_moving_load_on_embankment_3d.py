@@ -36,7 +36,7 @@ poisson_ratio = 0.2
 soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density, POROSITY=porosity)
 constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=young_modulus, POISSON_RATIO=poisson_ratio)
 retention_parameters1 = SaturatedBelowPhreaticLevelLaw()
-material_soil1 = SoilMaterial("soil", soil_formulation1, constitutive_law1, retention_parameters1)
+material_soil1 = SoilMaterial("soil1", soil_formulation1, constitutive_law1, retention_parameters1)
 material_soil2 = SoilMaterial("soil2", soil_formulation1, constitutive_law1, retention_parameters1)
 material_embankment = SoilMaterial("embankment", soil_formulation1, constitutive_law1, retention_parameters1)
 
@@ -53,23 +53,22 @@ model.add_soil_layer_by_coordinates(embankment_coordinates, material_embankment,
 
 # Define moving load
 load_coordinates = [(0.75, 3.0, 0.0), (0.75, 3.0, 10.0)]
-moving_load = MovingLoad(load=[0.0, -10.0, 0.0], direction=[1, 1, 1], velocity=5, origin=[0.75, 3.0, 0.0], offset=0.0)
+moving_load = MovingLoad(load=[0.0, -10.0, 0.0], direction=[-1, -1, 1], velocity=5, origin=[0.75, 3.0, 0.0], offset=0.0)
 model.add_load_by_coordinates(load_coordinates, moving_load, "moving_load")
 
 # Define boundary conditions
 no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
                                                     is_fixed=[True, True, True], value=[0, 0, 0])
-roller_displacement_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, False, False], value=[0, 0, 0])
+roller_displacement_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, False, True], value=[0, 0, 0])
 
 # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
 model.add_boundary_condition_by_geometry_ids(2, [1], no_displacement_parameters, "base_fixed")
-model.add_boundary_condition_by_geometry_ids(2, [2, 4, 5, 6, 7, 10, 11, 12, 15, 16, 17], roller_displacement_parameters, "roller_fixed")
+model.add_boundary_condition_by_geometry_ids(2, [2, 4, 5, 6, 7, 10, 11, 12, 15, 16, 17], roller_displacement_parameters, "sides_roller")
 
 # Synchronize geometry
 model.synchronise_geometry()
 
 # Show geometry and geometry ids
-#TODO: show_geometry is not responding
 model.show_geometry(show_surface_ids=True)
 # input()
 
@@ -86,7 +85,7 @@ model.generate_mesh()
 analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
 solution_type = SolutionType.QUASI_STATIC
 # Set up start and end time of calculation, time step and etc
-time_integration = TimeIntegration(start_time=0.0, end_time=1.0, delta_time=0.01, reduction_factor=1.0,
+time_integration = TimeIntegration(start_time=0.0, end_time=2.0, delta_time=0.01, reduction_factor=1.0,
                                    increase_factor=1.0, max_delta_time_factor=1000)
 convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
                                                         displacement_absolute_tolerance=1.0e-9)
