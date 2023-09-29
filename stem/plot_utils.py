@@ -4,7 +4,7 @@ from typing import List, Optional
 import numpy as np
 import numpy.typing as npt
 import plotly.graph_objects as go
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
 from matplotlib.collections import PolyCollection
 
 from stem.geometry import Geometry, Volume, Surface
