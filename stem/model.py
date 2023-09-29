@@ -483,8 +483,7 @@ class Model:
         """
         self.mesh_settings.element_size = element_size
 
-    def generate_mesh(self, save_file: bool = False, mesh_output_dir="./", mesh_name: str = "mesh_file",
-                      open_gmsh_gui: bool = False):
+    def generate_mesh(self):
         """
         Generate the mesh for the whole model.
 
