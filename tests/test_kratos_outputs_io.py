@@ -69,12 +69,12 @@ class TestKratosOutputsIO:
         )
         # 3. Json
         json_output_parameters1 = JsonOutputParameters(
-            time_frequency=0.002,
+            output_interval=0.002,
             nodal_results=nodal_results1,
             gauss_point_results=gauss_point_results1,
         )
         json_output_parameters2 = JsonOutputParameters(
-            time_frequency=0.002,
+            output_interval=0.002,
             nodal_results=nodal_results2,
             gauss_point_results=gauss_point_results2,
         )

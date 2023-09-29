@@ -115,12 +115,12 @@ class OutputParametersABC(ABC):
     Abstract class for the definition of user output parameters (GiD, VTK, json).
 
     Attributes:
-        - coordinates (Optional[Sequence[Sequence[float]]]): List of output nodes if only a subset of nodes is of
+        - coordinates ([Sequence[Sequence[float]]): List of output nodes if only a subset of nodes is of
             interest. Defaults to None. In that case, all the nodes/elements of the part/model are provided in the
             output.
     """
 
-    coordinates: Optional[Sequence[Sequence[float]]]
+    coordinates: Sequence[Sequence[float]]
 
     @abstractmethod
     def validate(self):
@@ -133,7 +133,6 @@ class OutputParametersABC(ABC):
         raise Exception("Abstract method for validate output parameters is called")
 
 
-@dataclass
 class GiDOutputParameters(OutputParametersABC):
     """
     Class containing the output parameters for GiD output
@@ -157,21 +156,26 @@ class GiDOutputParameters(OutputParametersABC):
         - point_data_configuration (List[str]):
     """
 
-    # general inputs
-    output_interval: float
-    output_control_type: str = "step"
-    file_format: str = "binary"
-    nodal_results: List[NodalOutput] = field(default_factory=lambda: [])
-    gauss_point_results: List[GaussPointOutput] = field(default_factory=lambda: [])
-    # GiD specific inputs
-    file_label: str = "step"
-    # optional
-    body_output: bool = True
-    node_output: bool = False
-    skin_output: bool = False
-    plane_output: List[str] = field(default_factory=lambda: [])
-    point_data_configuration: List[str] = field(default_factory=lambda: [])
-    coordinates = None
+    def __init__(self,
+                 output_interval: float,
+                 output_control_type: str = "step",
+                 file_format: str = "binary",
+                 nodal_results: Optional[List[NodalOutput]] = None,
+                 gauss_point_results: Optional[List[GaussPointOutput]] = None,
+                 file_label: str = "step"
+    ):
+        super().__init__(coordinates=[])
+
+        self.output_interval = output_interval
+        self.output_control_type = output_control_type
+        self.file_format = file_format
+        if nodal_results is None:
+            nodal_results = []
+        self.nodal_results: List[NodalOutput] = nodal_results
+        if gauss_point_results is None:
+            gauss_point_results = []
+        self.gauss_point_results: List[GaussPointOutput] = gauss_point_results
+        self.file_label = file_label
 
     def validate(self):
         """
@@ -201,15 +205,26 @@ class VtkOutputParameters(OutputParametersABC):
           output_precision (int): precision of the output for ascii. Default is 7.
     """
 
-    # general inputs
-    output_interval: float
-    output_control_type: str = "step"
-    file_format: str = "binary"
-    nodal_results: List[NodalOutput] = field(default_factory=lambda: [])
-    gauss_point_results: List[GaussPointOutput] = field(default_factory=lambda: [])
-    # VTK specif inputs
-    output_precision: int = 7
-    coordinates = None
+    def __init__(self,
+                 output_interval: float,
+                 output_control_type: str = "step",
+                 file_format: str = "binary",
+                 nodal_results: Optional[List[NodalOutput]] = None,
+                 gauss_point_results: Optional[List[GaussPointOutput]] = None,
+                 output_precision: int = 7
+    ):
+        super().__init__(coordinates=[])
+
+        self.output_interval = output_interval
+        self.output_control_type = output_control_type
+        self.file_format = file_format
+        if nodal_results is None:
+            nodal_results = []
+        self.nodal_results: List[NodalOutput] = nodal_results
+        if gauss_point_results is None:
+            gauss_point_results = []
+        self.gauss_point_results: List[GaussPointOutput] = gauss_point_results
+        self.output_precision = output_precision
 
     def validate(self):
         """
@@ -228,18 +243,26 @@ class JsonOutputParameters(OutputParametersABC):
         - :class:`OutputParametersABC`
 
     Attributes:
-        - time_frequency (float): time frequency of the output [s].
+        - output_interval (float): time frequency of the output [s].
         - nodal_results (List[:class:`NodalOutput`]): list of nodal outputs as defined in :class:`NodalOutput`.
         - gauss_point_results (List[:class:`GaussPointOutput`]): list of gauss point outputs as \
               defined in :class:`GaussPointOutput`.
     """
 
-    # JSON specif inputs
-    time_frequency: float
-    # general inputs
-    nodal_results: List[NodalOutput] = field(default_factory=lambda: [])
-    gauss_point_results: List[GaussPointOutput] = field(default_factory=lambda: [])
-    coordinates = None
+    def __init__(self,
+                 output_interval: float,
+                 nodal_results: Optional[List[NodalOutput]] = None,
+                 gauss_point_results: Optional[List[GaussPointOutput]] = None
+    ):
+        super().__init__(coordinates=[])
+
+        self.output_interval = output_interval
+        if nodal_results is None:
+            nodal_results = []
+        self.nodal_results: List[NodalOutput] = nodal_results
+        if gauss_point_results is None:
+            gauss_point_results = []
+        self.gauss_point_results: List[GaussPointOutput] = gauss_point_results
 
     def validate(self):
         """
@@ -283,9 +306,9 @@ class Output:
 
                 if output_dir is None, then the current directory is assumed.
 
-                [NOTE]: for VTK file type, the content of the target directory will be deleted. Therefore a subfolder is
-                always appended to the specified output directory to avoid erasing important memory content.
-                The appended folder is defined based on the submodelpart name specified.
+                [NOTE]: for VTK file type, the content of the target directory will be deleted. Therefore,
+                a subfolder is always appended to the specified output directory to avoid erasing important memory
+                content. The appended folder is defined based on the submodelpart name specified.
 
             - output_name (Optional[str]): Name for the output file. This parameter is \
                   used by GiD and JSON outputs while is ignored in VTK. If the name is not \

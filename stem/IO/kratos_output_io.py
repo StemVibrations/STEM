@@ -83,10 +83,6 @@ class KratosOutputsIO:
                     "file_label": output_parameters.file_label,
                     "output_control_type": output_parameters.output_control_type,
                     "output_interval": output_parameters.output_interval,
-                    "body_output": output_parameters.body_output,
-                    "node_output": output_parameters.node_output,
-                    "skin_output": output_parameters.skin_output,
-                    "plane_output": output_parameters.plane_output,
                     "nodal_results": [
                         op.name for op in output_parameters.nodal_results
                     ],
@@ -94,7 +90,7 @@ class KratosOutputsIO:
                         op.name for op in output_parameters.gauss_point_results
                     ],
                 },
-                "point_data_configuration": output_parameters.point_data_configuration,
+                "point_data_configuration": [],
             },
         }
         # initialize output dictionary
@@ -200,7 +196,7 @@ class KratosOutputsIO:
                 "gauss_points_output_variables": [
                     op.name for op in output_parameters.gauss_point_results
                 ],
-                "time_frequency": output_parameters.time_frequency,
+                "time_frequency": output_parameters.output_interval,
             },
         }
         return output_dict

@@ -17,10 +17,6 @@
                         "file_label":          "step",
                         "output_control_type": "step",
                         "output_interval":     100,
-                        "body_output":         true,
-                        "node_output":         false,
-                        "skin_output":         false,
-                        "plane_output":        [],
                         "nodal_results":       ["DISPLACEMENT","TOTAL_DISPLACEMENT"],
                         "gauss_point_results": ["VON_MISES_STRESS","FLUID_FLUX_VECTOR","HYDRAULIC_HEAD"]
                     },
@@ -45,10 +41,6 @@
                         "file_label":          "step",
                         "output_control_type": "step",
                         "output_interval":     100,
-                        "body_output":         true,
-                        "node_output":         false,
-                        "skin_output":         false,
-                        "plane_output":        [],
                         "nodal_results":       ["WATER_PRESSURE","VOLUME_ACCELERATION"],
                         "gauss_point_results": ["GREEN_LAGRANGE_STRAIN_TENSOR","ENGINEERING_STRAIN_TENSOR","CAUCHY_STRESS_TENSOR","TOTAL_STRESS_TENSOR"]
                     },
@@ -74,10 +66,6 @@
                         "file_label":          "step",
                         "output_control_type": "step",
                         "output_interval":     100,
-                        "body_output":         true,
-                        "node_output":         false,
-                        "skin_output":         false,
-                        "plane_output":        [],
                         "nodal_results":       ["WATER_PRESSURE","VOLUME_ACCELERATION"],
                         "gauss_point_results": ["GREEN_LAGRANGE_STRAIN_TENSOR","ENGINEERING_STRAIN_TENSOR","CAUCHY_STRESS_TENSOR","TOTAL_STRESS_TENSOR"]
                     },
