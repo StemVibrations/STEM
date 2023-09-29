@@ -7,6 +7,7 @@ import pytest
 
 from stem.geometry import *
 from stem.model import *
+from stem.output import NodalOutput, GaussPointOutput, GiDOutputParameters
 from stem.solver import *
 from tests.utils import TestUtils
 
@@ -346,6 +347,32 @@ class TestModel:
             offset=3.0,
             direction=[1, 1, 1]
         )
+
+    @pytest.fixture
+    def create_default_outputs(self):
+        """
+        Sets default output parameters.
+
+        Returns:
+            - List[:class:`stem.output.Output`]: list of default output processes.
+        """
+        # Nodal results
+        nodal_results = [NodalOutput.ACCELERATION]
+        # Gauss point results
+        # define output process
+
+        output_process = Output(
+            part_name="nodal_accelerations",
+            output_name="gid_nodal_accelerations_top",
+            output_dir="dir_test",
+            output_parameters=GiDOutputParameters(
+                file_format="binary",
+                output_interval=100,
+                nodal_results=nodal_results
+            )
+        )
+
+        return output_process
 
     @pytest.fixture
     def expected_geometry_two_layers_3D_extruded(self):
@@ -1110,6 +1137,88 @@ class TestModel:
             assert len(node.coordinates) == 3
             unique_node_ids.append(node.id)
 
+    def test_add_output_to_a_surface_2d(self, create_default_2d_soil_material: SoilMaterial,
+                                        create_default_outputs: Output):
+        """
+        Test if output nodes are correctly accounted for when meshing a surface.
+        Args:
+            - expected_geometry_two_layers_2D_after_sync (Tuple[:class:`stem.geometry.Geometry`, \
+                :class:`stem.geometry.Geometry`, :class:`stem.geometry.Geometry`]): The expected geometry after \
+                synchronising the geometry.
+            - create_default_outputs (:class:`stem.output.Output`): the output object containing the \
+                output info.
+        """
+
+        # define layer coordinates
+        ndim = 2
+        layer1_coordinates = [(0, 0, 0), (4, 0, 0), (4, 1, 0), (0, 1, 0)]
+
+        # define soil materials
+        soil_material1 = create_default_2d_soil_material
+        soil_material1.name = "soil1"
+
+        # create model
+        model = Model(ndim)
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
+
+        # synchronise geometry and recalculates the ids
+        model.synchronise_geometry()
+        # define soil material
+        output_object = create_default_outputs
+
+        # add outputs
+        output_coordinates = [(1.5, 1, 0), (1.5, 0.5, 0), (2.5, 0.5, 0), (2.5, 0, 0)]
+        model.add_output_part_by_coordinates(
+            output_coordinates, **output_object.__dict__
+        )
+        model.synchronise_geometry()
+        # model.show_geometry(show_line_ids=True)
+        # TODO: create an assert block for geometry
+
+        model.generate_mesh()
+        # model.show_mesh()
+
+        unique_element_ids = []
+        unique_node_ids = []
+
+        part = model.body_model_parts[0]
+        assert part.mesh.ndim == 2
+
+        # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
+        # correct and if the element ids are unique and if the number of nodes per element is correct
+        assert len(part.mesh.elements) == 98
+
+        for element_id, element in part.mesh.elements.items():
+            assert element.element_type == "TRIANGLE_3N"
+            assert element_id not in unique_element_ids
+            assert len(element.node_ids) == 3
+            unique_element_ids.append(element.id)
+
+        # check if nodes are generated correctly, i.e. if there are nodes in the mesh and if the node ids are unique
+        # and if the number of coordinates per node is correct
+        assert len(part.mesh.nodes) == 64
+        for node_id, node in part.mesh.nodes.items():
+            assert node_id not in unique_node_ids
+            assert len(node.coordinates) == 3
+            unique_node_ids.append(node.id)
+
+        # assert the output parts
+        part = model.process_model_parts[0]
+        assert part.mesh.ndim == 1
+
+        unique_node_ids = []
+        # check if nodes are generated correctly, number of nodes are equal to the one requested in output,
+        # no elements generated, unique node ids, and correct number of coordinates per node
+        assert len(part.mesh.nodes) == len(output_coordinates)
+        for node_id, node in part.mesh.nodes.items():
+            assert node_id not in unique_node_ids
+            assert len(node.coordinates) == 3
+            unique_node_ids.append(node.id)
+
+        assert part.mesh.elements is None
+
     def test_generate_mesh_with_only_a_body_model_part_3d(self, create_default_3d_soil_material: SoilMaterial):
         """
         Test if the mesh is generated correctly in 3D if there is only one body model part.
@@ -1154,6 +1263,7 @@ class TestModel:
             assert node_id not in unique_node_ids
             assert len(node.coordinates) == 3
             unique_node_ids.append(node.id)
+
 
     def test_generate_mesh_with_body_and_process_model_part(self, create_default_2d_soil_material: SoilMaterial):
         """

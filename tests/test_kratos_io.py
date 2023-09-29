@@ -49,6 +49,7 @@ class TestKratosModelIO:
         """
         ndim = 2
         layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+        output_coordinates = [(0.5, 0, 0), (0.5, 0.5, 0), (0.5, 1, 0)]
 
         load_coordinates_top = [(1, 1, 0), (0, 1, 0)]  # top
         load_coordinates_bottom = [(0, 0, 0), (1, 0, 0)]  # bottom
@@ -87,9 +88,24 @@ class TestKratosModelIO:
         # add boundary conditions in 0d, 1d and 2d
         model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "no_displacement")
 
+        # add output
+        # - Nodal results
+        nodal_results = [NodalOutput.ACCELERATION, NodalOutput.VELOCITY, NodalOutput.DISPLACEMENT]
+        # - define output process
+        model.add_output_part_by_coordinates(
+            coordinates=output_coordinates,
+            part_name="test_output_part",
+            output_name="gid_output_soil1",
+            output_dir="dir_test",
+            output_parameters=GiDOutputParameters(
+                file_format="binary",
+                output_interval=100,
+                nodal_results=nodal_results
+            )
+        )
         model.synchronise_geometry()
 
-        model.set_mesh_size(1)
+        model.set_mesh_size(0.2)
         model.generate_mesh()
 
         return model
@@ -177,7 +193,7 @@ class TestKratosModelIO:
             )
         )
 
-        return [gid_output_process]
+        return gid_output_process
 
     @pytest.fixture
     def create_default_solver_settings(self):
@@ -230,10 +246,10 @@ class TestKratosModelIO:
         model = create_default_2d_model_and_mesh
         kratos_io = KratosIO(ndim=model.ndim)
         model.project_parameters = create_default_solver_settings
+        model.add_model_part_output(**create_default_outputs.__dict__)
 
         actual_dict = kratos_io.write_project_parameters_json(
             model=model,
-            outputs=create_default_outputs,
             mesh_file_name="test_mdpa_file.mdpa",
             materials_file_name="MaterialParameters.json",
             output_folder="dir_test"
@@ -338,10 +354,10 @@ class TestKratosModelIO:
         model = create_default_2d_model_and_mesh
         kratos_io = KratosIO(ndim=model.ndim)
         model.project_parameters = create_default_solver_settings
+        model.add_model_part_output(**create_default_outputs.__dict__)
 
         kratos_io.write_input_files_for_kratos(
             model=model,
-            outputs=create_default_outputs,
             mesh_file_name="test_mdpa_file.mdpa"
         )
 
@@ -371,6 +387,9 @@ class TestKratosModelIO:
         """
         # load the default 2D model
         model = create_default_2d_model_and_mesh
+        # reduce the size of the model
+        model.set_mesh_size(0.5)
+        model.generate_mesh()
 
         body_model_part_to_write = model.body_model_parts[0]
         process_model_part_to_write = model.process_model_parts[0]
@@ -386,10 +405,47 @@ class TestKratosModelIO:
             body_model_part=body_model_part_to_write
         )
         # define expected block text
-        expected_text_body = ['', 'Begin SubModelPart soil1', '  Begin SubModelPartTables', '  End SubModelPartTables',
-                              '  Begin SubModelPartNodes', '  1', '  2', '  3', '  4', '  5', '  End SubModelPartNodes',
-                              '  Begin SubModelPartElements', '  5', '  6', '  7', '  8',
-                              '  End SubModelPartElements', 'End SubModelPart', '']
+        expected_text_body = [
+            "",
+            "Begin SubModelPart soil1",
+            "  Begin SubModelPartTables",
+            "  End SubModelPartTables",
+            "  Begin SubModelPartNodes",
+            "  1",
+            "  2",
+            "  3",
+            "  4",
+            "  5",
+            "  6",
+            "  7",
+            "  8",
+            "  9",
+            "  10",
+            "  11",
+            "  12",
+            "  13",
+            "  End SubModelPartNodes",
+            "  Begin SubModelPartElements",
+            "  11",
+            "  12",
+            "  13",
+            "  14",
+            "  15",
+            "  16",
+            "  17",
+            "  18",
+            "  19",
+            "  20",
+            "  21",
+            "  22",
+            "  23",
+            "  24",
+            "  25",
+            "  26",
+            "  End SubModelPartElements",
+            "End SubModelPart",
+            "",
+        ]
         # assert the objects to be equal
         npt.assert_equal(actual=actual_text_body, desired=expected_text_body)
 
@@ -398,10 +454,24 @@ class TestKratosModelIO:
             process_model_part=process_model_part_to_write
         )
         # define expected block text
-        expected_text_load = ['', 'Begin SubModelPart load_top', '  Begin SubModelPartTables', '  1',
-                              '  End SubModelPartTables', '  Begin SubModelPartNodes', '  3', '  4',
-                              '  End SubModelPartNodes', '  Begin SubModelPartConditions', '  3',
-                              '  End SubModelPartConditions', 'End SubModelPart', '']
+        expected_text_load = [
+            "",
+            "Begin SubModelPart load_top",
+            "  Begin SubModelPartTables",
+            "  1",
+            "  End SubModelPartTables",
+            "  Begin SubModelPartNodes",
+            "  3",
+            "  4",
+            "  7",
+            "  End SubModelPartNodes",
+            "  Begin SubModelPartConditions",
+            "  7",
+            "  9",
+            "  End SubModelPartConditions",
+            "End SubModelPart",
+            "",
+        ]
 
         # assert the objects to be equal
         npt.assert_equal(actual=actual_text_load, desired=expected_text_load)

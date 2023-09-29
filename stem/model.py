@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import List, Sequence, Dict, Any, Optional, Union
 
 import numpy.typing as npty
@@ -11,6 +12,7 @@ from stem.structural_material import *
 from stem.boundary import *
 from stem.geometry import Geometry
 from stem.mesh import Mesh, MeshSettings, Node, Element
+from stem.output import Output, OutputParametersABC
 from stem.load import *
 from stem.solver import Problem, StressInitialisationType
 from stem.utils import Utils
@@ -31,6 +33,7 @@ class Model:
         - geometry (Optional[:class:`stem.geometry.Geometry`]) The geometry of the whole model.
         - body_model_parts (List[:class:`stem.model_part.BodyModelPart`]): A list containing the body model parts.
         - process_model_parts (List[:class:`stem.model_part.ModelPart`]): A list containing the process model parts.
+        - outputs (List[:class:`stem.output.Output`]): A list containing the outputs of the model.
         - extrusion_length (Optional[Sequence[float]]): The extrusion length in x, y and z direction
 
     """
@@ -48,6 +51,7 @@ class Model:
         self.gmsh_io = gmsh_IO.GmshIO()
         self.body_model_parts: List[BodyModelPart] = []
         self.process_model_parts: List[ModelPart] = []
+        self.outputs: List[Output] = []
 
         self.extrusion_length: Optional[Sequence[float]] = None
 
@@ -107,8 +111,7 @@ class Model:
                 self.process_model_parts.append(model_part)
 
     def add_soil_layer_by_coordinates(self, coordinates: Sequence[Sequence[float]],
-                       material_parameters: Union[SoilMaterial, StructuralMaterial], name: str,
-                       ):
+                                      material_parameters: Union[SoilMaterial, StructuralMaterial], name: str):
         """
         Adds a soil layer to the model by giving a sequence of 2D coordinates. In 3D the 2D geometry is extruded in
         the direction of the extrusion_length
@@ -287,10 +290,128 @@ class Model:
 
         self.process_model_parts.append(model_part)
 
+    def add_model_part_output(
+            self,
+            output_parameters: OutputParametersABC,
+            part_name: Optional[str] = None,
+            output_dir: str = "./",
+            output_name: Optional[str] = None):
+
+        """
+        Adds an output to the model, including the output folder, the name of the output file (if applicable) and the
+        part of interest to output.
+
+        If no part is specified, the whole model is considered as output.
+
+        Args:
+            - output_parameters (:class:`OutputParametersABC`): class containing the output parameters
+            - part_name (Optional[str]): name of the submodelpart to be given in output. If None, all the model is
+                provided in  output.
+            - output_dir (Optional[str]): output directory for the relative or absolute path to the output file. The \
+                path will be created if it does not exist yet. \n
+
+                example1='test1' results in the test1 output folder relative to current folder as './test1'\
+                example2='path1/path2/test2' saves the outputs in './path1/path2/test2' \
+                example3='C:/Documents/yourproject/test3' saves the outputs in 'C:/Documents/yourproject/test3'.
+
+                if output_dir is None, then the current directory is assumed.
+
+                [NOTE]: for VTK file type, the content of the target directory will be deleted. Therefore a subfolder is
+                always appended to the specified output directory to avoid erasing important memory content.
+                The appended folder is defined based on the submodelpart name specified.
+
+            - output_name (Optional[str]): Name for the output file. This parameter is \
+                  used by GiD and JSON outputs while is ignored in VTK. If the name is not \
+                  given, the part_name is used instead.
+            - coordinates (Optional[Sequence[Sequence[float]]]): A list of nodes that are of interest for the
+                outputs.
+        """
+
+        self.outputs.append(
+            Output(output_parameters=output_parameters,
+                   part_name=part_name,
+                   output_dir=output_dir,
+                   output_name=output_name)
+        )
+
+    def add_output_part_by_coordinates(
+            self,
+            coordinates: Sequence[Sequence[float]],
+            output_parameters: OutputParametersABC,
+            part_name: str,
+            output_dir: str = "./",
+            output_name: Optional[str] = None):
+        """
+        Adds nodes to be output on a set of nodes. The nodes have to be laying on an existing geometry surface.
+        The first and endpoint have to lie on one of the edges of the surface. A new process model part is
+        created, to specify the list of nodes of interest.
+
+        Current limitations:
+        - The nodes have to be laying on an existing geometry surface.
+        - The first and endpoint have to lie on one of the edges of the surface.
+        - A single point cannot be provided, but is always a sequence of lines.
+
+        Args:
+            - coordinates (Optional[Sequence[Sequence[float]]]): A list of nodes that are of interest for the
+                outputs.
+            - output_parameters (:class:`OutputParametersABC`): class containing the output parameters
+            - part_name (str): name of the submodelpart name for the output. Must be different from
+                existing parts.
+            - output_dir (Optional[str]): output directory for the relative or absolute path to the output file. The \
+                path will be created if it does not exist yet. \n
+
+                example1='test1' results in the test1 output folder relative to current folder as './test1'\
+                example2='path1/path2/test2' saves the outputs in './path1/path2/test2' \
+                example3='C:/Documents/yourproject/test3' saves the outputs in 'C:/Documents/yourproject/test3'.
+
+                if output_dir is None, then the current directory is assumed.
+
+                [NOTE]: for VTK file type, the content of the target directory will be deleted. Therefore, a subfolder
+                is always appended to the specified output directory to avoid erasing important memory content.
+                The appended folder is defined based on the submodelpart name specified.
+
+            - output_name (Optional[str]): Name for the output file. This parameter is \
+                  used by GiD and JSON outputs while is ignored in VTK. If the name is not \
+        Raises:
+            - None
+        """
+
+        # todo add validation for point to be inside the same surface.
+        # todo add validation for start and end-point to lie on the edges
+
+        # validation of inputs
+        self.validate_coordinates(coordinates)
+
+        # add output to the output list
+        self.add_model_part_output(
+            output_parameters=output_parameters,
+            part_name=part_name,
+            output_dir=output_dir,
+            output_name=output_name
+        )
+
+        # add coordinates as attribute to keep track of the coordinates.
+        # Needed to filter the nodes in the part and restrict only the required outputs.
+        # TODO: can we improve the book-keeping?
+        output_parameters.coordinates = coordinates
+
+        gmsh_input = {part_name: {"coordinates": coordinates, "ndim": 1}}
+
+        self.gmsh_io.generate_geometry(gmsh_input, "")
+
+        # create model part
+        model_part = ModelPart(part_name)
+        model_part.parameters = output_parameters
+
+        # set the geometry of the model part
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, part_name)
+
+        self.process_model_parts.append(model_part)
+
     def synchronise_geometry(self):
         """
         Synchronise the geometry of all model parts and synchronise the geometry of the whole model. This function
-        recalculates all ids and connectivities of all geometrical entities.
+        recalculates all ids and connectivity of all geometrical entities.
 
         """
 
@@ -338,6 +459,11 @@ class Model:
         for model_part in all_model_parts:
             model_part.mesh = Mesh.create_mesh_from_gmsh_group(self.gmsh_io.mesh_data, model_part.name)
 
+            # adjust the mesh of output model parts. Exclude element, and keep only the nodes of corresponding to the
+            # outout locations.
+            if isinstance(model_part.parameters, OutputParametersABC):
+                model_part.mesh = self.__exclude_non_output_nodes(model_part)
+
         # per process model part, check if the condition elements are applied to a body model part and set the
         # node ordering of the condition elements to match the body elements
         for process_model_part in self.process_model_parts:
@@ -349,6 +475,41 @@ class Model:
 
                 # check the ordering of the nodes of the conditions. If it does not match flip the order.
                 self.__check_ordering_process_model_part(matched_elements, process_model_part)
+
+    def __exclude_non_output_nodes(self, process_model_part: ModelPart, eps = 1e-06) -> Mesh:
+        """
+        Exclude the nodes that are further than `eps` to the requested output nodes for the output model part.
+
+        Args:
+            - process_model_part (:class:`stem.model_part.ModelPart`): the output process model part.
+            - eps (float): the radius distance to search for nodes. In practice is a tolerance for the search
+                algorithm to look for close nodes.
+
+        Returns:
+            - filtered_mesh (:class:`stem.mesh.Mesh`): the filtered mesh for the output process model part.
+        """
+
+        if not hasattr(process_model_part.parameters, "coordinates"):
+            raise ValueError
+
+        # retrieve ids and coordinates of the nodes
+        ids = list(process_model_part.mesh.nodes.keys())
+        coordinates = np.stack([vv.coordinates for vv in process_model_part.mesh.nodes.values()])
+
+        # compute pairwise distances
+        distances = (
+            np.linalg.norm(coordinates[:, None, :] - np.stack(process_model_part.parameters.coordinates)[None, :, :], axis=-1)
+        )
+
+        # only keep the node ids close to the requested node (smaller than eps meters)
+        filtered_node_ids = [ids[ix] for ix in np.where(distances < eps)[0]]
+
+        new_mesh = deepcopy(process_model_part.mesh)
+        new_mesh.nodes = {
+            nn: process_model_part.mesh.nodes[nn] for nn in filtered_node_ids
+        }
+        new_mesh.elements = None
+        return new_mesh
 
     @staticmethod
     def __get_model_part_element_connectivities(model_part: ModelPart) -> npty.NDArray[np.int64]:
@@ -652,6 +813,22 @@ class Model:
 
         fig = PlotUtils.create_geometry_figure(self.ndim, self.geometry, show_volume_ids, show_surface_ids, show_line_ids,
                                                show_point_ids)
+        fig.show()
+
+    def show_mesh(self, **kwargs):
+        """
+        Show the mesh of the model in a matplotlib plot. only available for 2D models.
+        Raises:
+            - NotImplementedError: when is run for 3D models
+        """
+
+        fig = PlotUtils.show_mesh(
+            ndim=self.ndim,
+            body_model_parts=self.body_model_parts,
+            process_model_parts=self.process_model_parts,
+            **kwargs,
+        )
+
         fig.show()
 
     def __setup_stress_initialisation(self):
