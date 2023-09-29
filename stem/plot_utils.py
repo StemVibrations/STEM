@@ -385,7 +385,7 @@ class PlotUtils:
 
         for mp in all_model_parts:
 
-            if isinstance(mp.parameters, OutputParametersABC):
+            if isinstance(mp.parameters, OutputParametersABC) and mp.mesh is not None:
                 # get the vertex of the node.
                 for node_id, node in mp.mesh.nodes.items():
                     vertex = node.coordinates[:ndim]

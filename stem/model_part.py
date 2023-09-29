@@ -3,6 +3,7 @@ from typing import Optional, Union, Dict, Any
 from stem.additional_processes import AdditionalProcessesParametersABC
 from stem.boundary import BoundaryParametersABC
 from stem.load import LoadParametersABC
+from stem.output import OutputParametersABC
 from stem.soil_material import SoilMaterial
 from stem.structural_material import StructuralMaterial
 
@@ -21,7 +22,8 @@ class ModelPart:
         - geometry (Optional[:class:`stem.geometry.Geometry`]): geometry of the model part
         - parameters (Optional[Union[:class:`stem.load.LoadParametersABC`, \
             :class:`stem.boundary.BoundaryParametersABC`, \
-            :class:`stem.additional_processes.AdditionalProcessesParametersABC`]]): process parameters containing the \
+            :class:`stem.additional_processes.AdditionalProcessesParametersABC`\
+            :class:`stem.output.OutputParametersABC`]]): process parameters containing the \
             model part parameters.
         - mesh (Optional[:class:`stem.mesh.Mesh`]): mesh of the model part
         - id (Optional[int]): the id of the model part
@@ -36,7 +38,7 @@ class ModelPart:
         self.__name: str = name
         self.geometry: Optional[Geometry] = None
         self.parameters: Optional[
-            Union[LoadParametersABC, BoundaryParametersABC, AdditionalProcessesParametersABC]
+            Union[LoadParametersABC, BoundaryParametersABC, AdditionalProcessesParametersABC, OutputParametersABC]
         ] = None
         self.mesh: Optional[Mesh] = None
         self.id: Optional[int] = None

@@ -1264,6 +1264,51 @@ class TestModel:
             assert len(node.coordinates) == 3
             unique_node_ids.append(node.id)
 
+    def test_generate_mesh_with_only_a_body_model_part_and_output_3d(
+            self, create_default_3d_soil_material:SoilMaterial
+    ):
+        """
+        Test if the mesh is generated correctly in 3D if there is only one body model part.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+        model = Model(3)
+        model.extrusion_length = [0, 0, 1]
+
+        # add soil material
+        soil_material = create_default_3d_soil_material
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
+        model.synchronise_geometry()
+
+        # generate mesh
+        model.generate_mesh(mesh_name="test", mesh_output_dir="./", save_file=True, open_gmsh_gui=True)
+        mesh = model.body_model_parts[0].mesh
+
+        assert mesh.ndim == 3
+
+        unique_element_ids = []
+        # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
+        # correct and if the element ids are unique and if the number of nodes per element is correct
+        assert len(mesh.elements) == 1120
+
+        for element_id, element in mesh.elements.items():
+            assert element.element_type == "TETRAHEDRON_4N"
+            assert element_id not in unique_element_ids
+            assert len(element.node_ids) == 4
+            unique_element_ids.append(element.id)
+
+        # check if nodes are generated correctly, i.e. if there are nodes in the mesh and if the node ids are unique
+        # and if the number of coordinates per node is correct
+        unique_node_ids = []
+        assert len(mesh.nodes) == 340
+        for node_id, node in mesh.nodes.items():
+            assert node_id not in unique_node_ids
+            assert len(node.coordinates) == 3
+            unique_node_ids.append(node.id)
 
     def test_generate_mesh_with_body_and_process_model_part(self, create_default_2d_soil_material: SoilMaterial):
         """

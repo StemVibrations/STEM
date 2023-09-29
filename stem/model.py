@@ -408,6 +408,49 @@ class Model:
 
         self.process_model_parts.append(model_part)
 
+    def __exclude_non_output_nodes(self, process_model_part: ModelPart, eps = 1e-06) -> Mesh:
+        """
+        Exclude the nodes that are further than `eps` to the requested output nodes for the output model part.
+
+        Args:
+            - process_model_part (:class:`stem.model_part.ModelPart`): the output process model part.
+            - eps (float): the radius distance to search for nodes. In practice is a tolerance for the search
+                algorithm to look for close nodes.
+
+        Returns:
+            - filtered_mesh (:class:`stem.mesh.Mesh`): the filtered mesh for the output process model part.
+        """
+
+        if process_model_part.parameters is None or not isinstance(process_model_part.parameters, OutputParametersABC):
+            raise ValueError
+
+        if process_model_part.parameters.coordinates is None:
+            raise ValueError
+
+        if process_model_part.mesh is None:
+            raise ValueError("process model part has not been meshed yet!")
+
+        # retrieve ids and coordinates of the nodes
+        ids = list(process_model_part.mesh.nodes.keys())
+        coordinates = np.stack([vv.coordinates for vv in process_model_part.mesh.nodes.values()])
+
+        # compute pairwise distances
+        output_coordinates = np.stack([np.array(cc) for cc in process_model_part.parameters.coordinates])
+
+        distances = (
+            np.linalg.norm(coordinates[:, None, :] - output_coordinates[None, :, :], axis=-1)
+        )
+
+        # only keep the node ids close to the requested node (smaller than eps meters)
+        filtered_node_ids = [ids[ix] for ix in np.where(distances < eps)[0]]
+
+        new_mesh = deepcopy(process_model_part.mesh)
+        new_mesh.nodes = {
+            nn: process_model_part.mesh.nodes[nn] for nn in filtered_node_ids
+        }
+        new_mesh.elements = {}
+        return new_mesh
+
     def synchronise_geometry(self):
         """
         Synchronise the geometry of all model parts and synchronise the geometry of the whole model. This function
@@ -440,15 +483,19 @@ class Model:
         """
         self.mesh_settings.element_size = element_size
 
-    def generate_mesh(self):
+    def generate_mesh(self, save_file: bool = False, mesh_output_dir="./", mesh_name: str = "mesh_file",
+                      open_gmsh_gui: bool = False):
         """
         Generate the mesh for the whole model.
 
         """
 
         # generate mesh
-        self.gmsh_io.generate_mesh(self.ndim, element_size=self.mesh_settings.element_size,
-                                   order=self.mesh_settings.element_order)
+        self.gmsh_io.generate_mesh(
+            self.ndim,
+            element_size=self.mesh_settings.element_size, order=self.mesh_settings.element_order, save_file=save_file,
+            mesh_output_dir=mesh_output_dir, mesh_name=mesh_name, open_gmsh_gui=open_gmsh_gui
+        )
 
         # collect all model parts
         all_model_parts: List[Union[BodyModelPart, ModelPart]] = []
@@ -476,40 +523,6 @@ class Model:
                 # check the ordering of the nodes of the conditions. If it does not match flip the order.
                 self.__check_ordering_process_model_part(matched_elements, process_model_part)
 
-    def __exclude_non_output_nodes(self, process_model_part: ModelPart, eps = 1e-06) -> Mesh:
-        """
-        Exclude the nodes that are further than `eps` to the requested output nodes for the output model part.
-
-        Args:
-            - process_model_part (:class:`stem.model_part.ModelPart`): the output process model part.
-            - eps (float): the radius distance to search for nodes. In practice is a tolerance for the search
-                algorithm to look for close nodes.
-
-        Returns:
-            - filtered_mesh (:class:`stem.mesh.Mesh`): the filtered mesh for the output process model part.
-        """
-
-        if not hasattr(process_model_part.parameters, "coordinates"):
-            raise ValueError
-
-        # retrieve ids and coordinates of the nodes
-        ids = list(process_model_part.mesh.nodes.keys())
-        coordinates = np.stack([vv.coordinates for vv in process_model_part.mesh.nodes.values()])
-
-        # compute pairwise distances
-        distances = (
-            np.linalg.norm(coordinates[:, None, :] - np.stack(process_model_part.parameters.coordinates)[None, :, :], axis=-1)
-        )
-
-        # only keep the node ids close to the requested node (smaller than eps meters)
-        filtered_node_ids = [ids[ix] for ix in np.where(distances < eps)[0]]
-
-        new_mesh = deepcopy(process_model_part.mesh)
-        new_mesh.nodes = {
-            nn: process_model_part.mesh.nodes[nn] for nn in filtered_node_ids
-        }
-        new_mesh.elements = None
-        return new_mesh
 
     @staticmethod
     def __get_model_part_element_connectivities(model_part: ModelPart) -> npty.NDArray[np.int64]:

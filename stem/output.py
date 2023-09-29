@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Sequence
 
 
 class NodalOutput(Enum):
@@ -113,7 +113,14 @@ def detect_tensor_outputs(requested_outputs: List[GaussPointOutput]):
 class OutputParametersABC(ABC):
     """
     Abstract class for the definition of user output parameters (GiD, VTK, json).
+
+    Attributes:
+        - coordinates (Optional[Sequence[Sequence[float]]]): List of output nodes if only a subset of nodes is of
+            interest. Defaults to None. In that case, all the nodes/elements of the part/model are provided in the
+            output.
     """
+
+    coordinates: Optional[Sequence[Sequence[float]]]
 
     @abstractmethod
     def validate(self):
@@ -164,6 +171,7 @@ class GiDOutputParameters(OutputParametersABC):
     skin_output: bool = False
     plane_output: List[str] = field(default_factory=lambda: [])
     point_data_configuration: List[str] = field(default_factory=lambda: [])
+    coordinates = None
 
     def validate(self):
         """
@@ -201,6 +209,7 @@ class VtkOutputParameters(OutputParametersABC):
     gauss_point_results: List[GaussPointOutput] = field(default_factory=lambda: [])
     # VTK specif inputs
     output_precision: int = 7
+    coordinates = None
 
     def validate(self):
         """
@@ -230,6 +239,7 @@ class JsonOutputParameters(OutputParametersABC):
     # general inputs
     nodal_results: List[NodalOutput] = field(default_factory=lambda: [])
     gauss_point_results: List[GaussPointOutput] = field(default_factory=lambda: [])
+    coordinates = None
 
     def validate(self):
         """
