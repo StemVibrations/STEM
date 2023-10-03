@@ -498,7 +498,7 @@ class Model:
         self.gmsh_io.generate_mesh(
             self.ndim,
             element_size=self.mesh_settings.element_size, order=self.mesh_settings.element_order,
-            # save_file=save_file, mesh_output_dir=mesh_output_dir, mesh_name=mesh_name, open_gmsh_gui=open_gmsh_gui
+            save_file=save_file, mesh_output_dir=mesh_output_dir, mesh_name=mesh_name, open_gmsh_gui=open_gmsh_gui
         )
 
         # collect all model parts
