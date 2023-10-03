@@ -319,10 +319,15 @@ class Model:
         """
         self.mesh_settings.element_size = element_size
 
-    def generate_mesh(self):
+    def generate_mesh(self, save_file:bool=False, mesh_output_dir="./", mesh_name:str="mesh_file", open_gmsh_gui:bool=False):
         """
         Generate the mesh for the whole model.
 
+        Args:
+            save_file (bool, optional): If True, saves mesh data to gmsh msh file. (default is False)
+            mesh_name (str): Name of gmsh model and mesh output file.  (default is working directory)
+            mesh_output_dir (str): Output directory of mesh file. (default is `mesh_file`)
+            open_gmsh_gui (bool, optional): User indicates whether to open gmsh interface (default is False)
         """
 
         # generate mesh
