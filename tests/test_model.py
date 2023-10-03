@@ -7,6 +7,7 @@ import pytest
 
 from stem.geometry import *
 from stem.model import *
+from stem.output import NodalOutput, GaussPointOutput, GiDOutputParameters
 from stem.solver import *
 from tests.utils import TestUtils
 
@@ -346,6 +347,32 @@ class TestModel:
             offset=3.0,
             direction=[1, 1, 1]
         )
+
+    @pytest.fixture
+    def create_default_outputs(self):
+        """
+        Sets default output parameters.
+
+        Returns:
+            - List[:class:`stem.output.Output`]: list of default output processes.
+        """
+        # Nodal results
+        nodal_results = [NodalOutput.ACCELERATION]
+        # Gauss point results
+        # define output process
+
+        output_process = Output(
+            part_name="nodal_accelerations",
+            output_name="gid_nodal_accelerations_top",
+            output_dir="dir_test",
+            output_parameters=GiDOutputParameters(
+                file_format="binary",
+                output_interval=100,
+                nodal_results=nodal_results
+            )
+        )
+
+        return output_process
 
     @pytest.fixture
     def expected_geometry_two_layers_3D_extruded(self):
@@ -1095,9 +1122,9 @@ class TestModel:
         # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
         # correct and if the element ids are unique and if the number of nodes per element is correct
         assert len(mesh.elements) == 162
-        for element in mesh.elements:
+        for element_id, element in mesh.elements.items():
             assert element.element_type == "TRIANGLE_3N"
-            assert element.id not in unique_element_ids
+            assert element_id not in unique_element_ids
             assert len(element.node_ids) == 3
             unique_element_ids.append(element.id)
 
@@ -1105,10 +1132,92 @@ class TestModel:
         # and if the number of coordinates per node is correct
         unique_node_ids = []
         assert len(mesh.nodes) == 98
-        for node in mesh.nodes:
-            assert node.id not in unique_node_ids
+        for node_id, node in mesh.nodes.items():
+            assert node_id not in unique_node_ids
             assert len(node.coordinates) == 3
             unique_node_ids.append(node.id)
+
+    def test_add_output_to_a_surface_2d(self, create_default_2d_soil_material: SoilMaterial,
+                                        create_default_outputs: Output):
+        """
+        Test if output nodes are correctly accounted for when meshing a surface.
+        Args:
+            - expected_geometry_two_layers_2D_after_sync (Tuple[:class:`stem.geometry.Geometry`, \
+                :class:`stem.geometry.Geometry`, :class:`stem.geometry.Geometry`]): The expected geometry after \
+                synchronising the geometry.
+            - create_default_outputs (:class:`stem.output.Output`): the output object containing the \
+                output info.
+        """
+
+        # define layer coordinates
+        ndim = 2
+        layer1_coordinates = [(0, 0, 0), (4, 0, 0), (4, 1, 0), (0, 1, 0)]
+
+        # define soil materials
+        soil_material1 = create_default_2d_soil_material
+        soil_material1.name = "soil1"
+
+        # create model
+        model = Model(ndim)
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
+
+        # synchronise geometry and recalculates the ids
+        model.synchronise_geometry()
+        # define output object
+        output_object = create_default_outputs
+
+        # add outputs
+        output_coordinates = [(1.5, 1, 0), (1.5, 0.5, 0), (2.5, 0.5, 0), (2.5, 0, 0)]
+        model.add_output_part_by_coordinates(
+            output_coordinates, **output_object.__dict__
+        )
+        model.synchronise_geometry()
+        # model.show_geometry(show_line_ids=True)
+        # TODO: create an assert block for geometry
+
+        model.generate_mesh()
+        # model.show_mesh()
+
+        unique_element_ids = []
+        unique_node_ids = []
+
+        part = model.body_model_parts[0]
+        assert part.mesh.ndim == 2
+
+        # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
+        # correct and if the element ids are unique and if the number of nodes per element is correct
+        assert len(part.mesh.elements) == 98
+
+        for element_id, element in part.mesh.elements.items():
+            assert element.element_type == "TRIANGLE_3N"
+            assert element_id not in unique_element_ids
+            assert len(element.node_ids) == 3
+            unique_element_ids.append(element.id)
+
+        # check if nodes are generated correctly, i.e. if there are nodes in the mesh and if the node ids are unique
+        # and if the number of coordinates per node is correct
+        assert len(part.mesh.nodes) == 64
+        for node_id, node in part.mesh.nodes.items():
+            assert node_id not in unique_node_ids
+            assert len(node.coordinates) == 3
+            unique_node_ids.append(node.id)
+
+        # assert the output parts
+        part = model.process_model_parts[0]
+        assert part.mesh.ndim == 1
+
+        unique_node_ids = []
+        # check if nodes are generated correctly, number of nodes are equal to the one requested in output,
+        # no elements generated, unique node ids, and correct number of coordinates per node
+        assert len(part.mesh.nodes) == len(output_coordinates)
+        for node_id, node in part.mesh.nodes.items():
+            assert node_id not in unique_node_ids
+            assert len(node.coordinates) == 3
+            unique_node_ids.append(node.id)
+
+        assert part.mesh.elements == {}
 
     def test_generate_mesh_with_only_a_body_model_part_3d(self, create_default_3d_soil_material: SoilMaterial):
         """
@@ -1139,9 +1248,10 @@ class TestModel:
         # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
         # correct and if the element ids are unique and if the number of nodes per element is correct
         assert len(mesh.elements) == 1120
-        for element in mesh.elements:
+
+        for element_id, element in mesh.elements.items():
             assert element.element_type == "TETRAHEDRON_4N"
-            assert element.id not in unique_element_ids
+            assert element_id not in unique_element_ids
             assert len(element.node_ids) == 4
             unique_element_ids.append(element.id)
 
@@ -1149,8 +1259,62 @@ class TestModel:
         # and if the number of coordinates per node is correct
         unique_node_ids = []
         assert len(mesh.nodes) == 340
-        for node in mesh.nodes:
-            assert node.id not in unique_node_ids
+        for node_id, node in mesh.nodes.items():
+            assert node_id not in unique_node_ids
+            assert len(node.coordinates) == 3
+            unique_node_ids.append(node.id)
+
+    def no_test_generate_mesh_with_only_a_body_model_part_and_output_3d(
+            self, create_default_3d_soil_material:SoilMaterial, create_default_outputs: Output):
+        """
+        Test if the mesh is generated correctly in 3D if there is only one body model part.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+            - create_default_outputs (:class:`stem.output.Output`): the output object containing the \
+                output info.
+
+        """
+        model = Model(3)
+        model.extrusion_length = [0, 0, 1]
+
+        # add soil material
+        soil_material = create_default_3d_soil_material
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
+        output_coordinates = [(0., 1, 0.5), (0.5, 1, 0.5), (1, 1, 0.5)]
+
+        output_object = create_default_outputs
+        model.add_output_part_by_coordinates(
+            output_coordinates, **output_object.__dict__
+        )
+        model.synchronise_geometry()
+        model.set_mesh_size(element_size=1)
+
+        # generate mesh
+        model.generate_mesh(mesh_name="test", mesh_output_dir="./", save_file=True, open_gmsh_gui=True)
+        mesh = model.body_model_parts[0].mesh
+
+        assert mesh.ndim == 3
+
+        unique_element_ids = []
+        # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
+        # correct and if the element ids are unique and if the number of nodes per element is correct
+        assert len(mesh.elements) == 1120
+
+        for element_id, element in mesh.elements.items():
+            assert element.element_type == "TETRAHEDRON_4N"
+            assert element_id not in unique_element_ids
+            assert len(element.node_ids) == 4
+            unique_element_ids.append(element.id)
+
+        # check if nodes are generated correctly, i.e. if there are nodes in the mesh and if the node ids are unique
+        # and if the number of coordinates per node is correct
+        unique_node_ids = []
+        assert len(mesh.nodes) == 340
+        for node_id, node in mesh.nodes.items():
+            assert node_id not in unique_node_ids
             assert len(node.coordinates) == 3
             unique_node_ids.append(node.id)
 
@@ -1195,18 +1359,20 @@ class TestModel:
         # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
         # correct and if the element ids are unique and if the number of nodes per element is correct
         assert len(mesh_body.elements) == 162
-        for element in mesh_body.elements:
+
+        for element_id, element in mesh_body.elements.items():
             assert element.element_type == "TRIANGLE_3N"
-            assert element.id not in unique_element_ids
+            assert element_id not in unique_element_ids
             assert len(element.node_ids) == 3
-            unique_element_ids.append(element.id)
+            unique_element_ids.append(element_id)
 
         # check if nodes are generated correctly, i.e. if there are nodes in the mesh and if the node ids are unique
         # and if the number of coordinates per node is correct
         unique_body_node_ids = []
         assert len(mesh_body.nodes) == 98
-        for node in mesh_body.nodes:
-            assert node.id not in unique_body_node_ids
+
+        for node_id, node in mesh_body.nodes.items():
+            assert node_id not in unique_body_node_ids
             assert len(node.coordinates) == 3
             unique_body_node_ids.append(node.id)
 
@@ -1218,21 +1384,100 @@ class TestModel:
         # check elements of process model part, i.e. if the number of elements is correct and if the element type is
         # correct and if the element ids are unique and if the number of nodes per element is correct
         assert len(mesh_process.elements) == 1
-        for element in mesh_process.elements:
+        for element_id, element in mesh_process.elements.items():
             assert element.element_type == "POINT_1N"
-            assert element.id == 1
-            assert element.id not in unique_element_ids
+            assert element_id == 1
+            assert element_id not in unique_element_ids
             assert len(element.node_ids) == 1
             unique_element_ids.append(element.id)
 
         # check nodes of process model part, i.e. if there is 1 node in the mesh and if the node ids are present in the
         # body mesh and if the number of coordinates per node is correct
         assert len(mesh_process.nodes) == 1
-        for node in mesh_process.nodes:
-
+        for node_id, node in mesh_process.nodes.items():
             # check if node is also available in the body mesh
-            assert node.id in unique_body_node_ids
+            assert node_id in unique_body_node_ids
             assert len(node.coordinates) == 3
+
+    def test_generate_mesh_2d_2_layers_and_lineload(
+            self,
+            create_default_line_load_parameters: LineLoad,
+            create_default_2d_soil_material: SoilMaterial
+    ):
+        """
+        Test if the mesh is generated correctly in 2D for 2 layers plus lineload and fixed bottom.
+
+        Args:
+            - create_default_line_load_parameters (:class:`stem.load.LineLoad`): default line load parameters
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+        model = Model(2)
+
+        # add soil material
+        soil_material = create_default_2d_soil_material
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (4, 0, 0), (4, 1, 0), (0, 1, 0)], soil_material, "layer1")
+        model.add_soil_layer_by_coordinates([(0, 1, 0), (4, 1, 0), (4, 2, 0), (0, 2, 0)], soil_material, "layer2")
+
+        # add line load
+        model.add_load_by_coordinates([(4, 2, 0), (0, 2, 0)],
+                                      create_default_line_load_parameters, "line_load1")
+
+        # add same line load in reversed order
+        model.add_load_by_coordinates([(0, 2, 0), (4, 2, 0)],
+                                      create_default_line_load_parameters, "line_load2")
+        model.synchronise_geometry()
+
+        # generate mesh
+        model.generate_mesh()
+
+        # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
+        # correct, the elements are counterclockwise and the number of nodes per element is correct
+        nodes = model.get_all_nodes()
+        for bmp in model.body_model_parts:
+
+            for element_id, element in bmp.mesh.elements.items():
+                coordinates = [nodes[node_id].coordinates for node_id in element.node_ids]
+                assert not Utils.are_2d_coordinates_clockwise(coordinates)
+                assert element.element_type == "TRIANGLE_3N"
+                assert len(element.node_ids) == 3
+
+        # Check if all condition elements have a body element neighbour
+        mapper_process_model_part_1 = model._Model__find_matching_body_elements_for_process_model_part(
+            model.process_model_parts[0])
+
+        mapper_process_model_part_2 = model._Model__find_matching_body_elements_for_process_model_part(
+            model.process_model_parts[1])
+
+        actual_element_ids_process_1 = [(process_element.id, body_element.id)
+                                        for process_element, body_element in mapper_process_model_part_1.items()]
+
+        actual_element_ids_process_2 = [(process_element.id, body_element.id)
+                                        for process_element, body_element in mapper_process_model_part_2.items()]
+
+        expected_ids = [(1, 85), (2, 116), (3, 125), (4, 95), (5, 96), (6, 124), (7, 98), (8, 100), (9, 83)]
+
+        # check if the element ids are correct, process model part 1 and 2 should have the same element ids in the same
+        # order
+        np.testing.assert_equal(desired=expected_ids, actual=actual_element_ids_process_1)
+        np.testing.assert_equal(desired=expected_ids, actual=actual_element_ids_process_2)
+
+        # check order of nodes is consistent with what expected.
+        node_ids_process_model_part_1 = np.array([el.node_ids
+                                                  for el in model.process_model_parts[0].mesh.elements.values()])
+
+        node_ids_process_model_part_2 = np.array([el.node_ids
+                                                  for el in model.process_model_parts[1].mesh.elements.values()])
+
+        expected_process_connectivities = np.array([[5, 29], [29, 30], [30, 31], [31, 32],
+                                                    [32, 33], [33, 34], [34, 35], [35, 36], [36, 6]])
+
+        # check if the node ids are correct, process model part 1 and 2 should have the same node ids in the same
+        # order
+        npt.assert_equal(node_ids_process_model_part_1, expected_process_connectivities)
+        npt.assert_equal(node_ids_process_model_part_2, expected_process_connectivities)
 
     def test_validate_expected_success(self):
         """
@@ -1280,7 +1525,7 @@ class TestModel:
 
         pytest.raises(ValueError, model.validate)
 
-    def test_add_boundary_condition_by_geometry_ids(self,create_default_3d_soil_material: SoilMaterial):
+    def test_add_boundary_condition_by_geometry_ids(self, create_default_3d_soil_material: SoilMaterial):
         """
         Test if a boundary condition is added correctly to the model. A boundary condition is added to the model by
         specifying the geometry ids to which the boundary condition should be applied.
@@ -1289,7 +1534,6 @@ class TestModel:
             - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
 
         """
-
 
         # create a 3D model
         model = Model(3)
@@ -1395,7 +1639,6 @@ class TestModel:
         for expected_geometry, model_part in zip(all_expected_geometries, model.process_model_parts):
 
             TestUtils.assert_almost_equal_geometries(expected_geometry, model_part.geometry)
-
 
     def test_add_gravity_load_1d_and_2d(self, create_default_2d_soil_material: SoilMaterial):
         """
@@ -1618,6 +1861,71 @@ class TestModel:
         with pytest.raises(ValueError,
                            match=r"Project parameters must be set before setting up the stress initialisation"):
             model._Model__setup_stress_initialisation()
+
+    def test_check_ordering_process_model_part_2d(self):
+        """
+        Test if the node order of the process model part is flipped, such that the nodes follow the same order as
+        the neighbour element. After filling in the nodes of the process model part in reverse order.
+
+        """
+
+        # create model
+        model = Model(2)
+
+        # manually set mesh data nodes
+        model.gmsh_io._GmshIO__mesh_data = {"nodes": {1: [0, 0, 0], 2: [1, 0, 0], 3: [1, 1, 0], 4: [0, 1, 0]}}
+
+        # manually create process model part with nodes in reverse order
+        process_element = Element(1, "LINE_2N", [2, 1])
+        process_model_part = ModelPart("process")
+        process_mesh = Mesh(1)
+        process_mesh.elements = {1: process_element}
+        process_mesh.nodes = {1: Node(1, [0, 0, 0]), 2: Node(2, [1, 0, 0])}
+        process_model_part.mesh = process_mesh
+        model.process_model_parts = [ModelPart("process")]
+
+        # create body_model_part
+        body_element = Element(2, "TRIANGLE_3N", [1, 2, 3])
+
+        # check ordering of process model part connectivities
+        mapper = {process_element: body_element}
+        model._Model__check_ordering_process_model_part(mapper, process_model_part)
+
+        # check if the node ids of the process model part are in the correct order
+        assert process_model_part.mesh.elements[1].node_ids == [1, 2]
+
+    def test_check_ordering_process_model_part_3d(self):
+        """
+        Test if the node order of the process model part is flipped, such that the normal is inwards. After filling in
+        the nodes of the process model part in outwards normal order.
+
+        """
+
+        # create model
+        model = Model(3)
+
+        # manually set mesh data nodes
+        model.gmsh_io._GmshIO__mesh_data = {"nodes": {1: [0, 0, 0], 2: [1, 0, 0], 3: [1, 1, 0], 4: [0, 0, 1]}}
+
+        # manually create process model part with nodes in outwards normal order
+        process_element = Element(1, "TRIANGLE_3N", [2, 1, 3])
+        process_model_part = ModelPart("process")
+        process_mesh = Mesh(1)
+        process_mesh.elements = {1: process_element}
+        process_mesh.nodes = {1: Node(1, [0, 0, 0]), 2: Node(2, [1, 0, 0])}
+        process_model_part.mesh = process_mesh
+        model.process_model_parts = [ModelPart("process")]
+
+        # create body_model_part
+        body_element = Element(2, "TETRAHEDRON_4N", [1, 2, 3, 4])
+
+        # check ordering of process model part connectivities
+        mapper = {process_element: body_element}
+        model._Model__check_ordering_process_model_part(mapper, process_model_part)
+
+        # check if the node ids of the process model part are in the correct order, i.e. the node order should be
+        # flipped, such that the normal is inwards
+        assert process_model_part.mesh.elements[1].node_ids == [3, 1, 2]
 
     @pytest.mark.skip("Not implemented yet")
     def test_post_setup(self):

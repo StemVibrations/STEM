@@ -16,7 +16,7 @@ from stem.mesh import Element, Node
 from stem.model import Model
 from stem.model_part import ModelPart, BodyModelPart
 from stem.table import Table
-from stem.output import Output
+from stem.output import Output, OutputParametersABC
 from stem.utils import Utils
 from stem.IO.io_utils import IOUtils
 
@@ -257,13 +257,13 @@ class KratosIO:
         )
 
         # write nodes
-        entities = [node.id for node in body_model_part.mesh.nodes]
+        entities = list(body_model_part.mesh.nodes.keys())
         block_text = self.__write_sub_model_part_block(
             block_text, block_name="Nodes", block_entities=entities
         )
 
         # write elements
-        entities = [el.id for el in body_model_part.mesh.elements]
+        entities = list(body_model_part.mesh.elements.keys())
         block_text = self.__write_sub_model_part_block(
             block_text, block_name="Elements", block_entities=entities
         )
@@ -310,7 +310,7 @@ class KratosIO:
         )
 
         # write nodes
-        entities = [node.id for node in process_model_part.mesh.nodes]
+        entities = list(process_model_part.mesh.nodes.keys())
         block_text = self.__write_sub_model_part_block(
             block_text, block_name="Nodes", block_entities=entities
         )
@@ -319,7 +319,8 @@ class KratosIO:
         if ((process_model_part.mesh.elements is not None) and
                 self.__check_if_process_writes_conditions(process_model_part)):
             # write conditions
-            entities = [el.id for el in process_model_part.mesh.elements]
+
+            entities = list(process_model_part.mesh.elements.keys())
             block_text = self.__write_sub_model_part_block(
                 block_text, block_name="Conditions", block_entities=entities
             )
@@ -460,7 +461,7 @@ class KratosIO:
 
         # check unique_elements
         element_part_type = np.unique(
-            [element.element_type for element in model_part.mesh.elements]
+            [element.element_type for element in model_part.mesh.elements.values()]
         )
 
         if len(element_part_type) > 1:
@@ -470,8 +471,7 @@ class KratosIO:
             )
 
         # get number of nodes per element
-        n_nodes_element = len(model_part.mesh.elements[0].node_ids)
-
+        n_nodes_element = len(next(iter(model_part.mesh.elements.values())).node_ids)
 
         # check analysis type
         if model.project_parameters is not None:
@@ -537,7 +537,7 @@ class KratosIO:
             block_text.extend(
                 [
                     self.__write_element_line(mat_id, el)
-                    for el in body_model_part.mesh.elements
+                    for el in body_model_part.mesh.elements.values()
                 ]
             )
         block_text += [f"End Elements", ""]
@@ -577,7 +577,7 @@ class KratosIO:
 
             block_text = ["", f"Begin Conditions {kratos_element_type}"]
             block_text.extend(
-                [self.__write_element_line(mat_id, el) for el in process_model_part.mesh.elements]
+                [self.__write_element_line(mat_id, el) for el in process_model_part.mesh.elements.values()]
             )
             block_text += [f"End Conditions", ""]
         else:
@@ -691,10 +691,13 @@ class KratosIO:
         block_text = []
         # write per conditions per process model part
         for pmp in model.process_model_parts:
-            # get the condition element type
-            condition_type = self.__map_gmsh_element_to_kratos(model, pmp)
+
             if not self.__check_if_process_writes_conditions(pmp):
                 continue
+
+            # get the condition element type
+            condition_type = self.__map_gmsh_element_to_kratos(model, pmp)
+
             if pmp.id is None:
                 raise ValueError(
                     f"Process model part id of part {pmp.name} not initialised."
@@ -727,6 +730,7 @@ class KratosIO:
             block_text.extend(self.write_submodelpart_body_model_part(bmp))
 
         for pmp in model.process_model_parts:
+
             block_text.extend(self.write_submodelpart_process_model_part(pmp))
 
         return block_text
@@ -924,7 +928,7 @@ class KratosIO:
 
         return processes_dict
 
-    def write_project_parameters_json(self, model: Model, outputs: List[Output], mesh_file_name: str,
+    def write_project_parameters_json(self, model: Model, mesh_file_name: str,
                                       materials_file_name: str, project_file_name: str = "ProjectParameters.json",
                                       output_folder: str = "./") -> Dict[str, Any]:
         """
@@ -950,7 +954,7 @@ class KratosIO:
             model, mesh_file_name, materials_file_name
         )
         # get the output dictionary
-        outputs_dict = self.__create_output_process_dictionary(outputs=outputs)
+        outputs_dict = self.__create_output_process_dictionary(outputs=model.outputs)
         # get the boundary condition dictionary
         loads_and_bc_dict = self.__create_loads_and_boundary_conditions_dictionary(model=model)
         # TODO get the additional_processes dictionary
@@ -964,7 +968,7 @@ class KratosIO:
 
         return project_parameters_dict
 
-    def write_input_files_for_kratos(self, model: Model, outputs: List[Output], mesh_file_name: str,
+    def write_input_files_for_kratos(self, model: Model, mesh_file_name: str,
                                      materials_file_name: str = "MaterialParameters.json",
                                      project_file_name: str = "ProjectParameters.json", output_folder: str = "./"):
         """
@@ -973,7 +977,6 @@ class KratosIO:
 
         Args:
             - model (:class:`stem.model.Model`): The model object containing all the required info.
-            - outputs (List[:class:`stem.output.Output`]): The list of output processes objects to write in outputs.
             - mesh_file_name (str): The name of the mesh file.
             - materials_file_name (str): The name of the materials file.
             - project_file_name (str): name of the project parameters file. Defaults to `ProjectParameters.json`.
@@ -984,8 +987,7 @@ class KratosIO:
         self.write_material_parameters_json(model, materials_file_name, output_folder)
 
         # write project parameters
-        self.write_project_parameters_json(model, outputs, mesh_file_name, materials_file_name, project_file_name,
-                                           output_folder)
+        self.write_project_parameters_json(model, mesh_file_name, materials_file_name, project_file_name, output_folder)
 
         # write mdpa files
         self.write_mesh_to_mdpa(model, mesh_file_name, output_folder)

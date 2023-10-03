@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import List, Sequence, Dict, Any, Optional, Union
 
 import numpy.typing as npty
@@ -10,11 +11,13 @@ from stem.soil_material import *
 from stem.structural_material import *
 from stem.boundary import *
 from stem.geometry import Geometry
-from stem.mesh import Mesh, MeshSettings, Node
+from stem.mesh import Mesh, MeshSettings, Node, Element
+from stem.output import Output, OutputParametersABC
 from stem.load import *
 from stem.solver import Problem, StressInitialisationType
 from stem.utils import Utils
 from stem.plot_utils import PlotUtils
+from stem.globals import ELEMENT_DATA
 
 
 NUMBER_TYPES = (int, float, np.int64, np.float64)
@@ -30,6 +33,7 @@ class Model:
         - geometry (Optional[:class:`stem.geometry.Geometry`]) The geometry of the whole model.
         - body_model_parts (List[:class:`stem.model_part.BodyModelPart`]): A list containing the body model parts.
         - process_model_parts (List[:class:`stem.model_part.ModelPart`]): A list containing the process model parts.
+        - outputs (List[:class:`stem.output.Output`]): A list containing the outputs of the model.
         - extrusion_length (Optional[Sequence[float]]): The extrusion length in x, y and z direction
 
     """
@@ -47,6 +51,7 @@ class Model:
         self.gmsh_io = gmsh_IO.GmshIO()
         self.body_model_parts: List[BodyModelPart] = []
         self.process_model_parts: List[ModelPart] = []
+        self.outputs: List[Output] = []
 
         self.extrusion_length: Optional[Sequence[float]] = None
 
@@ -87,8 +92,8 @@ class Model:
 
         # Create geometry and model part for each physical group in the gmsh geo_data
         model_part: Union[ModelPart, BodyModelPart]
-        for group_name in self.gmsh_io.geo_data["physical_groups"].keys():
 
+        for group_name in self.gmsh_io.geo_data["physical_groups"].keys():
             # create model part, if the group name is in the body names, create a body model part, otherwise a process
             # model part
             if group_name in body_names:
@@ -106,8 +111,7 @@ class Model:
                 self.process_model_parts.append(model_part)
 
     def add_soil_layer_by_coordinates(self, coordinates: Sequence[Sequence[float]],
-                       material_parameters: Union[SoilMaterial, StructuralMaterial], name: str,
-                       ):
+                                      material_parameters: Union[SoilMaterial, StructuralMaterial], name: str):
         """
         Adds a soil layer to the model by giving a sequence of 2D coordinates. In 3D the 2D geometry is extruded in
         the direction of the extrusion_length
@@ -241,15 +245,14 @@ class Model:
         """
 
         # iterate over each line constituting the trajectory
-        for ix in range(len(coordinates)-1):
-
+        for ix in range(len(coordinates) - 1):
             # check origin is collinear to the edges of the line
             collinear_check = Utils.is_collinear(
-                point=load_parameters.origin, start_point=coordinates[ix],end_point=coordinates[ix+1]
+                point=load_parameters.origin, start_point=coordinates[ix], end_point=coordinates[ix + 1]
             )
             # check origin is between the edges of the line (edges included)
             is_between_check = Utils.is_point_between_points(
-                point=load_parameters.origin, start_point=coordinates[ix], end_point=coordinates[ix+1]
+                point=load_parameters.origin, start_point=coordinates[ix], end_point=coordinates[ix + 1]
             )
             # check if point complies
             is_on_line = collinear_check and is_between_check
@@ -287,10 +290,171 @@ class Model:
 
         self.process_model_parts.append(model_part)
 
+    def add_model_part_output(
+            self,
+            output_parameters: OutputParametersABC,
+            part_name: Optional[str] = None,
+            output_dir: str = "./",
+            output_name: Optional[str] = None):
+
+        """
+        Adds an output to the model, including the output folder, the name of the output file (if applicable) and the
+        part of interest to output.
+
+        If no part is specified, the whole model is considered as output.
+
+        Args:
+            - output_parameters (:class:`OutputParametersABC`): class containing the output parameters
+            - part_name (Optional[str]): name of the submodelpart to be given in output. If None, all the model is
+                provided in  output.
+            - output_dir (Optional[str]): output directory for the relative or absolute path to the output file. The \
+                path will be created if it does not exist yet. \n
+
+                example1='test1' results in the test1 output folder relative to current folder as './test1'\
+                example2='path1/path2/test2' saves the outputs in './path1/path2/test2' \
+                example3='C:/Documents/yourproject/test3' saves the outputs in 'C:/Documents/yourproject/test3'.
+
+                if output_dir is None, then the current directory is assumed.
+
+                [NOTE]: for VTK file type, the content of the target directory will be deleted. Therefore a subfolder is
+                always appended to the specified output directory to avoid erasing important memory content.
+                The appended folder is defined based on the submodelpart name specified.
+
+            - output_name (Optional[str]): Name for the output file. This parameter is \
+                  used by GiD and JSON outputs while is ignored in VTK. If the name is not \
+                  given, the part_name is used instead.
+            - coordinates (Optional[Sequence[Sequence[float]]]): A list of nodes that are of interest for the
+                outputs.
+        """
+
+        self.outputs.append(
+            Output(output_parameters=output_parameters,
+                   part_name=part_name,
+                   output_dir=output_dir,
+                   output_name=output_name)
+        )
+
+    def add_output_part_by_coordinates(
+            self,
+            coordinates: Sequence[Sequence[float]],
+            output_parameters: OutputParametersABC,
+            part_name: str,
+            output_dir: str = "./",
+            output_name: Optional[str] = None):
+        """
+        Adds nodes to be output on a set of nodes. The nodes have to be laying on an existing geometry surface.
+        The first and endpoint have to lie on one of the edges of the surface. A new process model part is
+        created, to specify the list of nodes of interest.
+
+        Current limitations:
+        - The nodes have to be laying on an existing geometry surface.
+        - The first and endpoint have to lie on one of the edges of the surface.
+        - A single point cannot be provided, but is always a sequence of lines.
+
+        Args:
+            - coordinates (Optional[Sequence[Sequence[float]]]): A list of nodes that are of interest for the
+                outputs.
+            - output_parameters (:class:`OutputParametersABC`): class containing the output parameters
+            - part_name (str): name of the submodelpart name for the output. Must be different from
+                existing parts.
+            - output_dir (Optional[str]): output directory for the relative or absolute path to the output file. The \
+                path will be created if it does not exist yet. \n
+
+                example1='test1' results in the test1 output folder relative to current folder as './test1'\
+                example2='path1/path2/test2' saves the outputs in './path1/path2/test2' \
+                example3='C:/Documents/yourproject/test3' saves the outputs in 'C:/Documents/yourproject/test3'.
+
+                if output_dir is None, then the current directory is assumed.
+
+                [NOTE]: for VTK file type, the content of the target directory will be deleted. Therefore, a subfolder
+                is always appended to the specified output directory to avoid erasing important memory content.
+                The appended folder is defined based on the submodelpart name specified.
+
+            - output_name (Optional[str]): Name for the output file. This parameter is \
+                  used by GiD and JSON outputs while is ignored in VTK. If the name is not \
+        Raises:
+            - None
+        """
+
+        # todo add validation for point to be inside the same surface.
+        # todo add validation for start and end-point to lie on the edges
+
+        # validation of inputs
+        self.validate_coordinates(coordinates)
+
+        # add output to the output list
+        self.add_model_part_output(
+            output_parameters=output_parameters,
+            part_name=part_name,
+            output_dir=output_dir,
+            output_name=output_name
+        )
+
+        # add coordinates as attribute to keep track of the coordinates.
+        # Needed to filter the nodes in the part and restrict only the required outputs.
+        # TODO: can we improve the book-keeping?
+        output_parameters.coordinates = coordinates
+
+        gmsh_input = {part_name: {"coordinates": coordinates, "ndim": 1}}
+
+        self.gmsh_io.generate_geometry(gmsh_input, "")
+
+        # create model part
+        model_part = ModelPart(part_name)
+        model_part.parameters = output_parameters
+
+        # set the geometry of the model part
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, part_name)
+
+        self.process_model_parts.append(model_part)
+
+    def __exclude_non_output_nodes(self, process_model_part: ModelPart, eps = 1e-06) -> Mesh:
+        """
+        Exclude the nodes that are further than `eps` to the requested output nodes for the output model part.
+
+        Args:
+            - process_model_part (:class:`stem.model_part.ModelPart`): the output process model part.
+            - eps (float): the radius distance to search for nodes. In practice is a tolerance for the search
+                algorithm to look for close nodes.
+
+        Returns:
+            - filtered_mesh (:class:`stem.mesh.Mesh`): the filtered mesh for the output process model part.
+        """
+
+        if process_model_part.parameters is None or not isinstance(process_model_part.parameters, OutputParametersABC):
+            raise ValueError
+
+        if process_model_part.parameters.coordinates is None:
+            raise ValueError
+
+        if process_model_part.mesh is None:
+            raise ValueError("process model part has not been meshed yet!")
+
+        # retrieve ids and coordinates of the nodes
+        ids = list(process_model_part.mesh.nodes.keys())
+        coordinates = np.stack([vv.coordinates for vv in process_model_part.mesh.nodes.values()])
+
+        # compute pairwise distances
+        output_coordinates = np.stack([np.array(cc) for cc in process_model_part.parameters.coordinates])
+
+        distances = (
+            np.linalg.norm(coordinates[:, None, :] - output_coordinates[None, :, :], axis=-1)
+        )
+
+        # only keep the node ids close to the requested node (smaller than eps meters)
+        filtered_node_ids = [ids[ix] for ix in np.where(distances < eps)[0]]
+
+        new_mesh = deepcopy(process_model_part.mesh)
+        new_mesh.nodes = {
+            nn: process_model_part.mesh.nodes[nn] for nn in filtered_node_ids
+        }
+        new_mesh.elements = {}
+        return new_mesh
+
     def synchronise_geometry(self):
         """
         Synchronise the geometry of all model parts and synchronise the geometry of the whole model. This function
-        recalculates all ids and connectivities of all geometrical entities.
+        recalculates all ids and connectivity of all geometrical entities.
 
         """
 
@@ -331,8 +495,11 @@ class Model:
         """
 
         # generate mesh
-        self.gmsh_io.generate_mesh(self.ndim, element_size=self.mesh_settings.element_size,
-                                   order=self.mesh_settings.element_order)
+        self.gmsh_io.generate_mesh(
+            self.ndim,
+            element_size=self.mesh_settings.element_size, order=self.mesh_settings.element_order,
+            # save_file=save_file, mesh_output_dir=mesh_output_dir, mesh_name=mesh_name, open_gmsh_gui=open_gmsh_gui
+        )
 
         # collect all model parts
         all_model_parts: List[Union[BodyModelPart, ModelPart]] = []
@@ -342,6 +509,178 @@ class Model:
         # add the mesh to each model part
         for model_part in all_model_parts:
             model_part.mesh = Mesh.create_mesh_from_gmsh_group(self.gmsh_io.mesh_data, model_part.name)
+
+            # adjust the mesh of output model parts. Exclude element, and keep only the nodes of corresponding to the
+            # outout locations.
+            if isinstance(model_part.parameters, OutputParametersABC):
+                model_part.mesh = self.__exclude_non_output_nodes(model_part)
+
+        # per process model part, check if the condition elements are applied to a body model part and set the
+        # node ordering of the condition elements to match the body elements
+        for process_model_part in self.process_model_parts:
+
+            # only check if the process model part is a condition element
+            if isinstance(process_model_part.parameters, (LineLoad, MovingLoad, SurfaceLoad, AbsorbingBoundary)):
+                # match the condition elements with the body elements on which the conditions are applied
+                matched_elements = self.__find_matching_body_elements_for_process_model_part(process_model_part)
+
+                # check the ordering of the nodes of the conditions. If it does not match flip the order.
+                self.__check_ordering_process_model_part(matched_elements, process_model_part)
+
+
+    @staticmethod
+    def __get_model_part_element_connectivities(model_part: ModelPart) -> npty.NDArray[np.int64]:
+        """
+        Extract the node ids of each of the elements in a model part.
+
+        Args:
+            - model_part (:class:`stem.model_part.ModelPart`): model part from which element nodes needs to be
+                extracted.
+
+        Returns:
+            - npty.NDArray[np.int64]: array containing the node ids of the elements in the model_part
+        """
+        if model_part.mesh is not None:
+            return np.array([el.node_ids for el in model_part.mesh.elements.values()])
+        else:
+            return np.array([])
+
+    def __find_matching_body_elements_for_process_model_part(self, process_model_part: ModelPart) \
+            -> Dict[Element, Element]:
+        """
+        For a process model part, tries finds the matching body elements on which the condition elements are applied.
+
+        Args:
+            - process_model_part (:class:`stem.model_part.ModelPart`): model part from which element nodes needs to be \
+                extracted.
+        Raises:
+            - ValueError: if mesh is not initialised yet.
+            - ValueError: if condition elements don't have a corresponding body element.
+
+        Returns:
+            - matched_elements (Dict[:class:`stem.mesh.Element`, :class:`stem.mesh.Element`]): Dictionary containing
+                the matched condition and body element parts.
+        """
+        # validation step for process model part
+        if process_model_part.mesh is None:
+            raise ValueError(f"Mesh of process model part: {process_model_part.name} is not yet initialised.")
+
+        # get all the node ids for all the elements in the process model (pmp) part and the indices of each element in
+        # the array
+        unmatched_connectivities_pmp = self.__get_model_part_element_connectivities(process_model_part)
+        pmp_element_ids = np.array(list(process_model_part.mesh.elements.keys()))
+
+        # initialise matching dictionary: process_element --> body_element
+        matched_elements: Dict[Element, Element] = {}
+
+        # loop over the body model parts (bmp) to match the elements of the process model part
+        for body_model_part in self.body_model_parts:
+
+            # validation step for body model part
+            if body_model_part.mesh is None:
+                raise ValueError(f"Mesh of body model part: {body_model_part.name} is not yet initialised.")
+
+            # if there is nothing to match, break the loop
+            if len(unmatched_connectivities_pmp) == 0:
+                # finished matching elements
+                break
+
+            # get the node ids for the elements in the current body model part and their ids
+            bmp_connectivities = self.__get_model_part_element_connectivities(body_model_part)
+            bmp_element_ids = np.array(list(body_model_part.mesh.elements.keys()))
+
+            # initialised matched ids and indices for the element of the process model part
+            matched_element_id_process_to_body = {}
+            matched_indices_process_element = []
+            # for each process element, check if there is a match with the current body part elements
+            for ix, (process_element_id, process_element_connectivities) in (
+                    enumerate(zip(pmp_element_ids, unmatched_connectivities_pmp))):
+                # find the indices of the element in the body model parts that contains the node ids of the current
+                # process model part. An element is considered a match if all the nodes of the process element are also
+                # in the body element
+                found_indices = np.where(np.sum(np.isin(bmp_connectivities, process_element_connectivities), axis=1) ==
+                                         len(process_element_connectivities))[0]
+
+                # from the first match, retrieve the element id of the body model part and the element id of the process
+                # model part
+                if len(found_indices) > 0:
+                    matched_element_id_process_to_body[process_element_id] = bmp_element_ids[found_indices.tolist()[0]]
+                    matched_indices_process_element.append(ix)
+
+            # if there is match, couple the element objects together in the matched_elements dictionary
+            # then remove the matched process model part elements from the unmatched_connectivities_pmp array
+            # and the pmp_element_ids array in order to avoid matching the same elements twice
+            if len(matched_element_id_process_to_body) > 0:
+
+                for process_element_id, body_element_id in matched_element_id_process_to_body.items():
+                    matched_elements[process_model_part.mesh.elements[process_element_id]] = (
+                        body_model_part.mesh.elements)[body_element_id]
+
+                # remove the matched elements from the unmatched_elements_pmp and pmp_element_ids arrays, in order
+                # to avoid matching the same elements twice
+                process_elements_idxs = np.array(list(matched_indices_process_element))
+                unmatched_connectivities_pmp = np.delete(unmatched_connectivities_pmp, process_elements_idxs, axis=0)
+                pmp_element_ids = np.delete(pmp_element_ids, process_elements_idxs)
+
+        # if there are still process elements which do not share the nodes of body elements, raise an error
+        if len(unmatched_connectivities_pmp) != 0:
+            raise ValueError(f"In process model part: {process_model_part.name}, the node ids: "
+                             f"{list(unmatched_connectivities_pmp)}, are not present in a body model part.")
+
+        return matched_elements
+
+    def __check_ordering_process_model_part(self, matched_elements: Dict[Element, Element],
+                                            process_model_part: ModelPart):
+        """
+        Check if the node ordering of the process element matches the node ordering of the neighbouring body element.
+        If not, flip the node ordering of the process element.
+
+        Args:
+            - matched_elements (Dict[:class:`stem.mesh.Element`, :class:`stem.mesh.Element`]): Dictionary containing \
+                the matched condition and body element parts.
+            - process_model_part (:class:`stem.model_part.ModelPart`): model part from which element nodes needs to be \
+                extracted.
+
+        Raises:
+            - ValueError: if mesh is not initialised yet.
+            - ValueError: if the integration order of the process element is different from the body element.
+        """
+
+        if process_model_part.mesh is None:
+            raise ValueError(f"Mesh of process model part: {process_model_part.name} is not yet initialised.")
+
+        # loop over the matched elements
+        flip_node_order = np.zeros(len(matched_elements), dtype=bool)
+
+        for i, (process_element, body_element) in enumerate(matched_elements.items()):
+
+            # element info such as order, number of edges, element types etc.
+            process_el_info = ELEMENT_DATA[process_element.element_type]
+            body_el_info = ELEMENT_DATA[body_element.element_type]
+
+            if process_el_info["ndim"] == 1:
+
+                # get all line edges of the body element and check if the process element is defined on one of them
+                # if the nodes are equal, but the node order isn't, flip the node order of the process element
+                body_line_edges = Utils.get_element_edges(body_element)
+                for edge in body_line_edges:
+                    if set(edge) == set(process_element.node_ids):
+                        if list(edge) != process_element.node_ids:
+                            flip_node_order[i] = True
+
+            elif body_el_info["ndim"] == 3 and process_el_info["ndim"] == 2:
+
+                # check if the normal of the condition element is defined outwards of the body element
+                flip_node_order[i] = Utils.is_volume_edge_defined_outwards(process_element, body_element,
+                                                                           self.gmsh_io.mesh_data["nodes"])
+
+        # flip condition elements if required
+        if any(flip_node_order):
+            # elements to be flipped
+            elements = np.array(list(process_model_part.mesh.elements.values()))[flip_node_order]
+
+            # flip elements, it is required that all elements in the array are of the same type
+            Utils.flip_node_order(elements)
 
     def __validate_model_part_names(self):
         """
@@ -372,7 +711,7 @@ class Model:
         Add a gravity model part to the complete model.
 
         Args:
-            - gravity_load (GravityLoad): The gravity load object.
+            - gravity_load (:class:`stem.load.GravityLoad`): The gravity load object.
             - ndim (int): The number of dimensions of the on which the gravity load should be applied.
             - geometry_ids (Sequence[int]): The geometry on which the gravity load should be applied.
 
@@ -429,6 +768,7 @@ class Model:
             self.__add_gravity_model_part(gravity_load, 3, body_geometries_3d)
 
         self.synchronise_geometry()
+        self.gmsh_io.finalize_gmsh()
 
     def get_all_model_parts(self) -> List[Union[BodyModelPart, ModelPart]]:
         """
@@ -456,10 +796,8 @@ class Model:
         node_dict: Dict[int, Node] = {}
         for mp in self.get_all_model_parts():
             if mp.mesh is None:
-                raise ValueError('Geometry has not been meshed yet! Please first run the Model.generate_mesh method.')
-            for node in mp.mesh.nodes:
-                if not node.id in node_dict.keys():
-                    node_dict[node.id] = node
+                raise ValueError("Geometry has not been meshed yet! Please first run the Model.generate_mesh method.")
+            node_dict.update(mp.mesh.nodes)
 
         return node_dict
 
@@ -494,6 +832,22 @@ class Model:
                                                show_point_ids)
         fig.show()
 
+    def show_mesh(self, **kwargs):
+        """
+        Show the mesh of the model in a matplotlib plot. only available for 2D models.
+        Raises:
+            - NotImplementedError: when is run for 3D models
+        """
+
+        fig = PlotUtils.show_mesh(
+            ndim=self.ndim,
+            body_model_parts=self.body_model_parts,
+            process_model_parts=self.process_model_parts,
+            **kwargs,
+        )
+
+        fig.show()
+
     def __setup_stress_initialisation(self):
         """
         Set up the stress initialisation. For K0 procedure and gravity loading, a gravity load is added to the model.
@@ -507,11 +861,8 @@ class Model:
             raise ValueError("Project parameters must be set before setting up the stress initialisation")
 
         # add gravity load if K0 procedure or gravity loading is used
-        if (self.project_parameters.settings.stress_initialisation_type ==
-            StressInitialisationType.K0_PROCEDURE) or \
-                (self.project_parameters.settings.stress_initialisation_type ==
-                 StressInitialisationType.GRAVITY_LOADING):
-
+        if (self.project_parameters.settings.stress_initialisation_type == StressInitialisationType.K0_PROCEDURE) or (
+            self.project_parameters.settings.stress_initialisation_type == StressInitialisationType.GRAVITY_LOADING):
             self.__add_gravity_load()
 
     def post_setup(self):
@@ -529,3 +880,6 @@ class Model:
         self.validate()
 
         self.__setup_stress_initialisation()
+
+        # finalize gmsh
+        self.gmsh_io.finalize_gmsh()
