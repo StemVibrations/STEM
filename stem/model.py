@@ -5,6 +5,7 @@ import numpy.typing as npty
 import numpy as np
 
 from gmsh_utils import gmsh_IO
+from random_fields.generate_field import RandomFields, ModelName
 
 from stem.model_part import ModelPart, BodyModelPart
 from stem.soil_material import *
@@ -13,6 +14,7 @@ from stem.boundary import *
 from stem.geometry import Geometry
 from stem.mesh import Mesh, MeshSettings, Node, Element
 from stem.output import Output, OutputParametersABC
+from stem.additional_processes import AdditionalProcess, ParameterFieldParameters
 from stem.load import *
 from stem.solver import Problem, StressInitialisationType
 from stem.utils import Utils
@@ -51,6 +53,7 @@ class Model:
         self.gmsh_io = gmsh_IO.GmshIO()
         self.body_model_parts: List[BodyModelPart] = []
         self.process_model_parts: List[ModelPart] = []
+        self.additional_processes: List[AdditionalProcess] = []
         self.outputs: List[Output] = []
 
         self.extrusion_length: Optional[Sequence[float]] = None
@@ -150,8 +153,9 @@ class Model:
 
         self.body_model_parts.append(body_model_part)
 
-    def add_load_by_coordinates(self, coordinates: Sequence[Sequence[float]], load_parameters: LoadParametersABC,
-                                name: str):
+    def add_load_by_coordinates(
+            self, coordinates: Sequence[Sequence[float]], load_parameters: LoadParametersABC, name: str
+    ):
         """
         Adds a load to the model by giving a sequence of 3D coordinates. For a 2D model, the third coordinate is
         ignored.
@@ -408,6 +412,7 @@ class Model:
 
         self.process_model_parts.append(model_part)
 
+
     def __exclude_non_output_nodes(self, process_model_part: ModelPart, eps = 1e-06) -> Mesh:
         """
         Exclude the nodes that are further than `eps` to the requested output nodes for the output model part.
@@ -450,6 +455,42 @@ class Model:
         }
         new_mesh.elements = {}
         return new_mesh
+
+    def add_random_field(
+            self, part_name: str, variable_name: str, mean: float, variance:float,
+            v_scale_fluctuation: float, anisotropy: List[float], angle: List[float],
+            seed: int = 14, v_dim: int = 1, json_fname:str=None
+    ):
+        """
+        Add a random field generator to perform random field for the given variable and the given model part.
+
+        Args:
+            - part_name (str): model of the part name where to apply the random field generation.
+            - variable_name (str): variable name to generate the random field for (e.g. YOUNG_MODULUS).
+            - model_name (str): Name of the model to be used. Options are: "Gaussian", "Exponential", "Matern", "Linear"
+            - mean (float): The mean of the random field.
+            - variance (float): The variance of the random field.
+            - v_scale_fluctuation (float): The vertical scale of fluctuation of the random field.
+            - anisotropy (list): The anisotropy of the random field (per dimension).
+            - angle (list): The angle of the random field (per dimension).
+            - seed (int): The seed number for the random number generator.
+            - v_dim (int): The dimension of the vertical scale of fluctuation.
+
+        """
+
+        random_field_generator = RandomFields(n_dim=self.ndim, mean=mean, variance=variance,
+                                              v_scale_fluctuation=v_scale_fluctuation,
+                                              anisotropy=anisotropy, angle=angle, seed=seed, v_dim=v_dim)
+
+        if json_fname is None:
+            json_fname = part_name.lower()+"_"+variable_name.lower()+".json"
+        field_parameters = ParameterFieldParameters(
+            variable_name=variable_name, function_type="json_file", function=json_fname,
+        )
+
+        self.additional_processes.append(
+            AdditionalProcess(process_parameters=field_parameters, part_name=part_name)
+        )
 
     def synchronise_geometry(self):
         """
