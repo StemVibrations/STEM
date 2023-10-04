@@ -13,7 +13,6 @@ class AdditionalProcessesParametersABC(ABC):
     Abstract base class to describe the parameters required for additional processes (e.g. excavations and random
     fields)
     """
-    pass
 
 
 @dataclass
@@ -99,8 +98,8 @@ class ParameterFieldParameters(AdditionalProcessesParametersABC):
     variable_name: str
     function_type: str
     function: str
-    rf_generator: Optional[RandomFields] = None
-    # HERE
+    rf_generator: RandomFields
+
     def __post_init__(self):
         """
         Validation of inputs
@@ -115,6 +114,14 @@ class ParameterFieldParameters(AdditionalProcessesParametersABC):
 
         if self.function_type.lower() == "json_file" and ".json" not in self.function:
             self.function = self.function_type+'.json'
+
+    @property
+    def values(self):
+
+        if self.rf_generator.random_field is None:
+            raise ValueError("Values for field parameters are not generated yet.")
+
+        return list(self.rf_generator.random_field)[0].tolist()
 
 
 class AdditionalProcess:

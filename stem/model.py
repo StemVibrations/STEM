@@ -457,9 +457,9 @@ class Model:
         return new_mesh
 
     def add_random_field(
-            self, part_name: str, variable_name: str, mean: float, variance:float,
-            v_scale_fluctuation: float, anisotropy: List[float], angle: List[float],
-            seed: int = 14, v_dim: int = 1, json_fname:str=None
+            self, part_name: str, variable_name: str, mean: float, variance: float,
+            v_scale_fluctuation: float, anisotropy: List[float], angle: List[float], model_name: str = "Gaussian",
+            seed: int = 14, v_dim: int = 1, json_fname: Optional[str] = None
     ):
         """
         Add a random field generator to perform random field for the given variable and the given model part.
@@ -476,16 +476,28 @@ class Model:
             - seed (int): The seed number for the random number generator.
             - v_dim (int): The dimension of the vertical scale of fluctuation.
 
+        Raises:
+            - ValueError: if the model_name is not a invalid, implemented model.
         """
 
-        random_field_generator = RandomFields(n_dim=self.ndim, mean=mean, variance=variance,
+        _available_model_names = ["Gaussian", "Exponential", "Matern", "Linear"]
+        if model_name not in _available_model_names:
+            raise ValueError(f"Model name: `{model_name}` was provided, but should be one of\n"
+                             f"{_available_model_names}")
+
+        random_field_generator = RandomFields(n_dim=3, mean=mean, variance=variance,
+                                              model_name=ModelName[model_name],
                                               v_scale_fluctuation=v_scale_fluctuation,
                                               anisotropy=anisotropy, angle=angle, seed=seed, v_dim=v_dim)
 
         if json_fname is None:
             json_fname = part_name.lower()+"_"+variable_name.lower()+".json"
+
         field_parameters = ParameterFieldParameters(
-            variable_name=variable_name, function_type="json_file", function=json_fname,
+            variable_name=variable_name,
+            function_type="json_file",
+            function=json_fname,
+            rf_generator=random_field_generator
         )
 
         self.additional_processes.append(
@@ -568,6 +580,27 @@ class Model:
                 # check the ordering of the nodes of the conditions. If it does not match flip the order.
                 self.__check_ordering_process_model_part(matched_elements, process_model_part)
 
+        # generate the parameters for the random field
+        self.__initiaise_random_fields()
+
+    def __initiaise_random_fields(self):
+        """
+        Extract the node ids of each of the elements in a model part.
+
+        Args:
+            - model_part (:class:`stem.model_part.ModelPart`): model part from which element nodes needs to be
+                extracted.
+
+        Returns:
+            - npty.NDArray[np.int64]: array containing the node ids of the elements in the model_part
+        """
+
+        for ap in self.additional_processes:
+
+            if isinstance(ap.process_parameters, ParameterFieldParameters):
+
+                centroids = self.get_centroids_elements_model_part(ap.part_name)
+                ap.process_parameters.rf_generator.generate(centroids)
 
     @staticmethod
     def __get_model_part_element_connectivities(model_part: ModelPart) -> npty.NDArray[np.int64]:
@@ -770,6 +803,55 @@ class Model:
         # add gravity load to process model parts
         self.process_model_parts.append(model_part)
 
+    def __get_model_part_by_name(self, part_name: str) -> Optional[ModelPart]:
+        """
+        Find the model part matching the given part_name
+
+        Args:
+            - part_name: the name of the part to retrieve.
+
+        Returns:
+            - Optional[:class:`stem.model_part.ModelPart`]: matched model part of None if no match.
+        """
+
+        for mp in self.get_all_model_parts():
+            if mp.name == part_name:
+                return mp
+        print(f"Model part `{part_name}` not found!")
+        return None
+
+    def get_centroids_elements_model_part(self, part_name:str):
+        """
+        Returns the centroid of all the elements in the model part.
+
+        Args:
+            - part_name (str): the model part for which centroids are required.
+
+        Returns:
+            - centroids (np.ndarray): centroids of the N elements in the part name as (N, 3) array.
+
+        Raises:
+            - ValueError: if part_name specified is not part of the model.
+            - ValueError: if the part_name has no mesh yet.
+            - ValueError: if the part_name has no elements.
+
+        """
+        mp = self.__get_model_part_by_name(part_name)
+        if mp is None:
+            raise ValueError(f"Model part `{part_name}` is not part of the model parts in the model."
+                             f"Please add it or check the part name.")
+        if mp.mesh is None:
+            raise ValueError(f"Mesh of model part `{part_name}` not available. Please run the model.generate_mesh() "
+                             f"method.")
+
+        if mp.mesh.elements is None:
+            raise ValueError(f"No elements for model part `{part_name}`. Check if the a wrond part was selected.")
+
+        nds = mp.mesh.nodes
+        coordinates = np.stack([[nds[nid].coordinates for nid in el.node_ids] for el in mp.mesh.elements.values()])
+        centroids = np.squeeze(np.mean(coordinates, axis=1))
+        return centroids
+
     def __add_gravity_load(self, gravity_acceleration: float = -9.81, vertical_axis: int = 1):
         """
         Add a gravity load to the complete model.
@@ -924,3 +1006,8 @@ class Model:
 
         # finalize gmsh
         self.gmsh_io.finalize_gmsh()
+
+
+    def write_kratos_files(self):
+
+        pass

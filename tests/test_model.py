@@ -1479,6 +1479,89 @@ class TestModel:
         npt.assert_equal(node_ids_process_model_part_1, expected_process_connectivities)
         npt.assert_equal(node_ids_process_model_part_2, expected_process_connectivities)
 
+    def test_random_field_generation_2d(
+            self,
+            create_default_2d_soil_material: SoilMaterial
+    ):
+        """
+        Test the correct generation of the random field for a 2D model with one body model part.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+        model = Model(2)
+
+        # add soil material
+        soil_material = create_default_2d_soil_material
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
+        model.set_mesh_size(0.5)
+        model.add_random_field(part_name="layer1", variable_name="YOUNG_MODULUS", mean=1e8, variance=1e18,
+                               v_scale_fluctuation=10, anisotropy=[5, 5], angle=[0, 0], seed=42)
+
+        model.synchronise_geometry()
+
+        # generate mesh
+        model.generate_mesh()
+
+        actual_rf_values = model.additional_processes[0].process_parameters.values
+
+        # assert the number of generated values to be equal to the amount of elements of the part
+        assert len(actual_rf_values) == len(model.body_model_parts[0].mesh.elements)
+        # assert the generated values against the expected values
+        expected_rf_values = [2470691733.978166, 2463679614.8106585, 2436903862.9336476, 2449748383.645991,
+                              2475489328.647194, 2472064561.106695,  2439474229.7722235, 2429598639.2907243,
+                              2452659092.9906096, 2440197124.4274206, 2453201038.451165, 2462122048.6207886,
+                              2462102455.775274, 2470158649.5571117
+                              ]
+
+        npt.assert_allclose(actual=actual_rf_values, desired=expected_rf_values)
+
+
+    def test_random_field_generation_3d(
+            self,
+            create_default_3d_soil_material: SoilMaterial
+    ):
+        """
+        Test the correct generation of the random field for a 3D model with one body model part.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+        model = Model(3)
+        model.extrusion_length = [0, 0, 1]
+
+        # add soil material
+        soil_material = create_default_3d_soil_material
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
+        model.set_mesh_size(1.0)
+        model.add_random_field(part_name="layer1", variable_name="YOUNG_MODULUS", mean=1e8, variance=1e18,
+                               v_scale_fluctuation=10, anisotropy=[5, 5], angle=[0, 0], seed=42)
+
+        model.synchronise_geometry()
+
+        # generate mesh
+        model.generate_mesh()
+
+        actual_rf_values = model.additional_processes[0].process_parameters.values
+
+        # assert the number of generated values to be equal to the amount of elements of the part
+        assert len(actual_rf_values) == len(model.body_model_parts[0].mesh.elements)
+        # assert the generated values against the expected values
+        expected_rf_values = [2463292498.047104, 2450469876.9766684, 2462761529.5347276, 2450932277.3619432,
+                              2461532302.7991962, 2438213518.942308, 2474486660.669373, 2459734700.6570625,
+                              2434032463.954693, 2453107362.4897747, 2470564560.556808, 2435190591.8597403,
+                              2430727302.9995837, 2472340000.112306, 2454294572.9963326, 2468148469.546412,
+                              2445974395.2790027, 2470477842.531443, 2444992729.5383973, 2464992628.7648168,
+                              2469213630.972179, 2440252956.906517, 2465977478.686655, 2440971680.6289673]
+
+        npt.assert_allclose(actual=actual_rf_values, desired=expected_rf_values)
+
     def test_validate_expected_success(self):
         """
         Test if the model is validated correctly. A model is created with two process model parts which both have

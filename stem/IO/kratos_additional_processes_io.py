@@ -66,9 +66,9 @@ class KratosAdditionalProcessesIO:
 
         # initialize boundary dictionary
         process_dict: Dict[str, Any] = {
-            "python_module": "apply_excavation_process",
+            "python_module": "set_parameter_field_process",
             "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
-            "process_name":  "ApplyExcavationProcess",
+            "process_name":  "SetParameterFieldProcess",
             "Parameters": {},
         }
 

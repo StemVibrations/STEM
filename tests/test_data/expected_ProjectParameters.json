@@ -166,6 +166,18 @@
                         0
                     ]
                 }
+            },{
+                "python_module": "set_parameter_field_process",
+                "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+                "process_name": "SetParameterFieldProcess",
+                "Parameters": {
+                    "dataset": "dummy",
+                    "dataset_file_name": "soil1_young_modulus.json",
+                    "func_type": "json_file",
+                    "function": "dummy",
+                    "model_part_name": "PorousDomain.soil1",
+                    "variable_name": "YOUNG_MODULUS"
+                }
             }
         ],
         "loads_process_list": [

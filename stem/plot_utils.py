@@ -5,6 +5,7 @@ import numpy as np
 import numpy.typing as npt
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
+import matplotlib.figure
 from matplotlib.collections import PolyCollection
 
 from stem.geometry import Geometry, Volume, Surface
@@ -336,7 +337,7 @@ class PlotUtils:
     @staticmethod
     def show_mesh(ndim: int, body_model_parts: List[BodyModelPart], process_model_parts: List[ModelPart],
                   show_node_ids: bool = False, show_element_ids: bool = False, fontsize:int=10,
-                  element_size: Optional[float] = None) -> plt.Figure:
+                  element_size: Optional[float] = None) -> matplotlib.figure.Figure:
         """
         Creates the mesh of the model in a matplotlib plot.
         Args:

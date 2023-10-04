@@ -103,6 +103,10 @@ class TestKratosModelIO:
                 nodal_results=nodal_results
             )
         )
+
+        model.add_random_field(part_name="soil1", variable_name="YOUNG_MODULUS", mean=1e8, variance=1e20,
+                               v_scale_fluctuation=10, anisotropy=[1e5, 1e5], angle=[0, 0])
+
         model.synchronise_geometry()
 
         model.set_mesh_size(0.2)
@@ -156,6 +160,9 @@ class TestKratosModelIO:
 
         # add boundary conditions in 0d, 1d and 2d
         model.add_boundary_condition_by_geometry_ids(2, [6], no_displacement_parameters, "no_displacement")
+
+        # model.add_random_field(part_name="soil1", variable_name="variable_name", mean=100e6, variance=10e06,
+        #                        v_scale_fluctuation=10, anisotropy=[5, 5], angle=[0, 0])
 
         model.synchronise_geometry()
 
@@ -245,17 +252,50 @@ class TestKratosModelIO:
         """
         model = create_default_2d_model_and_mesh
         kratos_io = KratosIO(ndim=model.ndim)
+        kratos_io.set_project_folder("dir_test")
+
         model.project_parameters = create_default_solver_settings
         model.add_model_part_output(**create_default_outputs.__dict__)
 
-        actual_dict = kratos_io.write_project_parameters_json(
-            model=model,
-            mesh_file_name="test_mdpa_file.mdpa",
-            materials_file_name="MaterialParameters.json",
-            output_folder="dir_test"
-        )
+        actual_dict = kratos_io.write_project_parameters_json(model=model, mesh_file_name="test_mdpa_file.mdpa",
+                                                              materials_file_name="MaterialParameters.json")
         expected_dict = json.load(open("tests/test_data/expected_ProjectParameters.json", 'r'))
         TestUtils.assert_dictionary_almost_equal(expected_dict, actual_dict)
+
+    def test_write_random_field_parameters(
+        self,
+        create_default_2d_model_and_mesh: Model,
+        create_default_outputs: List[Output],
+        create_default_solver_settings: Problem
+    ):
+        """
+        Test correct writing of the random field parameters.
+
+        Args:
+            - create_default_2d_model_and_mesh (:class:`stem.model.Model`): the default 2D model of a square \
+                soil layer and a line load.
+            - create_default_outputs (List[:class:`stem.output.Output`]): list of default output processes.
+            - create_default_solver_settings (:class:`stem.solver.Problem`): the Problem object containing the \
+                solver settings.
+        """
+        model = create_default_2d_model_and_mesh
+        kratos_io = KratosIO(ndim=model.ndim)
+
+        model.project_parameters = create_default_solver_settings
+        model.add_model_part_output(**create_default_outputs.__dict__)
+
+        kratos_io.write_project_parameters_json(model=model,
+                                                mesh_file_name="test_mdpa_file.mdpa",
+                                                materials_file_name="MaterialParameters.json")
+
+        expected_random_field_values = json.load(open("tests/test_data/expected_json_soil1_young_modulus.json", 'r'))
+
+        actual_random_field_values = json.load(open("soil1_young_modulus.json", 'r'))
+
+        # check number of values is equal to the number of elements
+        assert len(actual_random_field_values["values"]) == len(model.body_model_parts[0].mesh.elements)
+
+        TestUtils.assert_dictionary_almost_equal(expected_random_field_values, actual_random_field_values)
 
     def test_write_material_parameters_json(
         self,
@@ -269,8 +309,9 @@ class TestKratosModelIO:
         """
         model = create_default_2d_model_and_mesh
         kratos_io = KratosIO(ndim=model.ndim)
+        kratos_io.set_project_folder("dir_test")
 
-        actual_dict = kratos_io.write_material_parameters_json(model=model, output_folder="dir_test")
+        actual_dict = kratos_io.write_material_parameters_json(model=model)
         expected_dict = json.load(open("tests/test_data/expected_MaterialParameters.json", 'r'))
         TestUtils.assert_dictionary_almost_equal(expected_dict, actual_dict)
 
@@ -290,12 +331,13 @@ class TestKratosModelIO:
         """
         model = create_default_2d_model_and_mesh
         kratos_io = KratosIO(ndim=model.ndim)
+        kratos_io.set_project_folder("dir_test")
+
         model.project_parameters = create_default_solver_settings
 
         actual_text = kratos_io.write_mesh_to_mdpa(
             model=model,
-            mesh_file_name="test_mdpa_file.mdpa",
-            output_folder="dir_test"
+            mesh_file_name="test_mdpa_file.mdpa"
         )
         with open('tests/test_data/expected_mdpa_file.mdpa', 'r') as openfile:
             expected_text = openfile.readlines()
@@ -318,12 +360,13 @@ class TestKratosModelIO:
         """
         model = create_default_3d_model_and_mesh
         kratos_io = KratosIO(ndim=model.ndim)
+        kratos_io.set_project_folder("dir_test")
+
         model.project_parameters = create_default_solver_settings
 
         actual_text = kratos_io.write_mesh_to_mdpa(
             model=model,
-            mesh_file_name="test_mdpa_file_3d.mdpa",
-            output_folder="dir_test"
+            mesh_file_name="test_mdpa_file_3d.mdpa"
         )
 
         if IS_LINUX:
@@ -356,10 +399,7 @@ class TestKratosModelIO:
         model.project_parameters = create_default_solver_settings
         model.add_model_part_output(**create_default_outputs.__dict__)
 
-        kratos_io.write_input_files_for_kratos(
-            model=model,
-            mesh_file_name="test_mdpa_file.mdpa"
-        )
+        kratos_io.write_input_files_for_kratos(model=model, mesh_file_name="test_mdpa_file.mdpa")
 
         # test mdpa
         with open('./test_mdpa_file.mdpa', 'r') as openfile:
