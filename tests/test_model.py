@@ -1515,16 +1515,16 @@ class TestModel:
         assert len(actual_rf_values) == len(model.body_model_parts[0].mesh.elements)
         # assert the generated values against the expected values
 
-        if IS_LINUX:
-            # TODO: test for linux
-            # assert the generated values against the expected values
-            expected_rf_values = actual_rf_values
-        else:
-            expected_rf_values = [2470691733.978166, 2463679614.8106585, 2436903862.9336476, 2449748383.645991,
-                                  2475489328.647194, 2472064561.106695, 2439474229.7722235, 2429598639.2907243,
-                                  2452659092.9906096, 2440197124.4274206, 2453201038.451165, 2462122048.6207886,
-                                  2462102455.775274, 2470158649.5571117
-                                  ]
+        # if IS_LINUX:
+        #     # TODO: test for linux
+        #     # assert the generated values against the expected values
+        #     expected_rf_values = actual_rf_values
+        # else:
+        expected_rf_values = [2470691733.978166, 2463679614.8106585, 2436903862.9336476, 2449748383.645991,
+                              2475489328.647194, 2472064561.106695, 2439474229.7722235, 2429598639.2907243,
+                              2452659092.9906096, 2440197124.4274206, 2453201038.451165, 2462122048.6207886,
+                              2462102455.775274, 2470158649.5571117
+                              ]
 
 
         npt.assert_allclose(actual=actual_rf_values, desired=expected_rf_values)
