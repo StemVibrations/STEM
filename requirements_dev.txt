@@ -1,4 +1,4 @@
-numpy==1.26.0
+numpy==1.24.2
 plotly==5.15.0
 matplotlib==3.8.0
 gmsh_utils @ git+https://github.com/StemVibrations/gmsh_utils@vakantie_branch
