@@ -32,12 +32,12 @@ model = Model(ndim)
 # Specify material model
 # Linear elastic drained soil with a Density of 2700, a Young's modulus of 50e6,
 # a Poisson ratio of 0.3 & a Porosity of 0.3 is specified.
-rho1 = 2700
-por1 = 0.3
-E1 = 50e6
-v1 = 0.3
-soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=rho1, POROSITY=por1)
-constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=E1, POISSON_RATIO=v1)
+DENSITY_SOLID = 2700
+POROSITY = 0.3
+YOUNG_MODULUS = 50e6
+POISSON_RATIO = 0.3
+soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
+constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=YOUNG_MODULUS, POISSON_RATIO=POISSON_RATIO)
 retention_parameters1 = SaturatedBelowPhreaticLevelLaw()
 material1 = SoilMaterial("soil", soil_formulation1, constitutive_law1, retention_parameters1)
 
@@ -72,9 +72,9 @@ model.synchronise_geometry()
 # Show geometry and geometry ids
 model.show_geometry(show_line_ids=True, show_point_ids=True)
 
-# Set mesh size and generate mesh
+# Add gravity to the geometry, set mesh size and generate mesh
 # --------------------------------
-
+model._Model__add_gravity_load()
 model.set_mesh_size(element_size=0.45)
 model.generate_mesh()
 
@@ -103,7 +103,7 @@ solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solu
                                  rayleigh_m=0.02)
 
 # Set up problem data
-problem = Problem(problem_name="test_1d_wave_prop_drained_soil", number_of_threads=2, settings=solver_settings)
+problem = Problem(problem_name="test_1d_wave_prop_drained_soil_constant_mass_damping", number_of_threads=2, settings=solver_settings)
 model.project_parameters = problem
 
 # Define the results to be written to the output file
@@ -138,15 +138,15 @@ output_folder = "inputs_kratos"
 kratos_io.write_project_parameters_json(
     model=model,
     outputs=[vtk_output_process],
-    mesh_file_name="test_1d_wave_prop_drained_soil.mdpa",
+    mesh_file_name="test_1d_wave_prop_drained_soil_constant_mass_damping.mdpa",
     materials_file_name="MaterialParameters.json",
     output_folder=output_folder
 )
 
-# Write mesh to test_1d_wave_prop_drained_soil.mdpa file
+# Write mesh to .mdpa file
 kratos_io.write_mesh_to_mdpa(
     model=model,
-    mesh_file_name="test_1d_wave_prop_drained_soil.mdpa",
+    mesh_file_name="test_1d_wave_prop_drained_soil_constant_mass_damping.mdpa",
     output_folder=output_folder
 )
 

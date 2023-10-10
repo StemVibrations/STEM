@@ -21,7 +21,7 @@ from stem.boundary import RotationConstraint
 from stem.boundary import DisplacementConstraint
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
     NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
-from stem.output import NodalOutput, GaussPointOutput, GiDOutputParameters, VtkOutputParameters, Output
+from stem.output import NodalOutput, GaussPointOutput, VtkOutputParameters, Output
 from stem.IO.kratos_io import KratosIO
 
 
@@ -85,12 +85,11 @@ model.add_boundary_condition_by_geometry_ids(0, [2], displacementXYZ_parameters,
 model.synchronise_geometry()
 
 # Show geometry and geometry ids
-# model.show_geometry(show_line_ids=True, show_point_ids=True)
-# input()
+model.show_geometry(show_line_ids=True, show_point_ids=True)
 
-# Set mesh size and generate mesh
+# Add gravity to the geometry, set mesh size and generate mesh
 # --------------------------------
-
+model._Model__add_gravity_load()
 model.set_mesh_size(element_size=0.05)
 model.generate_mesh()
 
@@ -130,26 +129,16 @@ nodal_results = [NodalOutput.DISPLACEMENT]
 gauss_point_results = []
 
 # Define the output process
-gid_output = Output(
+vtk_output_process = Output(
     part_name="porous_computational_model_part",
-    output_name="gid_output",
+    output_name="vtk_output",
     output_dir="output",
-    output_parameters=GiDOutputParameters(
+    output_parameters=VtkOutputParameters(
         file_format="binary",
         output_interval=1,
         nodal_results=nodal_results,
         gauss_point_results=gauss_point_results,
         output_control_type="step"
-# vtk_output_process = Output(
-#     part_name="porous_computational_model_part",
-#     output_name="vtk_output",
-#     output_dir="output",
-#     output_parameters=VtkOutputParameters(
-#         file_format="binary",
-#         output_interval=1,
-#         nodal_results=nodal_results,
-#         gauss_point_results=gauss_point_results,
-#         output_control_type="step"
     )
 )
 
@@ -163,7 +152,7 @@ output_folder = "inputs_kratos"
 # Write project settings to ProjectParameters.json file
 kratos_io.write_project_parameters_json(
     model=model,
-    outputs=[gid_output],
+    outputs=[vtk_output_process],
     mesh_file_name="calculate_moving_load_on_beam.mdpa",
     materials_file_name="MaterialParameters.json",
     output_folder=output_folder

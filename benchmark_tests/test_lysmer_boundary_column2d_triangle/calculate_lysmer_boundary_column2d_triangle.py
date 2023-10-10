@@ -31,14 +31,14 @@ ndim = 2
 model = Model(ndim)
 
 # Specify material model
-# Linear elastic drained soil with a Density of 2700, a Young's modulus of 50e6,
-# a Poisson ratio of 0.3 & a Porosity of 0.3 is specified.
-rho1 = 2650
-por1 = 0.3
-E1 = 10.0e7
-v1 = 0.2
-soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=rho1, POROSITY=por1)
-constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=E1, POISSON_RATIO=v1)
+# Linear elastic drained soil with a Density of 2650, a Young's modulus of 10.0e7,
+# a Poisson ratio of 0.2 & a Porosity of 0.3 is specified.
+DENSITY_SOLID = 2650
+POROSITY = 0.3
+YOUNG_MODULUS = 10.0e7
+POISSON_RATIO = 0.2
+soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
+constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=YOUNG_MODULUS, POISSON_RATIO=POISSON_RATIO)
 retention_parameters1 = SaturatedBelowPhreaticLevelLaw()
 material1 = SoilMaterial("soil", soil_formulation1, constitutive_law1, retention_parameters1)
 
@@ -71,11 +71,10 @@ model.synchronise_geometry()
 
 # Show geometry and geometry ids
 model.show_geometry(show_line_ids=True)
-# input()
 
-# Set mesh size and generate mesh
+# Add gravity to the geometry, set mesh size and generate mesh
 # --------------------------------
-
+model._Model__add_gravity_load()
 model.set_mesh_size(element_size=2)
 model.generate_mesh()
 

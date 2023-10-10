@@ -17,7 +17,7 @@ from stem.load import MovingLoad
 from stem.boundary import DisplacementConstraint
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
     NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
-from stem.output import NodalOutput, GiDOutputParameters, Output
+from stem.output import NodalOutput, VtkOutputParameters, Output
 from stem.IO.kratos_io import KratosIO
 
 
@@ -29,14 +29,14 @@ ndim = 3
 model = Model(ndim)
 
 # Specify material model
-# Linear elastic drained soil with a Density of 2700, a Young's modulus of 50e6,
-# a Poisson ratio of 0.3 & a Porosity of 0.3 is specified.
-rho1 = 2.65
-por1 = 0.3
-E1 = 10e3
-v1 = 0.2
-soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=rho1, POROSITY=por1)
-constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=E1, POISSON_RATIO=v1)
+# Linear elastic drained soil with a Density of 2650, a Young's modulus of 30e6,
+# a Poisson ratio of 0.2 & a Porosity of 0.3 is specified.
+DENSITY_SOLID = 2650
+POROSITY = 0.3
+YOUNG_MODULUS = 30e6
+POISSON_RATIO = 0.2
+soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
+constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=YOUNG_MODULUS, POISSON_RATIO=POISSON_RATIO)
 retention_parameters1 = SaturatedBelowPhreaticLevelLaw()
 material1 = SoilMaterial("soil", soil_formulation1, constitutive_law1, retention_parameters1)
 
@@ -48,29 +48,29 @@ model.extrusion_length = [0, 0, 3]
 model.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil_layer")
 
 # Define moving load
-load_coordinates = [(0.0, 1.0, 3.0), (0.0, 0.0, 3.0), (5.0, 0.0, 3.0)]
-moving_load = MovingLoad(load=[0.0, 0.0, -10.0], direction=[1, -1, 1], velocity=5, origin=[0.0, 0.0, 3.0], offset=0.0)
+load_coordinates = [(0.0, 1.0, 3.0), (0.0, 0.0, 3.0), (5.0, 0.0, 3.0), (5.0, 1.0, 3.0)]
+moving_load = MovingLoad(load=[0.0, -10.0, 0.0], direction=[1, 1, 1], velocity=5, origin=[0.0, 1.0, 3.0], offset=0.0)
 model.add_load_by_coordinates(load_coordinates, moving_load, "moving_load")
 
 # Define boundary conditions
 no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
                                                     is_fixed=[True, True, True], value=[0, 0, 0])
-# roller_displacement_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, False, False], value=[0, 0, 0])
+roller_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+                                                        is_fixed=[True, False, False], value=[0, 0, 0])
 
 # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
 model.add_boundary_condition_by_geometry_ids(2, [1], no_displacement_parameters, "base_fixed")
-# model.add_boundary_condition_by_geometry_ids(1, [2, 4], roller_displacement_parameters, "roller_fixed")
+model.add_boundary_condition_by_geometry_ids(2, [2, 3, 4, 5], roller_displacement_parameters, "roller_fixed")
 
 # Synchronize geometry
 model.synchronise_geometry()
 
 # Show geometry and geometry ids
 model.show_geometry(show_line_ids=True, show_surface_ids=True)
-# input()
 
-# Set mesh size and generate mesh
+# Add gravity to the geometry, set mesh size and generate mesh
 # --------------------------------
-
+model._Model__add_gravity_load()
 model.set_mesh_size(element_size=1)
 model.generate_mesh()
 
@@ -112,26 +112,16 @@ gauss_point_results = [
 ]
 
 # Define the output process
-gid_output = Output(
+vtk_output_process = Output(
     part_name="porous_computational_model_part",
-    output_name="gid_output",
+    output_name="vtk_output",
     output_dir="output",
-    output_parameters=GiDOutputParameters(
+    output_parameters=VtkOutputParameters(
         file_format="binary",
         output_interval=1,
         nodal_results=nodal_results,
         gauss_point_results=gauss_point_results,
         output_control_type="step"
-# vtk_output_process = Output(
-#     part_name="porous_computational_model_part",
-#     output_name="vtk_output",
-#     output_dir="output",
-#     output_parameters=VtkOutputParameters(
-#         file_format="binary",
-#         output_interval=1,
-#         nodal_results=nodal_results,
-#         gauss_point_results=gauss_point_results,
-#         output_control_type="step"
     )
 )
 
@@ -145,7 +135,7 @@ output_folder = "inputs_kratos"
 # Write project settings to ProjectParameters.json file
 kratos_io.write_project_parameters_json(
     model=model,
-    outputs=[gid_output],
+    outputs=[vtk_output_process],
     mesh_file_name="calculate_moving_load_on_soil_3d.mdpa",
     materials_file_name="MaterialParameters.json",
     output_folder=output_folder
