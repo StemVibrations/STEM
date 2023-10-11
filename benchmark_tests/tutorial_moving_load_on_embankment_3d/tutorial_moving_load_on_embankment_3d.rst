@@ -273,30 +273,19 @@ Firstly the KratosIO class is initialised.
 
     kratos_io = KratosIO(ndim=model.ndim)
 
-The Kratos input files are then written. The project settings and output definitions are written to ProjectParameters.json file.
-The mesh is written to .mdpa file and the material parameters are written to MaterialParameters.json file.
+The Kratos input files are then written. The project settings and output definitions are written to
+ProjectParameters.json file. The mesh is written to .mdpa file and the material parameters are written to
+the MaterialParameters.json file.
 All of the input files are then written to the input files directory.
 
 .. code-block:: python
 
-    kratos_io.write_project_parameters_json(
+    kratos_io.write_input_files_for_kratos(
         model=model,
         outputs=[vtk_output_process],
-        mesh_file_name=mesh_name,
-        materials_file_name="MaterialParameters.json",
-        output_folder=input_files_dir
+        mesh_file_name=mesh_name, output_folder=input_files_dir
     )
 
-    kratos_io.write_mesh_to_mdpa(
-        model=model,
-        mesh_file_name=mesh_name,
-        output_folder=input_files_dir
-    )
-
-    kratos_io.write_material_parameters_json(
-        model=model,
-        output_folder=input_files_dir
-    )
 
 In order to run the calculation, the working directory is changed to the "input_files_dir". The simulation is then run
 using the GeoMechanicsAnalysis.
