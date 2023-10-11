@@ -26,7 +26,7 @@ To install the STEM, follow the following steps:
 pip install git+https://github.com/StemVibrations/STEM.git
 ```
 
-It is also needed to download Kratos Multiphysics. Kratos Multhypisics can be downloaded [here]().
+It is also needed to download Kratos Multiphysics. Kratos Multhypisics can be downloaded [here](https://github.com/StemVibrations/StemKratos).
 
 Further details about the installation can be found [here](https://stemvibrations.readthedocs.io/).
 
