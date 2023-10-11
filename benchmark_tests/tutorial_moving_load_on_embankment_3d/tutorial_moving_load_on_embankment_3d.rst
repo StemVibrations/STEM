@@ -2,7 +2,7 @@ Tutorial Moving load on an embankment in 3D
 =======================
 
 This tutorial shows step by step guide on how to set up a moving load
-on top of an embankment with two soil layers underneath in 3D model.
+on top of an embankment with two soil layers underneath, in a 3D model.
 
 First the necessary packages are imported and paths are defined.
 The path to Kratos is specified in the following way.
@@ -10,6 +10,7 @@ The name of the mesh file is also specified here.
 Then necessary paths are added to the system path.
 After which the necessary packages for setting up the model are imported. From KratosMultiphysics,
 GeoMechanicsApplication is imported for this simulation.
+
 For setting up the model, Model class is imported from stem.model. And for setting up the soil material, OnePhaseSoil,
 LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw classes are imported.
 In this case, there is a moving load on top of the embankment. MovingLoad class is imported from stem.load.
@@ -28,11 +29,16 @@ And for writing the Kratos input files, KratosIO class is imported.
     project_name = "ProjectParameters.json"
     mesh_name = "calculate_moving_load_on_embankment_3d.mdpa"
 
+    input_files_dir = "inputs_kratos"
+    results_dir = "output"
+
+
     sys.path.append(os.path.join(path_kratos, "KratosGeoMechanics"))
     sys.path.append(os.path.join(path_kratos, r"KratosGeoMechanics\libs"))
 
     import KratosMultiphysics.GeoMechanicsApplication
     from KratosMultiphysics.GeoMechanicsApplication.geomechanics_analysis import (GeoMechanicsAnalysis)
+
     from stem.model import Model
     from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
     from stem.load import MovingLoad
@@ -44,7 +50,7 @@ And for writing the Kratos input files, KratosIO class is imported.
 
 
 In this step, the geometry, conditions, and material parameters for the simulation is defined.
-First the dimension of the model is indicated which is this case is 3. After which the model can be initialized.
+First the dimension of the model is indicated which in this case is 3. After which the model can be initialised.
 
 .. code-block:: python
 
@@ -103,14 +109,9 @@ The soil is a one-phase soil, meaning that the flow of water through the soil is
     retention_parameters_3 = SaturatedBelowPhreaticLevelLaw()
     material_embankment = SoilMaterial("embankment", soil_formulation_3, constitutive_law_3, retention_parameters_3)
 
-The coordinates of the model are defined in the following way. Each of the layers are defined by a list of coordinates.
-The picture below shows the dimension of the model.
-The extrusion length should also be specified for 3D models. In this case, the extrusion length is 10 m in the z-direction.
-The geometry is seen in the pictures below.
-
-.. image:: Images/embankment_1.png
-
-.. image:: Images/embankment_2.png
+The coordinates of the model are defined in the following way. Each of the layers are defined by a list of coordinates,
+defined in th x-y plane. For 3D models, the x-y plane can be extruded in the z-direction. In this case, the extrusion
+length is 10 m in the z-direction.
 
 .. code-block:: python
 
@@ -119,7 +120,15 @@ The geometry is seen in the pictures below.
     embankment_coordinates = [(0.0, 2.0, 0.0), (3.0, 2.0, 0.0), (1.5, 3.0, 0.0), (0.75, 3.0, 0.0), (0, 3.0, 0.0)]
     model.extrusion_length = [0, 0, 10]
 
-The soil layers are then added to the model in the following way.
+The geometry is shown in the figures below.
+
+.. image:: Images/embankment_1.png
+
+.. image:: Images/embankment_2.png
+
+
+The soil layers are then added to the model in the following way. It is important that all soil layers have
+a unique name.
 
 .. code-block:: python
 
@@ -127,44 +136,26 @@ The soil layers are then added to the model in the following way.
     model.add_soil_layer_by_coordinates(soil2_coordinates, material_soil_2, "soil_layer_2")
     model.add_soil_layer_by_coordinates(embankment_coordinates, material_embankment, "embankment_layer")
 
-For the moving load, MovingLoad class is called. The load is defined as a list of coordinates. In this case,
-moving load is applied on a line with a 0.75 meter distance from x-axis on top of the embankment. The velocity of
-the moving load is 5 m/s and the load is 10 kN/m in the y-direction. The load starts at [0.75, 3.0, 0.0].
+For the moving load, MovingLoad class is called. The load is defined following a list of coordinates. In this case,
+a moving load is applied on a line with a 0.75 meter distance from the x-axis on top of the embankment. The velocity of
+the moving load is 5 m/s and the load is 10 kN/m in the y-direction. The load moves in positive directions and  the
+load starts at coordinates: [0.75, 3.0, 0.0].
 
 .. code-block:: python
 
     load_coordinates = [(0.75, 3.0, 0.0), (0.75, 3.0, 10.0)]
-    moving_load = MovingLoad(load=[0.0, -10.0, 0.0], direction=[1, 1, 1], velocity=5, origin=[0.75, 3.0, 0.0],
+    moving_load = MovingLoad(load=[0.0, -10000.0, 0.0], direction=[1, 1, 1], velocity=5, origin=[0.75, 3.0, 0.0],
                              offset=0.0)
     model.add_load_by_coordinates(load_coordinates, moving_load, "moving_load")
 
-Now the boundary conditions are defined. The base of the model is fixed in all directions with the name "base_fixed".
-The roller boundary condition is applied on the sides of the embankment with the name "sides_roller".
-The boundary conditions are added to the model as a list of geometry ids with the corresponding dimensions which is "2"
-for this 3D model.
+The boundary conditions are defined on geometry ids, which are created by gmsh when making the geometry. Gmsh will
+assign an id to each of the points, lines, surfaces and volumes created.
+The geometry ids can be seen after using the show_geometry function.
 
-Geometry ids are created by gmsh when making the geometry. Gmsh will assign a number as an id or a tag to each of the
-points, lines, surfaces and volumes created.
-The geometry ids can be seen in the show_geometry function below after synchronizing the geometry.
-In this case, the boundary conditions are defined by surface ids.
-
-.. code-block:: python
-
-    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True], value=[0, 0, 0])
-    roller_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                            is_fixed=[True, False, True], value=[0, 0, 0])
-
-    model.add_boundary_condition_by_geometry_ids(2, [1], no_displacement_parameters, "base_fixed")
-    model.add_boundary_condition_by_geometry_ids(2, [2, 4, 5, 6, 7, 10, 11, 12, 15, 16, 17],
-                                                 roller_displacement_parameters, "sides_roller")
-
-The geometry should be synchronized and then the geometry itself and geometry ids can be seen in the
-show_geometry function below.
-This function is only used for visualization of the geometry ids after creation of the geometry, to be able to see the
-geometry ids issued by gmsh and pass them to the boundary conditions above.
-For visualization of surface ids, "show_surface_ids" should be set to "True".
-Also for visualization of line ids, "show_line_ids" and for visualization of point ids, "show_point_ids"
+This function is only used for visualisation of the geometry ids after creation of the geometry, to be able to see the
+geometry ids issued by gmsh, and to know which ids belong to each boundary conditions.
+For visualisation of surface ids, "show_surface_ids" should be set to "True".
+Also for visualisation of line ids, "show_line_ids" and for visualisation of point ids, "show_point_ids"
 should be set to "True".
 
 .. code-block:: python
@@ -177,7 +168,26 @@ The geometry ids can be seen in the pictures below.
 
 .. image:: Images/geometry_ids.png
 
-After which the mesh size can be set. Element size for mesh can be defined as a single value and then mesh is generated.
+
+Below the boundary conditions are defined. The base of the model is fixed in all directions with the name "base_fixed".
+The roller boundary condition is applied on the sides of the embankment with the name "sides_roller".
+The boundary conditions are added to the model on the edge surfaces, i.e. the boundary conditions are applied to a list
+of surface ids (which can be visualised using: "model.show_geometry(show_surface_ids=True)")  with the corresponding
+dimension, "2".
+
+.. code-block:: python
+
+    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+                                                        is_fixed=[True, True, True], value=[0, 0, 0])
+    roller_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+                                                            is_fixed=[True, False, True], value=[0, 0, 0])
+
+    model.add_boundary_condition_by_geometry_ids(2, [1], no_displacement_parameters, "base_fixed")
+    model.add_boundary_condition_by_geometry_ids(2, [2, 4, 5, 6, 7, 10, 11, 12, 15, 16, 17],
+                                                 roller_displacement_parameters, "sides_roller")
+
+After which the mesh size can be set. The element size for the mesh can be defined as a single value and then the mesh
+can be generated.
 
 .. code-block:: python
 
@@ -185,56 +195,61 @@ After which the mesh size can be set. Element size for mesh can be defined as a 
 
     model.generate_mesh()
 
-The model is then initialized and the model part is created. Now the solver settings should be defined.
-The analysis type is set to "MECHANICAL_GROUNDWATER_FLOW" and the solution type is set to "QUASI_STATIC".
-Then the start time is set to 0.0 second and the end time is set to 1.0 second. The time step is set to 0.01 second.
-Newton-Raphson strategy is used with a minimum of 6 iterations and a maximum of 15 iterations.
-And Newmark scheme is used with a newmark beta of 0.25, newmark gamma of 0.5 and newmark theta of 0.5.
-The linear solver settings are defined as Amgcl with a tolerance of 1e-8, a maximum iteration of 500 and scaling is set to True.
+Now that the geometry is defined, the solver settings of the model has to be set.
+The analysis type is set to "MECHANICAL" and the solution type is set to "DYNAMIC".
+Then the start time is set to 0.0 second and the end time is set to 1.0 second. The time step size is set to 0.01 second.
+Furthermore, the reduction factor and increase factor are set to 1.0, such that the time step size is constant throughout
+the simulation. Displacement convergence criteria is set to 1.0e-4 for the relative tolerance and 1.0e-9 for the
+absolute tolerance. Newton-Raphson is used as a solving strategy. And Newmark is used as an integration method.
+Amgcl is used as a linear solver. Stresses are not initialised since the "stress_initialisation_type" is set to "NONE".
+Other options are "StressInitialisationType.GRAVITY_LOADING" and "StressInitialisationType.K0_PROCEDURE". Since the problem is linear elastic, the stiffness matrix is constant and the mass and
+damping matrices are constant, defining the matrices as constant will speed up the computation. Rayleigh damping is
+assumed, with a damping coefficient of 0.12 for the stiffness matrix and 0.0001 for the mass matrix.
 
 .. code-block:: python
 
-    analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
-    solution_type = SolutionType.QUASI_STATIC
+    analysis_type = AnalysisType.MECHANICAL
+    solution_type = SolutionType.DYNAMIC
     # Set up start and end time of calculation, time step and etc
     time_integration = TimeIntegration(start_time=0.0, end_time=1.0, delta_time=0.01, reduction_factor=1.0,
-                                       increase_factor=1.0, max_delta_time_factor=1000)
+                                       increase_factor=1.0)
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
                                                             displacement_absolute_tolerance=1.0e-9)
-    strategy_type = NewtonRaphsonStrategy(min_iterations=6, max_iterations=15, number_cycles=100)
-    scheme_type = NewmarkScheme(newmark_beta=0.25, newmark_gamma=0.5, newmark_theta=0.5)
-    linear_solver_settings = Amgcl(tolerance=1e-8, max_iteration=500, scaling=True)
+    strategy_type = NewtonRaphsonStrategy()
+    scheme_type = NewmarkScheme()
+    linear_solver_settings = Amgcl()
     stress_initialisation_type = StressInitialisationType.NONE
     solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
                                      stress_initialisation_type=stress_initialisation_type,
                                      time_integration=time_integration,
-                                     is_stiffness_matrix_constant=False, are_mass_and_damping_constant=False,
+                                     is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
                                      strategy_type=strategy_type, scheme=scheme_type,
-                                     linear_solver_settings=linear_solver_settings, rayleigh_k=0.0,
-                                     rayleigh_m=0.0)
+                                     linear_solver_settings=linear_solver_settings, rayleigh_k=0.12,
+                                     rayleigh_m=0.0001)
 
-Now the problem datas should be set up. The problem should be given a name, in this case it is
-"calculate_moving_load_on_embankment_3d". Then the model part is added to the problem.
+Now the problem data should be set up. The problem should be given a name, in this case it is
+"calculate_moving_load_on_embankment_3d". Then the solver settings are added to the problem.
 
 .. code-block:: python
 
-    Set up problem data
+    # Set up problem data
     problem = Problem(problem_name="calculate_moving_load_on_embankment_3d", number_of_threads=1,
                       settings=solver_settings)
     model.project_parameters = problem
 
-After which the results to be written to the output file is defined. Beginning with the nodal results, DISPLACEMENT and
-TOTAL_DISPLACEMENT are defined. In this test case, gauss point results are left empty.
+Before starting the calculation, it is required to specify why output is desired. In this case, displacement,
+velocity and acceleration is given on the nodes and written to the output file. In this test case, gauss point results
+are left empty.
 
 .. code-block:: python
 
-    nodal_results = [NodalOutput.DISPLACEMENT,
-                     NodalOutput.TOTAL_DISPLACEMENT]
+    nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY, NodalOutput.ACCELERATION]
     gauss_point_results = []
 
-The output process is defined in the following way. VTK output is defined with a binary file format.
-The results will be then written to the output folder with vtk format.
+The output process is defined in the following way. The results will be then written to the output directory in vtk
+format. In this case, the output interval is set to 1 and the output control type is set to "step", meaning that the
+results will be written every time step.
 
 .. code-block:: python
 
@@ -243,7 +258,6 @@ The results will be then written to the output folder with vtk format.
          output_name="vtk_output",
          output_dir="output",
          output_parameters=VtkOutputParameters(
-             file_format="binary",
              output_interval=1,
              nodal_results=nodal_results,
              gauss_point_results=gauss_point_results,
@@ -251,52 +265,51 @@ The results will be then written to the output folder with vtk format.
         )
      )
 
+Now that the model is set up, the Kratos input files can be written.
 
-The KratosIO class is called and the output folder is defined.
+Firstly the KratosIO class is initialised.
 
 .. code-block:: python
 
     kratos_io = KratosIO(ndim=model.ndim)
-    output_folder = "inputs_kratos"
 
-The Kratos input files are then written. The project settings are written to ProjectParameters.json file. The mesh is
-written to .mdpa file and the materials are written to MaterialParameters.json file. All of the input files are then
-written to the output folder. The mesh name should be the same as in the whole test which is
-"calculate_moving_load_on_embankment_3d.mdpa".
+The Kratos input files are then written. The project settings and output definitions are written to ProjectParameters.json file.
+The mesh is written to .mdpa file and the material parameters are written to MaterialParameters.json file.
+All of the input files are then written to the input files directory.
 
 .. code-block:: python
 
     kratos_io.write_project_parameters_json(
         model=model,
         outputs=[vtk_output_process],
-        mesh_file_name="calculate_moving_load_on_embankment_3d.mdpa",
+        mesh_file_name=mesh_name,
         materials_file_name="MaterialParameters.json",
-        output_folder=output_folder
+        output_folder=input_files_dir
     )
 
     kratos_io.write_mesh_to_mdpa(
         model=model,
-        mesh_file_name="calculate_moving_load_on_embankment_3d.mdpa",
-        output_folder=output_folder
+        mesh_file_name=mesh_name,
+        output_folder=input_files_dir
     )
 
     kratos_io.write_material_parameters_json(
         model=model,
-        output_folder=output_folder
+        output_folder=input_files_dir
     )
 
-The project folder is then changed to the inputs_kratos. The simulation is then run using the GeoMechanicsAnalysis.
+In order to run the calculation, the working directory is changed to the "input_files_dir". The simulation is then run
+using the GeoMechanicsAnalysis.
 
 .. code-block:: python
 
-    project_folder = "inputs_kratos"
-    os.chdir(project_folder)
+    os.chdir(input_files_dir)
 
     with open(project_name, "r") as parameter_file:
-        parameters = KratosMultiphysics.Parameters(parameter_file.read())
+        kratos_parameters = KratosMultiphysics.Parameters(parameter_file.read())
 
-    model = KratosMultiphysics.Model()
-    simulation = GeoMechanicsAnalysis(model, parameters)
+    kratos_model = KratosMultiphysics.Model()
+    simulation = GeoMechanicsAnalysis(kratos_model, kratos_parameters)
     simulation.Run()
 
 
