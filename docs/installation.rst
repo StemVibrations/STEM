@@ -58,7 +58,7 @@ Once the repository is downloaded, place the *KratosGeomechanics* folder in a di
 This directory will be necessary for the tutorials.
 
 
-.. _paraview:
+.. _parav:
 
 ParaView
 --------

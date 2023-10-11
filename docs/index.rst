@@ -27,7 +27,7 @@ To install STEM you need to install the following items:
 
 * :ref:`kratos`
 
-* :ref:`paraview`
+* :ref:`parav`
 
 Optionally, you can install `gmsh <https://gmsh.info/>`_ to visualise the mesh.
 
@@ -43,7 +43,9 @@ STEM interface definitions
 ==========================
 STEM has interface definitions to interact with the model, and allow the extension of the model and the use
 of different train and material models:
+
    * :ref:`uvec`
+
    * :ref:`umat`
 
 
