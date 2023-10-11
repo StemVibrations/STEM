@@ -13,6 +13,7 @@
 ![Tests](https://github.com/StemVibrations/STEM/actions/workflows/tests.yml/badge.svg)
 [![Documentation Status](https://readthedocs.org/projects/stemvibrations/badge/?version=latest)](https://stemvibrations.readthedocs.io/badge=latest)
 
+
 The STEM model is designed to create and analyze models of soil and track systems.
 The tool provides a set of commands for creating the geometry of the model, defining the soil and track properties, setting the boundary conditions and loads, generating the mesh, and performing post-processing on the results.
 
@@ -21,9 +22,9 @@ The tool provides a set of commands for creating the geometry of the model, defi
 STEM can be downloaded and installed on any system that supports Python.
 To install the STEM, follow the following steps:
 
-.. code-block::
-
-   pip install git+https://github.com/StemVibrations/STEM.git
+```python
+pip install git+https://github.com/StemVibrations/STEM.git
+```
 
 It is also needed to download Kratos Multiphysics. Kratos Multhypisics can be downloaded [here]().
 
