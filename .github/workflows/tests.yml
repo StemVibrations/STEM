@@ -38,6 +38,8 @@ jobs:
   code_coverage:
     runs-on: ubuntu-latest
     steps:
+      - name: Install libGLU library on Ubuntu
+        run: sudo apt-get install -y libglu1-mesa
       - uses: actions/checkout@v4
       - name: Setup Python
         uses: actions/setup-python@v2
