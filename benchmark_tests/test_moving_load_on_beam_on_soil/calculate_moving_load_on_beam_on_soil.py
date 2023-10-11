@@ -108,7 +108,6 @@ model.synchronise_geometry()
 
 # Set mesh size and generate mesh
 # --------------------------------
-model._Model__add_gravity_load()
 model.set_mesh_size(element_size=0.05)
 model.generate_mesh()
 

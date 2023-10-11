@@ -74,9 +74,8 @@ model.synchronise_geometry()
 model.show_geometry(show_surface_ids=True)
 # input()
 
-# Add gravity to the geometry, set mesh size and generate mesh
+# Set mesh size and generate mesh
 # --------------------------------
-model._Model__add_gravity_load()
 model.set_mesh_size(element_size=2)
 model.generate_mesh()
 

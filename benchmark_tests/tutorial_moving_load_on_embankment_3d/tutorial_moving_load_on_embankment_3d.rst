@@ -177,11 +177,9 @@ The geometry ids can be seen in the pictures below.
 
 .. image:: Images/geometry_ids.png
 
-After which the gravity is applied to the geometry and the mesh size can be set. Element size for mesh can be defined as a single value and then mesh is generated.
+After which the mesh size can be set. Element size for mesh can be defined as a single value and then mesh is generated.
 
 .. code-block:: python
-
-    model._Model__add_gravity_load()
 
     model.set_mesh_size(element_size=1)
 
