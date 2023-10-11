@@ -21,48 +21,23 @@ User guide
 ==========
 Installation
 ............
-It is recommended to install STEM in a Python virtual environment.
-The main purpose of Python virtual environments is to create an isolated environment for Python projects.
-This means that each project can have its own dependencies, regardless of what dependencies every other project has.
-This avoids issues with packages dependencies.
+To install STEM you need to install the following items:
 
-The virtual environment should be installed and activated before the installation of STEM.
-To create a virtual environment with python/pip follow this `link <https://docs.python.org/3/library/venv.html>`_.
-To create a virtual environment with conda follow this `link <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands>`_.
+* :ref:`python_stem`
 
+* :ref:`kratos`
 
-Installing STEM as a user
-.........................
-To install STEM, run the following code:
+* :ref:`paraview`
 
-.. code-block::
-
-   pip install git+https://github.com/StemVibrations/STEM.git
+Optionally, you can install `gmsh <https://gmsh.info/>`_ to visualise the mesh.
 
 
-Installing STEM as a developer
-..............................
-To install the package as a developer, you need first to check out the repository.
+Tutorials
+.........
 
-.. code-block::
+* :ref:`tutorial1`
 
-   git clone https://github.com/StemVibrations/STEM.git
-
-To install the package in editable mode with the following command:
-
-.. code-block::
-
-   pip install -e .[testing]
-
-This will install the package in editable mode, so that any changes you make to the code will be reflected in the installed package.
-The [testing] flag will also install the dependencies needed for running the tests.
-
-Alternatively, you can install the requirements manually with the following command:
-
-.. code-block::
-
-   pip install -r requirements.txt
-
+* :ref:`tutorial2`
 
 STEM interface definitions
 ==========================
