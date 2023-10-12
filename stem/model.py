@@ -53,7 +53,6 @@ class Model:
         self.gmsh_io = gmsh_IO.GmshIO()
         self.body_model_parts: List[BodyModelPart] = []
         self.process_model_parts: List[ModelPart] = []
-        self.additional_processes: List[AdditionalProcess] = []
         self.outputs: List[Output] = []
 
         self.extrusion_length: Optional[Sequence[float]] = None
@@ -394,11 +393,6 @@ class Model:
             output_name=output_name
         )
 
-        # add coordinates as attribute to keep track of the coordinates.
-        # Needed to filter the nodes in the part and restrict only the required outputs.
-        # TODO: can we improve the book-keeping?
-        output_parameters.coordinates = coordinates
-
         gmsh_input = {part_name: {"coordinates": coordinates, "ndim": 1}}
 
         self.gmsh_io.generate_geometry(gmsh_input, "")
@@ -411,7 +405,6 @@ class Model:
         model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, part_name)
 
         self.process_model_parts.append(model_part)
-
 
     def __exclude_non_output_nodes(self, process_model_part: ModelPart, eps = 1e-06) -> Mesh:
         """
@@ -429,7 +422,7 @@ class Model:
         if process_model_part.parameters is None or not isinstance(process_model_part.parameters, OutputParametersABC):
             raise ValueError
 
-        if process_model_part.parameters.coordinates is None:
+        if process_model_part.geometry is None:
             raise ValueError
 
         if process_model_part.mesh is None:
@@ -439,8 +432,9 @@ class Model:
         ids = list(process_model_part.mesh.nodes.keys())
         coordinates = np.stack([vv.coordinates for vv in process_model_part.mesh.nodes.values()])
 
-        # compute pairwise distances
-        output_coordinates = np.stack([np.array(cc) for cc in process_model_part.parameters.coordinates])
+        # compute pairwise distances between the geometry nodes (actual outputs and subset of the mesh nodes) and the
+        # mesh nodes
+        output_coordinates = np.stack([np.array(pt.coordinates) for pt in process_model_part.geometry.points.values()])
 
         distances = (
             np.linalg.norm(coordinates[:, None, :] - output_coordinates[None, :, :], axis=-1)
@@ -457,52 +451,89 @@ class Model:
         return new_mesh
 
     def add_random_field(
-            self, part_name: str, variable_name: str, mean: float, variance: float,
+            self, part_name: str, property_name: str, cov:float,
             v_scale_fluctuation: float, anisotropy: List[float], angle: List[float], model_name: str = "Gaussian",
             seed: int = 14, v_dim: int = 1, json_fname: Optional[str] = None
     ):
         """
         Add a random field generator to perform random field for the given variable and the given model part.
+        The mean of the random field is taken from the material parameter.
 
         Args:
             - part_name (str): model of the part name where to apply the random field generation.
-            - variable_name (str): variable name to generate the random field for (e.g. YOUNG_MODULUS).
+            - property_name (str): property (or variable) name to generate the random field for (e.g. YOUNG_MODULUS).
             - model_name (str): Name of the model to be used. Options are: "Gaussian", "Exponential", "Matern", "Linear"
-            - mean (float): The mean of the random field.
-            - variance (float): The variance of the random field.
+            - cov (float): The coefficient of variation of the random field.
             - v_scale_fluctuation (float): The vertical scale of fluctuation of the random field.
-            - anisotropy (list): The anisotropy of the random field (per dimension).
+            - anisotropy (list): The anisotropy of the random field in the other directions (per dimension).
             - angle (list): The angle of the random field (per dimension).
             - seed (int): The seed number for the random number generator.
-            - v_dim (int): The dimension of the vertical scale of fluctuation.
+            - v_dim (int): The dimension of the vertical scale of fluctuation. # TODO: make global variable
 
         Raises:
-            - ValueError: if the model_name is not a invalid, implemented model.
+            - ValueError: if the model_name is not an invalid, implemented model.
         """
 
-        _available_model_names = ["Gaussian", "Exponential", "Matern", "Linear"]
-        if model_name not in _available_model_names:
-            raise ValueError(f"Model name: `{model_name}` was provided, but should be one of\n"
-                             f"{_available_model_names}")
+        # Check if the model part exists and retrieve the part
+        trgt_part = self.__get_model_part_by_name(part_name=part_name)
 
-        random_field_generator = RandomFields(n_dim=3, mean=mean, variance=variance,
+        # Check if the model part is a body model part
+        if not isinstance(trgt_part, BodyModelPart):
+            raise ValueError(f"The target part, `{part_name}`, is not a body model part.")
+
+        # Check if the material of the body model part is soil
+        if not isinstance(trgt_part.material, SoilMaterial):
+            raise ValueError(f"The target part is not a soil material, but `{trgt_part.material.__class__}`.")
+
+        if not trgt_part.material.is_property_in_soil_material(property_name=property_name):
+            raise ValueError(f"The property for which a random field needs to be generated, `{property_name}`, "
+                             f"is not part of the soil material.")
+
+        # Get the property of the soil material, this is the mean value of the random field.
+        # Checks also if the material of the body model part is soil contains the desired parameter
+        mean_value = trgt_part.material.get_property_in_soil_material(property_name=property_name)
+        if not isinstance(mean_value, (float, int)):
+            raise ValueError(f"The property for which a random field needs to be generated, `{property_name}`, "
+                             f"is not numeric, but {mean_value} ({type(mean_value)}).")
+
+        _available_model_names = ["Gaussian", "Exponential", "Matern", "Linear"]
+
+        # check that random field model is one of the implemented
+        if model_name not in _available_model_names:
+            raise ValueError(f"Model name: `{model_name}` was provided but not understood or implemented yet."
+                             f"Available models are: {_available_model_names}")
+
+        variance = (cov * mean_value) ** 2
+
+        random_field_generator = RandomFields(n_dim=3, mean=mean_value, variance=variance,
                                               model_name=ModelName[model_name],
                                               v_scale_fluctuation=v_scale_fluctuation,
                                               anisotropy=anisotropy, angle=angle, seed=seed, v_dim=v_dim)
 
+        #
+        new_part_name = part_name+"_"+property_name.lower()
+
         if json_fname is None:
-            json_fname = part_name.lower()+"_"+variable_name.lower()+".json"
+            json_fname = new_part_name+".json"
 
         field_parameters = ParameterFieldParameters(
-            variable_name=variable_name,
+            variable_name=property_name,
             function_type="json_file",
             function=json_fname,
-            rf_generator=random_field_generator
+            field_generator=random_field_generator
         )
 
-        self.additional_processes.append(
-            AdditionalProcess(process_parameters=field_parameters, part_name=part_name)
-        )
+        model_part_geometry_ids = self.gmsh_io.geo_data["physical_groups"][part_name]["geometry_ids"]
+        model_part_ndim = self.gmsh_io.geo_data["physical_groups"][part_name]["ndim"]
+        # create new gravity physical group and model part
+        self.gmsh_io.add_physical_group(new_part_name, model_part_ndim, model_part_geometry_ids)
+        model_part = ModelPart(new_part_name)
+
+        model_part.parameters = field_parameters
+
+        # add gravity load to process model parts
+        self.process_model_parts.append(model_part)
+
 
     def synchronise_geometry(self):
         """
@@ -595,12 +626,12 @@ class Model:
             - npty.NDArray[np.int64]: array containing the node ids of the elements in the model_part
         """
 
-        for ap in self.additional_processes:
+        for mp in self.process_model_parts:
 
-            if isinstance(ap.process_parameters, ParameterFieldParameters):
+            if isinstance(mp.parameters, ParameterFieldParameters):
 
-                centroids = self.get_centroids_elements_model_part(ap.part_name)
-                ap.process_parameters.rf_generator.generate(centroids)
+                centroids = self.get_centroids_elements_model_part(mp.name)
+                mp.parameters.field_generator.generate(centroids)
 
     @staticmethod
     def __get_model_part_element_connectivities(model_part: ModelPart) -> npty.NDArray[np.int64]:

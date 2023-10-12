@@ -84,6 +84,9 @@ class ModelPart:
         else:
             return None
 
+    def __repr__(self):
+        return f"ModelPart(name={self.name}, parameters={self.parameters.__class__.__name__})"
+
 
 class BodyModelPart(ModelPart):
     """
@@ -130,3 +133,7 @@ class BodyModelPart(ModelPart):
             return self.material.get_element_name(n_dim_model, n_nodes_element, analysis_type)
         else:
             return None
+
+    def __repr__(self):
+        return f"BodyModelPart(name={self.name}, material={self.material.__class__.__name__})"
+

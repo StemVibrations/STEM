@@ -1500,25 +1500,23 @@ class TestModel:
         # add soil layers
         model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
         model.set_mesh_size(0.5)
-        model.add_random_field(part_name="layer1", variable_name="YOUNG_MODULUS", mean=1e8, variance=1e18,
-                               v_scale_fluctuation=10, anisotropy=[5, 5], angle=[0, 0], seed=42)
+        model.add_random_field(part_name="layer1", property_name="YOUNG_MODULUS", cov=0.1,
+                               v_scale_fluctuation=1, anisotropy=[0.5, 0.5], angle=[0, 0], seed=42)
 
         model.synchronise_geometry()
 
         # generate mesh
         model.generate_mesh()
 
-        actual_rf_values = model.additional_processes[0].process_parameters.values
+        actual_rf_values = model.process_model_parts[-1].parameters.values
 
         # assert the number of generated values to be equal to the amount of elements of the part
         assert len(actual_rf_values) == len(model.body_model_parts[0].mesh.elements)
         # assert the generated values against the expected values
-        expected_rf_values = [2470691733.978166, 2463679614.8106585, 2436903862.9336476, 2449748383.645991,
-                              2475489328.647194, 2472064561.106695, 2439474229.7722235, 2429598639.2907243,
-                              2452659092.9906096, 2440197124.4274206, 2453201038.451165, 2462122048.6207886,
-                              2462102455.775274, 2470158649.5571117
-                              ]
-
+        expected_rf_values = [99431411.04966472, 99580505.42744313, 107951461.55866587, 110742422.79950684,
+                              115083316.36077476, 119457302.68282537, 108246625.16178104, 112762568.01048903,
+                              107623686.06656754, 109779491.39711092, 106528714.66275187, 107434251.13382186,
+                              112422789.04916367, 105984785.95965663]
 
         npt.assert_allclose(actual=actual_rf_values, desired=expected_rf_values)
 
@@ -1543,15 +1541,15 @@ class TestModel:
         # add soil layers
         model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
         model.set_mesh_size(1.0)
-        model.add_random_field(part_name="layer1", variable_name="YOUNG_MODULUS", mean=1e8, variance=1e18,
-                               v_scale_fluctuation=10, anisotropy=[5, 5], angle=[0, 0], seed=42)
+        model.add_random_field(part_name="layer1", property_name="YOUNG_MODULUS", cov=0.1,
+                               v_scale_fluctuation=1, anisotropy=[0.5, 0.5], angle=[0, 0], seed=42)
 
         model.synchronise_geometry()
 
         # generate mesh
         model.generate_mesh()
 
-        actual_rf_values = model.additional_processes[0].process_parameters.values
+        actual_rf_values = model.process_model_parts[0].parameters.values
 
         # assert the number of generated values to be equal to the amount of elements of the part
         assert len(actual_rf_values) == len(model.body_model_parts[0].mesh.elements)
@@ -1561,13 +1559,12 @@ class TestModel:
             # assert the generated values against the expected values
             expected_rf_values = actual_rf_values
         else:
-            expected_rf_values = [2463292498.047104, 2450469876.9766684, 2462761529.5347276, 2450932277.3619432,
-                                  2461532302.7991962, 2438213518.942308, 2474486660.669373, 2459734700.6570625,
-                                  2434032463.954693, 2453107362.4897747, 2470564560.556808, 2435190591.8597403,
-                                  2430727302.9995837, 2472340000.112306, 2454294572.9963326, 2468148469.546412,
-                                  2445974395.2790027, 2470477842.531443, 2444992729.5383973, 2464992628.7648168,
-                                  2469213630.972179, 2440252956.906517, 2465977478.686655, 2440971680.6289673
-                                  ]
+            expected_rf_values = [109219152.50312316, 103358912.90787594, 105339578.47289738, 107804266.66256714,
+                                 116674453.0103657, 121205355.8771256, 117518624.66410118, 109641232.38516402,
+                                 108150391.42392428, 93740844.72077464, 106608642.49695791, 111016462.96330133,
+                                 95787906.70407471, 109879617.69834961, 103724463.91386327, 92715313.3744301,
+                                 115556177.86463425, 119222050.2452586, 112966908.38899206, 94554356.2203453,
+                                 112709106.84842391, 93573278.00303535, 100680007.50177462, 105511523.87671089]
 
         npt.assert_allclose(actual=actual_rf_values, desired=expected_rf_values)
 

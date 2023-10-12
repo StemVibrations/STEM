@@ -104,8 +104,8 @@ class TestKratosModelIO:
             )
         )
 
-        model.add_random_field(part_name="soil1", variable_name="YOUNG_MODULUS", mean=1e8, variance=1e20,
-                               v_scale_fluctuation=10, anisotropy=[1e5, 1e5], angle=[0, 0])
+        model.add_random_field(part_name="soil1", property_name="YOUNG_MODULUS", cov=0.1,
+                               v_scale_fluctuation=1, anisotropy=[0.5, 0.5], angle=[0, 0])
 
         model.synchronise_geometry()
 

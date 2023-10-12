@@ -13,7 +13,7 @@ from stem.IO.kratos_additional_processes_io import KratosAdditionalProcessesIO
 from stem.structural_material import *
 from stem.boundary import BoundaryParametersABC, AbsorbingBoundary, DisplacementConstraint, RotationConstraint
 from stem.load import LoadParametersABC, LineLoad, MovingLoad, SurfaceLoad, PointLoad
-from stem.additional_processes import ParameterFieldParameters, AdditionalProcess
+from stem.additional_processes import ParameterFieldParameters, AdditionalProcessesParametersABC
 from stem.mesh import Element, Node
 from stem.model import Model
 from stem.model_part import ModelPart, BodyModelPart
@@ -331,14 +331,20 @@ class KratosIO:
         )
 
         # write conditions if the process contains condition elements
-        if ((process_model_part.mesh.elements is not None) and
-                self.__check_if_process_writes_conditions(process_model_part)):
-            # write conditions
+        if process_model_part.mesh.elements is not None:
 
             entities = list(process_model_part.mesh.elements.keys())
-            block_text = self.__write_sub_model_part_block(
-                block_text, block_name="Conditions", block_entities=entities
-            )
+
+            if self.__check_if_process_writes_conditions(process_model_part):
+                # write conditions
+                block_text = self.__write_sub_model_part_block(
+                    block_text, block_name="Conditions", block_entities=entities
+                )
+            elif isinstance(process_model_part.parameters, AdditionalProcessesParametersABC):
+                # write conditions
+                block_text = self.__write_sub_model_part_block(
+                    block_text, block_name="Elements", block_entities=entities
+                )
 
         block_text += [f"End SubModelPart", ""]
         return block_text
@@ -903,16 +909,17 @@ class KratosIO:
         else:
             return self.outputs_io.create_output_process_dictionary(outputs=outputs)
 
-    def __create_loads_and_boundary_conditions_dictionary(self, model: Model) -> Dict[str, Any]:
+    def __create_process_model_parts_dictionary(self, model: Model) -> Dict[str, Any]:
         """
-        Creates a dictionary containing the loads and boundary conditions.
+        Creates a dictionary containing the process dictionaries from the process model parts, i.e. loads, boundary
+        conditions and additional processes (random field, excavation, etc.).
 
         Args:
             - model (:class:`stem.model.Model`): The model object containing the process model parts.
 
         Returns:
             - Dict[str, Any]: dictionary containing the part of the project parameters dictionary related \
-                to loads and boundary conditions
+                to loads, boundary conditions and additional processes.
         """
         processes_dict: Dict[str, Any] = {
             "processes": {"constraints_process_list": [], "loads_process_list": []}
@@ -938,39 +945,21 @@ class KratosIO:
                     _key = "loads_process_list"
                 processes_dict["processes"][_key].append(_parameters)
 
-        return processes_dict
+            elif isinstance(mp.parameters, AdditionalProcessesParametersABC):
 
-    def __create_additional_parameters_dictionary(self, model: Model) -> Dict[str, Any]:
-        """
-        Creates a dictionary containing the loads and boundary conditions.
-
-        Args:
-            - model (:class:`stem.model.Model`): The model object containing the process model parts.
-
-        Returns:
-            - Dict[str, Any]: dictionary containing the part of the project parameters dictionary related \
-                to loads and boundary conditions
-        """
-        processes_dict: Dict[str, Any] = {
-            "processes": {"constraints_process_list": [], "loads_process_list": []}
-        }
-
-        # loop on the process model parts
-        for ap in model.additional_processes:
-
-            processes_dict["processes"]["constraints_process_list"].append(
-                self.additional_process_io.create_additional_processes_dict(
-                    ap.part_name, ap.process_parameters
+                processes_dict["processes"]["constraints_process_list"].append(
+                    self.additional_process_io.create_additional_processes_dict(
+                        mp.name, mp.parameters
+                    )
                 )
-            )
 
-            if isinstance(ap.process_parameters, ParameterFieldParameters):
-                # generate random field file json
-                IOUtils.write_json_file(
-                    output_folder=self.project_folder,
-                    file_name=ap.process_parameters.function,
-                    dictionary={"values": ap.process_parameters.values}
-                )
+                if isinstance(mp.parameters, ParameterFieldParameters):
+                    # generate random field file json
+                    IOUtils.write_json_file(
+                        output_folder=self.project_folder,
+                        file_name=mp.parameters.function,
+                        dictionary={"values": mp.parameters.values}
+                    )
 
         return processes_dict
 
@@ -988,8 +977,8 @@ class KratosIO:
                 parameters object to generate the random field at the element centroids.
         """
         centroids = model.get_centroids_elements_model_part(part_name)
-        process_parameters.rf_generator.generate(centroids)
-        field_values = list(process_parameters.rf_generator.random_field)[0].tolist()
+        process_parameters.field_generator.generate(centroids)
+        field_values = list(process_parameters.field_generator.random_field)[0].tolist()
         json_dict = {"values": field_values}
 
         IOUtils.write_json_file(
@@ -1022,13 +1011,11 @@ class KratosIO:
         # get the output dictionary
         outputs_dict = self.__create_output_process_dictionary(outputs=model.outputs)
         # get the boundary condition dictionary
-        loads_and_bc_dict = self.__create_loads_and_boundary_conditions_dictionary(model=model)
-
-        additional_processes_dict = self.__create_additional_parameters_dictionary(model=model)
+        loads_and_bc_dict = self.__create_process_model_parts_dictionary(model=model)
 
         # merge dictionaries into one
         project_parameters_dict: Dict[str, Any] = reduce(
-            Utils.merge, (solver_dict, outputs_dict, loads_and_bc_dict, additional_processes_dict)
+            Utils.merge, (solver_dict, outputs_dict, loads_and_bc_dict)
         )
         # write json file
         IOUtils.write_json_file(self.project_folder, project_file_name, project_parameters_dict)

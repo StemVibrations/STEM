@@ -42,41 +42,6 @@ class ParameterFieldParameters(AdditionalProcessesParametersABC):
                 extension.
             Dummy parameters: `function` and `dataset`.
 
-        -  `python`: an additional python script should be provided file should be provided that provides a manual
-            update of the parameters.
-            Parameters required: `function`, name of the function without .py extension.
-            Dummy parameters: `dataset`
-
-
-            This type is currently not supported because requires to be linked directly to
-            Kratos. Below an example template:
-            ___________________________________________________________________________________________________________
-
-            from KratosMultiphysics.GeoMechanicsApplication.user_defined_scripts.user_defined_parameter_field_base \
-                import ParameterFieldBase
-
-
-            class ParameterField(ParameterFieldBase):
-                '''Base class of a user defined parameter field'''
-
-                def generate_field(self):
-                    '''Creates custom parameter field'''
-
-                    super(ParameterField, self).generate_field()
-
-                    input_dict = self.get_input()
-                    output_dict = self.get_output()
-
-                    # add custom run functionalities here
-
-                    new_values = []
-                    for value, coord in zip(input_dict['values'], input_dict['coordinates']):
-                        new_value = value * 2 * coord[0] + value * 3 * coord[1]
-                    new_values.append(new_value)
-
-                    output_dict["values"] = new_values
-            ___________________________________________________________________________________________________________
-
         -   `input`: In this case, the function is explicitly defined as function of coordinates
             Parameters required: `function`, the explicit function.
                 e.g. `20000*x + 30000*y`
@@ -98,7 +63,7 @@ class ParameterFieldParameters(AdditionalProcessesParametersABC):
     variable_name: str
     function_type: str
     function: str
-    rf_generator: RandomFields
+    field_generator: RandomFields
 
     def __post_init__(self):
         """
@@ -118,10 +83,10 @@ class ParameterFieldParameters(AdditionalProcessesParametersABC):
     @property
     def values(self):
 
-        if self.rf_generator.random_field is None:
+        if self.field_generator.random_field is None:
             raise ValueError("Values for field parameters are not generated yet.")
 
-        return list(self.rf_generator.random_field)[0].tolist()
+        return list(self.field_generator.random_field)[0].tolist()
 
 
 class AdditionalProcess:

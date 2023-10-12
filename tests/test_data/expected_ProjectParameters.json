@@ -11,7 +11,6 @@
         "solver_type": "U_Pw",
         "model_part_name": "PorousDomain",
         "domain_size": 2,
-        "start_time": 0.0,
         "model_import_settings": {
             "input_type": "mdpa",
             "input_filename": "test_mdpa_file"
@@ -67,7 +66,8 @@
             "load_left",
             "load_right",
             "no_displacement",
-            "test_output_part"
+            "test_output_part",
+            "soil1_young_modulus"
         ],
         "body_domain_sub_model_part_list": [
             "soil1"
@@ -175,7 +175,7 @@
                     "dataset_file_name": "soil1_young_modulus.json",
                     "func_type": "json_file",
                     "function": "dummy",
-                    "model_part_name": "PorousDomain.soil1",
+                    "model_part_name": "PorousDomain.soil1_young_modulus",
                     "variable_name": "YOUNG_MODULUS"
                 }
             }
