@@ -14,7 +14,7 @@ from stem.boundary import *
 from stem.geometry import Geometry
 from stem.mesh import Mesh, MeshSettings, Node, Element
 from stem.output import Output, OutputParametersABC
-from stem.additional_processes import AdditionalProcess, ParameterFieldParameters
+from stem.additional_processes import ParameterFieldParameters
 from stem.load import *
 from stem.solver import Problem, StressInitialisationType
 from stem.utils import Utils

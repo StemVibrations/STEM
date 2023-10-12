@@ -87,24 +87,3 @@ class ParameterFieldParameters(AdditionalProcessesParametersABC):
             raise ValueError("Values for field parameters are not generated yet.")
 
         return list(self.field_generator.random_field)[0].tolist()
-
-
-class AdditionalProcess:
-    """
-    Class containing the information required to perform additional processes like excavations or add random fields.
-    Attributes:
-        - process_parameters (:class:`OutputParametersABC`): class containing the process parameters
-        - part_name (Optional[str]): name of the body model part to apply the process.
-    """
-
-    def __init__(
-            self,
-            process_parameters: AdditionalProcessesParametersABC,
-            part_name: str
-    ):
-        """
-        Constructor of the additional process class
-        """
-
-        self.process_parameters = process_parameters
-        self.part_name = part_name
