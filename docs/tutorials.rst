@@ -114,7 +114,7 @@ The soil is a one-phase soil, meaning that the flow of water through the soil is
 
 The coordinates of the model are defined in the following way. Each of the layers are defined by a list of coordinates,
 defined in th x-y plane. For 3D models, the x-y plane can be extruded in the z-direction. In this case, the extrusion
-length is 10 m in the z-direction.
+length is 50 m in the z-direction.
 
 .. code-block:: python
 
