@@ -37,51 +37,53 @@ An example of a class:
 
 .. code-block::
 
-   class KratosMaterialIO:
+class ResidualConvergenceCriteria(ConvergenceCriteriaABC):
     """
-    Class containing methods to write materials to Kratos
+    Class containing information about the residual convergence criteria
+
+    Inheritance:
+        - :class:`ConvergenceCriteriaABC`
 
     Attributes:
-        - ndim (int): number of dimensions of the mesh
+        - residual_relative_tolerance (float): The relative tolerance for the residual. Default value is 1e-4.
+        - residual_absolute_tolerance (float): The absolute tolerance for the residual. Default value is 1e-9.
     """
-
-    def __init__(self, ndim: int, domain:str):
+    def __init__(self):
         """
-        Constructor of KratosMaterialIO class
-
-        Args:
-            - ndim (int): number of dimensions of the mesh
+        Constructor of the ResidualConvergenceCriteria class.
         """
-        self.ndim: int = ndim
-        self.domain = domain
+        self.residual_relative_tolerance: float = 1e-4
+        self.residual_absolute_tolerance: float = 1e-9
+
 
 An example of a function:
 
 .. code-block::
 
-       def are_2d_coordinates_clockwise(coordinates: Sequence[Sequence[float]]) -> bool:
-        """
-        Checks if the 2D coordinates are given in clockwise order. If the signed area is positive, the coordinates
-        are given in clockwise order.
 
-        Args:
-            - coordinates (Sequence[Sequence[float]]): coordinates of the points of a surface
+def create_solver_settings_dictionary(self, model: Model, mesh_file_name: str, materials_file_name: str) -> Dict[str, Any]:
+    """
+    Creates a dictionary containing the solver settings.
 
-        Returns:
-            - bool: True if the coordinates are given in clockwise order, False otherwise.
-        """
+    Args:
+        - model (:class:`stem.model.Model`): The model object containing the solver data and model parts.
+        - mesh_file_name (str): The name of the mesh file.
+        - materials_file_name (str): The name of the materials parameters json file.
 
-        # calculate signed area of polygon
-        signed_area = 0.0
-        for i in range(len(coordinates) - 1):
-            signed_area += (coordinates[i + 1][0] - coordinates[i][0]) * (coordinates[i + 1][1] + coordinates[i][1])
+    Raises:
+        - ValueError: if solver_settings in model are not initialised.
 
-        signed_area += (coordinates[0][0] - coordinates[-1][0]) * (coordinates[0][1] + coordinates[-1][1])
+    Returns:
+        - Dict[str, Any]: dictionary containing the part of the project parameters
+            dictionary related to problem data and solver settings.
+    """
 
-        # if signed area is positive, the coordinates are given in clockwise order
-        return signed_area > 0.0
+    if model.project_parameters is None:
+        raise ValueError("Solver settings are not initialised in model.")
 
-
-
-
-
+    return self.solver_io.create_settings_dictionary(
+        model.project_parameters,
+        Path(mesh_file_name).stem,
+        materials_file_name,
+        model.get_all_model_parts(),
+    )
