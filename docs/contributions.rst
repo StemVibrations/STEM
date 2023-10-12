@@ -29,7 +29,9 @@ There should be a docstring at the beginning of the class or function describing
 The docstring should be in the form of a triple-quoted string.
 
 The class or function arguments must have a type annotation. The type annotation should be in the form of a comment after the argument name.
-The class or function should have a return type annotation. The return type annotation should be in the form of a comment after the closing parenthesis of the arguments.
+The class should specify the attributes and inheritance.
+The function should specify the arguments, returns and exceptions (should be placed after the arguments and before the returns).
+The return type annotation should be in the form of a comment after the closing parenthesis of the arguments.
 
 Please, avoid inheritance, and favour composition when writing your code.
 
