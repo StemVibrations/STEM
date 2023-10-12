@@ -1,7 +1,7 @@
 numpy==1.24.2
 plotly==5.15.0
 matplotlib>=3.7.1
-gmsh_utils @ git+https://github.com/StemVibrations/gmsh_utils@vakantie_branch
+gmsh_utils @ git+https://github.com/StemVibrations/gmsh_utils
 random_fields @ git+https://github.com/StemVibrations/RandomFields
 pytest==7.2.2
 pytest-cov==4.0.0
