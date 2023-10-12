@@ -503,7 +503,7 @@ can be generated.
 
 Now that the geometry is defined, the solver settings of the model has to be set.
 The analysis type is set to "MECHANICAL" and the solution type is set to "DYNAMIC".
-Then the start time is set to 0.0 second and the end time is set to 1.0 second. The time step size is set to 0.01 second.
+Then the start time is set to 0.0 second and the end time is set to 1.5 second. The time step size is set to 0.01 second.
 Furthermore, the reduction factor and increase factor are set to 1.0, such that the time step size is constant throughout
 the simulation. Displacement convergence criteria is set to 1.0e-4 for the relative tolerance and 1.0e-9 for the
 absolute tolerance. Newton-Raphson is used as a solving strategy. And Newmark is used as an integration method.
