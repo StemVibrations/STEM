@@ -39,53 +39,52 @@ An example of a class:
 
 .. code-block::
 
-class ResidualConvergenceCriteria(ConvergenceCriteriaABC):
-    """
-    Class containing information about the residual convergence criteria
-
-    Inheritance:
-        - :class:`ConvergenceCriteriaABC`
-
-    Attributes:
-        - residual_relative_tolerance (float): The relative tolerance for the residual. Default value is 1e-4.
-        - residual_absolute_tolerance (float): The absolute tolerance for the residual. Default value is 1e-9.
-    """
-    def __init__(self):
+    class ResidualConvergenceCriteria(ConvergenceCriteriaABC):
         """
-        Constructor of the ResidualConvergenceCriteria class.
+        Class containing information about the residual convergence criteria
+
+        Inheritance:
+            - :class:`ConvergenceCriteriaABC`
+
+        Attributes:
+            - residual_relative_tolerance (float): The relative tolerance for the residual. Default value is 1e-4.
+            - residual_absolute_tolerance (float): The absolute tolerance for the residual. Default value is 1e-9.
         """
-        self.residual_relative_tolerance: float = 1e-4
-        self.residual_absolute_tolerance: float = 1e-9
+        def __init__(self):
+            """
+            Constructor of the ResidualConvergenceCriteria class.
+            """
+            self.residual_relative_tolerance: float = 1e-4
+            self.residual_absolute_tolerance: float = 1e-9
 
 
 An example of a function:
 
 .. code-block::
 
+    def create_solver_settings_dictionary(self, model: Model, mesh_file_name: str, materials_file_name: str) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the solver settings.
 
-def create_solver_settings_dictionary(self, model: Model, mesh_file_name: str, materials_file_name: str) -> Dict[str, Any]:
-    """
-    Creates a dictionary containing the solver settings.
+        Args:
+            - model (:class:`stem.model.Model`): The model object containing the solver data and model parts.
+            - mesh_file_name (str): The name of the mesh file.
+            - materials_file_name (str): The name of the materials parameters json file.
 
-    Args:
-        - model (:class:`stem.model.Model`): The model object containing the solver data and model parts.
-        - mesh_file_name (str): The name of the mesh file.
-        - materials_file_name (str): The name of the materials parameters json file.
+        Raises:
+            - ValueError: if solver_settings in model are not initialised.
 
-    Raises:
-        - ValueError: if solver_settings in model are not initialised.
+        Returns:
+            - Dict[str, Any]: dictionary containing the part of the project parameters
+                dictionary related to problem data and solver settings.
+        """
 
-    Returns:
-        - Dict[str, Any]: dictionary containing the part of the project parameters
-            dictionary related to problem data and solver settings.
-    """
+        if model.project_parameters is None:
+            raise ValueError("Solver settings are not initialised in model.")
 
-    if model.project_parameters is None:
-        raise ValueError("Solver settings are not initialised in model.")
-
-    return self.solver_io.create_settings_dictionary(
-        model.project_parameters,
-        Path(mesh_file_name).stem,
-        materials_file_name,
-        model.get_all_model_parts(),
-    )
+        return self.solver_io.create_settings_dictionary(
+            model.project_parameters,
+            Path(mesh_file_name).stem,
+            materials_file_name,
+            model.get_all_model_parts(),
+        )
