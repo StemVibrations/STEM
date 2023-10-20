@@ -93,20 +93,30 @@ class KratosIO:
 
     def __initialise_process_model_part_ids(self, model: Model):
         """
-        Resets the process model part ids.
+        Resets the process model part ids. Also resets the condition element ids.
 
         Args:
             - model (:class:`stem.model.Model`): the model object containing the process model parts.
 
         """
 
-        # reset all condition ids
+        # reset all condition model part ids
         new_id = 0
+        new_cond_id = 1
         for pmp in model.process_model_parts:
             # if the process writes condition add an id
             if self.__check_if_process_writes_conditions(pmp):
                 new_id += 1
                 pmp.id = new_id
+
+                if pmp.mesh is not None and pmp.mesh.elements is not None:
+                    # renew all condition element ids
+                    new_cond_dict: Dict[int, Element] = {}
+                    for old_id, cond in pmp.mesh.elements.items():
+                        cond.id = new_cond_id
+                        new_cond_dict[new_cond_id] = cond
+                        new_cond_id += 1
+                    pmp.mesh.elements = new_cond_dict
 
     @staticmethod
     def __initialise_body_model_part_ids(model: Model):

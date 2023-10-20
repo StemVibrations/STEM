@@ -400,7 +400,7 @@ class TestKratosModelIO:
         # define expected block text
         expected_text_load = ['', 'Begin SubModelPart load_top', '  Begin SubModelPartTables', '  1',
                               '  End SubModelPartTables', '  Begin SubModelPartNodes', '  3', '  4',
-                              '  End SubModelPartNodes', '  Begin SubModelPartConditions', '  3',
+                              '  End SubModelPartNodes', '  Begin SubModelPartConditions', '  1',
                               '  End SubModelPartConditions', 'End SubModelPart', '']
 
         # assert the objects to be equal
@@ -434,3 +434,41 @@ class TestKratosModelIO:
         expected_text_body = [line.rstrip() for line in expected_text_body]
         # assert the objects to be equal
         npt.assert_equal(actual=actual_text_body, desired=expected_text_body)
+
+    def test_write_mdpa_two_conditions_same_position(self):
+
+        ndim = 2
+        layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+
+        load_coordinates_top = [(1, 1, 0), (0, 1, 0)]  # top
+
+        # define soil material
+        soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
+        constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
+        soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
+                                     retention_parameters=SaturatedBelowPhreaticLevelLaw())
+
+        # define load properties
+        line_load1 = LineLoad(active=[False, True, False], value=[0, 10, 0])
+        line_load2 = LineLoad(active=[True, False, False], value=[10, 0, 0])
+
+        # create model
+        model = Model(ndim)
+
+        # add soil layer and line load and mesh them
+        model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
+
+        model.add_load_by_coordinates(load_coordinates_top, line_load1, "line_load_1")
+        model.add_load_by_coordinates(load_coordinates_top, line_load2, "line_load_2")
+
+        model.synchronise_geometry()
+
+        model.set_mesh_size(1)
+        model.generate_mesh()
+        model.project_parameters = TestUtils.create_default_solver_settings()
+
+        kratos_io = KratosIO(ndim=model.ndim)
+        actual_text_body = kratos_io.write_mdpa_text(model=model)
+
+        a=1+1
+
