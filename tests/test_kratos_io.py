@@ -436,6 +436,11 @@ class TestKratosModelIO:
         npt.assert_equal(actual=actual_text_body, desired=expected_text_body)
 
     def test_write_mdpa_two_conditions_same_position(self):
+        """
+        Test the creation of the mdpa text of the whole model with two conditions at the same position. The two
+        conditions should be written with unique condition element ids.
+
+        """
 
         ndim = 2
         layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
@@ -463,12 +468,22 @@ class TestKratosModelIO:
 
         model.synchronise_geometry()
 
+        # set mesh size and generate mesh
         model.set_mesh_size(1)
         model.generate_mesh()
         model.project_parameters = TestUtils.create_default_solver_settings()
 
+        # write mdpa text
         kratos_io = KratosIO(ndim=model.ndim)
-        actual_text_body = kratos_io.write_mdpa_text(model=model)
+        actual_mdpa_text = kratos_io.write_mdpa_text(model=model)
 
-        a=1+1
+        # get expected mdpa text
+        with open('tests/test_data/expected_mdpa_file_two_conds_same_position.mdpa', 'r') as f:
+            expected_mdpa_text = f.readlines()
+
+        expected_mdpa_text = [line.rstrip() for line in expected_mdpa_text]
+
+        # check if mdpa data is as expected
+        npt.assert_equal(actual=actual_mdpa_text, desired=expected_mdpa_text)
+
 
