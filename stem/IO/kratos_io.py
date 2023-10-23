@@ -963,28 +963,6 @@ class KratosIO:
 
         return processes_dict
 
-    def __write_json_file_for_parameter_field(
-            self, model: Model, part_name:str, process_parameters: ParameterFieldParameters
-    ) -> None:
-        """
-        Generates the random field parameters for the considered random field process and writes it to a json file.
-
-        Args:
-            - model (:class:`stem.model.Model`): The model object containing all the required info, i.e. \
-                body and process model parts, boundary conditions, solver settings and problem data.
-            - part_name (str): The name of the part for which random field needs to be generated.
-            - materials_file_name (:class:`stem.additional_processes.ParameterFieldParameters`): The random field \
-                parameters object to generate the random field at the element centroids.
-        """
-        centroids = model.get_centroids_elements_model_part(part_name)
-        process_parameters.field_generator.generate(centroids)
-        field_values = list(process_parameters.field_generator.random_field)[0].tolist()
-        json_dict = {"values": field_values}
-
-        IOUtils.write_json_file(
-            output_folder=self.project_folder, file_name=process_parameters.function, dictionary=json_dict
-        )
-
     def write_project_parameters_json(self, model: Model, mesh_file_name: str, materials_file_name: str,
                                       project_file_name: str = "ProjectParameters.json") -> Dict[str, Any]:
         """
