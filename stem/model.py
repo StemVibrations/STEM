@@ -682,7 +682,6 @@ class Model:
         """
 
         self.synchronise_geometry()
-        self.generate_mesh()
         self.validate()
 
         self.__setup_stress_initialisation()
