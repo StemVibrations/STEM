@@ -1,52 +1,73 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, auto
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import List, Optional, Sequence, Union
 
 
 class NodalOutput(Enum):
     """
     Enum class for variables at the nodes
     """
-    DISPLACEMENT = 1
-    DISPLACEMENT_X = 11
-    DISPLACEMENT_Y = 12
-    DISPLACEMENT_Z = 13
-    VELOCITY = 2
-    VELOCITY_X = 21
-    VELOCITY_Y = 22
-    VELOCITY_Z = 23
-    ACCELERATION = 3
-    ACCELERATION_X = 31
-    ACCELERATION_Y = 32
-    ACCELERATION_Z = 33
-    TOTAL_DISPLACEMENT = 4
-    TOTAL_DISPLACEMENT_X = 41
-    TOTAL_DISPLACEMENT_Y = 42
-    TOTAL_DISPLACEMENT_Z = 43
-    WATER_PRESSURE = 5
-    VOLUME_ACCELERATION = 6
-    VOLUME_ACCELERATION_X = 61
-    VOLUME_ACCELERATION_Y = 62
-    VOLUME_ACCELERATION_Z = 63
+    DISPLACEMENT = auto()
+    DISPLACEMENT_X = auto()
+    DISPLACEMENT_Y = auto()
+    DISPLACEMENT_Z = auto()
+    VELOCITY = auto()
+    VELOCITY_X = auto()
+    VELOCITY_Y = auto()
+    VELOCITY_Z = auto()
+    ACCELERATION = auto()
+    ACCELERATION_X = auto()
+    ACCELERATION_Y = auto()
+    ACCELERATION_Z = auto()
+    TOTAL_DISPLACEMENT = auto()
+    TOTAL_DISPLACEMENT_X = auto()
+    TOTAL_DISPLACEMENT_Y = auto()
+    TOTAL_DISPLACEMENT_Z = auto()
+    WATER_PRESSURE = auto()
+    VOLUME_ACCELERATION = auto()
+    VOLUME_ACCELERATION_X = auto()
+    VOLUME_ACCELERATION_Y = auto()
+    VOLUME_ACCELERATION_Z = auto()
 
 
 class GaussPointOutput(Enum):
     """
     Enum class for variables at the Gauss Point
     """
-    VON_MISES_STRESS = 1
-    FLUID_FLUX_VECTOR = 2
-    HYDRAULIC_HEAD = 3
-    GREEN_LAGRANGE_STRAIN_VECTOR = 41
-    GREEN_LAGRANGE_STRAIN_TENSOR = 42
-    ENGINEERING_STRAIN_VECTOR = 51
-    ENGINEERING_STRAIN_TENSOR = 52
-    CAUCHY_STRESS_VECTOR = 61
-    CAUCHY_STRESS_TENSOR = 62
-    TOTAL_STRESS_VECTOR = 71
-    TOTAL_STRESS_TENSOR = 72
+    VON_MISES_STRESS = auto()
+    FLUID_FLUX_VECTOR = auto()
+    HYDRAULIC_HEAD = auto()
+    GREEN_LAGRANGE_STRAIN_VECTOR = auto()
+    GREEN_LAGRANGE_STRAIN_TENSOR = auto()
+    ENGINEERING_STRAIN_VECTOR = auto()
+    ENGINEERING_STRAIN_TENSOR = auto()
+    CAUCHY_STRESS_VECTOR = auto()
+    CAUCHY_STRESS_TENSOR = auto()
+    TOTAL_STRESS_VECTOR = auto()
+    TOTAL_STRESS_TENSOR = auto()
+
+    # MATERIAL PARAMETERS - soil
+    YOUNG_MODULUS = auto()
+    POISSON_RATIO = auto()
+    DENSITY_SOLID = auto()
+    POROSITY = auto()
+    PERMEABILITY_XX = auto()
+    PERMEABILITY_YY = auto()
+    PERMEABILITY_XY = auto()
+    BULK_MODULUS_SOLID = auto()
+    BIOT_COEFFICIENT = auto()
+
+    PERMEABILITY_YZ = auto()
+    PERMEABILITY_ZX = auto()
+    PERMEABILITY_ZZ = auto()
+    # Material parameters - fluid
+    DENSITY_FLUID = auto()
+    DYNAMIC_VISCOSITY = auto()
+    BULK_MODULUS_FLUID = auto()
+    # umat
+    UMAT_PARAMETERS = auto()
 
 
 TENSOR_OUTPUTS = [
@@ -55,6 +76,10 @@ TENSOR_OUTPUTS = [
     "CAUCHY_STRESS",
     "TOTAL_STRESS",
 ]
+
+# def validate_gauss_point(requested_outputs:)
+#
+#     list(GaussPointOutput.__members__.keys())
 
 
 def detect_vector_in_tensor_outputs(requested_outputs: List[GaussPointOutput]):
@@ -83,9 +108,10 @@ def detect_vector_in_tensor_outputs(requested_outputs: List[GaussPointOutput]):
             print(_msg)
 
 
-def detect_tensor_outputs(requested_outputs: List[GaussPointOutput]):
+def detect_tensor_outputs(requested_outputs: List[Union[GaussPointOutput, str]]):
     """
-    Detects whether gauss point outputs are requested and warns the user
+    Detects whether gauss point outputs are requested and warns the user if some cause problems
+    for the considered output. It also checks if input types are correct
 
     Args:
         - requested_outputs (List[:class:`GaussPointOutput`]): list of requested outputs (gauss point)
@@ -94,9 +120,17 @@ def detect_tensor_outputs(requested_outputs: List[GaussPointOutput]):
         detected_tensor_outputs = []
         for requested_output in requested_outputs:
             for tensor_output in TENSOR_OUTPUTS:
-                if tensor_output in requested_output.name:
+                if isinstance(requested_output, str):
+                    _req_out = GaussPointOutput[requested_output]
+                elif isinstance(requested_output, GaussPointOutput):
+                    _name = requested_output.name
+                else:
+                    raise ValueError("Incorrect type specified for Gauss point output:"
+                                     f"{requested_output.__class__.__name__}.")
+                if tensor_output in _name:
                     detected_tensor_outputs.append(tensor_output)
                     break
+
         if len(detected_tensor_outputs):
             _fmt_list = "".join([f" - {outpt} \n" for outpt in detected_tensor_outputs])
             _msg = (
