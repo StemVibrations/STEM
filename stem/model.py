@@ -15,7 +15,7 @@ from stem.load import *
 from stem.solver import Problem, StressInitialisationType
 from stem.utils import Utils
 from stem.plot_utils import PlotUtils
-from stem.globals import ELEMENT_DATA
+from stem.globals import ELEMENT_DATA, VERTICAL_AXIS, GRAVITY_VALUE,  OUT_OF_PLANE_AXIS_2D
 
 
 NUMBER_TYPES = (int, float, np.int64, np.float64)
@@ -31,7 +31,7 @@ class Model:
         - geometry (Optional[:class:`stem.geometry.Geometry`]) The geometry of the whole model.
         - body_model_parts (List[:class:`stem.model_part.BodyModelPart`]): A list containing the body model parts.
         - process_model_parts (List[:class:`stem.model_part.ModelPart`]): A list containing the process model parts.
-        - extrusion_length (Optional[Sequence[float]]): The extrusion length in x, y and z direction
+        - extrusion_length (Optional[float]): The extrusion length in the out of plane direction.
 
     """
     def __init__(self, ndim: int):
@@ -49,7 +49,7 @@ class Model:
         self.body_model_parts: List[BodyModelPart] = []
         self.process_model_parts: List[ModelPart] = []
 
-        self.extrusion_length: Optional[Sequence[float]] = None
+        self.extrusion_length: Optional[float] = None
 
     def __del__(self):
         """
@@ -111,7 +111,7 @@ class Model:
                        ):
         """
         Adds a soil layer to the model by giving a sequence of 2D coordinates. In 3D the 2D geometry is extruded in
-        the direction of the extrusion_length
+        the out of plane direction.
 
         Args:
             - coordinates (Sequence[Sequence[float]]): The plane coordinates of the soil layer.
@@ -133,7 +133,9 @@ class Model:
             if self.extrusion_length is None:
                 raise ValueError("Extrusion length must be specified for 3D models")
 
-            gmsh_input[name]["extrusion_length"] = self.extrusion_length
+            extrusion_length = [0, 0, 0]
+            extrusion_length[OUT_OF_PLANE_AXIS_2D] = self.extrusion_length
+            gmsh_input[name]["extrusion_length"] = extrusion_length
 
         # todo check if this function in gmsh io can be improved
         self.gmsh_io.generate_geometry(gmsh_input, "")
@@ -551,19 +553,15 @@ class Model:
         # add gravity load to process model parts
         self.process_model_parts.append(model_part)
 
-    def __add_gravity_load(self, gravity_acceleration: float = -9.81, vertical_axis: int = 1):
+    def __add_gravity_load(self):
         """
         Add a gravity load to the complete model.
-
-        Args:
-            - gravity_acceleration  (float): The gravity acceleration [m/s^2]. (default -9.81)
-            - vertical_axis (int): The vertical axis of the model. x=>0, y=>1, z=>2. (default y, 1)
 
         """
 
         # set gravity load at vertical axis
         gravity_load_values: List[float] = [0, 0, 0]
-        gravity_load_values[vertical_axis] = gravity_acceleration
+        gravity_load_values[VERTICAL_AXIS] = GRAVITY_VALUE
         gravity_load = GravityLoad(value=gravity_load_values, active=[True, True, True])
 
         # get all body model part names
