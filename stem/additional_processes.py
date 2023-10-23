@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from abc import ABC
-from typing import Optional, List
+from typing import Optional, List, Any
 
 from random_fields.generate_field import RandomFields
 
@@ -90,7 +90,10 @@ class ParameterFieldParameters(AdditionalProcessesParametersABC):
                              " parameters!")
 
     @property
-    def values(self) -> List[float]:
+    def values(self) -> Any:
+
+        if self.field_generator is None:
+            raise ValueError("No generator is assigned. Error.")
 
         if self.field_generator.random_field is None:
             raise ValueError("Values for field parameters are not generated yet.")

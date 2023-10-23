@@ -630,6 +630,8 @@ class Model:
 
             if isinstance(mp.parameters, ParameterFieldParameters):
 
+                if mp.parameters.field_generator is None:
+                    raise ValueError("Field generator is not provided for parameter field.")
                 centroids = self.get_centroids_elements_model_part(mp.name)
                 mp.parameters.field_generator.generate(centroids)
 

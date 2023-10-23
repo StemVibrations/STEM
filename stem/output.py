@@ -108,7 +108,7 @@ def detect_vector_in_tensor_outputs(requested_outputs: List[GaussPointOutput]):
             print(_msg)
 
 
-def detect_tensor_outputs(requested_outputs: List[Union[GaussPointOutput, str]]):
+def detect_tensor_outputs(requested_outputs: Sequence[Union[GaussPointOutput, str]]):
     """
     Detects whether gauss point outputs are requested and warns the user if some cause problems
     for the considered output. It also checks if input types are correct
@@ -222,8 +222,8 @@ class VtkOutputParameters(OutputParametersABC):
     output_interval: float
     output_control_type: str = "step"
     file_format: str = "binary"
-    nodal_results: List[NodalOutput] = field(default_factory=lambda: [])
-    gauss_point_results: List[GaussPointOutput] = field(default_factory=lambda: [])
+    nodal_results: Sequence[NodalOutput] = field(default_factory=lambda: [])
+    gauss_point_results: Sequence[GaussPointOutput] = field(default_factory=lambda: [])
     # VTK specif inputs
     output_precision: int = 7
 
@@ -253,8 +253,8 @@ class JsonOutputParameters(OutputParametersABC):
     # JSON specif inputs
     output_interval: float
     # general inputs
-    nodal_results: List[NodalOutput] = field(default_factory=lambda: [])
-    gauss_point_results: List[GaussPointOutput] = field(default_factory=lambda: [])
+    nodal_results: Sequence[NodalOutput] = field(default_factory=lambda: [])
+    gauss_point_results: Sequence[GaussPointOutput] = field(default_factory=lambda: [])
 
     def validate(self):
         """

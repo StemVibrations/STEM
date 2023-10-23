@@ -22,6 +22,16 @@ class TestAdditionalProcesses:
                 field_generator=None
             )
 
+        # Raise error if values are asked but generator is None (from python or input function type)
+        field_parameters_python = ParameterFieldParameters(
+            variable_name="YOUNG_MODULUS",
+            function_type="python",
+            function="test_random_field_python",
+            field_generator=None
+        )
+        with pytest.raises(ValueError):
+            values = field_parameters_python.values
+
         # Raise error if random field values have not been initialised
         random_field_generator = RandomFields(n_dim=3, mean=10, variance=2,
                                               model_name=ModelName.Gaussian,
@@ -35,3 +45,5 @@ class TestAdditionalProcesses:
         )
         with pytest.raises(ValueError):
             values = field_parameters_json.values
+
+
