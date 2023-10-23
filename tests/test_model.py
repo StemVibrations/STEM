@@ -1144,9 +1144,7 @@ class TestModel:
         """
         Test if output nodes are correctly accounted for when meshing a surface.
         Args:
-            - expected_geometry_two_layers_2D_after_sync (Tuple[:class:`stem.geometry.Geometry`, \
-                :class:`stem.geometry.Geometry`, :class:`stem.geometry.Geometry`]): The expected geometry after \
-                synchronising the geometry.
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
             - create_default_outputs (:class:`stem.output.Output`): the output object containing the \
                 output info.
         """
@@ -1201,6 +1199,88 @@ class TestModel:
         # check if nodes are generated correctly, i.e. if there are nodes in the mesh and if the node ids are unique
         # and if the number of coordinates per node is correct
         assert len(part.mesh.nodes) == 64
+        for node_id, node in part.mesh.nodes.items():
+            assert node_id not in unique_node_ids
+            assert len(node.coordinates) == 3
+            unique_node_ids.append(node.id)
+
+        # assert the output parts
+        part = model.process_model_parts[0]
+        assert part.mesh.ndim == 1
+
+        unique_node_ids = []
+        # check if nodes are generated correctly, number of nodes are equal to the one requested in output,
+        # no elements generated, unique node ids, and correct number of coordinates per node
+        assert len(part.mesh.nodes) == len(output_coordinates)
+        for node_id, node in part.mesh.nodes.items():
+            assert node_id not in unique_node_ids
+            assert len(node.coordinates) == 3
+            unique_node_ids.append(node.id)
+
+        assert part.mesh.elements == {}
+
+    def test_add_output_to_a_surface_3d(
+            self, create_default_3d_soil_material: SoilMaterial, create_default_outputs: Output
+    ):
+        """
+        Test if output nodes are correctly accounted for when meshing a surface in 3d.
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+            - create_default_outputs (:class:`stem.output.Output`): the output object containing the \
+                output info.
+        """
+
+        # define layer coordinates
+        ndim = 3
+        layer1_coordinates = [(0, 0, 0), (4, 0, 0), (4, 1, 0), (0, 1, 0)]
+
+        # define soil materials
+        soil_material1 = create_default_3d_soil_material
+        soil_material1.name = "soil1"
+
+        # create model
+        model = Model(ndim)
+        model.extrusion_length = [0, 0, 4]
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
+
+        # synchronise geometry and recalculates the ids
+        model.synchronise_geometry()
+        # define output object
+        output_object = create_default_outputs
+
+        # add outputs
+        output_coordinates = [(0, 1, 1.5), (2, 1, 1.5), (2, 1, 2.5), (4, 1, 2.5)]
+        model.add_output_part_by_coordinates(
+            output_coordinates, **output_object.__dict__
+        )
+        model.synchronise_geometry()
+        # model.show_geometry(show_line_ids=True)
+        # TODO: create an assert block for geometry
+
+        model.generate_mesh()
+        # model.show_mesh()
+
+        unique_element_ids = []
+        unique_node_ids = []
+
+        part = model.body_model_parts[0]
+        assert part.mesh.ndim == 3
+
+        # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
+        # correct and if the element ids are unique and if the number of nodes per element is correct
+        assert len(part.mesh.elements) == 586
+
+        for element_id, element in part.mesh.elements.items():
+            assert element.element_type == "TETRAHEDRON_4N"
+            assert element_id not in unique_element_ids
+            assert len(element.node_ids) == 4
+            unique_element_ids.append(element.id)
+
+        # check if nodes are generated correctly, i.e. if there are nodes in the mesh and if the node ids are unique
+        # and if the number of coordinates per node is correct
+        assert len(part.mesh.nodes) == 216
         for node_id, node in part.mesh.nodes.items():
             assert node_id not in unique_node_ids
             assert len(node.coordinates) == 3
