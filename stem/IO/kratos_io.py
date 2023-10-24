@@ -109,6 +109,7 @@ class KratosIO:
                 new_id += 1
                 pmp.id = new_id
 
+                # Check if mesh in current process model part is initialised with elements
                 if pmp.mesh is not None and pmp.mesh.elements is not None:
                     # renew all condition element ids
                     new_cond_dict: Dict[int, Element] = {}
