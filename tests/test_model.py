@@ -104,7 +104,7 @@ class TestModel:
         Sets expected geometries for 2 attached 2D squares.
 
         Returns:
-            - Tuple[:class:`stem.geometry.Geometry`,:class:`stem.geometry.Geometry`]: \
+            - Tuple[:class:`stem.geometry.Geometry`,:class:`stem.geometry.Geometry`, :class:`stem.geometry.Geometry` ]:\
                 geometries of 2 attached 2D squares
 
         """
@@ -142,7 +142,28 @@ class TestModel:
 
         geometry_2.volumes = {}
 
-        return geometry_1, geometry_2
+        full_geometry = Geometry()
+        full_geometry.points = {1: Point.create([0, 0, 0], 1),
+                                2: Point.create([1, 0, 0], 2),
+                                3: Point.create([1, 1, 0], 3),
+                                4: Point.create([0, 1, 0], 4),
+                                5: Point.create([1, 2, 0], 5),
+                                6: Point.create([0, 2, 0], 6)}
+
+        full_geometry.lines = {1: Line.create([1, 2], 1),
+                               2: Line.create([2, 3], 2),
+                               3: Line.create([3, 4], 3),
+                               4: Line.create([4, 1], 4),
+                               5: Line.create([5, 6], 5),
+                               6: Line.create([6, 4], 6),
+                               7: Line.create([3, 5], 7)}
+
+        full_geometry.surfaces = {1: Surface.create([1, 2, 3, 4], 1),
+                                  2: Surface.create([5, 6, -3, 7], 2)}
+
+        full_geometry.volumes = {}
+
+        return geometry_1, geometry_2, full_geometry
 
     @pytest.fixture
     def expected_geometry_two_layers_2D_after_sync(self):
@@ -624,15 +645,15 @@ class TestModel:
         # check if points are added correctly
         TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
-    def test_add_multiple_soil_layers_2D(self, expected_geometry_two_layers_2D: Tuple[Geometry, Geometry],
+    def test_add_multiple_soil_layers_2D(self, expected_geometry_two_layers_2D: Tuple[Geometry, Geometry, Geometry],
                                          create_default_2d_soil_material: SoilMaterial):
         """
         Test if multiple soil layers are added correctly to the model in a 2D space. Multiple soil layers are generated
         and multiple soil materials are created and added to the model.
 
         Args:
-            - expected_geometry_two_layers_2D (Tuple[:class:`stem.geometry.Geometry`, :class:`stem.geometry.Geometry`]): \
-                expected geometry of the model
+            - expected_geometry_two_layers_2D (Tuple[:class:`stem.geometry.Geometry`, :class:`stem.geometry.Geometry`, \
+              :class:`stem.geometry.Geometry`]): expected geometry of the model
             - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
 
         """
@@ -720,14 +741,15 @@ class TestModel:
 
             TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
-    def test_add_all_layers_from_geo_file_2D(self, expected_geometry_two_layers_2D: Tuple[Geometry, Geometry]):
+    def test_add_all_layers_from_geo_file_2D(self,
+                                             expected_geometry_two_layers_2D: Tuple[Geometry, Geometry, Geometry]):
         """
         Tests if all layers are added correctly to the model in a 2D space. A geo file is read and all layers are
         added to the model.
 
         Args:
-            - expected_geometry_two_layers_2D (Tuple[:class:`stem.geometry.Geometry`, :class:`stem.geometry.Geometry`]): \
-                expected geometry of the model
+            - expected_geometry_two_layers_2D (Tuple[:class:`stem.geometry.Geometry`, :class:`stem.geometry.Geometry`, \
+                :class:`stem.geometry.Geometry`]): expected geometry of the model
 
         """
 
@@ -789,8 +811,9 @@ class TestModel:
 
             TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
-    def test_synchronise_geometry_2D(self, expected_geometry_two_layers_2D_after_sync: Tuple[Geometry, Geometry],
-                                   create_default_2d_soil_material: SoilMaterial):
+    def test_synchronise_geometry_2D(self,
+                                     expected_geometry_two_layers_2D_after_sync: Tuple[Geometry, Geometry, Geometry],
+                                     create_default_2d_soil_material: SoilMaterial):
         """
         Test if the geometry is synchronised correctly in 2D after adding a new layer to the model. Where the new layer
         overlaps with the existing layer, the existing layer is cut and the overlapping part is removed.
@@ -1794,6 +1817,51 @@ class TestModel:
         # remove file
         Path(r"tests/test_geometry.html").unlink()
 
-    @pytest.mark.skip("Not implemented yet")
-    def test_post_setup(self):
-        pass
+    def test_post_setup_with_gravity(self, expected_geometry_two_layers_2D: Tuple[Geometry, Geometry, Geometry],
+                                     create_default_2d_soil_material: SoilMaterial):
+        """
+        Tests if gravity loading is added correctly when using post setup. Gravity load should be present on all nodes
+        of the model.
+
+        Args:
+            - expected_geometry_single_layer_2D (Tuple[:class:`stem.geometry.Geometry`, \
+              :class:`stem.geometry.Geometry`, :class:`stem.geometry.Geometry`]): expected geometry of the model
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+
+        """
+
+        ndim = 2
+
+        layer1_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+        layer2_coordinates = [(1, 1, 0), (0, 1, 0), (0, 2, 0), (1, 2, 0)]
+
+        # define soil materials
+        soil_material1 = create_default_2d_soil_material
+        soil_material1.name = "soil1"
+
+        soil_material2 = create_default_2d_soil_material
+        soil_material2.name = "soil2"
+
+        # create model
+        model = Model(ndim)
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
+        model.add_soil_layer_by_coordinates(layer2_coordinates, soil_material2, "layer2")
+
+        # set up gravity loading
+        project_parameters = TestUtils.create_default_solver_settings()
+        model.project_parameters = project_parameters
+        model.project_parameters.settings.stress_initialisation_type = StressInitialisationType.GRAVITY_LOADING
+
+        # add gravity through post setup
+        model.post_setup()
+
+        gravity_model_part = model.process_model_parts[0]
+
+        # # assert if the gravity model part is the same as the expected gravity model part
+        expected_gravity_geometry = expected_geometry_two_layers_2D[-1]
+
+        TestUtils.assert_almost_equal_geometries(expected_gravity_geometry, gravity_model_part.geometry)
+        npt.assert_allclose([0, -9.81, 0], gravity_model_part.parameters.value)
+        npt.assert_allclose([True, True, True], gravity_model_part.parameters.active)
