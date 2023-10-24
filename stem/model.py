@@ -133,7 +133,7 @@ class Model:
             if self.extrusion_length is None:
                 raise ValueError("Extrusion length must be specified for 3D models")
 
-            extrusion_length = [0, 0, 0]
+            extrusion_length: List[float] = [0, 0, 0]
             extrusion_length[OUT_OF_PLANE_AXIS_2D] = self.extrusion_length
             gmsh_input[name]["extrusion_length"] = extrusion_length
 
