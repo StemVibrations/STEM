@@ -74,18 +74,18 @@ End Elements
 
 
 Begin Conditions UPwFaceLoadCondition3D3N
-  5  1  5 14 6
-  6  1  8 14 5
-  7  1  6 14 7
-  8  1  7 14 8
+  1  1  5 14 6
+  2  1  8 14 5
+  3  1  6 14 7
+  4  1  7 14 8
 End Conditions
 
 
 Begin Conditions UPwFaceLoadCondition3D3N
-  1  2  2 9 1
-  2  2  1 9 4
-  3  2  3 9 2
-  4  2  4 9 3
+  5  2  2 9 1
+  6  2  1 9 4
+  7  2  3 9 2
+  8  2  4 9 3
 End Conditions
 
 
@@ -149,10 +149,10 @@ Begin SubModelPart load_top
   14
   End SubModelPartNodes
   Begin SubModelPartConditions
-  5
-  6
-  7
-  8
+  1
+  2
+  3
+  4
   End SubModelPartConditions
 End SubModelPart
 
@@ -169,10 +169,10 @@ Begin SubModelPart load_bottom
   9
   End SubModelPartNodes
   Begin SubModelPartConditions
-  1
-  2
-  3
-  4
+  5
+  6
+  7
+  8
   End SubModelPartConditions
 End SubModelPart
 
