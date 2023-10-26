@@ -1,6 +1,7 @@
 import pickle
 from typing import Tuple
 import re
+from pathlib import Path
 
 import numpy.testing as npt
 import pytest
@@ -1786,6 +1787,35 @@ class TestModel:
         # check if the node ids of the process model part are in the correct order, i.e. the node order should be
         # flipped, such that the normal is inwards
         assert process_model_part.mesh.elements[1].node_ids == [3, 1, 2]
+
+    def test_show_geometry_file(self, create_default_3d_soil_material):
+        """
+        Test if the geometry html file is generated. A model is created with a soil layer. The geometry is plotted to a
+         html file and the file is checked if it is created.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+        # define soil material
+        soil_material = create_default_3d_soil_material
+
+        # create model
+        model = Model(3)
+        model.extrusion_length = [0, 0, 1]
+
+        # add soil layer
+        layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+        model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
+        model.synchronise_geometry()
+
+        model.show_geometry(file_name=r"tests/test_geometry.html", auto_open=False)
+
+        # check if the file is created with pathlib
+        assert Path(r"tests/test_geometry.html").exists()
+
+        # remove file
+        Path(r"tests/test_geometry.html").unlink()
 
     def test_post_setup_with_gravity(self, expected_geometry_two_layers_2D: Tuple[Geometry, Geometry, Geometry],
                                      create_default_2d_soil_material: SoilMaterial):

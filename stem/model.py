@@ -633,7 +633,7 @@ class Model:
         self.__validate_model_part_names()
 
     def show_geometry(self, show_volume_ids: bool = False, show_surface_ids: bool = False, show_line_ids: bool = False,
-                      show_point_ids: bool = False):
+                      show_point_ids: bool = False, file_name: str = "tmp_geometry_file.html", auto_open: bool = True):
         """
         Show the 2D or 3D geometry in a plot.
 
@@ -642,6 +642,8 @@ class Model:
             - show_surface_ids (bool): Show the surface ids in the plot. (default False)
             - show_line_ids (bool): Show the line ids in the plot. (default False)
             - show_point_ids (bool): Show the point ids in the plot. (default False)
+            - file_name (str): The name of the html file in which the plot is saved. (default "tmp_geometry_file.html")
+            - auto_open (bool): Open the html file automatically. (default True)
 
         Raises:
             - ValueError: If the geometry is not set.
@@ -652,7 +654,8 @@ class Model:
 
         fig = PlotUtils.create_geometry_figure(self.ndim, self.geometry, show_volume_ids, show_surface_ids, show_line_ids,
                                                show_point_ids)
-        fig.show()
+
+        fig.write_html(file_name, auto_open=auto_open)
 
     def __setup_stress_initialisation(self):
         """
