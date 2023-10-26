@@ -85,23 +85,73 @@ TENSOR_OUTPUTS = [
 #     list(GaussPointOutput.__members__.keys())
 
 
-def detect_vector_in_tensor_outputs(requested_outputs: Sequence[GaussPointOutput]):
+def validate_nodal_point_output(nodal_results: Sequence[Union[NodalOutput, str]]):
+    """Validates that the specified string requested for nodal outputs are compatible with the ones defined in the
+    corresponding enumeration.
+
+    Args:
+        - nodal_results (Sequence[Union[:class:`NodalOutput`, str]]): the requested nodal outputs.
+
+    Raises:
+        - ValueError: when incorrect outputs are found
+    """
+    __valid_nodal_outputs = list(GaussPointOutput.__members__.keys())
+    __invalid_outputs: List[str] = []
+    for nr in nodal_results:
+        if isinstance(nr, str) and nr not in __valid_nodal_outputs:
+            __invalid_outputs.append(nr)
+
+    if len(__invalid_outputs) > 0:
+        _invalid_strings = '\n'.join(__invalid_outputs)
+        raise ValueError(f"Incorrect requested output for Nodal outputs:\n"
+                         f"{_invalid_strings}. Check the available "
+                         f"gauss point outputs inputs in the Enum NodalOutput.")
+
+def validate_gauss_point_output(gauss_point_results: Sequence[Union[GaussPointOutput, str]]):
+    """Validates that the specified string requested for gauss point outputs are compatible with the ones defined in
+    the corresponding enumeration.
+
+    Args:
+        - gauss_point_results (Sequence[Union[:class:`GaussPointOutput`, str]]): the requested gauss point outputs.
+
+    Raises:
+        - ValueError: when incorrect outputs are found
+    """
+    __valid_gauss_point_outputs = list(GaussPointOutput.__members__.keys())
+    __invalid_outputs: List[str] = []
+    for gr in gauss_point_results:
+        if isinstance(gr, str) and gr not in __valid_gauss_point_outputs:
+            __invalid_outputs.append(gr)
+
+    if len(__invalid_outputs) > 0:
+        _invalid_strings = '\n'.join(__invalid_outputs)
+        raise ValueError(f"Incorrect requested output for Gauss point outputs:\n"
+                         f"{_invalid_strings}. Check the available "
+                         f"gauss point outputs inputs in the Enum GaussPointOutput.")
+
+
+def detect_vector_in_tensor_outputs(requested_outputs: Sequence[Union[GaussPointOutput, str]]):
     """
     Detects whether gauss point outputs are requested and warns the user
 
     Args:
-        - requested_outputs (List[:class:`GaussPointOutput`]): list of requested outputs (gauss point)
+        - requested_outputs (Sequence[Union[:class:`GaussPointOutput`, str]]): list of requested outputs (gauss point)
     """
     if len(requested_outputs) > 0:
         detected_tensor_outputs = []
         for requested_output in requested_outputs:
             for tensor_output in TENSOR_OUTPUTS:
+
+                if isinstance(requested_output, str):
+                    requested_output = GaussPointOutput[requested_output]
+
                 if (
                     tensor_output in requested_output.name
                     and "_VECTOR" in requested_output.name
                 ):
                     detected_tensor_outputs.append(tensor_output)
                     break
+
         if len(detected_tensor_outputs):
             _fmt_list = "".join([f" - {outpt} \n" for outpt in detected_tensor_outputs])
             _msg = (
@@ -111,7 +161,7 @@ def detect_vector_in_tensor_outputs(requested_outputs: Sequence[GaussPointOutput
             print(_msg)
 
 
-def detect_tensor_outputs(requested_outputs: Sequence[GaussPointOutput]):
+def detect_tensor_outputs(requested_outputs: Sequence[Union[GaussPointOutput, str]]):
     """
     Detects whether gauss point outputs are requested and warns the user if some cause problems
     for the considered output. It also checks if input types are correct
@@ -123,6 +173,9 @@ def detect_tensor_outputs(requested_outputs: Sequence[GaussPointOutput]):
         detected_tensor_outputs = []
         for requested_output in requested_outputs:
             for tensor_output in TENSOR_OUTPUTS:
+
+                if isinstance(requested_output, str):
+                    requested_output = GaussPointOutput[requested_output]
 
                 if tensor_output in requested_output.name:
                     detected_tensor_outputs.append(tensor_output)
@@ -178,40 +231,12 @@ class GiDOutputParameters(OutputParametersABC):
 
     def __post_init__(self):
         """
-        Converts string specified outputs to enumerations as well as validates the asked outputs for both \
-        nodal and gauss point (element) outputs.
-        Validates the gauss point results requested for GiD output.
+        Validates the asked outputs for both nodal and gauss point (element) outputs and \
+        validates the gauss point results requested for GiD output.
         Prints warnings if vector format is requested for tensor output.
         """
-        nodal_results_adj : List[NodalOutput] = []
-        for ix, nr in enumerate(self.nodal_results):
-            if isinstance(nr, str):
-                try:
-                    nodal_results_adj.append(NodalOutput[nr])
-                except KeyError:
-                    raise ValueError(f"Incorrect requested output for Nodal output `{nr}`. Check the available nodal "
-                                     f"inputs in the Enum NodalOutput.")
-            elif isinstance(nr, NodalOutput):
-                nodal_results_adj.append(nr)
-            else:
-                raise ValueError
-        self.nodal_results = nodal_results_adj
-
-        gauss_results_adj: List[GaussPointOutput] = []
-        for ix, gr in enumerate(self.gauss_point_results):
-            if isinstance(gr, str):
-                try:
-                    gauss_results_adj.append(GaussPointOutput[gr])
-                except KeyError:
-                    raise ValueError(f"Incorrect requested output for Gauss point output `{gr}`. Check the available "
-                                     f"gauss point outputs inputs in the Enum GaussPointOutput.")
-            elif isinstance(gr, GaussPointOutput):
-                gauss_results_adj.append(gr)
-            else:
-                raise ValueError
-
-        self.gauss_point_results = gauss_results_adj
-
+        validate_nodal_point_output(self.nodal_results)
+        validate_gauss_point_output(self.gauss_point_results)
         detect_vector_in_tensor_outputs(requested_outputs=self.gauss_point_results)
 
 
@@ -246,40 +271,12 @@ class VtkOutputParameters(OutputParametersABC):
 
     def __post_init__(self):
         """
-        Converts string specified outputs to enumerations as well as validates the asked outputs for both \
-        nodal and gauss point (element) outputs.
-        Validates the gauss point results requested for VTK output.
+        Validates the asked outputs for both nodal and gauss point (element) outputs and \
+        validates the gauss point results requested for VTK output.
         Prints warnings if tensor are asked in output.
         """
-        nodal_results_adj: List[NodalOutput] = []
-        for ix, nr in enumerate(self.nodal_results):
-            if isinstance(nr, str):
-                try:
-                    nodal_results_adj.append(NodalOutput[nr])
-                except KeyError:
-                    raise ValueError(f"Incorrect requested output for Nodal output `{nr}`. Check the available nodal "
-                                     f"inputs in the Enum NodalOutput.")
-            elif isinstance(nr, NodalOutput):
-                nodal_results_adj.append(nr)
-            else:
-                raise ValueError
-        self.nodal_results = nodal_results_adj
-
-        gauss_results_adj: List[GaussPointOutput] = []
-        for ix, gr in enumerate(self.gauss_point_results):
-            if isinstance(gr, str):
-                try:
-                    gauss_results_adj.append(GaussPointOutput[gr])
-                except KeyError:
-                    raise ValueError(f"Incorrect requested output for Gauss point output `{gr}`. Check the available "
-                                     f"gauss point outputs inputs in the Enum GaussPointOutput.")
-            elif isinstance(gr, GaussPointOutput):
-                gauss_results_adj.append(gr)
-            else:
-                raise ValueError
-
-        self.gauss_point_results = gauss_results_adj
-
+        validate_nodal_point_output(self.nodal_results)
+        validate_gauss_point_output(self.gauss_point_results)
         detect_tensor_outputs(requested_outputs=self.gauss_point_results)
 
 
@@ -307,39 +304,12 @@ class JsonOutputParameters(OutputParametersABC):
 
     def __post_init__(self):
         """
-        Converts string specified outputs to enumerations as well as validates the asked outputs for both \
-        nodal and gauss point (element) outputs.
-        Validates the gauss point results requested for JSON output.
+        Validates the asked outputs for both nodal and gauss point (element) outputs and \
+        the gauss point results requested for JSON output.
         Prints warnings if tensor are asked in output.
         """
-        nodal_results_adj: List[NodalOutput] = []
-        for ix, nr in enumerate(self.nodal_results):
-            if isinstance(nr, str):
-                try:
-                    nodal_results_adj.append(NodalOutput[nr])
-                except KeyError:
-                    raise ValueError(f"Incorrect requested output for Nodal output `{nr}`. Check the available nodal "
-                                     f"inputs in the Enum NodalOutput.")
-            elif isinstance(nr, NodalOutput):
-                nodal_results_adj.append(nr)
-            else:
-                raise ValueError
-        self.nodal_results = nodal_results_adj
-
-        gauss_results_adj: List[GaussPointOutput] = []
-        for ix, gr in enumerate(self.gauss_point_results):
-            if isinstance(gr, str):
-                try:
-                    gauss_results_adj.append(GaussPointOutput[gr])
-                except KeyError:
-                    raise ValueError(f"Incorrect requested output for Gauss point output `{gr}`. Check the available "
-                                     f"gauss point outputs inputs in the Enum GaussPointOutput.")
-            elif isinstance(gr, GaussPointOutput):
-                gauss_results_adj.append(gr)
-            else:
-                raise ValueError
-
-        self.gauss_point_results = gauss_results_adj
+        validate_nodal_point_output(self.nodal_results)
+        validate_gauss_point_output(self.gauss_point_results)
         detect_tensor_outputs(requested_outputs=self.gauss_point_results)
 
 
