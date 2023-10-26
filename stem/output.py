@@ -69,6 +69,9 @@ class GaussPointOutput(Enum):
     # umat
     UMAT_PARAMETERS = auto()
 
+    FORCE = auto()
+    MOMENT = auto()
+
 
 TENSOR_OUTPUTS = [
     "GREEN_LAGRANGE_STRAIN",
@@ -141,7 +144,6 @@ def detect_tensor_outputs(requested_outputs: Sequence[Union[GaussPointOutput, st
                 f"For TENSOR the output is ignored.\n"
             )
             print(_msg)
-
 
 
 @dataclass

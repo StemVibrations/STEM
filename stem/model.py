@@ -19,7 +19,7 @@ from stem.load import *
 from stem.solver import Problem, StressInitialisationType
 from stem.utils import Utils
 from stem.plot_utils import PlotUtils
-from stem.globals import ELEMENT_DATA
+from stem.globals import ELEMENT_DATA, VERTICAL_AXIS, GRAVITY_VALUE,  OUT_OF_PLANE_AXIS_2D
 
 
 NUMBER_TYPES = (int, float, np.int64, np.float64)
@@ -36,7 +36,7 @@ class Model:
         - body_model_parts (List[:class:`stem.model_part.BodyModelPart`]): A list containing the body model parts.
         - process_model_parts (List[:class:`stem.model_part.ModelPart`]): A list containing the process model parts.
         - outputs (List[:class:`stem.output.Output`]): A list containing the outputs of the model.
-        - extrusion_length (Optional[Sequence[float]]): The extrusion length in x, y and z direction
+        - extrusion_length (Optional[float]): The extrusion length in the out of plane direction.
 
     """
     def __init__(self, ndim: int):
@@ -55,7 +55,7 @@ class Model:
         self.process_model_parts: List[ModelPart] = []
         self.outputs: List[Output] = []
 
-        self.extrusion_length: Optional[Sequence[float]] = None
+        self.extrusion_length: Optional[float] = None
 
     def __del__(self):
         """
@@ -116,7 +116,7 @@ class Model:
                                       material_parameters: Union[SoilMaterial, StructuralMaterial], name: str):
         """
         Adds a soil layer to the model by giving a sequence of 2D coordinates. In 3D the 2D geometry is extruded in
-        the direction of the extrusion_length
+        the out of plane direction.
 
         Args:
             - coordinates (Sequence[Sequence[float]]): The plane coordinates of the soil layer.
@@ -138,7 +138,9 @@ class Model:
             if self.extrusion_length is None:
                 raise ValueError("Extrusion length must be specified for 3D models")
 
-            gmsh_input[name]["extrusion_length"] = self.extrusion_length
+            extrusion_length: List[float] = [0, 0, 0]
+            extrusion_length[OUT_OF_PLANE_AXIS_2D] = self.extrusion_length
+            gmsh_input[name]["extrusion_length"] = extrusion_length
 
         # todo check if this function in gmsh io can be improved
         self.gmsh_io.generate_geometry(gmsh_input, "")
@@ -891,19 +893,15 @@ class Model:
         centroids = np.squeeze(np.mean(coordinates, axis=1))
         return centroids
 
-    def __add_gravity_load(self, gravity_acceleration: float = -9.81, vertical_axis: int = 1):
+    def __add_gravity_load(self):
         """
         Add a gravity load to the complete model.
-
-        Args:
-            - gravity_acceleration  (float): The gravity acceleration [m/s^2]. (default -9.81)
-            - vertical_axis (int): The vertical axis of the model. x=>0, y=>1, z=>2. (default y, 1)
 
         """
 
         # set gravity load at vertical axis
         gravity_load_values: List[float] = [0, 0, 0]
-        gravity_load_values[vertical_axis] = gravity_acceleration
+        gravity_load_values[VERTICAL_AXIS] = GRAVITY_VALUE
         gravity_load = GravityLoad(value=gravity_load_values, active=[True, True, True])
 
         # get all body model part names
@@ -973,7 +971,7 @@ class Model:
         self.__validate_model_part_names()
 
     def show_geometry(self, show_volume_ids: bool = False, show_surface_ids: bool = False, show_line_ids: bool = False,
-                      show_point_ids: bool = False):
+                      show_point_ids: bool = False, file_name: str = "tmp_geometry_file.html", auto_open: bool = True):
         """
         Show the 2D or 3D geometry in a plot.
 
@@ -982,6 +980,8 @@ class Model:
             - show_surface_ids (bool): Show the surface ids in the plot. (default False)
             - show_line_ids (bool): Show the line ids in the plot. (default False)
             - show_point_ids (bool): Show the point ids in the plot. (default False)
+            - file_name (str): The name of the html file in which the plot is saved. (default "tmp_geometry_file.html")
+            - auto_open (bool): Open the html file automatically. (default True)
 
         Raises:
             - ValueError: If the geometry is not set.
@@ -992,7 +992,8 @@ class Model:
 
         fig = PlotUtils.create_geometry_figure(self.ndim, self.geometry, show_volume_ids, show_surface_ids, show_line_ids,
                                                show_point_ids)
-        fig.show()
+
+        fig.write_html(file_name, auto_open=auto_open)
 
     def show_mesh(self, **kwargs):
         """
@@ -1038,7 +1039,6 @@ class Model:
         """
 
         self.synchronise_geometry()
-        self.generate_mesh()
         self.validate()
 
         self.__setup_stress_initialisation()
@@ -1048,5 +1048,5 @@ class Model:
 
 
     def write_kratos_files(self):
-
+        # TODO
         pass

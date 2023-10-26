@@ -86,7 +86,7 @@ class TestPlotUtils:
 
         # create model
         model = Model(ndim)
-        model.extrusion_length = [0, 0, 1]
+        model.extrusion_length = 1
 
         # add soil layers
         model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")

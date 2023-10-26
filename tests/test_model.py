@@ -2,6 +2,7 @@ import pickle
 from typing import Tuple
 import re
 import sys
+from pathlib import Path
 
 import numpy.testing as npt
 import pytest
@@ -106,7 +107,7 @@ class TestModel:
         Sets expected geometries for 2 attached 2D squares.
 
         Returns:
-            - Tuple[:class:`stem.geometry.Geometry`,:class:`stem.geometry.Geometry`]: \
+            - Tuple[:class:`stem.geometry.Geometry`,:class:`stem.geometry.Geometry`, :class:`stem.geometry.Geometry` ]:\
                 geometries of 2 attached 2D squares
 
         """
@@ -144,7 +145,28 @@ class TestModel:
 
         geometry_2.volumes = {}
 
-        return geometry_1, geometry_2
+        full_geometry = Geometry()
+        full_geometry.points = {1: Point.create([0, 0, 0], 1),
+                                2: Point.create([1, 0, 0], 2),
+                                3: Point.create([1, 1, 0], 3),
+                                4: Point.create([0, 1, 0], 4),
+                                5: Point.create([1, 2, 0], 5),
+                                6: Point.create([0, 2, 0], 6)}
+
+        full_geometry.lines = {1: Line.create([1, 2], 1),
+                               2: Line.create([2, 3], 2),
+                               3: Line.create([3, 4], 3),
+                               4: Line.create([4, 1], 4),
+                               5: Line.create([5, 6], 5),
+                               6: Line.create([6, 4], 6),
+                               7: Line.create([3, 5], 7)}
+
+        full_geometry.surfaces = {1: Surface.create([1, 2, 3, 4], 1),
+                                  2: Surface.create([5, 6, -3, 7], 2)}
+
+        full_geometry.volumes = {}
+
+        return geometry_1, geometry_2, full_geometry
 
     @pytest.fixture
     def expected_geometry_two_layers_2D_after_sync(self):
@@ -633,7 +655,7 @@ class TestModel:
 
         # create model
         model = Model(ndim)
-        model.extrusion_length = [0, 0, 1]
+        model.extrusion_length = 1
 
         model.project_parameters = TestUtils.create_default_solver_settings()
 
@@ -652,15 +674,15 @@ class TestModel:
         # check if points are added correctly
         TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
-    def test_add_multiple_soil_layers_2D(self, expected_geometry_two_layers_2D: Tuple[Geometry, Geometry],
+    def test_add_multiple_soil_layers_2D(self, expected_geometry_two_layers_2D: Tuple[Geometry, Geometry, Geometry],
                                          create_default_2d_soil_material: SoilMaterial):
         """
         Test if multiple soil layers are added correctly to the model in a 2D space. Multiple soil layers are generated
         and multiple soil materials are created and added to the model.
 
         Args:
-            - expected_geometry_two_layers_2D (Tuple[:class:`stem.geometry.Geometry`, :class:`stem.geometry.Geometry`]): \
-                expected geometry of the model
+            - expected_geometry_two_layers_2D (Tuple[:class:`stem.geometry.Geometry`, :class:`stem.geometry.Geometry`, \
+              :class:`stem.geometry.Geometry`]): expected geometry of the model
             - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
 
         """
@@ -726,7 +748,7 @@ class TestModel:
 
         # create model
         model = Model(ndim)
-        model.extrusion_length = [0, 0, 1]
+        model.extrusion_length = 1
 
         # add soil layers
         model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
@@ -748,14 +770,15 @@ class TestModel:
 
             TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
-    def test_add_all_layers_from_geo_file_2D(self, expected_geometry_two_layers_2D: Tuple[Geometry, Geometry]):
+    def test_add_all_layers_from_geo_file_2D(self,
+                                             expected_geometry_two_layers_2D: Tuple[Geometry, Geometry, Geometry]):
         """
         Tests if all layers are added correctly to the model in a 2D space. A geo file is read and all layers are
         added to the model.
 
         Args:
-            - expected_geometry_two_layers_2D (Tuple[:class:`stem.geometry.Geometry`, :class:`stem.geometry.Geometry`]): \
-                expected geometry of the model
+            - expected_geometry_two_layers_2D (Tuple[:class:`stem.geometry.Geometry`, :class:`stem.geometry.Geometry`, \
+                :class:`stem.geometry.Geometry`]): expected geometry of the model
 
         """
 
@@ -817,8 +840,9 @@ class TestModel:
 
             TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
-    def test_synchronise_geometry_2D(self, expected_geometry_two_layers_2D_after_sync: Tuple[Geometry, Geometry],
-                                   create_default_2d_soil_material: SoilMaterial):
+    def test_synchronise_geometry_2D(self,
+                                     expected_geometry_two_layers_2D_after_sync: Tuple[Geometry, Geometry, Geometry],
+                                     create_default_2d_soil_material: SoilMaterial):
         """
         Test if the geometry is synchronised correctly in 2D after adding a new layer to the model. Where the new layer
         overlaps with the existing layer, the existing layer is cut and the overlapping part is removed.
@@ -886,7 +910,7 @@ class TestModel:
 
         # create model
         model = Model(ndim)
-        model.extrusion_length = [0, 0, 1]
+        model.extrusion_length = 1
 
         # add soil layers
         model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
@@ -1306,7 +1330,7 @@ class TestModel:
 
         """
         model = Model(3)
-        model.extrusion_length = [0, 0, 1]
+        model.extrusion_length = 1
 
         # add soil material
         soil_material = create_default_3d_soil_material
@@ -1648,7 +1672,7 @@ class TestModel:
 
         # create a 3D model
         model = Model(3)
-        model.extrusion_length = [0, 0, 1]
+        model.extrusion_length = 1
 
         # create multiple boundary condition parameters
         no_rotation_parameters = RotationConstraint(active=[True, True, True], is_fixed=[True, True, True],
@@ -1836,7 +1860,7 @@ class TestModel:
         model.synchronise_geometry()
 
         # add gravity load
-        model._Model__add_gravity_load(-12,0)
+        model._Model__add_gravity_load()
 
         assert len(model.process_model_parts) == 1
 
@@ -1849,7 +1873,7 @@ class TestModel:
         assert len(generated_geometry.surfaces) == len(model.geometry.surfaces) == 2
 
         assert model.process_model_parts[0].name == "gravity_load_2d"
-        npt.assert_allclose(model.process_model_parts[0].parameters.value, [-12, 0, 0])
+        npt.assert_allclose(model.process_model_parts[0].parameters.value, [0, -9.81, 0])
         npt.assert_allclose(model.process_model_parts[0].parameters.active, [True, True, True])
 
     def test_add_gravity_load_3d(self, create_default_3d_soil_material):
@@ -1864,7 +1888,7 @@ class TestModel:
 
         # create model
         model = Model(3)
-        model.extrusion_length = [0, 0, 1]
+        model.extrusion_length = 1
 
         # add a 2d layer
         model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0)], create_default_3d_soil_material, "soil1")
@@ -1872,7 +1896,7 @@ class TestModel:
         model.synchronise_geometry()
 
         # add gravity load
-        model._Model__add_gravity_load(vertical_axis=2, gravity_acceleration=-10)
+        model._Model__add_gravity_load()
 
         assert len(model.process_model_parts) == 1
 
@@ -1886,7 +1910,7 @@ class TestModel:
         assert len(generated_geometry.volumes) == len(model.geometry.volumes) == 1
 
         assert model.process_model_parts[0].name == "gravity_load_3d"
-        npt.assert_allclose(model.process_model_parts[0].parameters.value, [0, 0, -10])
+        npt.assert_allclose(model.process_model_parts[0].parameters.value, [0, -9.81, 0])
         npt.assert_allclose(model.process_model_parts[0].parameters.active, [True, True, True])
 
     def test_setup_stress_initialisation(self, create_default_2d_soil_material: SoilMaterial):
@@ -2038,6 +2062,80 @@ class TestModel:
         # flipped, such that the normal is inwards
         assert process_model_part.mesh.elements[1].node_ids == [3, 1, 2]
 
-    @pytest.mark.skip("Not implemented yet")
-    def test_post_setup(self):
-        pass
+    def test_show_geometry_file(self, create_default_3d_soil_material):
+        """
+        Test if the geometry html file is generated. A model is created with a soil layer. The geometry is plotted to a
+         html file and the file is checked if it is created.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+        # define soil material
+        soil_material = create_default_3d_soil_material
+
+        # create model
+        model = Model(3)
+        model.extrusion_length = [0, 0, 1]
+
+        # add soil layer
+        layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+        model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
+        model.synchronise_geometry()
+
+        model.show_geometry(file_name=r"tests/test_geometry.html", auto_open=False)
+
+        # check if the file is created with pathlib
+        assert Path(r"tests/test_geometry.html").exists()
+
+        # remove file
+        Path(r"tests/test_geometry.html").unlink()
+
+    def test_post_setup_with_gravity(self, expected_geometry_two_layers_2D: Tuple[Geometry, Geometry, Geometry],
+                                     create_default_2d_soil_material: SoilMaterial):
+        """
+        Tests if gravity loading is added correctly when using post setup. Gravity load should be present on all nodes
+        of the model.
+
+        Args:
+            - expected_geometry_single_layer_2D (Tuple[:class:`stem.geometry.Geometry`, \
+              :class:`stem.geometry.Geometry`, :class:`stem.geometry.Geometry`]): expected geometry of the model
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+
+        """
+
+        ndim = 2
+
+        layer1_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+        layer2_coordinates = [(1, 1, 0), (0, 1, 0), (0, 2, 0), (1, 2, 0)]
+
+        # define soil materials
+        soil_material1 = create_default_2d_soil_material
+        soil_material1.name = "soil1"
+
+        soil_material2 = create_default_2d_soil_material
+        soil_material2.name = "soil2"
+
+        # create model
+        model = Model(ndim)
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
+        model.add_soil_layer_by_coordinates(layer2_coordinates, soil_material2, "layer2")
+
+        # set up gravity loading
+        project_parameters = TestUtils.create_default_solver_settings()
+        model.project_parameters = project_parameters
+        model.project_parameters.settings.stress_initialisation_type = StressInitialisationType.GRAVITY_LOADING
+
+        # add gravity through post setup
+        model.post_setup()
+
+        gravity_model_part = model.process_model_parts[0]
+
+        # # assert if the gravity model part is the same as the expected gravity model part
+        expected_gravity_geometry = expected_geometry_two_layers_2D[-1]
+
+        TestUtils.assert_almost_equal_geometries(expected_gravity_geometry, gravity_model_part.geometry)
+        npt.assert_allclose([0, -9.81, 0], gravity_model_part.parameters.value)
+        npt.assert_allclose([True, True, True], gravity_model_part.parameters.active)

@@ -189,12 +189,7 @@ End Conditions
 
 
 Begin Conditions LineLoadCondition2D2N
-  20  2  1 22
-  21  2  22 23
-  22  2  23 5
-  26  2  26 5
-  27  2  27 26
-  28  2  2 27
+  1  2  1 2
 End Conditions
 
 
