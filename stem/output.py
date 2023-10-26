@@ -95,7 +95,7 @@ def validate_nodal_point_output(nodal_results: Sequence[Union[NodalOutput, str]]
     Raises:
         - ValueError: when incorrect outputs are found
     """
-    __valid_nodal_outputs = list(GaussPointOutput.__members__.keys())
+    __valid_nodal_outputs = list(NodalOutput.__members__.keys())
     __invalid_outputs: List[str] = []
     for nr in nodal_results:
         if isinstance(nr, str) and nr not in __valid_nodal_outputs:
