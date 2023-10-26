@@ -46,7 +46,7 @@ material_soil_1 = SoilMaterial("soil_1", soil_formulation_1, constitutive_law_1,
 b, w, h = (100, 100, 50)
 
 soil1_coordinates = [(0.0, 0.0, 0.0), (b, 0.0, 0.0), (b, h, 0.0), (0.0, h, 0.0)]
-model.extrusion_length = [0, 0, w]
+model.extrusion_length = w
 
 model.add_soil_layer_by_coordinates(soil1_coordinates, material_soil_1, "soil_layer_1")
 model.synchronise_geometry()

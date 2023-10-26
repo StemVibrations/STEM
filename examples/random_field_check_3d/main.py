@@ -64,14 +64,14 @@ material_embankment = SoilMaterial("embankment", soil_formulation_3, constitutiv
 soil1_coordinates = [(0.0, 0.0, 0.0), (5.0, 0.0, 0.0), (5.0, 1.0, 0.0), (0.0, 1.0, 0.0)]
 soil2_coordinates = [(0.0, 1.0, 0.0), (5.0, 1.0, 0.0), (5.0, 2.0, 0.0), (0.0, 2.0, 0.0)]
 embankment_coordinates = [(0.0, 2.0, 0.0), (3.0, 2.0, 0.0), (1.5, 3.0, 0.0), (0.75, 3.0, 0.0), (0, 3.0, 0.0)]
-model.extrusion_length = [0, 0, 10]
+model.extrusion_length = 1
 
 model.add_soil_layer_by_coordinates(soil1_coordinates, material_soil_1, "soil_layer_1")
 model.add_soil_layer_by_coordinates(soil2_coordinates, material_soil_2, "soil_layer_2")
 model.add_soil_layer_by_coordinates(embankment_coordinates, material_embankment, "embankment_layer")
 model.synchronise_geometry()
 
-depth = model.extrusion_length[2]
+depth = model.extrusion_length
 load_coordinates = [(0.75, 3.0, 0.0), (0.75, 3.0, depth)]
 line_load = LineLoad(active=[False, True, False], value=[0, -1000, 0])
 model.add_load_by_coordinates(load_coordinates, line_load, "line_load")
