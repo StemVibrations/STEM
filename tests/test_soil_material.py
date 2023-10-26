@@ -56,4 +56,5 @@ class TestSoilMaterial:
         assert soil_material.get_property_in_soil_material("POISSON_RATIO") == 0.3
         assert soil_material.get_property_in_soil_material("POROSITY") == 0.3
 
-
+        with pytest.raises(ValueError):
+            soil_material.get_property_in_soil_material("YOUNGS_MODULUS")

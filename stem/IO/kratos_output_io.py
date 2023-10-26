@@ -7,7 +7,7 @@ from stem.output import (
     GiDOutputParameters,
     VtkOutputParameters,
     JsonOutputParameters,
-    OutputParametersABC,
+    OutputParametersABC, NodalOutput, GaussPointOutput,
 )
 
 
@@ -69,6 +69,14 @@ class KratosOutputsIO:
         if part_name is not None:
             model_part_name += f".{part_name}"
 
+        nodal_results = [
+            op.name if isinstance(op, NodalOutput) else op for op in output_parameters.nodal_results
+        ]
+
+        gauss_results = [
+            op.name if isinstance(op, GaussPointOutput) else op for op in output_parameters.gauss_point_results
+        ]
+
         parameters_dict = {
             "model_part_name": model_part_name,
             "output_name": output_path_gid,
@@ -83,12 +91,8 @@ class KratosOutputsIO:
                     "file_label": output_parameters.file_label,
                     "output_control_type": output_parameters.output_control_type,
                     "output_interval": output_parameters.output_interval,
-                    "nodal_results": [
-                        op.name for op in output_parameters.nodal_results
-                    ],
-                    "gauss_point_results": [
-                        op.name for op in output_parameters.gauss_point_results
-                    ],
+                    "nodal_results": nodal_results,
+                    "gauss_point_results": gauss_results,
                 },
                 "point_data_configuration": [],
             },
@@ -125,6 +129,14 @@ class KratosOutputsIO:
         if part_name is not None:
             model_part_name += f".{part_name}"
 
+        nodal_results = [
+            op.name if isinstance(op, NodalOutput) else op for op in output_parameters.nodal_results
+        ]
+
+        gauss_results = [
+            op.name if isinstance(op, GaussPointOutput) else op for op in output_parameters.gauss_point_results
+        ]
+
         parameters_dict = {
             "model_part_name": model_part_name,
             "output_path": output_path_vtk,
@@ -132,12 +144,8 @@ class KratosOutputsIO:
             "output_precision": output_parameters.output_precision,
             "output_control_type": output_parameters.output_control_type,
             "output_interval": output_parameters.output_interval,
-            "nodal_solution_step_data_variables": [
-                op.name for op in output_parameters.nodal_results
-            ],
-            "gauss_point_variables_in_elements": [
-                op.name for op in output_parameters.gauss_point_results
-            ],
+            "nodal_solution_step_data_variables": nodal_results,
+            "gauss_point_variables_in_elements": gauss_results,
         }
 
         # initialize load dictionary
@@ -184,6 +192,14 @@ class KratosOutputsIO:
         if part_name is not None:
             model_part_name += f".{part_name}"
 
+        nodal_results = [
+            op.name if isinstance(op, NodalOutput) else op for op in output_parameters.nodal_results
+        ]
+
+        gauss_results = [
+            op.name if isinstance(op, GaussPointOutput) else op for op in output_parameters.gauss_point_results
+        ]
+
         # initialize output dictionary
         output_dict: Dict[str, Any] = {
             "python_module": "json_output_process",
@@ -192,10 +208,8 @@ class KratosOutputsIO:
             "Parameters": {
                 "model_part_name": model_part_name,
                 "output_file_name": output_path_json,
-                "output_variables": [op.name for op in output_parameters.nodal_results],
-                "gauss_points_output_variables": [
-                    op.name for op in output_parameters.gauss_point_results
-                ],
+                "output_variables": nodal_results,
+                "gauss_points_output_variables": gauss_results,
                 "time_frequency": output_parameters.output_interval,
             },
         }
