@@ -500,10 +500,16 @@ class Model:
 
         # check that random field model is one of the implemented
         if model_name not in _available_model_names:
-            raise ValueError(f"Model name: `{model_name}` was provided but not understood or implemented yet."
+            raise ValueError(f"Model name: `{model_name}` was provided but not understood or implemented yet. "
                              f"Available models are: {_available_model_names}")
 
         variance = (cov * mean_value) ** 2
+
+        aux_key = [anisotropy, angle]
+        if self.ndim == 2:
+            for key in aux_key:
+                if len(key) == 1:
+                    key += key
 
         random_field_generator = RandomFields(n_dim=3, mean=mean_value, variance=variance,
                                               model_name=ModelName[model_name],

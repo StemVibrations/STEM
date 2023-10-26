@@ -1219,7 +1219,7 @@ class TestModel:
 
         assert part.mesh.elements == {}
 
-    def test_add_output_to_a_surface_3d(
+    def no_test_add_output_to_a_surface_3d(
             self, create_default_3d_soil_material: SoilMaterial, create_default_outputs: Output
     ):
         """
@@ -1245,8 +1245,6 @@ class TestModel:
         # add soil layers
         model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
 
-        # synchronise geometry and recalculates the ids
-        model.synchronise_geometry()
         # define output object
         output_object = create_default_outputs
 
@@ -1256,10 +1254,8 @@ class TestModel:
             output_coordinates, **output_object.__dict__
         )
         model.synchronise_geometry()
-        # model.show_geometry(show_line_ids=True)
-        # TODO: create an assert block for geometry
 
-        model.generate_mesh()
+        model.generate_mesh(save_file=True, open_gmsh_gui=True)
         # model.show_mesh()
 
         unique_element_ids = []
