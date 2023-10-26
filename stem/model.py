@@ -995,22 +995,6 @@ class Model:
 
         fig.write_html(file_name, auto_open=auto_open)
 
-    def show_mesh(self, **kwargs):
-        """
-        Show the mesh of the model in a matplotlib plot. only available for 2D models.
-        Raises:
-            - NotImplementedError: when is run for 3D models
-        """
-
-        fig = PlotUtils.show_mesh(
-            ndim=self.ndim,
-            body_model_parts=self.body_model_parts,
-            process_model_parts=self.process_model_parts,
-            **kwargs,
-        )
-
-        fig.show()
-
     def __setup_stress_initialisation(self):
         """
         Set up the stress initialisation. For K0 procedure and gravity loading, a gravity load is added to the model.

@@ -1,11 +1,86 @@
 import json
 
+import pytest
+
 from stem.IO.kratos_output_io import KratosOutputsIO
 from stem.output import *
 from tests.utils import TestUtils
 
 
 class TestKratosOutputsIO:
+
+
+    def test_check_validation_of_requested_output(self):
+        """
+        Test the creation of the output process dictionary for the
+        ProjectParameters.json file
+        """
+
+        # Nodal results
+        nodal_results1 = [NodalOutput.DISPLACEMENT, "DISPLACEMENT"]
+
+        nodal_results2 = ["DISPLLLACEMENT"]
+
+        # Gauss point results
+        gauss_point_results1 = [
+            GaussPointOutput.GREEN_LAGRANGE_STRAIN_TENSOR,
+            GaussPointOutput.YOUNG_MODULUS,
+            "YOUNG_MODULUS"
+        ]
+        gauss_point_results2 = [
+            "YOUNGS_MODULUS"
+        ]
+        # define output parameters
+        # 1. GiD
+        GiDOutputParameters(
+            file_format="binary",
+            output_interval=100,
+            nodal_results=nodal_results1,
+            gauss_point_results=gauss_point_results1,
+        )
+
+        with pytest.raises(ValueError):
+            gid_output_parameters2 = GiDOutputParameters(
+                file_format="ascii",
+                output_interval=100,
+                nodal_results=nodal_results2,
+                gauss_point_results=gauss_point_results2,
+            )
+
+        # 2. Vtk (Paraview)
+        VtkOutputParameters(
+            file_format="binary",
+            output_precision=8,
+            output_interval=100.0,
+            nodal_results=nodal_results1,
+            gauss_point_results=gauss_point_results1,
+        )
+
+        with pytest.raises(ValueError):
+            vtk_output_parameters2 = VtkOutputParameters(
+                file_format="ascii",
+                output_precision=8,
+                output_control_type="step",
+                output_interval=100.0,
+                nodal_results=nodal_results2,
+                gauss_point_results=gauss_point_results2,
+            )
+
+        # 3. Json
+        JsonOutputParameters(
+            output_interval=0.002,
+            nodal_results=nodal_results1,
+            gauss_point_results=gauss_point_results1,
+        )
+
+        with pytest.raises(ValueError):
+            json_output_parameters2 = JsonOutputParameters(
+                output_interval=0.002,
+                nodal_results=nodal_results2,
+                gauss_point_results=gauss_point_results2,
+            )
+
+
     def test_create_output_process_dictionary(self):
         """
         Test the creation of the output process dictionary for the

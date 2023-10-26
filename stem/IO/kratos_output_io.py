@@ -257,7 +257,7 @@ class KratosOutputsIO:
         output_dict: Dict[str, Any] = {"output_processes": {}, "processes": {}}
 
         for output in outputs:
-            output.output_parameters.validate()
+
             key_output, _parameters_output = self.__create_output_dict(output)
             key_process = KratosOutputsIO.__get_process_type_for_output(
                 output.output_parameters

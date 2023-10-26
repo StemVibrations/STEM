@@ -1527,6 +1527,14 @@ class TestModel:
         npt.assert_equal(node_ids_process_model_part_1, expected_process_connectivities)
         npt.assert_equal(node_ids_process_model_part_2, expected_process_connectivities)
 
+        # check the __repr__  method is correct:
+        expected_string_repr = np.array([
+            "ModelPart(name=line_load1, parameters=LineLoad)", "ModelPart(name=line_load2, parameters=LineLoad)",
+            "BodyModelPart(name=layer1, material=SoilMaterial)", "BodyModelPart(name=layer2, material=SoilMaterial)"
+        ])
+        actual_string_repr = np.array([str(pp) for pp in model.get_all_model_parts()])
+        npt.assert_equal(actual=actual_string_repr, desired=expected_string_repr)
+
     def test_random_field_generation_2d(
             self,
             create_default_2d_soil_material: SoilMaterial

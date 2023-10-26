@@ -147,37 +147,3 @@ class TestPlotUtils:
 
         # create geometry and plot it
         self.create_geometry_plot_and_assert(3, create_default_3d_soil_material)
-
-    def test_plot_mesh_2D(self, create_default_2d_soil_material: SoilMaterial):
-        """
-        Test the plot of a 3D geometry.
-
-        Args:
-            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
-
-        """
-
-        layer1_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
-        layer2_coordinates = [(1, 1, 0), (0, 1, 0), (0, 2, 0), (1, 2, 0)]
-
-        # define soil materials
-        soil_material1 = create_default_2d_soil_material
-        soil_material1.name = "soil1"
-
-        soil_material2 = create_default_2d_soil_material
-        soil_material2.name = "soil2"
-
-        # create model
-        model = Model(2)
-        model.extrusion_length = [0, 0, 1]
-
-        # add soil layers
-        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
-        model.add_soil_layer_by_coordinates(layer2_coordinates, soil_material2, "layer2")
-
-        # synchronise geometry
-        model.synchronise_geometry()
-        # create geometry and plot it
-        model.generate_mesh()
-
-        model.show_mesh()
