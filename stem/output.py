@@ -47,6 +47,8 @@ class GaussPointOutput(Enum):
     CAUCHY_STRESS_TENSOR = 62
     TOTAL_STRESS_VECTOR = 71
     TOTAL_STRESS_TENSOR = 72
+    FORCE = 81
+    MOMENT = 82
 
 
 TENSOR_OUTPUTS = [
