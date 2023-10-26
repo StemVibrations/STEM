@@ -626,7 +626,7 @@ class TestModel:
 
         # create model
         model = Model(ndim)
-        model.extrusion_length = [0, 0, 1]
+        model.extrusion_length = 1
 
         model.project_parameters = TestUtils.create_default_solver_settings()
 
@@ -719,7 +719,7 @@ class TestModel:
 
         # create model
         model = Model(ndim)
-        model.extrusion_length = [0, 0, 1]
+        model.extrusion_length = 1
 
         # add soil layers
         model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
@@ -881,7 +881,7 @@ class TestModel:
 
         # create model
         model = Model(ndim)
-        model.extrusion_length = [0, 0, 1]
+        model.extrusion_length = 1
 
         # add soil layers
         model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
@@ -1143,7 +1143,7 @@ class TestModel:
 
         """
         model = Model(3)
-        model.extrusion_length = [0, 0, 1]
+        model.extrusion_length = 1
 
         # add soil material
         soil_material = create_default_3d_soil_material
@@ -1398,7 +1398,7 @@ class TestModel:
 
         # create a 3D model
         model = Model(3)
-        model.extrusion_length = [0, 0, 1]
+        model.extrusion_length = 1
 
         # create multiple boundary condition parameters
         no_rotation_parameters = RotationConstraint(active=[True, True, True], is_fixed=[True, True, True],
@@ -1586,7 +1586,7 @@ class TestModel:
         model.synchronise_geometry()
 
         # add gravity load
-        model._Model__add_gravity_load(-12,0)
+        model._Model__add_gravity_load()
 
         assert len(model.process_model_parts) == 1
 
@@ -1599,7 +1599,7 @@ class TestModel:
         assert len(generated_geometry.surfaces) == len(model.geometry.surfaces) == 2
 
         assert model.process_model_parts[0].name == "gravity_load_2d"
-        npt.assert_allclose(model.process_model_parts[0].parameters.value, [-12, 0, 0])
+        npt.assert_allclose(model.process_model_parts[0].parameters.value, [0, -9.81, 0])
         npt.assert_allclose(model.process_model_parts[0].parameters.active, [True, True, True])
 
     def test_add_gravity_load_3d(self, create_default_3d_soil_material):
@@ -1614,7 +1614,7 @@ class TestModel:
 
         # create model
         model = Model(3)
-        model.extrusion_length = [0, 0, 1]
+        model.extrusion_length = 1
 
         # add a 2d layer
         model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0)], create_default_3d_soil_material, "soil1")
@@ -1622,7 +1622,7 @@ class TestModel:
         model.synchronise_geometry()
 
         # add gravity load
-        model._Model__add_gravity_load(vertical_axis=2, gravity_acceleration=-10)
+        model._Model__add_gravity_load()
 
         assert len(model.process_model_parts) == 1
 
@@ -1636,7 +1636,7 @@ class TestModel:
         assert len(generated_geometry.volumes) == len(model.geometry.volumes) == 1
 
         assert model.process_model_parts[0].name == "gravity_load_3d"
-        npt.assert_allclose(model.process_model_parts[0].parameters.value, [0, 0, -10])
+        npt.assert_allclose(model.process_model_parts[0].parameters.value, [0, -9.81, 0])
         npt.assert_allclose(model.process_model_parts[0].parameters.active, [True, True, True])
 
     def test_setup_stress_initialisation(self, create_default_2d_soil_material: SoilMaterial):

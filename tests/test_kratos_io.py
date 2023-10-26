@@ -127,7 +127,7 @@ class TestKratosModelIO:
 
         # create model
         model = Model(ndim)
-        model.extrusion_length = [0, 0, 1]
+        model.extrusion_length = 1
 
         # add soil layer and line load and mesh them
         model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")

@@ -4,6 +4,9 @@ This module contains global variables used in the stem package.
 
 from typing import Dict,  Any
 
+GRAVITY_VALUE = -9.81  # [m/s2]
+VERTICAL_AXIS = 1  # [0, 1, 2] = [x, y, z]
+OUT_OF_PLANE_AXIS_2D = 2  # [0, 1, 2] = [x, y, z]
 
 #: Element data for supported element types in STEM. The data contains the following information: \
 #: - ndim (int): number of dimensions
