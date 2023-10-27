@@ -338,7 +338,7 @@ class Utils:
         return is_outwards
 
     @staticmethod
-    def create_sigmoid_tiny_expr(start_time: float, dt_slope: float, initial_value, final_value: float,
+    def create_sigmoid_tiny_expr(start_time: float, dt_slope: float, initial_value: float, final_value: float,
                                  is_half_function: bool) -> str:
         """
         Creates a tiny expression with variable time for a sigmoid function. For more information on tiny expressions,
