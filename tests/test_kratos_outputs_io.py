@@ -39,11 +39,21 @@ class TestKratosOutputsIO:
             gauss_point_results=gauss_point_results1,
         )
 
+        # incorrect definition nodal outputs
         with pytest.raises(ValueError):
-            gid_output_parameters2 = GiDOutputParameters(
+            GiDOutputParameters(
                 file_format="ascii",
                 output_interval=100,
                 nodal_results=nodal_results2,
+                gauss_point_results=[],
+            )
+
+        # incorrect definition gauss outputs
+        with pytest.raises(ValueError):
+            GiDOutputParameters(
+                file_format="ascii",
+                output_interval=100,
+                nodal_results=[],
                 gauss_point_results=gauss_point_results2,
             )
 
@@ -56,13 +66,25 @@ class TestKratosOutputsIO:
             gauss_point_results=gauss_point_results1,
         )
 
+        # incorrect definition nodal outputs
         with pytest.raises(ValueError):
-            vtk_output_parameters2 = VtkOutputParameters(
+            VtkOutputParameters(
                 file_format="ascii",
                 output_precision=8,
                 output_control_type="step",
                 output_interval=100.0,
                 nodal_results=nodal_results2,
+                gauss_point_results=[],
+            )
+
+        # incorrect definition gauss outputs
+        with pytest.raises(ValueError):
+            VtkOutputParameters(
+                file_format="ascii",
+                output_precision=8,
+                output_control_type="step",
+                output_interval=100.0,
+                nodal_results=[],
                 gauss_point_results=gauss_point_results2,
             )
 
@@ -73,10 +95,19 @@ class TestKratosOutputsIO:
             gauss_point_results=gauss_point_results1,
         )
 
+        # incorrect definition nodal outputs
         with pytest.raises(ValueError):
-            json_output_parameters2 = JsonOutputParameters(
+            JsonOutputParameters(
                 output_interval=0.002,
                 nodal_results=nodal_results2,
+                gauss_point_results=[],
+            )
+
+        # incorrect definition gauss outputs
+        with pytest.raises(ValueError):
+            JsonOutputParameters(
+                output_interval=0.002,
+                nodal_results=[],
                 gauss_point_results=gauss_point_results2,
             )
 
@@ -102,6 +133,7 @@ class TestKratosOutputsIO:
             GaussPointOutput.ENGINEERING_STRAIN_TENSOR,
             GaussPointOutput.CAUCHY_STRESS_TENSOR,
             GaussPointOutput.TOTAL_STRESS_TENSOR,
+            GaussPointOutput.GREEN_LAGRANGE_STRAIN_VECTOR
         ]
         # define output parameters
         # 1. GiD
