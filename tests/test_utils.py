@@ -419,7 +419,7 @@ class TestUtilsStem:
         with pytest.raises(ValueError, match="All nodes of the edge element should be part of the body element."):
             Utils.is_volume_edge_defined_outwards(edge_element_3, body_element_1, nodes)
 
-    def test_sigmoid_function(self):
+    def test_create_sigmoid_tiny_expr(self):
         """
         Test the creation of the sigmoid function tiny expr, which can be evaluated in c++
 
