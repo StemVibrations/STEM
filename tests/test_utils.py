@@ -419,4 +419,42 @@ class TestUtilsStem:
         with pytest.raises(ValueError, match="All nodes of the edge element should be part of the body element."):
             Utils.is_volume_edge_defined_outwards(edge_element_3, body_element_1, nodes)
 
+    def test_sigmoid_function(self):
+        """
+        Test the creation of the sigmoid function tiny expr, which can be evaluated in c++
 
+        """
+
+        # define input values
+        start_time = 5
+        dt_slope = 3
+        final_value = -10000
+        initial_value = -3000
+
+        # define time vector, note that it is required for the test that this variable is called "t"
+        t = np.linspace(start_time, start_time + dt_slope, 10)
+
+        # get full sigmoid function
+        full_function = Utils.create_sigmoid_tiny_expr(start_time, dt_slope, initial_value, final_value, False)
+
+        # get half sigmoid function
+        half_function = Utils.create_sigmoid_tiny_expr(start_time, dt_slope, initial_value, final_value, True)
+
+        # replace e^ with np.exp, such that python can evaluate the string
+        python_full_func_str = full_function.replace(r"e^", "np.exp")
+        python_half_func_str = half_function.replace(r"e^", "np.exp")
+
+        # evaluate string
+        full_eval = eval(python_full_func_str)
+        half_eval = eval(python_half_func_str)
+
+        # define expected functions
+        expected_half_eval = ((1 / (1 + np.exp(-6/dt_slope * (t - start_time))) - 0.5)
+                              * (final_value - initial_value) * 2 + initial_value)
+        expected_full_eval = ((1 / (1 + np.exp(-12/dt_slope
+                                              * (t - dt_slope/2 - start_time))))
+                              * (final_value - initial_value ) + initial_value)
+
+        # check if expected and actual results are almost equal
+        np.testing.assert_almost_equal(full_eval, expected_full_eval)
+        np.testing.assert_almost_equal(half_eval, expected_half_eval)
