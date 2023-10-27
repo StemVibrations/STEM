@@ -149,6 +149,49 @@ class Model:
 
         self.body_model_parts.append(body_model_part)
 
+    def add_load_by_geometry_ids(self, ndim_load: int, geometry_ids: Sequence[int], load_parameters:
+                                 LoadParametersABC, name: str):
+        """
+        Add a load to the model by giving the geometry ids of the geometry where the load has to be applied.
+
+        Args:
+            - ndim_load (int): geometry dimension of the entity where the load needs to be applied \
+                (0=point,1=line, 2=surface, 3=volume).
+            - geometry_ids (Sequence[int]): geometry ids of the entities where the load needs to be applied.
+            - load_parameters (:class:`stem.load.LoadParametersABC`): load parameters to define the load object.
+            - name (str): name of the load.
+
+        """
+
+        # check that dimension is coherent with geometry dimension:
+        # point load can only be assigned to 0d geometry
+        if ndim_load == 0 and not isinstance(load_parameters, PointLoad):
+            raise ValueError("Point load can only be applied to 0d geometries (`ndim_load`=0).")
+        # line and moving load can only be assigned to 1d geometry
+        if ndim_load == 1 and not isinstance(load_parameters, (LineLoad, MovingLoad)):
+            raise ValueError("Line or moving load can only be applied to 1d geometries (`ndim_load`=1).")
+        # surface load can only be assigned to 2d geometry
+        if ndim_load == 2 and not isinstance(load_parameters, SurfaceLoad):
+            raise ValueError("Surface load can only be applied to 2d geometries (`ndim_load`=2).")
+
+        if ndim_load >= 3:
+            raise NotImplementedError(
+                "Volume load (ndim_load=3) are not implemented yet. `ndim_load` >3 are incorrect."
+            )
+        # add physical group to gmsh
+        self.gmsh_io.add_physical_group(name, ndim_load, geometry_ids)
+
+        # create model part
+        model_part = ModelPart(name)
+
+        # retrieve geometry from gmsh and add to model part
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
+
+        # add boundary parameters to model part
+        model_part.parameters = load_parameters
+
+        self.process_model_parts.append(model_part)
+
     def add_load_by_coordinates(self, coordinates: Sequence[Sequence[float]], load_parameters: LoadParametersABC,
                                 name: str):
         """
