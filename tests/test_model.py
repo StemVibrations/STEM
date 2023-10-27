@@ -1802,7 +1802,7 @@ class TestModel:
 
         # create model
         model = Model(3)
-        model.extrusion_length = [0, 0, 1]
+        model.extrusion_length = 1
 
         # add soil layer
         layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
