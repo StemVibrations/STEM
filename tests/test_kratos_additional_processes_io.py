@@ -7,6 +7,7 @@ from random_fields.generate_field import ModelName
 
 from stem.IO.kratos_additional_processes_io import KratosAdditionalProcessesIO
 from stem.additional_processes import *
+from stem.load import PointLoad
 from tests.utils import TestUtils
 
 
@@ -89,7 +90,6 @@ class TestKratosAdditionalProcessesIO:
 
 
         # Define random field generator
-
         random_field_generator = RandomFields(n_dim=3, mean=10, variance=2,
                                               model_name=ModelName.Gaussian,
                                               v_scale_fluctuation=5,
@@ -106,9 +106,16 @@ class TestKratosAdditionalProcessesIO:
         field_parameters_json.function_type = "csv"
         add_processes_io = KratosAdditionalProcessesIO(domain="PorousDomain")
 
-        # check that error is raised correctly
+        # Function type is not allowed
         with pytest.raises(ValueError):
             _parameters = add_processes_io.create_additional_processes_dict(
                 part_name="test", parameters=field_parameters_json
             )
 
+        load_parameters = PointLoad(value=[0, 1, 0], active=[True, True, True])
+
+        # Wrong parameters type (load)
+        with pytest.raises(NotImplementedError):
+            _parameters = add_processes_io.create_additional_processes_dict(
+                part_name="test", parameters=load_parameters
+            )
