@@ -1535,6 +1535,79 @@ class TestModel:
         actual_string_repr = np.array([str(pp) for pp in model.get_all_model_parts()])
         npt.assert_equal(actual=actual_string_repr, desired=expected_string_repr)
 
+    def test_random_field_generation_raises_errors(
+            self,
+            create_default_2d_soil_material: SoilMaterial
+    ):
+
+        model = Model(2)
+
+        # add soil material
+        soil_material = create_default_2d_soil_material
+        model.body_model_parts.append(
+            BodyModelPart(name="fake part")
+        )
+        # add soil layers
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
+        line_load_parameters = LineLoad(active=[True,True,True], value=[0, -1000, 0])
+        model.add_load_by_coordinates(name="line_load", coordinates=[(0, 0, 0), (0, 1, 0)],
+                                           load_parameters=line_load_parameters)
+
+        # add random field to process model part
+        with pytest.raises(ValueError):
+            model.add_random_field(part_name="line_load", property_name="YOUNG_MODULUS", cov=0.1,
+                               v_scale_fluctuation=1, anisotropy=[0.5, 0.5], angle=[0, 0], seed=42)
+
+        # add random field to part with no material
+        with pytest.raises(ValueError):
+            model.add_random_field(part_name="fake part", property_name="YOUNG_MODULUS", cov=0.1,
+                               v_scale_fluctuation=1, anisotropy=[0.5, 0.5], angle=[0, 0], seed=42)
+
+        # add random field to non-existing property
+        with pytest.raises(ValueError):
+            model.add_random_field(part_name="layer1", property_name="YOUNGS_MODULUS", cov=0.1,
+                               v_scale_fluctuation=1, anisotropy=[0.5, 0.5], angle=[0, 0], seed=42)
+
+        # add random field to non-existing property
+        with pytest.raises(ValueError):
+            model.add_random_field(part_name="layer1", property_name="IS_DRAINED", cov=0.1,
+                               v_scale_fluctuation=1, anisotropy=[0.5, 0.5], angle=[0, 0], seed=42)
+
+        # add random field using invalid model
+        with pytest.raises(ValueError):
+            model.add_random_field(part_name="layer1", property_name="IS_DRAINED", cov=0.1,
+                               v_scale_fluctuation=1, anisotropy=[0.5, 0.5], angle=[0, 0], seed=42,
+                               model_name="GAUSSIAN_MODEL")
+
+    def test_get_centroids_elements(
+            self,
+            create_default_2d_soil_material: SoilMaterial
+    ):
+
+
+        model = Model(2)
+
+        # add soil material
+        soil_material = create_default_2d_soil_material
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
+        point_load_parms = PointLoad(active=[True,True,True], value=[0, -1000, 0])
+        model.add_load_by_coordinates(name="point_load", coordinates=[(0, 0, 0)],
+                                           load_parameters=point_load_parms)
+
+        # non existing part
+        with pytest.raises(ValueError):
+            model.get_centroids_elements_model_part(part_name="layer2")
+
+        # non meshed part
+        with pytest.raises(ValueError):
+            model.get_centroids_elements_model_part(part_name="layer1")
+
+        # part without elements
+        with pytest.raises(ValueError):
+            model.get_centroids_elements_model_part(part_name="point_load")
+
     def test_random_field_generation_2d(
             self,
             create_default_2d_soil_material: SoilMaterial
@@ -1555,7 +1628,7 @@ class TestModel:
         model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
         model.set_mesh_size(0.5)
         model.add_random_field(part_name="layer1", property_name="YOUNG_MODULUS", cov=0.1,
-                               v_scale_fluctuation=1, anisotropy=[0.5, 0.5], angle=[0, 0], seed=42)
+                               v_scale_fluctuation=1, anisotropy=[0.5], angle=[0], seed=42)
 
         model.synchronise_geometry()
 
@@ -1573,7 +1646,6 @@ class TestModel:
                               112422789.04916367, 105984785.95965663]
 
         npt.assert_allclose(actual=actual_rf_values, desired=expected_rf_values)
-
 
     def test_random_field_generation_3d(
             self,

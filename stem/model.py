@@ -484,17 +484,17 @@ class Model:
             raise ValueError(f"The target part, `{part_name}`, is not a body model part.")
 
         # Check if the material of the body model part is soil
-        if not isinstance(trgt_part.material, SoilMaterial):
-            raise ValueError(f"The target part is not a soil material, but `{trgt_part.material.__class__}`.")
+        if trgt_part.material is None:
+            raise ValueError(f"No material assigned to the body model part!")
 
-        if not trgt_part.material.is_property_in_soil_material(property_name=property_name):
+        if not trgt_part.material.is_property_in_material(property_name=property_name):
             raise ValueError(f"The property for which a random field needs to be generated, `{property_name}`, "
                              f"is not part of the soil material.")
 
         # Get the property of the soil material, this is the mean value of the random field.
         # Checks also if the material of the body model part is soil contains the desired parameter
-        mean_value = trgt_part.material.get_property_in_soil_material(property_name=property_name)
-        if not isinstance(mean_value, (float, int)):
+        mean_value = trgt_part.material.get_property_in_material(property_name=property_name)
+        if isinstance(mean_value, bool) or not isinstance(mean_value, (float, int)):
             raise ValueError(f"The property for which a random field needs to be generated, `{property_name}`, "
                              f"is not numeric, but {mean_value} ({type(mean_value)}).")
 
@@ -1029,8 +1029,3 @@ class Model:
 
         # finalize gmsh
         self.gmsh_io.finalize_gmsh()
-
-
-    def write_kratos_files(self):
-        # TODO
-        pass

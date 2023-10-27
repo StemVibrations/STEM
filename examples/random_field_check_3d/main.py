@@ -173,7 +173,7 @@ from matplotlib import pyplot as plt
 from random_fields.generate_field import RandomFields, ModelName
 
 
-mean = material_soil_2.get_property_in_soil_material("YOUNG_MODULUS")
+mean = material_soil_2.get_property_in_material("YOUNG_MODULUS")
 # dimensions of anisotropy and angle are adjusted automatically in model.add_random_field()
 
 rf = RandomFields(mean=mean, variance=(cov*mean)**2,

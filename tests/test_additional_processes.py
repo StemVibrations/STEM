@@ -26,11 +26,11 @@ class TestAdditionalProcesses:
         field_parameters_python = ParameterFieldParameters(
             variable_name="YOUNG_MODULUS",
             function_type="python",
-            function="test_random_field_python",
+            function="test_random_field_python.py",
             field_generator=None
         )
         with pytest.raises(ValueError):
-            values = field_parameters_python.values
+            field_parameters_python.values()
 
         # Raise error if random field values have not been initialised
         random_field_generator = RandomFields(n_dim=3, mean=10, variance=2,
@@ -44,6 +44,15 @@ class TestAdditionalProcesses:
             field_generator=random_field_generator
         )
         with pytest.raises(ValueError):
-            values = field_parameters_json.values
+            field_parameters_json.values()
+
+        # Raises error if function type is not recognized
+        with pytest.raises(ValueError):
+            ParameterFieldParameters(
+                variable_name="YOUNG_MODULUS",
+                function_type="user_defined_function",
+                function="test_random_field_json",
+                field_generator=random_field_generator
+            )
 
 

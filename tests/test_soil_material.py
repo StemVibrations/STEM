@@ -36,11 +36,11 @@ class TestSoilMaterial:
         soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
                                      retention_parameters=SaturatedBelowPhreaticLevelLaw())
 
-        assert soil_material.is_property_in_soil_material("YOUNG_MODULUS")
-        assert soil_material.is_property_in_soil_material("POISSON_RATIO")
-        assert soil_material.is_property_in_soil_material("POROSITY")
-        assert not soil_material.is_property_in_soil_material("YOUNG_MODULUS".lower())
-        assert not soil_material.is_property_in_soil_material("YOUNGS_MODULUS")
+        assert soil_material.is_property_in_material("YOUNG_MODULUS")
+        assert soil_material.is_property_in_material("POISSON_RATIO")
+        assert soil_material.is_property_in_material("POROSITY")
+        assert not soil_material.is_property_in_material("YOUNG_MODULUS".lower())
+        assert not soil_material.is_property_in_material("YOUNGS_MODULUS")
 
     def test_get_property_in_soil_material(self):
         """
@@ -52,9 +52,9 @@ class TestSoilMaterial:
         soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
                                      retention_parameters=SaturatedBelowPhreaticLevelLaw())
 
-        assert soil_material.get_property_in_soil_material("YOUNG_MODULUS") == 100e6
-        assert soil_material.get_property_in_soil_material("POISSON_RATIO") == 0.3
-        assert soil_material.get_property_in_soil_material("POROSITY") == 0.3
+        assert soil_material.get_property_in_material("YOUNG_MODULUS") == 100e6
+        assert soil_material.get_property_in_material("POISSON_RATIO") == 0.3
+        assert soil_material.get_property_in_material("POROSITY") == 0.3
 
         with pytest.raises(ValueError):
-            soil_material.get_property_in_soil_material("YOUNGS_MODULUS")
+            soil_material.get_property_in_material("YOUNGS_MODULUS")

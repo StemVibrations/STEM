@@ -291,20 +291,16 @@ class SoilMaterial:
 
         return element_name
 
-    def is_property_in_soil_material(self, property_name: str) -> bool:
+    def is_property_in_material(self, property_name: str) -> bool:
+
         """
-        Function to get the element name based on the number of dimensions, the number of nodes and the analysis type.
+        Function to check if requested property is available for the soil material.
 
         Args:
-            - n_dim_model (int): The number of dimensions of the model.
-            - n_nodes_element (int): The number of nodes per element.
-            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type.
-
-        Raises:
-            - ValueError: If the analysis type is not implemented yet for nodal concentrated elements.
+            - property_name (str): The desired soil property name.
 
         Returns:
-            - bool : Whether the property is one of the soil material properties.
+            - bool : Whether the property is one of the soil material properties. Returns False if it is not.
 
         """
 
@@ -319,22 +315,22 @@ class SoilMaterial:
 
         return property_name in all_properties
 
-    def get_property_in_soil_material(self, property_name: str) -> Any:
+    def get_property_in_material(self, property_name: str) -> Any:
         """
-        Function to get the element name based on the number of dimensions, the number of nodes and the analysis type.
+        Function to retrieve the requested property for the soil material. The function is capital sensitive!
 
         Args:
-            - property_name (str): The desired property name.
+            - property_name (str): The desired soil property name.
 
         Raises:
             - ValueError: If the property is not in not available in the soil material.
 
         Returns:
-            - Any : The value of the property
+            - Any : The value of the soil property.
 
         """
 
-        if not self.is_property_in_soil_material(property_name=property_name):
+        if not self.is_property_in_material(property_name=property_name):
             raise ValueError(f"Property f{property_name} is not one of the parameters of the soil material")
 
         all_properties = {}
