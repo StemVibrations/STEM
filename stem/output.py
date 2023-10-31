@@ -80,13 +80,11 @@ TENSOR_OUTPUTS = [
     "TOTAL_STRESS",
 ]
 
-# def validate_gauss_point(requested_outputs:)
-#
-#     list(GaussPointOutput.__members__.keys())
 
 
 def validate_nodal_point_output(nodal_results: Sequence[Union[NodalOutput, str]]):
-    """Validates that the specified string requested for nodal outputs are compatible with the ones defined in the
+    """
+    Validates that the specified string requested for nodal outputs are compatible with the ones defined in the
     corresponding enumeration.
 
     Args:
@@ -108,7 +106,8 @@ def validate_nodal_point_output(nodal_results: Sequence[Union[NodalOutput, str]]
                          f"gauss point outputs inputs in the Enum NodalOutput.")
 
 def validate_gauss_point_output(gauss_point_results: Sequence[Union[GaussPointOutput, str]]):
-    """Validates that the specified string requested for gauss point outputs are compatible with the ones defined in
+    """
+    Validates that the specified string requested for gauss point outputs are compatible with the ones defined in
     the corresponding enumeration.
 
     Args:

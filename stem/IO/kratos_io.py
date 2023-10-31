@@ -43,7 +43,6 @@ class KratosIO:
         - ndim (int): The number of dimensions of the problem.
         - project_folder (str): folder to store the project files (mesh, project and material parameters as well as \
             json files). Defaults to the working directory.
-
         - material_io (:class:`stem.IO.kratos_material_io.KratosMaterialIO`): The material IO object.
         - loads_io (:class:`stem.IO.kratos_loads_io.KratosLoadsIO`): The loads IO object.
         - boundaries_io (:class:`stem.IO.kratos_boundaries_io.KratosBoundariesIO`): The boundaries IO object.
@@ -965,7 +964,7 @@ class KratosIO:
                 )
 
                 if isinstance(mp.parameters, ParameterFieldParameters):
-                    # generate random field file json
+                    # generate parameter field file json
                     IOUtils.write_json_file(
                         output_folder=self.project_folder,
                         file_name=mp.parameters.function,
