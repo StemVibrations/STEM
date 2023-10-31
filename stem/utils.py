@@ -1,5 +1,6 @@
 from typing import Sequence, Dict, Any, List, Union, Optional, Generator, TYPE_CHECKING
 
+import networkx as nx
 import numpy as np
 import numpy.typing as npt
 
@@ -7,6 +8,7 @@ from stem.globals import ELEMENT_DATA
 
 if TYPE_CHECKING:
     from stem.mesh import Element
+    from stem.geometry import Geometry
 
 
 class Utils:
@@ -336,3 +338,100 @@ class Utils:
         is_outwards: bool = np.dot(normal_vector_edge, body_inward_vector) < 0
 
         return is_outwards
+
+    @staticmethod
+    def check_lines_geometry_are_path(geometry: Optional['Geometry']) -> None:
+
+        """Checks if lines are connected forming a path without:
+
+            a) disconnected lines,   b) branching out paths
+                o---o       o---o              o
+                |                              |
+                o                         o----o----o
+                                               |
+                                               o
+
+        Args:
+            - geometry: geometry to be checked
+
+        Raises:
+            - ValueError: when geometry is not provided (is None).
+            - ValueError: when geometry has no lines.
+            - ValueError: when lines are disconnected.
+            - ValueError: when lines are branching off.
+            - ValueError: when lines are creating loops (passing on the same node twice).
+
+        """
+
+        if geometry is None:
+            raise ValueError("No geometry has been provided.")
+
+        if geometry.lines is None or len(geometry.lines) == 0:
+            raise ValueError("The geometry doesn't contain lines to check.")
+
+        if len(geometry.lines) > 1:
+
+            lines = {_id: line.point_ids for _id, line in geometry.lines.items()}
+            points = list(set([n for v in lines.values() for n in v]))
+
+            graph = nx.Graph()
+
+            for n in points:
+                graph.add_node(n)
+
+            for l1, nodes1 in lines.items():
+                graph.add_edge(nodes1[0], nodes1[1])
+
+            # Run DBSCAN clustering on the graph,
+            # Count the number of clusters and identify branching points and loops
+            clustered = list(nx.connected_components(graph))
+            branching_points = [node for node, degree in graph.degree() if degree > 2]
+            loops = list(nx.simple_cycles(graph))
+
+            num_clusters = len(clustered)
+            num_loops = len(loops)
+            num_bp = len(branching_points)
+
+            if num_clusters > 1:
+                raise ValueError(f"Number of disconnected paths is >1: {num_clusters-1} discontinuities found in "
+                                 f"the path!")
+
+            if num_loops > 0:
+                raise ValueError(f"Found {num_loops} loop(s) in the path.")
+
+            if num_bp > 0:
+                raise ValueError(f"Path is branching, should be on a line."
+                                 f"{num_bp} branching point(s) have been found in the path!")
+
+    @staticmethod
+    def is_point_aligned_and_between_any_of_points(coordinates: Sequence[Sequence[Sequence[float]]],
+                                                   origin: Sequence[float]):
+        """Checks that any of the points provides in a list of pairs of coordinates
+
+        Args:
+            - coordinates (Sequence[Sequence[Sequence[float]]]): Pair-wise sets of coordinates representing the line
+                on which the origin should lie.
+            - origin (Sequence[float]): the coordinates of the point to be checked for alignment.
+
+        Raises:
+            - ValueError: when point is not aligned with one of the lines (pair-wise sets of coordinates).
+
+        """
+
+        for ix in range(len(coordinates)):
+            # check origin is collinear to the edges of the line
+            collinear_check = Utils.is_collinear(
+                point=origin, start_point=coordinates[ix][0], end_point=coordinates[ix][1]
+            )
+            # check origin is between the edges of the line (edges included)
+            is_between_check = Utils.is_point_between_points(
+                point=origin, start_point=coordinates[ix][0], end_point=coordinates[ix][1]
+            )
+            # check if point complies
+            is_on_line = collinear_check and is_between_check
+            # exit at the first success of the test (point in the line)
+            if is_on_line:
+                return
+
+        # none of the lines contain the origin, then raise an error
+        raise ValueError(f"Origin is not in any of the lines given as trajectory of the moving load.")

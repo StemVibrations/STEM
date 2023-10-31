@@ -4,6 +4,7 @@ import numpy as np
 import numpy.testing as npt
 import pytest
 
+from stem.geometry import Geometry, Point, Line
 from stem.utils import Utils
 from stem.mesh import Mesh, Element
 from stem.globals import ELEMENT_DATA
@@ -419,4 +420,118 @@ class TestUtilsStem:
         with pytest.raises(ValueError, match="All nodes of the edge element should be part of the body element."):
             Utils.is_volume_edge_defined_outwards(edge_element_3, body_element_1, nodes)
 
+    def test_check_lines_geometry_are_path(self):
+        """
+        Tests that the lines in a geometry are connected and aligned along one path (no branching)
 
+        """
+
+        # None object passed (geometry not initialised)
+        msg = "No geometry has been provided."
+        with pytest.raises(ValueError, match=msg):
+            Utils.check_lines_geometry_are_path(None)
+
+        geo1 = Geometry()
+
+        # test undefined lines in geometry (empty)
+        msg = "The geometry doesn't contain lines to check."
+        with pytest.raises(ValueError, match=msg):
+            Utils.check_lines_geometry_are_path(geo1)
+
+        # test normal path
+        geo1.points = {
+            1: Point.create([0, 0, 0], 1),
+            2: Point.create([0.5, 0, 0], 2),
+            3: Point.create([1, 0, 0], 3),
+            4: Point.create([1.5, 1, 0], 4)
+        }
+
+        geo1.lines = {
+            1: Line.create([1, 2], 1),
+            2: Line.create([2, 3], 2),
+            3: Line.create([3, 4], 3),
+        }
+
+        Utils.check_lines_geometry_are_path(geo1)
+        # test for discontinuities
+        geo2 = Geometry()
+
+        geo2.points = {
+            1: Point.create([0, 0, 0], 1),
+            2: Point.create([0.5, 0, 0], 2),
+            3: Point.create([1, 0, 0], 3),
+            4: Point.create([1.5, 1, 0], 4)
+        }
+
+        geo2.lines = {
+            1: Line.create([1, 2], 1),
+            3: Line.create([3, 4], 3),
+        }
+
+        msg = ("Number of disconnected paths is >1: 1 discontinuities found in "
+               "the path!")
+        with pytest.raises(ValueError, match=msg):
+            Utils.check_lines_geometry_are_path(geo2)
+
+        # test for loops
+        geo3 = Geometry()
+
+        geo3.points = {
+            1: Point.create([0, 0.5, 0], 1),
+            2: Point.create([0.5, 0.5, 0], 2),
+            3: Point.create([1, 0.5, 0], 3),
+            4: Point.create([0.5, 1, 0], 4),
+            5: Point.create([0.5, 0, 0], 5)
+        }
+
+        geo3.lines = {
+            1: Line.create([1, 2], 1),
+            2: Line.create([2, 3], 2),
+            3: Line.create([3, 4], 3),
+            4: Line.create([4, 2], 4),
+            5: Line.create([2, 5], 5)
+        }
+
+        msg = "Found 1 loop\(s\) in the path."
+        with pytest.raises(ValueError, match=msg):
+            Utils.check_lines_geometry_are_path(geo3)
+
+        # test for loops
+        geo4 = Geometry()
+
+        geo4.points = {
+            1: Point.create([0, 0, 0], 1),
+            2: Point.create([0, 1, 0], 2),
+            3: Point.create([1, 0, 0], 3),
+            4: Point.create([-1, 0, 0], 4)
+        }
+
+        geo4.lines = {
+            1: Line.create([1, 2], 1),
+            2: Line.create([1, 3], 2),
+            3: Line.create([1, 4], 3)
+        }
+
+        # test for branching points
+        msg = "Path is branching, should be on a line.1 branching point\(s\) have been found in the path!"
+        with pytest.raises(ValueError, match=msg):
+            Utils.check_lines_geometry_are_path(geo4)
+
+    def test_is_point_aligned_and_between_any_of_points(self):
+        """Checks that any of the points is aligned with at least one of the points in a list of pairs of
+         coordinates"""
+
+        point_coordinates = [[(0.0, 0, 0), (1, 0, 0)],
+                             [(1, 0, 0), (2, 0, 0)],
+                             [(2, 0, 0), (4, 0, 0)]]
+
+        origin_correct = (0.5, 0, 0)
+        origin_wrong = (3, 1, 0)
+
+        # check that no error are raised for correct definition
+        Utils.is_point_aligned_and_between_any_of_points(point_coordinates, origin_correct)
+
+        # ... and that error are also raised when definition is incorrect
+        msg = "Origin is not in any of the lines given as trajectory of the moving load."
+        with pytest.raises(ValueError, match=msg):
+            Utils.is_point_aligned_and_between_any_of_points(point_coordinates, origin_wrong)

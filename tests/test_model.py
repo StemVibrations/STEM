@@ -977,6 +977,43 @@ class TestModel:
 
         TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
+    def test_add_moving_point_load(self, expected_geometry_line_load: Geometry,
+                                   create_default_moving_load_parameters: MovingLoad):
+        """
+        Test if a single soil point load is added correctly to the model. Two points are generated
+        and a single load is created and added to the model.
+        Args:
+            - expected_geometry_line_load (:class:`stem.geometry.Geometry`): expected geometry of the model
+            - create_default_moving_load_parameters (:class:`stem.load.MovingLoad`): default moving load parameters
+        """
+
+        ndim = 3
+
+        point_coordinates = [(0, 0, 0), (3, 0, 0), (4, -1, 0), (10, -1, 0)]
+        # origin is in (3.5, -0.5, 0) thus in the trajectory
+
+        # define soil material
+        load_parameters = create_default_moving_load_parameters
+
+        # create model
+        model = Model(ndim)
+        # add moving load
+        model.add_load_by_coordinates(point_coordinates, load_parameters, "moving_load_1")
+
+        # check if layer is added correctly
+        assert len(model.process_model_parts) == 1
+        assert model.process_model_parts[0].name == "moving_load_1"
+        TestUtils.assert_dictionary_almost_equal(
+            model.process_model_parts[0].parameters.__dict__,
+            load_parameters.__dict__
+        )
+
+        # check if geometry is added correctly
+        generated_geometry = model.process_model_parts[0].geometry
+        expected_geometry = expected_geometry_line_load
+
+        TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
+
     def test_validation_coordinates(self):
         """
         Test that validation raises and error if the points are not correctly specified.
@@ -1472,7 +1509,7 @@ class TestModel:
         Args:
             - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
             - create_default_point_load_parameters (:class:`stem.load.PointLoad`): default point load parameters.
-            - create_default_moving_load_parameters (:class:`stem.load.MovingLoad`): default moving load parameters.
+            - create_default_surface_load_parameters (:class:`stem.load.SurfaceLoad`): default surface load parameters.
 
         """
 
@@ -1486,15 +1523,23 @@ class TestModel:
         expected_0d_model_part_parameters = PointLoad(active=[False, True, False], value=[0, -200, 0])
         expected_1d_model_part_parameters = LineLoad(active=[False, True, False], value=[0, -20, 0])
         expected_2d_model_part_parameters = SurfaceLoad(active=[False, True, False], value=[0, -2, 0])
+        moving_load_parameters = MovingLoad(
+            origin=[0, 1, 0.5],
+            load=[0.0, -10.0, 0.0],
+            velocity=5.0,
+            offset=3.0,
+            direction=[1, 1, 1]
+        )
 
         # add body model part
         soil_material = create_default_3d_soil_material
         model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "test_soil")
 
         # add boundary conditions in 0d, 1d and 2d
-        model.add_load_by_geometry_ids(0, [3, 4, 7, 8], create_default_point_load_parameters, "point_loads")
-        model.add_load_by_geometry_ids(1, [3, 8, 10, 11], create_default_line_load_parameters, "line_loads")
-        model.add_load_by_geometry_ids(2, [4], create_default_surface_load_parameters, "surface_load")
+        model.add_load_by_geometry_ids([3, 4, 7, 8], create_default_point_load_parameters, "point_loads")
+        model.add_load_by_geometry_ids([3, 8, 10, 11], create_default_line_load_parameters, "line_loads")
+        model.add_load_by_geometry_ids([4], create_default_surface_load_parameters, "surface_load")
+        model.add_load_by_geometry_ids([3, 8, 10], moving_load_parameters, "moving_load")
 
         # set expected geometry 0d load
         expected_load_points = {3: Point.create([1, 1, 0], 3), 4:  Point.create([0, 1, 0], 4),
@@ -1539,16 +1584,53 @@ class TestModel:
         npt.assert_allclose(model.process_model_parts[2].parameters.value, expected_2d_model_part_parameters.value)
         npt.assert_allclose(model.process_model_parts[2].parameters.active, expected_2d_model_part_parameters.active)
 
-        # check raising of errors
+        # add boundary conditions in 0d, 1d and 2d
+        model.add_load_by_geometry_ids([], create_default_point_load_parameters, "point_loads")
 
-        with pytest.raises(ValueError):
-            model.add_load_by_geometry_ids(0, [1], create_default_line_load_parameters, "line_loads")
-        with pytest.raises(ValueError):
-            model.add_load_by_geometry_ids(2, [1], create_default_point_load_parameters, "point_loads")
-        with pytest.raises(ValueError):
-            model.add_load_by_geometry_ids(1, [1], create_default_surface_load_parameters, "surface loads")
-        with pytest.raises(NotImplementedError):
-            model.add_load_by_geometry_ids(3, [1], create_default_surface_load_parameters, "Volume loads")
+    def test_add_load_by_geometry_ids_raises_error(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if a load is added correctly to the model. Here the load is added to the model by
+        specifying the geometry ids to which the load should be applied.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+
+        ndim = 3
+
+        # create a 3D model
+        model = Model(ndim)
+        model.extrusion_length = 1
+
+        soil_material = create_default_3d_soil_material
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "test_soil")
+
+        moving_load_parameters = MovingLoad(
+            origin=[0, 1, 0.5],
+            load=[0.0, -10.0, 0.0],
+            velocity=5.0,
+            offset=3.0,
+            direction=[1, 1, 1]
+        )
+
+        # check raising of errors
+        msg = "Load parameter provided is not supported: `GravityLoad`."
+        with pytest.raises(NotImplementedError, match=msg):
+            model.add_load_by_geometry_ids([1], GravityLoad(value=[0, -9.81, 0], active=[True, True, True]),
+                                           "gravity load")
+        # lines disconnected
+
+        msg = ("Number of disconnected paths is >1: 1 discontinuities found in "
+               "the path!")
+        with pytest.raises(ValueError, match=msg):
+            model.add_load_by_geometry_ids([8, 10], moving_load_parameters, "moving_load_wrong_1")
+
+        # origin not in path
+        # test for branching points
+        msg = "Origin is not in any of the lines given as trajectory of the moving load."
+        with pytest.raises(ValueError, match=msg):
+            model.add_load_by_geometry_ids([3, 8, 11], moving_load_parameters, "moving_load_wrong_2")
 
 
     def test_add_gravity_load_1d_and_2d(self, create_default_2d_soil_material: SoilMaterial):
