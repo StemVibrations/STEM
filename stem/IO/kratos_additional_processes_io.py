@@ -54,11 +54,11 @@ class KratosAdditionalProcessesIO:
         self, part_name: str, parameters: ParameterFieldParameters
     ) -> Dict[str, Any]:
         """
-        Creates a dictionary containing the parameters for the random field process
+        Creates a dictionary containing the parameters for the parameter field process
 
         Args:
-            - part_name (str): part name where the random field is applied
-            - parameters (:class:`stem.additional_processes.ParameterFieldParameters`): random field parameters object
+            - part_name (str): part name where the parameter field is applied
+            - parameters (:class:`stem.additional_processes.ParameterFieldParameters`): parameter field parameters object
 
         Returns:
             - Dict[str, Any]: dictionary containing the additional process parameters

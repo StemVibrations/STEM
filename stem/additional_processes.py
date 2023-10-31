@@ -10,7 +10,7 @@ _field_input_types = ["python", "json_file", "input"]
 @dataclass
 class AdditionalProcessesParametersABC(ABC):
     """
-    Abstract base class to describe the parameters required for additional processes (e.g. excavations and random
+    Abstract base class to describe the parameters required for additional processes (e.g. excavations and parameter
     fields)
     """
 
