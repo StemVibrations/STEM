@@ -58,7 +58,7 @@ class KratosAdditionalProcessesIO:
 
         Args:
             - part_name (str): part name where the random field is applied
-            - parameters (:class:`stem.additional_processes.Excavation`): random field parameters object
+            - parameters (:class:`stem.additional_processes.ParameterFieldParameters`): random field parameters object
 
         Returns:
             - Dict[str, Any]: dictionary containing the additional process parameters
