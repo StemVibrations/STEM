@@ -64,7 +64,5 @@ jobs:
           python -m pip install --upgrade pip
           pip install .'[testing]'
           pip install "StemKratos @ git+https://github.com/StemVibrations/StemKratos"
-      - name: run benchmarks
-        run: |
           pytest benchmark_tests
 
