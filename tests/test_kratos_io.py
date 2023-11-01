@@ -230,10 +230,10 @@ class TestKratosModelIO:
         model = create_default_2d_model_and_mesh
         kratos_io = KratosIO(ndim=model.ndim)
         model.project_parameters = create_default_solver_settings
+        model.output_settings = create_default_outputs
 
         actual_dict = kratos_io.write_project_parameters_json(
             model=model,
-            outputs=create_default_outputs,
             mesh_file_name="test_mdpa_file.mdpa",
             materials_file_name="MaterialParameters.json",
             output_folder="dir_test"
@@ -338,10 +338,10 @@ class TestKratosModelIO:
         model = create_default_2d_model_and_mesh
         kratos_io = KratosIO(ndim=model.ndim)
         model.project_parameters = create_default_solver_settings
+        model.output_settings = create_default_outputs
 
         kratos_io.write_input_files_for_kratos(
             model=model,
-            outputs=create_default_outputs,
             mesh_file_name="test_mdpa_file.mdpa"
         )
 
