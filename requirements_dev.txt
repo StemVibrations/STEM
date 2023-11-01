@@ -1,6 +1,7 @@
 numpy==1.24.2
 plotly==5.15.0
 gmsh_utils @ git+https://github.com/StemVibrations/gmsh_utils
+StemKratos @ git+https://github.com/StemVibrations/StemKratos
 pytest==7.2.2
 pytest-cov==4.0.0
 tox==4.4.11
