@@ -77,15 +77,16 @@ class MainStem:
         """
 
         for stage_nr, stage in enumerate(self.stages):
-            mesh_name = stage.project_parameters.problem_name + f"_stage_{stage_nr+1}.mdpa"
-            project_settings_file_name = f"ProjectParameters_stage_{stage_nr+1}.json"
-            material_settings_file_name = f"MaterialParameters_stage_{stage_nr+1}.json"
-            self.kratos_io.write_input_files_for_kratos(stage, mesh_name,
-                                                        materials_file_name=material_settings_file_name,
-                                                        project_file_name=project_settings_file_name,
-                                                        output_folder=self.input_files_dir)
+            if stage.project_parameters is not None:
+                mesh_name = stage.project_parameters.problem_name + f"_stage_{stage_nr+1}.mdpa"
+                project_settings_file_name = f"ProjectParameters_stage_{stage_nr+1}.json"
+                material_settings_file_name = f"MaterialParameters_stage_{stage_nr+1}.json"
+                self.kratos_io.write_input_files_for_kratos(stage, mesh_name,
+                                                            materials_file_name=material_settings_file_name,
+                                                            project_file_name=project_settings_file_name,
+                                                            output_folder=self.input_files_dir)
 
-            self.__stage_settings_file_names[stage_nr] = project_settings_file_name
+                self.__stage_settings_file_names[stage_nr] = project_settings_file_name
 
     def run_stage(self, stage_number: int):
         """
