@@ -1,4 +1,3 @@
 numpy==1.24.2
 plotly==5.15.0
 gmsh_utils @ git+https://github.com/StemVibrations/gmsh_utils
-StemKratos @ git+https://github.com/StemVibrations/StemKratos
