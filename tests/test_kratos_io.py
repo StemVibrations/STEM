@@ -127,7 +127,7 @@ class TestKratosModelIO:
 
         # create model
         model = Model(ndim)
-        model.extrusion_length = [0, 0, 1]
+        model.extrusion_length = 1
 
         # add soil layer and line load and mesh them
         model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
@@ -230,10 +230,10 @@ class TestKratosModelIO:
         model = create_default_2d_model_and_mesh
         kratos_io = KratosIO(ndim=model.ndim)
         model.project_parameters = create_default_solver_settings
+        model.output_settings = create_default_outputs
 
         actual_dict = kratos_io.write_project_parameters_json(
             model=model,
-            outputs=create_default_outputs,
             mesh_file_name="test_mdpa_file.mdpa",
             materials_file_name="MaterialParameters.json",
             output_folder="dir_test"
@@ -338,10 +338,10 @@ class TestKratosModelIO:
         model = create_default_2d_model_and_mesh
         kratos_io = KratosIO(ndim=model.ndim)
         model.project_parameters = create_default_solver_settings
+        model.output_settings = create_default_outputs
 
         kratos_io.write_input_files_for_kratos(
             model=model,
-            outputs=create_default_outputs,
             mesh_file_name="test_mdpa_file.mdpa"
         )
 
@@ -400,7 +400,7 @@ class TestKratosModelIO:
         # define expected block text
         expected_text_load = ['', 'Begin SubModelPart load_top', '  Begin SubModelPartTables', '  1',
                               '  End SubModelPartTables', '  Begin SubModelPartNodes', '  3', '  4',
-                              '  End SubModelPartNodes', '  Begin SubModelPartConditions', '  3',
+                              '  End SubModelPartNodes', '  Begin SubModelPartConditions', '  1',
                               '  End SubModelPartConditions', 'End SubModelPart', '']
 
         # assert the objects to be equal
@@ -434,3 +434,56 @@ class TestKratosModelIO:
         expected_text_body = [line.rstrip() for line in expected_text_body]
         # assert the objects to be equal
         npt.assert_equal(actual=actual_text_body, desired=expected_text_body)
+
+    def test_write_mdpa_two_conditions_same_position(self):
+        """
+        Test the creation of the mdpa text of the whole model with two conditions at the same position. The two
+        conditions should be written with unique condition element ids.
+
+        """
+
+        ndim = 2
+        layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+
+        load_coordinates_top = [(1, 1, 0), (0, 1, 0)]  # top
+
+        # define soil material
+        soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
+        constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
+        soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
+                                     retention_parameters=SaturatedBelowPhreaticLevelLaw())
+
+        # define load properties
+        line_load1 = LineLoad(active=[False, True, False], value=[0, 10, 0])
+        line_load2 = LineLoad(active=[True, False, False], value=[10, 0, 0])
+
+        # create model
+        model = Model(ndim)
+
+        # add soil layer and line load and mesh them
+        model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
+
+        model.add_load_by_coordinates(load_coordinates_top, line_load1, "line_load_1")
+        model.add_load_by_coordinates(load_coordinates_top, line_load2, "line_load_2")
+
+        model.synchronise_geometry()
+
+        # set mesh size and generate mesh
+        model.set_mesh_size(1)
+        model.generate_mesh()
+        model.project_parameters = TestUtils.create_default_solver_settings()
+
+        # write mdpa text
+        kratos_io = KratosIO(ndim=model.ndim)
+        actual_mdpa_text = kratos_io.write_mdpa_text(model=model)
+
+        # get expected mdpa text
+        with open('tests/test_data/expected_mdpa_file_two_conds_same_position.mdpa', 'r') as f:
+            expected_mdpa_text = f.readlines()
+
+        expected_mdpa_text = [line.rstrip() for line in expected_mdpa_text]
+
+        # check if mdpa data is as expected
+        npt.assert_equal(actual=actual_mdpa_text, desired=expected_mdpa_text)
+
+
