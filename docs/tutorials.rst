@@ -257,7 +257,7 @@ Firstly the Stem class is initialised, with the model and the directory where th
 
 The Kratos input files are then written. The project settings and output definitions are written to
 ProjectParameters_stage_1.json file. The mesh is written to the .mdpa file and the material parameters are
-written to the ProjectParameters_stage_1.json file.
+written to the MaterialParameters_stage_1.json file.
 All of the input files are then written to the input files directory.
 
 .. code-block:: python
@@ -529,7 +529,7 @@ Firstly the Stem class is initialised, with the model and the directory where th
 
 The Kratos input files are then written. The project settings and output definitions are written to
 ProjectParameters_stage_1.json file. The mesh is written to the .mdpa file and the material parameters are
-written to the ProjectParameters_stage_1.json file.
+written to the MaterialParameters_stage_1.json file.
 All of the input files are then written to the input files directory.
 
 .. code-block:: python
