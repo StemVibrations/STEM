@@ -53,10 +53,13 @@ Alternatively, you can install the requirements manually with the following comm
 
 Kratos
 ------
-To install Kratos Multiphysics download the Kratos repository from `here <https://github.com/StemVibrations/StemKratos>`_.
-Once the repository is downloaded, place the *KratosGeomechanics* folder in a directory of your choice.
-This directory will be necessary for the tutorials.
+To install Kratos Multiphysics specifically for STEM, run the following command in your STEM virtual environment:
 
+.. code-block::
+
+   pip install "StemKratos @ git+https://github.com/StemVibrations/StemKratos"
+
+Note that currently, Kratos Multiphysics for STEM is only supported for Python 3.10 in Windows.
 
 .. _parav:
 

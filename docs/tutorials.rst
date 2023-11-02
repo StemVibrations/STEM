@@ -9,31 +9,11 @@ This tutorial shows step by step guide on how to set up a line load
 on top of an embankment with two soil layers underneath, in a 3D model.
 
 First the necessary packages are imported and paths are defined.
-The path to Kratos is specified in the following way (this path is described in :ref:`kratos`).
-The name of the mesh file is also specified here.
-Then necessary paths are added to the system path.
-After which the necessary packages for setting up the model are imported. From KratosMultiphysics,
-GeoMechanicsApplication is imported for this simulation.
 
 .. code-block:: python
 
-    import sys
-    import os
-
-    path_kratos = r"./StemKratos"
-    material_name = "MaterialParameters.json"
-    project_name = "ProjectParameters.json"
-    mesh_name = "calculate_load_on_embankment_3d.mdpa"
-
     input_files_dir = "line_load"
     results_dir = "output_line_load"
-
-
-    sys.path.append(os.path.join(path_kratos, "KratosGeoMechanics"))
-    sys.path.append(os.path.join(path_kratos, r"KratosGeoMechanics\libs"))
-
-    import KratosMultiphysics.GeoMechanicsApplication
-    from KratosMultiphysics.GeoMechanicsApplication.geomechanics_analysis import (GeoMechanicsAnalysis)
 
     from stem.model import Model
     from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
@@ -42,7 +22,7 @@ GeoMechanicsApplication is imported for this simulation.
     from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
          NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
     from stem.output import NodalOutput, VtkOutputParameters, Output
-    from stem.IO.kratos_io import KratosIO
+    from stem.stem import Stem
 
 For setting up the model, Model class is imported from stem.model. And for setting up the soil material, OnePhaseSoil,
 LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw classes are imported.
@@ -50,7 +30,7 @@ In this case, there is a line load on top of the embankment. LineLoad class is i
 As for setting the boundary conditions, DisplacementConstraint class is imported from stem.boundary.
 For setting up the solver settings, necessary classes are imported from stem.solver.
 Classes needed for the output, are NodalOutput, VtkOutputParameters and Output which are imported from stem.output.
-And for writing the Kratos input files, KratosIO class is imported.
+Lastly, Stem class is imported from stem.stem, in order to run the simulation.
 
 In this step, the geometry, conditions, and material parameters for the simulation is defined.
 First the dimension of the model is indicated which in this case is 3. After which the model can be initialised.
@@ -265,44 +245,30 @@ results will be written every time step.
              output_control_type="step"
         )
      )
+     model.output_settings = [vtk_output_process]
 
-Now that the model is set up, the Kratos input files can be written.
+Now that the model is set up, the calculation is almost ready to be ran.
 
-Firstly the KratosIO class is initialised.
+Firstly the Stem class is initialised, with the model and the directory where the input files will be written to.
 
 .. code-block:: python
 
-    kratos_io = KratosIO(ndim=model.ndim)
+    stem = Stem(model, input_files_dir)
 
 The Kratos input files are then written. The project settings and output definitions are written to
-ProjectParameters.json file. The mesh is written to .mdpa file and the material parameters are written to
-the MaterialParameters.json file.
+ProjectParameters_stage_1.json file. The mesh is written to the .mdpa file and the material parameters are
+written to the ProjectParameters_stage_1.json file.
 All of the input files are then written to the input files directory.
 
 .. code-block:: python
 
-    kratos_io.write_input_files_for_kratos(
-        model=model,
-        outputs=[vtk_output_process],
-        mesh_file_name=mesh_name, output_folder=input_files_dir
-    )
+    stem.write_all_input_files()
 
-
-In order to run the calculation, the working directory is changed to the "input_files_dir". The simulation is then run
-using the GeoMechanicsAnalysis.
+The calculation is then ran by calling the run_calculation function within the stem class.
 
 .. code-block:: python
 
-    os.chdir(input_files_dir)
-
-    with open(project_name, "r") as parameter_file:
-        kratos_parameters = KratosMultiphysics.Parameters(parameter_file.read())
-
-    kratos_model = KratosMultiphysics.Model()
-    simulation = GeoMechanicsAnalysis(kratos_model, kratos_parameters)
-    simulation.Run()
-
-
+    stem.run_calculation()
 
 .. _tutorial2:
 
@@ -312,31 +278,11 @@ This tutorial shows step by step guide on how to set up a moving load
 on top of an embankment with two soil layers underneath, in a 3D model.
 
 First the necessary packages are imported and paths are defined.
-The path to Kratos is specified in the following way (this path is described in :ref:`kratos`).
-The name of the mesh file is also specified here.
-Then necessary paths are added to the system path.
-After which the necessary packages for setting up the model are imported. From KratosMultiphysics,
-GeoMechanicsApplication is imported for this simulation.
 
 .. code-block:: python
 
-    import sys
-    import os
-
-    path_kratos = r"./StemKratos"
-    material_name = "MaterialParameters.json"
-    project_name = "ProjectParameters.json"
-    mesh_name = "calculate_moving_load_on_embankment_3d.mdpa"
-
     input_files_dir = "moving_load"
     results_dir = "output_moving_load"
-
-
-    sys.path.append(os.path.join(path_kratos, "KratosGeoMechanics"))
-    sys.path.append(os.path.join(path_kratos, r"KratosGeoMechanics\libs"))
-
-    import KratosMultiphysics.GeoMechanicsApplication
-    from KratosMultiphysics.GeoMechanicsApplication.geomechanics_analysis import (GeoMechanicsAnalysis)
 
     from stem.model import Model
     from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
@@ -345,7 +291,7 @@ GeoMechanicsApplication is imported for this simulation.
     from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
          NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
     from stem.output import NodalOutput, VtkOutputParameters, Output
-    from stem.IO.kratos_io import KratosIO
+    from stem.stem import Stem
 
 For setting up the model, Model class is imported from stem.model. And for setting up the soil material, OnePhaseSoil,
 LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw classes are imported.
@@ -353,7 +299,7 @@ In this case, there is a moving load on top of the embankment. MovingLoad class 
 As for setting the boundary conditions, DisplacementConstraint class is imported from stem.boundary.
 For setting up the solver settings, necessary classes are imported from stem.solver.
 Classes needed for the output, are NodalOutput, VtkOutputParameters and Output which are imported from stem.output.
-And for writing the Kratos input files, KratosIO class is imported.
+Lastly, Stem class is imported from stem.stem, in order to run the simulation.
 
 In this step, the geometry, conditions, and material parameters for the simulation is defined.
 First the dimension of the model is indicated which in this case is 3. After which the model can be initialised.
@@ -571,39 +517,27 @@ results will be written every time step.
              output_control_type="step"
         )
      )
+     model.output_settings = [vtk_output_process]
 
-Now that the model is set up, the Kratos input files can be written.
+Now that the model is set up, the calculation is almost ready to be ran.
 
-Firstly the KratosIO class is initialised.
+Firstly the Stem class is initialised, with the model and the directory where the input files will be written to.
 
 .. code-block:: python
 
-    kratos_io = KratosIO(ndim=model.ndim)
+    stem = Stem(model, input_files_dir)
 
 The Kratos input files are then written. The project settings and output definitions are written to
-ProjectParameters.json file. The mesh is written to .mdpa file and the material parameters are written to
-the MaterialParameters.json file.
+ProjectParameters_stage_1.json file. The mesh is written to the .mdpa file and the material parameters are
+written to the ProjectParameters_stage_1.json file.
 All of the input files are then written to the input files directory.
 
 .. code-block:: python
 
-    kratos_io.write_input_files_for_kratos(
-        model=model,
-        outputs=[vtk_output_process],
-        mesh_file_name=mesh_name, output_folder=input_files_dir
-    )
+    stem.write_all_input_files()
 
-
-In order to run the calculation, the working directory is changed to the "input_files_dir". The simulation is then run
-using the GeoMechanicsAnalysis.
+The calculation is then ran by calling the run_calculation function within the stem class.
 
 .. code-block:: python
 
-    os.chdir(input_files_dir)
-
-    with open(project_name, "r") as parameter_file:
-        kratos_parameters = KratosMultiphysics.Parameters(parameter_file.read())
-
-    kratos_model = KratosMultiphysics.Model()
-    simulation = GeoMechanicsAnalysis(kratos_model, kratos_parameters)
-    simulation.Run()
+    stem.run_calculation()

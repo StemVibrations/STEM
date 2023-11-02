@@ -7,7 +7,7 @@ from typing import List, Dict
 from stem.model import Model
 from stem.IO.kratos_io import KratosIO
 
-class MainStem:
+class Stem:
     """
     Class containing the main calculation.
 
@@ -17,6 +17,7 @@ class MainStem:
         - kratos_model (:class:`KratosMultiphysics.Model`): The Kratos model.
         - __stages (List[:class:`stem.model.Model`]): The calculation stages.
         - __stage_settings_file_names (Dict[int, str]): The file names of the project parameters files for each stage.
+        - __last_ran_stage_number (int): The number of the last ran stage.
 
     """
 
@@ -36,9 +37,15 @@ class MainStem:
         self.__stage_settings_file_names: Dict[int, str] = {}
         self.__last_ran_stage_number: int = 0
 
-
     @property
     def stages(self) -> List[Model]:
+        """
+        The calculation stages.
+
+        Returns:
+            - (List[:class:`stem.model.Model`]): The calculation stages.
+
+        """
         return self.__stages
 
     def add_calculation_stage(self, stage: Model):
@@ -46,7 +53,6 @@ class MainStem:
         Add a calculation stage to the calculation. Currently only one stage is supported. This method is reserved for
         when multi-stage calculations are implemented. In this case, when adding a stage, a deepcopy of the model is to
         be made, where the nodes and elements is not to be written again.
-
 
         Args:
             - stage (:class:`stem.model.Model`): The model of the stage to be added.
@@ -86,7 +92,7 @@ class MainStem:
                                                             project_file_name=project_settings_file_name,
                                                             output_folder=self.input_files_dir)
 
-                self.__stage_settings_file_names[stage_nr] = project_settings_file_name
+                self.__stage_settings_file_names[stage_nr+1] = project_settings_file_name
 
     def run_stage(self, stage_number: int):
         """
@@ -97,6 +103,7 @@ class MainStem:
 
         """
 
+        # check if the stages are run in order
         if stage_number != self.__last_ran_stage_number + 1:
             raise Exception("Stages should be run in order")
 
@@ -128,6 +135,6 @@ class MainStem:
         """
 
         for stage_nr, stage in enumerate(self.stages):
-            self.run_stage(stage_nr)
+            self.run_stage(stage_nr + 1)
 
 
