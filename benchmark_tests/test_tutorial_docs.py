@@ -2,17 +2,21 @@ import re
 
 
 def test_tutorial_docs():
-    with open("./docs/tutorials.rst", "r") as fi:
-        lines = fi.read().splitlines()
+    """Test the code in the tutorials"""
+    tutorial_files = ["./docs/tutorials.rst"]
 
-    # find start lines
-    idx_ini = [i for i, val, in enumerate(lines) if val == ".. code-block:: python"]
+    for tutorial in tutorial_files:
+        with open("./docs/tutorials.rst", "r") as fi:
+            lines = fi.read().splitlines()
 
-    data = []
-    for ini in idx_ini:
-        # find end line
-        for val in lines[ini:]:
-            if len(val.lstrip()) > 0 and re.search('\S', val).start() >= 4:
-                data.append(val.lstrip())
+        # find start lines
+        idx_ini = [i for i, val, in enumerate(lines) if val == ".. code-block:: python"]
 
-    exec("\n".join(data))
+        data = []
+        for ini in idx_ini:
+            # find end line
+            for val in lines[ini:]:
+                if len(val.lstrip()) > 0 and re.search('\S', val).start() >= 4:
+                    data.append(val.lstrip())
+
+        exec("\n".join(data))
