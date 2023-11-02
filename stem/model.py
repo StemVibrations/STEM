@@ -13,6 +13,7 @@ from stem.geometry import Geometry
 from stem.mesh import Mesh, MeshSettings, Node, Element
 from stem.load import *
 from stem.solver import Problem, StressInitialisationType
+from stem.output import Output
 from stem.utils import Utils
 from stem.plot_utils import PlotUtils
 from stem.globals import ELEMENT_DATA, VERTICAL_AXIS, GRAVITY_VALUE,  OUT_OF_PLANE_AXIS_2D
@@ -31,6 +32,7 @@ class Model:
         - geometry (Optional[:class:`stem.geometry.Geometry`]) The geometry of the whole model.
         - body_model_parts (List[:class:`stem.model_part.BodyModelPart`]): A list containing the body model parts.
         - process_model_parts (List[:class:`stem.model_part.ModelPart`]): A list containing the process model parts.
+        - output_settings (List[:class:`stem.output.Output`]): A list containing the output settings.
         - extrusion_length (Optional[float]): The extrusion length in the out of plane direction.
 
     """
@@ -48,6 +50,7 @@ class Model:
         self.gmsh_io = gmsh_IO.GmshIO()
         self.body_model_parts: List[BodyModelPart] = []
         self.process_model_parts: List[ModelPart] = []
+        self.output_settings: List[Output] = []
 
         self.extrusion_length: Optional[float] = None
 
