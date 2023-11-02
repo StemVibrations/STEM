@@ -192,7 +192,6 @@ class KratosSolverIO:
         solver_settings_dict: Dict[str, Any] = {"solver_type": self.__set_analysis_type(solver_settings.analysis_type),
                                                 "model_part_name": self.domain,
                                                 "domain_size": self.ndim,
-                                                "start_time": solver_settings.time_integration.start_time,
                                                 "model_import_settings": {
                                                     "input_type": "mdpa",
                                                     "input_filename": mesh_file_name},

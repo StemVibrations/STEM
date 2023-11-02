@@ -338,6 +338,43 @@ class Utils:
         return is_outwards
 
     @staticmethod
+    def create_sigmoid_tiny_expr(start_time: float, dt_slope: float, initial_value: float, final_value: float,
+                                 is_half_function: bool) -> str:
+        """
+        Creates a tiny expression with variable time for a sigmoid function. For more information on tiny expressions,
+        see: https://github.com/codeplea/tinyexpr
+
+        Args:
+            - start_time (float): start time of the sigmoid function
+            - dt_slope (float): delta time on where the slope is present in the sigmoid function
+            - initial_value (float): initial value of the sigmoid function
+            - final_value (float): final value of the sigmoid function
+            - is_half_function (bool): whether to return half the sigmoid function or the full sigmoid function
+
+        Returns:
+            - str: tiny expression of the sigmoid time function
+        """
+
+        # only return half the sigmoid function, where the slope always contains the same sign
+        if is_half_function:
+
+            # calculate beta
+            beta = 6 / dt_slope
+
+            return (f"((1 / (1 + e^(-{beta} * (t -  {start_time}))) - 0.5)) * "
+                    f"({final_value} - {initial_value}) * 2 + {initial_value}")
+
+        # return full sigmoid function
+        else:
+            # calculate beta
+            beta = 12 / dt_slope
+            return (f"(1 / (1 + e^(-{beta} * (t - {dt_slope} / 2 - {start_time})))) * ({final_value} - {initial_value})"
+                    f"+ {initial_value}")
+
+
+
+
+    @staticmethod
     def calculate_centre_of_mass(coordinates: npt.NDArray) -> npt.NDArray:
         """
         Calculate the centre of mass of a closed polygon.

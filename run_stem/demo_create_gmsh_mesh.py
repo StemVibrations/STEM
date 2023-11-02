@@ -11,7 +11,7 @@ element_size = 2
 # define geometry dimension; input "3" for 3D to extrude the 2D surface, input "2" for 2D
 dims = 3
 # if 3D, input depth of geometry to be extruded from 2D surface
-extrusion_length = [0, 0, 2]
+extrusion_length = 2
 # set a name label for the surface
 name_label = "Soil Layer"
 # if "True", saves mesh data to separate mdpa files; otherwise "False"

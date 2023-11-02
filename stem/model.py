@@ -13,9 +13,10 @@ from stem.geometry import Geometry
 from stem.mesh import Mesh, MeshSettings, Node, Element
 from stem.load import *
 from stem.solver import Problem, StressInitialisationType
+from stem.output import Output
 from stem.utils import Utils
 from stem.plot_utils import PlotUtils
-from stem.globals import ELEMENT_DATA, VERTICAL_AXIS, GRAVITY_VALUE, TEMP_ZERO_THICKNESS
+from stem.globals import ELEMENT_DATA, VERTICAL_AXIS, GRAVITY_VALUE,  OUT_OF_PLANE_AXIS_2D
 
 
 NUMBER_TYPES = (int, float, np.int64, np.float64)
@@ -31,7 +32,8 @@ class Model:
         - geometry (Optional[:class:`stem.geometry.Geometry`]) The geometry of the whole model.
         - body_model_parts (List[:class:`stem.model_part.BodyModelPart`]): A list containing the body model parts.
         - process_model_parts (List[:class:`stem.model_part.ModelPart`]): A list containing the process model parts.
-        - extrusion_length (Optional[Sequence[float]]): The extrusion length in x, y and z direction
+        - output_settings (List[:class:`stem.output.Output`]): A list containing the output settings.
+        - extrusion_length (Optional[float]): The extrusion length in the out of plane direction.
 
     """
     def __init__(self, ndim: int):
@@ -48,7 +50,9 @@ class Model:
         self.gmsh_io = gmsh_IO.GmshIO()
         self.body_model_parts: List[BodyModelPart] = []
         self.process_model_parts: List[ModelPart] = []
-        self.extrusion_length: Optional[Sequence[float]] = None
+        self.output_settings: List[Output] = []
+
+        self.extrusion_length: Optional[float] = None
 
     def generate_straight_track(self, sleeper_distance: float, n_sleepers: int, rail_parameters: EulerBeam,
                        sleeper_parameters: NodalConcentrated, rail_pad_parameters: ElasticSpringDamper,
@@ -204,7 +208,7 @@ class Model:
                                       material_parameters: Union[SoilMaterial, StructuralMaterial], name: str):
         """
         Adds a soil layer to the model by giving a sequence of 2D coordinates. In 3D the 2D geometry is extruded in
-        the direction of the extrusion_length
+        the out of plane direction.
 
         Args:
             - coordinates (Sequence[Sequence[float]]): The plane coordinates of the soil layer.
@@ -226,7 +230,9 @@ class Model:
             if self.extrusion_length is None:
                 raise ValueError("Extrusion length must be specified for 3D models")
 
-            gmsh_input[name]["extrusion_length"] = self.extrusion_length
+            extrusion_length: List[float] = [0, 0, 0]
+            extrusion_length[OUT_OF_PLANE_AXIS_2D] = self.extrusion_length
+            gmsh_input[name]["extrusion_length"] = extrusion_length
 
         # todo check if this function in gmsh io can be improved
         self.gmsh_io.generate_geometry(gmsh_input, "")
@@ -430,13 +436,6 @@ class Model:
         # add the mesh to each model part
         for model_part in all_model_parts:
             model_part.mesh = Mesh.create_mesh_from_gmsh_group(self.gmsh_io.mesh_data, model_part.name)
-
-        # Shift back the nodes of the body model parts in the vertical direction, note that this has to be done after
-        # generating the mesh for each model part
-        for model_part in self.body_model_parts:
-            if model_part.is_shifted:
-                for node in model_part.mesh.nodes.values():
-                    node.coordinates[2] -= TEMP_ZERO_THICKNESS
 
         # per process model part, check if the condition elements are applied to a body model part and set the
         # node ordering of the condition elements to match the body elements
@@ -659,7 +658,7 @@ class Model:
 
         # set gravity load at vertical axis
         gravity_load_values: List[float] = [0, 0, 0]
-        gravity_load_values[VERTICAL_AXIS] = -GRAVITY_VALUE
+        gravity_load_values[VERTICAL_AXIS] = GRAVITY_VALUE
         gravity_load = GravityLoad(value=gravity_load_values, active=[True, True, True])
 
         # get all body model part names
@@ -729,7 +728,7 @@ class Model:
         self.__validate_model_part_names()
 
     def show_geometry(self, show_volume_ids: bool = False, show_surface_ids: bool = False, show_line_ids: bool = False,
-                      show_point_ids: bool = False):
+                      show_point_ids: bool = False, file_name: str = "tmp_geometry_file.html", auto_open: bool = True):
         """
         Show the 2D or 3D geometry in a plot.
 
@@ -738,6 +737,8 @@ class Model:
             - show_surface_ids (bool): Show the surface ids in the plot. (default False)
             - show_line_ids (bool): Show the line ids in the plot. (default False)
             - show_point_ids (bool): Show the point ids in the plot. (default False)
+            - file_name (str): The name of the html file in which the plot is saved. (default "tmp_geometry_file.html")
+            - auto_open (bool): Open the html file automatically. (default True)
 
         Raises:
             - ValueError: If the geometry is not set.
@@ -748,7 +749,8 @@ class Model:
 
         fig = PlotUtils.create_geometry_figure(self.ndim, self.geometry, show_volume_ids, show_surface_ids, show_line_ids,
                                                show_point_ids)
-        fig.show()
+
+        fig.write_html(file_name, auto_open=auto_open)
 
     def __setup_stress_initialisation(self):
         """
@@ -778,7 +780,6 @@ class Model:
         """
 
         self.synchronise_geometry()
-        self.generate_mesh()
         self.validate()
 
         self.__setup_stress_initialisation()

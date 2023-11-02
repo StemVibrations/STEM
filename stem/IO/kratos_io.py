@@ -43,7 +43,6 @@ class KratosIO:
         - loads_io (:class:`stem.IO.kratos_loads_io.KratosLoadsIO`): The loads IO object.
         - boundaries_io (:class:`stem.IO.kratos_boundaries_io.KratosBoundariesIO`): The boundaries IO object.
         - outputs_io (:class:`stem.IO.kratos_output_io.KratosOutputsIO`): The outputs IO object.
-        - model_io (:class:`stem.IO.kratos_model_io.KratosModelIO`): The model IO object.
         - solver_io (:class:`stem.IO.kratos_solver_io.KratosSolverIO`): The solver IO object.
 
     """
@@ -93,20 +92,31 @@ class KratosIO:
 
     def __initialise_process_model_part_ids(self, model: Model):
         """
-        Resets the process model part ids.
+        Resets the process model part ids. Also resets the condition element ids.
 
         Args:
             - model (:class:`stem.model.Model`): the model object containing the process model parts.
 
         """
 
-        # reset all condition ids
+        # reset all condition model part ids
         new_id = 0
+        new_cond_id = 1
         for pmp in model.process_model_parts:
             # if the process writes condition add an id
             if self.__check_if_process_writes_conditions(pmp):
                 new_id += 1
                 pmp.id = new_id
+
+                # Check if mesh in current process model part is initialised with elements
+                if pmp.mesh is not None and pmp.mesh.elements is not None:
+                    # renew all condition element ids
+                    new_cond_dict: Dict[int, Element] = {}
+                    for old_id, cond in pmp.mesh.elements.items():
+                        cond.id = new_cond_id
+                        new_cond_dict[new_cond_id] = cond
+                        new_cond_id += 1
+                    pmp.mesh.elements = new_cond_dict
 
     @staticmethod
     def __initialise_body_model_part_ids(model: Model):
@@ -924,7 +934,7 @@ class KratosIO:
 
         return processes_dict
 
-    def write_project_parameters_json(self, model: Model, outputs: List[Output], mesh_file_name: str,
+    def write_project_parameters_json(self, model: Model, mesh_file_name: str,
                                       materials_file_name: str, project_file_name: str = "ProjectParameters.json",
                                       output_folder: str = "./") -> Dict[str, Any]:
         """
@@ -933,7 +943,6 @@ class KratosIO:
         Args:
             - model (:class:`stem.model.Model`): The model object containing all the required info, i.e. \
                 body and process model parts, boundary conditions, solver settings and problem data.
-            - outputs (List[:class:`stem.output.Output`]): The list of output processes objects to write in outputs.
             - mesh_file_name (str): The name of the mesh file.
             - materials_file_name (str): The name of the materials file.
             - project_file_name (str): name of the project parameters file. Defaults to `ProjectParameters.json`.
@@ -950,7 +959,7 @@ class KratosIO:
             model, mesh_file_name, materials_file_name
         )
         # get the output dictionary
-        outputs_dict = self.__create_output_process_dictionary(outputs=outputs)
+        outputs_dict = self.__create_output_process_dictionary(outputs=model.output_settings)
         # get the boundary condition dictionary
         loads_and_bc_dict = self.__create_loads_and_boundary_conditions_dictionary(model=model)
         # TODO get the additional_processes dictionary
@@ -964,7 +973,7 @@ class KratosIO:
 
         return project_parameters_dict
 
-    def write_input_files_for_kratos(self, model: Model, outputs: List[Output], mesh_file_name: str,
+    def write_input_files_for_kratos(self, model: Model, mesh_file_name: str,
                                      materials_file_name: str = "MaterialParameters.json",
                                      project_file_name: str = "ProjectParameters.json", output_folder: str = "./"):
         """
@@ -973,7 +982,6 @@ class KratosIO:
 
         Args:
             - model (:class:`stem.model.Model`): The model object containing all the required info.
-            - outputs (List[:class:`stem.output.Output`]): The list of output processes objects to write in outputs.
             - mesh_file_name (str): The name of the mesh file.
             - materials_file_name (str): The name of the materials file.
             - project_file_name (str): name of the project parameters file. Defaults to `ProjectParameters.json`.
@@ -984,7 +992,7 @@ class KratosIO:
         self.write_material_parameters_json(model, materials_file_name, output_folder)
 
         # write project parameters
-        self.write_project_parameters_json(model, outputs, mesh_file_name, materials_file_name, project_file_name,
+        self.write_project_parameters_json(model, mesh_file_name, materials_file_name, project_file_name,
                                            output_folder)
 
         # write mdpa files

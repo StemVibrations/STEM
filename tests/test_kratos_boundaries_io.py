@@ -71,7 +71,6 @@ class TestKratosBoundariesIO:
 
         test_dictionary = kratos_io.write_project_parameters_json(
             model=model,
-            outputs=[],
             mesh_file_name="test_load_parameters.mdpa",
             materials_file_name=""
         )
