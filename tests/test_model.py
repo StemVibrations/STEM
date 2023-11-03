@@ -1954,9 +1954,12 @@ class TestModel:
         direction_vector = np.array([1, 1, -1])
 
         # create a straight track with rails, sleepers and rail pads
-        connection_coordinates = model.generate_straight_track(0.6, 3, rail_parameters,
+        connection_coordinates = model.generate_straight_track(0.6, 20, rail_parameters,
                                                                sleeper_parameters, rail_pad_parameters, origin_point,
                                                                direction_vector,"track_1")
+
+        model.synchronise_geometry()
+        model.gmsh_io.generate_mesh(3, open_gmsh_gui=True)
 
         distance_sleepers_xyz = 0.6 / 3**0.5
 

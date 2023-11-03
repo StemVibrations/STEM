@@ -55,8 +55,9 @@ class Model:
         self.extrusion_length: Optional[float] = None
 
     def generate_straight_track(self, sleeper_distance: float, n_sleepers: int, rail_parameters: EulerBeam,
-                       sleeper_parameters: NodalConcentrated, rail_pad_parameters: ElasticSpringDamper,
-                                origin_point: Sequence[float], direction_vector: Sequence[float], name):
+                                sleeper_parameters: NodalConcentrated, rail_pad_parameters: ElasticSpringDamper,
+                                origin_point: Sequence[float], direction_vector: Sequence[float], name,
+                                small_thickness: float = 1e-3):
         """
         Generates a track geometry. With rail, rail-pads and sleepers as mass elements.
 
@@ -83,14 +84,9 @@ class Model:
         rail_local_distance = np.linspace(0, sleeper_distance * (n_sleepers - 1), n_sleepers)
         sleeper_local_coords = np.copy(rail_local_distance)
 
-        # # todo kratos allows for a 0 thickness rail pad height, however gmsh needs to deal with fragmentation,
-        # # so we add a small height to prevent wrong fragmentation. Investigate the possibility to reset the thickness to
-        # # zero after the mesh is generated
-        # rail_pad_height = TEMP_ZERO_THICKNESS
-
         # set rail geometry
         rail_global_coords = rail_local_distance[:, None].dot(normalized_direction_vector[None, :]) + origin_point
-        rail_global_coords[:, VERTICAL_AXIS] += TEMP_ZERO_THICKNESS
+        rail_global_coords[:, VERTICAL_AXIS] += small_thickness
 
         rail_geo_settings = {rail_name: {"coordinates": rail_global_coords, "ndim": 1}}
         self.gmsh_io.generate_geometry(rail_geo_settings, "")
@@ -100,6 +96,9 @@ class Model:
 
         sleeper_geo_settings = {sleeper_name: {"coordinates": sleeper_global_coords, "ndim": 0}}
         self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
+
+        connection_lines = {f"rail_connection_{name}": {"coordinates": sleeper_global_coords, "ndim": 1}}
+        self.gmsh_io.generate_geometry(connection_lines, "")
 
         # create rail pad geometries
         top_point_ids = self.gmsh_io.make_points(rail_global_coords)
@@ -113,16 +112,15 @@ class Model:
         # create rail, sleeper, and rail_pad body model parts
         rail_model_part = BodyModelPart(rail_name)
         rail_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_name)
-        rail_model_part.material = rail_parameters
-        rail_model_part._is_shifted = True
+        rail_model_part.material = StructuralMaterial(name=rail_name, material_parameters=rail_parameters)
 
         sleeper_model_part = BodyModelPart(sleeper_name)
         sleeper_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, sleeper_name)
-        sleeper_model_part.material = sleeper_parameters
+        sleeper_model_part.material = StructuralMaterial(name=sleeper_name, material_parameters=sleeper_parameters)
 
         rail_pads_model_part = BodyModelPart(rail_pads_name)
         rail_pads_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_pads_name)
-        rail_pads_model_part.material = rail_pad_parameters
+        rail_pads_model_part.material = StructuralMaterial(name=rail_pads_name, material_parameters=rail_pad_parameters)
 
         # add physical group to gmsh
         rail_constraint_name = f"constraint_{rail_name}"
@@ -144,8 +142,6 @@ class Model:
         self.body_model_parts.append(rail_pads_model_part)
 
         self.process_model_parts.append(model_part)
-
-
 
         return sleeper_global_coords
 
@@ -289,6 +285,53 @@ class Model:
 
         # set the geometry of the model part
         model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
+
+        self.process_model_parts.append(model_part)
+
+    def add_load_by_geometry_ids(self, geometry_ids: Sequence[int], load_parameters: LoadParametersABC, name: str):
+        """
+        Add a load to the model by giving the geometry ids of the geometry where the load has to be applied.
+        The geometry dimension of the entity where the load needs to be applied is determined based on the 
+        load_parameters (0=point load, 1=line load, 2=surface load, 3=volume).
+
+        Args:
+            - geometry_ids (Sequence[int]): geometry ids of the entities where the load needs to be applied.
+            - load_parameters (:class:`stem.load.LoadParametersABC`): load parameters to define the load object.
+            - name (str): name of the load.
+
+        Raises:
+            - NotImplementedError: when the load parameter provided is not one of point, line, moving or surface loads.
+
+        """
+
+        # point load can only be assigned to 0d geometry
+        if isinstance(load_parameters, PointLoad):
+            ndim_load = 0
+        # line and moving load can only be assigned to 1d geometry
+        elif isinstance(load_parameters, (LineLoad, MovingLoad)):
+            ndim_load = 1
+        # surface load can only be assigned to 2d geometry
+        elif isinstance(load_parameters, SurfaceLoad):
+            ndim_load = 2
+        else:
+            raise NotImplementedError(
+                f"Load parameter provided is not supported: `{load_parameters.__class__.__name__}`."
+            )
+        # add physical group to gmsh
+        self.gmsh_io.add_physical_group(name, ndim_load, geometry_ids)
+
+        # create model part
+        model_part = ModelPart(name)
+
+        # retrieve geometry from gmsh and add to model part
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
+
+        # validations for non-empty geometry
+        if model_part.geometry is None:
+            raise ValueError("The geometry is not initialised for the model part.")
+
+        # add load parameters to model part
+        model_part.parameters = load_parameters
 
         self.process_model_parts.append(model_part)
 
