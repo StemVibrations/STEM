@@ -1520,10 +1520,10 @@ class TestModel:
         model.extrusion_length = 1
 
         # set expected parameters of the load conditions
-        expected_0d_model_part_parameters = PointLoad(active=[False, True, False], value=[0, -200, 0])
-        expected_1d_model_part_parameters = LineLoad(active=[False, True, False], value=[0, -20, 0])
-        expected_2d_model_part_parameters = SurfaceLoad(active=[False, True, False], value=[0, -2, 0])
-        moving_load_parameters = MovingLoad(
+        expected_point_load_parameters = PointLoad(active=[False, True, False], value=[0, -200, 0])
+        expected_line_load_parameters = LineLoad(active=[False, True, False], value=[0, -20, 0])
+        expected_surface_load_parameters = SurfaceLoad(active=[False, True, False], value=[0, -2, 0])
+        expected_moving_load_parameters = MovingLoad(
             origin=[0, 1, 0.5],
             load=[0.0, -10.0, 0.0],
             velocity=5.0,
@@ -1535,57 +1535,77 @@ class TestModel:
         soil_material = create_default_3d_soil_material
         model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "test_soil")
 
-        # add boundary conditions in 0d, 1d and 2d
+        # add point, line, surface and moving loads by geometry id
         model.add_load_by_geometry_ids([3, 4, 7, 8], create_default_point_load_parameters, "point_loads")
         model.add_load_by_geometry_ids([3, 8, 10, 11], create_default_line_load_parameters, "line_loads")
         model.add_load_by_geometry_ids([4], create_default_surface_load_parameters, "surface_load")
-        model.add_load_by_geometry_ids([3, 8, 10], moving_load_parameters, "moving_load")
+        model.add_load_by_geometry_ids([3, 8, 10], expected_moving_load_parameters, "moving_load")
 
-        # set expected geometry 0d load
+        # set expected geometry point load
         expected_load_points = {3: Point.create([1, 1, 0], 3), 4:  Point.create([0, 1, 0], 4),
-                                    7: Point.create([1, 1, 1], 7), 8:  Point.create([0, 1, 1], 8)}
-        expected_load_geometry_0d = Geometry(expected_load_points, {}, {}, {})
+                                7: Point.create([1, 1, 1], 7), 8:  Point.create([0, 1, 1], 8)}
+        expected_point_load_geometry = Geometry(expected_load_points, {}, {}, {})
 
-        # set expected geometry 1d load
+        # set expected geometry line load
         expected_load_lines = {3: Line.create([3, 4], 3), 8: Line.create([3, 7], 8),
-                                   10: Line.create([4, 8], 10), 11: Line.create([7, 8], 11)}
+                               10: Line.create([4, 8], 10), 11: Line.create([7, 8], 11)}
 
-        expected_load_geometry_1d = Geometry(expected_load_points, expected_load_lines, {}, {})
+        expected_line_load_geometry = Geometry(expected_load_points, expected_load_lines, {}, {})
 
-        # set expected geometry 2d load
-        expected_load_geometry_2d = Geometry()
-        expected_load_geometry_2d.points = {
+        # set expected geometry surface load
+        expected_surface_load_geometry = Geometry()
+        expected_surface_load_geometry.points = {
             3: Point.create([1, 1, 0], 3), 7: Point.create([1, 1, 1], 7),
             8:  Point.create([0, 1, 1], 8), 4:  Point.create([0, 1, 0], 4)
         }
-        expected_load_geometry_2d.lines = {
+        expected_surface_load_geometry.lines = {
             8: Line.create([3, 7], 8), 11: Line.create([7, 8], 11),
             10: Line.create([4, 8], 10), 3: Line.create([3, 4], 3)
         }
-        expected_load_geometry_2d.surfaces = {
+        expected_surface_load_geometry.surfaces = {
             4: Surface.create([8, 11, -10, -3], 4)
         }
-        # collect all expected geometries
-        all_expected_geometries = [expected_load_geometry_0d, expected_load_geometry_1d, expected_load_geometry_2d]
+
+        # set expected geometry moving load
+        expected_surface_load_geometry = Geometry()
+        expected_surface_load_geometry.points = {
+            3: Point.create([1, 1, 0], 3), 7: Point.create([1, 1, 1], 7),
+            8:  Point.create([0, 1, 1], 8), 4:  Point.create([0, 1, 0], 4)
+        }
+        expected_surface_load_geometry.lines = {
+            8: Line.create([3, 7], 8), 11: Line.create([7, 8], 11),
+            10: Line.create([4, 8], 10), 3: Line.create([3, 4], 3)
+        }
+        expected_surface_load_geometry.surfaces = {
+            4: Surface.create([8, 11, -10, -3], 4)
+        }
+
+        # collect all expected geometriesl
+        all_expected_geometries = [
+            expected_point_load_geometry,
+            expected_line_load_geometry,
+            expected_surface_load_geometry
+        ]
 
         for expected_geometry, model_part in zip(all_expected_geometries, model.process_model_parts):
 
             TestUtils.assert_almost_equal_geometries(expected_geometry, model_part.geometry)
 
-        # check 0d parameters
-        npt.assert_allclose(model.process_model_parts[0].parameters.value, expected_0d_model_part_parameters.value)
-        npt.assert_allclose(model.process_model_parts[0].parameters.active, expected_0d_model_part_parameters.active)
+        # check point load parameters
+        npt.assert_allclose(model.process_model_parts[0].parameters.value, expected_point_load_parameters.value)
+        npt.assert_allclose(model.process_model_parts[0].parameters.active, expected_point_load_parameters.active)
 
-        # check 1d parameters
-        npt.assert_allclose(model.process_model_parts[1].parameters.value, expected_1d_model_part_parameters.value)
-        npt.assert_allclose(model.process_model_parts[1].parameters.active, expected_1d_model_part_parameters.active)
+        # check line load parameters
+        npt.assert_allclose(model.process_model_parts[1].parameters.value, expected_line_load_parameters.value)
+        npt.assert_allclose(model.process_model_parts[1].parameters.active, expected_line_load_parameters.active)
 
-        # check 2d parameters
-        npt.assert_allclose(model.process_model_parts[2].parameters.value, expected_2d_model_part_parameters.value)
-        npt.assert_allclose(model.process_model_parts[2].parameters.active, expected_2d_model_part_parameters.active)
+        # check surface load parameters
+        npt.assert_allclose(model.process_model_parts[2].parameters.value, expected_surface_load_parameters.value)
+        npt.assert_allclose(model.process_model_parts[2].parameters.active, expected_surface_load_parameters.active)
 
-        # add boundary conditions in 0d, 1d and 2d
-        model.add_load_by_geometry_ids([], create_default_point_load_parameters, "point_loads")
+        # check moving load parameters
+        TestUtils.assert_dictionary_almost_equal(
+            model.process_model_parts[3].parameters.__dict__,  expected_moving_load_parameters.__dict__)
 
     def test_add_load_by_geometry_ids_raises_error(self, create_default_3d_soil_material: SoilMaterial):
         """
@@ -1621,17 +1641,16 @@ class TestModel:
                                            "gravity load")
         # lines disconnected
 
-        msg = ("Number of disconnected paths is >1: 1 discontinuities found in "
-               "the path!")
+        msg = ("The lines defined for the moving load are not aligned on a path."
+               "Discontinuities or loops/branching points are found.")
         with pytest.raises(ValueError, match=msg):
             model.add_load_by_geometry_ids([8, 10], moving_load_parameters, "moving_load_wrong_1")
 
         # origin not in path
         # test for branching points
-        msg = "Origin is not in any of the lines given as trajectory of the moving load."
+        msg = "None of the lines are aligned with the origin of the moving load. Error."
         with pytest.raises(ValueError, match=msg):
             model.add_load_by_geometry_ids([3, 8, 11], moving_load_parameters, "moving_load_wrong_2")
-
 
     def test_add_gravity_load_1d_and_2d(self, create_default_2d_soil_material: SoilMaterial):
         """

@@ -492,7 +492,8 @@ class TestUtilsStem:
             3: Line.create([3, 4], 3),
         }
 
-        Utils.check_lines_geometry_are_path(geo1)
+        # assert geometry is aligned on a path
+        assert Utils.check_lines_geometry_are_path(geo1)
         # test for discontinuities
         geo2 = Geometry()
 
@@ -508,10 +509,8 @@ class TestUtilsStem:
             3: Line.create([3, 4], 3),
         }
 
-        msg = ("Number of disconnected paths is >1: 1 discontinuities found in "
-               "the path!")
-        with pytest.raises(ValueError, match=msg):
-            Utils.check_lines_geometry_are_path(geo2)
+        # assert path are disconnected  (not a path)
+        assert not Utils.check_lines_geometry_are_path(geo2)
 
         # test for loops
         geo3 = Geometry()
@@ -532,9 +531,8 @@ class TestUtilsStem:
             5: Line.create([2, 5], 5)
         }
 
-        msg = "Found 1 loop\(s\) in the path."
-        with pytest.raises(ValueError, match=msg):
-            Utils.check_lines_geometry_are_path(geo3)
+        # assert loop is present (not a path)
+        assert not Utils.check_lines_geometry_are_path(geo3)
 
         # test for loops
         geo4 = Geometry()
@@ -552,15 +550,14 @@ class TestUtilsStem:
             3: Line.create([1, 4], 3)
         }
 
-        # test for branching points
-        msg = "Path is branching, should be on a line.1 branching point\(s\) have been found in the path!"
-        with pytest.raises(ValueError, match=msg):
-            Utils.check_lines_geometry_are_path(geo4)
+        # assert branching point is present (not a path)
+        assert not Utils.check_lines_geometry_are_path(geo4)
 
     def test_is_point_aligned_and_between_any_of_points(self):
-        """Checks that any of the points is aligned with at least one of the points in a list of pairs of
-         coordinates"""
-
+        """
+        Checks that any of the points is aligned with at least one of the points in a list of pairs of
+        coordinates.
+        """
         point_coordinates = [[(0.0, 0, 0), (1, 0, 0)],
                              [(1, 0, 0), (2, 0, 0)],
                              [(2, 0, 0), (4, 0, 0)]]
@@ -568,10 +565,8 @@ class TestUtilsStem:
         origin_correct = (0.5, 0, 0)
         origin_wrong = (3, 1, 0)
 
-        # check that no error are raised for correct definition
-        Utils.is_point_aligned_and_between_any_of_points(point_coordinates, origin_correct)
+        # check that the function returns true for correct definition of points/origin
+        assert Utils.is_point_aligned_and_between_any_of_points(point_coordinates, origin_correct)
 
-        # ... and that error are also raised when definition is incorrect
-        msg = "Origin is not in any of the lines given as trajectory of the moving load."
-        with pytest.raises(ValueError, match=msg):
-            Utils.is_point_aligned_and_between_any_of_points(point_coordinates, origin_wrong)
+        # check that the function returns false for incorrect definition of points/origin
+        assert not Utils.is_point_aligned_and_between_any_of_points(point_coordinates, origin_wrong)

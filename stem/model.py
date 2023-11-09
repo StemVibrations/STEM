@@ -203,10 +203,13 @@ class Model:
                 coordinates.append(line_coords)
 
             # check origin of moving load is in the path
-            Utils.is_point_aligned_and_between_any_of_points(coordinates, load_parameters.origin)
+            if not Utils.is_point_aligned_and_between_any_of_points(coordinates, load_parameters.origin):
+                raise ValueError("None of the lines are aligned with the origin of the moving load. Error.")
             # check that the path provided by geometry is correct (no loops, no branching out
             # and no discontinuities in the path)
-            Utils.check_lines_geometry_are_path(model_part.geometry)
+            if not Utils.check_lines_geometry_are_path(model_part.geometry):
+                raise ValueError("The lines defined for the moving load are not aligned on a path."
+                                 "Discontinuities or loops/branching points are found.")
 
         # add load parameters to model part
         model_part.parameters = load_parameters

@@ -1,6 +1,5 @@
 from typing import Sequence, Dict, Any, List, Union, Optional, Generator, TYPE_CHECKING
 
-import networkx as nx
 import numpy as np
 import numpy.typing as npt
 
@@ -374,9 +373,9 @@ class Utils:
                     f"+ {initial_value}")
 
     @staticmethod
-    def check_lines_geometry_are_path(geometry: Optional['Geometry']) -> None:
-
-        """Checks if lines are connected forming a path without:
+    def check_lines_geometry_are_path(geometry: Optional['Geometry']) -> bool:
+        """
+        Checks if lines are connected forming a path without:
 
             a) disconnected lines,   b) branching out paths
                 o---o       o---o              o
@@ -391,9 +390,9 @@ class Utils:
         Raises:
             - ValueError: when geometry is not provided (is None).
             - ValueError: when geometry has no lines.
-            - ValueError: when lines are disconnected.
-            - ValueError: when lines are branching off.
-            - ValueError: when lines are creating loops (passing on the same node twice).
+
+        Returns:
+            - bool: whether the lines are connected along the path
 
         """
 
@@ -403,52 +402,56 @@ class Utils:
         if geometry.lines is None or len(geometry.lines) == 0:
             raise ValueError("The geometry doesn't contain lines to check.")
 
+        # if more than 2 lines check for branching points/loops and discontinuities
         if len(geometry.lines) > 1:
 
+            # get the line ids and points in the line
             lines = {_id: line.point_ids for _id, line in geometry.lines.items()}
-            points = list(set([n for v in lines.values() for n in v]))
 
-            graph = nx.Graph()
+            # get the unique points in the line
+            unique_points = list(set([n for v in lines.values() for n in v]))
 
-            for n in points:
-                graph.add_node(n)
+            # loop over the points and find the lines connected to the poit
+            for p in unique_points:
 
-            for l1, nodes1 in lines.items():
-                graph.add_edge(nodes1[0], nodes1[1])
+                # initialise list of lines connected to the point
+                line_to_point = []
 
-            # Run DBSCAN clustering on the graph,
-            # Count the number of clusters and identify branching points and loops
-            clustered = list(nx.connected_components(graph))
-            branching_points = [node for node, degree in graph.degree() if degree > 2]
-            loops = list(nx.simple_cycles(graph))
+                # find which lines contain the point
+                for line_id, points_line in lines.items():
 
-            num_clusters = len(clustered)
-            num_loops = len(loops)
-            num_bp = len(branching_points)
+                    if p in points_line:
+                        line_to_point.append(line_id)
 
-            if num_clusters > 1:
-                raise ValueError(f"Number of disconnected paths is >1: {num_clusters-1} discontinuities found in "
-                                 f"the path!")
+                # when more than 2 lines are connected to the point a branching point or loop
+                # is found, so the geometry is not a path. Return False.
+                if len(line_to_point) > 2:
+                    # "Branching point was found for node {p} connected to lines {line_to_point}
+                    return False
 
-            if num_loops > 0:
-                raise ValueError(f"Found {num_loops} loop(s) in the path.")
+            # if no branching point are found than the check of connectivity holds when
+            if len(unique_points) != (len(lines) + 1):
+                # lines are not connected.
+                return False
 
-            if num_bp > 0:
-                raise ValueError(f"Path is branching, should be on a line."
-                                 f"{num_bp} branching point(s) have been found in the path!")
+        # if no False is return, the path is valid.  Return True.
+        return True
 
     @staticmethod
     def is_point_aligned_and_between_any_of_points(coordinates: Sequence[Sequence[Sequence[float]]],
-                                                   origin: Sequence[float]):
-        """Checks that any of the points provides in a list of pairs of coordinates
+                                                   origin: Sequence[float]) -> bool:
+        """
+        Checks that the point (origin) provided aligns with at least one of the lines, expressed as
+        list of pairs of coordinates representing the edges of the line.
 
         Args:
-            - coordinates (Sequence[Sequence[Sequence[float]]]): Pair-wise sets of coordinates representing the line
+            - coordinates (Sequence[Sequence[Sequence[float]]]): Pair-wise sets of coordinates representing the line \
                 on which the origin should lie.
             - origin (Sequence[float]): the coordinates of the point to be checked for alignment.
 
-        Raises:
-            - ValueError: when point is not aligned with one of the lines (pair-wise sets of coordinates).
+        Returns:
+            - bool: whether the considered point in at least one of the given lines (i.e. within the sequence of \
+                pair-wise points).
 
         """
 
@@ -463,9 +466,9 @@ class Utils:
             )
             # check if point complies
             is_on_line = collinear_check and is_between_check
-            # exit at the first success of the test (point in the line)
+            # exit at the first success of the test (point in the line) and return True
             if is_on_line:
-                return
+                return True
 
-        # none of the lines contain the origin, then raise an error
-        raise ValueError(f"Origin is not in any of the lines given as trajectory of the moving load.")
+        # none of the lines contain the origin, return False
+        return False
