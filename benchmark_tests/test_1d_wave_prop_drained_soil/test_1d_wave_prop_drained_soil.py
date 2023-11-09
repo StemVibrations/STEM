@@ -1,16 +1,3 @@
-import sys
-import os
-
-path_kratos = r"D:\Kratos_without_compiling"
-material_name = "MaterialParameters.json"
-project_name = "ProjectParameters.json"
-mesh_name = "test_1d_wave_prop_drained_soil.mdpa"
-
-sys.path.append(os.path.join(path_kratos, "KratosGeoMechanics"))
-sys.path.append(os.path.join(path_kratos, r"KratosGeoMechanics\libs"))
-
-import KratosMultiphysics.GeoMechanicsApplication
-from KratosMultiphysics.GeoMechanicsApplication.geomechanics_analysis import (GeoMechanicsAnalysis)
 from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
 from stem.load import LineLoad
@@ -19,8 +6,7 @@ from stem.boundary import DisplacementConstraint
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
     NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
 from stem.output import NodalOutput, VtkOutputParameters, Output
-from stem.IO.kratos_io import KratosIO
-
+from stem.stem import Stem
 
 # Define geometry, conditions and material parameters
 # --------------------------------
@@ -60,6 +46,7 @@ model.add_load_by_coordinates(load_coordinates, line_load, "load")
 # Define boundary conditions
 no_displacement_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True],
                                                     value=[0, 0, 0])
+
 sym_parameters = DisplacementConstraint(active=[True, False, True], is_fixed=[True, False, False], value=[0, 0, 0])
 
 # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
@@ -70,7 +57,7 @@ model.add_boundary_condition_by_geometry_ids(1, [2, 4], sym_parameters, "side_ro
 model.synchronise_geometry()
 
 # Show geometry and geometry ids
-model.show_geometry(show_line_ids=True, show_point_ids=True)
+# model.show_geometry(show_line_ids=True, show_point_ids=True)
 
 # Set mesh size and generate mesh
 # --------------------------------
@@ -106,65 +93,32 @@ problem = Problem(problem_name="test_1d_wave_prop_drained_soil", number_of_threa
 model.project_parameters = problem
 
 # Define the results to be written to the output file
-
 # Nodal results
 nodal_results = [NodalOutput.VELOCITY]
-# Gauss point results
-gauss_point_results = [
-]
 
 # Define the output process
 vtk_output_process = Output(
-    part_name="porous_computational_model_part",
     output_name="vtk_output",
     output_dir="output",
     output_parameters=VtkOutputParameters(
         file_format="binary",
         output_interval=1,
         nodal_results=nodal_results,
-        gauss_point_results=gauss_point_results,
+        gauss_point_results=[],
         output_control_type="step"
     )
 )
+# add the output process to the model
+model.output_settings = [vtk_output_process]
+
+# Define the kratos input folder
+input_folder = "benchmark_tests/test_1d_wave_prop_drained_soil/inputs_kratos"
 
 # Write KRATOS input files
 # --------------------------------
-
-kratos_io = KratosIO(ndim=model.ndim)
-# Define the output folder
-output_folder = "inputs_kratos"
-
-# Write project settings to ProjectParameters.json file
-kratos_io.write_project_parameters_json(
-    model=model,
-    outputs=[vtk_output_process],
-    mesh_file_name="test_1d_wave_prop_drained_soil.mdpa",
-    materials_file_name="MaterialParameters.json",
-    output_folder=output_folder
-)
-
-# Write mesh to .mdpa file
-kratos_io.write_mesh_to_mdpa(
-    model=model,
-    mesh_file_name="test_1d_wave_prop_drained_soil.mdpa",
-    output_folder=output_folder
-)
-
-# Write materials to MaterialParameters.json file
-kratos_io.write_material_parameters_json(
-    model=model,
-    output_folder=output_folder
-)
+stem = Stem(model, input_folder)
+stem.write_all_input_files()
 
 # Run Kratos calculation
 # --------------------------------
-
-project_folder = "inputs_kratos"
-os.chdir(project_folder)
-
-with open(project_name, "r") as parameter_file:
-    parameters = KratosMultiphysics.Parameters(parameter_file.read())
-
-model = KratosMultiphysics.Model()
-simulation = GeoMechanicsAnalysis(model, parameters)
-simulation.Run()
+stem.run_calculation()

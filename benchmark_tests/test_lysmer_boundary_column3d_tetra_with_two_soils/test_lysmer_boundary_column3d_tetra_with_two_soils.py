@@ -1,16 +1,3 @@
-import sys
-import os
-
-path_kratos = r"D:\Kratos_without_compiling"
-material_name = "MaterialParameters.json"
-project_name = "ProjectParameters.json"
-mesh_name = "test_lysmer_boundary_column3d_tetra_with_two_soils.mdpa"
-
-sys.path.append(os.path.join(path_kratos, "KratosGeoMechanics"))
-sys.path.append(os.path.join(path_kratos, r"KratosGeoMechanics\libs"))
-
-import KratosMultiphysics.GeoMechanicsApplication
-from KratosMultiphysics.GeoMechanicsApplication.geomechanics_analysis import (GeoMechanicsAnalysis)
 from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
 from stem.load import SurfaceLoad
@@ -19,9 +6,7 @@ from stem.boundary import DisplacementConstraint
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
     NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
 from stem.output import NodalOutput, GaussPointOutput, VtkOutputParameters, Output
-from stem.IO.kratos_io import KratosIO
-
-
+from stem.stem import Stem
 
 # Define geometry, conditions and material parameters
 # --------------------------------
@@ -46,7 +31,7 @@ material2 = SoilMaterial("soil2", soil_formulation1, constitutive_law1, retentio
 # Specify the coordinates for the column: x:2m x y:2m x z:10m
 layer1_coordinates = [(-1, -1, 0), (1, -1, 0), (1, 0, 0), (-1, 0, 0)]
 layer2_coordinates = [(-1, 0, 0), (1, 0, 0), (1, 1, 0), (-1, 1, 0)]
-model.extrusion_length = [0, 0, 10]
+model.extrusion_length = 10
 
 # Create the soil layer
 model.add_soil_layer_by_coordinates(layer1_coordinates, material1, "layer1")
@@ -60,7 +45,7 @@ surface_load = SurfaceLoad(active=[False, False, True], value=[0, 0, -10])
 model.add_load_by_coordinates(load_coordinates, surface_load, "load")
 
 # Define absorbing boundary condition
-absorbing_boundaries_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=1000.0)
+absorbing_boundaries_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=40.0)
 
 # Define displacement conditions
 displacement_parameters = DisplacementConstraint(active=[True, True, False], is_fixed=[True, True, False], value=[0, 0, 0])
@@ -74,12 +59,11 @@ model.add_boundary_condition_by_geometry_ids(2, [1, 2, 4, 7, 8, 9], displacement
 model.synchronise_geometry()
 
 # Show geometry and geometry ids
-model.show_geometry(show_surface_ids=True)
-# input()
+# model.show_geometry(show_surface_ids=True)
 
 # Set mesh size and generate mesh
 # --------------------------------
-model.set_mesh_size(element_size=2)
+model.set_mesh_size(element_size=0.25)
 model.generate_mesh()
 
 # Define project parameters
@@ -94,16 +78,13 @@ time_integration = TimeIntegration(start_time=0.0, end_time=0.3, delta_time=0.01
 convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
                                                         displacement_absolute_tolerance=1.0e-9)
 strategy_type = NewtonRaphsonStrategy(min_iterations=6, max_iterations=15, number_cycles=100)
-scheme_type = NewmarkScheme(newmark_beta=0.25, newmark_gamma=0.5, newmark_theta=0.5)
-linear_solver_settings = Amgcl(tolerance=1.0e-6, max_iteration=1000, scaling=True)
 stress_initialisation_type = StressInitialisationType.NONE
 solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
                                  stress_initialisation_type=stress_initialisation_type,
                                  time_integration=time_integration,
-                                 is_stiffness_matrix_constant=False, are_mass_and_damping_constant=False,
+                                 is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
                                  convergence_criteria=convergence_criterion,
-                                 strategy_type=strategy_type, scheme=scheme_type,
-                                 linear_solver_settings=linear_solver_settings, rayleigh_k=0.001,
+                                 strategy_type=strategy_type, rayleigh_k=0.001,
                                  rayleigh_m=0.1)
 
 # Set up problem data
@@ -134,44 +115,15 @@ vtk_output_process = Output(
     )
 )
 
+model.output_settings = [vtk_output_process]
+
+input_folder = "benchmark_tests/test_lysmer_boundary_column3d_tetra_with_two_soils/inputs_kratos"
+
 # Write KRATOS input files
 # --------------------------------
-
-kratos_io = KratosIO(ndim=model.ndim)
-# Define the output folder
-output_folder = "inputs_kratos"
-
-# Write project settings to ProjectParameters.json file
-kratos_io.write_project_parameters_json(
-    model=model,
-    outputs=[vtk_output_process],
-    mesh_file_name="test_lysmer_boundary_column3d_tetra_with_two_soils.mdpa",
-    materials_file_name="MaterialParameters.json",
-    output_folder=output_folder
-)
-
-# Write mesh to .mdpa file
-kratos_io.write_mesh_to_mdpa(
-    model=model,
-    mesh_file_name="test_lysmer_boundary_column3d_tetra_with_two_soils.mdpa",
-    output_folder=output_folder
-)
-
-# Write materials to MaterialParameters.json file
-kratos_io.write_material_parameters_json(
-    model=model,
-    output_folder=output_folder
-)
+stem = Stem(model, input_folder)
+stem.write_all_input_files()
 
 # Run Kratos calculation
 # --------------------------------
-
-project_folder = "inputs_kratos"
-os.chdir(project_folder)
-
-with open(project_name, "r") as parameter_file:
-    parameters = KratosMultiphysics.Parameters(parameter_file.read())
-
-model = KratosMultiphysics.Model()
-simulation = GeoMechanicsAnalysis(model, parameters)
-simulation.Run()
+stem.run_calculation()
