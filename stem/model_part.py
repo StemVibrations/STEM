@@ -85,6 +85,12 @@ class ModelPart:
             return None
 
     def __repr__(self):
+        """Repr method to provide a human-readable version of the ModelPart object
+
+        Returns:
+            - str: string representing the ModelPart object and it's parameters.
+
+        """
         return f"ModelPart(name={self.name}, parameters={self.parameters.__class__.__name__})"
 
 
@@ -135,5 +141,11 @@ class BodyModelPart(ModelPart):
             return None
 
     def __repr__(self):
+        """Repr method to provide a human-readable version of the BodyModelPart object
+
+        Returns:
+            - str: string representing the BodyModelPart object and it's parameters.
+
+        """
         return f"BodyModelPart(name={self.name}, material={self.material.__class__.__name__})"
 

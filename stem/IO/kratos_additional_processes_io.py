@@ -82,12 +82,10 @@ class KratosAdditionalProcessesIO:
 
         if parameters.function_type == "json_file":
             process_dict["Parameters"]["dataset_file_name"] = parameters.function
-        elif parameters.function_type == "python":
-            process_dict["Parameters"]["function"] = parameters.function
         elif parameters.function_type == "input":
             process_dict["Parameters"]["function"] = parameters.function
         else:
-            raise ValueError
+            raise ValueError(f"function type {parameters.function_type} not supported.")
 
         return process_dict
 

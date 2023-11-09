@@ -69,10 +69,13 @@ class KratosOutputsIO:
         if part_name is not None:
             model_part_name += f".{part_name}"
 
+        # make everything a string (if it's not a string) before passing it to the dictionary
+        # the if statement is required because we accept mixed objects (string or Enum)
         nodal_results = [
             op.name if isinstance(op, NodalOutput) else op for op in output_parameters.nodal_results
         ]
-
+        # make everything a string (if it's not a string) before passing it to the dictionary
+        # the if statement is required because we accept mixed objects (string or Enum)
         gauss_results = [
             op.name if isinstance(op, GaussPointOutput) else op for op in output_parameters.gauss_point_results
         ]
@@ -129,10 +132,13 @@ class KratosOutputsIO:
         if part_name is not None:
             model_part_name += f".{part_name}"
 
+        # make everything a string (if it's not a string) before passing it to the dictionary
+        # the if statement is required because we accept mixed objects (string or Enum)
         nodal_results = [
             op.name if isinstance(op, NodalOutput) else op for op in output_parameters.nodal_results
         ]
-
+        # make everything a string (if it's not a string) before passing it to the dictionary
+        # the if statement is required because we accept mixed objects (string or Enum)
         gauss_results = [
             op.name if isinstance(op, GaussPointOutput) else op for op in output_parameters.gauss_point_results
         ]
@@ -192,10 +198,13 @@ class KratosOutputsIO:
         if part_name is not None:
             model_part_name += f".{part_name}"
 
+        # make everything a string (if it's not a string) before passing it to the dictionary
+        # the if statement is required because we accept mixed objects (string or Enum)
         nodal_results = [
             op.name if isinstance(op, NodalOutput) else op for op in output_parameters.nodal_results
         ]
-
+        # make everything a string (if it's not a string) before passing it to the dictionary
+        # the if statement is required because we accept mixed objects (string or Enum)
         gauss_results = [
             op.name if isinstance(op, GaussPointOutput) else op for op in output_parameters.gauss_point_results
         ]

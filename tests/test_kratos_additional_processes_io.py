@@ -37,13 +37,6 @@ class TestKratosAdditionalProcessesIO:
             field_generator=random_field_generator
         )
 
-        field_parameters_python = ParameterFieldParameters(
-            variable_name="YOUNG_MODULUS",
-            function_type="python",
-            function="test_random_field_python",
-            field_generator=random_field_generator
-        )
-
         field_parameters_input = ParameterFieldParameters(
             variable_name="YOUNG_MODULUS",
             function_type="input",
@@ -55,7 +48,6 @@ class TestKratosAdditionalProcessesIO:
         all_parameters = {
             "test_excavation": excavation_parameters,
             "test_random_field_json": field_parameters_json,
-            "test_random_field_python": field_parameters_python,
             "test_random_field_input": field_parameters_input
         }
 
@@ -66,7 +58,6 @@ class TestKratosAdditionalProcessesIO:
 
         # write dictionary for the boundary(/ies)
         add_processes_io = KratosAdditionalProcessesIO(domain="PorousDomain")
-        # TODO: when model part are implemented, generate file through kratos_io
 
         for part_name, part_parameters in all_parameters.items():
             _parameters = add_processes_io.create_additional_processes_dict(

@@ -29,18 +29,6 @@
                 "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
                 "process_name": "SetParameterFieldProcess",
                 "Parameters": {
-                    "model_part_name": "PorousDomain.test_random_field_python",
-                    "variable_name": "YOUNG_MODULUS",
-                    "func_type": "python",
-                    "function": "test_random_field_python",
-                    "dataset": "dummy"
-                }
-            },
-            {
-                "python_module": "set_parameter_field_process",
-                "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
-                "process_name": "SetParameterFieldProcess",
-                "Parameters": {
                     "model_part_name": "PorousDomain.test_random_field_input",
                     "variable_name": "YOUNG_MODULUS",
                     "func_type": "input",

@@ -2,6 +2,7 @@ import pytest
 from random_fields.generate_field import RandomFields, ModelName
 
 from stem.additional_processes import ParameterFieldParameters
+from stem.field_generator import RandomFieldGenerator
 
 
 class TestAdditionalProcesses:
@@ -12,9 +13,8 @@ class TestAdditionalProcesses:
         """
 
         # Raise error if random field generator is None for json_type function
-
-        with pytest.raises(ValueError):
-
+        msg = (f"Field generator object is required to produce the json file parameters!")
+        with pytest.raises(ValueError, match=msg):
             field_parameters_json = ParameterFieldParameters(
                 variable_name="YOUNG_MODULUS",
                 function_type="json_file",
@@ -23,36 +23,33 @@ class TestAdditionalProcesses:
             )
 
         # Raise error if values are asked but generator is None (from python or input function type)
-        field_parameters_python = ParameterFieldParameters(
-            variable_name="YOUNG_MODULUS",
-            function_type="python",
-            function="test_random_field_python.py",
-            field_generator=None
-        )
+        msg = (f"ParameterField Error:\n`function_type` is not understood: python.\n"
+               f"Should be one of ['json_file', 'input'].")
         with pytest.raises(ValueError):
-            field_parameters_python.values()
+            field_parameters_python = ParameterFieldParameters(
+                variable_name="YOUNG_MODULUS",
+                function_type="python",
+                function="test_random_field_python.py",
+                field_generator=None
+            )
 
         # Raise error if random field values have not been initialised
-        random_field_generator = RandomFields(n_dim=3, mean=10, variance=2,
-                                              model_name=ModelName.Gaussian,
-                                              v_scale_fluctuation=5,
-                                              anisotropy=[0.5, 0.5], angle=[0, 0], seed=42, v_dim=1)
+        random_field_generator = RandomFieldGenerator(
+            n_dim=3, mean=10, variance=2, model_name="Gaussian",
+            v_scale_fluctuation=5, anisotropy=[0.5, 0.5], angle=[0, 0], seed=42, v_dim=1
+        )
         field_parameters_json = ParameterFieldParameters(
             variable_name="YOUNG_MODULUS",
             function_type="json_file",
             function="test_random_field_json",
             field_generator=random_field_generator
         )
-        with pytest.raises(ValueError):
-            field_parameters_json.values()
 
-        # Raises error if function type is not recognized
-        with pytest.raises(ValueError):
-            ParameterFieldParameters(
-                variable_name="YOUNG_MODULUS",
-                function_type="user_defined_function",
-                function="test_random_field_json",
-                field_generator=random_field_generator
-            )
+        # values are not generated yet!
+        msg = "Values for field parameters are not generated yet."
+        with pytest.raises(ValueError, match=msg):
+            values = field_parameters_json.field_generator.values
+
+        field_parameters_json.field_generator.generate([(0, 0, 0), (1, 1, 0)])
 
 

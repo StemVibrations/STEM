@@ -291,30 +291,6 @@ class SoilMaterial:
 
         return element_name
 
-    def is_property_in_material(self, property_name: str) -> bool:
-
-        """
-        Function to check if requested property is available for the soil material.
-
-        Args:
-            - property_name (str): The desired soil property name.
-
-        Returns:
-            - bool : Whether the property is one of the soil material properties. Returns False if it is not.
-
-        """
-
-        all_properties = []
-
-        all_properties.extend(list(self.soil_formulation.__dict__.keys()))
-        all_properties.extend(list(self.constitutive_law.__dict__.keys()))
-        all_properties.extend(list(self.retention_parameters.__dict__.keys()))
-        all_properties.extend(list(self.fluid_properties.__dict__.keys()))
-
-        all_properties = list(set(all_properties))
-
-        return property_name in all_properties
-
     def get_property_in_material(self, property_name: str) -> Any:
         """
         Function to retrieve the requested property for the soil material. The function is capital sensitive!
@@ -330,9 +306,6 @@ class SoilMaterial:
 
         """
 
-        if not self.is_property_in_material(property_name=property_name):
-            raise ValueError(f"Property f{property_name} is not one of the parameters of the soil material")
-
         all_properties = {}
 
         all_properties.update(self.soil_formulation.__dict__)
@@ -340,4 +313,9 @@ class SoilMaterial:
         all_properties.update(self.retention_parameters.__dict__)
         all_properties.update(self.fluid_properties.__dict__)
 
-        return all_properties[property_name]
+        property_value = all_properties.get(property_name)
+
+        if property_value is None:
+            raise ValueError(f"Property f{property_name} is not one of the parameters of the soil material")
+
+        return property_value

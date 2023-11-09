@@ -131,26 +131,32 @@ def validate_gauss_point_output(gauss_point_results: Sequence[Union[GaussPointOu
 
 def detect_vector_in_tensor_outputs(requested_outputs: Sequence[Union[GaussPointOutput, str]]):
     """
-    Detects whether gauss point outputs are requested and warns the user
+    Detects whether tensor gauss point outputs are requested as vector output instead and warns the user if some
+    cause problems. In GiD the vector output for tensors is incorrectly rendered. For example, for 2D tensor with 3
+    components, given the symmetry of the tensor, 6 component are expected when vector output is considered.
+    In GiD, this is rendered with 4 components.
+
+    If such output types are detected the script merely warns the user since the simulation can still run correctly.
 
     Args:
         - requested_outputs (Sequence[Union[:class:`GaussPointOutput`, str]]): list of requested outputs (gauss point)
     """
     if len(requested_outputs) > 0:
+        # initialise the detected tensor outputs with vector specification
         detected_tensor_outputs = []
-        for requested_output in requested_outputs:
+        # convert enumerations in strings
+        _string_requested_output = [out.name if isinstance(out, GaussPointOutput) else out for out in requested_outputs]
+        # loop over requested outputs
+        for requested_output in _string_requested_output:
+            # check for any requested output if a tensor output is specified with vector specification
+            # i.e. if it's in the list of TENSOR_OUTPUTS and "VECTOR" is present.
             for tensor_output in TENSOR_OUTPUTS:
-
-                if isinstance(requested_output, str):
-                    requested_output = GaussPointOutput[requested_output]
-
-                if (
-                    tensor_output in requested_output.name
-                    and "_VECTOR" in requested_output.name
-                ):
-                    detected_tensor_outputs.append(tensor_output)
+                # if it is, append it to the initialised list
+                if tensor_output in requested_output and "_VECTOR" in requested_output:
+                    detected_tensor_outputs.append(requested_output)
                     break
 
+        # print an explanatory warning if any tensor output was detected
         if len(detected_tensor_outputs):
             _fmt_list = "".join([f" - {outpt} \n" for outpt in detected_tensor_outputs])
             _msg = (
@@ -162,24 +168,27 @@ def detect_vector_in_tensor_outputs(requested_outputs: Sequence[Union[GaussPoint
 
 def detect_tensor_outputs(requested_outputs: Sequence[Union[GaussPointOutput, str]]):
     """
-    Detects whether gauss point outputs are requested and warns the user if some cause problems
-    for the considered output. It also checks if input types are correct
+    Detects whether gauss point outputs are requested for specific gauss point outputs and warns the user if some
+    cause problems. In VTK and JSON output types the vector output are rendered incorrectly.
+
+    If such output types are detected the script merely warns the user since the simulation can still run correctly.
 
     Args:
         - requested_outputs (List[:class:`GaussPointOutput`]): list of requested outputs (gauss point)
     """
     if len(requested_outputs) > 0:
+        # initialise the detected tensor outputs
         detected_tensor_outputs = []
-        for requested_output in requested_outputs:
-            for tensor_output in TENSOR_OUTPUTS:
+        # convert enumerations in strings
+        _string_requested_output = [out.name if isinstance(out, GaussPointOutput) else out for out in requested_outputs]
+        # loop over requested outputs
+        for requested_output in _string_requested_output:
+            # check for any requested output if a tensor output is specified
+            # i.e. if it's in the list of TENSOR_OUTPUTS
+            if any([tensor_output in requested_output for tensor_output in TENSOR_OUTPUTS]):
+                detected_tensor_outputs.append(requested_output)
 
-                if isinstance(requested_output, str):
-                    requested_output = GaussPointOutput[requested_output]
-
-                if tensor_output in requested_output.name:
-                    detected_tensor_outputs.append(tensor_output)
-                    break
-
+        # print an explanatory warning if any tensor output was detected
         if len(detected_tensor_outputs):
             _fmt_list = "".join([f" - {outpt} \n" for outpt in detected_tensor_outputs])
             _msg = (
@@ -213,8 +222,9 @@ class GiDOutputParameters(OutputParametersABC):
               `output_control_type` is `time`.
         - output_control_type (str): type of output control, either `step` or `time`.
         - file_format (str): format of output (`binary`,`ascii` or `hdf5`) for the gid_post_mode flag
-        - nodal_results (List[:class:`NodalOutput`]): list of nodal outputs as defined in :class:`NodalOutput`.
-        - gauss_point_results (List[:class:`GaussPointOutput`]): list of gauss point outputs as \
+        - nodal_results (Sequence[Union[:class:`NodalOutput`, str]]): list of nodal outputs as defined in \
+            :class:`NodalOutput`.
+        - gauss_point_results (Sequence[Union[:class:`GaussPointOutput`, str]]): list of gauss point outputs as \
             defined in :class:`GaussPointOutput`.
         - file_label (str): labelling format for the files (`step` or `time`)
     """
@@ -253,9 +263,10 @@ class VtkOutputParameters(OutputParametersABC):
               `output_control_type` is `time`.
         - output_control_type (str): type of output control, either `step` or `time`.
         - file_format (str): file format for VTK, either `binary` or `ascii` are allowed.
-        - nodal_results (List[:class:`NodalOutput`]): list of nodal outputs as defined in :class:`NodalOutput`.
-        - gauss_point_results (List[:class:`GaussPointOutput`]): list of gauss point outputs as \
-              defined in :class:`GaussPointOutput`.
+        - nodal_results (Sequence[Union[:class:`NodalOutput`, str]]): list of nodal outputs as defined in \
+            :class:`NodalOutput`.
+        - gauss_point_results (Sequence[Union[:class:`GaussPointOutput`, str]]): list of gauss point outputs as \
+            defined in :class:`GaussPointOutput`.
           output_precision (int): precision of the output for ascii. Default is 7.
     """
 
@@ -290,9 +301,10 @@ class JsonOutputParameters(OutputParametersABC):
 
     Attributes:
         - output_interval (float): time frequency of the output [s].
-        - nodal_results (List[:class:`NodalOutput`]): list of nodal outputs as defined in :class:`NodalOutput`.
-        - gauss_point_results (List[:class:`GaussPointOutput`]): list of gauss point outputs as \
-              defined in :class:`GaussPointOutput`.
+        - nodal_results (Sequence[Union[:class:`NodalOutput`, str]]): list of nodal outputs as defined in \
+            :class:`NodalOutput`.
+        - gauss_point_results (Sequence[Union[:class:`GaussPointOutput`, str]]): list of gauss point outputs as \
+            defined in :class:`GaussPointOutput`.
     """
 
     # JSON specif inputs

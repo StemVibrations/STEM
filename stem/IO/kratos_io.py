@@ -69,15 +69,6 @@ class KratosIO:
         self.solver_io = KratosSolverIO(self.ndim, DOMAIN)
         self.additional_process_io = KratosAdditionalProcessesIO(DOMAIN)
 
-    def set_project_folder(self, project_folder:str):
-        """
-        Change the project folder of the project.
-
-        Args:
-            project_folder (str): new project folder
-        """
-        self.project_folder = project_folder
-
     @staticmethod
     def __is_body_model_part(model_part: ModelPart):
         """
@@ -351,7 +342,7 @@ class KratosIO:
                     block_text, block_name="Conditions", block_entities=entities
                 )
             elif isinstance(process_model_part.parameters, AdditionalProcessesParametersABC):
-                # write conditions
+                # write element for the parameter field process
                 block_text = self.__write_sub_model_part_block(
                     block_text, block_name="Elements", block_entities=entities
                 )
@@ -723,26 +714,25 @@ class KratosIO:
         # write per conditions per process model part
         for pmp in model.process_model_parts:
 
-            if not self.__check_if_process_writes_conditions(pmp):
-                continue
+            if self.__check_if_process_writes_conditions(pmp):
 
-            # get the condition element type
-            condition_type = self.__map_gmsh_element_to_kratos(model, pmp)
+                # get the condition element type
+                condition_type = self.__map_gmsh_element_to_kratos(model, pmp)
 
-            if pmp.id is None:
-                raise ValueError(
-                    f"Process model part id of part {pmp.name} not initialised."
-                )
-
-            # write text block with conditions
-            if condition_type is not None:
-                block_text.extend(
-                    self.write_conditions_process_model_part(
-                        mat_id=pmp.id,
-                        kratos_element_type=condition_type,
-                        process_model_part=pmp,
+                if pmp.id is None:
+                    raise ValueError(
+                        f"Process model part id of part {pmp.name} not initialised."
                     )
-                )
+
+                # write text block with conditions
+                if condition_type is not None:
+                    block_text.extend(
+                        self.write_conditions_process_model_part(
+                            mat_id=pmp.id,
+                            kratos_element_type=condition_type,
+                            process_model_part=pmp,
+                        )
+                    )
         return block_text
 
     def __write_submodel_parts(self, model: Model) -> List[str]:
@@ -766,7 +756,7 @@ class KratosIO:
 
         return block_text
 
-    def write_mdpa_text(self, model: Model) -> List[str]:
+    def __write_mdpa_text(self, model: Model) -> List[str]:
         """
         Returns the  mesh data to mdpa format as list of strings representing each a line in the mdpa file.
 
@@ -802,7 +792,7 @@ class KratosIO:
 
         return block_text
 
-    def write_mesh_to_mdpa(self, model: Model, mesh_file_name: str) -> List[str]:
+    def __write_mesh_to_mdpa(self, model: Model, mesh_file_name: str) -> List[str]:
         """
         Saves mesh data to mdpa file.
 
@@ -814,7 +804,7 @@ class KratosIO:
         Returns:
             - block_text (List[str]): list of strings for the mdpa file. Each element is a line in the mdpa file.
         """
-        block_text = self.write_mdpa_text(model)
+        block_text = self.__write_mdpa_text(model)
 
         # append EOL to each line
         output_formatted_txt = [f"{line}\n" for line in block_text]
@@ -831,7 +821,7 @@ class KratosIO:
 
         return output_formatted_txt
 
-    def write_material_parameters_json(self, model: Model, materials_file_name: str = "MaterialParameters.json") -> Dict[str, Any]:
+    def __write_material_parameters_json(self, model: Model, materials_file_name: str = "MaterialParameters.json") -> Dict[str, Any]:
         """
         Writes the material parameters to json format for Kratos.
 
@@ -965,16 +955,17 @@ class KratosIO:
 
                 if isinstance(mp.parameters, ParameterFieldParameters):
                     # generate parameter field file json
-                    IOUtils.write_json_file(
-                        output_folder=self.project_folder,
-                        file_name=mp.parameters.function,
-                        dictionary={"values": mp.parameters.values}
-                    )
+                    if ParameterFieldParameters.function_type == "json_file":
+                        IOUtils.write_json_file(
+                            output_folder=self.project_folder,
+                            file_name=mp.parameters.function,
+                            dictionary={"values": mp.parameters.field_generator.values}
+                        )
 
         return processes_dict
 
-    def write_project_parameters_json(self, model: Model, mesh_file_name: str, materials_file_name: str,
-                                      project_file_name: str = "ProjectParameters.json") -> Dict[str, Any]:
+    def __write_project_parameters_json(self, model: Model, mesh_file_name: str, materials_file_name: str,
+                                        project_file_name: str = "ProjectParameters.json") -> Dict[str, Any]:
         """
         Writes project parameters to json file
 
@@ -984,7 +975,6 @@ class KratosIO:
             - mesh_file_name (str): The name of the mesh file.
             - materials_file_name (str): The name of the materials file.
             - project_file_name (str): name of the project parameters file. Defaults to `ProjectParameters.json`.
-            - project_folder (str): folder to store the project parameters file. Defaults to the working directory.
 
         Returns:
             - project_parameters_dict (Dict[str, Any]): the dictionary containing the project parameters.
@@ -999,11 +989,11 @@ class KratosIO:
         # get the output dictionary
         outputs_dict = self.__create_output_process_dictionary(outputs=model.outputs)
         # get the boundary condition dictionary
-        loads_and_bc_dict = self.__create_process_model_parts_dictionary(model=model)
+        process_model_part_dict = self.__create_process_model_parts_dictionary(model=model)
 
         # merge dictionaries into one
         project_parameters_dict: Dict[str, Any] = reduce(
-            Utils.merge, (solver_dict, outputs_dict, loads_and_bc_dict)
+            Utils.merge, (solver_dict, outputs_dict, process_model_part_dict)
         )
         # write json file
         IOUtils.write_json_file(self.project_folder, project_file_name, project_parameters_dict)
@@ -1025,10 +1015,10 @@ class KratosIO:
         """
 
         # write materials
-        self.write_material_parameters_json(model, materials_file_name)
+        self.__write_material_parameters_json(model, materials_file_name)
 
         # write project parameters
-        self.write_project_parameters_json(model, mesh_file_name, materials_file_name, project_file_name)
+        self.__write_project_parameters_json(model, mesh_file_name, materials_file_name, project_file_name)
 
         # write mdpa files
-        self.write_mesh_to_mdpa(model, mesh_file_name)
+        self.__write_mesh_to_mdpa(model, mesh_file_name)

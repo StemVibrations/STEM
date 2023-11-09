@@ -109,7 +109,7 @@ class TestKratosModelIO:
 
         model.synchronise_geometry()
 
-        model.set_mesh_size(0.2)
+        model.set_mesh_size(1)
         model.generate_mesh()
 
         return model
@@ -252,12 +252,12 @@ class TestKratosModelIO:
         """
         model = create_default_2d_model_and_mesh
         kratos_io = KratosIO(ndim=model.ndim)
-        kratos_io.set_project_folder("dir_test")
+        kratos_io.project_folder = "dir_test"
 
         model.project_parameters = create_default_solver_settings
         model.add_model_part_output(**create_default_outputs.__dict__)
 
-        actual_dict = kratos_io.write_project_parameters_json(model=model, mesh_file_name="test_mdpa_file.mdpa",
+        actual_dict = kratos_io._KratosIO__write_project_parameters_json(model=model, mesh_file_name="test_mdpa_file.mdpa",
                                                               materials_file_name="MaterialParameters.json")
         expected_dict = json.load(open("tests/test_data/expected_ProjectParameters.json", 'r'))
         TestUtils.assert_dictionary_almost_equal(expected_dict, actual_dict)
@@ -284,7 +284,7 @@ class TestKratosModelIO:
         model.project_parameters = create_default_solver_settings
         model.add_model_part_output(**create_default_outputs.__dict__)
 
-        kratos_io.write_project_parameters_json(model=model,
+        kratos_io._KratosIO__write_project_parameters_json(model=model,
                                                 mesh_file_name="test_mdpa_file.mdpa",
                                                 materials_file_name="MaterialParameters.json")
 
@@ -309,9 +309,9 @@ class TestKratosModelIO:
         """
         model = create_default_2d_model_and_mesh
         kratos_io = KratosIO(ndim=model.ndim)
-        kratos_io.set_project_folder("dir_test")
+        kratos_io.project_folder = "dir_test"
 
-        actual_dict = kratos_io.write_material_parameters_json(model=model)
+        actual_dict = kratos_io._KratosIO__write_material_parameters_json(model=model)
         expected_dict = json.load(open("tests/test_data/expected_MaterialParameters.json", 'r'))
         TestUtils.assert_dictionary_almost_equal(expected_dict, actual_dict)
 
@@ -331,11 +331,11 @@ class TestKratosModelIO:
         """
         model = create_default_2d_model_and_mesh
         kratos_io = KratosIO(ndim=model.ndim)
-        kratos_io.set_project_folder("dir_test")
+        kratos_io.project_folder = "dir_test"
 
         model.project_parameters = create_default_solver_settings
 
-        actual_text = kratos_io.write_mesh_to_mdpa(
+        actual_text = kratos_io._KratosIO__write_mesh_to_mdpa(
             model=model,
             mesh_file_name="test_mdpa_file.mdpa"
         )
@@ -360,11 +360,11 @@ class TestKratosModelIO:
         """
         model = create_default_3d_model_and_mesh
         kratos_io = KratosIO(ndim=model.ndim)
-        kratos_io.set_project_folder("dir_test")
+        kratos_io.project_folder = "dir_test"
 
         model.project_parameters = create_default_solver_settings
 
-        actual_text = kratos_io.write_mesh_to_mdpa(
+        actual_text = kratos_io._KratosIO__write_mesh_to_mdpa(
             model=model,
             mesh_file_name="test_mdpa_file_3d.mdpa"
         )
@@ -535,7 +535,7 @@ class TestKratosModelIO:
         kratos_io.initialise_model_ids(model)
 
         # generate text block body model part: soil1
-        actual_text_body = kratos_io.write_mdpa_text(model=model)
+        actual_text_body = kratos_io._KratosIO__write_mdpa_text(model=model)
 
         # define expected block text
         with open('tests/test_data/expected_mdpa_file.mdpa', 'r') as openfile:
@@ -585,7 +585,7 @@ class TestKratosModelIO:
 
         # write mdpa text
         kratos_io = KratosIO(ndim=model.ndim)
-        actual_mdpa_text = kratos_io.write_mdpa_text(model=model)
+        actual_mdpa_text = kratos_io._KratosIO__write_mdpa_text(model=model)
 
         # get expected mdpa text
         with open('tests/test_data/expected_mdpa_file_two_conds_same_position.mdpa', 'r') as f:

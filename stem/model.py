@@ -5,8 +5,9 @@ import numpy.typing as npty
 import numpy as np
 
 from gmsh_utils import gmsh_IO
-from random_fields.generate_field import RandomFields, ModelName
 
+
+from stem.field_generator import RandomFieldGenerator
 from stem.model_part import ModelPart, BodyModelPart
 from stem.soil_material import *
 from stem.structural_material import *
@@ -170,8 +171,6 @@ class Model:
             - ValueError: if load_parameters is not of one of the classes PointLoad, MovingLoad, LineLoad
                           or SurfaceLoad.
         """
-
-        # todo add validation that load is applied on a body model part
 
         # validation of inputs
         self.validate_coordinates(coordinates)
@@ -473,6 +472,8 @@ class Model:
             - v_dim (int): The dimension of the vertical scale of fluctuation. # TODO: make global variable
 
         Raises:
+            - ValueError: if the part name is not a body model part.
+            - ValueError: if the body model part has no material.
             - ValueError: if the model_name is not an invalid, implemented model.
         """
 
@@ -486,10 +487,6 @@ class Model:
         # Check if the material of the body model part is soil
         if trgt_part.material is None:
             raise ValueError(f"No material assigned to the body model part!")
-
-        if not trgt_part.material.is_property_in_material(property_name=property_name):
-            raise ValueError(f"The property for which a random field needs to be generated, `{property_name}`, "
-                             f"is not part of the soil material.")
 
         # Get the property of the soil material, this is the mean value of the random field.
         # Checks also if the material of the body model part is soil contains the desired parameter
@@ -513,10 +510,12 @@ class Model:
                 if len(key) == 1:
                     key += key
 
-        random_field_generator = RandomFields(n_dim=3, mean=mean_value, variance=variance,
-                                              model_name=ModelName[model_name],
-                                              v_scale_fluctuation=v_scale_fluctuation,
-                                              anisotropy=anisotropy, angle=angle, seed=seed, v_dim=v_dim)
+        random_field_generator = RandomFieldGenerator(
+            n_dim=3, mean=mean_value, variance=variance,
+            model_name=model_name,
+            v_scale_fluctuation=v_scale_fluctuation,
+            anisotropy=anisotropy, angle=angle, seed=seed, v_dim=v_dim
+        )
 
         #
         new_part_name = part_name+"_"+property_name.lower()
@@ -541,7 +540,6 @@ class Model:
 
         # add gravity load to process model parts
         self.process_model_parts.append(model_part)
-
 
     def synchronise_geometry(self):
         """
