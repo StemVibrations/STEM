@@ -402,7 +402,7 @@ class Utils:
         if geometry.lines is None or len(geometry.lines) == 0:
             raise ValueError("The geometry doesn't contain lines to check.")
 
-        # if more than 2 lines check for branching points/loops and discontinuities
+        # if 2 or more lines check for branching points/loops and discontinuities
         if len(geometry.lines) > 1:
 
             # get the line ids and points in the line
@@ -411,7 +411,7 @@ class Utils:
             # get the unique points in the line
             unique_points = list(set([n for v in lines.values() for n in v]))
 
-            # loop over the points and find the lines connected to the poit
+            # loop over the points and find the lines connected to the point
             for p in unique_points:
 
                 # initialise list of lines connected to the point
@@ -434,7 +434,7 @@ class Utils:
                 # lines are not connected.
                 return False
 
-        # if no False is return, the path is valid.  Return True.
+        # All lines are connected without branches
         return True
 
     @staticmethod
