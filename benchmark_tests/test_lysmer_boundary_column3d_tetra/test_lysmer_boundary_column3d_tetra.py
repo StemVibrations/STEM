@@ -100,9 +100,7 @@ def test_stem():
     nodal_results = [NodalOutput.DISPLACEMENT,
                     NodalOutput.VELOCITY]
     # Gauss point results
-    gauss_point_results = [
-        GaussPointOutput.CAUCHY_STRESS_TENSOR
-    ]
+    gauss_point_results = []
 
     # Define the output process
     vtk_output_process = Output(

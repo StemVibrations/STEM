@@ -93,8 +93,7 @@ def test_stem():
     nodal_results = [NodalOutput.DISPLACEMENT,
                     NodalOutput.TOTAL_DISPLACEMENT]
     # Gauss point results
-    gauss_point_results = [
-    ]
+    gauss_point_results = []
 
     # Define the output process
     vtk_output_process = Output(
