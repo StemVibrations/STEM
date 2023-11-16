@@ -4,8 +4,7 @@ from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, Sa
 from stem.load import LineLoad
 from stem.boundary import AbsorbingBoundary
 from stem.boundary import DisplacementConstraint
-from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
-    NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
+from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, StressInitialisationType, SolverSettings, Problem
 from stem.output import NodalOutput, VtkOutputParameters, Output
 from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
@@ -78,17 +77,13 @@ def test_stem():
                                     increase_factor=1.0, max_delta_time_factor=1000)
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
                                                             displacement_absolute_tolerance=1.0e-9)
-    strategy_type = NewtonRaphsonStrategy(min_iterations=6, max_iterations=30, number_cycles=100)
-    scheme_type = NewmarkScheme(newmark_beta=0.25, newmark_gamma=0.5, newmark_theta=0.5)
-    linear_solver_settings = Amgcl(tolerance=1.0e-6, max_iteration=1000, scaling=True)
     stress_initialisation_type = StressInitialisationType.NONE
     solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
                                     stress_initialisation_type=stress_initialisation_type,
                                     time_integration=time_integration,
                                     is_stiffness_matrix_constant=False, are_mass_and_damping_constant=False,
                                     convergence_criteria=convergence_criterion,
-                                    strategy_type=strategy_type, scheme=scheme_type,
-                                    linear_solver_settings=linear_solver_settings, rayleigh_k=0.001,
+                                    rayleigh_k=0.001,
                                     rayleigh_m=0.1)
 
     # Set up problem data
