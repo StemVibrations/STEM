@@ -1,3 +1,4 @@
+import os
 from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
 from stem.load import SurfaceLoad
@@ -6,8 +7,9 @@ from stem.boundary import DisplacementConstraint
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
     NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
 from stem.output import NodalOutput, GaussPointOutput, VtkOutputParameters, Output
-
 from stem.stem import Stem
+from benchmark_tests.utils import assert_files_equal
+from shutil import rmtree
 
 
 def test_stem():
@@ -108,8 +110,8 @@ def test_stem():
         output_name="vtk_output",
         output_dir="output",
         output_parameters=VtkOutputParameters(
-            file_format="binary",
-            output_interval=1,
+            file_format="ascii",
+            output_interval=10,
             nodal_results=nodal_results,
             gauss_point_results=gauss_point_results,
             output_control_type="step"
@@ -129,3 +131,8 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
+    result = assert_files_equal("benchmark_tests/test_lysmer_boundary_column3d_tetra/output_/output_vtk_porous_computational_model_part",
+                                os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
+
+    assert result is True
+    rmtree(input_folder)

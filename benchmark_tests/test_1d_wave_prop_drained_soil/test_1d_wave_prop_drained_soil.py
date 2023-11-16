@@ -1,3 +1,4 @@
+import os
 from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
 from stem.load import LineLoad
@@ -7,6 +8,8 @@ from stem.solver import AnalysisType, SolutionType, TimeIntegration, Displacemen
     NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
 from stem.output import NodalOutput, VtkOutputParameters, Output
 from stem.stem import Stem
+from benchmark_tests.utils import assert_files_equal
+from shutil import rmtree
 
 
 def test_stem():
@@ -124,3 +127,9 @@ def test_stem():
     # Run Kratos calculation
     # --------------------------------
     stem.run_calculation()
+
+    result = assert_files_equal("benchmark_tests/test_1d_wave_prop_drained_soil/output_/output_vtk_full_model",
+                                os.path.join(input_folder, "output/output_vtk_full_model"))
+
+    assert result is True
+    rmtree(input_folder)

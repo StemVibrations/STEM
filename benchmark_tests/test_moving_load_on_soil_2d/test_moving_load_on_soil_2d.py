@@ -1,4 +1,4 @@
-from KratosMultiphysics.GeoMechanicsApplication.geomechanics_analysis import (GeoMechanicsAnalysis)
+import os
 from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
 from stem.load import MovingLoad
@@ -7,6 +7,9 @@ from stem.solver import AnalysisType, SolutionType, TimeIntegration, Displacemen
     NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
 from stem.output import NodalOutput, VtkOutputParameters, Output
 from stem.stem import Stem
+from benchmark_tests.utils import assert_files_equal
+from shutil import rmtree
+
 
 def test_stem():
     # Define geometry, conditions and material parameters
@@ -51,9 +54,6 @@ def test_stem():
     # Synchronize geometry
     model.synchronise_geometry()
 
-    # Show geometry and geometry ids
-    model.show_geometry(show_line_ids=True, show_point_ids=True)
-
     # Set mesh size and generate mesh
     # --------------------------------
     model.set_mesh_size(element_size=0.1)
@@ -93,8 +93,7 @@ def test_stem():
     nodal_results = [NodalOutput.DISPLACEMENT,
                     NodalOutput.TOTAL_DISPLACEMENT]
     # Gauss point results
-    gauss_point_results = [
-    ]
+    gauss_point_results = []
 
     # Define the output process
     vtk_output_process = Output(
@@ -102,8 +101,8 @@ def test_stem():
         output_name="vtk_output",
         output_dir="output",
         output_parameters=VtkOutputParameters(
-            file_format="binary",
-            output_interval=1,
+            file_format="ascii",
+            output_interval=10,
             nodal_results=nodal_results,
             gauss_point_results=gauss_point_results,
             output_control_type="step"
@@ -112,7 +111,7 @@ def test_stem():
 
     model.output_settings = [vtk_output_process]
 
-    input_folder = "benchmark_tests/test_moving_on_soil_2d/inputs_kratos"
+    input_folder = "benchmark_tests/test_moving_load_on_soil_2d/inputs_kratos"
 
     # Write KRATOS input files
     # --------------------------------
@@ -122,3 +121,10 @@ def test_stem():
     # Run Kratos calculation
     # --------------------------------
     stem.run_calculation()
+
+    print(1)
+    result = assert_files_equal("benchmark_tests/test_moving_load_on_soil_2d/output_/output_vtk_porous_computational_model_part",
+                                os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
+
+    assert result is True
+    rmtree(input_folder)
