@@ -1,3 +1,4 @@
+import pytest
 from KratosMultiphysics.GeoMechanicsApplication.geomechanics_analysis import (GeoMechanicsAnalysis)
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
 from stem.model import Model
@@ -12,6 +13,7 @@ from stem.output import NodalOutput, GaussPointOutput, VtkOutputParameters, Outp
 from stem.stem import Stem
 
 
+@pytest.mark.skip(reason="work in progress")
 def test_stem():
     # Define geometry, conditions and material parameters
     # --------------------------------

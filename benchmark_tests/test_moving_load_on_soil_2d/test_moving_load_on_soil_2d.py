@@ -110,29 +110,6 @@ def test_stem():
         )
     )
 
-    # Write KRATOS input files
-    # --------------------------------
-
-    kratos_io = KratosIO(ndim=model.ndim)
-    # Define the output folder
-    output_folder = "inputs_kratos"
-
-    # Write project settings to ProjectParameters.json file
-    kratos_io.write_project_parameters_json(
-        model=model,
-        outputs=[vtk_output_process],
-        mesh_file_name="calculate_moving_load_on_soil_2d.mdpa",
-        materials_file_name="MaterialParameters.json",
-        output_folder=output_folder
-    )
-
-    # Write mesh to .mdpa file
-    kratos_io.write_mesh_to_mdpa(
-        model=model,
-        mesh_file_name="calculate_moving_load_on_soil_2d.mdpa",
-        output_folder=output_folder
-    )
-
     model.output_settings = [vtk_output_process]
 
     input_folder = "benchmark_tests/test_moving_on_soil_2d/inputs_kratos"

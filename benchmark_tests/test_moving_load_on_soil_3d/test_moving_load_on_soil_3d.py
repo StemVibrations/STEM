@@ -31,7 +31,7 @@ def test_stem():
 
     # Specify the coordinates for the column: x:5m x y:1m
     layer1_coordinates = [(0.0, 0.0, 0.0), (5.0, 0.0, 0.0), (5.0, 1.0, 0.0), (0.0, 1.0, 0.0)]
-    model.extrusion_length = [0, 0, 3]
+    model.extrusion_length = 3
 
     # Create the soil layer
     model.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil_layer")
@@ -115,27 +115,6 @@ def test_stem():
 
     # Write KRATOS input files
     # --------------------------------
-
-    kratos_io = KratosIO(ndim=model.ndim)
-    # Define the output folder
-    output_folder = "inputs_kratos"
-
-    # Write project settings to ProjectParameters.json file
-    kratos_io.write_project_parameters_json(
-        model=model,
-        outputs=[vtk_output_process],
-        mesh_file_name="calculate_moving_load_on_soil_3d.mdpa",
-        materials_file_name="MaterialParameters.json",
-        output_folder=output_folder
-    )
-
-    # Write mesh to .mdpa file
-    kratos_io.write_mesh_to_mdpa(
-        model=model,
-        mesh_file_name="calculate_moving_load_on_soil_3d.mdpa",
-        output_folder=output_folder
-    )
-
     model.output_settings = [vtk_output_process]
 
     input_folder = "benchmark_tests/test_moving_load_on_soil_3d/inputs_kratos"

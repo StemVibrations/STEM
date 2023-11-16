@@ -32,7 +32,7 @@ def test_stem():
     soil1_coordinates = [(0.0, 0.0, 0.0), (5.0, 0.0, 0.0), (5.0, 1.0, 0.0), (0.0, 1.0, 0.0)]
     soil2_coordinates = [(0.0, 1.0, 0.0), (5.0, 1.0, 0.0), (5.0, 2.0, 0.0), (0.0, 2.0, 0.0)]
     embankment_coordinates = [(0.0, 2.0, 0.0), (3.0, 2.0, 0.0), (1.5, 3.0, 0.0), (0.75, 3.0, 0.0), (0, 3.0, 0.0)]
-    model.extrusion_length = [0, 0, 10]
+    model.extrusion_length = 10
 
     # Create the soil layer
     model.add_soil_layer_by_coordinates(soil1_coordinates, material_soil1, "soil1")
@@ -113,29 +113,6 @@ def test_stem():
             gauss_point_results=gauss_point_results,
             output_control_type="step"
         )
-    )
-
-    # Write KRATOS input files
-    # --------------------------------
-
-    kratos_io = KratosIO(ndim=model.ndim)
-    # Define the output folder
-    output_folder = "inputs_kratos"
-
-    # Write project settings to ProjectParameters.json file
-    kratos_io.write_project_parameters_json(
-        model=model,
-        outputs=[vtk_output_process],
-        mesh_file_name="calculate_moving_load_on_embankment_3d.mdpa",
-        materials_file_name="MaterialParameters.json",
-        output_folder=output_folder
-    )
-
-    # Write mesh to .mdpa file
-    kratos_io.write_mesh_to_mdpa(
-        model=model,
-        mesh_file_name="calculate_moving_load_on_embankment_3d.mdpa",
-        output_folder=output_folder
     )
 
     model.output_settings = [vtk_output_process]
