@@ -212,8 +212,8 @@ class TestModelPart:
         beam_part = BodyModelPart("beam")
         beam_part.material = beam
 
-        assert beam_part.get_element_name(2, 2, AnalysisType.MECHANICAL) == "GeoCrBeamElement2D2N"
-        assert beam_part.get_element_name(3, 2, AnalysisType.MECHANICAL) == "GeoCrBeamElement3D2N"
+        assert beam_part.get_element_name(2, 2, AnalysisType.MECHANICAL) == "GeoCrBeamElementLinear2D2N"
+        assert beam_part.get_element_name(3, 2, AnalysisType.MECHANICAL) == "GeoCrBeamElementLinear3D2N"
 
         # wrong beam input
 
