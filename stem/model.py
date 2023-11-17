@@ -1,7 +1,7 @@
 from typing import List, Sequence, Dict, Any, Optional, Union
 
-import numpy.typing as npty
 import numpy as np
+import numpy.typing as npty
 
 from gmsh_utils import gmsh_IO
 
@@ -110,8 +110,7 @@ class Model:
                 self.process_model_parts.append(model_part)
 
     def add_soil_layer_by_coordinates(self, coordinates: Sequence[Sequence[float]],
-                       material_parameters: Union[SoilMaterial, StructuralMaterial], name: str,
-                       ):
+                                      material_parameters: Union[SoilMaterial, StructuralMaterial], name: str):
         """
         Adds a soil layer to the model by giving a sequence of 2D coordinates. In 3D the 2D geometry is extruded in
         the out of plane direction.
@@ -152,6 +151,74 @@ class Model:
 
         self.body_model_parts.append(body_model_part)
 
+    def add_load_by_geometry_ids(self, geometry_ids: Sequence[int], load_parameters:
+                                 LoadParametersABC, name: str):
+        """
+        Add a load to the model by giving the geometry ids of the geometry where the load has to be applied.
+        The geometry dimension of the entity where the load needs to be applied is determined based on the 
+        load_parameters (0=point load, 1=line load, 2=surface load, 3=volume).
+        
+        Args:
+            - geometry_ids (Sequence[int]): geometry ids of the entities where the load needs to be applied.
+            - load_parameters (:class:`stem.load.LoadParametersABC`): load parameters to define the load object.
+            - name (str): name of the load.
+            
+        Raises:
+            - NotImplementedError: when the load parameter provided is not one of point, line, moving or surface loads.
+            
+        """
+
+        # point load can only be assigned to 0d geometry
+        if isinstance(load_parameters, PointLoad):
+            ndim_load = 0
+        # line and moving load can only be assigned to 1d geometry
+        elif isinstance(load_parameters, (LineLoad, MovingLoad)):
+            ndim_load = 1
+        # surface load can only be assigned to 2d geometry
+        elif isinstance(load_parameters, SurfaceLoad):
+            ndim_load = 2
+        else:
+            raise NotImplementedError(
+                f"Load parameter provided is not supported: `{load_parameters.__class__.__name__}`."
+            )
+        # add physical group to gmsh
+        self.gmsh_io.add_physical_group(name, ndim_load, geometry_ids)
+
+        # create model part
+        model_part = ModelPart(name)
+
+        # retrieve geometry from gmsh and add to model part
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
+
+        # validations for non-empty geometry
+        if model_part.geometry is None:
+            raise ValueError("The geometry is not initialised for the model part.")
+
+        # validations for moving load input
+        if isinstance(load_parameters, MovingLoad):
+
+            # retrieve the coordinates of the points in the path of the load
+            coordinates = []
+            for line in model_part.geometry.lines.values():
+                line_coords = []
+                for k in line.point_ids:
+                    line_coords.append(model_part.geometry.points[k].coordinates)
+                coordinates.append(line_coords)
+
+            # check origin of moving load is in the path
+            if not Utils.is_point_aligned_and_between_any_of_points(coordinates, load_parameters.origin):
+                raise ValueError("None of the lines are aligned with the origin of the moving load. Error.")
+            # check that the path provided by geometry is correct (no loops, no branching out
+            # and no discontinuities in the path)
+            if not Utils.check_lines_geometry_are_path(model_part.geometry):
+                raise ValueError("The lines defined for the moving load are not aligned on a path."
+                                 "Discontinuities or loops/branching points are found.")
+
+        # add load parameters to model part
+        model_part.parameters = load_parameters
+
+        self.process_model_parts.append(model_part)
+
     def add_load_by_coordinates(self, coordinates: Sequence[Sequence[float]], load_parameters: LoadParametersABC,
                                 name: str):
         """
@@ -166,9 +233,8 @@ class Model:
         Raises:
             - ValueError: if load_parameters is not of one of the classes PointLoad, MovingLoad, LineLoad
                           or SurfaceLoad.
-        """
 
-        # todo add validation that load is applied on a body model part
+        """
 
         # validation of inputs
         self.validate_coordinates(coordinates)
@@ -210,6 +276,7 @@ class Model:
             - ValueError: if coordinates is not a sequence real numbers.
             - ValueError: if coordinates is not convertible to a 2D array (i.e. a sequence of sequences)
             - ValueError: if the number of elements (number of coordinates) is not 3.
+
         """
 
         # if is not an array, make it array!
@@ -244,6 +311,7 @@ class Model:
 
         Returns:
             - None
+
         """
 
         # iterate over each line constituting the trajectory
@@ -321,6 +389,7 @@ class Model:
 
         Args:
             - element_size (float): the desired element size [m].
+
         """
         self.mesh_settings.element_size = element_size
 
@@ -366,6 +435,7 @@ class Model:
 
         Returns:
             - npty.NDArray[np.int64]: array containing the node ids of the elements in the model_part
+
         """
         if model_part.mesh is not None:
             return np.array([el.node_ids for el in model_part.mesh.elements.values()])
@@ -387,6 +457,7 @@ class Model:
         Returns:
             - matched_elements (Dict[:class:`stem.mesh.Element`, :class:`stem.mesh.Element`]): Dictionary containing
                 the matched condition and body element parts.
+
         """
         # validation step for process model part
         if process_model_part.mesh is None:
@@ -471,6 +542,7 @@ class Model:
         Raises:
             - ValueError: if mesh is not initialised yet.
             - ValueError: if the integration order of the process element is different from the body element.
+
         """
 
         if process_model_part.mesh is None:
@@ -515,7 +587,8 @@ class Model:
 
         Raises:
             - ValueError: If not all model parts have a name.
-            - ValueError: If not all model part names are unique .
+            - ValueError: If not all model part names are unique.
+
         """
 
         # collect all model parts
@@ -599,6 +672,7 @@ class Model:
 
         Returns:
             - all_model_parts (List[:class:`stem.model_part.ModelPart`]): list of all the model parts.
+
         """
         all_model_parts = []
         all_model_parts.extend(self.process_model_parts)
@@ -614,6 +688,7 @@ class Model:
 
         Returns:
             - node_dict (Dict[int, :class:`stem.mesh.Node`]): dictionary containing nodes id and nodes objects.
+
         """
 
         node_dict: Dict[int, Node] = {}
