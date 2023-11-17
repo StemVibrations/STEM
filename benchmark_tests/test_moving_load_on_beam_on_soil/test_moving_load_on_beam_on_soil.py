@@ -1,3 +1,5 @@
+import os
+
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
 from stem.model import Model
 from stem.model_part import BodyModelPart
@@ -5,11 +7,13 @@ from stem.structural_material import *
 from stem.load import MovingLoad
 from stem.boundary import RotationConstraint
 from stem.boundary import DisplacementConstraint
-from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
-    NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
-from stem.output import NodalOutput, GaussPointOutput, VtkOutputParameters, Output
+from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
+                         StressInitialisationType, SolverSettings, Problem)
+from stem.output import NodalOutput, VtkOutputParameters, Output
 from stem.stem import Stem
 
+from benchmark_tests.utils import assert_files_equal
+from shutil import rmtree
 
 
 def test_stem():
@@ -148,3 +152,8 @@ def test_stem():
     # Run Kratos calculation
     # --------------------------------
     stem.run_calculation()
+
+    assert assert_files_equal("benchmark_tests/test_moving_load_on_beam_on_soil/output_/output_vtk_full_model",
+                              os.path.join(input_folder, "output/output_vtk_full_model"))
+
+    rmtree(input_folder)
