@@ -98,7 +98,7 @@ class EulerBeam(StructuralParametersABC):
                                              "Euler beam")
 
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
-            element_name = f"GeoCrBeamElement{n_dim_model}D{n_nodes_element}N"
+            element_name = f"GeoCrBeamElementLinear{n_dim_model}D{n_nodes_element}N"
         else:
             raise ValueError(f"Analysis type {analysis_type} is not implemented for euler beams.")
 
