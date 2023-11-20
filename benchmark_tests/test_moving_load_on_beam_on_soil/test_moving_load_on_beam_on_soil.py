@@ -1,5 +1,5 @@
-import pytest
-from KratosMultiphysics.GeoMechanicsApplication.geomechanics_analysis import (GeoMechanicsAnalysis)
+import os
+
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
 from stem.model import Model
 from stem.model_part import BodyModelPart
@@ -7,13 +7,15 @@ from stem.structural_material import *
 from stem.load import MovingLoad
 from stem.boundary import RotationConstraint
 from stem.boundary import DisplacementConstraint
-from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
-    NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
-from stem.output import NodalOutput, GaussPointOutput, VtkOutputParameters, Output
+from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
+                         StressInitialisationType, SolverSettings, Problem)
+from stem.output import NodalOutput, VtkOutputParameters, Output
 from stem.stem import Stem
 
+from benchmark_tests.utils import assert_files_equal
+from shutil import rmtree
 
-@pytest.mark.skip(reason="work in progress")
+
 def test_stem():
     # Define geometry, conditions and material parameters
     # --------------------------------
@@ -40,13 +42,11 @@ def test_stem():
 
     # Specify beam material model
     YOUNG_MODULUS = 210000000000
-    POISSON_RATIO = 0.30000
+    POISSON_RATIO = 0.3
     DENSITY = 7850
     CROSS_AREA = 0.01
-    I33 = 0.00001
     I22 = 0.00001
-    TORSIONAL_INERTIA = 0.00001
-    beam_material = EulerBeam(ndim, YOUNG_MODULUS, POISSON_RATIO, DENSITY, CROSS_AREA, I33, I22, TORSIONAL_INERTIA)
+    beam_material = EulerBeam(ndim, YOUNG_MODULUS, POISSON_RATIO, DENSITY, CROSS_AREA, I22)
     name = "beam"
     structural_material = StructuralMaterial(name, beam_material)
 
@@ -54,9 +54,6 @@ def test_stem():
     beam_coordinates = [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0)]
     # Create the beam
     gmsh_input = {name: {"coordinates": beam_coordinates, "ndim": 1}}
-    # check if extrusion length is specified in 3D
-    # model.gmsh_io = gmsh_IO.GmshIO()
-    # model.body_model_parts: List[BodyModelPart] = []
     model.gmsh_io.generate_geometry(gmsh_input, "")
     #
     # create body model part
@@ -68,26 +65,27 @@ def test_stem():
     model.body_model_parts.append(body_model_part)
 
     # Synchronize geometry
-    model.synchronise_geometry()
-
-    model.show_geometry(show_line_ids=True, show_point_ids=True)
+    # model.synchronise_geometry()
+    # model.show_geometry(show_line_ids=True, show_point_ids=True)
 
     # Define moving load
     load_coordinates = [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0)]
 
-    moving_load = MovingLoad(load=["0.0", "-1*t", "0.0"], direction=[1, 0, 0], velocity=1.0, origin=[0.0, 0.0, 0.0], offset=0.0)
+    moving_load = MovingLoad(load=["0.0", "-10000*t", "0.0"], direction=[1, 0, 0], velocity=1.0,
+                             origin=[0.0, 0.0, 0.0])
     model.add_load_by_coordinates(load_coordinates, moving_load, "moving_load")
 
     # Define rotation boundary condition
-    rotation_boundaries_parameters = RotationConstraint(active=[True, True, True], is_fixed=[True, True, True], value=[0, 0, 0])
+    rotation_boundaries_parameters = RotationConstraint(active=[True, True, True], is_fixed=[True, True, True],
+                                                        value=[0, 0, 0])
 
     # Define displacement conditions
-    displacementXYZ_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True], value=[0, 0, 0])
+    displacementXYZ_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True],
+                                                        value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
-
     model.add_boundary_condition_by_geometry_ids(0, [3, 4], rotation_boundaries_parameters, "rotation")
-    model.add_boundary_condition_by_geometry_ids(0, [3, 4], displacementXYZ_parameters, "displacementXYZ")
+    model.add_boundary_condition_by_geometry_ids(1, [1, 4, 2], displacementXYZ_parameters, "displacementXYZ")
 
     # Synchronize geometry
     model.synchronise_geometry()
@@ -108,24 +106,19 @@ def test_stem():
     solution_type = SolutionType.DYNAMIC
     # Set up start and end time of calculation, time step and etc
     time_integration = TimeIntegration(start_time=0.0, end_time=1.0, delta_time=0.01, reduction_factor=1.0,
-                                    increase_factor=1.0, max_delta_time_factor=1000)
-    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-12,
+                                       increase_factor=1.0, max_delta_time_factor=1000)
+    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
                                                             displacement_absolute_tolerance=1.0e-12)
-    strategy_type = NewtonRaphsonStrategy(min_iterations=6, max_iterations=15, number_cycles=100)
-    scheme_type = NewmarkScheme(newmark_beta=0.25, newmark_gamma=0.5, newmark_theta=0.5)
-    linear_solver_settings = Amgcl(tolerance=1.0e-6, max_iteration=1000, scaling=True)
     stress_initialisation_type = StressInitialisationType.NONE
     solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
-                                    stress_initialisation_type=stress_initialisation_type,
-                                    time_integration=time_integration,
-                                    is_stiffness_matrix_constant=False, are_mass_and_damping_constant=False,
-                                    convergence_criteria=convergence_criterion,
-                                    strategy_type=strategy_type, scheme=scheme_type,
-                                    linear_solver_settings=linear_solver_settings, rayleigh_k=0.001,
-                                    rayleigh_m=0.1)
+                                     stress_initialisation_type=stress_initialisation_type,
+                                     time_integration=time_integration,
+                                     is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
+                                     convergence_criteria=convergence_criterion, rayleigh_k=0.001,
+                                     rayleigh_m=0.1)
 
     # Set up problem data
-    problem = Problem(problem_name="calculate_moving_load_on_beam", number_of_threads=1, settings=solver_settings)
+    problem = Problem(problem_name="calculate_moving_load_on_beam", number_of_threads=2, settings=solver_settings)
     model.project_parameters = problem
 
     # Define the results to be written to the output file
@@ -137,43 +130,18 @@ def test_stem():
 
     # Define the output process
     vtk_output_process = Output(
-        part_name="porous_computational_model_part",
         output_name="vtk_output",
         output_dir="output",
         output_parameters=VtkOutputParameters(
-            file_format="binary",
-            output_interval=1,
+            file_format="ascii",
+            output_interval=10,
             nodal_results=nodal_results,
             gauss_point_results=gauss_point_results,
             output_control_type="step"
         )
     )
 
-    # Write KRATOS input files
-    # --------------------------------
-
-    kratos_io = KratosIO(ndim=model.ndim)
-    # Define the output folder
-    output_folder = "inputs_kratos"
-
-    # Write project settings to ProjectParameters.json file
-    kratos_io.write_project_parameters_json(
-        model=model,
-        outputs=[vtk_output_process],
-        mesh_file_name="calculate_moving_load_on_beam.mdpa",
-        materials_file_name="MaterialParameters.json",
-        output_folder=output_folder
-    )
-
-    # Write mesh to .mdpa file
-    kratos_io.write_mesh_to_mdpa(
-        model=model,
-        mesh_file_name="calculate_moving_load_on_beam.mdpa",
-        output_folder=output_folder
-    )
-
     model.output_settings = [vtk_output_process]
-
     input_folder = "benchmark_tests/test_moving_load_on_beam_on_soil/inputs_kratos"
 
     # Write KRATOS input files
@@ -184,3 +152,8 @@ def test_stem():
     # Run Kratos calculation
     # --------------------------------
     stem.run_calculation()
+
+    assert assert_files_equal("benchmark_tests/test_moving_load_on_beam_on_soil/output_/output_vtk_full_model",
+                              os.path.join(input_folder, "output/output_vtk_full_model"))
+
+    rmtree(input_folder)
