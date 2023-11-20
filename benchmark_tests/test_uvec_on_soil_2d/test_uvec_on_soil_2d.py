@@ -7,7 +7,7 @@ from stem.solver import AnalysisType, SolutionType, TimeIntegration, Displacemen
 from stem.output import NodalOutput, VtkOutputParameters, Output
 from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
-from shutil import rmtree
+from shutil import rmtree, copyfile
 
 
 def test_stem():
@@ -112,6 +112,10 @@ def test_stem():
     model.output_settings = [vtk_output_process]
 
     input_folder = "benchmark_tests/test_uvec_on_soil_2d/inputs_kratos"
+
+    # copy uvec to input folder
+    os.makedirs(input_folder, exist_ok=True)
+    copyfile("benchmark_tests/test_uvec_on_soil_2d/sample_uvec.py", os.path.join(input_folder, "sample_uvec.py"))
 
     # Write KRATOS input files
     # --------------------------------
