@@ -151,8 +151,7 @@ class Model:
 
         self.body_model_parts.append(body_model_part)
 
-    def add_load_by_geometry_ids(self, geometry_ids: Sequence[int], load_parameters:
-                                 LoadParametersABC, name: str):
+    def add_load_by_geometry_ids(self, geometry_ids: Sequence[int], load_parameters: LoadParametersABC, name: str):
         """
         Add a load to the model by giving the geometry ids of the geometry where the load has to be applied.
         The geometry dimension of the entity where the load needs to be applied is determined based on the 
@@ -165,14 +164,13 @@ class Model:
             
         Raises:
             - NotImplementedError: when the load parameter provided is not one of point, line, moving or surface loads.
-            
         """
 
         # point load can only be assigned to 0d geometry
         if isinstance(load_parameters, PointLoad):
             ndim_load = 0
         # line and moving load can only be assigned to 1d geometry
-        elif isinstance(load_parameters, (LineLoad, MovingLoad)):
+        elif isinstance(load_parameters, (LineLoad, MovingLoad, UvecLoad)):
             ndim_load = 1
         # surface load can only be assigned to 2d geometry
         elif isinstance(load_parameters, SurfaceLoad):
@@ -195,7 +193,7 @@ class Model:
             raise ValueError("The geometry is not initialised for the model part.")
 
         # validations for moving load input
-        if isinstance(load_parameters, MovingLoad):
+        if isinstance(load_parameters, (MovingLoad, UvecLoad)):
 
             # retrieve the coordinates of the points in the path of the load
             coordinates = []

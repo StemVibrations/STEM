@@ -3,6 +3,7 @@ from copy import deepcopy
 
 from stem.solver import *
 from stem.model_part import ModelPart, BodyModelPart
+from stem.load import UvecLoad
 
 
 class KratosSolverIO:
@@ -173,6 +174,23 @@ class KratosSolverIO:
         elif analysis_type == AnalysisType.GROUNDWATER_FLOW:
             return "Pw"
 
+    def __create_uvec_parameters_dictionary(self, solver_settings_dict: Dict[str, Any], model_parts: List[ModelPart]):
+
+        for model_part in model_parts:
+            if isinstance(model_part.parameters, UvecLoad):
+                uvec_dict: Dict[str, Any] = {"uvec_path": model_part.parameters.uvec_file,
+                                             "uvec_method": model_part.parameters.uvec_function_name,
+                                             "uvec_model_part": model_part.name,
+                                             "uvec_data": {"dt": solver_settings_dict["time_stepping"]["time_step"],
+                                                           "u": {},
+                                                           "theta": {},
+                                                           "loads": {},
+                                                           "parameters": model_part.parameters.uvec_parameters,
+                                                           "state": model_part.parameters.uvec_state_variables}}
+
+                return uvec_dict
+
+        return None
 
 
     def __create_solver_settings_dictionary(self, solver_settings: SolverSettings, mesh_file_name: str,
@@ -231,6 +249,11 @@ class KratosSolverIO:
 
         # Add the model part names
         solver_settings_dict.update(self.__create_model_part_name_dict(model_parts))
+
+        # add  Uvec parameters
+        uvec_settings = self.__create_uvec_parameters_dictionary(solver_settings_dict, model_parts)
+        if uvec_settings is not None:
+            solver_settings_dict.update({"uvec": uvec_settings})
 
         return solver_settings_dict
 
