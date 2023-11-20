@@ -48,11 +48,10 @@ class KratosLoadsIO:
 
     def create_uvec_dict(self, part_name: str, parameters: UvecLoad) -> Dict[str, Any]:
 
-
         parameters_dict = {"model_part_name":  f"{self.domain}.{part_name}",
-                           "compute_model_part_name": f"{self.domain}",
+                           "compute_model_part_name": f"porous_computational_model_part", # as hard coded in Kratos
                            "variable_name": "POINT_LOAD",
-                           "load": [0,0,0], # dummy parameter
+                           "load": [1, 1, 1],  # dummy parameter
                            "direction": parameters.direction,
                            "velocity": parameters.velocity,
                            "origin": parameters.origin,
