@@ -11,7 +11,7 @@ from stem.IO.kratos_output_io import KratosOutputsIO
 from stem.IO.kratos_solver_io import KratosSolverIO
 from stem.structural_material import *
 from stem.boundary import BoundaryParametersABC, AbsorbingBoundary, DisplacementConstraint, RotationConstraint
-from stem.load import LoadParametersABC, LineLoad, MovingLoad, SurfaceLoad, PointLoad
+from stem.load import LoadParametersABC, LineLoad, MovingLoad, UvecLoad, SurfaceLoad, PointLoad
 from stem.mesh import Element, Node
 from stem.model import Model
 from stem.model_part import ModelPart, BodyModelPart
@@ -88,7 +88,7 @@ class KratosIO:
         Returns:
             - bool: whether the process model part writes condition elements
         """
-        return isinstance(process_model_part.parameters, (LineLoad, MovingLoad, SurfaceLoad, AbsorbingBoundary))
+        return isinstance(process_model_part.parameters, (LineLoad, MovingLoad, UvecLoad, SurfaceLoad, AbsorbingBoundary))
 
     def __initialise_process_model_part_ids(self, model: Model):
         """

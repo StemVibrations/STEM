@@ -178,6 +178,10 @@ class KratosSolverIO:
 
         for model_part in model_parts:
             if isinstance(model_part.parameters, UvecLoad):
+
+                # set strategy type to newton_raphson_with_uvec
+                solver_settings_dict["strategy_type"] = "newton_raphson_with_uvec"
+
                 uvec_dict: Dict[str, Any] = {"uvec_path": model_part.parameters.uvec_file,
                                              "uvec_method": model_part.parameters.uvec_function_name,
                                              "uvec_model_part": model_part.name,
