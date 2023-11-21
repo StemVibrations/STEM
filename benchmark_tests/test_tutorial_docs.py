@@ -12,7 +12,7 @@ def find_first_greater(my_list: List[float], value: float) -> float:
         - float: value to compare
 
     Returns:
-        - item (float): first value greater than the given value
+        - float: first value greater than the given value
     """
     for item in my_list:
         if item > value:
@@ -28,7 +28,7 @@ def read_tutorial(rst_file: str, name: str) -> List[str]:
         - name (str): name of the tutorial
 
     Returns:
-        - List: list of strings with the code
+        - list: list of strings with the code
     """
 
     with open(rst_file, "r") as fi:
