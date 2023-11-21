@@ -1,4 +1,6 @@
 import os
+from shutil import rmtree, copyfile
+
 from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
 from stem.load import UvecLoad
@@ -6,8 +8,8 @@ from stem.boundary import DisplacementConstraint
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, StressInitialisationType, SolverSettings, Problem
 from stem.output import NodalOutput, VtkOutputParameters, Output
 from stem.stem import Stem
+
 from benchmark_tests.utils import assert_files_equal
-from shutil import rmtree, copyfile
 
 
 def test_stem():
@@ -91,7 +93,7 @@ def test_stem():
 
     # Nodal results
     nodal_results = [NodalOutput.DISPLACEMENT,
-                    NodalOutput.TOTAL_DISPLACEMENT]
+                     NodalOutput.TOTAL_DISPLACEMENT]
     # Gauss point results
     gauss_point_results = []
 
