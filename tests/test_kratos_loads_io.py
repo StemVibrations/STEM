@@ -43,11 +43,17 @@ class TestKratosLoadsIO:
             offset=3.0,
         )
 
+        uvec_parameters = {"load_wheel_1": -10.0, "load_wheel_2": -20.0}
+
+        uvec_load = UvecLoad(direction=[1, 1, 0], velocity=5, origin=[0.0, 1.0, 0.0], wheel_configuration=[0.0, 2.0],
+                             uvec_file=r"sample_uvec.py", uvec_function_name="uvec_test", uvec_parameters=uvec_parameters)
+
         # add loads to process model parts:
         model.add_load_by_coordinates(point_load_coords, point_load_parameters, 'test_point_load')
         model.add_load_by_coordinates(line_load_coords, line_load_parameters, 'test_line_load')
         model.add_load_by_coordinates(surface_load_coords, surface_load_parameters, 'test_surface_load')
         model.add_load_by_coordinates(moving_load_coords, moving_point_load_parameters, 'test_moving_load')
+        model.add_load_by_coordinates(moving_load_coords, uvec_load, 'test_uvec_load')
         model.synchronise_geometry()
 
         # create load process dictionary
@@ -56,7 +62,8 @@ class TestKratosLoadsIO:
         loads_processes = [kratos_loads_io.create_load_dict("test_point_load", point_load_parameters),
                            kratos_loads_io.create_load_dict("test_line_load", line_load_parameters),
                            kratos_loads_io.create_load_dict("test_surface_load", surface_load_parameters),
-                           kratos_loads_io.create_load_dict("test_moving_load", moving_point_load_parameters)]
+                           kratos_loads_io.create_load_dict("test_moving_load", moving_point_load_parameters),
+                           kratos_loads_io.create_load_dict("test_uvec_load", uvec_load)]
 
         test_dictionary = {"loads_process_list": loads_processes,
                             "constraints_process_list": []}
