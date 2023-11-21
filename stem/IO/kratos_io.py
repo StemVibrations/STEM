@@ -47,7 +47,6 @@ class KratosIO:
         - loads_io (:class:`stem.IO.kratos_loads_io.KratosLoadsIO`): The loads IO object.
         - boundaries_io (:class:`stem.IO.kratos_boundaries_io.KratosBoundariesIO`): The boundaries IO object.
         - outputs_io (:class:`stem.IO.kratos_output_io.KratosOutputsIO`): The outputs IO object.
-        - model_io (:class:`stem.IO.kratos_model_io.KratosModelIO`): The model IO object.
         - solver_io (:class:`stem.IO.kratos_solver_io.KratosSolverIO`): The solver IO object.
 
     """

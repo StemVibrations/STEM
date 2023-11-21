@@ -1,2 +1,4 @@
 ignore:
   - "tests"
+  - "benchmark_tests"
+  - "stem/main_stem.py"

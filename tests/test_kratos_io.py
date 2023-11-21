@@ -257,8 +257,12 @@ class TestKratosModelIO:
         model.project_parameters = create_default_solver_settings
         model.add_model_part_output(**create_default_outputs.__dict__)
 
-        actual_dict = kratos_io._KratosIO__write_project_parameters_json(model=model, mesh_file_name="test_mdpa_file.mdpa",
-                                                              materials_file_name="MaterialParameters.json")
+        actual_dict = kratos_io.write_project_parameters_json(
+            model=model,
+            mesh_file_name="test_mdpa_file.mdpa",
+            materials_file_name="MaterialParameters.json",
+            output_folder="dir_test"
+        )
         expected_dict = json.load(open("tests/test_data/expected_ProjectParameters.json", 'r'))
         TestUtils.assert_dictionary_almost_equal(expected_dict, actual_dict)
 
@@ -399,7 +403,10 @@ class TestKratosModelIO:
         model.project_parameters = create_default_solver_settings
         model.add_model_part_output(**create_default_outputs.__dict__)
 
-        kratos_io.write_input_files_for_kratos(model=model, mesh_file_name="test_mdpa_file.mdpa")
+        kratos_io.write_input_files_for_kratos(
+            model=model,
+            mesh_file_name="test_mdpa_file.mdpa"
+        )
 
         # test mdpa
         with open('./test_mdpa_file.mdpa', 'r') as openfile:
