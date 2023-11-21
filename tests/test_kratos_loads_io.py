@@ -21,6 +21,7 @@ class TestKratosLoadsIO:
         point_load_coords = [(0, 0, 0)]
         line_load_coords = [(0, 0, 0), (0, 1, 0)]
         moving_load_coords = [(1, 0, 0), (1, 0.4, 0)]
+        uvec_load_coords = [(0, 1, 0), (5, 1, 0)]
         surface_load_coords = [(0, 0, 1), (0, 1, 1), (1, 1, 1), (1, 0, 1)]
 
         # define load(s) parameters
@@ -53,7 +54,7 @@ class TestKratosLoadsIO:
         model.add_load_by_coordinates(line_load_coords, line_load_parameters, 'test_line_load')
         model.add_load_by_coordinates(surface_load_coords, surface_load_parameters, 'test_surface_load')
         model.add_load_by_coordinates(moving_load_coords, moving_point_load_parameters, 'test_moving_load')
-        model.add_load_by_coordinates(moving_load_coords, uvec_load, 'test_uvec_load')
+        model.add_load_by_coordinates(uvec_load_coords, uvec_load, 'test_uvec_load')
         model.synchronise_geometry()
 
         # create load process dictionary
