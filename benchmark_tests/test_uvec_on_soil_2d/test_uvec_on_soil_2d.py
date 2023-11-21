@@ -13,6 +13,11 @@ from benchmark_tests.utils import assert_files_equal
 
 
 def test_stem():
+    """
+    This test tests a UVEC with two wheels with different wheel loads on a 2d soil model.
+
+    """
+
     # Define geometry, conditions and material parameters
     # --------------------------------
 
@@ -38,11 +43,10 @@ def test_stem():
     # Create the soil layer
     model.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil_layer")
 
-    # Define moving load
+    # Define UVEC load
     load_coordinates = [(0.0, 1.0, 0.0), (5.0, 1.0, 0.0)]
 
     uvec_parameters = {"load_wheel_1": -30.0, "load_wheel_2": -10.0}
-
     uvec_load = UvecLoad(direction=[1, 1, 0], velocity=5, origin=[0.0, 1.0, 0.0], wheel_configuration=[0.0, 2.0],
                            uvec_file=r"sample_uvec.py", uvec_function_name="uvec_test",uvec_parameters=uvec_parameters)
 
@@ -73,7 +77,7 @@ def test_stem():
     solution_type = SolutionType.DYNAMIC
     # Set up start and end time of calculation, time step and etc
     time_integration = TimeIntegration(start_time=0.0, end_time=1.0, delta_time=0.01, reduction_factor=1.0,
-                                    increase_factor=1.0, max_delta_time_factor=1000)
+                                       increase_factor=1.0, max_delta_time_factor=1000)
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
                                                             displacement_absolute_tolerance=1.0e-9)
     stress_initialisation_type = StressInitialisationType.NONE

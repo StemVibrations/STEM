@@ -245,7 +245,7 @@ class MovingLoad(LoadParametersABC):
 @dataclass
 class UvecLoad(LoadParametersABC):
     """
-    Class containing the load parameters for a uvec (User-defined VEhiCle) load.
+    Class containing the load parameters for a UVEC (User-defined VEhiCle) load.
 
     Inheritance:
         - :class:`LoadParametersABC`
@@ -255,10 +255,10 @@ class UvecLoad(LoadParametersABC):
         - velocity (Union[float, str]): Velocity of the moving load [m/s].
         - origin (List[float]): Starting coordinates of the first wheel [m].
         - wheel_configuration (List[float]): Wheel configuration, i.e. distances from the origin of each wheel [m].
-        - uvec_file (str): Path to the uvec file.
-        - uvec_function_name (str): Name of the uvec function.
-        - uvec_parameters (Dict[str, Any]): Parameters of the uvec function.
-        - uvec_state_variables (Dict[str, Any]): State variables of the uvec function.
+        - uvec_file (str): Path to the UVEC file.
+        - uvec_function_name (str): Name of the UVEC function.
+        - uvec_parameters (Dict[str, Any]): Parameters of the UVEC function.
+        - uvec_state_variables (Dict[str, Any]): State variables of the UVEC function.
 
 
     """
@@ -278,6 +278,7 @@ class UvecLoad(LoadParametersABC):
         Static method to get the element name for a UVEC load.
         """
 
+        # check if the number of nodes per element is correct
         available_node_dim_combinations = {
             2: [2, 3],
             3: [2, 3],

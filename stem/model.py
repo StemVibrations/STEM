@@ -236,7 +236,7 @@ class Model:
 
         # validation of inputs
         self.validate_coordinates(coordinates)
-        if isinstance(load_parameters, MovingLoad):
+        if isinstance(load_parameters, (MovingLoad, UvecLoad)):
             self.__validate_moving_load_parameters(coordinates, load_parameters)
 
         # create input for gmsh
@@ -296,14 +296,15 @@ class Model:
                                      f"but {i} was given.")
 
     @staticmethod
-    def __validate_moving_load_parameters(coordinates: Sequence[Sequence[float]], load_parameters: MovingLoad) -> None:
+    def __validate_moving_load_parameters(coordinates: Sequence[Sequence[float]],
+                                          load_parameters: Union[MovingLoad, UvecLoad]) -> None:
         """
-        Validates the coordinates in input for the moving load and the trajectory (collinearity of the
+        Validates the coordinates in input for the moving load or Uvec load and the trajectory (collinearity of the
         points and if the origin is between the point).
 
         Args:
             - coordinates (Sequence[Sequence[float]]): The start-end coordinate of the moving load.
-            - parameters (:class:`stem.load.LoadParametersABC`): The parameters of the load.
+            - parameters (Union[:class:`stem.load.MovingLoad`,:class:`stem.load.UvecLoad` ): The parameters of the load.
 
         Raises:
             - ValueError: if moving load origin is not on trajectory
