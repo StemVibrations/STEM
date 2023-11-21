@@ -275,8 +275,15 @@ class UvecLoad(LoadParametersABC):
     @staticmethod
     def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
         """
-        Static method to get the element name for a uvec load.
+        Static method to get the element name for a UVEC load.
         """
+
+        available_node_dim_combinations = {
+            2: [2, 3],
+            3: [2, 3],
+        }
+        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations,
+                                             "UVEC load")
 
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
             element_name = f"MovingLoadCondition{n_dim_model}D{n_nodes_element}N"
