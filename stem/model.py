@@ -242,8 +242,7 @@ class Model:
         # create input for gmsh
         if isinstance(load_parameters, PointLoad):
             gmsh_input = {name: {"coordinates": coordinates, "ndim": 0}}
-        elif (isinstance(load_parameters, LineLoad) or isinstance(load_parameters, MovingLoad)
-              or isinstance(load_parameters, UvecLoad)):
+        elif isinstance(load_parameters, (LineLoad, MovingLoad, UvecLoad)):
             gmsh_input = {name: {"coordinates": coordinates, "ndim": 1}}
         elif isinstance(load_parameters, SurfaceLoad):
             gmsh_input = {name: {"coordinates": coordinates, "ndim": 2}}
