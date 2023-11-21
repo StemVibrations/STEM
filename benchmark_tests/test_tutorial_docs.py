@@ -9,7 +9,7 @@ def find_first_greater(my_list: List[float], value: float) -> float:
 
     Args:
         - my_list (list): list of values
-        - float: value to compare
+        - value (float): value to compare
 
     Returns:
         - float: first value greater than the given value
