@@ -65,8 +65,7 @@
             "load_bottom",
             "load_left",
             "load_right",
-            "no_displacement",
-            "soil1_young_modulus_field"
+            "no_displacement"
         ],
         "body_domain_sub_model_part_list": [
             "soil1"
@@ -135,19 +134,6 @@
                         0,
                         0
                     ]
-                }
-            },
-            {
-                "python_module": "set_parameter_field_process",
-                "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
-                "process_name": "SetParameterFieldProcess",
-                "Parameters": {
-                    "model_part_name": "PorousDomain.soil1_young_modulus_field",
-                    "variable_name": "YOUNG_MODULUS",
-                    "func_type": "json_file",
-                    "function": "dummy",
-                    "dataset": "dummy",
-                    "dataset_file_name": "soil1_young_modulus_field.json"
                 }
             }
         ],

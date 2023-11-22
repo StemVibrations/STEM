@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod, abstractproperty
-from typing import List, Dict, Optional, Any, Sequence
+from typing import List, Dict, Optional, Any, Sequence, Union
 
 import numpy as np
 from random_fields.generate_field import RandomFields, ModelName
@@ -54,17 +54,20 @@ class RandomFieldGenerator(FieldGenerator):
                  n_dim: int,
                  cov: float,
                  v_scale_fluctuation: float,
-                 anisotropy: List[float],
-                 angle: List[float],
+                 anisotropy: Union[float, List[float]],
+                 angle: Union[float, List[float]],
                  mean_value: Optional[float] = None,
                  seed: int = 14):
         """
         Initialise a random generator field. The mean value is optional because it can be set in another moment.
         In that case it should be set before running the generate method.
 
+        Anisotropy and angle can be given as scalar, 1-D and 2-D lists. In case the model is 3D but a 1-D or scalar
+        is provided, it is assumed the same angle and anisotropy along both horizontal direction.
+
         Args:
             - model_name (str): Name of the model to be used. Options are: "Gaussian", "Exponential", "Matern", "Linear"
-            - n_dim (int): number of dimensions of the model (2 or# self.__initiaise_fields() 3).
+            - n_dim (int): number of dimensions of the model (2 or 3).
             - cov (float): The coefficient of variation of the random field.
             - v_scale_fluctuation (float): The vertical scale of fluctuation of the random field.
             - anisotropy (list): The anisotropy of the random field in the other directions (per dimension).

@@ -92,20 +92,6 @@ class TestKratosModelIO:
         # add boundary conditions in 0d, 1d and 2d
         model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "no_displacement")
 
-        # Define the field generator
-        random_field_generator = RandomFieldGenerator(
-            n_dim=3, cov=0.1, model_name="Gaussian",
-            v_scale_fluctuation=1, anisotropy=[0.5, 0.5], angle=[0, 0]
-        )
-
-        field_parameters_json = ParameterFieldParameters(
-            property_name="YOUNG_MODULUS",
-            function_type="json_file",
-            field_generator=random_field_generator
-        )
-
-        model.add_field(part_name="soil1", field_parameters=field_parameters_json)
-
         model.synchronise_geometry()
 
         model.set_mesh_size(1)
@@ -113,12 +99,12 @@ class TestKratosModelIO:
 
         return model
 
-
     @pytest.fixture
     def create_default_2d_model_and_output_by_coordinates(self) -> Model:
         """
         Sets expected geometry data for a 2D geometry group. And it sets a time dependent line load at the top and
         outputs by coordinate so to include the center of the square. The group is a geometry of a square.
+        Output is provided along a line.
 
         Returns:
             - :class:`stem.model.Model`: the default 2D model of a square soil layer, line loads and output on a line.
@@ -171,6 +157,64 @@ class TestKratosModelIO:
                 nodal_results=nodal_results
             )
         )
+
+        model.synchronise_geometry()
+
+        model.set_mesh_size(1)
+        model.generate_mesh()
+
+        return model
+
+    @pytest.fixture
+    def create_default_2d_model_and_mesh_randomfield(self) -> Model:
+        """
+        Sets expected geometry data for a 2D geometry group. And it sets a time dependent line load at the top and
+        bottom and another line load at the sides. The group is a geometry of a square.
+
+        Returns:
+            - :class:`stem.model.Model`: the default 2D model of a square soil layer and line loads.
+        """
+        ndim = 2
+        layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+
+        load_coordinates_top = [(1, 1, 0), (0, 1, 0)]  # top
+        # define soil material
+        soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
+        constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
+        soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
+                                     retention_parameters=SaturatedBelowPhreaticLevelLaw())
+
+        # define load properties
+        line_load1 = LineLoad(active=[False, True, False], value=[0, -500, 0])
+
+        # create model
+        model = Model(ndim)
+
+        # add soil layer and line load and mesh them
+        model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
+
+        model.add_load_by_coordinates(load_coordinates_top, line_load1, "load_top")
+
+        # add pin parameters
+        no_displacement_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True],
+                                                            value=[0, 0, 0])
+
+        # add boundary conditions in 0d, 1d and 2d
+        model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "no_displacement")
+
+        # Define the field generator
+        random_field_generator = RandomFieldGenerator(
+            n_dim=3, cov=0.1, model_name="Gaussian",
+            v_scale_fluctuation=1, anisotropy=[0.5, 0.5], angle=[0, 0]
+        )
+
+        field_parameters_json = ParameterFieldParameters(
+            property_name="YOUNG_MODULUS",
+            function_type="json_file",
+            field_generator=random_field_generator
+        )
+
+        model.add_field(part_name="soil1", field_parameters=field_parameters_json)
 
         model.synchronise_geometry()
 
@@ -296,7 +340,6 @@ class TestKratosModelIO:
         # set up problem data
         return Problem(problem_name="test", number_of_threads=2, settings=solver_settings)
 
-
     def test_write_project_parameters_json(
         self,
         create_default_2d_model_and_mesh: Model,
@@ -338,8 +381,8 @@ class TestKratosModelIO:
         Test correct writing of the project parameters for the default output, model and settings.
 
         Args:
-            - create_default_2d_model_and_mesh (:class:`stem.model.Model`): the default 2D model of a square \
-                soil layer and a line load.
+            - create_default_2d_model_and_output_by_coordinates (:class:`stem.model.Model`): the default 2D model of \
+                a square soil layer, a line load and a line output.
             - create_default_outputs (List[:class:`stem.output.Output`]): list of default output processes.
             - create_default_solver_settings (:class:`stem.solver.Problem`): the Problem object containing the \
                 solver settings.
@@ -358,9 +401,9 @@ class TestKratosModelIO:
         expected_dict = json.load(open("tests/test_data/expected_ProjectParameters_line_output.json", 'r'))
         TestUtils.assert_dictionary_almost_equal(expected_dict, actual_dict)
 
-    def test_write_random_field_parameters(
+    def test_write_random_field_json_file(
         self,
-        create_default_2d_model_and_mesh: Model,
+        create_default_2d_model_and_mesh_randomfield: Model,
         create_default_outputs: List[Output],
         create_default_solver_settings: Problem
     ):
@@ -368,13 +411,13 @@ class TestKratosModelIO:
         Test correct writing of the random field parameters.
 
         Args:
-            - create_default_2d_model_and_mesh (:class:`stem.model.Model`): the default 2D model of a square \
-                soil layer and a line load.
+            - create_default_2d_model_and_mesh_randomfield (:class:`stem.model.Model`): the default 2D model of a \
+                square soil layer, a line load and a random field for the Young's modulus.
             - create_default_outputs (List[:class:`stem.output.Output`]): list of default output processes.
             - create_default_solver_settings (:class:`stem.solver.Problem`): the Problem object containing the \
                 solver settings.
         """
-        model = create_default_2d_model_and_mesh
+        model = create_default_2d_model_and_mesh_randomfield
         kratos_io = KratosIO(ndim=model.ndim)
 
         model.project_parameters = create_default_solver_settings
@@ -387,12 +430,76 @@ class TestKratosModelIO:
         expected_random_field_values = json.load(open("tests/test_data/expected_json_soil1_young_modulus_field.json",
                                                       'r'))
 
-        actual_random_field_values = json.load(open("soil1_young_modulus.json", 'r'))
+        actual_random_field_values = json.load(open("soil1_young_modulus_field.json", 'r'))
 
         # check number of values is equal to the number of elements
         assert len(actual_random_field_values["values"]) == len(model.body_model_parts[0].mesh.elements)
 
         TestUtils.assert_dictionary_almost_equal(expected_random_field_values, actual_random_field_values)
+
+    def test_validation_of_random_field_parameters(
+        self,
+        create_default_2d_model_and_mesh_randomfield: Model,
+        create_default_solver_settings: Problem
+    ):
+        """
+        Test correct writing of the random field parameters.
+
+        Args:
+            - create_default_2d_model_and_mesh (:class:`stem.model.Model`): the default 2D model of a square \
+                soil layer and a line load and a random field for the Young's modulus.
+            - create_default_outputs (List[:class:`stem.output.Output`]): list of default output processes.
+            - create_default_solver_settings (:class:`stem.solver.Problem`): the Problem object containing the \
+                solver settings.
+        """
+        model = create_default_2d_model_and_mesh_randomfield
+        kratos_io = KratosIO(ndim=model.ndim)
+
+        model.project_parameters = create_default_solver_settings
+
+        kratos_io._KratosIO__write_project_parameters_json(
+            model=model, mesh_file_name="test_mdpa_file.mdpa", materials_file_name="MaterialParameters.json"
+        )
+
+        expected_random_field_values = json.load(open("tests/test_data/expected_json_soil1_young_modulus_field.json",
+                                                      'r'))
+
+        actual_random_field_values = json.load(open("soil1_young_modulus_field.json", 'r'))
+
+        # check number of values is equal to the number of elements
+        assert len(actual_random_field_values["values"]) == len(model.body_model_parts[0].mesh.elements)
+
+        TestUtils.assert_dictionary_almost_equal(expected_random_field_values, actual_random_field_values)
+
+    def test_write_project_parameters_json_for_randomfield(
+        self,
+        create_default_2d_model_and_mesh_randomfield: Model,
+        create_default_outputs: List[Output],
+        create_default_solver_settings: Problem
+    ):
+        """
+        Test correct writing of the project parameters for the default output, model and settings.
+
+        Args:
+            - create_default_2d_model_and_mesh_randomfield (:class:`stem.model.Model`): the default 2D model of \
+                a square soil layer, a line load and a random field for the Young's modulus.
+            - create_default_outputs (List[:class:`stem.output.Output`]): list of default output processes.
+            - create_default_solver_settings (:class:`stem.solver.Problem`): the Problem object containing the \
+                solver settings.
+        """
+        model = create_default_2d_model_and_mesh_randomfield
+        kratos_io = KratosIO(ndim=model.ndim)
+        kratos_io.project_folder = "dir_test"
+
+        model.project_parameters = create_default_solver_settings
+
+        actual_dict = kratos_io._KratosIO__write_project_parameters_json(
+            model=model,
+            mesh_file_name="test_mdpa_file.mdpa",
+            materials_file_name="MaterialParameters.json",
+        )
+        expected_dict = json.load(open("tests/test_data/expected_ProjectParameters_random_field_2d.json", 'r'))
+        TestUtils.assert_dictionary_almost_equal(expected_dict, actual_dict)
 
     def test_write_material_parameters_json(
         self,
@@ -450,7 +557,7 @@ class TestKratosModelIO:
         Test correct writing of the mdpa file (mesh) for the default model and solver settings in 2D.
 
         Args:
-            - create_default_2d_model_and_mesh (:class:`stem.model.Model`): the default 2D model of a square \
+            - create_default_2d_model_and_output_by_coordinates (:class:`stem.model.Model`): the default 2D model of a square \
                 soil layer and a line load.
             - create_default_solver_settings (:class:`stem.solver.Problem`): the Problem object containing the \
                 solver settings.
@@ -470,6 +577,34 @@ class TestKratosModelIO:
 
         npt.assert_equal(actual=actual_text, desired=expected_text)
 
+    def test_write_mdpa_file_with_radonom_field(
+        self,
+        create_default_2d_model_and_mesh_randomfield: Model,
+        create_default_solver_settings: Problem
+    ):
+        """
+        Test correct writing of the mdpa file (mesh) for the default model and solver settings in 2D.
+
+        Args:
+            - create_default_2d_model_and_mesh_randomfield (:class:`stem.model.Model`): the default 2D model of a square \
+                soil layer, a line load and a random field for the Young's modulus.
+            - create_default_solver_settings (:class:`stem.solver.Problem`): the Problem object containing the \
+                solver settings.
+        """
+        model = create_default_2d_model_and_mesh_randomfield
+        kratos_io = KratosIO(ndim=model.ndim)
+        kratos_io.project_folder = "dir_test"
+
+        model.project_parameters = create_default_solver_settings
+
+        actual_text = kratos_io._KratosIO__write_mesh_to_mdpa(
+            model=model,
+            mesh_file_name="mdpa_file_with_random_field_2d.mdpa"
+        )
+        with open('tests/test_data/expected_mdpa_file_with_random_field_2d.mdpa', 'r') as openfile:
+            expected_text = openfile.readlines()
+
+        npt.assert_equal(actual=actual_text, desired=expected_text)
 
     def test_write_mdpa_file_3d(
         self,

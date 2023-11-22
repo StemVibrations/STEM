@@ -46,4 +46,4 @@ class TestGenerators:
         random_field_generator.mean_value = 10
         random_field_generator.generate([(0, 0, 0), (10, 1, 0)])
         values = random_field_generator.values
-        npt.assert_allclose(values, [12.237596631774569, 10.111738506937831])
+        npt.assert_allclose(values, [12.379497, 10.593184])

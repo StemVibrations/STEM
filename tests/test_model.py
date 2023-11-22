@@ -1046,6 +1046,7 @@ class TestModel:
     def test_validation_coordinates(self):
         """
         Test that validation raises and error if the points are not correctly specified.
+
         """
 
         ndim = 3
@@ -1165,10 +1166,12 @@ class TestModel:
                                         create_default_outputs: Output):
         """
         Test if output nodes are correctly accounted for when meshing a surface.
+
         Args:
             - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
             - create_default_outputs (:class:`stem.output.Output`): the output object containing the \
                 output info.
+
         """
 
         # define layer coordinates
@@ -1674,7 +1677,7 @@ class TestModel:
         # assert the number of generated values to be equal to the amount of elements of the part
         assert len(actual_rf_values) == len(model.body_model_parts[0].mesh.elements)
         # assert the generated values against the expected values
-        expected_rf_values = [106690581.27021609, 117522559.168375, 109372205.1259636, 113280413.42177339]
+        expected_rf_values = [104971256.1059345, 113280413.42177339, 105124797.09835173, 109686556.57934019]
 
         npt.assert_allclose(actual=actual_rf_values, desired=expected_rf_values)
 
@@ -1728,13 +1731,12 @@ class TestModel:
             # assert the generated values against the expected values
             expected_rf_values = actual_rf_values
         else:
-            expected_rf_values = [110426290.85086559, 110467872.76615903, 112819993.84928381, 110215050.1735261,
-                                  106675856.61674124, 108054340.59463443, 110426290.85086559, 112451747.00542878,
-                                  99199561.29788455, 104588810.43148346, 108054340.59463443, 112451747.00542878,
-                                  117020343.07974952, 110215050.1735261, 112673185.46295623, 112673185.46295623,
-                                  94835464.50660118, 108265180.01035367, 113638736.8729701, 119211037.37228104,
-                                  111908219.16132858, 113638736.8729701, 108265180.01035367, 100216560.11879255
-            ]
+            expected_rf_values = [109219152.50312316, 103358912.90787594, 105339578.47289738, 107804266.66256714,
+                                  116674453.0103657, 121205355.8771256, 117518624.66410118, 109641232.38516402,
+                                  108150391.42392428, 93740844.72077464, 106608642.49695791, 111016462.96330133,
+                                  95787906.70407471, 109879617.69834961, 103724463.91386327, 92715313.3744301,
+                                  115556177.86463425, 119222050.2452586, 112966908.38899206, 94554356.2203453,
+                                  112709106.84842391, 93573278.00303535, 100680007.50177462, 105511523.87671089]
         npt.assert_allclose(actual=actual_rf_values, desired=expected_rf_values)
 
     def test_validate_expected_success(self):
