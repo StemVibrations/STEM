@@ -1241,7 +1241,7 @@ class TestModel:
 
         assert part.mesh.elements == {}
 
-    def no_test_add_output_to_a_surface_3d(
+    def test_add_output_to_a_surface_3d(
             self, create_default_3d_soil_material: SoilMaterial, create_default_outputs: Output
     ):
         """
@@ -1262,23 +1262,22 @@ class TestModel:
 
         # create model
         model = Model(ndim)
-        model.extrusion_length = [0, 0, 4]
+        model.extrusion_length = 4
 
         # add soil layers
-        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "soil1")
 
         # define output object
         output_object = create_default_outputs
 
         # add outputs
-        output_coordinates = [(0, 1, 1.5), (2, 1, 1.5), (2, 1, 2.5), (4, 1, 2.5)]
+        output_coordinates = [(0, 1, 2), (2, 1, 2), (4, 1, 2)]
         model.add_output_part_by_coordinates(
             output_coordinates, **output_object.__dict__
         )
         model.synchronise_geometry()
 
-        model.generate_mesh(save_file=True, open_gmsh_gui=True)
-        # model.show_mesh()
+        model.generate_mesh()
 
         unique_element_ids = []
         unique_node_ids = []
@@ -1288,7 +1287,7 @@ class TestModel:
 
         # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
         # correct and if the element ids are unique and if the number of nodes per element is correct
-        assert len(part.mesh.elements) == 586
+        assert len(part.mesh.elements) == 686
 
         for element_id, element in part.mesh.elements.items():
             assert element.element_type == "TETRAHEDRON_4N"
@@ -1298,7 +1297,7 @@ class TestModel:
 
         # check if nodes are generated correctly, i.e. if there are nodes in the mesh and if the node ids are unique
         # and if the number of coordinates per node is correct
-        assert len(part.mesh.nodes) == 216
+        assert len(part.mesh.nodes) == 237
         for node_id, node in part.mesh.nodes.items():
             assert node_id not in unique_node_ids
             assert len(node.coordinates) == 3
@@ -1317,6 +1316,7 @@ class TestModel:
             assert len(node.coordinates) == 3
             unique_node_ids.append(node.id)
 
+        # No element outputs, so the element attribute of the mesh must be an empty dictionary
         assert part.mesh.elements == {}
 
     def test_generate_mesh_with_only_a_body_model_part_3d(self, create_default_3d_soil_material: SoilMaterial):
@@ -1542,6 +1542,8 @@ class TestModel:
 
         # add soil material
         soil_material = create_default_2d_soil_material
+
+        # add fake body model part with no material
         model.body_model_parts.append(
             BodyModelPart(name="fake part")
         )
@@ -1551,37 +1553,51 @@ class TestModel:
         model.add_load_by_coordinates(name="line_load", coordinates=[(0, 0, 0), (0, 1, 0)],
                                            load_parameters=line_load_parameters)
 
+        # Define the field generator
+        correct_rf_generator = RandomFieldGenerator(
+            n_dim=3, cov=0.1, model_name="Gaussian",
+            v_scale_fluctuation=5, anisotropy=[0.5, 0.5], angle=[0, 0], seed=42
+        )
+
+        # define the field parameters
+        correct_field_parameters_json = ParameterFieldParameters(
+            property_name="YOUNG_MODULUS",
+            function_type="json_file",
+            field_file_name="json_file.json",
+            field_generator=correct_rf_generator
+        )
+
+        # Define the field generator
+        wrong_rf_generator = RandomFieldGenerator(
+            n_dim=3, cov=0.1, model_name="Gaussian",
+            v_scale_fluctuation=5, anisotropy=[0.5, 0.5], angle=[0, 0], seed=42
+        )
+        wrong_field_parameters_json = ParameterFieldParameters(
+            property_name="YOUNGS_MODULUS",
+            function_type="json_file",
+            field_file_name="json_file.json",
+            field_generator=wrong_rf_generator
+        )
+
         # add random field to process model part
-        with pytest.raises(ValueError):
-            model.add_random_field(part_name="line_load", property_name="YOUNG_MODULUS", cov=0.1,
-                               v_scale_fluctuation=1, anisotropy=[0.5, 0.5], angle=[0, 0], seed=42)
+        msg = "The target part, `line_load`, is not a body model part."
+        with pytest.raises(ValueError, match=msg):
+            model.add_field(part_name="line_load", field_parameters=correct_field_parameters_json)
 
         # add random field to part with no material
-        with pytest.raises(ValueError):
-            model.add_random_field(part_name="fake part", property_name="YOUNG_MODULUS", cov=0.1,
-                               v_scale_fluctuation=1, anisotropy=[0.5, 0.5], angle=[0, 0], seed=42)
+        msg = "No material assigned to the body model part!"
+        with pytest.raises(ValueError, match=msg):
+            model.add_field(part_name="fake part", field_parameters=correct_field_parameters_json)
 
         # add random field to non-existing property
-        with pytest.raises(ValueError):
-            model.add_random_field(part_name="layer1", property_name="YOUNGS_MODULUS", cov=0.1,
-                               v_scale_fluctuation=1, anisotropy=[0.5, 0.5], angle=[0, 0], seed=42)
-
-        # add random field to non-existing property
-        with pytest.raises(ValueError):
-            model.add_random_field(part_name="layer1", property_name="IS_DRAINED", cov=0.1,
-                               v_scale_fluctuation=1, anisotropy=[0.5, 0.5], angle=[0, 0], seed=42)
-
-        # add random field using invalid model
-        with pytest.raises(ValueError):
-            model.add_random_field(part_name="layer1", property_name="IS_DRAINED", cov=0.1,
-                               v_scale_fluctuation=1, anisotropy=[0.5, 0.5], angle=[0, 0], seed=42,
-                               model_name="GAUSSIAN_MODEL")
+        msg = "Property YOUNGS_MODULUS is not one of the parameters of the soil material"
+        with pytest.raises(ValueError, match=msg):
+            model.add_field(part_name="layer1", field_parameters=wrong_field_parameters_json)
 
     def test_get_centroids_elements(
             self,
             create_default_2d_soil_material: SoilMaterial
     ):
-
 
         model = Model(2)
 
@@ -1595,15 +1611,24 @@ class TestModel:
                                            load_parameters=point_load_parms)
 
         # non existing part
-        with pytest.raises(ValueError):
+        msg = ("Model part `layer2` is not part of the model parts in the model."
+               "Please add it or check the part name.")
+        with pytest.raises(ValueError, match=msg):
             model.get_centroids_elements_model_part(part_name="layer2")
 
         # non meshed part
-        with pytest.raises(ValueError):
+        msg = ("Mesh of model part `layer1` not available. Please run the"
+               " model.generate_mesh() method")
+        with pytest.raises(ValueError, match=re.escape(msg)):
             model.get_centroids_elements_model_part(part_name="layer1")
 
+        # generate mesh
+        model.generate_mesh()
+
+        model.process_model_parts[0].mesh.elements = None
         # part without elements
-        with pytest.raises(ValueError):
+        msg = "No elements for model part `point_load`. Check if the a wrong part was selected."
+        with pytest.raises(ValueError, match=msg):
             model.get_centroids_elements_model_part(part_name="point_load")
 
     def test_random_field_generation_2d(
@@ -1624,24 +1649,32 @@ class TestModel:
 
         # add soil layers
         model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
-        model.set_mesh_size(0.5)
-        model.add_random_field(part_name="layer1", property_name="YOUNG_MODULUS", cov=0.1,
-                               v_scale_fluctuation=1, anisotropy=[0.5], angle=[0], seed=42)
+        model.set_mesh_size(1)
 
+        # Define the field generator
+        random_field_generator = RandomFieldGenerator(
+            n_dim=3, cov=0.1, model_name="Gaussian",
+            v_scale_fluctuation=1, anisotropy=[0.5], angle=[0], seed=42
+        )
+
+        field_parameters_json = ParameterFieldParameters(
+            property_name="YOUNG_MODULUS",
+            function_type="json_file",
+            field_generator=random_field_generator
+        )
+
+        model.add_field(part_name="layer1", field_parameters=field_parameters_json)
         model.synchronise_geometry()
 
         # generate mesh
         model.generate_mesh()
 
-        actual_rf_values = model.process_model_parts[-1].parameters.values
+        actual_rf_values = model.process_model_parts[-1].parameters.field_generator.values
 
         # assert the number of generated values to be equal to the amount of elements of the part
         assert len(actual_rf_values) == len(model.body_model_parts[0].mesh.elements)
         # assert the generated values against the expected values
-        expected_rf_values = [99431411.04966472, 99580505.42744313, 107951461.55866587, 110742422.79950684,
-                              115083316.36077476, 119457302.68282537, 108246625.16178104, 112762568.01048903,
-                              107623686.06656754, 109779491.39711092, 106528714.66275187, 107434251.13382186,
-                              112422789.04916367, 105984785.95965663]
+        expected_rf_values = [106690581.27021609, 117522559.168375, 109372205.1259636, 113280413.42177339]
 
         npt.assert_allclose(actual=actual_rf_values, desired=expected_rf_values)
 
@@ -1665,15 +1698,27 @@ class TestModel:
         # add soil layers
         model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
         model.set_mesh_size(1.0)
-        model.add_random_field(part_name="layer1", property_name="YOUNG_MODULUS", cov=0.1,
-                               v_scale_fluctuation=1, anisotropy=[0.5, 0.5], angle=[0, 0], seed=42)
+
+        # Define the field generator
+        random_field_generator = RandomFieldGenerator(
+            n_dim=3, cov=0.1, model_name="Gaussian",
+            v_scale_fluctuation=1, anisotropy=[0.5, 0.5], angle=[0, 0], seed=42
+        )
+
+        field_parameters_json = ParameterFieldParameters(
+            property_name="YOUNG_MODULUS",
+            function_type="json_file",
+            field_generator=random_field_generator
+        )
+
+        model.add_field(part_name="layer1", field_parameters=field_parameters_json)
 
         model.synchronise_geometry()
 
         # generate mesh
         model.generate_mesh()
 
-        actual_rf_values = model.process_model_parts[0].parameters.values
+        actual_rf_values = model.process_model_parts[0].parameters.field_generator.values
 
         # assert the number of generated values to be equal to the amount of elements of the part
         assert len(actual_rf_values) == len(model.body_model_parts[0].mesh.elements)
@@ -1683,13 +1728,13 @@ class TestModel:
             # assert the generated values against the expected values
             expected_rf_values = actual_rf_values
         else:
-            expected_rf_values = [109219152.50312316, 103358912.90787594, 105339578.47289738, 107804266.66256714,
-                                 116674453.0103657, 121205355.8771256, 117518624.66410118, 109641232.38516402,
-                                 108150391.42392428, 93740844.72077464, 106608642.49695791, 111016462.96330133,
-                                 95787906.70407471, 109879617.69834961, 103724463.91386327, 92715313.3744301,
-                                 115556177.86463425, 119222050.2452586, 112966908.38899206, 94554356.2203453,
-                                 112709106.84842391, 93573278.00303535, 100680007.50177462, 105511523.87671089]
-
+            expected_rf_values = [110426290.85086559, 110467872.76615903, 112819993.84928381, 110215050.1735261,
+                                  106675856.61674124, 108054340.59463443, 110426290.85086559, 112451747.00542878,
+                                  99199561.29788455, 104588810.43148346, 108054340.59463443, 112451747.00542878,
+                                  117020343.07974952, 110215050.1735261, 112673185.46295623, 112673185.46295623,
+                                  94835464.50660118, 108265180.01035367, 113638736.8729701, 119211037.37228104,
+                                  111908219.16132858, 113638736.8729701, 108265180.01035367, 100216560.11879255
+            ]
         npt.assert_allclose(actual=actual_rf_values, desired=expected_rf_values)
 
     def test_validate_expected_success(self):

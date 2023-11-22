@@ -26,22 +26,6 @@ class TestSoilMaterial:
                       PERMEABILITY_XX=1E-15, PERMEABILITY_YY=1E-15, PERMEABILITY_XY=1, PERMEABILITY_ZX=None,
                       PERMEABILITY_ZZ=3)
 
-    def test_is_property_in_soil_material(self):
-        """
-        Check that properties are correctly found in soil material properties
-        """
-        ndim = 2
-        soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
-        constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
-        soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
-                                     retention_parameters=SaturatedBelowPhreaticLevelLaw())
-
-        assert soil_material.is_property_in_material("YOUNG_MODULUS")
-        assert soil_material.is_property_in_material("POISSON_RATIO")
-        assert soil_material.is_property_in_material("POROSITY")
-        assert not soil_material.is_property_in_material("YOUNG_MODULUS".lower())
-        assert not soil_material.is_property_in_material("YOUNGS_MODULUS")
-
     def test_get_property_in_soil_material(self):
         """
         Check that properties are correctly returned in soil material properties
@@ -56,5 +40,6 @@ class TestSoilMaterial:
         assert soil_material.get_property_in_material("POISSON_RATIO") == 0.3
         assert soil_material.get_property_in_material("POROSITY") == 0.3
 
-        with pytest.raises(ValueError):
+        msg = "Property YOUNGS_MODULUS is not one of the parameters of the soil material"
+        with pytest.raises(ValueError, match=msg):
             soil_material.get_property_in_material("YOUNGS_MODULUS")

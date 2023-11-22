@@ -9,16 +9,18 @@ class TestTable:
         """
         Tests that table is created correctly
         """
-        _time = [0, 1, 2, 3, 4, 5]
-        _value1 = [0, 5, 10, 5, 0, 0]
+        time = [0, 1, 2, 3, 4, 5]
+        values = [0, 5, 10, 5, 0, 0]
 
-        Table(times=_time, values=_value1)
+        # correct definition of a table
+        Table(times=time, values=values)
 
-        _value2 = [0, 5, 10, 5, 0, 0, 10, 2]
+        # mismatch between times and values
+        values = [0, 5, 10, 5, 0, 0, 10, 2]
                        
-        _msg1 = ("Dimension mismatch between times and values in table:\n"
-                 f" - times: {len(_time)}\n"
-                 f" - values: {len(_value2)}\n")
-        with pytest.raises(ValueError, match=_msg1):
-            Table(times=_time, values=_value2)
-        
+        msg1 = ("Dimension mismatch between times and values in table:\n"
+                 f" - times: {len(time)}\n"
+                 f" - values: {len(values)}\n")
+
+        with pytest.raises(ValueError, match=msg1):
+            Table(times=time, values=values)

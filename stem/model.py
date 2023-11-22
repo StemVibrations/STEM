@@ -451,8 +451,8 @@ class Model:
             - None
         """
 
-        # todo add validation for point to be inside the same surface.
-        # todo add validation for start and end-point to lie on the edges
+        # TODO: add validation for point to be inside the same surface.
+        # TODO: add validation for start and end-point to lie on the edges
 
         # validation of inputs
         self.validate_coordinates(coordinates)
@@ -522,84 +522,57 @@ class Model:
         new_mesh.elements = {}
         return new_mesh
 
-    def add_random_field(
-            self, part_name: str, property_name: str, cov:float,
-            v_scale_fluctuation: float, anisotropy: List[float], angle: List[float], model_name: str = "Gaussian",
-            seed: int = 14, v_dim: int = 1, json_fname: Optional[str] = None
+    def add_field(
+            self, part_name: str,  field_parameters: ParameterFieldParameters
     ):
         """
-        Add a random field generator to perform random field for the given variable and the given model part.
-        The mean of the random field is taken from the material parameter.
+        Add a field parameter to a given model part (specified by the part_name input).
+        If a json input file is considered for the generation of the random field (more info in
+        additional_processes.py) than if the `mean_value` attribute of the generator is None, the
+        corresponding material property is used as mean.
 
         Args:
             - part_name (str): model of the part name where to apply the random field generation.
-            - property_name (str): property (or variable) name to generate the random field for (e.g. YOUNG_MODULUS).
-            - model_name (str): Name of the model to be used. Options are: "Gaussian", "Exponential", "Matern", "Linear"
-            - cov (float): The coefficient of variation of the random field.
-            - v_scale_fluctuation (float): The vertical scale of fluctuation of the random field.
-            - anisotropy (list): The anisotropy of the random field in the other directions (per dimension).
-            - angle (list): The angle of the random field (per dimension).
-            - seed (int): The seed number for the random number generator.
-            - v_dim (int): The dimension of the vertical scale of fluctuation. # TODO: make global variable
+            - field_parameters (:class:`stem.additional_processes.ParameterFieldParameters`): the objects containing \
+                the parameters necessary for the definition of the field.
 
         Raises:
             - ValueError: if the part name is not a body model part.
             - ValueError: if the body model part has no material.
-            - ValueError: if the model_name is not an invalid, implemented model.
+
         """
 
         # Check if the model part exists and retrieve the part
-        trgt_part = self.__get_model_part_by_name(part_name=part_name)
+        target_part = self.__get_model_part_by_name(part_name=part_name)
 
         # Check if the model part is a body model part
-        if not isinstance(trgt_part, BodyModelPart):
+        if not isinstance(target_part, BodyModelPart):
             raise ValueError(f"The target part, `{part_name}`, is not a body model part.")
 
         # Check if the material of the body model part is soil
-        if trgt_part.material is None:
+        if target_part.material is None:
             raise ValueError(f"No material assigned to the body model part!")
 
         # Get the property of the soil material, this is the mean value of the random field.
         # Checks also if the material of the body model part is soil contains the desired parameter
-        mean_value = trgt_part.material.get_property_in_material(property_name=property_name)
-        if isinstance(mean_value, bool) or not isinstance(mean_value, (float, int)):
-            raise ValueError(f"The property for which a random field needs to be generated, `{property_name}`, "
-                             f"is not numeric, but {mean_value} ({type(mean_value)}).")
+        mean_value_material = target_part.material.get_property_in_material(
+            property_name=field_parameters.property_name)
 
-        _available_model_names = ["Gaussian", "Exponential", "Matern", "Linear"]
+        # define the name of the new model part to generate the random field
+        new_part_name = part_name + "_" + field_parameters.property_name.lower() + "_field"
 
-        # check that random field model is one of the implemented
-        if model_name not in _available_model_names:
-            raise ValueError(f"Model name: `{model_name}` was provided but not understood or implemented yet. "
-                             f"Available models are: {_available_model_names}")
+        # validation for json input files
+        if field_parameters.function_type == "json_file":
 
-        variance = (cov * mean_value) ** 2
+            if isinstance(field_parameters.field_generator, RandomFieldGenerator):
 
-        aux_key = [anisotropy, angle]
-        if self.ndim == 2:
-            for key in aux_key:
-                if len(key) == 1:
-                    key += key
+                if field_parameters.field_generator.mean_value is None:
 
-        random_field_generator = RandomFieldGenerator(
-            n_dim=3, mean=mean_value, variance=variance,
-            model_name=model_name,
-            v_scale_fluctuation=v_scale_fluctuation,
-            anisotropy=anisotropy, angle=angle, seed=seed, v_dim=v_dim
-        )
+                    field_parameters.field_generator.mean_value= mean_value_material
 
-        #
-        new_part_name = part_name+"_"+property_name.lower()
+            if field_parameters.field_file_name is None:
 
-        if json_fname is None:
-            json_fname = new_part_name+".json"
-
-        field_parameters = ParameterFieldParameters(
-            variable_name=property_name,
-            function_type="json_file",
-            function=json_fname,
-            field_generator=random_field_generator
-        )
+                field_parameters.field_file_name = new_part_name + ".json"
 
         model_part_geometry_ids = self.gmsh_io.geo_data["physical_groups"][part_name]["geometry_ids"]
         model_part_ndim = self.gmsh_io.geo_data["physical_groups"][part_name]["ndim"]
@@ -690,10 +663,17 @@ class Model:
                 # check the ordering of the nodes of the conditions. If it does not match flip the order.
                 self.__check_ordering_process_model_part(matched_elements, process_model_part)
 
-        # generate the parameters for the random field
-        self.__initiaise_random_fields()
+        self.__post_mesh()
 
-    def __initiaise_random_fields(self):
+    def __post_mesh(self):
+        """
+        Function to be called after the mesh is generated and finalised.
+            - initialise field parameters (e.g., random fields).
+
+        """
+        self.__initiaise_fields()
+
+    def __initiaise_fields(self):
         """
         Extract the node ids of each of the elements in a model part.
 
@@ -709,10 +689,14 @@ class Model:
 
             if isinstance(mp.parameters, ParameterFieldParameters):
 
-                if mp.parameters.field_generator is None:
-                    raise ValueError("Field generator is not provided for parameter field.")
-                centroids = self.get_centroids_elements_model_part(mp.name)
-                mp.parameters.field_generator.generate(centroids)
+                # initialise the fields for the json output files. Tiny expressions don't require it.
+                if mp.parameters.function_type == "json_file":
+
+                    if mp.parameters.field_generator is None:
+                        raise ValueError("Field generator is not provided for parameter field.")
+
+                    centroids = self.get_centroids_elements_model_part(mp.name)
+                    mp.parameters.field_generator.generate(centroids)
 
     @staticmethod
     def __get_model_part_element_connectivities(model_part: ModelPart) -> npty.NDArray[np.int64]:
@@ -961,7 +945,7 @@ class Model:
                              f"method.")
 
         if mp.mesh.elements is None:
-            raise ValueError(f"No elements for model part `{part_name}`. Check if the a wrond part was selected.")
+            raise ValueError(f"No elements for model part `{part_name}`. Check if the a wrong part was selected.")
 
         nds = mp.mesh.nodes
         coordinates = np.stack([[nds[nid].coordinates for nid in el.node_ids] for el in mp.mesh.elements.values()])
@@ -1101,6 +1085,8 @@ class Model:
 
         self.synchronise_geometry()
         self.validate()
+
+        # generate the fields for the field parameters (e.g., random fields)
 
         self.__setup_stress_initialisation()
 

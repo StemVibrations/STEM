@@ -316,6 +316,6 @@ class SoilMaterial:
         property_value = all_properties.get(property_name)
 
         if property_value is None:
-            raise ValueError(f"Property f{property_name} is not one of the parameters of the soil material")
+            raise ValueError(f"Property {property_name} is not one of the parameters of the soil material")
 
         return property_value

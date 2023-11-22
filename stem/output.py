@@ -103,7 +103,7 @@ def validate_nodal_point_output(nodal_results: Sequence[Union[NodalOutput, str]]
         _invalid_strings = '\n'.join(__invalid_outputs)
         raise ValueError(f"Incorrect requested output for Nodal outputs:\n"
                          f"{_invalid_strings}. Check the available "
-                         f"gauss point outputs inputs in the Enum NodalOutput.")
+                         f"nodal outputs in the Enum NodalOutput.")
 
 def validate_gauss_point_output(gauss_point_results: Sequence[Union[GaussPointOutput, str]]):
     """
@@ -126,7 +126,7 @@ def validate_gauss_point_output(gauss_point_results: Sequence[Union[GaussPointOu
         _invalid_strings = '\n'.join(__invalid_outputs)
         raise ValueError(f"Incorrect requested output for Gauss point outputs:\n"
                          f"{_invalid_strings}. Check the available "
-                         f"gauss point outputs inputs in the Enum GaussPointOutput.")
+                         f"gauss point outputs in the Enum GaussPointOutput.")
 
 
 def detect_vector_in_tensor_outputs(requested_outputs: Sequence[Union[GaussPointOutput, str]]):

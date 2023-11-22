@@ -1,4 +1,5 @@
 import json
+import re
 
 import pytest
 
@@ -40,7 +41,10 @@ class TestKratosOutputsIO:
         )
 
         # incorrect definition nodal outputs
-        with pytest.raises(ValueError):
+        msg = ("Incorrect requested output for Nodal outputs:\n"
+               "DISPLLLACEMENT. Check the available nodal outputs "
+               "in the Enum NodalOutput.")
+        with pytest.raises(ValueError, match=msg):
             GiDOutputParameters(
                 file_format="ascii",
                 output_interval=100,
@@ -49,7 +53,10 @@ class TestKratosOutputsIO:
             )
 
         # incorrect definition gauss outputs
-        with pytest.raises(ValueError):
+        msg = ("Incorrect requested output for Gauss point outputs:\n"
+               "YOUNGS_MODULUS. Check the available gauss point outputs "
+               "in the Enum GaussPointOutput.")
+        with pytest.raises(ValueError, match=msg):
             GiDOutputParameters(
                 file_format="ascii",
                 output_interval=100,
@@ -67,7 +74,10 @@ class TestKratosOutputsIO:
         )
 
         # incorrect definition nodal outputs
-        with pytest.raises(ValueError):
+        msg = ("Incorrect requested output for Nodal outputs:\n"
+               "DISPLLLACEMENT. Check the available nodal outputs "
+               "in the Enum NodalOutput.")
+        with pytest.raises(ValueError, match=msg):
             VtkOutputParameters(
                 file_format="ascii",
                 output_precision=8,
@@ -78,7 +88,10 @@ class TestKratosOutputsIO:
             )
 
         # incorrect definition gauss outputs
-        with pytest.raises(ValueError):
+        msg = ("Incorrect requested output for Gauss point outputs:\n"
+               "YOUNGS_MODULUS. Check the available gauss point outputs "
+               "in the Enum GaussPointOutput.")
+        with pytest.raises(ValueError, match=msg):
             VtkOutputParameters(
                 file_format="ascii",
                 output_precision=8,
@@ -95,8 +108,10 @@ class TestKratosOutputsIO:
             gauss_point_results=gauss_point_results1,
         )
 
-        # incorrect definition nodal outputs
-        with pytest.raises(ValueError):
+        msg = ("Incorrect requested output for Nodal outputs:\n"
+               "DISPLLLACEMENT. Check the available nodal outputs "
+               "in the Enum NodalOutput.")
+        with pytest.raises(ValueError, match=msg):
             JsonOutputParameters(
                 output_interval=0.002,
                 nodal_results=nodal_results2,
@@ -104,7 +119,10 @@ class TestKratosOutputsIO:
             )
 
         # incorrect definition gauss outputs
-        with pytest.raises(ValueError):
+        msg = ("Incorrect requested output for Gauss point outputs:\n"
+               "YOUNGS_MODULUS. Check the available gauss point outputs "
+               "in the Enum GaussPointOutput.")
+        with pytest.raises(ValueError, match=msg):
             JsonOutputParameters(
                 output_interval=0.002,
                 nodal_results=[],

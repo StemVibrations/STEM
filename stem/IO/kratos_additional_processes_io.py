@@ -73,7 +73,7 @@ class KratosAdditionalProcessesIO:
         }
 
         process_dict["Parameters"]["model_part_name"] = f"{self.domain}.{part_name}"
-        process_dict["Parameters"]["variable_name"] = parameters.variable_name
+        process_dict["Parameters"]["variable_name"] = parameters.property_name
         process_dict["Parameters"]["func_type"] = parameters.function_type
 
         # initialise to dummy
@@ -81,9 +81,9 @@ class KratosAdditionalProcessesIO:
         process_dict["Parameters"]["dataset"] = "dummy"
 
         if parameters.function_type == "json_file":
-            process_dict["Parameters"]["dataset_file_name"] = parameters.function
+            process_dict["Parameters"]["dataset_file_name"] = parameters.field_file_name
         elif parameters.function_type == "input":
-            process_dict["Parameters"]["function"] = parameters.function
+            process_dict["Parameters"]["function"] = parameters.tiny_expr_function
         else:
             raise ValueError(f"function type {parameters.function_type} not supported.")
 

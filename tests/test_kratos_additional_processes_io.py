@@ -17,31 +17,31 @@ class TestKratosAdditionalProcessesIO:
         """
         Test the creation of the additional processes dictionaries for the
         ProjectParameters.json file
+
         """
 
         # Excavation process
         excavation_parameters = Excavation(deactivate_body_model_part=True)
 
-        # Define random field generator
-
-        random_field_generator = RandomFields(n_dim=3, mean=10, variance=2,
-                                              model_name=ModelName.Gaussian,
-                                              v_scale_fluctuation=5,
-                                              anisotropy=[0.5, 0.5], angle=[0, 0], seed=42, v_dim=1)
+        # Define the field generator
+        random_field_generator = RandomFieldGenerator(
+            n_dim=3, cov=0.1, model_name="Gaussian",
+            v_scale_fluctuation=5, anisotropy=[0.5, 0.5], angle=[0, 0], seed=42
+        )
 
         # define the field parameters
         field_parameters_json = ParameterFieldParameters(
-            variable_name="YOUNG_MODULUS",
+            property_name="YOUNG_MODULUS",
             function_type="json_file",
-            function="test_random_field_json",
+            field_file_name="json_file.json",
             field_generator=random_field_generator
         )
 
         field_parameters_input = ParameterFieldParameters(
-            variable_name="YOUNG_MODULUS",
+            property_name="YOUNG_MODULUS",
             function_type="input",
-            function="20000*x + 30000*y",
-            field_generator=random_field_generator
+            tiny_expr_function="20000*x + 30000*y",
+
         )
         # collect the part names and parameters into a dictionary
         # TODO: change later when model part is implemented
@@ -76,21 +76,22 @@ class TestKratosAdditionalProcessesIO:
         )
 
     def test_raise_errors_additional_processes_io(self):
-        """Test that the additional_processes_io raises correctly the errors
+        """
+        Test that the additional_processes_io raises correctly the errors
+
         """
 
-
-        # Define random field generator
-        random_field_generator = RandomFields(n_dim=3, mean=10, variance=2,
-                                              model_name=ModelName.Gaussian,
-                                              v_scale_fluctuation=5,
-                                              anisotropy=[0.5, 0.5], angle=[0, 0], seed=42, v_dim=1)
+        # Define the field generator
+        random_field_generator = RandomFieldGenerator(
+            n_dim=3, cov=0.1, model_name="Gaussian",
+            v_scale_fluctuation=5, anisotropy=[0.5, 0.5], angle=[0, 0], seed=42
+        )
 
         # define the field parameters
         field_parameters_json = ParameterFieldParameters(
-            variable_name="YOUNG_MODULUS",
+            property_name="YOUNG_MODULUS",
             function_type="json_file",
-            function="test_random_field_json",
+            field_file_name="test_random_field_json",
             field_generator=random_field_generator
         )
 

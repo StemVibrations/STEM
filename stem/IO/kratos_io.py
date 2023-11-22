@@ -954,10 +954,10 @@ class KratosIO:
 
                 if isinstance(mp.parameters, ParameterFieldParameters):
                     # generate parameter field file json
-                    if ParameterFieldParameters.function_type == "json_file":
+                    if mp.parameters.function_type == "json_file":
                         IOUtils.write_json_file(
                             output_folder=self.project_folder,
-                            file_name=mp.parameters.function,
+                            file_name=mp.parameters.field_file_name,
                             dictionary={"values": mp.parameters.field_generator.values}
                         )
 
