@@ -67,7 +67,7 @@ def test_moving_load_on_track():
                                      rayleigh_m=0.0)
 
     # Set up problem data
-    problem = Problem(problem_name="calculate_moving_load_on_embankment_3d", number_of_threads=1,
+    problem = Problem(problem_name="calculate_moving_load_on_embankment_3d2", number_of_threads=1,
                       settings=solver_settings)
     model.project_parameters = problem
 
@@ -87,8 +87,8 @@ def test_moving_load_on_track():
         output_name="vtk_output",
         output_dir="output",
         output_parameters=VtkOutputParameters(
-            file_format="binary",
-            output_interval=1,
+            file_format="ascii",
+            output_interval=10,
             nodal_results=nodal_results,
             gauss_point_results=gauss_point_results,
             output_control_type="step"
@@ -100,6 +100,6 @@ def test_moving_load_on_track():
 
     from stem.stem import Stem
 
-    stem = Stem(model, "benchmark_moving_load")
+    stem = Stem(model, "benchmark_moving_load2")
     stem.write_all_input_files()
     stem.run_calculation()

@@ -1,7 +1,7 @@
 import os
 
 import KratosMultiphysics
-from KratosMultiphysics.GeoMechanicsApplication.geomechanics_analysis import GeoMechanicsAnalysis
+from KratosMultiphysics.StemApplication.geomechanics_analysis import StemGeoMechanicsAnalysis
 
 from typing import List, Dict
 from stem.model import Model
@@ -119,7 +119,7 @@ class Stem:
             kratos_parameters = KratosMultiphysics.Parameters(parameter_file.read())
 
         # run calculation
-        simulation = GeoMechanicsAnalysis(self.kratos_model, kratos_parameters)
+        simulation = StemGeoMechanicsAnalysis(self.kratos_model, kratos_parameters)
         simulation.Run()
 
         # update last ran stage number
