@@ -92,7 +92,7 @@ def test_stem():
     gauss_point_results = []
 
     # Define the output process
-    vtk_output_process = Output(
+    model.add_model_part_output(
         part_name="porous_computational_model_part",
         output_name="vtk_output",
         output_dir="output",
@@ -107,7 +107,6 @@ def test_stem():
 
     # Write KRATOS input files
     # --------------------------------
-    model.output_settings = [vtk_output_process]
 
     input_folder = "benchmark_tests/test_moving_load_on_soil_3d/inputs_kratos"
 

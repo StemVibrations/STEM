@@ -96,7 +96,7 @@ def test_stem():
     nodal_results = [NodalOutput.VELOCITY]
 
     # Define the output process
-    vtk_output_process = Output(
+    model.add_model_part_output(
         output_name="vtk_output",
         output_dir="output",
         output_parameters=VtkOutputParameters(
@@ -107,8 +107,6 @@ def test_stem():
             output_control_type="step"
         )
     )
-    # add the output process to the model
-    model.output_settings = [vtk_output_process]
 
     # Define the kratos input folder
     input_folder = "benchmark_tests/test_1d_wave_prop_drained_soil/inputs_kratos"
