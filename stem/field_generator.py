@@ -27,7 +27,7 @@ class FieldGenerator(ABC):
         It has to set the generated_field attribute.
 
         Args:
-            - coordinates (Sequence[Sequence[float]]): Sequence of points where the random field needs to be generated.
+            - coordinates (numpy.typing.NDArray[np.float64]): Sequence of points where the random field needs to be generated.
 
         """
         return None

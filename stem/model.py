@@ -923,7 +923,8 @@ class Model:
             - part_name (str): the model part for which centroids are required.
 
         Returns:
-            - centroids (Optional[npty.NDArray[np.float64]]): centroids of the N elements in the part name as (N, 3) array.
+            - centroids (Union[Any, npty.NDArray[np.float64]]): centroids of the N elements in the part name \
+                as (N,3) array.
 
         Raises:
             - ValueError: if part_name specified is not part of the model.
