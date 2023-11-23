@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod, abstractproperty
 from typing import List, Dict, Optional, Any, Sequence, Union
 
 import numpy as np
+import numpy.typing as npty
 from random_fields.generate_field import RandomFields, ModelName
 
 from stem.globals import VERTICAL_AXIS
@@ -20,7 +21,7 @@ class FieldGenerator(ABC):
         self.generated_field: Optional[List[float]] = None
 
     @abstractmethod
-    def generate(self, coordinates: Sequence[Sequence[float]]):
+    def generate(self, coordinates: npty.NDArray[np.float64]):
         """
         Method to generate the fields for the required coordinates.
         It has to set the generated_field attribute.
@@ -57,7 +58,7 @@ class RandomFieldGenerator(FieldGenerator):
                  v_scale_fluctuation: float,
                  anisotropy: Union[float, List[float]],
                  angle: Union[float, List[float]],
-                 mean_value: Optional[float] = None,
+                 mean_value: Optional[Union[int, float]] = None,
                  seed: int = 14):
         """
         Initialise a random generator field. The mean value is optional because it can be set in another moment.
@@ -115,13 +116,14 @@ class RandomFieldGenerator(FieldGenerator):
         self.mean_value = mean_value
         self.seed = seed
 
-    def generate(self, coordinates: Sequence[Sequence[float]]):
+    def generate(self, coordinates: npty.NDArray[np.float64]):
         """
         Generate the random field parameters at the coordinates specified.
         The generated values are stored in `generated_field` attribute.
 
         Args:
-            - coordinates (Sequence[Sequence[float]]): Sequence of points where the random field needs to be generated.
+            - coordinates (numpy.typing.NDArray[np.float64]): Sequence of points where the random field needs to be
+            generated.
 
         """
 

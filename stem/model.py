@@ -554,7 +554,7 @@ class Model:
         mean_value_material = target_part.material.get_property_in_material(
             property_name=field_parameters.property_name)
 
-        if isinstance(mean_value_material, bool) or not isinstance(mean_value_material, (float, int, np.float64)):
+        if isinstance(mean_value_material, bool) or not isinstance(mean_value_material, (float, int)):
             raise ValueError("The property for which a random field needs to be generated, "
                              f"`{field_parameters.property_name}` is not a numeric value.")
 
@@ -915,7 +915,7 @@ class Model:
         print(f"Model part `{part_name}` not found!")
         return None
 
-    def get_centroids_elements_model_part(self, part_name:str) -> Optional[npty.NDArray[np.float64]]:
+    def get_centroids_elements_model_part(self, part_name: str) -> Union[Any, npty.NDArray[np.float64]]:
         """
         Returns the centroid of all the elements in the model part.
 
