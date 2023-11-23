@@ -422,9 +422,9 @@ class Model:
         created, to specify the list of nodes of interest.
 
         Current limitations:
-        - The nodes have to be laying on an existing geometry surface.
-        - The first and endpoint have to lie on one of the edges of the surface.
-        - A single point cannot be provided, but is always a sequence of lines.
+            - The nodes have to be laying on an existing geometry surface.
+            - The first and endpoint have to lie on one of the edges of the surface.
+            - A single point cannot be provided, but is always a sequence of lines.
 
         Args:
             - coordinates (Optional[Sequence[Sequence[float]]]): A list of nodes that are of interest for the
@@ -588,7 +588,7 @@ class Model:
     def synchronise_geometry(self):
         """
         Synchronise the geometry of all model parts and synchronise the geometry of the whole model. This function
-        recalculates all ids and connectivity of all geometrical entities.
+        recalculates all ids and connectivities of all geometrical entities.
 
         """
 
