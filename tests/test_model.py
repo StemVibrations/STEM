@@ -1726,12 +1726,11 @@ class TestModel:
         # assert the number of generated values to be equal to the amount of elements of the part
         assert len(actual_rf_values) == len(model.body_model_parts[0].mesh.elements)
 
-        if IS_LINUX:
-            # TODO: test for linux
-            # assert the generated values against the expected values
-            expected_rf_values = actual_rf_values
-        else:
-            expected_rf_values = [109219152.50312316, 103358912.90787594, 105339578.47289738, 107804266.66256714,
+        # if IS_LINUX:
+        #     # TODO: test for linux
+        #     # assert the generated values against the expected values
+        #     expected_rf_values = actual_rf_values
+        expected_rf_values = [109219152.50312316, 103358912.90787594, 105339578.47289738, 107804266.66256714,
                                   116674453.0103657, 121205355.8771256, 117518624.66410118, 109641232.38516402,
                                   108150391.42392428, 93740844.72077464, 106608642.49695791, 111016462.96330133,
                                   95787906.70407471, 109879617.69834961, 103724463.91386327, 92715313.3744301,
