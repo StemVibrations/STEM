@@ -81,6 +81,7 @@ class KratosAdditionalProcessesIO:
         process_dict["Parameters"]["dataset"] = "dummy"
 
         if parameters.function_type == "json_file":
+
             process_dict["Parameters"]["dataset_file_name"] = parameters.field_file_name
         elif parameters.function_type == "input":
             process_dict["Parameters"]["function"] = parameters.tiny_expr_function

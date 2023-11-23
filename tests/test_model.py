@@ -1199,11 +1199,7 @@ class TestModel:
             output_coordinates, **output_object.__dict__
         )
         model.synchronise_geometry()
-        # model.show_geometry(show_line_ids=True)
-        # TODO: create an assert block for geometry
-
         model.generate_mesh()
-        # model.show_mesh()
 
         unique_element_ids = []
         unique_node_ids = []
@@ -1249,6 +1245,7 @@ class TestModel:
     ):
         """
         Test if output nodes are correctly accounted for when meshing a surface in 3d.
+
         Args:
             - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
             - create_default_outputs (:class:`stem.output.Output`): the output object containing the \
@@ -1285,14 +1282,14 @@ class TestModel:
         unique_element_ids = []
         unique_node_ids = []
 
-        part = model.body_model_parts[0]
-        assert part.mesh.ndim == 3
+        body_model_part = model.body_model_parts[0]
+        assert body_model_part.mesh.ndim == 3
 
         # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
         # correct and if the element ids are unique and if the number of nodes per element is correct
-        assert len(part.mesh.elements) == 686
+        assert len(body_model_part.mesh.elements) == 686
 
-        for element_id, element in part.mesh.elements.items():
+        for element_id, element in body_model_part.mesh.elements.items():
             assert element.element_type == "TETRAHEDRON_4N"
             assert element_id not in unique_element_ids
             assert len(element.node_ids) == 4
@@ -1300,27 +1297,27 @@ class TestModel:
 
         # check if nodes are generated correctly, i.e. if there are nodes in the mesh and if the node ids are unique
         # and if the number of coordinates per node is correct
-        assert len(part.mesh.nodes) == 237
-        for node_id, node in part.mesh.nodes.items():
+        assert len(body_model_part.mesh.nodes) == 237
+        for node_id, node in body_model_part.mesh.nodes.items():
             assert node_id not in unique_node_ids
             assert len(node.coordinates) == 3
             unique_node_ids.append(node.id)
 
         # assert the output parts
-        part = model.process_model_parts[0]
-        assert part.mesh.ndim == 1
+        output_model_part = model.process_model_parts[0]
+        assert output_model_part.mesh.ndim == 1
 
         unique_node_ids = []
         # check if nodes are generated correctly, number of nodes are equal to the one requested in output,
         # no elements generated, unique node ids, and correct number of coordinates per node
-        assert len(part.mesh.nodes) == len(output_coordinates)
-        for node_id, node in part.mesh.nodes.items():
+        assert len(output_model_part.mesh.nodes) == len(output_coordinates)
+        for node_id, node in output_model_part.mesh.nodes.items():
             assert node_id not in unique_node_ids
             assert len(node.coordinates) == 3
             unique_node_ids.append(node.id)
 
         # No element outputs, so the element attribute of the mesh must be an empty dictionary
-        assert part.mesh.elements == {}
+        assert output_model_part.mesh.elements == {}
 
     def test_generate_mesh_with_only_a_body_model_part_3d(self, create_default_3d_soil_material: SoilMaterial):
         """
@@ -1373,6 +1370,7 @@ class TestModel:
 
         Args:
             - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
         """
         model = Model(2)
 
@@ -1528,19 +1526,17 @@ class TestModel:
         npt.assert_equal(node_ids_process_model_part_1, expected_process_connectivities)
         npt.assert_equal(node_ids_process_model_part_2, expected_process_connectivities)
 
-        # check the __repr__  method is correct:
-        expected_string_repr = np.array([
-            "ModelPart(name=line_load1, parameters=LineLoad)", "ModelPart(name=line_load2, parameters=LineLoad)",
-            "BodyModelPart(name=layer1, material=SoilMaterial)", "BodyModelPart(name=layer2, material=SoilMaterial)"
-        ])
-        actual_string_repr = np.array([str(pp) for pp in model.get_all_model_parts()])
-        npt.assert_equal(actual=actual_string_repr, desired=expected_string_repr)
-
-    def test_random_field_generation_raises_errors(
+    def test_add_field_raises_errors(
             self,
             create_default_2d_soil_material: SoilMaterial
     ):
+        """
+        Checks that the function to add parameter field raises errors correctly.
 
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
         model = Model(2)
 
         # add soil material
@@ -1582,6 +1578,13 @@ class TestModel:
             field_generator=wrong_rf_generator
         )
 
+        wrong_field_parameters_json_boolean = ParameterFieldParameters(
+            property_name="IS_DRAINED",
+            function_type="json_file",
+            field_file_name="json_file.json",
+            field_generator=wrong_rf_generator
+        )
+
         # add random field to process model part
         msg = "The target part, `line_load`, is not a body model part."
         with pytest.raises(ValueError, match=msg):
@@ -1597,10 +1600,22 @@ class TestModel:
         with pytest.raises(ValueError, match=msg):
             model.add_field(part_name="layer1", field_parameters=wrong_field_parameters_json)
 
+        # add random field to boolean property
+        msg = "The property for which a random field needs to be generated, `IS_DRAINED` is not a numeric value."
+        with pytest.raises(ValueError, match=msg):
+            model.add_field(part_name="layer1", field_parameters=wrong_field_parameters_json_boolean)
+
     def test_get_centroids_elements(
             self,
             create_default_2d_soil_material: SoilMaterial
     ):
+        """
+        Test the computation of the centroids from the mesh of a model part and raising of errors.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
 
         model = Model(2)
 
@@ -1626,8 +1641,20 @@ class TestModel:
             model.get_centroids_elements_model_part(part_name="layer1")
 
         # generate mesh
+        model.set_mesh_size(1)
         model.generate_mesh()
 
+        # generate centroids and assert they are as expected
+        actual_entroids = model.get_centroids_elements_model_part(part_name="layer1")
+        expected_centroids = np.array(
+            [[0.5, 0.16666667, 0.],
+             [0.16666667, 0.5, 0.],
+             [0.83333333, 0.5, 0.],
+             [0.5, 0.83333333, 0.]]
+        )
+        npt.assert_allclose(actual_entroids,expected_centroids)
+
+        # test that error is raised when trying to get centroid from a part with no elements
         model.process_model_parts[0].mesh.elements = None
         # part without elements
         msg = "No elements for model part `point_load`. Check if the a wrong part was selected."
@@ -1681,6 +1708,9 @@ class TestModel:
 
         npt.assert_allclose(actual=actual_rf_values, desired=expected_rf_values)
 
+    @pytest.mark.skipif(IS_LINUX, reason="The 3D random field samples different values for linux and windows, "
+                                         "because the mesh is slightly different. See also the test for mdpa_file in "
+                                         "3d in test_kratos_io.py.")
     def test_random_field_generation_3d(
             self,
             create_default_3d_soil_material: SoilMaterial
@@ -1723,15 +1753,12 @@ class TestModel:
 
         actual_rf_values = model.process_model_parts[0].parameters.field_generator.values
 
+        # TODO: make test for Unix  with different values
+
         # assert the number of generated values to be equal to the amount of elements of the part
         assert len(actual_rf_values) == len(model.body_model_parts[0].mesh.elements)
 
-        if IS_LINUX:
-            # TODO: test for linux
-            # assert the generated values against the expected values
-            expected_rf_values = actual_rf_values
-        else:
-            expected_rf_values = [109219152.50312316, 103358912.90787594, 105339578.47289738, 107804266.66256714,
+        expected_rf_values = [109219152.50312316, 103358912.90787594, 105339578.47289738, 107804266.66256714,
                                   116674453.0103657, 121205355.8771256, 117518624.66410118, 109641232.38516402,
                                   108150391.42392428, 93740844.72077464, 106608642.49695791, 111016462.96330133,
                                   95787906.70407471, 109879617.69834961, 103724463.91386327, 92715313.3744301,

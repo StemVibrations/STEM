@@ -382,7 +382,7 @@ class Model:
             - output_parameters (:class:`OutputParametersABC`): class containing the output parameters
             - part_name (Optional[str]): name of the submodelpart to be given in output. If None, all the model is
                 provided in  output.
-            - output_dir (Optional[str]): output directory for the relative or absolute path to the output file. The \
+            - output_dir (str): output directory for the relative or absolute path to the output file. The \
                 path will be created if it does not exist yet. \n
 
                 example1='test1' results in the test1 output folder relative to current folder as './test1'\
@@ -398,8 +398,7 @@ class Model:
             - output_name (Optional[str]): Name for the output file. This parameter is \
                   used by GiD and JSON outputs while is ignored in VTK. If the name is not \
                   given, the part_name is used instead.
-            - coordinates (Optional[Sequence[Sequence[float]]]): A list of nodes that are of interest for the
-                outputs.
+
         """
 
         self.outputs.append(
@@ -417,8 +416,9 @@ class Model:
             output_dir: str = "./",
             output_name: Optional[str] = None):
         """
-        Adds nodes to be output on a set of nodes. The nodes have to be laying on an existing geometry surface.
-        The first and endpoint have to lie on one of the edges of the surface. A new process model part is
+        Sets coordinates where the output is to be defined.
+        The coordinates have to be laying on an existing geometry surface.
+        Both the first- and end-point has to lie on one of the edges of the surface. A new process model part is
         created, to specify the list of nodes of interest.
 
         Current limitations:
@@ -447,11 +447,10 @@ class Model:
 
             - output_name (Optional[str]): Name for the output file. This parameter is \
                   used by GiD and JSON outputs while is ignored in VTK. If the name is not \
-        Raises:
-            - None
+
         """
 
-        # TODO: add validation for point to be inside the same surface.
+        # TODO: add validation for sequential pair of points to lie on the an existing geometry surface.
         # TODO: add validation for start and end-point to lie on the edges
 
         # validation of inputs
@@ -478,7 +477,7 @@ class Model:
 
         self.process_model_parts.append(model_part)
 
-    def __exclude_non_output_nodes(self, process_model_part: ModelPart, eps = 1e-06) -> Mesh:
+    def __exclude_non_output_nodes(self, process_model_part: ModelPart, eps: float = 1e-06) -> Mesh:
         """
         Exclude the nodes that are further than `eps` to the requested output nodes for the output model part.
 
@@ -488,7 +487,7 @@ class Model:
                 algorithm to look for close nodes.
 
         Returns:
-            - filtered_mesh (:class:`stem.mesh.Mesh`): the filtered mesh for the output process model part.
+            - :class:`stem.mesh.Mesh`: the filtered mesh for the output process model part.
         """
 
         if process_model_part.parameters is None or not isinstance(process_model_part.parameters, OutputParametersABC):
@@ -508,17 +507,14 @@ class Model:
         # mesh nodes
         output_coordinates = np.stack([np.array(pt.coordinates) for pt in process_model_part.geometry.points.values()])
 
-        distances = (
-            np.linalg.norm(coordinates[:, None, :] - output_coordinates[None, :, :], axis=-1)
-        )
+        # find the ids of the nodes in the model that are close to the specified coordinates.
+        tmp_ids = np.where((np.isclose(output_coordinates[:, None], coordinates, atol=eps)).all(axis=2))[1]
 
         # only keep the node ids close to the requested node (smaller than eps meters)
-        filtered_node_ids = [ids[ix] for ix in np.where(distances < eps)[0]]
+        filtered_node_ids = np.array(ids)[tmp_ids]
 
-        new_mesh = deepcopy(process_model_part.mesh)
-        new_mesh.nodes = {
-            nn: process_model_part.mesh.nodes[nn] for nn in filtered_node_ids
-        }
+        new_mesh = Mesh(ndim=process_model_part.mesh.ndim)
+        new_mesh.nodes = {nn: process_model_part.mesh.nodes[nn] for nn in filtered_node_ids}
         new_mesh.elements = {}
         return new_mesh
 
@@ -549,14 +545,18 @@ class Model:
         if not isinstance(target_part, BodyModelPart):
             raise ValueError(f"The target part, `{part_name}`, is not a body model part.")
 
-        # Check if the material of the body model part is soil
+        # Check that the body model part has a material
         if target_part.material is None:
             raise ValueError(f"No material assigned to the body model part!")
 
-        # Get the property of the soil material, this is the mean value of the random field.
-        # Checks also if the material of the body model part is soil contains the desired parameter
+        # Get the property of the material, this is the mean value of the random field.
+        # Checks also if the material of the body model part contains the desired parameter
         mean_value_material = target_part.material.get_property_in_material(
             property_name=field_parameters.property_name)
+
+        if isinstance(mean_value_material, bool) or not isinstance(mean_value_material, (float, int, np.float64)):
+            raise ValueError("The property for which a random field needs to be generated, "
+                             f"`{field_parameters.property_name}` is not a numeric value.")
 
         # define the name of the new model part to generate the random field
         new_part_name = part_name + "_" + field_parameters.property_name.lower() + "_field"
@@ -568,7 +568,7 @@ class Model:
 
                 if field_parameters.field_generator.mean_value is None:
 
-                    field_parameters.field_generator.mean_value= mean_value_material
+                    field_parameters.field_generator.mean_value = mean_value_material
 
             if field_parameters.field_file_name is None:
 
@@ -576,13 +576,13 @@ class Model:
 
         model_part_geometry_ids = self.gmsh_io.geo_data["physical_groups"][part_name]["geometry_ids"]
         model_part_ndim = self.gmsh_io.geo_data["physical_groups"][part_name]["ndim"]
-        # create new gravity physical group and model part
+        # create the field_parameter physical group and model part
         self.gmsh_io.add_physical_group(new_part_name, model_part_ndim, model_part_geometry_ids)
         model_part = ModelPart(new_part_name)
 
         model_part.parameters = field_parameters
 
-        # add gravity load to process model parts
+        # add the field_parameter part to process model parts
         self.process_model_parts.append(model_part)
 
     def synchronise_geometry(self):
@@ -618,15 +618,16 @@ class Model:
         """
         self.mesh_settings.element_size = element_size
 
-    def generate_mesh(self, save_file:bool=False, mesh_output_dir="./", mesh_name:str="mesh_file", open_gmsh_gui:bool=False):
+    def generate_mesh(self, save_file: bool = False, mesh_output_dir: str = "./", mesh_name: str = "mesh_file",
+                      open_gmsh_gui: bool = False):
         """
         Generate the mesh for the whole model.
 
         Args:
-            - save_file (bool, optional): If True, saves mesh data to gmsh msh file. (default is False)
+            - save_file (bool): If True, saves mesh data to gmsh msh file. (default is False)
             - mesh_name (str): Name of gmsh model and mesh output file.  (default is working directory)
-            - mesh_output_dir (str): Output directory of mesh file. (default is `mesh_file`)
-            - open_gmsh_gui (bool, optional): User indicates whether to open gmsh interface (default is False)
+            - mesh_output_dir (bool): Output directory of mesh file. (default is `mesh_file`)
+            - open_gmsh_gui (bool): User indicates whether to open gmsh interface (default is False)
 
         """
 
@@ -647,7 +648,7 @@ class Model:
             model_part.mesh = Mesh.create_mesh_from_gmsh_group(self.gmsh_io.mesh_data, model_part.name)
 
             # adjust the mesh of output model parts. Exclude element, and keep only the nodes of corresponding to the
-            # outout locations.
+            # output locations.
             if isinstance(model_part.parameters, OutputParametersABC):
                 model_part.mesh = self.__exclude_non_output_nodes(model_part)
 
@@ -671,18 +672,12 @@ class Model:
             - initialise field parameters (e.g., random fields).
 
         """
-        self.__initiaise_fields()
+        self.__initialise_fields()
 
-    def __initiaise_fields(self):
+    def __initialise_fields(self):
         """
-        Extract the node ids of each of the elements in a model part.
+        Initialise the field parameters for the field generator objects.
 
-        Args:
-            - model_part (:class:`stem.model_part.ModelPart`): model part from which element nodes needs to be
-                extracted.
-
-        Returns:
-            - npty.NDArray[np.int64]: array containing the node ids of the elements in the model_part
         """
 
         for mp in self.process_model_parts:
@@ -908,10 +903,10 @@ class Model:
         Find the model part matching the given part_name
 
         Args:
-            - part_name: the name of the part to retrieve.
+            - part_name (str): the name of the part to retrieve.
 
         Returns:
-            - Optional[:class:`stem.model_part.ModelPart`]: matched model part of None if no match.
+            - Optional[:class:`stem.model_part.ModelPart`]: matched model part or None if no match.
         """
 
         for mp in self.get_all_model_parts():
@@ -920,7 +915,7 @@ class Model:
         print(f"Model part `{part_name}` not found!")
         return None
 
-    def get_centroids_elements_model_part(self, part_name:str):
+    def get_centroids_elements_model_part(self, part_name:str) -> Optional[npty.NDArray[np.float64]]:
         """
         Returns the centroid of all the elements in the model part.
 
@@ -928,7 +923,7 @@ class Model:
             - part_name (str): the model part for which centroids are required.
 
         Returns:
-            - centroids (np.ndarray): centroids of the N elements in the part name as (N, 3) array.
+            - centroids (Optional[npty.NDArray[np.float64]]): centroids of the N elements in the part name as (N, 3) array.
 
         Raises:
             - ValueError: if part_name specified is not part of the model.
@@ -947,8 +942,8 @@ class Model:
         if mp.mesh.elements is None:
             raise ValueError(f"No elements for model part `{part_name}`. Check if the a wrong part was selected.")
 
-        nds = mp.mesh.nodes
-        coordinates = np.stack([[nds[nid].coordinates for nid in el.node_ids] for el in mp.mesh.elements.values()])
+        nodes = mp.mesh.nodes
+        coordinates = np.stack([[nodes[nid].coordinates for nid in el.node_ids] for el in mp.mesh.elements.values()])
         centroids = np.squeeze(np.mean(coordinates, axis=1))
         return centroids
 

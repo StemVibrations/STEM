@@ -20,7 +20,7 @@ class FieldGenerator(ABC):
         self.generated_field: Optional[List[float]] = None
 
     @abstractmethod
-    def generate(self, coordinates:Sequence[Sequence[float]]):
+    def generate(self, coordinates: Sequence[Sequence[float]]):
         """
         Method to generate the fields for the required coordinates.
         It has to set the generated_field attribute.
@@ -34,7 +34,8 @@ class FieldGenerator(ABC):
     @property
     @abstractmethod
     def values(self) -> Optional[List[Any]]:
-        """Returns the value of the generated field.
+        """
+        Returns the value of the generated field.
 
         Returns:
             - Optional[list[Any]]: the list of generated values for the field.
@@ -79,6 +80,7 @@ class RandomFieldGenerator(FieldGenerator):
         Raises:
             - ValueError: if the model dimensions is not 2 or 3.
             - ValueError: if the model_name is not an invalid, implemented model.
+
         """
         super().__init__()
 
@@ -143,7 +145,8 @@ class RandomFieldGenerator(FieldGenerator):
 
     @property
     def values(self) -> Optional[List[Any]]:
-        """Returns the value of the generated field.
+        """
+        Returns the value of the generated field.
 
         Returns:
             - Optional[list[Any]]: the list of generated values for the field.

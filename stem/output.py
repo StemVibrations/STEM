@@ -81,7 +81,6 @@ TENSOR_OUTPUTS = [
 ]
 
 
-
 def validate_nodal_point_output(nodal_results: Sequence[Union[NodalOutput, str]]):
     """
     Validates that the specified string requested for nodal outputs are compatible with the ones defined in the
@@ -104,6 +103,7 @@ def validate_nodal_point_output(nodal_results: Sequence[Union[NodalOutput, str]]
         raise ValueError(f"Incorrect requested output for Nodal outputs:\n"
                          f"{_invalid_strings}. Check the available "
                          f"nodal outputs in the Enum NodalOutput.")
+
 
 def validate_gauss_point_output(gauss_point_results: Sequence[Union[GaussPointOutput, str]]):
     """

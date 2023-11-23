@@ -946,33 +946,37 @@ class KratosIO:
 
             elif isinstance(mp.parameters, AdditionalProcessesParametersABC):
 
+                # Validations and adjustment for json_file parameter field:
+                if isinstance(mp.parameters, ParameterFieldParameters) and mp.parameters.function_type == "json_file":
+
+                    # check that the name is not none!
+                    if mp.parameters.field_file_name is None:
+                        raise ValueError("No name was provided for the json file containing the "
+                                         f"field parameters of model part {mp.name} and property"
+                                         f" {mp.parameters.property_name}.")
+
+                    # adjust extension of filename name is not none, check that extension is json and change it if not.
+                    mp.parameters.field_file_name = Utils.replace_extensions(mp.parameters.field_file_name, ".json")
+
+                    # check that the name is not none!
+                    if mp.parameters.field_generator is None:
+                        raise ValueError("Field generator object not provided for the field generation"
+                                         " of model part {mp.name} and property {mp.parameters.property_name}."
+                                         )
+
+                    # write field values in the json input file
+                    IOUtils.write_json_file(
+                        output_folder=self.project_folder,
+                        file_name=mp.parameters.field_file_name,
+                        dictionary={"values": mp.parameters.field_generator.values}
+                    )
+
+                # write info to project parameters
                 processes_dict["processes"]["constraints_process_list"].append(
                     self.additional_process_io.create_additional_processes_dict(
                         mp.name, mp.parameters
                     )
                 )
-
-                if isinstance(mp.parameters, ParameterFieldParameters):
-                    # generate parameter field file json
-                    if mp.parameters.function_type == "json_file":
-
-                        # check that the name is not none!
-                        if mp.parameters.field_file_name is None:
-                            raise ValueError("No name was provided for the json file containing the "
-                                             f"field parameters of model part {mp.name} and property"
-                                             f" {mp.parameters.property_name}.")
-
-                        # check that the name is not none!
-                        if mp.parameters.field_generator is None:
-                            raise ValueError("Field generator object not provided for the field generation"
-                                             " of model part {mp.name} and property {mp.parameters.property_name}."
-                                             )
-
-                        IOUtils.write_json_file(
-                            output_folder=self.project_folder,
-                            file_name=mp.parameters.field_file_name,
-                            dictionary={"values": mp.parameters.field_generator.values}
-                        )
 
         return processes_dict
 

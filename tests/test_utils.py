@@ -570,3 +570,18 @@ class TestUtilsStem:
 
         # check that the function returns false for incorrect definition of points/origin
         assert not Utils.is_point_aligned_and_between_any_of_points(point_coordinates, origin_wrong)
+
+    def test_replace_extension(self):
+        """
+        Tests that the extension of a filename is replaced correctly.
+
+        """
+        filename1 = "outputfile"
+        filename2 = "outputfile.csv"
+        filename3 = "outputfile.tmp.csv"
+
+        desired_filename = "outputfile.json"
+
+        assert Utils.replace_extensions(filename1, ".json") == desired_filename
+        assert Utils.replace_extensions(filename2, ".json") == desired_filename
+        assert Utils.replace_extensions(filename3, ".json") == desired_filename

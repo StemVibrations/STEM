@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Sequence, Dict, Any, List, Union, Optional, Generator, TYPE_CHECKING
 
 import numpy as np
@@ -472,3 +473,24 @@ class Utils:
 
         # none of the lines contain the origin, return False
         return False
+
+    @staticmethod
+    def replace_extensions(fname:str, new_extension:str) -> str:
+        """
+        Adjust the extension of a file. Can remove multiple extensions (e.g. .tar.gz.tmp) with a new extension (e.g.
+        json). If no extensions are given, the new extension is added directly.
+
+        Args:
+            fname (str): name or path to the filename for which the extension needs to be changed
+            new_extension (str): the new extension for the file
+
+        Returns:
+            fname (str): name or path to the filename with the desired extension
+
+        """
+        path_obj = Path(fname)
+        extensions = "".join(path_obj.suffixes)
+        if len(extensions) == 0:
+            return str(path_obj.with_suffix(new_extension))
+        else:
+            return str(path_obj).replace(extensions, new_extension)
