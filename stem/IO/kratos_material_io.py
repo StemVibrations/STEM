@@ -345,8 +345,7 @@ class KratosMaterialIO:
             - Dict[str, Any]: dictionary containing the structural material parameters
         """
 
-        structural_material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""},
-                                                    "Variables": {}}
+        structural_material_dict: Dict[str, Any] = {"Variables": {}}
 
         # add material parameters to dictionary based on material type.
         if isinstance(material.material_parameters, EulerBeam):
@@ -380,8 +379,7 @@ class KratosMaterialIO:
         # initialize material dictionary
         material_dict: Dict[str, Any] = {"model_part_name": f"{self.domain}.{part_name}",
                                          "properties_id": material_id,
-                                         "Material": {"constitutive_law": {"name": ""},
-                                                      "Variables": {}},
+                                         "Material": {"Variables": {}},
                                          "Tables": {}
                                          }
 

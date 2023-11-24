@@ -21,9 +21,6 @@
             "model_part_name": "PorousDomain.test_spring_damper_material",
             "properties_id": 2,
             "Material": {
-                "constitutive_law": {
-                    "name": ""
-                },
                 "Variables": {
                     "NODAL_DISPLACEMENT_STIFFNESS": [1,2,3],
                     "NODAL_ROTATIONAL_STIFFNESS": [2,4,5],
@@ -38,9 +35,6 @@
             "model_part_name": "PorousDomain.test_nodal_concentrated_material",
             "properties_id": 3,
             "Material": {
-                "constitutive_law": {
-                    "name": ""
-                },
                 "Variables": {"NODAL_DISPLACEMENT_STIFFNESS": [1,2,3],
             "NODAL_MASS": 1.0,
             "NODAL_DAMPING_RATIO": [1,2,0.2]}

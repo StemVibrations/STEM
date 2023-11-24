@@ -934,6 +934,41 @@ class KratosIO:
 
         return processes_dict
 
+    @staticmethod
+    def __create_set_nodal_parameters_process_dictionary(model_part: BodyModelPart):
+
+        if model_part is None:
+            raise ValueError("Model part is not initialised.")
+
+        parameters = {"python_module": "set_nodal_parameters_process",
+                      "kratos_module": "StemApplication",
+                      "process_name": "SetNodalParametersProcess",
+                      "Parameters": {"model_part_name": model_part.name}
+                      }
+
+        return parameters
+
+    def __create_auxiliary_process_list_dictionary(self, model: Model) -> Dict[str, Any]:
+        processes_dict: Dict[str, Any] = {
+            "processes": {"auxiliary_process_list": []}
+        }
+
+        # loop over body model parts
+        for bmp in model.body_model_parts:
+            if bmp.material is None:
+                raise ValueError(f"Body model part {bmp.name} has no material assigned.")
+
+            if bmp.id is None:
+                raise ValueError(f"Body model part {bmp.name} has no id initialised.")
+
+            # add nodal parameters from elastic spring damper and nodal concentrated element to auxiliary process list
+            if (isinstance(bmp.material, StructuralMaterial) and
+                    isinstance(bmp.material.material_parameters, (ElasticSpringDamper, NodalConcentrated))):
+                parameters = self.__create_set_nodal_parameters_process_dictionary(bmp)
+                processes_dict["processes"]["auxiliary_process_list"].append(parameters)
+
+        return processes_dict
+
     def write_project_parameters_json(self, model: Model, mesh_file_name: str,
                                       materials_file_name: str, project_file_name: str = "ProjectParameters.json",
                                       output_folder: str = "./") -> Dict[str, Any]:
@@ -962,11 +997,13 @@ class KratosIO:
         outputs_dict = self.__create_output_process_dictionary(outputs=model.output_settings)
         # get the boundary condition dictionary
         loads_and_bc_dict = self.__create_loads_and_boundary_conditions_dictionary(model=model)
+        # get the auxiliary processes dictionary
+        auxiliary_processes_dict = self.__create_auxiliary_process_list_dictionary(model=model)
         # TODO get the additional_processes dictionary
 
         # merge dictionaries into one
         project_parameters_dict: Dict[str, Any] = reduce(
-            Utils.merge, (solver_dict, outputs_dict, loads_and_bc_dict)
+            Utils.merge, (solver_dict, outputs_dict, loads_and_bc_dict, auxiliary_processes_dict)
         )
         # write json file
         IOUtils.write_json_file(output_folder, project_file_name, project_parameters_dict)
