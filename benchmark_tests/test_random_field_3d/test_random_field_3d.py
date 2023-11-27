@@ -33,11 +33,10 @@ def test_stem():
     constitutive_law = LinearElasticSoil(YOUNG_MODULUS=10, POISSON_RATIO=0.3)
     soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
                                  retention_parameters=SaturatedBelowPhreaticLevelLaw())
-    b = 20
-    h = 20
+    width = 20
+    height = 20
     # add soil layers
-    model.add_soil_layer_by_coordinates([(0, 0, 0), (b, 0, 0), (b, h, 0), (0, h, 0)], soil_material, "layer1")
-    model.set_mesh_size(1)
+    model.add_soil_layer_by_coordinates([(0, 0, 0), (width, 0, 0), (width, height, 0), (0, height, 0)], soil_material, "layer1")
 
     # Define the field generator
     random_field_generator = RandomFieldGenerator(

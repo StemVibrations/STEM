@@ -6,7 +6,7 @@ from random_fields.generate_field import RandomFields
 
 from stem.field_generator import FieldGenerator, RandomFieldGenerator
 
-_field_input_types = ["json_file", "input"]
+FIELD_INPUT_TYPES = ["json_file", "input"]
 
 
 @dataclass
@@ -48,15 +48,15 @@ class ParameterFieldParameters(AdditionalProcessesParametersABC):
         - function_type (str): the type of function to be provided. It can be either `json_file`, `python` or `input`,
             as provided in the function documentation.
         - field_file_name (Optional[str]): Name for the json file where the field parameters will be stored.
-            This is optional for `input` function_type.
+            This is optional for `json` function_type.
         - field_generator (Optional[:class:`stem.field_generator.FieldGenerator`]): the field generator to produce the \
             values in the json file. Currently only random fields is supported but will be in the future \
             implemented as custom functions that take in input X, Y, Z coordinates. Not required for \
-            `python` and `input` function types. This is optional for `input` function_type.
+            `python` and `input` function types. This is optional for `json` function_type.
 
         - tiny_expr_function (Optional[str]): is a tiny expression string with dependency on coordinates (x, y, z) \
             and time (e.g. `x + y^2 + 2*cos(t)`). For more info check tinyexpr on GitHub. \
-            This is optional for `json_file` function_type.
+            This is optional for `input` function_type.
 
     """
 
