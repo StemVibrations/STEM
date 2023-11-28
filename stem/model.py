@@ -416,7 +416,8 @@ class Model:
         for process_model_part in self.process_model_parts:
 
             # only check if the process model part is a condition element
-            if isinstance(process_model_part.parameters, (LineLoad, MovingLoad, SurfaceLoad, AbsorbingBoundary)):
+            if isinstance(process_model_part.parameters,
+                          (LineLoad, MovingLoad, UvecLoad, SurfaceLoad, AbsorbingBoundary)):
                 # match the condition elements with the body elements on which the conditions are applied
                 matched_elements = self.__find_matching_body_elements_for_process_model_part(process_model_part)
 
