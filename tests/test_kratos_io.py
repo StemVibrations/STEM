@@ -530,10 +530,10 @@ class TestKratosModelIO:
 
         # add elastic spring damper element
         spring_damper = ElasticSpringDamper(
-            NODAL_DISPLACEMENT_STIFFNESS = [1,1,1],
-            NODAL_ROTATIONAL_STIFFNESS = [1,1,2],
-            NODAL_DAMPING_COEFFICIENT = [1,1,3],
-            NODAL_ROTATIONAL_DAMPING_COEFFICIENT = [1,1,4])
+            NODAL_DISPLACEMENT_STIFFNESS=[1, 1, 1],
+            NODAL_ROTATIONAL_STIFFNESS=[1, 1, 2],
+            NODAL_DAMPING_COEFFICIENT=[1, 1, 3],
+            NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[1, 1, 4])
 
         # create model part
         spring_damper_model_part = BodyModelPart("spring_damper")
@@ -576,5 +576,20 @@ class TestKratosModelIO:
         # assert the dictionaries to be equal
         TestUtils.assert_dictionary_almost_equal(expected_dict, actual_dict)
 
+    def test_create_auxiliary_process_list_dictionary_expected_raises(self):
+        """
+        Test the creation of the auxiliary process list dictionary with expected errors.
 
+        """
+        # create model
+        model = Model(ndim=2)
 
+        # create IO object
+        kratos_io = KratosIO(ndim=model.ndim)
+
+        empty_body_model_part = BodyModelPart("empty_body_model_part")
+        model.body_model_parts = [empty_body_model_part]
+
+        # create auxiliary process list dictionary
+        with pytest.raises(ValueError, match=f"Body model part empty_body_model_part has no material assigned."):
+            kratos_io._KratosIO__create_auxiliary_process_list_dictionary(model=model)
