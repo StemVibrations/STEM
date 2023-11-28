@@ -593,3 +593,14 @@ class TestKratosModelIO:
         # create auxiliary process list dictionary
         with pytest.raises(ValueError, match=f"Body model part empty_body_model_part has no material assigned."):
             kratos_io._KratosIO__create_auxiliary_process_list_dictionary(model=model)
+
+        nodal_concentrated = NodalConcentrated(NODAL_MASS=1, NODAL_DAMPING_COEFFICIENT=[1, 1, 1],
+                                               NODAL_DISPLACEMENT_STIFFNESS=[1, 1, 1])
+        empty_body_model_part.material = StructuralMaterial("empty_body_model_part", nodal_concentrated)
+
+        # create auxiliary process list dictionary
+        with pytest.raises(ValueError, match=f"Body model part empty_body_model_part has no id initialised."):
+            kratos_io._KratosIO__create_auxiliary_process_list_dictionary(model=model)
+
+
+

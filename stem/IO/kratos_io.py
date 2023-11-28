@@ -935,10 +935,19 @@ class KratosIO:
         return processes_dict
 
     @staticmethod
-    def __create_set_nodal_parameters_process_dictionary(model_part: BodyModelPart):
+    def __create_set_nodal_parameters_process_dictionary(model_part: BodyModelPart) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the nodal parameters for the nodal concentrated element and elastic spring
+        damper.
 
-        if model_part is None:
-            raise ValueError("Model part is not initialised.")
+        Args:
+            - model_part (:class:`stem.model_part.BodyModelPart`): The body model part containing the nodal parameters.
+
+        Returns:
+            - Dict[str, Any]: dictionary containing the part of the project parameters dictionary related \
+                to nodal parameters
+
+        """
 
         parameters = {"python_module": "set_nodal_parameters_process",
                       "kratos_module": "StemApplication",
@@ -949,6 +958,17 @@ class KratosIO:
         return parameters
 
     def __create_auxiliary_process_list_dictionary(self, model: Model) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the auxiliary processes.
+
+        Args:
+            - model (:class:`stem.model.Model`): The model object containing the process model parts.
+
+        Returns:
+            - Dict[str, Any]: dictionary containing the part of the project parameters dictionary related \
+                to auxiliary processes.
+
+        """
         processes_dict: Dict[str, Any] = {
             "processes": {"auxiliary_process_list": []}
         }
@@ -984,7 +1004,7 @@ class KratosIO:
             - output_folder (str): folder to store the project parameters file. Defaults to the working directory.
 
         Returns:
-            - project_parameters_dict (Dict[str, Any]): the dictionary containing the project parameters.
+            - Dict[str, Any]: the dictionary containing the project parameters.
         """
         # initialise material, tables and process model part ids
         self.initialise_model_ids(model)
