@@ -952,8 +952,7 @@ class KratosIO:
         parameters = {"python_module": "set_nodal_parameters_process",
                       "kratos_module": "StemApplication",
                       "process_name": "SetNodalParametersProcess",
-                      "Parameters": {"model_part_name": model_part.name}
-                      }
+                      "Parameters": {"model_part_name": f"{DOMAIN}.{model_part.name}"}}
 
         return parameters
 
