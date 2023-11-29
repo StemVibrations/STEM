@@ -761,6 +761,11 @@ class Model:
             if isinstance(process_model_part.parameters, WaterProcessParametersABC):
                 return
 
+        # if all model parts are structural, do not add water pressure
+        materials = [body_model_part.material for body_model_part in self.body_model_parts]
+        if all(isinstance(material, StructuralMaterial) for material in materials):
+            return
+
         water_model_part = ModelPart("zero_water_pressure")
         water_model_part.parameters = UniformWaterPressure(water_pressure=0.0)
 

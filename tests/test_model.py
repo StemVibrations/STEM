@@ -2071,7 +2071,7 @@ class TestModel:
         model.gmsh_io.add_physical_group("water_pressure_part", 3, geometry_ids=
                                          model.gmsh_io.geo_data["physical_groups"]["layer1"]["geometry_ids"])
 
-        # set up gravity loading
+        # add project parameters
         project_parameters = TestUtils.create_default_solver_settings()
 
         model.project_parameters = project_parameters
@@ -2089,6 +2089,61 @@ class TestModel:
         expected_water_pressure_geometry = expected_geometry_two_layers_3D_extruded[0]
         TestUtils.assert_almost_equal_geometries(expected_water_pressure_geometry,
                                                  model.process_model_parts[0].geometry)
+
+    def test_post_setup_only_structural_material(self):
+        """
+        Test if the post setup is done correctly when only structural materials are present. Gravity loading should
+        be applied, but no water pressures
+
+        """
+
+        ndim = 2
+
+        model = Model(ndim)
+
+        # Specify beam material model
+        beam_material = EulerBeam(ndim, 210e9, 0.3, 7850, 0.01, 0.0001)
+        name = "beam"
+        structural_material = StructuralMaterial(name, beam_material)
+        # Specify the coordinates for the beam: x:1m x y:0m
+        beam_coordinates = [(0, 0, 0), (1, 0, 0)]
+        # Create the beam
+        gmsh_input = {name: {"coordinates": beam_coordinates, "ndim": 1}}
+        # check if extrusion length is specified in 3D
+        model.gmsh_io.generate_geometry(gmsh_input, "")
+        #
+        # create body model part
+        body_model_part = BodyModelPart(name)
+        body_model_part.material = structural_material
+
+        # set the geometry of the body model part
+        body_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, name)
+        model.body_model_parts.append(body_model_part)
+
+        # add project parameters and set up gravity loading
+        project_parameters = TestUtils.create_default_solver_settings()
+        project_parameters.settings.stress_initialisation_type = StressInitialisationType.GRAVITY_LOADING
+
+        model.project_parameters = project_parameters
+
+        # add gravity through post setup, do not add water pressure through post setup
+        model.post_setup()
+
+        # set expected geometry
+        expected_geometry = Geometry()
+        expected_geometry.points = {1: Point.create([0, 0, 0], 1), 2: Point.create([1, 0, 0], 2)}
+        expected_geometry.lines = {1: Line.create([1, 2], 1)}
+
+        # check if only gravity process model part is present, no water pressure should be present
+        assert len(model.process_model_parts) == 1
+        assert model.process_model_parts[0].name == "gravity_load_1d"
+        assert model.process_model_parts[0].parameters.value == [0, -9.81, 0]
+        assert model.process_model_parts[0].parameters.active == [True, True, True]
+
+        # check if the geometry of the process model part is correct
+        TestUtils.assert_almost_equal_geometries(expected_geometry, model.process_model_parts[0].geometry)
+
+
 
 
 

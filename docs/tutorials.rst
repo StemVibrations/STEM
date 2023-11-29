@@ -167,8 +167,8 @@ dimension, "2".
     model.add_boundary_condition_by_geometry_ids(2, [2, 4, 5, 6, 7, 10, 11, 12, 15, 16, 17],
                                                  roller_displacement_parameters, "sides_roller")
 
-Firstly the Stem class is initialised, with the model and the directory where the input files will be written to.
-While initialising the Stem class, the mesh will be generated.
+After which the mesh size can be set. The element size for the mesh can be defined as a single value, the mesh
+will be generated when the Stem class is initialised.
 
 .. code-block:: python
 
