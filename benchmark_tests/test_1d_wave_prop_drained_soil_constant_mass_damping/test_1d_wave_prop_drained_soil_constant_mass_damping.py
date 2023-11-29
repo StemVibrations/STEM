@@ -59,10 +59,9 @@ def test_stem():
     # Synchronize geometry
     model.synchronise_geometry()
 
-    # Set mesh size and generate mesh
+    # Set mesh size
     # --------------------------------
     model.set_mesh_size(element_size=0.45)
-    model.generate_mesh()
 
     # Define project parameters
     # --------------------------------

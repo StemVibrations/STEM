@@ -63,10 +63,9 @@ def test_stem():
     # Show geometry and geometry ids
     # model.show_geometry(show_line_ids=True)
 
-    # Set mesh size and generate mesh
+    # Set mesh size
     # --------------------------------
     model.set_mesh_size(element_size=2)
-    model.generate_mesh()
 
     # Define project parameters
     # --------------------------------
