@@ -752,7 +752,6 @@ class KratosIO:
             block_text.extend(self.write_submodelpart_body_model_part(bmp))
 
         for pmp in model.process_model_parts:
-
             block_text.extend(self.write_submodelpart_process_model_part(pmp))
 
         return block_text
@@ -1016,6 +1015,61 @@ class KratosIO:
             dictionary={"values": process_model_part.parameters.field_generator.values}
         )
 
+    @staticmethod
+    def __create_set_nodal_parameters_process_dictionary(model_part: BodyModelPart) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the nodal parameters for the nodal concentrated element and elastic spring
+        damper.
+
+        Args:
+            - model_part (:class:`stem.model_part.BodyModelPart`): The body model part containing the nodal parameters.
+
+        Returns:
+            - Dict[str, Any]: dictionary containing the part of the project parameters dictionary related \
+                to nodal parameters
+
+        """
+
+        parameters = {"python_module": "set_nodal_parameters_process",
+                      "kratos_module": "StemApplication",
+                      "process_name": "SetNodalParametersProcess",
+                      "Parameters": {"model_part_name": f"{DOMAIN}.{model_part.name}"}}
+
+        return parameters
+
+
+    def __create_auxiliary_process_list_dictionary(self, model: Model) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the auxiliary processes.
+
+        Args:
+            - model (:class:`stem.model.Model`): The model object containing the process model parts.
+
+        Returns:
+            - Dict[str, Any]: dictionary containing the part of the project parameters dictionary related \
+                to auxiliary processes.
+
+        """
+        processes_dict: Dict[str, Any] = {
+            "processes": {"auxiliary_process_list": []}
+        }
+
+        # loop over body model parts
+        for bmp in model.body_model_parts:
+            if bmp.material is None:
+                raise ValueError(f"Body model part {bmp.name} has no material assigned.")
+
+            if bmp.id is None:
+                raise ValueError(f"Body model part {bmp.name} has no id initialised.")
+
+            # add nodal parameters from elastic spring damper and nodal concentrated element to auxiliary process list
+            if (isinstance(bmp.material, StructuralMaterial) and
+                    isinstance(bmp.material.material_parameters, (ElasticSpringDamper, NodalConcentrated))):
+                parameters = self.__create_set_nodal_parameters_process_dictionary(bmp)
+                processes_dict["processes"]["auxiliary_process_list"].append(parameters)
+
+        return processes_dict
+
     def __write_project_parameters_json(self, model: Model, mesh_file_name: str, materials_file_name: str,
                                         project_file_name: str = "ProjectParameters.json") -> Dict[str, Any]:
         """
@@ -1029,7 +1083,7 @@ class KratosIO:
             - project_file_name (str): name of the project parameters file. Defaults to `ProjectParameters.json`.
 
         Returns:
-            - project_parameters_dict (Dict[str, Any]): the dictionary containing the project parameters.
+            - Dict[str, Any]: the dictionary containing the project parameters.
         """
         # initialise material, tables and process model part ids
         self.initialise_model_ids(model)
@@ -1042,10 +1096,11 @@ class KratosIO:
         outputs_dict = self.__create_output_process_dictionary(output_settings=model.output_settings)
         # get the boundary condition dictionary
         process_model_part_dict = self.__create_process_model_parts_dictionary(model=model)
-
+        # get the auxiliary processes dictionary
+        auxiliary_processes_dict = self.__create_auxiliary_process_list_dictionary(model=model)
         # merge dictionaries into one
         project_parameters_dict: Dict[str, Any] = reduce(
-            Utils.merge, (solver_dict, outputs_dict, process_model_part_dict)
+            Utils.merge, (solver_dict, outputs_dict, process_model_part_dict, auxiliary_processes_dict)
         )
         # write json file
         IOUtils.write_json_file(self.project_folder, project_file_name, project_parameters_dict)
