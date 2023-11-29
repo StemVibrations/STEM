@@ -5,14 +5,17 @@ from abc import ABC
 @dataclass
 class WaterProcessParametersABC(ABC):
     """
-    Abstract class which contains the parameters for a water boundary.
+    Abstract class which contains the parameters for a water process.
     """
 
 
 @dataclass
 class UniformWaterPressure(WaterProcessParametersABC):
     """
-    Class which contains the parameters for a uniform water boundary.
+    Class which contains the parameters for a uniform water pressure process.
+
+    Inheritance:
+        - WaterProcessParametersABC (ABC): Abstract base class which contains the parameters for a water process.
 
     Attributes:
         - water_pressure (float): The water pressure.
