@@ -448,7 +448,6 @@ class TestKratosModelIO:
         Args:
             - create_default_2d_model_and_mesh (:class:`stem.model.Model`): the default 2D model of a square \
                 soil layer and a line load and a random field for the Young's modulus.
-            - create_default_outputs (List[:class:`stem.output.Output`]): list of default output processes.
             - create_default_solver_settings (:class:`stem.solver.Problem`): the Problem object containing the \
                 solver settings.
         """
@@ -577,7 +576,7 @@ class TestKratosModelIO:
 
         npt.assert_equal(actual=actual_text, desired=expected_text)
 
-    def test_write_mdpa_file_with_radonom_field(
+    def test_write_mdpa_file_with_random_field(
         self,
         create_default_2d_model_and_mesh_randomfield: Model,
         create_default_solver_settings: Problem
