@@ -7,7 +7,7 @@ from random_fields.generate_field import RandomFields, ModelName
 
 from stem.globals import VERTICAL_AXIS
 
-available_random_field_model_names = ["Gaussian", "Exponential", "Matern", "Linear"]
+AVAILABLE_RANDOM_FIELD_MODEL_NAMES = ["Gaussian", "Exponential", "Matern", "Linear"]
 
 
 class FieldGenerator(ABC):
@@ -30,7 +30,7 @@ class FieldGenerator(ABC):
             - coordinates (numpy.typing.NDArray[np.float64]): Sequence of points where the random field needs to be generated.
 
         """
-        return None
+        pass
 
     @property
     def values(self) -> Optional[List[Any]]:
@@ -65,7 +65,7 @@ class RandomFieldGenerator(FieldGenerator):
                  mean_value: Optional[Union[int, float]] = None,
                  seed: int = 14):
         """
-        Initialise a random generator field. The mean value is optional because it can be set in another moment.
+        Initialise a random generator field. The mean value is optional because it can be set at another moment.
         In that case it should be set before running the generate method.
 
         Anisotropy and angle can be given as scalar, 1-D and 2-D lists. In case the model is 3D but a 1-D or scalar
@@ -84,7 +84,7 @@ class RandomFieldGenerator(FieldGenerator):
 
         Raises:
             - ValueError: if the model dimensions is not 2 or 3.
-            - ValueError: if the model_name is not an invalid, implemented model.
+            - ValueError: if the model_name is not a valid or implemented model.
 
         """
         super().__init__()
@@ -148,10 +148,5 @@ class RandomFieldGenerator(FieldGenerator):
         coordinates_for_rf = np.array(coordinates)
         rf_generator.generate(coordinates_for_rf)
         self.generated_field = list(rf_generator.random_field)[0].tolist()
-
-
-
-
-
 
 
