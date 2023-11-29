@@ -348,12 +348,18 @@ class TestKratosModelIO:
         """
         model = create_default_2d_model
 
+        # apply default solver settings and output settings
+        model.project_parameters = create_default_solver_settings
+        model.output_settings = create_default_outputs
+
+        # perform post setup
+        model.post_setup()
+
+        # set mesh size and generate mesh
         model.set_mesh_size(1)
         model.generate_mesh()
 
         kratos_io = KratosIO(ndim=model.ndim)
-        model.project_parameters = create_default_solver_settings
-        model.output_settings = create_default_outputs
 
         kratos_io.write_input_files_for_kratos(
             model=model,

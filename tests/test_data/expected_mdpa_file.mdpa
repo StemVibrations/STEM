@@ -156,3 +156,16 @@ Begin SubModelPart no_displacement
   End SubModelPartNodes
 End SubModelPart
 
+
+Begin SubModelPart zero_water_pressure
+  Begin SubModelPartTables
+  End SubModelPartTables
+  Begin SubModelPartNodes
+  1
+  2
+  3
+  4
+  5
+  End SubModelPartNodes
+End SubModelPart
+
