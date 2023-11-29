@@ -1,5 +1,5 @@
-from abc import ABC, abstractmethod, abstractproperty
-from typing import List, Dict, Optional, Any, Sequence, Union
+from abc import ABC, abstractmethod
+from typing import List, Optional, Any, Union
 
 import numpy as np
 import numpy.typing as npty
@@ -10,50 +10,65 @@ from stem.globals import VERTICAL_AXIS
 AVAILABLE_RANDOM_FIELD_MODEL_NAMES = ["Gaussian", "Exponential", "Matern", "Linear"]
 
 
-class FieldGenerator(ABC):
+class FieldGeneratorABC(ABC):
     """
     Abstract class to generate fields as function of points coordinates (x, y and z).
     The function should implement a `generate` method to initialise the field and the `values`
     property to retrieve the generated field.
 
     """
-    def __init__(self):
-        self.generated_field: Optional[List[float]] = None
 
     @abstractmethod
     def generate(self, coordinates: npty.NDArray[np.float64]):
         """
-        Method to generate the fields for the required coordinates.
+        Abstract method to generate the fields for the required coordinates.
         It has to set the generated_field attribute.
 
         Args:
-            - coordinates (numpy.typing.NDArray[np.float64]): Sequence of points where the random field needs to be generated.
+            - coordinates (numpy.typing.NDArray[np.float64]): Sequence of points where the field needs to be generated.
+
+        Raises:
+            - Exception: abstract class of generate is called
 
         """
-        pass
+        raise Exception("abstract class of generate is called")
 
     @property
-    def values(self) -> Optional[List[Any]]:
+    @abstractmethod
+    def generated_field(self) -> Optional[List[Any]]:
         """
-        Returns the value of the generated field.
-
-        Returns:
-            - Optional[list[Any]]: the list of generated values for the field.
+        Abstract property of the generated field.
 
         Raises:
             - ValueError: if field is not generated using the `generate()` method
 
+        Returns:
+            - Optional[list[Any]]: the list of generated values for the field.
+
         """
-        if self.generated_field is None:
-            raise ValueError("Values for field parameters are not generated yet.")
 
-        return self.generated_field
+        raise Exception("abstract class of generated_field is called")
 
 
-class RandomFieldGenerator(FieldGenerator):
+class RandomFieldGenerator(FieldGeneratorABC):
     """
     Class to generate random fields for a material property in the model as funtion of the coordinates
     of the centroid of the elements (x, y and z).
+
+    Inheritance:
+        - :class:`FieldGeneratorABC`: abstract class to generate fields as function of points coordinates (x, y and z).
+
+    Attributes:
+        - __generated_field (Optional[List[float]]): The generated field values. Defaults to None.
+        - model_name (str): Name of the model to be used. Options are: "Gaussian", "Exponential", "Matern", "Linear"
+        - n_dim (int): number of dimensions of the model (2 or 3).
+        - cov (float): The coefficient of variation of the random field.
+        - v_scale_fluctuation (float): The vertical scale of fluctuation of the random field.
+        - anisotropy (list): The anisotropy of the random field in the other directions (per dimension).
+        - angle (list): The angle of the random field (per dimension).
+        - mean_value (Optional[float]): mean value of the random field. Defaults to None. \
+            In that case it should be set otherwise before running the generate method.
+        - seed (int): The seed number for the random number generator.
 
     """
 
@@ -88,8 +103,6 @@ class RandomFieldGenerator(FieldGenerator):
             - ValueError: if the model_name is not a valid or implemented model.
 
         """
-        super().__init__()
-
         # validate the number of dimensions of the model
         if n_dim not in [2, 3]:
             raise ValueError(f"Number of dimension {n_dim} specified, but should be one of either 2 or 3.")
@@ -105,13 +118,12 @@ class RandomFieldGenerator(FieldGenerator):
         if isinstance(angle, float):
             angle = [angle]
 
-        # if angle or anisotropy are 1-D list but model is 3-D replicate them
-        aux_key = [anisotropy, angle]
+        # if angle or anisotropy are 1-D list but model is 3-D duplicate them
         if n_dim == 3:
-            for key in aux_key:
-                if len(key) == 1:
-                    key += key
+            anisotropy = anisotropy if len(anisotropy) == 2 else [anisotropy[0], anisotropy[0]]
+            angle = angle if len(angle) == 2 else [angle[0], angle[0]]
 
+        self.__generated_field: Optional[List[float]] = None
         self.model_name = model_name
         self.n_dim = n_dim
         self.cov = cov
@@ -120,6 +132,24 @@ class RandomFieldGenerator(FieldGenerator):
         self.angle = angle
         self.mean_value = mean_value
         self.seed = seed
+
+    @property
+    def generated_field(self) -> Optional[List[Any]]:
+        """
+        Returns the value of the generated field.
+
+        Raises:
+            - ValueError: if field is not generated using the `generate()` method
+
+        Returns:
+            - Optional[list[Any]]: the list of generated values for the field.
+
+        """
+
+        if self.__generated_field is None:
+            raise ValueError("Field is not generated yet.")
+
+        return self.__generated_field
 
     def generate(self, coordinates: npty.NDArray[np.float64]):
         """
@@ -151,6 +181,4 @@ class RandomFieldGenerator(FieldGenerator):
         )
         coordinates_for_rf = np.array(coordinates)
         rf_generator.generate(coordinates_for_rf)
-        self.generated_field = list(rf_generator.random_field)[0].tolist()
-
-
+        self.__generated_field = list(rf_generator.random_field)[0].tolist()

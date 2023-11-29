@@ -35,9 +35,9 @@ class TestGenerators:
             n_dim=3, cov=0.1, model_name="Gaussian",
             v_scale_fluctuation=5, anisotropy=[0.5, 0.5], angle=[0, 0], seed=42
         )
-        msg = "Values for field parameters are not generated yet."
+        msg = "Field is not generated yet."
         with pytest.raises(ValueError, match=msg):
-            values = random_field_generator.values
+            values = random_field_generator.generated_field
 
         msg = "The mean value of the random field is not set yet. Error."
         with pytest.raises(ValueError, match=msg):
@@ -45,5 +45,5 @@ class TestGenerators:
 
         random_field_generator.mean_value = 10
         random_field_generator.generate([(0, 0, 0), (10, 1, 0)])
-        values = random_field_generator.values
+        values = random_field_generator.generated_field
         npt.assert_allclose(values, [12.379497, 10.593184])

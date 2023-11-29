@@ -475,7 +475,7 @@ class Utils:
         return False
 
     @staticmethod
-    def replace_extensions(filename:str, new_extension:str) -> str:
+    def replace_extensions(filename: str, new_extension: str) -> str:
         """
         Adjust the extension of a file. Can remove multiple extensions (e.g. .tar.gz.tmp) with a new extension (e.g.
         json). If no extensions are given, the new extension is added directly.

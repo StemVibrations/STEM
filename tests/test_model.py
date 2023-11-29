@@ -9,7 +9,7 @@ import pytest
 
 from stem.geometry import *
 from stem.model import *
-from stem.output import NodalOutput, GaussPointOutput, GiDOutputParameters, JsonOutputParameters
+from stem.output import NodalOutput, GiDOutputParameters, JsonOutputParameters
 from stem.solver import *
 from tests.utils import TestUtils
 
@@ -1191,7 +1191,7 @@ class TestModel:
         # Nodal results
         nodal_results = [NodalOutput.ACCELERATION]
         # add outputs to existing model part
-        model.add_output_by_model_part_name(
+        model.add_output_settings(
             part_name="layer1",
             output_name="gid_nodal_accelerations_top",
             output_dir="dir_test",
@@ -1204,7 +1204,7 @@ class TestModel:
         # add output to non-existing model part
         msg = "Model part for which output needs to be requested doesn't exist."
         with pytest.raises(ValueError, match=msg):
-            model.add_output_by_model_part_name(
+            model.add_output_settings(
                 part_name="layer2",
                 output_name="gid_nodal_accelerations_top",
                 output_dir="dir_test",
@@ -1246,7 +1246,7 @@ class TestModel:
         output_coordinates = [(1.5, 1, 0), (1.5, 0.5, 0), (2.5, 0.5, 0), (2.5, 0, 0)]
 
         # add output settings
-        model.add_output_part_by_coordinates(
+        model.add_output_settings_by_coordinates(
             output_coordinates,
             part_name="nodal_accelerations",
             output_name="json_nodal_accelerations_top",
@@ -1334,7 +1334,7 @@ class TestModel:
         output_coordinates = [(0, 1, 2), (2, 1, 2), (4, 1, 2)]
 
         # add output settings
-        model.add_output_part_by_coordinates(
+        model.add_output_settings_by_coordinates(
             output_coordinates,
             part_name="nodal_accelerations",
             output_name="json_nodal_accelerations_top",
@@ -1769,7 +1769,7 @@ class TestModel:
         # generate mesh
         model.generate_mesh()
 
-        actual_rf_values = model.process_model_parts[-1].parameters.field_generator.values
+        actual_rf_values = model.process_model_parts[-1].parameters.field_generator.generated_field
 
         # assert the number of generated values to be equal to the amount of elements of the part
         assert len(actual_rf_values) == len(model.body_model_parts[0].mesh.elements)
@@ -1821,7 +1821,7 @@ class TestModel:
         # generate mesh
         model.generate_mesh()
 
-        actual_rf_values = model.process_model_parts[0].parameters.field_generator.values
+        actual_rf_values = model.process_model_parts[0].parameters.field_generator.generated_field
 
         # TODO: make test for Unix  with different values
 

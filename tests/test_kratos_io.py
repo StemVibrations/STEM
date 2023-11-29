@@ -143,7 +143,7 @@ class TestKratosModelIO:
         # - Nodal results
         nodal_results = [NodalOutput.ACCELERATION, NodalOutput.VELOCITY, NodalOutput.DISPLACEMENT]
         # - define output process
-        model.add_output_part_by_coordinates(
+        model.add_output_settings_by_coordinates(
             coordinates=output_coordinates,
             part_name="line_output_soil1",
             output_name="json_line_output_soil1",
@@ -355,7 +355,7 @@ class TestKratosModelIO:
         kratos_io.project_folder = "dir_test"
 
         model.project_parameters = create_default_solver_settings
-        model.add_output_by_model_part_name(**create_default_outputs.__dict__)
+        model.add_output_settings(**create_default_outputs.__dict__)
 
         actual_dict = kratos_io._KratosIO__write_project_parameters_json(
             model=model,
@@ -423,7 +423,7 @@ class TestKratosModelIO:
         kratos_io = KratosIO(ndim=model.ndim)
 
         model.project_parameters = create_default_solver_settings
-        model.add_output_by_model_part_name(**create_default_outputs.__dict__)
+        model.add_output_settings(**create_default_outputs.__dict__)
 
         kratos_io._KratosIO__write_project_parameters_json(
             model=model, mesh_file_name="test_mdpa_file.mdpa", materials_file_name="MaterialParameters.json"
@@ -753,7 +753,7 @@ class TestKratosModelIO:
 
         kratos_io = KratosIO(ndim=model.ndim)
         model.project_parameters = create_default_solver_settings
-        model.add_output_by_model_part_name(**create_default_outputs.__dict__)
+        model.add_output_settings(**create_default_outputs.__dict__)
 
         kratos_io.write_input_files_for_kratos(
             model=model,
@@ -955,7 +955,7 @@ class TestKratosModelIO:
         model = create_default_2d_model
         kratos_io = KratosIO(ndim=model.ndim)
         model.project_parameters = create_default_solver_settings
-        model.add_output_by_model_part_name(**create_default_outputs.__dict__)
+        model.add_output_settings(**create_default_outputs.__dict__)
         kratos_io.project_folder = "dummy"
 
         # add elastic spring damper element

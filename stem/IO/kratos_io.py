@@ -898,8 +898,8 @@ class KratosIO:
         Creates a dictionary containing the output settings.
 
         Args:
-            - output_settings (Optional[List[:class:`stem.output.Output`]]): The list of output processes objects to write \
-                in outputs.
+            - output_settings (Optional[List[:class:`stem.output.Output`]]): The list of output processes objects to \
+              write  in outputs.
 
         Returns:
             - Dict[str, Any]: dictionary containing the part of the project parameters dictionary related to outputs
@@ -964,7 +964,7 @@ class KratosIO:
 
         return processes_dict
 
-    def __adjust_parameter_field_parameters_and_write_json_file(self, process_model_part:ModelPart) -> None:
+    def __adjust_parameter_field_parameters_and_write_json_file(self, process_model_part: ModelPart) -> None:
         """
         Adjusts the additional process parameters when the parameter field parameter is
         of type `json_file`. It also writes the json file with the parameter values.
@@ -1012,7 +1012,7 @@ class KratosIO:
         IOUtils.write_json_file(
             output_folder=self.project_folder,
             file_name=process_model_part.parameters.field_file_name,
-            dictionary={"values": process_model_part.parameters.field_generator.values}
+            dictionary={"values": process_model_part.parameters.field_generator.generated_field}
         )
 
     @staticmethod
@@ -1036,7 +1036,6 @@ class KratosIO:
                       "Parameters": {"model_part_name": f"{DOMAIN}.{model_part.name}"}}
 
         return parameters
-
 
     def __create_auxiliary_process_list_dictionary(self, model: Model) -> Dict[str, Any]:
         """
@@ -1094,7 +1093,7 @@ class KratosIO:
         )
         # get the output dictionary
         outputs_dict = self.__create_output_process_dictionary(output_settings=model.output_settings)
-        # get the boundary condition dictionary
+        # get the boundary condition and loads dictionary
         process_model_part_dict = self.__create_process_model_parts_dictionary(model=model)
         # get the auxiliary processes dictionary
         auxiliary_processes_dict = self.__create_auxiliary_process_list_dictionary(model=model)
