@@ -2,8 +2,6 @@ import numpy as np
 import json
 from typing import Dict, Tuple
 
-# import sys
-# sys.path.append("./")
 from uvec.base_model import TrainModel
 from uvec.hertzian_contact import HertzianContact
 from uvec.newmark_solver import NewmarkExplicit
