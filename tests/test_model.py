@@ -1968,11 +1968,11 @@ class TestModel:
         # remove file
         Path(r"tests/test_geometry.html").unlink()
 
-    def test_post_setup_with_gravity(self, expected_geometry_two_layers_2D: Tuple[Geometry, Geometry, Geometry],
-                                     create_default_2d_soil_material: SoilMaterial):
+    def test_post_setup_with_gravity_2D(self, expected_geometry_two_layers_2D: Tuple[Geometry, Geometry, Geometry],
+                                              create_default_2d_soil_material: SoilMaterial):
         """
-        Tests if gravity loading is added correctly when using post setup. Gravity load should be present on all nodes
-        of the model.
+        Tests if gravity loading and zero water pressure is added correctly when using post setup. Gravity load and zero
+        water pressure should be present on all nodes of the model.
 
         Args:
             - expected_geometry_single_layer_2D (Tuple[:class:`stem.geometry.Geometry`, \
@@ -2008,11 +2008,87 @@ class TestModel:
         # add gravity through post setup
         model.post_setup()
 
+        # get water and gravity model parts
+        water_pressure_model_part = model.process_model_parts[0]
         gravity_model_part = model.process_model_parts[1]
 
-        # # assert if the gravity model part is the same as the expected gravity model part
+        # assert if the water and gravity model part are the same as the expected model parts
+        expected_water_pressure_geometry = expected_geometry_two_layers_2D[-1]
         expected_gravity_geometry = expected_geometry_two_layers_2D[-1]
 
+        TestUtils.assert_almost_equal_geometries(expected_water_pressure_geometry, water_pressure_model_part.geometry)
         TestUtils.assert_almost_equal_geometries(expected_gravity_geometry, gravity_model_part.geometry)
+
+        assert water_pressure_model_part.name == "zero_water_pressure"
+        assert gravity_model_part.name == "gravity_load_2d"
+
+        assert pytest.approx(water_pressure_model_part.parameters.water_pressure) == 0
+        assert water_pressure_model_part.parameters.is_fixed
+
         npt.assert_allclose([0, -9.81, 0], gravity_model_part.parameters.value)
         npt.assert_allclose([True, True, True], gravity_model_part.parameters.active)
+
+    def test_post_setup_with_water_pressure_3D(self,
+                                               expected_geometry_two_layers_3D_extruded: Tuple[Geometry, Geometry],
+                                               create_default_3d_soil_material: SoilMaterial):
+        """
+        Tests if gravity loading is not applied and zero water pressure is not added when using post setup. Water pressure
+        should only be present on layer 1.
+
+        Args:
+            - expected_geometry_two_layers_3D_extruded (Tuple[:class:`stem.geometry.Geometry`, \
+                :class:`stem.geometry.Geometry`]): expected geometry of the model
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+
+        """
+
+        ndim = 3
+
+        layer1_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+        layer2_coordinates = [(1, 1, 0), (0, 1, 0), (0, 2, 0), (1, 2, 0)]
+
+        # define soil materials
+        soil_material1 = create_default_3d_soil_material
+        soil_material1.name = "soil1"
+
+        soil_material2 = create_default_3d_soil_material
+        soil_material2.name = "soil2"
+
+        # create model
+        model = Model(ndim)
+        model.extrusion_length = 1
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
+        model.add_soil_layer_by_coordinates(layer2_coordinates, soil_material2, "layer2")
+
+        # manually add water pressure model part
+        water_pressure_model_part = ModelPart("water_pressure_part")
+        water_pressure_model_part.geometry = model.body_model_parts[0].geometry
+        water_pressure_model_part.parameters = UniformWaterPressure(water_pressure=100)
+        model.process_model_parts.append(water_pressure_model_part)
+
+        model.gmsh_io.add_physical_group("water_pressure_part", 3, geometry_ids=
+                                         model.gmsh_io.geo_data["physical_groups"]["layer1"]["geometry_ids"])
+
+        # set up gravity loading
+        project_parameters = TestUtils.create_default_solver_settings()
+
+        model.project_parameters = project_parameters
+        model.post_setup()
+
+        # only 1 process model part should be present which is the water pressure on layer 1
+        assert len(model.process_model_parts) == 1
+
+        # check if the water pressure model part is the same as the expected model part
+        assert model.process_model_parts[0].name == "water_pressure_part"
+        assert pytest.approx(model.process_model_parts[0].parameters.water_pressure) == 100
+        assert model.process_model_parts[0].parameters.is_fixed
+
+        # check if the water pressure is only applied to the nodes of layer 1
+        expected_water_pressure_geometry = expected_geometry_two_layers_3D_extruded[0]
+        TestUtils.assert_almost_equal_geometries(expected_water_pressure_geometry,
+                                                 model.process_model_parts[0].geometry)
+
+
+
