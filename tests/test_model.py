@@ -2008,7 +2008,7 @@ class TestModel:
         # add gravity through post setup
         model.post_setup()
 
-        gravity_model_part = model.process_model_parts[0]
+        gravity_model_part = model.process_model_parts[1]
 
         # # assert if the gravity model part is the same as the expected gravity model part
         expected_gravity_geometry = expected_geometry_two_layers_2D[-1]
