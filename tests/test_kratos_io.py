@@ -94,9 +94,6 @@ class TestKratosModelIO:
 
         model.synchronise_geometry()
 
-        model.set_mesh_size(1)
-        model.generate_mesh()
-
         return model
 
     @pytest.fixture
@@ -162,7 +159,7 @@ class TestKratosModelIO:
         return model
 
     @pytest.fixture
-    def create_default_2d_model_and_mesh_randomfield(self) -> Model:
+    def create_default_2d_model_randomfield(self) -> Model:
         """
         Sets expected geometry data for a 2D geometry group. And it sets a time dependent line load at the top and
         bottom and another line load at the sides. The group is a geometry of a square.
@@ -299,7 +296,7 @@ class TestKratosModelIO:
             )
         )
 
-        return [vtk_output_process]
+        return vtk_output_process
 
     @pytest.fixture
     def create_default_solver_settings(self):
@@ -354,7 +351,6 @@ class TestKratosModelIO:
         model.set_mesh_size(1)
         model.generate_mesh()
 
-
         kratos_io = KratosIO(ndim=model.ndim)
         kratos_io.project_folder = "dir_test"
 
@@ -386,6 +382,10 @@ class TestKratosModelIO:
                 solver settings.
         """
         model = create_default_2d_model_and_output_by_coordinates
+
+        model.set_mesh_size(1)
+        model.generate_mesh()
+
         kratos_io = KratosIO(ndim=model.ndim)
         kratos_io.project_folder = "dir_test"
 
@@ -401,7 +401,7 @@ class TestKratosModelIO:
 
     def test_write_random_field_json_file(
         self,
-        create_default_2d_model_and_mesh_randomfield: Model,
+        create_default_2d_model_randomfield: Model,
         create_default_outputs: List[Output],
         create_default_solver_settings: Problem
     ):
@@ -409,13 +409,17 @@ class TestKratosModelIO:
         Test correct writing of the random field parameters.
 
         Args:
-            - create_default_2d_model_and_mesh_randomfield (:class:`stem.model.Model`): the default 2D model of a \
+            - create_default_2d_model_randomfield (:class:`stem.model.Model`): the default 2D model of a \
                 square soil layer, a line load and a random field for the Young's modulus.
             - create_default_outputs (List[:class:`stem.output.Output`]): list of default output processes.
             - create_default_solver_settings (:class:`stem.solver.Problem`): the Problem object containing the \
                 solver settings.
         """
-        model = create_default_2d_model_and_mesh_randomfield
+        model = create_default_2d_model_randomfield
+
+        model.set_mesh_size(1)
+        model.generate_mesh()
+
         kratos_io = KratosIO(ndim=model.ndim)
 
         model.project_parameters = create_default_solver_settings
@@ -437,7 +441,7 @@ class TestKratosModelIO:
 
     def test_validation_of_random_field_parameters(
         self,
-        create_default_2d_model_and_mesh_randomfield: Model,
+        create_default_2d_model_randomfield: Model,
         create_default_solver_settings: Problem
     ):
         """
@@ -449,7 +453,10 @@ class TestKratosModelIO:
             - create_default_solver_settings (:class:`stem.solver.Problem`): the Problem object containing the \
                 solver settings.
         """
-        model = create_default_2d_model_and_mesh_randomfield
+        model = create_default_2d_model_randomfield
+        model.set_mesh_size(1)
+        model.generate_mesh()
+
         kratos_io = KratosIO(ndim=model.ndim)
 
         model.project_parameters = create_default_solver_settings
@@ -470,7 +477,7 @@ class TestKratosModelIO:
 
     def test_write_project_parameters_json_for_randomfield(
         self,
-        create_default_2d_model_and_mesh_randomfield: Model,
+        create_default_2d_model_randomfield: Model,
         create_default_outputs: List[Output],
         create_default_solver_settings: Problem
     ):
@@ -478,13 +485,16 @@ class TestKratosModelIO:
         Test correct writing of the project parameters for the default output, model and settings.
 
         Args:
-            - create_default_2d_model_and_mesh_randomfield (:class:`stem.model.Model`): the default 2D model of \
+            - create_default_2d_model_randomfield (:class:`stem.model.Model`): the default 2D model of \
                 a square soil layer, a line load and a random field for the Young's modulus.
             - create_default_outputs (List[:class:`stem.output.Output`]): list of default output processes.
             - create_default_solver_settings (:class:`stem.solver.Problem`): the Problem object containing the \
                 solver settings.
         """
-        model = create_default_2d_model_and_mesh_randomfield
+        model = create_default_2d_model_randomfield
+        model.set_mesh_size(1)
+        model.generate_mesh()
+
         kratos_io = KratosIO(ndim=model.ndim)
         kratos_io.project_folder = "dir_test"
 
@@ -568,6 +578,9 @@ class TestKratosModelIO:
                 solver settings.
         """
         model = create_default_2d_model_and_output_by_coordinates
+        model.set_mesh_size(1)
+        model.generate_mesh()
+
         kratos_io = KratosIO(ndim=model.ndim)
         kratos_io.project_folder = "dir_test"
 
@@ -584,19 +597,22 @@ class TestKratosModelIO:
 
     def test_write_mdpa_file_with_random_field(
         self,
-        create_default_2d_model_and_mesh_randomfield: Model,
+        create_default_2d_model_randomfield: Model,
         create_default_solver_settings: Problem
     ):
         """
         Test correct writing of the mdpa file (mesh) for the default model and solver settings in 2D.
 
         Args:
-            - create_default_2d_model_and_mesh_randomfield (:class:`stem.model.Model`): the default 2D model of a square \
+            - create_default_2d_model_randomfield (:class:`stem.model.Model`): the default 2D model of a square \
                 soil layer, a line load and a random field for the Young's modulus.
             - create_default_solver_settings (:class:`stem.solver.Problem`): the Problem object containing the \
                 solver settings.
         """
-        model = create_default_2d_model_and_mesh_randomfield
+        model = create_default_2d_model_randomfield
+        model.set_mesh_size(1)
+        model.generate_mesh()
+
         kratos_io = KratosIO(ndim=model.ndim)
         kratos_io.project_folder = "dir_test"
 
@@ -939,7 +955,8 @@ class TestKratosModelIO:
         model = create_default_2d_model
         kratos_io = KratosIO(ndim=model.ndim)
         model.project_parameters = create_default_solver_settings
-        model.output_settings = create_default_outputs
+        model.add_output_by_model_part_name(**create_default_outputs.__dict__)
+        kratos_io.project_folder = "dummy"
 
         # add elastic spring damper element
         spring_damper = ElasticSpringDamper(
@@ -976,11 +993,10 @@ class TestKratosModelIO:
         model.body_model_parts.append(nodal_concentrated_model_part)
 
         # write project parameters
-        actual_dict = kratos_io.write_project_parameters_json(
+        actual_dict = kratos_io._KratosIO__write_project_parameters_json(
             model=model,
             mesh_file_name="dummy.mdpa",
             materials_file_name="dummy.json",
-            output_folder="dummy"
         )
 
         # load expected project parameters
