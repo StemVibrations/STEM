@@ -1,13 +1,13 @@
 import os
 from stem.model import Model
-from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
-from stem.load import MovingLoad, UvecLoad
+from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedLaw
+from stem.load import UvecLoad
 from stem.boundary import DisplacementConstraint
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, StressInitialisationType, SolverSettings, Problem
 from stem.output import NodalOutput, VtkOutputParameters, Output
 from stem.stem import Stem
-from benchmark_tests.utils import assert_files_equal
-from shutil import rmtree, copyfile
+from shutil import rmtree, copytree
+from utils import assert_files_equal
 
 
 def test_stem():
@@ -25,7 +25,7 @@ def test_stem():
     poisson_ratio = 0.2
     soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density, POROSITY=porosity)
     constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=young_modulus, POISSON_RATIO=poisson_ratio)
-    retention_parameters1 = SaturatedBelowPhreaticLevelLaw()
+    retention_parameters1 = SaturatedLaw()
     material_soil1 = SoilMaterial("soil1", soil_formulation1, constitutive_law1, retention_parameters1)
     material_soil2 = SoilMaterial("soil2", soil_formulation1, constitutive_law1, retention_parameters1)
     material_embankment = SoilMaterial("embankment", soil_formulation1, constitutive_law1, retention_parameters1)
@@ -41,10 +41,8 @@ def test_stem():
     model.add_soil_layer_by_coordinates(soil2_coordinates, material_soil2, "soil2")
     model.add_soil_layer_by_coordinates(embankment_coordinates, material_embankment, "embankment")
 
-    # Define moving load
+    # Define UVEC load
     load_coordinates = [(0.75, 3.0, 0.0), (0.75, 3.0, 50.0)]
-    # moving_load = MovingLoad(load=[0.0, -10.0, 0.0], direction=[-1, -1, 1], velocity=5, origin=[0.75, 3.0, 0.0], offset=0.0)
-    # model.add_load_by_coordinates(load_coordinates, moving_load, "moving_load")
 
     uvec_parameters = {"n_carts":1,
                        "cart_inertia": (1128.8e3)/2,
@@ -59,14 +57,14 @@ def test_stem():
                        "wheel_stiffness": 4800e3,
                        "wheel_damping": 0.25e3,
                        "gravity_axis": 1,
-                       "contact_coefficient": 9.1e-7,
-                       "contact_power": 1.5
-                       }  # train params
+                       "contact_coefficient": 9.1e-5,
+                       "contact_power": 1.5,
+                       "initialisation_steps": 100,
+                       }
 
-    uvec_load = UvecLoad(direction=[-1, -1, 1], velocity=0.0, origin=[0.75, 3, 0], wheel_configuration=[0.0, 2.5, 19.9, 22.4],
-                         uvec_file=r"sample_uvec.py", uvec_function_name="uvec", uvec_parameters=uvec_parameters)
+    uvec_load = UvecLoad(direction=[1, 1, 1], velocity=1000, origin=[0.75, 3, 5], wheel_configuration=[0.0, 2.5, 19.9, 22.4],
+                         uvec_file=r"uvec/sample_uvec.py", uvec_function_name="uvec", uvec_parameters=uvec_parameters)
     model.add_load_by_coordinates(load_coordinates, uvec_load, "train_load")
-
 
     # Define boundary conditions
     no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
@@ -83,7 +81,7 @@ def test_stem():
 
     # Set mesh size and generate mesh
     # --------------------------------
-    model.set_mesh_size(element_size=5)
+    model.set_mesh_size(element_size=1)
     model.generate_mesh()
 
     # Define project parameters
@@ -91,11 +89,11 @@ def test_stem():
 
     # Set up solver settings
     analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
-    solution_type = SolutionType.QUASI_STATIC
+    solution_type = SolutionType.DYNAMIC
     # Set up start and end time of calculation, time step and etc
-    time_integration = TimeIntegration(start_time=0.0, end_time=2.0, delta_time=0.01, reduction_factor=1.0,
+    time_integration = TimeIntegration(start_time=0.0, end_time=0.01, delta_time=0.00005, reduction_factor=1.0,
                                     increase_factor=1.0, max_delta_time_factor=1000)
-    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
+    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-3,
                                                             displacement_absolute_tolerance=1.0e-9)
     stress_initialisation_type = StressInitialisationType.NONE
     solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
@@ -103,15 +101,14 @@ def test_stem():
                                     time_integration=time_integration,
                                     is_stiffness_matrix_constant=False, are_mass_and_damping_constant=False,
                                     convergence_criteria=convergence_criterion,
-                                    rayleigh_k=0.0,
-                                    rayleigh_m=0.0)
+                                    rayleigh_k=0.001,
+                                    rayleigh_m=0.01)
 
     # Set up problem data
-    problem = Problem(problem_name="calculate_moving_load_on_embankment_3d", number_of_threads=1, settings=solver_settings)
+    problem = Problem(problem_name="uvec_3d", number_of_threads=1, settings=solver_settings)
     model.project_parameters = problem
 
     # Define the results to be written to the output file
-
     # Nodal results
     nodal_results = [NodalOutput.DISPLACEMENT,
                     NodalOutput.TOTAL_DISPLACEMENT]
@@ -125,7 +122,7 @@ def test_stem():
         output_dir="output",
         output_parameters=VtkOutputParameters(
             file_format="ascii",
-            output_interval=10,
+            output_interval=50,
             nodal_results=nodal_results,
             gauss_point_results=gauss_point_results,
             output_control_type="step"
@@ -137,8 +134,7 @@ def test_stem():
     input_folder = r"benchmark_tests\test_train_uvec_3d/input_kratos"
     # copy uvec to input folder
     os.makedirs(input_folder, exist_ok=True)
-    copyfile(r"benchmark_tests\test_train_uvec_3d\sample_uvec.py", os.path.join(input_folder, "sample_uvec.py"))
-
+    copytree(r"benchmark_tests\test_train_uvec_3d\uvec", os.path.join(input_folder, "uvec"), dirs_exist_ok=True)
 
     # Write KRATOS input files
     # --------------------------------
@@ -149,4 +145,8 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
+    # test output
+    assert assert_files_equal("benchmark_tests/test_train_uvec_3d/output_/output_vtk_porous_computational_model_part",
+                                os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
 
+    rmtree(input_folder)
