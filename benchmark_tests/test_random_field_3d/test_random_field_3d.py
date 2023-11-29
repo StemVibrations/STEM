@@ -93,7 +93,7 @@ def test_stem():
     gauss_point_results = [GaussPointOutput.YOUNG_MODULUS]
 
     # Define the output process
-    model.add_output_by_model_part_name(output_parameters=VtkOutputParameters(
+    model.add_output_settings(output_parameters=VtkOutputParameters(
         file_format="ascii",
         output_interval=1,
         nodal_results=[],
