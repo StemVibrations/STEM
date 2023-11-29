@@ -37,6 +37,10 @@ class Stem:
         self.__stage_settings_file_names: Dict[int, str] = {}
         self.__last_ran_stage_number: int = 0
 
+        # perform initial stage setup and mesh generation in this order
+        initial_stage.post_setup()
+        initial_stage.generate_mesh()
+
     @property
     def stages(self) -> List[Model]:
         """

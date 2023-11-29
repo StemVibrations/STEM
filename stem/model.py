@@ -757,6 +757,7 @@ class Model:
 
         """
         for process_model_part in self.process_model_parts:
+            # if one of the model parts already contains water, do not add zero water pressure
             if isinstance(process_model_part.parameters, WaterBoundaryParametersABC):
                 return
 
@@ -766,10 +767,13 @@ class Model:
         geometry_ids = []
 
         for body_model_part in self.body_model_parts:
-            if self.ndim == 2:
-                geometry_ids.extend(list(body_model_part.geometry.surfaces.keys()))
-            elif self.ndim == 3:
-                geometry_ids.extend(list(body_model_part.geometry.volumes.keys()))
+
+            # if body model part has geometry, add the geometry ids to the list
+            if body_model_part.geometry is not None:
+                if self.ndim == 2:
+                    geometry_ids.extend(list(body_model_part.geometry.surfaces.keys()))
+                elif self.ndim == 3:
+                    geometry_ids.extend(list(body_model_part.geometry.volumes.keys()))
 
         # add physical group to gmsh
         self.gmsh_io.add_physical_group(water_model_part.name, self.ndim, geometry_ids)
@@ -779,6 +783,7 @@ class Model:
 
         self.process_model_parts.append(water_model_part)
 
+        # re-synchronise the geometry as the water model part has been added
         self.synchronise_geometry()
 
     def post_setup(self):
@@ -790,7 +795,6 @@ class Model:
             - Set up the stress initialisation.
 
         """
-
 
         self.synchronise_geometry()
         self.validate()

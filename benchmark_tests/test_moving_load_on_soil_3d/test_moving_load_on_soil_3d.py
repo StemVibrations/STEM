@@ -105,14 +105,9 @@ def test_stem():
     # Write KRATOS input files
     # --------------------------------
     model.output_settings = [vtk_output_process]
-
-    model.post_setup()
-
     # Set mesh size and generate mesh
     # --------------------------------
     model.set_mesh_size(element_size=1)
-    model.generate_mesh()
-
 
     input_folder = "benchmark_tests/test_moving_load_on_soil_3d/inputs_kratos"
 
