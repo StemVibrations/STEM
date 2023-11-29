@@ -54,17 +54,14 @@ def test_stem():
     # Synchronize geometry
     model.synchronise_geometry()
 
-    # Set mesh size and generate mesh
-    # --------------------------------
-    model.set_mesh_size(element_size=1)
-    model.generate_mesh()
+
 
     # Define project parameters
     # --------------------------------
 
     # Set up solver settings
     analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
-    solution_type = SolutionType.QUASI_STATIC
+    solution_type = SolutionType.DYNAMIC
     # Set up start and end time of calculation, time step and etc
     time_integration = TimeIntegration(start_time=0.0, end_time=1.0, delta_time=0.01, reduction_factor=1.0,
                                     increase_factor=1.0, max_delta_time_factor=1000)
@@ -77,7 +74,7 @@ def test_stem():
                                     is_stiffness_matrix_constant=False, are_mass_and_damping_constant=False,
                                     convergence_criteria=convergence_criterion,
                                     rayleigh_k=0.0,
-                                    rayleigh_m=0.0)
+                                    rayleigh_m=0.001)
 
     # Set up problem data
     problem = Problem(problem_name="calculate_moving_load_on_soil_3d", number_of_threads=1, settings=solver_settings)
@@ -108,6 +105,14 @@ def test_stem():
     # Write KRATOS input files
     # --------------------------------
     model.output_settings = [vtk_output_process]
+
+    model.post_setup()
+
+    # Set mesh size and generate mesh
+    # --------------------------------
+    model.set_mesh_size(element_size=1)
+    model.generate_mesh()
+
 
     input_folder = "benchmark_tests/test_moving_load_on_soil_3d/inputs_kratos"
 
