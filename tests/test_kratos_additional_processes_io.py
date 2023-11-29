@@ -3,8 +3,7 @@ from typing import Dict, Any
 
 import pytest
 
-from random_fields.generate_field import ModelName
-
+from stem.field_generator import RandomFieldGenerator
 from stem.IO.kratos_additional_processes_io import KratosAdditionalProcessesIO
 from stem.additional_processes import *
 from stem.load import PointLoad
@@ -29,7 +28,7 @@ class TestKratosAdditionalProcessesIO:
             v_scale_fluctuation=5, anisotropy=[0.5, 0.5], angle=[0, 0], seed=42
         )
 
-        # define the field parameters
+        # add field via json file
         field_parameters_json = ParameterFieldParameters(
             property_name="YOUNG_MODULUS",
             function_type="json_file",
@@ -37,6 +36,7 @@ class TestKratosAdditionalProcessesIO:
             field_generator=random_field_generator
         )
 
+        # add field via tiny expression
         field_parameters_input = ParameterFieldParameters(
             property_name="YOUNG_MODULUS",
             function_type="input",
