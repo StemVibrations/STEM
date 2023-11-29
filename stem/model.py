@@ -403,8 +403,8 @@ class Model:
 
         """
 
-        # check if the model part exists:
-        if self.__get_model_part_by_name(part_name=part_name) is None:
+        # check if the model part exists (if None, all model is output)
+        if part_name is not None and self.__get_model_part_by_name(part_name=part_name) is None:
             raise ValueError("Model part for which output needs to be requested doesn't exist.")
 
         self.output_settings.append(
