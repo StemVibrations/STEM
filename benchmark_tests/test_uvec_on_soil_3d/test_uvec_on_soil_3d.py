@@ -2,14 +2,16 @@ import os
 from shutil import rmtree, copyfile
 
 from stem.model import Model
-from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
+from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedLaw
 from stem.load import UvecLoad
 from stem.boundary import DisplacementConstraint
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, StressInitialisationType, SolverSettings, Problem
 from stem.output import NodalOutput, VtkOutputParameters, Output
 from stem.stem import Stem
 
-from benchmark_tests.utils import assert_files_equal
+import sys
+sys.path.append("./benchmark_tests")
+from utils import assert_files_equal
 
 
 def test_stem():
@@ -24,7 +26,7 @@ def test_stem():
     # Specify dimension and initiate the model
     ndim = 3
     model = Model(ndim)
-    model.extrusion_length = 3
+    model.extrusion_length = 10
 
     # Specify material model
     # Linear elastic drained soil with a Density of 2650, a Young's modulus of 30e6,
@@ -35,7 +37,7 @@ def test_stem():
     POISSON_RATIO = 0.2
     soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
     constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=YOUNG_MODULUS, POISSON_RATIO=POISSON_RATIO)
-    retention_parameters1 = SaturatedBelowPhreaticLevelLaw()
+    retention_parameters1 = SaturatedLaw()
     material1 = SoilMaterial("soil", soil_formulation1, constitutive_law1, retention_parameters1)
 
     # Specify the coordinates for the column: x:5m x y:1m
@@ -45,16 +47,16 @@ def test_stem():
     model.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil_layer")
 
     # Define UVEC load
-    load_coordinates = [(0.0, 1.0, 1), (5.0, 1.0, 1)]
+    load_coordinates = [(0.0, 1.0, 0.0), (0.0, 1.0, 10)]
 
     uvec_parameters = {"load_wheel_1": -30.0, "load_wheel_2": -10.0}
-    uvec_load = UvecLoad(direction=[1, 1, 1], velocity=5, origin=[0.0, 1.0, 1.0], wheel_configuration=[0.0, 2.0],
+    uvec_load = UvecLoad(direction=[1, 1, 1], velocity=5, origin=[0.0, 1.0, 0.0], wheel_configuration=[1.0, 2.0],
                            uvec_file=r"sample_uvec.py", uvec_function_name="uvec_test",uvec_parameters=uvec_parameters)
 
     model.add_load_by_coordinates(load_coordinates, uvec_load, "uvec_load")
 
-    # model.synchronise_geometry()
-    # model.show_geometry(show_surface_ids=True)
+    model.synchronise_geometry()
+    model.show_geometry(show_surface_ids=True)
 
     # Define boundary conditions
     no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
@@ -63,7 +65,7 @@ def test_stem():
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(2, [2], no_displacement_parameters, "base_fixed")
-    model.add_boundary_condition_by_geometry_ids(2, [1, 3,5,6], roller_displacement_parameters, "roller_fixed")
+    model.add_boundary_condition_by_geometry_ids(2, [1, 3, 5, 6], roller_displacement_parameters, "roller_fixed")
 
     # Synchronize geometry
     model.synchronise_geometry()
@@ -122,7 +124,7 @@ def test_stem():
 
     model.output_settings = [vtk_output_process]
 
-    input_folder = "benchmark_tests/test_uvec_on_soil_3d/inputs_kratos"
+    input_folder = "benchmark_tests/test_uvec_on_soil_3d/input_kratos"
 
     # copy uvec to input folder
     os.makedirs(input_folder, exist_ok=True)
@@ -138,7 +140,6 @@ def test_stem():
     stem.run_calculation()
 
     assert assert_files_equal("benchmark_tests/test_uvec_on_soil_3d/output_/output_vtk_porous_computational_model_part",
-                                os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
+                              os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
 
-    # rmtree(input_folder)
-
+    rmtree(input_folder)
