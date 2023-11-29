@@ -249,7 +249,7 @@
                 "kratos_module": "StemApplication",
                 "process_name": "SetNodalParametersProcess",
                 "Parameters": {
-                    "model_part_name": "spring_damper"
+                    "model_part_name": "PorousDomain.spring_damper"
                 }
             },
             {
@@ -257,7 +257,7 @@
                 "kratos_module": "StemApplication",
                 "process_name": "SetNodalParametersProcess",
                 "Parameters": {
-                    "model_part_name": "nodal_concentrated"
+                    "model_part_name": "PorousDomain.nodal_concentrated"
                 }
             }
         ]
