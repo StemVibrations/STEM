@@ -343,7 +343,7 @@ class KratosIO:
                     block_text, block_name="Conditions", block_entities=entities
                 )
             elif isinstance(process_model_part.parameters, AdditionalProcessesParametersABC):
-                # write element for the parameter field process
+                # write elements for additional processes
                 block_text = self.__write_sub_model_part_block(
                     block_text, block_name="Elements", block_entities=entities
                 )

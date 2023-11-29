@@ -6,7 +6,6 @@ import numpy.typing as npty
 
 from gmsh_utils import gmsh_IO
 
-
 from stem.field_generator import RandomFieldGenerator
 from stem.model_part import ModelPart, BodyModelPart
 from stem.soil_material import *
@@ -37,7 +36,7 @@ class Model:
         - geometry (Optional[:class:`stem.geometry.Geometry`]) The geometry of the whole model.
         - body_model_parts (List[:class:`stem.model_part.BodyModelPart`]): A list containing the body model parts.
         - process_model_parts (List[:class:`stem.model_part.ModelPart`]): A list containing the process model parts.
-        - outputs (List[:class:`stem.output.Output`]): A list containing the outputs of the model.
+        - output_settings (List[:class:`stem.output.Output`]): A list containing the output settings.
         - extrusion_length (Optional[float]): The extrusion length in the out of plane direction.
 
     """
@@ -55,7 +54,7 @@ class Model:
         self.gmsh_io = gmsh_IO.GmshIO()
         self.body_model_parts: List[BodyModelPart] = []
         self.process_model_parts: List[ModelPart] = []
-        self.outputs: List[Output] = []
+        self.output_settings: List[Output] = []
 
         self.extrusion_length: Optional[float] = None
 
@@ -922,14 +921,15 @@ class Model:
         Args:
             - part_name (str): the model part for which centroids are required.
 
-        Returns:
-            - centroids (Union[Any, npty.NDArray[np.float64]]): centroids of the N elements in the part name \
-                as (N,3) array.
 
         Raises:
             - ValueError: if part_name specified is not part of the model.
             - ValueError: if the part_name has no mesh yet.
             - ValueError: if the part_name has no elements.
+
+        Returns:
+            - Union[Any, npty.NDArray[np.float64]]: centroids of the N elements in the part name \
+                as (N,3) array.
 
         """
         mp = self.__get_model_part_by_name(part_name)
@@ -1081,8 +1081,6 @@ class Model:
 
         self.synchronise_geometry()
         self.validate()
-
-        # generate the fields for the field parameters (e.g., random fields)
 
         self.__setup_stress_initialisation()
 
