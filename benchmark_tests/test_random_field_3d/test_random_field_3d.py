@@ -61,8 +61,9 @@ def test_stem():
     roller_displacement_parameters = DisplacementConstraint(active=[True, True, True],
                                                             is_fixed=[True, False, True], value=[0, 0, 0])
 
-    model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "base_fixed")
-    model.add_boundary_condition_by_geometry_ids(1, [2, 4], roller_displacement_parameters, "sides_roller")
+    # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
+    model.add_boundary_condition_by_geometry_ids(2, [2], no_displacement_parameters, "base_fixed")
+    model.add_boundary_condition_by_geometry_ids(2, [1, 3, 5, 6], roller_displacement_parameters, "roller_fixed")
     # generate mesh
     model.set_mesh_size(element_size=1)
     model.generate_mesh()
@@ -84,7 +85,7 @@ def test_stem():
                                     rayleigh_m=0.0)
 
     # Set up problem data
-    problem = Problem(problem_name="calculate_load_on_embankment_2d", number_of_threads=1,
+    problem = Problem(problem_name="create_random_field_3d", number_of_threads=1,
                       settings=solver_settings)
     model.project_parameters = problem
 
@@ -120,8 +121,10 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
-    # result = assert_files_equal("benchmark_tests/test_random_field_with_line_load_2d/output_/output_vtk_porous_computational_model_part",
-    #                             os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
-    #
-    # assert result is True
-    # rmtree(input_folder)
+    result = assert_files_equal(
+        "benchmark_tests/test_random_field_3d/output_/output_vtk_porous_computational_model_part",
+        os.path.join(input_folder, "output/output_vtk_porous_computational_model_part")
+    )
+
+    assert result is True
+    rmtree(input_folder)

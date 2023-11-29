@@ -33,7 +33,6 @@ class FieldGenerator(ABC):
         return None
 
     @property
-    @abstractmethod
     def values(self) -> Optional[List[Any]]:
         """
         Returns the value of the generated field.
@@ -41,8 +40,13 @@ class FieldGenerator(ABC):
         Returns:
             - Optional[list[Any]]: the list of generated values for the field.
 
+        Raises:
+            - ValueError: if field is not generated using the `generate()` methoed
         """
-        pass
+        if self.generated_field is None:
+            raise ValueError("Values for field parameters are not generated yet.")
+
+        return self.generated_field
 
 
 class RandomFieldGenerator(FieldGenerator):
@@ -145,19 +149,6 @@ class RandomFieldGenerator(FieldGenerator):
         rf_generator.generate(coordinates_for_rf)
         self.generated_field = list(rf_generator.random_field)[0].tolist()
 
-    @property
-    def values(self) -> Optional[List[Any]]:
-        """
-        Returns the value of the generated field.
-
-        Returns:
-            - Optional[list[Any]]: the list of generated values for the field.
-
-        """
-        if self.generated_field is None:
-            raise ValueError("Values for field parameters are not generated yet.")
-
-        return self.generated_field
 
 
 

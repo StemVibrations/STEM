@@ -75,7 +75,7 @@ def test_stem():
                                     rayleigh_m=0.0)
 
     # Set up problem data
-    problem = Problem(problem_name="calculate_load_on_embankment_2d", number_of_threads=1,
+    problem = Problem(problem_name="create_random_field_2d", number_of_threads=1,
                       settings=solver_settings)
     model.project_parameters = problem
 
@@ -112,8 +112,10 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
-    result = assert_files_equal("benchmark_tests/test_random_field_2d/output_/output_vtk_porous_computational_model_part",
-                                os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
+    result = assert_files_equal(
+        "benchmark_tests/test_random_field_2d/output_/output_vtk_porous_computational_model_part",
+        os.path.join(input_folder, "output/output_vtk_porous_computational_model_part")
+    )
 
     assert result is True
     rmtree(input_folder)
