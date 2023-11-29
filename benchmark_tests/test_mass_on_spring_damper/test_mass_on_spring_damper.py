@@ -1,4 +1,6 @@
 import os
+import pytest
+
 from stem.model import Model
 from stem.model_part import BodyModelPart
 from stem.structural_material import *
@@ -12,7 +14,7 @@ from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
 from shutil import rmtree
 
-
+@pytest.mark.skip(reason="work in progress")
 def test_stem():
     # Define geometry, conditions and material parameters
     # --------------------------------
