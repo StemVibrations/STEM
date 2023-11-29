@@ -14,6 +14,7 @@ from stem.model import Model
 from stem.model_part import *
 from stem.output import NodalOutput, GaussPointOutput, GiDOutputParameters, Output
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
+from stem.structural_material import ElasticSpringDamper, NodalConcentrated
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, \
     NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
 from stem.table import Table
@@ -39,7 +40,7 @@ class TestKratosModelIO:
         gmsh_IO.GmshIO().finalize_gmsh()
 
     @pytest.fixture
-    def create_default_2d_model_and_mesh(self) -> Model:
+    def create_default_2d_model(self) -> Model:
         """
         Sets expected geometry data for a 2D geometry group. And it sets a time dependent line load at the top and
         bottom and another line load at the sides. The group is a geometry of a square.
@@ -88,9 +89,6 @@ class TestKratosModelIO:
         model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "no_displacement")
 
         model.synchronise_geometry()
-
-        model.set_mesh_size(1)
-        model.generate_mesh()
 
         return model
 
@@ -213,7 +211,7 @@ class TestKratosModelIO:
 
     def test_write_project_parameters_json(
         self,
-        create_default_2d_model_and_mesh: Model,
+        create_default_2d_model: Model,
         create_default_outputs: List[Output],
         create_default_solver_settings: Problem
     ):
@@ -221,13 +219,18 @@ class TestKratosModelIO:
         Test correct writing of the project parameters for the default output, model and settings.
 
         Args:
-            - create_default_2d_model_and_mesh (:class:`stem.model.Model`): the default 2D model of a square \
+            - create_default_2d_model (:class:`stem.model.Model`): the default 2D model of a square \
                 soil layer and a line load.
             - create_default_outputs (List[:class:`stem.output.Output`]): list of default output processes.
             - create_default_solver_settings (:class:`stem.solver.Problem`): the Problem object containing the \
                 solver settings.
         """
-        model = create_default_2d_model_and_mesh
+        model = create_default_2d_model
+
+        model.set_mesh_size(1)
+        model.generate_mesh()
+
+
         kratos_io = KratosIO(ndim=model.ndim)
         model.project_parameters = create_default_solver_settings
         model.output_settings = create_default_outputs
@@ -243,15 +246,19 @@ class TestKratosModelIO:
 
     def test_write_material_parameters_json(
         self,
-        create_default_2d_model_and_mesh: Model
+        create_default_2d_model: Model
     ):
         """
         Test correct writing of the material parameters for the default model.
         Args:
-            - create_default_2d_model_and_mesh (:class:`stem.model.Model`): the default 2D model of a square \
+            - create_default_2d_model (:class:`stem.model.Model`): the default 2D model of a square \
                 soil layer and a line load.
         """
-        model = create_default_2d_model_and_mesh
+        model = create_default_2d_model
+
+        model.set_mesh_size(1)
+        model.generate_mesh()
+
         kratos_io = KratosIO(ndim=model.ndim)
 
         actual_dict = kratos_io.write_material_parameters_json(model=model, output_folder="dir_test")
@@ -260,19 +267,23 @@ class TestKratosModelIO:
 
     def test_write_mdpa_file_2d(
         self,
-        create_default_2d_model_and_mesh: Model,
+        create_default_2d_model: Model,
         create_default_solver_settings: Problem
     ):
         """
         Test correct writing of the mdpa file (mesh) for the default model and solver settings in 2D.
 
         Args:
-            - create_default_2d_model_and_mesh (:class:`stem.model.Model`): the default 2D model of a square \
+            - create_default_2d_model (:class:`stem.model.Model`): the default 2D model of a square \
                 soil layer and a line load.
             - create_default_solver_settings (:class:`stem.solver.Problem`): the Problem object containing the \
                 solver settings.
         """
-        model = create_default_2d_model_and_mesh
+        model = create_default_2d_model
+
+        model.set_mesh_size(1)
+        model.generate_mesh()
+
         kratos_io = KratosIO(ndim=model.ndim)
         model.project_parameters = create_default_solver_settings
 
@@ -321,7 +332,7 @@ class TestKratosModelIO:
 
     def test_write_input_files_for_kratos(
         self,
-        create_default_2d_model_and_mesh: Model,
+        create_default_2d_model: Model,
         create_default_solver_settings: Problem,
         create_default_outputs: List[Output]
     ):
@@ -329,13 +340,17 @@ class TestKratosModelIO:
         Test correct writing of the mdpa file (mesh) for the default model and solver settings.
 
         Args:
-            - create_default_2d_model_and_mesh (:class:`stem.model.Model`): the default 2D model of a square \
+            - create_default_2d_model (:class:`stem.model.Model`): the default 2D model of a square \
                 soil layer line loads.
             - create_default_solver_settings (:class:`stem.solver.Problem`): the Problem object containing the \
                 solver settings.
             - create_default_outputs (List[:class:`stem.output.Output`]): list of default output processes.
         """
-        model = create_default_2d_model_and_mesh
+        model = create_default_2d_model
+
+        model.set_mesh_size(1)
+        model.generate_mesh()
+
         kratos_io = KratosIO(ndim=model.ndim)
         model.project_parameters = create_default_solver_settings
         model.output_settings = create_default_outputs
@@ -362,15 +377,18 @@ class TestKratosModelIO:
         expected_dict = json.load(open('tests/test_data/expected_ProjectParameters.json', 'r'))
         TestUtils.assert_dictionary_almost_equal(expected=expected_dict, actual=actual_dict)
 
-    def test_create_submodelpart_text(self, create_default_2d_model_and_mesh:Model):
+    def test_create_submodelpart_text(self, create_default_2d_model:Model):
         """
         Test the creation of the mdpa text of a model part
 
         Args:
-            - create_default_2d_model_and_mesh (:class:`stem.model.Model`): the default model to use in testing
+            - create_default_2d_model (:class:`stem.model.Model`): the default model to use in testing
         """
         # load the default 2D model
-        model = create_default_2d_model_and_mesh
+        model = create_default_2d_model
+
+        model.set_mesh_size(1)
+        model.generate_mesh()
 
         body_model_part_to_write = model.body_model_parts[0]
         process_model_part_to_write = model.process_model_parts[0]
@@ -406,16 +424,20 @@ class TestKratosModelIO:
         # assert the objects to be equal
         npt.assert_equal(actual=actual_text_load, desired=expected_text_load)
 
-    def test_write_mdpa_text(self, create_default_2d_model_and_mesh: Model):
+    def test_write_mdpa_text(self, create_default_2d_model: Model):
         """
         Test the creation of the mdpa text of the whole model
 
         Args:
-            - create_default_2d_model_and_mesh (:class:`stem.model.Model`): the default model to use in testing
+            - create_default_2d_model (:class:`stem.model.Model`): the default model to use in testing
 
         """
         # load the default 2D model
-        model = create_default_2d_model_and_mesh
+        model = create_default_2d_model
+
+        model.set_mesh_size(1)
+        model.generate_mesh()
+
         model.project_parameters = TestUtils.create_default_solver_settings()
 
         # IO object
@@ -485,5 +507,100 @@ class TestKratosModelIO:
 
         # check if mdpa data is as expected
         npt.assert_equal(actual=actual_mdpa_text, desired=expected_mdpa_text)
+
+    def test_write_project_parameters_with_spring_damper_and_mass_element(self,
+                                                                          create_default_2d_model: Model,
+                                                                          create_default_outputs: List[Output],
+                                                                          create_default_solver_settings: Problem):
+        """
+        Test correct writing of the project parameters for the default output, model and settings with a spring damper
+        and a nodal concentrated element.
+
+        Args:
+            - create_default_2d_model (:class:`stem.model.Model`): the default 2D model of a square \
+                soil layer and a line load.
+            - create_default_outputs (List[:class:`stem.output.Output`]): list of default output processes.
+            - create_default_solver_settings (:class:`stem.solver.Problem`): the Problem object containing the \
+                solver settings.
+        """
+        model = create_default_2d_model
+        kratos_io = KratosIO(ndim=model.ndim)
+        model.project_parameters = create_default_solver_settings
+        model.output_settings = create_default_outputs
+
+        # add elastic spring damper element
+        spring_damper = ElasticSpringDamper(
+            NODAL_DISPLACEMENT_STIFFNESS=[1, 1, 1],
+            NODAL_ROTATIONAL_STIFFNESS=[1, 1, 2],
+            NODAL_DAMPING_COEFFICIENT=[1, 1, 3],
+            NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[1, 1, 4])
+
+        # create model part
+        spring_damper_model_part = BodyModelPart("spring_damper")
+        spring_damper_model_part.material = StructuralMaterial("spring_damper", spring_damper)
+
+        # assign spring damper to geometry
+        model.gmsh_io.add_physical_group("spring_damper", 1, [1])
+        spring_damper_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, "spring_damper")
+
+        # add nodal concentrated element
+        nodal_concentrated = NodalConcentrated(
+            NODAL_MASS=1,
+            NODAL_DAMPING_COEFFICIENT=[1, 1, 1],
+            NODAL_DISPLACEMENT_STIFFNESS=[1, 1, 1]
+        )
+
+        # create model part
+        nodal_concentrated_model_part = BodyModelPart("nodal_concentrated")
+        nodal_concentrated_model_part.material = StructuralMaterial("nodal_concentrated", nodal_concentrated)
+
+        # assign nodal concentrated to geometry
+        model.gmsh_io.add_physical_group("nodal_concentrated", 0, [2])
+        nodal_concentrated_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, "nodal_concentrated")
+
+        # add model parts to model
+        model.body_model_parts.append(spring_damper_model_part)
+        model.body_model_parts.append(nodal_concentrated_model_part)
+
+        # write project parameters
+        actual_dict = kratos_io.write_project_parameters_json(
+            model=model,
+            mesh_file_name="dummy.mdpa",
+            materials_file_name="dummy.json",
+            output_folder="dummy"
+        )
+
+        # load expected project parameters
+        expected_dict = json.load(open("tests/test_data/expected_ProjectParameters_with_nodal_parameters.json", 'r'))
+
+        # assert the dictionaries to be equal
+        TestUtils.assert_dictionary_almost_equal(expected_dict, actual_dict)
+
+    def test_create_auxiliary_process_list_dictionary_expected_raises(self):
+        """
+        Test the creation of the auxiliary process list dictionary with expected errors.
+
+        """
+        # create model
+        model = Model(ndim=2)
+
+        # create IO object
+        kratos_io = KratosIO(ndim=model.ndim)
+
+        empty_body_model_part = BodyModelPart("empty_body_model_part")
+        model.body_model_parts = [empty_body_model_part]
+
+        # create auxiliary process list dictionary
+        with pytest.raises(ValueError, match=f"Body model part empty_body_model_part has no material assigned."):
+            kratos_io._KratosIO__create_auxiliary_process_list_dictionary(model=model)
+
+        nodal_concentrated = NodalConcentrated(NODAL_MASS=1, NODAL_DAMPING_COEFFICIENT=[1, 1, 1],
+                                               NODAL_DISPLACEMENT_STIFFNESS=[1, 1, 1])
+        empty_body_model_part.material = StructuralMaterial("empty_body_model_part", nodal_concentrated)
+
+        # create auxiliary process list dictionary
+        with pytest.raises(ValueError, match=f"Body model part empty_body_model_part has no id initialised."):
+            kratos_io._KratosIO__create_auxiliary_process_list_dictionary(model=model)
+
 
 
