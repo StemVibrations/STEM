@@ -106,17 +106,13 @@ def test_stem():
     gauss_point_results = [GaussPointOutput.FORCE]
 
     # Define the output process
-    model.add_model_part_output(
-        output_name="vtk_output",
-        output_dir="output",
-        output_parameters=VtkOutputParameters(
-            file_format="ascii",
-            output_interval=10,
-            nodal_results=nodal_results,
-            gauss_point_results=gauss_point_results,
-            output_control_type="step"
-        )
-    )
+    model.add_output_by_model_part_name(output_parameters=VtkOutputParameters(
+        file_format="ascii",
+        output_interval=10,
+        nodal_results=nodal_results,
+        gauss_point_results=gauss_point_results,
+        output_control_type="step"
+    ), output_dir="output", output_name="vtk_output")
 
     input_folder = "benchmark_tests/test_moving_load_on_beam/inputs_kratos"
 

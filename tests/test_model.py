@@ -9,7 +9,7 @@ import pytest
 
 from stem.geometry import *
 from stem.model import *
-from stem.output import NodalOutput, GaussPointOutput, GiDOutputParameters
+from stem.output import NodalOutput, GaussPointOutput, GiDOutputParameters, JsonOutputParameters
 from stem.solver import *
 from tests.utils import TestUtils
 
@@ -1162,15 +1162,12 @@ class TestModel:
             assert len(node.coordinates) == 3
             unique_node_ids.append(node.id)
 
-    def test_add_output_to_a_surface_2d(self, create_default_2d_soil_material: SoilMaterial,
-                                        create_default_outputs: Output):
+    def test_add_output_to_non_existing_model_part(self, create_default_2d_soil_material: SoilMaterial):
         """
         Test if output nodes are correctly accounted for when meshing a surface.
 
         Args:
             - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
-            - create_default_outputs (:class:`stem.output.Output`): the output object containing the \
-                output info.
 
         """
 
@@ -1191,13 +1188,75 @@ class TestModel:
         # synchronise geometry and recalculates the ids
         model.synchronise_geometry()
         # define output object
-        output_object = create_default_outputs
-
-        # add outputs
-        output_coordinates = [(1.5, 1, 0), (1.5, 0.5, 0), (2.5, 0.5, 0), (2.5, 0, 0)]
-        model.add_output_part_by_coordinates(
-            output_coordinates, **output_object.__dict__
+        # Nodal results
+        nodal_results = [NodalOutput.ACCELERATION]
+        # add outputs to existing model part
+        model.add_output_by_model_part_name(
+            part_name="layer1",
+            output_name="gid_nodal_accelerations_top",
+            output_dir="dir_test",
+            output_parameters=GiDOutputParameters(
+                file_format="binary",
+                output_interval=100,
+                nodal_results=nodal_results
+            )
         )
+        # add output to non-existing model part
+        msg = "Model part for which output needs to be requested doesn't exist."
+        with pytest.raises(ValueError, match=msg):
+            model.add_output_by_model_part_name(
+                part_name="layer2",
+                output_name="gid_nodal_accelerations_top",
+                output_dir="dir_test",
+                output_parameters=GiDOutputParameters(
+                    file_format="binary",
+                    output_interval=100,
+                    nodal_results=nodal_results
+                )
+            )
+
+    def test_add_output_to_a_surface_2d(self, create_default_2d_soil_material: SoilMaterial):
+        """
+        Test if output nodes are correctly accounted for when meshing a surface.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+
+        # define layer coordinates
+        ndim = 2
+        layer1_coordinates = [(0, 0, 0), (4, 0, 0), (4, 1, 0), (0, 1, 0)]
+
+        # define soil materials
+        soil_material1 = create_default_2d_soil_material
+        soil_material1.name = "soil1"
+
+        # create model
+        model = Model(ndim)
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
+
+        # synchronise geometry and recalculates the ids
+        model.synchronise_geometry()
+        # Define nodal results
+        nodal_results = [NodalOutput.ACCELERATION]
+        # Define output coordinates
+        output_coordinates = [(1.5, 1, 0), (1.5, 0.5, 0), (2.5, 0.5, 0), (2.5, 0, 0)]
+
+        # add output settings
+        model.add_output_part_by_coordinates(
+            output_coordinates,
+            part_name="nodal_accelerations",
+            output_name="json_nodal_accelerations_top",
+            output_dir="dir_test",
+            output_parameters=JsonOutputParameters(
+                output_interval=100,
+                nodal_results=nodal_results
+            )
+        )
+
         model.synchronise_geometry()
         model.generate_mesh()
 
@@ -1267,14 +1326,25 @@ class TestModel:
         # add soil layers
         model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "soil1")
 
-        # define output object
-        output_object = create_default_outputs
-
-        # add outputs
+        # synchronise geometry and recalculates the ids
+        model.synchronise_geometry()
+        # Define nodal results
+        nodal_results = [NodalOutput.ACCELERATION]
+        # Define output coordinates
         output_coordinates = [(0, 1, 2), (2, 1, 2), (4, 1, 2)]
+
+        # add output settings
         model.add_output_part_by_coordinates(
-            output_coordinates, **output_object.__dict__
+            output_coordinates,
+            part_name="nodal_accelerations",
+            output_name="json_nodal_accelerations_top",
+            output_dir="dir_test",
+            output_parameters=JsonOutputParameters(
+                output_interval=100,
+                nodal_results=nodal_results
+            )
         )
+
         model.synchronise_geometry()
 
         model.generate_mesh()

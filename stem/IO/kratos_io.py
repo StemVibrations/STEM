@@ -1039,7 +1039,7 @@ class KratosIO:
             model, mesh_file_name, materials_file_name
         )
         # get the output dictionary
-        outputs_dict = self.__create_output_process_dictionary(output_settings=model.outputs)
+        outputs_dict = self.__create_output_process_dictionary(output_settings=model.output_settings)
         # get the boundary condition dictionary
         process_model_part_dict = self.__create_process_model_parts_dictionary(model=model)
 

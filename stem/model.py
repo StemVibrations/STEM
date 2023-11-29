@@ -364,7 +364,7 @@ class Model:
 
         self.process_model_parts.append(model_part)
 
-    def add_model_part_output(
+    def add_output_by_model_part_name(
             self,
             output_parameters: OutputParametersABC,
             part_name: Optional[str] = None,
@@ -398,9 +398,16 @@ class Model:
                   used by GiD and JSON outputs while is ignored in VTK. If the name is not \
                   given, the part_name is used instead.
 
+        Raises:
+            - ValueError: if the model part for which output needs to be requested doesn't exist.
+
         """
 
-        self.outputs.append(
+        # check if the model part exists:
+        if self.__get_model_part_by_name(part_name=part_name) is None:
+            raise ValueError("Model part for which output needs to be requested doesn't exist.")
+
+        self.output_settings.append(
             Output(output_parameters=output_parameters,
                    part_name=part_name,
                    output_dir=output_dir,
@@ -455,14 +462,6 @@ class Model:
         # validation of inputs
         self.validate_coordinates(coordinates)
 
-        # add output to the output list
-        self.add_model_part_output(
-            output_parameters=output_parameters,
-            part_name=part_name,
-            output_dir=output_dir,
-            output_name=output_name
-        )
-
         gmsh_input = {part_name: {"coordinates": coordinates, "ndim": 1}}
 
         self.gmsh_io.generate_geometry(gmsh_input, "")
@@ -476,6 +475,10 @@ class Model:
 
         self.process_model_parts.append(model_part)
 
+        # add output to the output list
+        self.add_output_by_model_part_name(output_parameters=output_parameters, part_name=part_name,
+                                           output_dir=output_dir, output_name=output_name)
+
     def __exclude_non_output_nodes(self, process_model_part: ModelPart, eps: float = 1e-06) -> Mesh:
         """
         Exclude the nodes that are further than `eps` to the requested output nodes for the output model part.
@@ -487,13 +490,23 @@ class Model:
 
         Returns:
             - :class:`stem.mesh.Mesh`: the filtered mesh for the output process model part.
+
+        Raises:
+            - ValueError: if the parameters of the model part are None.
+            - ValueError: if the model part is not an output model part.
+            - ValueError: if the model part has no geometry.
+            - ValueError: if the model part is not yet meshed.
+
         """
 
-        if process_model_part.parameters is None or not isinstance(process_model_part.parameters, OutputParametersABC):
-            raise ValueError
+        if process_model_part.parameters is None:
+            raise ValueError("The model part doesn't have parameters.")
+
+        if not isinstance(process_model_part.parameters, OutputParametersABC):
+            raise ValueError("The model part is not an output part.")
 
         if process_model_part.geometry is None:
-            raise ValueError
+            raise ValueError("The model part has no geometry.")
 
         if process_model_part.mesh is None:
             raise ValueError("process model part has not been meshed yet!")
@@ -523,7 +536,7 @@ class Model:
         """
         Add a field parameter to a given model part (specified by the part_name input).
         If a json input file is considered for the generation of the random field (more info in
-        additional_processes.py) than if the `mean_value` attribute of the generator is None, the
+        :mod:`stem.additional_processes.py`) than if the `mean_value` attribute of the generator is None, the
         corresponding material property is used as mean.
 
         Args:
@@ -534,6 +547,7 @@ class Model:
         Raises:
             - ValueError: if the part name is not a body model part.
             - ValueError: if the body model part has no material.
+            - ValueError: if the mean value of the material property is a boolean.
 
         """
 

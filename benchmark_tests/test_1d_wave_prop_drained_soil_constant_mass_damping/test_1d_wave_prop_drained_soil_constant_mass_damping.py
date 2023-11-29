@@ -98,18 +98,13 @@ def test_stem():
     gauss_point_results = []
 
     # Define the output process and add to the model
-    model.add_model_part_output(
-        part_name="porous_computational_model_part",
-        output_name="vtk_output",
-        output_dir="output",
-        output_parameters=VtkOutputParameters(
-            file_format="ascii",
-            output_interval=10,
-            nodal_results=nodal_results,
-            gauss_point_results=gauss_point_results,
-            output_control_type="step"
-        )
-    )
+    model.add_output_by_model_part_name(output_parameters=VtkOutputParameters(
+        file_format="ascii",
+        output_interval=10,
+        nodal_results=nodal_results,
+        gauss_point_results=gauss_point_results,
+        output_control_type="step"
+    ), part_name="porous_computational_model_part", output_dir="output", output_name="vtk_output")
 
     # Define the kratos input folder
     input_folder = "benchmark_tests/test_1d_wave_prop_drained_soil_constant_mass_damping/inputs_kratos"

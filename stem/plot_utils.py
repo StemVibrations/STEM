@@ -1,16 +1,11 @@
 # import required typing classes
-from typing import List, Optional
+from typing import List
 
 import numpy as np
 import numpy.typing as npt
 import plotly.graph_objects as go
-import matplotlib.pyplot as plt
-import matplotlib.figure
-from matplotlib.collections import PolyCollection
 
 from stem.geometry import Geometry, Volume, Surface
-from stem.model_part import BodyModelPart, ModelPart
-from stem.output import OutputParametersABC
 
 
 class PlotUtils:
@@ -333,4 +328,3 @@ class PlotUtils:
                           hovermode=False)
 
         return fig
-

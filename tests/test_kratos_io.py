@@ -16,7 +16,7 @@ from stem.field_generator import RandomFieldGenerator
 from stem.load import LineLoad, SurfaceLoad, MovingLoad
 from stem.model import Model
 from stem.model_part import *
-from stem.output import NodalOutput, GaussPointOutput, GiDOutputParameters, Output
+from stem.output import NodalOutput, GaussPointOutput, VtkOutputParameters, Output, JsonOutputParameters
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, \
     NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
@@ -149,10 +149,9 @@ class TestKratosModelIO:
         model.add_output_part_by_coordinates(
             coordinates=output_coordinates,
             part_name="line_output_soil1",
-            output_name="gid_line_output_soil1",
+            output_name="json_line_output_soil1",
             output_dir="dir_test",
-            output_parameters=GiDOutputParameters(
-                file_format="binary",
+            output_parameters=JsonOutputParameters(
                 output_interval=100,
                 nodal_results=nodal_results
             )
@@ -296,10 +295,10 @@ class TestKratosModelIO:
 
         gid_output_process = Output(
             part_name="soil1",
-            output_name="gid_output_soil1",
+            output_name="vtk_output_soil1",
             output_dir="dir_test",
-            output_parameters=GiDOutputParameters(
-                file_format="binary",
+            output_parameters=VtkOutputParameters(
+                file_format="ascii",
                 output_interval=100,
                 nodal_results=nodal_results,
                 gauss_point_results=gauss_point_results,
@@ -361,7 +360,7 @@ class TestKratosModelIO:
         kratos_io.project_folder = "dir_test"
 
         model.project_parameters = create_default_solver_settings
-        model.add_model_part_output(**create_default_outputs.__dict__)
+        model.add_output_by_model_part_name(**create_default_outputs.__dict__)
 
         actual_dict = kratos_io._KratosIO__write_project_parameters_json(
             model=model,
@@ -421,7 +420,7 @@ class TestKratosModelIO:
         kratos_io = KratosIO(ndim=model.ndim)
 
         model.project_parameters = create_default_solver_settings
-        model.add_model_part_output(**create_default_outputs.__dict__)
+        model.add_output_by_model_part_name(**create_default_outputs.__dict__)
 
         kratos_io._KratosIO__write_project_parameters_json(
             model=model, mesh_file_name="test_mdpa_file.mdpa", materials_file_name="MaterialParameters.json"
@@ -728,7 +727,7 @@ class TestKratosModelIO:
         model = create_default_2d_model_and_mesh
         kratos_io = KratosIO(ndim=model.ndim)
         model.project_parameters = create_default_solver_settings
-        model.add_model_part_output(**create_default_outputs.__dict__)
+        model.add_output_by_model_part_name(**create_default_outputs.__dict__)
 
         kratos_io.write_input_files_for_kratos(
             model=model,

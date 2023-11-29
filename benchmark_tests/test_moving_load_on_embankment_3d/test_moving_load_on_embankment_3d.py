@@ -96,18 +96,13 @@ def test_stem():
     gauss_point_results = []
 
     # Define the output process
-    model.add_model_part_output(
-        part_name="porous_computational_model_part",
-        output_name="vtk_output",
-        output_dir="output",
-        output_parameters=VtkOutputParameters(
-            file_format="ascii",
-            output_interval=10,
-            nodal_results=nodal_results,
-            gauss_point_results=gauss_point_results,
-            output_control_type="step"
-        )
-    )
+    model.add_output_by_model_part_name(output_parameters=VtkOutputParameters(
+        file_format="ascii",
+        output_interval=10,
+        nodal_results=nodal_results,
+        gauss_point_results=gauss_point_results,
+        output_control_type="step"
+    ), part_name="porous_computational_model_part", output_dir="output", output_name="vtk_output")
 
     input_folder = "benchmark_tests/test_moving_load_on_embankment_3d/inputs_kratos"
 
