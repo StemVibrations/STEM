@@ -1,13 +1,14 @@
 from pathlib import Path
-from typing import List, Dict, Tuple, Union, Any
-
+from typing import List, Dict, Tuple, Any
 
 from stem.output import (
     Output,
     GiDOutputParameters,
     VtkOutputParameters,
     JsonOutputParameters,
-    OutputParametersABC, NodalOutput, GaussPointOutput,
+    OutputParametersABC,
+    NodalOutput,
+    GaussPointOutput,
 )
 
 
@@ -263,13 +264,13 @@ class KratosOutputsIO:
             return "output_processes"
         return "processes"
 
-    def create_output_process_dictionary(self, outputs: List[Output]) -> Dict[str, Any]:
+    def create_output_process_dictionary(self, output_settings: List[Output]) -> Dict[str, Any]:
         """
         Creates a dictionary containing the output_processes, that specifies which
         output to request Kratos and the type of output ('GiD', 'VTK', 'JSON')
 
         Args:
-            - outputs (List[:class:`stem.output.Output`]): list of output process objects
+            - output_settings (List[:class:`stem.output.Output`]): list of output process objects
 
         Returns:
             - output_dict (Dict[str, Any]): dictionary containing two other dictionary \
@@ -279,7 +280,7 @@ class KratosOutputsIO:
         """
         output_dict: Dict[str, Any] = {"output_processes": {}, "processes": {}}
 
-        for output in outputs:
+        for output in output_settings:
 
             key_output, _parameters_output = self.__create_output_dict(output)
             key_process = KratosOutputsIO.__get_process_type_for_output(

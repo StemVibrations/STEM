@@ -41,7 +41,8 @@ class FieldGenerator(ABC):
             - Optional[list[Any]]: the list of generated values for the field.
 
         Raises:
-            - ValueError: if field is not generated using the `generate()` methoed
+            - ValueError: if field is not generated using the `generate()` method
+
         """
         if self.generated_field is None:
             raise ValueError("Values for field parameters are not generated yet.")
@@ -94,9 +95,9 @@ class RandomFieldGenerator(FieldGenerator):
             raise ValueError(f"Number of dimension {n_dim} specified, but should be one of either 2 or 3.")
 
         # check that random field model is one of the implemented
-        if model_name not in available_random_field_model_names:
+        if model_name not in AVAILABLE_RANDOM_FIELD_MODEL_NAMES:
             raise ValueError(f"Model name: `{model_name}` was provided but not understood or implemented yet. "
-                             f"Available models are: {available_random_field_model_names}")
+                             f"Available models are: {AVAILABLE_RANDOM_FIELD_MODEL_NAMES}")
 
         # if anisotropy or angle are float, convert to list
         if isinstance(anisotropy, float):
@@ -128,6 +129,9 @@ class RandomFieldGenerator(FieldGenerator):
         Args:
             - coordinates (numpy.typing.NDArray[np.float64]): Sequence of points where the random field needs to be
             generated.
+
+        Raises:
+            - ValueError: if the mean value of the random field is undefined.
 
         """
 

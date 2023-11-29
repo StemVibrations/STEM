@@ -45,7 +45,7 @@ class ParameterFieldParameters(AdditionalProcessesParametersABC):
 
     Attributes:
         - property_name (str): the name of the (material) property that needs to be changed (e.g. YOUNG_MODULUS)
-        - function_type (str): the type of function to be provided. It can be either `json_file`, `python` or `input`,
+        - function_type (str): the type of function to be provided. It can be either `json_file` or `input`,
             as provided in the function documentation.
         - field_file_name (Optional[str]): Name for the json file where the field parameters will be stored.
             This is optional for `json` function_type.
@@ -57,6 +57,11 @@ class ParameterFieldParameters(AdditionalProcessesParametersABC):
         - tiny_expr_function (Optional[str]): is a tiny expression string with dependency on coordinates (x, y, z) \
             and time (e.g. `x + y^2 + 2*cos(t)`). For more info check tinyexpr on GitHub. \
             This is optional for `input` function_type.
+
+    Raises:
+        - ValueError: if the function type is not `input` or `json_file`.
+        - ValueError: if the field_generator is not provided when function_type is `json_file`.`input`
+        - ValueError: if the tiny_expr_function is not provided when function_type is `input`.
 
     """
 
@@ -72,10 +77,10 @@ class ParameterFieldParameters(AdditionalProcessesParametersABC):
         """
         self.function_type = self.function_type.lower()
 
-        if self.function_type not in _field_input_types:
+        if self.function_type not in FIELD_INPUT_TYPES:
             raise ValueError(f"ParameterField Error:"
                              f"`function_type` is not understood: {self.function_type}."
-                             f"Should be one of {_field_input_types}.")
+                             f"Should be one of {FIELD_INPUT_TYPES}.")
 
         if self.function_type == "json_file" and self.field_generator is None:
             raise ValueError("`field_generator` parameter is a required when `json_file` field parameter is "

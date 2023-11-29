@@ -48,6 +48,8 @@ class KratosIO:
         - boundaries_io (:class:`stem.IO.kratos_boundaries_io.KratosBoundariesIO`): The boundaries IO object.
         - outputs_io (:class:`stem.IO.kratos_output_io.KratosOutputsIO`): The outputs IO object.
         - solver_io (:class:`stem.IO.kratos_solver_io.KratosSolverIO`): The solver IO object.
+        - additional_process_io (:class:`stem.IO.kratos_additional_process_io.KratosAdditionalProcessesIO`): \
+            The IO object for the additional processes.
 
     """
 
@@ -892,21 +894,21 @@ class KratosIO:
             model.get_all_model_parts(),
         )
 
-    def __create_output_process_dictionary(self, outputs: Optional[List[Output]] = None) -> Dict[str, Any]:
+    def __create_output_process_dictionary(self, output_settings: Optional[List[Output]] = None) -> Dict[str, Any]:
         """
         Creates a dictionary containing the output settings.
 
         Args:
-            - outputs (Optional[List[:class:`stem.output.Output`]]): The list of output processes objects to write \
+            - output_settings (Optional[List[:class:`stem.output.Output`]]): The list of output processes objects to write \
                 in outputs.
 
         Returns:
             - Dict[str, Any]: dictionary containing the part of the project parameters dictionary related to outputs
         """
-        if outputs is None or len(outputs) == 0:
+        if output_settings is None or len(output_settings) == 0:
             return {"output_processes": {}, "processes": {}}
         else:
-            return self.outputs_io.create_output_process_dictionary(outputs=outputs)
+            return self.outputs_io.create_output_process_dictionary(output_settings=output_settings)
 
     def __create_process_model_parts_dictionary(self, model: Model) -> Dict[str, Any]:
         """
@@ -919,6 +921,7 @@ class KratosIO:
         Returns:
             - Dict[str, Any]: dictionary containing the part of the project parameters dictionary related \
                 to loads, boundary conditions and additional processes.
+
         """
         processes_dict: Dict[str, Any] = {
             "processes": {"constraints_process_list": [], "loads_process_list": []}
@@ -948,30 +951,12 @@ class KratosIO:
 
                 # Validations and adjustment for json_file parameter field:
                 if isinstance(mp.parameters, ParameterFieldParameters) and mp.parameters.function_type == "json_file":
-
-                    # check that the name is not none!
-                    if mp.parameters.field_file_name is None:
-                        raise ValueError("No name was provided for the json file containing the "
-                                         f"field parameters of model part {mp.name} and property"
-                                         f" {mp.parameters.property_name}.")
-
-                    # adjust extension of filename name is not none, check that extension is json and change it if not.
-                    mp.parameters.field_file_name = Utils.replace_extensions(mp.parameters.field_file_name, ".json")
-
-                    # check that the name is not none!
-                    if mp.parameters.field_generator is None:
-                        raise ValueError("Field generator object not provided for the field generation"
-                                         " of model part {mp.name} and property {mp.parameters.property_name}."
-                                         )
-
-                    # write field values in the json input file
-                    IOUtils.write_json_file(
-                        output_folder=self.project_folder,
-                        file_name=mp.parameters.field_file_name,
-                        dictionary={"values": mp.parameters.field_generator.values}
+                    self.__adjust_parameter_field_parameters_and_write_json_file(
+                        process_model_part=mp
                     )
 
-                # write info to project parameters
+                # write the additional process model part parameters for the
+                # project parameters file
                 processes_dict["processes"]["constraints_process_list"].append(
                     self.additional_process_io.create_additional_processes_dict(
                         mp.name, mp.parameters
@@ -979,6 +964,57 @@ class KratosIO:
                 )
 
         return processes_dict
+
+    def __adjust_parameter_field_parameters_and_write_json_file(self, process_model_part:ModelPart) -> None:
+        """
+        Adjusts the additional process parameters when the parameter field parameter is
+        of type `json_file`. It also writes the json file with the parameter values.
+
+        Args:
+            - process_model_part (:class:`stem.model_part.ModelPart`): the process model part for which the field \
+                parameters require adjustment.
+
+        Raises:
+            - ValueError: if the `field_file_name` attribute in the parameters is None.
+            - ValueError: if the `field_generator` attribute in the parameters is None.
+
+        Returns:
+            - None
+
+        """
+
+        # required for validation:
+        # Process model part has to be a field parameter process model part
+        if not isinstance(process_model_part.parameters, ParameterFieldParameters):
+            return None
+
+        # Process model part has to be of `json_file` type
+        if not process_model_part.parameters.function_type == "json_file":
+            return None
+
+        # check that the name is not none!
+        if process_model_part.parameters.field_file_name is None:
+            raise ValueError("No name was provided for the json file containing the "
+                             f"field parameters of model part {process_model_part.name} and property"
+                             f" {process_model_part.parameters.property_name}.")
+
+        # adjust extension of filename name is not none, check that extension is json and change it if not.
+        process_model_part.parameters.field_file_name = Utils.replace_extensions(
+            process_model_part.parameters.field_file_name, ".json"
+        )
+
+        # check that the name is not none!
+        if process_model_part.parameters.field_generator is None:
+            raise ValueError("Field generator object not provided for the field generation"
+                             " of model part {mp.name} and property {mp.parameters.property_name}."
+                             )
+
+        # write field values in the json input file
+        IOUtils.write_json_file(
+            output_folder=self.project_folder,
+            file_name=process_model_part.parameters.field_file_name,
+            dictionary={"values": process_model_part.parameters.field_generator.values}
+        )
 
     def __write_project_parameters_json(self, model: Model, mesh_file_name: str, materials_file_name: str,
                                         project_file_name: str = "ProjectParameters.json") -> Dict[str, Any]:
@@ -1003,7 +1039,7 @@ class KratosIO:
             model, mesh_file_name, materials_file_name
         )
         # get the output dictionary
-        outputs_dict = self.__create_output_process_dictionary(outputs=model.outputs)
+        outputs_dict = self.__create_output_process_dictionary(output_settings=model.outputs)
         # get the boundary condition dictionary
         process_model_part_dict = self.__create_process_model_parts_dictionary(model=model)
 

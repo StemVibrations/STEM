@@ -488,7 +488,7 @@ class Utils:
             - str: name or path to the filename with the desired extension
 
         """
-        path_obj = Path(fname)
+        path_obj = Path(filename)
         extensions = "".join(path_obj.suffixes)
         if len(extensions) == 0:
             return str(path_obj.with_suffix(new_extension))
