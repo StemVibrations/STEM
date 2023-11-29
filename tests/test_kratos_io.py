@@ -227,13 +227,15 @@ class TestKratosModelIO:
         """
         model = create_default_2d_model
 
+        model.project_parameters = create_default_solver_settings
+        model.output_settings = create_default_outputs
+
+        model.post_setup()
+
         model.set_mesh_size(1)
         model.generate_mesh()
 
-
         kratos_io = KratosIO(ndim=model.ndim)
-        model.project_parameters = create_default_solver_settings
-        model.output_settings = create_default_outputs
 
         actual_dict = kratos_io.write_project_parameters_json(
             model=model,
@@ -280,12 +282,14 @@ class TestKratosModelIO:
                 solver settings.
         """
         model = create_default_2d_model
+        model.project_parameters = create_default_solver_settings
+
+        model.post_setup()
 
         model.set_mesh_size(1)
         model.generate_mesh()
 
         kratos_io = KratosIO(ndim=model.ndim)
-        model.project_parameters = create_default_solver_settings
 
         actual_text = kratos_io.write_mesh_to_mdpa(
             model=model,
@@ -441,10 +445,12 @@ class TestKratosModelIO:
         # load the default 2D model
         model = create_default_2d_model
 
+        model.project_parameters = TestUtils.create_default_solver_settings()
+
+        model.post_setup()
+
         model.set_mesh_size(1)
         model.generate_mesh()
-
-        model.project_parameters = TestUtils.create_default_solver_settings()
 
         # IO object
         kratos_io = KratosIO(ndim=model.ndim)
