@@ -2,7 +2,7 @@ from typing import Optional, Union, Dict, Any
 
 from stem.additional_processes import AdditionalProcessesParametersABC
 from stem.boundary import BoundaryParametersABC
-from stem.water_boundaries import WaterBoundaryParametersABC
+from stem.water_processes import WaterProcessParametersABC
 from stem.load import LoadParametersABC
 from stem.soil_material import SoilMaterial
 from stem.structural_material import StructuralMaterial
@@ -39,7 +39,7 @@ class ModelPart:
         self.geometry: Optional[Geometry] = None
         self.parameters: Optional[
             Union[LoadParametersABC, BoundaryParametersABC,
-            AdditionalProcessesParametersABC, WaterBoundaryParametersABC]
+            AdditionalProcessesParametersABC, WaterProcessParametersABC]
         ] = None
         self.mesh: Optional[Mesh] = None
         self.id: Optional[int] = None

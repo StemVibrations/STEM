@@ -5,7 +5,7 @@ from typing import List, Dict, Any, Optional, Sequence
 import numpy as np
 
 from stem.IO.kratos_boundaries_io import KratosBoundariesIO
-from stem.IO.kratos_water_boundaries_io import KratosWaterBoundariesIO
+from stem.IO.kratos_water_processes_io import KratosWaterProcessesIO
 from stem.IO.kratos_loads_io import KratosLoadsIO
 from stem.IO.kratos_material_io import KratosMaterialIO
 from stem.IO.kratos_output_io import KratosOutputsIO
@@ -13,7 +13,7 @@ from stem.IO.kratos_solver_io import KratosSolverIO
 from stem.structural_material import *
 from stem.boundary import BoundaryParametersABC, AbsorbingBoundary, DisplacementConstraint, RotationConstraint
 from stem.load import LoadParametersABC, LineLoad, MovingLoad, SurfaceLoad, PointLoad
-from stem.water_boundaries import WaterBoundaryParametersABC
+from stem.water_processes import WaterProcessParametersABC
 from stem.mesh import Element, Node
 from stem.model import Model
 from stem.model_part import ModelPart, BodyModelPart
@@ -62,7 +62,7 @@ class KratosIO:
         self.material_io = KratosMaterialIO(self.ndim, DOMAIN)
         self.loads_io = KratosLoadsIO(DOMAIN)
         self.boundaries_io = KratosBoundariesIO(DOMAIN)
-        self.water_boundaries_io = KratosWaterBoundariesIO(DOMAIN)
+        self.water_boundaries_io = KratosWaterProcessesIO(DOMAIN)
         self.outputs_io = KratosOutputsIO(DOMAIN)
         self.solver_io = KratosSolverIO(self.ndim, DOMAIN)
 
@@ -935,7 +935,7 @@ class KratosIO:
                     _key = "loads_process_list"
                 processes_dict["processes"][_key].append(parameters)
 
-            elif isinstance(mp.parameters, WaterBoundaryParametersABC):
+            elif isinstance(mp.parameters, WaterProcessParametersABC):
                 parameters = self.water_boundaries_io.create_water_boundary_condition_dict(
                     mp.name, mp.parameters
                 )

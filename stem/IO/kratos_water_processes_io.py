@@ -1,11 +1,11 @@
 from copy import deepcopy
 from typing import Any, Dict, Union, List
 
-from stem.water_boundaries import *
+from stem.water_processes import *
 from stem.IO.io_utils import IOUtils
 
 
-class KratosWaterBoundariesIO:
+class KratosWaterProcessesIO:
     """
     Class containing methods to write boundary conditions to Kratos
 
@@ -25,7 +25,7 @@ class KratosWaterBoundariesIO:
         self.domain = domain
 
     def __create_uniform_water_pressure_dict(
-        self, part_name: str, parameters: UniformWaterBoundary
+        self, part_name: str, parameters: UniformWaterPressure
     ) -> Dict[str, Any]:
         """
         Creates a dictionary containing the absorbing boundary parameters
@@ -46,15 +46,15 @@ class KratosWaterBoundariesIO:
             "Parameters": {"model_part_name": f"{self.domain}.{part_name}",
                            "variable_name": "WATER_PRESSURE",
                            "table": 0,
-                           "value": parameters.WATER_PRESSURE,
-                           "is_fixed": True,
+                           "value": parameters.water_pressure,
+                           "is_fixed": parameters.is_fixed,
                            "fluid_pressure_type": "Uniform"}
         }
 
         return water_dict
 
     def create_water_boundary_condition_dict(
-        self, part_name: str, parameters: WaterBoundaryParametersABC
+        self, part_name: str, parameters: WaterProcessParametersABC
     ) -> Union[Dict[str, Any], None]:
         """
         Creates a dictionary containing the boundary parameters
@@ -69,8 +69,8 @@ class KratosWaterBoundariesIO:
 
         # add water parameters to dictionary based on water boundary type.
 
-        if isinstance(parameters, UniformWaterBoundary):
+        if isinstance(parameters, UniformWaterPressure):
             return self.__create_uniform_water_pressure_dict(part_name, parameters)
 
         else:
-            raise NotImplementedError
+            raise NotImplementedError(f"Water boundary type: {parameters.__class__.__name__} not implemented.")

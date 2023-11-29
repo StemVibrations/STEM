@@ -12,7 +12,7 @@ from stem.boundary import *
 from stem.geometry import Geometry
 from stem.mesh import Mesh, MeshSettings, Node, Element
 from stem.load import *
-from stem.water_boundaries import WaterBoundaryParametersABC, UniformWaterBoundary
+from stem.water_processes import WaterProcessParametersABC, UniformWaterPressure
 from stem.solver import Problem, StressInitialisationType
 from stem.output import Output
 from stem.utils import Utils
@@ -758,11 +758,11 @@ class Model:
         """
         for process_model_part in self.process_model_parts:
             # if one of the model parts already contains water, do not add zero water pressure
-            if isinstance(process_model_part.parameters, WaterBoundaryParametersABC):
+            if isinstance(process_model_part.parameters, WaterProcessParametersABC):
                 return
 
         water_model_part = ModelPart("zero_water_pressure")
-        water_model_part.parameters = UniformWaterBoundary(WATER_PRESSURE=0.0)
+        water_model_part.parameters = UniformWaterPressure(water_pressure=0.0)
 
         geometry_ids = []
 
