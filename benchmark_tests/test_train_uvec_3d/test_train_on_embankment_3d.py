@@ -7,7 +7,8 @@ from stem.solver import AnalysisType, SolutionType, TimeIntegration, Displacemen
 from stem.output import NodalOutput, VtkOutputParameters, Output
 from stem.stem import Stem
 from shutil import rmtree, copytree
-from utils import assert_files_equal
+
+from benchmark_tests.utils import assert_files_equal
 
 
 def test_stem():
