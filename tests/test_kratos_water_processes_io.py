@@ -1,20 +1,20 @@
-import json
-
-import numpy as np
 import pytest
 
 from stem.IO.kratos_water_processes_io import KratosWaterProcessesIO
-from stem.model import Model
 from stem.water_processes import *
 from stem.load import PointLoad
 from tests.utils import TestUtils
 
 
-class TestKratosLoadsIO:
-    def test_create_load_process_dict_no_tables(self):
+class TestWaterProcessesIO:
+    """
+    Test class for the KratosWaterProcessesIO class.
+    """
+
+    def test_create_water_pressure_dict(self):
         """
-        Test the creation of the load process dictionary for the
-        ProjectParameters.json file excluding tables.
+        Test the creation of the  water process dictionary for the
+        ProjectParameters.json file.
         """
 
         # set water boundary parameters
@@ -37,6 +37,9 @@ class TestKratosLoadsIO:
                            "is_fixed": False,
                            "fluid_pressure_type": "Uniform"}
         }
+
+        # compare dictionaries
+        TestUtils.assert_dictionary_almost_equal(expected_water_boundary_dict, uniform_water_boundary_dict)
 
         # create non water boundary parameters
         non_water_boundary = PointLoad(active=[True, False, True], value=[1000, 0, 0])
