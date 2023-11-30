@@ -1,13 +1,11 @@
-from copy import deepcopy
 from typing import Any, Dict, Union, List
 
 from stem.water_processes import *
-from stem.IO.io_utils import IOUtils
 
 
 class KratosWaterProcessesIO:
     """
-    Class containing methods to write boundary conditions to Kratos
+    Class containing methods to write water processes to Kratos
 
     Attributes:
         - domain (str): name of the Kratos domain
@@ -16,7 +14,7 @@ class KratosWaterProcessesIO:
 
     def __init__(self, domain: str):
         """
-        Constructor of KratosBoundariesIO class
+        Constructor of KratosWaterProcessesIO class
 
         Args:
             - domain (str): name of the Kratos domain
@@ -28,14 +26,14 @@ class KratosWaterProcessesIO:
         self, part_name: str, parameters: UniformWaterPressure
     ) -> Dict[str, Any]:
         """
-        Creates a dictionary containing the absorbing boundary parameters
+        Creates a dictionary containing the uniform water pressure parameters
 
         Args:
-            - part_name (str): part name where the boundary condition is applied
-            - parameters (:class:`stem.boundary.AbsorbingBoundary`): absorbing boundary parameters object
+            - part_name (str): part name where the water process is applied
+            - parameters (:class:`stem.water_processes.UniformWaterPressure`): uniform water pressure parameters object
 
         Returns:
-            - Dict[str, Any]: dictionary containing the boundary parameters
+            - Dict[str, Any]: dictionary containing the uniform water pressure process parameters
         """
 
         # initialize boundary dictionary
@@ -53,22 +51,21 @@ class KratosWaterProcessesIO:
 
         return water_dict
 
-    def create_water_boundary_condition_dict(
+    def create_water_process_dict(
         self, part_name: str, parameters: WaterProcessParametersABC
     ) -> Union[Dict[str, Any], None]:
         """
-        Creates a dictionary containing the boundary parameters
+        Creates a dictionary containing the water process parameters
 
         Args:
-            - part_name (str): part name where the boundary condition is applied
-            - parameters (:class:`stem.boundary.BoundaryParametersABC`): boundary parameters object
+            - part_name (str): part name where the water process is applied
+            - parameters (:class:`stem.water_processes.UniformWaterPressure`): water process object
 
         Returns:
-            - Dict[str, Any]: dictionary containing the boundary parameters
+            - Dict[str, Any]: dictionary containing the water process parameters
         """
 
-        # add water parameters to dictionary based on water boundary type.
-
+        # add water parameters to dictionary based on water process type.
         if isinstance(parameters, UniformWaterPressure):
             return self.__create_uniform_water_pressure_dict(part_name, parameters)
 

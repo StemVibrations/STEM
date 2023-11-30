@@ -7,6 +7,7 @@ class WaterProcessParametersABC(ABC):
     """
     Abstract class which contains the parameters for a water process.
     """
+    pass
 
 
 @dataclass

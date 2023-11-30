@@ -950,7 +950,7 @@ class KratosIO:
                 processes_dict["processes"][_key].append(parameters)
 
             elif isinstance(mp.parameters, WaterProcessParametersABC):
-                parameters = self.water_boundaries_io.create_water_boundary_condition_dict(
+                parameters = self.water_boundaries_io.create_water_process_dict(
                     mp.name, mp.parameters
                 )
                 processes_dict["processes"]["loads_process_list"].append(parameters)
