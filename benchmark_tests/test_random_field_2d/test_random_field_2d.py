@@ -1,16 +1,18 @@
 import os
+from shutil import rmtree
 
 from stem.additional_processes import ParameterFieldParameters
 from stem.field_generator import RandomFieldGenerator
 from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
-from stem.load import MovingLoad, LineLoad
 from stem.boundary import DisplacementConstraint
-from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, StressInitialisationType, SolverSettings, Problem
-from stem.output import NodalOutput, VtkOutputParameters, Output, GaussPointOutput
+from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
+                         StressInitialisationType, SolverSettings, Problem)
+from stem.output import VtkOutputParameters, GaussPointOutput
 from stem.stem import Stem
+
 from benchmark_tests.utils import assert_files_equal
-from shutil import rmtree
+
 
 def test_stem():
     # Define geometry, conditions and material parameters
@@ -61,17 +63,17 @@ def test_stem():
     solution_type = SolutionType.QUASI_STATIC
     # Set up start and end time of calculation, time step and etc
     time_integration = TimeIntegration(start_time=0.0, end_time=1.0, delta_time=1, reduction_factor=1.0,
-                                    increase_factor=1.0, max_delta_time_factor=1000)
+                                       increase_factor=1.0, max_delta_time_factor=1000)
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
                                                             displacement_absolute_tolerance=1.0e-9)
     stress_initialisation_type = StressInitialisationType.NONE
     solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
-                                    stress_initialisation_type=stress_initialisation_type,
-                                    time_integration=time_integration,
-                                    is_stiffness_matrix_constant=False, are_mass_and_damping_constant=False,
-                                    convergence_criteria=convergence_criterion,
-                                    rayleigh_k=0.0,
-                                    rayleigh_m=0.0)
+                                     stress_initialisation_type=stress_initialisation_type,
+                                     time_integration=time_integration,
+                                     is_stiffness_matrix_constant=False, are_mass_and_damping_constant=False,
+                                     convergence_criteria=convergence_criterion,
+                                     rayleigh_k=0.0,
+                                     rayleigh_m=0.0)
 
     # Set up problem data
     problem = Problem(problem_name="create_random_field_2d", number_of_threads=1,

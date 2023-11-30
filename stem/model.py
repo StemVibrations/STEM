@@ -1,4 +1,3 @@
-from copy import deepcopy
 from typing import List, Sequence, Dict, Any, Optional, Union
 
 import numpy as np
@@ -695,7 +694,8 @@ class Model:
                         raise ValueError("Field generator is not provided for parameter field.")
 
                     centroids = self.get_centroids_elements_model_part(model_part.name)
-                    model_part.parameters.field_generator.generate(centroids)
+                    if centroids is not None:
+                        model_part.parameters.field_generator.generate(centroids)
 
     @staticmethod
     def __get_model_part_element_connectivities(model_part: ModelPart) -> npty.NDArray[np.int64]:
@@ -919,7 +919,7 @@ class Model:
         print(f"Model part `{part_name}` not found!")
         return None
 
-    def get_centroids_elements_model_part(self, part_name: str) -> Union[Any, npty.NDArray[np.float64]]:
+    def get_centroids_elements_model_part(self, part_name: str) -> Optional[npty.NDArray[np.float64]]:
         """
         Returns the centroid of all the elements in the model part.
 
@@ -933,7 +933,7 @@ class Model:
             - ValueError: if the part_name has no elements.
 
         Returns:
-            - Union[Any, npty.NDArray[np.float64]]: centroids of the N elements in the part name \
+            - Optional[npty.NDArray[np.float64]]: centroids of the N elements in the part name \
                 as (N,3) array.
 
         """
@@ -951,7 +951,8 @@ class Model:
         nodes = model_part.mesh.nodes
         coordinates = np.stack([[nodes[nid].coordinates for nid in el.node_ids]
                                 for el in model_part.mesh.elements.values()])
-        centroids = np.squeeze(np.mean(coordinates, axis=1))
+
+        centroids: npty.NDArray[np.float64] = np.squeeze(np.mean(coordinates, axis=1))
         return centroids
 
     def __add_gravity_load(self):
