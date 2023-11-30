@@ -349,7 +349,7 @@ class TestKratosModelIO:
         model = create_default_2d_model
 
         model.project_parameters = create_default_solver_settings
-        model.output_settings = create_default_outputs
+        model.add_output_settings(**create_default_outputs.__dict__)
 
         model.post_setup()
 
@@ -358,9 +358,6 @@ class TestKratosModelIO:
 
         kratos_io = KratosIO(ndim=model.ndim)
         kratos_io.project_folder = "dir_test"
-
-        model.project_parameters = create_default_solver_settings
-        model.add_output_settings(**create_default_outputs.__dict__)
 
         actual_dict = kratos_io._KratosIO__write_project_parameters_json(
             model=model,
