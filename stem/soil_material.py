@@ -290,3 +290,32 @@ class SoilMaterial:
             raise ValueError(f"Analysis type {analysis_type} is not implemented yet for soil material.")
 
         return element_name
+
+    def get_property_in_material(self, property_name: str) -> Any:
+        """
+        Function to retrieve the requested property for the soil material. The function is capital sensitive!
+
+        Args:
+            - property_name (str): The desired soil property name.
+
+        Raises:
+            - ValueError: If the property is not in not available in the soil material.
+
+        Returns:
+            - Any : The value of the soil property.
+
+        """
+
+        all_properties = {}
+
+        all_properties.update(self.soil_formulation.__dict__)
+        all_properties.update(self.constitutive_law.__dict__)
+        all_properties.update(self.retention_parameters.__dict__)
+        all_properties.update(self.fluid_properties.__dict__)
+
+        property_value = all_properties.get(property_name)
+
+        if property_value is None:
+            raise ValueError(f"Property {property_name} is not one of the parameters of the soil material")
+
+        return property_value

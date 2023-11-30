@@ -62,41 +62,33 @@
         ],
         "processes_sub_model_part_list": [
             "load_top",
-            "load_bottom",
-            "load_left",
-            "load_right",
             "no_displacement",
-            "zero_water_pressure"
+            "line_output_soil1"
         ],
         "body_domain_sub_model_part_list": [
             "soil1"
         ]
     },
-    "output_processes": {
-        "vtk_output": [
+    "output_processes": {},
+    "processes": {
+        "json_output": [
             {
-                "python_module": "vtk_output_process",
+                "python_module": "json_output_process",
                 "kratos_module": "KratosMultiphysics",
-                "process_name": "VtkOutputProcess",
+                "process_name": "JsonOutputProcess",
                 "Parameters": {
-                    "model_part_name": "PorousDomain.soil1",
-                    "output_path": "dir_test/output_vtk_soil1/output_vtk_soil1",
-                    "file_format": "ascii",
-                    "output_precision": 7,
-                    "output_control_type": "step",
-                    "output_interval": 100,
-                    "nodal_solution_step_data_variables": [
+                    "model_part_name": "PorousDomain.line_output_soil1",
+                    "output_file_name": "dir_test/json_line_output_soil1.json",
+                    "output_variables": [
+                        "ACCELERATION",
+                        "VELOCITY",
                         "DISPLACEMENT"
                     ],
-                    "gauss_point_variables_in_elements": [
-                        "GREEN_LAGRANGE_STRAIN_TENSOR",
-                        "CAUCHY_STRESS_TENSOR"
-                    ]
+                    "gauss_points_output_variables": [],
+                    "time_frequency": 100
                 }
             }
-        ]
-    },
-    "processes": {
+        ],
         "constraints_process_list": [
             {
                 "python_module": "apply_vector_constraint_table_process",
@@ -152,93 +144,7 @@
                         0
                     ]
                 }
-            },
-            {
-                "python_module": "apply_vector_constraint_table_process",
-                "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
-                "process_name": "ApplyVectorConstraintTableProcess",
-                "Parameters": {
-                    "active": [
-                        false,
-                        true,
-                        false
-                    ],
-                    "value": [
-                        0.0,
-                        0.0,
-                        0.0
-                    ],
-                    "model_part_name": "PorousDomain.load_bottom",
-                    "variable_name": "LINE_LOAD",
-                    "table": [
-                        0,
-                        1,
-                        0
-                    ]
-                }
-            },
-            {
-                "python_module": "apply_vector_constraint_table_process",
-                "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
-                "process_name": "ApplyVectorConstraintTableProcess",
-                "Parameters": {
-                    "active": [
-                        true,
-                        false,
-                        false
-                    ],
-                    "value": [
-                        0.0,
-                        0.0,
-                        0.0
-                    ],
-                    "model_part_name": "PorousDomain.load_left",
-                    "variable_name": "LINE_LOAD",
-                    "table": [
-                        2,
-                        0,
-                        0
-                    ]
-                }
-            },
-            {
-                "python_module": "apply_vector_constraint_table_process",
-                "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
-                "process_name": "ApplyVectorConstraintTableProcess",
-                "Parameters": {
-                    "active": [
-                        true,
-                        false,
-                        false
-                    ],
-                    "value": [
-                        0.0,
-                        0.0,
-                        0.0
-                    ],
-                    "model_part_name": "PorousDomain.load_right",
-                    "variable_name": "LINE_LOAD",
-                    "table": [
-                        2,
-                        0,
-                        0
-                    ]
-                }
-            },
-            {
-                "python_module": "apply_scalar_constraint_table_process",
-                "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
-                "process_name": "ApplyScalarConstraintTableProcess",
-                "Parameters": {
-                    "model_part_name": "PorousDomain.zero_water_pressure",
-                    "variable_name": "WATER_PRESSURE",
-                    "table": 0,
-                    "value": 0.0,
-                    "is_fixed": true,
-                    "fluid_pressure_type": "Uniform"
-                }
             }
-        ],
-        "auxiliary_process_list": []
+        ]
     }
 }

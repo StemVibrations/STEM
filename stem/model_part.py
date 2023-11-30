@@ -4,6 +4,7 @@ from stem.additional_processes import AdditionalProcessesParametersABC
 from stem.boundary import BoundaryParametersABC
 from stem.water_processes import WaterProcessParametersABC
 from stem.load import LoadParametersABC
+from stem.output import OutputParametersABC
 from stem.soil_material import SoilMaterial
 from stem.structural_material import StructuralMaterial
 
@@ -23,7 +24,8 @@ class ModelPart:
         - parameters (Optional[Union[:class:`stem.load.LoadParametersABC`, \
             :class:`stem.boundary.BoundaryParametersABC`, \
             :class:`stem.additional_processes.AdditionalProcessesParametersABC`, \
-            :class:`stem.water_boundaries.WaterBoundaryParametersABC`]]): process parameters containing the \
+            :class:`stem.water_boundaries.WaterBoundaryParametersABC`, \
+            :class:`stem.output.OutputParametersABC`]]): process parameters containing the \
             model part parameters.
         - mesh (Optional[:class:`stem.mesh.Mesh`]): mesh of the model part
         - id (Optional[int]): the id of the model part
@@ -37,10 +39,8 @@ class ModelPart:
         """
         self.__name: str = name
         self.geometry: Optional[Geometry] = None
-        self.parameters: Optional[
-            Union[LoadParametersABC, BoundaryParametersABC,
-            AdditionalProcessesParametersABC, WaterProcessParametersABC]
-        ] = None
+        self.parameters: Optional[Union[LoadParametersABC, BoundaryParametersABC,AdditionalProcessesParametersABC,
+                         WaterProcessParametersABC, OutputParametersABC]] = None
         self.mesh: Optional[Mesh] = None
         self.id: Optional[int] = None
 
@@ -84,6 +84,15 @@ class ModelPart:
             return self.parameters.get_element_name(n_dim_model, n_nodes_element, analysis_type)
         else:
             return None
+
+    def __repr__(self):
+        """Repr method to provide a human-readable version of the ModelPart object
+
+        Returns:
+            - str: string representing the ModelPart object and it's parameters.
+
+        """
+        return f"ModelPart(name={self.name}, parameters={self.parameters.__class__.__name__})"
 
 
 class BodyModelPart(ModelPart):
@@ -131,3 +140,13 @@ class BodyModelPart(ModelPart):
             return self.material.get_element_name(n_dim_model, n_nodes_element, analysis_type)
         else:
             return None
+
+    def __repr__(self):
+        """Repr method to provide a human-readable version of the BodyModelPart object
+
+        Returns:
+            - str: string representing the BodyModelPart object and it's parameters.
+
+        """
+        return f"BodyModelPart(name={self.name}, material={self.material.__class__.__name__})"
+
