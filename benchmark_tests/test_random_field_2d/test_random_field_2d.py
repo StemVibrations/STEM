@@ -55,9 +55,9 @@ def test_stem():
 
     model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "base_fixed")
     model.add_boundary_condition_by_geometry_ids(1, [2, 4], roller_displacement_parameters, "sides_roller")
-    # generate mesh
+
+    # set mesh size
     model.set_mesh_size(element_size=1)
-    model.generate_mesh()
 
     analysis_type = AnalysisType.MECHANICAL
     solution_type = SolutionType.QUASI_STATIC
@@ -99,8 +99,6 @@ def test_stem():
 
     input_folder = "benchmark_tests/test_random_field_2d/inputs_kratos"
 
-    # Write KRATOS input files
-    # --------------------------------
     stem = Stem(model, input_folder)
     stem.write_all_input_files()
 
