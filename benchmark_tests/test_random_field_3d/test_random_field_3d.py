@@ -65,9 +65,9 @@ def test_stem():
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(2, [2], no_displacement_parameters, "base_fixed")
     model.add_boundary_condition_by_geometry_ids(2, [1, 3, 5, 6], roller_displacement_parameters, "roller_fixed")
-    # generate mesh
+
+    # set mesh size
     model.set_mesh_size(element_size=1)
-    model.generate_mesh()
 
     analysis_type = AnalysisType.MECHANICAL
     solution_type = SolutionType.QUASI_STATIC
