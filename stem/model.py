@@ -424,6 +424,88 @@ class Model:
                 # check the ordering of the nodes of the conditions. If it does not match flip the order.
                 self.__check_ordering_process_model_part(matched_elements, process_model_part)
 
+    def __post_mesh(self):
+        """
+        Function to be called after the mesh is generated and finalised.
+            - adjust the elements for the spring damper parts.
+
+        """
+
+        # it has to be the last process!!!
+        self.__adjust_mesh_spring_dampers()
+
+    def __adjust_mesh_spring_dampers(self):
+        """
+        Adjusts the mesh of the spring dampers which are normally added on an existing line.
+        If the line is broken in multiple elements, mesh requires to be adjusted so that there is only one element
+        per spring-damper.
+
+        """
+
+        # retrieve connectivities and cluster into individual spring-damper elements
+        for mp in self.body_model_parts:
+
+            if isinstance(mp.parameters, ElasticSpringDamper):
+                # 1. find end-points of the clusters
+                end_nodes_cluster = self.__find_end_point_clusters_in_mesh(model_part=mp)
+                # 2. find the end-points of the spring-damper elements
+
+        # 2. start with a node, find the elements connected to it and add them to the cluster
+        # 3. find the elements connected to the added nodes
+        pass
+
+    def __find_end_point_clusters_in_mesh(self, model_part:ModelPart):
+        """
+        Finds the points at the edge of a mesh even if the mesh comprises multiple clusters.
+
+        Args:
+            - model_part (:class:`stem.model_part.ModelPart`): model part from which end-points needs to be
+                extracted.
+
+        Returns:
+            - end_point_cluster_nodes (Dict[int, :class:`stem.mesh.Node`): dictionary containing the nodes at the
+                edges of a mesh, if there is any (e.g. sphere would not have any edge nodes).
+
+        Raises:
+            - ValueError: if the mesh is not initialised.
+
+        """
+        if model_part.mesh is None:
+            raise ValueError("Mesh not initialised, clusters cannot be identified.")
+
+        # shorten variables
+        elements = model_part.mesh.elements
+        nodes = model_part.mesh.nodes
+
+        # find which nodes connected to only 1 element
+        end_point_cluster_nodes = {}
+        for node_id, node in nodes.items():
+
+            elements_connected = [element_id for element_id, element in elements if node_id in element.node_ids]
+            if len(elements_connected) == 1:
+                end_point_cluster_nodes[node_id] = node
+
+        return end_point_cluster_nodes
+
+    def __find_end_point_clusters_in_mesh(self, model_part: ModelPart):
+
+        if model_part.mesh is None:
+            raise ValueError("Mesh not initialised, clusters cannot be identified.")
+
+        # shorten variables
+        elements = model_part.mesh.elements
+        nodes = model_part.mesh.nodes
+
+        # find which nodes connected to only 1 element
+        end_point_cluster_nodes = {}
+        for node_id, node in nodes.items():
+
+            elements_connected = [element_id for element_id, element in elements if node_id in element.node_ids]
+            if len(elements_connected) == 1:
+                end_point_cluster_nodes[node_id] = node
+
+        return end_point_cluster_nodes
+
     @staticmethod
     def __get_model_part_element_connectivities(model_part: ModelPart) -> npty.NDArray[np.int64]:
         """

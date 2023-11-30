@@ -508,6 +508,77 @@ class TestKratosModelIO:
         # check if mdpa data is as expected
         npt.assert_equal(actual=actual_mdpa_text, desired=expected_mdpa_text)
 
+
+    def test_write_mdpa_with_spring_damper_and_mass_element(self,
+                                                            create_default_2d_model: Model,
+                                                            create_default_outputs: List[Output],
+                                                            create_default_solver_settings: Problem
+    ):
+        """
+        Test correct writing of the mdpa file for the default model 2 spring damper and a nodal concentrated elements.
+
+        Args:
+            - create_default_2d_model (:class:`stem.model.Model`): the default 2D model of a square \
+                soil layer and a line load.
+            - create_default_outputs (List[:class:`stem.output.Output`]): list of default output processes.
+            - create_default_solver_settings (:class:`stem.solver.Problem`): the Problem object containing the \
+                solver settings.
+        """
+        model = create_default_2d_model
+        kratos_io = KratosIO(ndim=model.ndim)
+        model.project_parameters = create_default_solver_settings
+        model.output_settings = create_default_outputs
+
+        # add elastic spring damper element
+        spring_damper = ElasticSpringDamper(
+            NODAL_DISPLACEMENT_STIFFNESS=[1, 1, 1],
+            NODAL_ROTATIONAL_STIFFNESS=[1, 1, 2],
+            NODAL_DAMPING_COEFFICIENT=[1, 1, 3],
+            NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[1, 1, 4])
+
+        # create model part
+        # TODO: make model.add_nodal_element
+        spring_damper_model_part = BodyModelPart("spring_damper")
+        spring_damper_model_part.material = StructuralMaterial("spring_damper", spring_damper)
+
+        # assign spring damper to geometry
+        model.gmsh_io.add_physical_group("spring_damper", 1, [1])
+        spring_damper_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, "spring_damper")
+
+        # add nodal concentrated element
+        nodal_concentrated = NodalConcentrated(
+            NODAL_MASS=1,
+            NODAL_DAMPING_COEFFICIENT=[1, 1, 1],
+            NODAL_DISPLACEMENT_STIFFNESS=[1, 1, 1]
+        )
+
+        # create model part
+        nodal_concentrated_model_part = BodyModelPart("nodal_concentrated")
+        nodal_concentrated_model_part.material = StructuralMaterial("nodal_concentrated", nodal_concentrated)
+
+        # assign nodal concentrated to geometry
+        model.gmsh_io.add_physical_group("nodal_concentrated", 0, [2])
+        nodal_concentrated_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, "nodal_concentrated")
+
+        # add model parts to model
+        model.body_model_parts.append(spring_damper_model_part)
+        model.body_model_parts.append(nodal_concentrated_model_part)
+
+        # write project parameters
+        actual_dict = kratos_io.write_project_parameters_json(
+            model=model,
+            mesh_file_name="dummy.mdpa",
+            materials_file_name="dummy.json",
+            output_folder="dummy"
+        )
+
+        # load expected project parameters
+        expected_dict = json.load(open("tests/test_data/expected_ProjectParameters_with_nodal_parameters.json", 'r'))
+
+        # assert the dictionaries to be equal
+        TestUtils.assert_dictionary_almost_equal(expected_dict, actual_dict)
+
+
     def test_write_project_parameters_with_spring_damper_and_mass_element(self,
                                                                           create_default_2d_model: Model,
                                                                           create_default_outputs: List[Output],
