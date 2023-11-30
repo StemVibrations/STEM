@@ -4,6 +4,7 @@ import numpy as np
 import numpy.testing as npt
 import pytest
 
+from stem.geometry import Geometry, Point, Line
 from stem.utils import Utils
 from stem.mesh import Mesh, Element
 from stem.globals import ELEMENT_DATA
@@ -494,4 +495,128 @@ class TestUtilsStem:
 
         npt.assert_allclose(expected_centre_of_mass, actual_centre_of_mass)
 
+    def test_check_lines_geometry_are_path(self):
+        """
+        Tests that the lines in a geometry are connected and aligned along one path (no branching)
 
+        """
+
+        # None object passed (geometry not initialised)
+        msg = "No geometry has been provided."
+        with pytest.raises(ValueError, match=msg):
+            Utils.check_lines_geometry_are_path(None)
+
+        geo1 = Geometry()
+
+        # test undefined lines in geometry (empty)
+        msg = "The geometry doesn't contain lines to check."
+        with pytest.raises(ValueError, match=msg):
+            Utils.check_lines_geometry_are_path(geo1)
+
+        # test normal path
+        geo1.points = {
+            1: Point.create([0, 0, 0], 1),
+            2: Point.create([0.5, 0, 0], 2),
+            3: Point.create([1, 0, 0], 3),
+            4: Point.create([1.5, 1, 0], 4)
+        }
+
+        geo1.lines = {
+            1: Line.create([1, 2], 1),
+            2: Line.create([2, 3], 2),
+            3: Line.create([3, 4], 3),
+        }
+
+        # assert geometry is aligned on a path
+        assert Utils.check_lines_geometry_are_path(geo1)
+        # test for discontinuities
+        geo2 = Geometry()
+
+        geo2.points = {
+            1: Point.create([0, 0, 0], 1),
+            2: Point.create([0.5, 0, 0], 2),
+            3: Point.create([1, 0, 0], 3),
+            4: Point.create([1.5, 1, 0], 4)
+        }
+
+        geo2.lines = {
+            1: Line.create([1, 2], 1),
+            3: Line.create([3, 4], 3),
+        }
+
+        # assert path are disconnected  (not a path)
+        assert not Utils.check_lines_geometry_are_path(geo2)
+
+        # test for loops
+        geo3 = Geometry()
+
+        geo3.points = {
+            1: Point.create([0, 0.5, 0], 1),
+            2: Point.create([0.5, 0.5, 0], 2),
+            3: Point.create([1, 0.5, 0], 3),
+            4: Point.create([0.5, 1, 0], 4),
+            5: Point.create([0.5, 0, 0], 5)
+        }
+
+        geo3.lines = {
+            1: Line.create([1, 2], 1),
+            2: Line.create([2, 3], 2),
+            3: Line.create([3, 4], 3),
+            4: Line.create([4, 2], 4),
+            5: Line.create([2, 5], 5)
+        }
+
+        # assert loop is present (not a path)
+        assert not Utils.check_lines_geometry_are_path(geo3)
+
+        # test for loops
+        geo4 = Geometry()
+
+        geo4.points = {
+            1: Point.create([0, 0, 0], 1),
+            2: Point.create([0, 1, 0], 2),
+            3: Point.create([1, 0, 0], 3),
+            4: Point.create([-1, 0, 0], 4)
+        }
+
+        geo4.lines = {
+            1: Line.create([1, 2], 1),
+            2: Line.create([1, 3], 2),
+            3: Line.create([1, 4], 3)
+        }
+
+        # assert branching point is present (not a path)
+        assert not Utils.check_lines_geometry_are_path(geo4)
+
+    def test_is_point_aligned_and_between_any_of_points(self):
+        """
+        Checks that any of the points is aligned with at least one of the points in a list of pairs of
+        coordinates.
+        """
+        point_coordinates = [[(0.0, 0, 0), (1, 0, 0)],
+                             [(1, 0, 0), (2, 0, 0)],
+                             [(2, 0, 0), (4, 0, 0)]]
+
+        origin_correct = (0.5, 0, 0)
+        origin_wrong = (3, 1, 0)
+
+        # check that the function returns true for correct definition of points/origin
+        assert Utils.is_point_aligned_and_between_any_of_points(point_coordinates, origin_correct)
+
+        # check that the function returns false for incorrect definition of points/origin
+        assert not Utils.is_point_aligned_and_between_any_of_points(point_coordinates, origin_wrong)
+
+    def test_replace_extension(self):
+        """
+        Tests that the extension of a filename is replaced correctly.
+
+        """
+        filename1 = "outputfile"
+        filename2 = "outputfile.csv"
+        filename3 = "outputfile.tmp.csv"
+
+        desired_filename = "outputfile.json"
+
+        assert Utils.replace_extensions(filename1, ".json") == desired_filename
+        assert Utils.replace_extensions(filename2, ".json") == desired_filename
+        assert Utils.replace_extensions(filename3, ".json") == desired_filename

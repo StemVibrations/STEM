@@ -1,6 +1,5 @@
 from pathlib import Path
-from typing import List, Dict, Tuple, Union, Any
-
+from typing import List, Dict, Tuple, Any
 
 from stem.output import (
     Output,
@@ -8,6 +7,8 @@ from stem.output import (
     VtkOutputParameters,
     JsonOutputParameters,
     OutputParametersABC,
+    NodalOutput,
+    GaussPointOutput,
 )
 
 
@@ -69,6 +70,17 @@ class KratosOutputsIO:
         if part_name is not None:
             model_part_name += f".{part_name}"
 
+        # make everything a string (if it's not a string) before passing it to the dictionary
+        # the if statement is required because we accept mixed objects (string or Enum)
+        nodal_results = [
+            op.name if isinstance(op, NodalOutput) else op for op in output_parameters.nodal_results
+        ]
+        # make everything a string (if it's not a string) before passing it to the dictionary
+        # the if statement is required because we accept mixed objects (string or Enum)
+        gauss_results = [
+            op.name if isinstance(op, GaussPointOutput) else op for op in output_parameters.gauss_point_results
+        ]
+
         parameters_dict = {
             "model_part_name": model_part_name,
             "output_name": output_path_gid,
@@ -83,18 +95,10 @@ class KratosOutputsIO:
                     "file_label": output_parameters.file_label,
                     "output_control_type": output_parameters.output_control_type,
                     "output_interval": output_parameters.output_interval,
-                    "body_output": output_parameters.body_output,
-                    "node_output": output_parameters.node_output,
-                    "skin_output": output_parameters.skin_output,
-                    "plane_output": output_parameters.plane_output,
-                    "nodal_results": [
-                        op.name for op in output_parameters.nodal_results
-                    ],
-                    "gauss_point_results": [
-                        op.name for op in output_parameters.gauss_point_results
-                    ],
+                    "nodal_results": nodal_results,
+                    "gauss_point_results": gauss_results,
                 },
-                "point_data_configuration": output_parameters.point_data_configuration,
+                "point_data_configuration": [],
             },
         }
         # initialize output dictionary
@@ -129,6 +133,17 @@ class KratosOutputsIO:
         if part_name is not None:
             model_part_name += f".{part_name}"
 
+        # make everything a string (if it's not a string) before passing it to the dictionary
+        # the if statement is required because we accept mixed objects (string or Enum)
+        nodal_results = [
+            op.name if isinstance(op, NodalOutput) else op for op in output_parameters.nodal_results
+        ]
+        # make everything a string (if it's not a string) before passing it to the dictionary
+        # the if statement is required because we accept mixed objects (string or Enum)
+        gauss_results = [
+            op.name if isinstance(op, GaussPointOutput) else op for op in output_parameters.gauss_point_results
+        ]
+
         parameters_dict = {
             "model_part_name": model_part_name,
             "output_path": output_path_vtk,
@@ -136,12 +151,8 @@ class KratosOutputsIO:
             "output_precision": output_parameters.output_precision,
             "output_control_type": output_parameters.output_control_type,
             "output_interval": output_parameters.output_interval,
-            "nodal_solution_step_data_variables": [
-                op.name for op in output_parameters.nodal_results
-            ],
-            "gauss_point_variables_in_elements": [
-                op.name for op in output_parameters.gauss_point_results
-            ],
+            "nodal_solution_step_data_variables": nodal_results,
+            "gauss_point_variables_in_elements": gauss_results,
         }
 
         # initialize load dictionary
@@ -188,6 +199,17 @@ class KratosOutputsIO:
         if part_name is not None:
             model_part_name += f".{part_name}"
 
+        # make everything a string (if it's not a string) before passing it to the dictionary
+        # the if statement is required because we accept mixed objects (string or Enum)
+        nodal_results = [
+            op.name if isinstance(op, NodalOutput) else op for op in output_parameters.nodal_results
+        ]
+        # make everything a string (if it's not a string) before passing it to the dictionary
+        # the if statement is required because we accept mixed objects (string or Enum)
+        gauss_results = [
+            op.name if isinstance(op, GaussPointOutput) else op for op in output_parameters.gauss_point_results
+        ]
+
         # initialize output dictionary
         output_dict: Dict[str, Any] = {
             "python_module": "json_output_process",
@@ -196,11 +218,9 @@ class KratosOutputsIO:
             "Parameters": {
                 "model_part_name": model_part_name,
                 "output_file_name": output_path_json,
-                "output_variables": [op.name for op in output_parameters.nodal_results],
-                "gauss_points_output_variables": [
-                    op.name for op in output_parameters.gauss_point_results
-                ],
-                "time_frequency": output_parameters.time_frequency,
+                "output_variables": nodal_results,
+                "gauss_points_output_variables": gauss_results,
+                "time_frequency": output_parameters.output_interval,
             },
         }
         return output_dict
@@ -244,13 +264,13 @@ class KratosOutputsIO:
             return "output_processes"
         return "processes"
 
-    def create_output_process_dictionary(self, outputs: List[Output]) -> Dict[str, Any]:
+    def create_output_process_dictionary(self, output_settings: List[Output]) -> Dict[str, Any]:
         """
         Creates a dictionary containing the output_processes, that specifies which
         output to request Kratos and the type of output ('GiD', 'VTK', 'JSON')
 
         Args:
-            - outputs (List[:class:`stem.output.Output`]): list of output process objects
+            - output_settings (List[:class:`stem.output.Output`]): list of output process objects
 
         Returns:
             - output_dict (Dict[str, Any]): dictionary containing two other dictionary \
@@ -260,8 +280,8 @@ class KratosOutputsIO:
         """
         output_dict: Dict[str, Any] = {"output_processes": {}, "processes": {}}
 
-        for output in outputs:
-            output.output_parameters.validate()
+        for output in output_settings:
+
             key_output, _parameters_output = self.__create_output_dict(output)
             key_process = KratosOutputsIO.__get_process_type_for_output(
                 output.output_parameters

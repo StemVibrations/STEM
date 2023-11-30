@@ -69,7 +69,7 @@ class TestKratosBoundariesIO:
         # write dictionary for the load(s)
         kratos_io = KratosIO(ndim=model.ndim)
 
-        test_dictionary = kratos_io.write_project_parameters_json(
+        test_dictionary = kratos_io._KratosIO__write_project_parameters_json(
             model=model,
             mesh_file_name="test_load_parameters.mdpa",
             materials_file_name=""

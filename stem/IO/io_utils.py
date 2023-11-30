@@ -71,8 +71,9 @@ class IOUtils:
                     _table.append(0)
                     _value.append(float(vv))
                 else:
-                    raise ValueError(f"'value' attribute in {parameters.__class__.__name__} in model part: "
-                                     f"{part_name} is neither a Table object, nor a float nor an integer.")
+                    raise ValueError(f"'value' attribute in {parameters.__class__.__name__} in model part "
+                                     f"`{part_name}`. The value ({vv}) is a `{vv.__class__.__name__}` object"
+                                     f" but only a Table, float or integer are valid inputs.")
 
         else:
             raise ValueError(f"Attribute `value` does not exist in class: {parameters.__class__.__name__}.")

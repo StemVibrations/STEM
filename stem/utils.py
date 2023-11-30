@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Sequence, Dict, Any, List, Union, Optional, Generator, TYPE_CHECKING
 
 import numpy as np
@@ -7,6 +8,7 @@ from stem.globals import ELEMENT_DATA
 
 if TYPE_CHECKING:
     from stem.mesh import Element
+    from stem.geometry import Geometry
 
 
 class Utils:
@@ -371,8 +373,127 @@ class Utils:
             return (f"(1 / (1 + e^(-{beta} * (t - {dt_slope} / 2 - {start_time})))) * ({final_value} - {initial_value})"
                     f"+ {initial_value}")
 
+    @staticmethod
+    def check_lines_geometry_are_path(geometry: Optional['Geometry']) -> bool:
+        """
+        Checks if lines are connected forming a path without:
 
+            a) disconnected lines,   b) branching out paths
+                o---o       o---o              o
+                |                              |
+                o                         o----o----o
+                                               |
+                                               o
 
+        Args:
+            - geometry: geometry to be checked
+
+        Raises:
+            - ValueError: when geometry is not provided (is None).
+            - ValueError: when geometry has no lines.
+
+        Returns:
+            - bool: whether the lines are connected along the path
+
+        """
+
+        if geometry is None:
+            raise ValueError("No geometry has been provided.")
+
+        if geometry.lines is None or len(geometry.lines) == 0:
+            raise ValueError("The geometry doesn't contain lines to check.")
+
+        # if 2 or more lines check for branching points/loops and discontinuities
+        if len(geometry.lines) > 1:
+
+            # get the line ids and points in the line
+            lines = {_id: line.point_ids for _id, line in geometry.lines.items()}
+
+            # get the unique points in the line
+            unique_points = list(set([n for v in lines.values() for n in v]))
+
+            # loop over the points and find the lines connected to the point
+            for p in unique_points:
+
+                # initialise list of lines connected to the point
+                line_to_point = []
+
+                # find which lines contain the point
+                for line_id, points_line in lines.items():
+
+                    if p in points_line:
+                        line_to_point.append(line_id)
+
+                # when more than 2 lines are connected to the point a branching point or loop
+                # is found, so the geometry is not a path. Return False.
+                if len(line_to_point) > 2:
+                    # "Branching point was found for node {p} connected to lines {line_to_point}
+                    return False
+
+            # if no branching point are found than the check of connectivity holds when
+            if len(unique_points) != (len(lines) + 1):
+                # lines are not connected.
+                return False
+
+        # All lines are connected without branches
+        return True
+
+    @staticmethod
+    def is_point_aligned_and_between_any_of_points(coordinates: Sequence[Sequence[Sequence[float]]],
+                                                   origin: Sequence[float]) -> bool:
+        """
+        Checks that the point (origin) provided aligns with at least one of the lines, expressed as
+        list of pairs of coordinates representing the edges of the line.
+
+        Args:
+            - coordinates (Sequence[Sequence[Sequence[float]]]): Pair-wise sets of coordinates representing the line \
+                on which the origin should lie.
+            - origin (Sequence[float]): the coordinates of the point to be checked for alignment.
+
+        Returns:
+            - bool: whether the considered point in at least one of the given lines (i.e. within the sequence of \
+                pair-wise points).
+
+        """
+
+        for ix in range(len(coordinates)):
+            # check origin is collinear to the edges of the line
+            collinear_check = Utils.is_collinear(
+                point=origin, start_point=coordinates[ix][0], end_point=coordinates[ix][1]
+            )
+            # check origin is between the edges of the line (edges included)
+            is_between_check = Utils.is_point_between_points(
+                point=origin, start_point=coordinates[ix][0], end_point=coordinates[ix][1]
+            )
+            # check if point complies
+            is_on_line = collinear_check and is_between_check
+            # exit at the first success of the test (point in the line) and return True
+            if is_on_line:
+                return True
+
+        # none of the lines contain the origin, return False
+        return False
+
+    @staticmethod
+    def replace_extensions(filename: str, new_extension: str) -> str:
+        """
+        Adjust the extension of a file. Can remove multiple extensions (e.g. .tar.gz.tmp) with a new extension (e.g.
+        json). If no extensions are given, the new extension is added directly.
+
+        Args:
+            - filename (str): name or path to the filename for which the extension needs to be changed
+            - new_extension (str): the new extension for the file
+
+        Returns:
+            - str: name or path to the filename with the desired extension
+
+        """
+        path_obj = Path(filename)
+        extensions = "".join(path_obj.suffixes)
+        if len(extensions) == 0:
+            return str(path_obj.with_suffix(new_extension))
+        else:
+            return str(path_obj).replace(extensions, new_extension)
 
     @staticmethod
     def calculate_centre_of_mass(coordinates: npt.NDArray) -> npt.NDArray:

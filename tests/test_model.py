@@ -1,6 +1,7 @@
 import pickle
 from typing import Tuple
 import re
+import sys
 from pathlib import Path
 
 import numpy.testing as npt
@@ -8,9 +9,11 @@ import pytest
 
 from stem.geometry import *
 from stem.model import *
+from stem.output import NodalOutput, GiDOutputParameters, JsonOutputParameters
 from stem.solver import *
 from tests.utils import TestUtils
 
+IS_LINUX = sys.platform == "linux"
 
 class TestModel:
 
@@ -368,6 +371,32 @@ class TestModel:
             offset=3.0,
             direction=[1, 1, 1]
         )
+
+    @pytest.fixture
+    def create_default_outputs(self):
+        """
+        Sets default output parameters.
+
+        Returns:
+            - List[:class:`stem.output.Output`]: list of default output processes.
+        """
+        # Nodal results
+        nodal_results = [NodalOutput.ACCELERATION]
+        # Gauss point results
+        # define output process
+
+        output_process = Output(
+            part_name="nodal_accelerations",
+            output_name="gid_nodal_accelerations_top",
+            output_dir="dir_test",
+            output_parameters=GiDOutputParameters(
+                file_format="binary",
+                output_interval=100,
+                nodal_results=nodal_results
+            )
+        )
+
+        return output_process
 
     @pytest.fixture
     def expected_geometry_two_layers_3D_extruded(self):
@@ -982,11 +1011,9 @@ class TestModel:
         """
         Test if a single soil point load is added correctly to the model. Two points are generated
         and a single load is created and added to the model.
-
         Args:
             - expected_geometry_line_load (:class:`stem.geometry.Geometry`): expected geometry of the model
             - create_default_moving_load_parameters (:class:`stem.load.MovingLoad`): default moving load parameters
-
         """
 
         ndim = 3
@@ -1019,6 +1046,7 @@ class TestModel:
     def test_validation_coordinates(self):
         """
         Test that validation raises and error if the points are not correctly specified.
+
         """
 
         ndim = 3
@@ -1134,6 +1162,233 @@ class TestModel:
             assert len(node.coordinates) == 3
             unique_node_ids.append(node.id)
 
+    def test_add_output_to_non_existing_model_part(self, create_default_2d_soil_material: SoilMaterial):
+        """
+        Test if output nodes are correctly accounted for when meshing a surface.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+
+        # define layer coordinates
+        ndim = 2
+        layer1_coordinates = [(0, 0, 0), (4, 0, 0), (4, 1, 0), (0, 1, 0)]
+
+        # define soil materials
+        soil_material1 = create_default_2d_soil_material
+        soil_material1.name = "soil1"
+
+        # create model
+        model = Model(ndim)
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
+
+        # synchronise geometry and recalculates the ids
+        model.synchronise_geometry()
+        # define output object
+        # Nodal results
+        nodal_results = [NodalOutput.ACCELERATION]
+        # add outputs to existing model part
+        model.add_output_settings(
+            part_name="layer1",
+            output_name="gid_nodal_accelerations_top",
+            output_dir="dir_test",
+            output_parameters=GiDOutputParameters(
+                file_format="binary",
+                output_interval=100,
+                nodal_results=nodal_results
+            )
+        )
+        # add output to non-existing model part
+        msg = "Model part for which output needs to be requested doesn't exist."
+        with pytest.raises(ValueError, match=msg):
+            model.add_output_settings(
+                part_name="layer2",
+                output_name="gid_nodal_accelerations_top",
+                output_dir="dir_test",
+                output_parameters=GiDOutputParameters(
+                    file_format="binary",
+                    output_interval=100,
+                    nodal_results=nodal_results
+                )
+            )
+
+    def test_add_output_to_a_surface_2d(self, create_default_2d_soil_material: SoilMaterial):
+        """
+        Test if output nodes are correctly accounted for when meshing a surface.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+
+        # define layer coordinates
+        ndim = 2
+        layer1_coordinates = [(0, 0, 0), (4, 0, 0), (4, 1, 0), (0, 1, 0)]
+
+        # define soil materials
+        soil_material1 = create_default_2d_soil_material
+        soil_material1.name = "soil1"
+
+        # create model
+        model = Model(ndim)
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
+
+        # synchronise geometry and recalculates the ids
+        model.synchronise_geometry()
+        # Define nodal results
+        nodal_results = [NodalOutput.ACCELERATION]
+        # Define output coordinates
+        output_coordinates = [(1.5, 1, 0), (1.5, 0.5, 0), (2.5, 0.5, 0), (2.5, 0, 0)]
+
+        # add output settings
+        model.add_output_settings_by_coordinates(
+            output_coordinates,
+            part_name="nodal_accelerations",
+            output_name="json_nodal_accelerations_top",
+            output_dir="dir_test",
+            output_parameters=JsonOutputParameters(
+                output_interval=100,
+                nodal_results=nodal_results
+            )
+        )
+
+        model.synchronise_geometry()
+        model.generate_mesh()
+
+        unique_element_ids = []
+        unique_node_ids = []
+
+        part = model.body_model_parts[0]
+        assert part.mesh.ndim == 2
+
+        # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
+        # correct and if the element ids are unique and if the number of nodes per element is correct
+        assert len(part.mesh.elements) == 98
+
+        for element_id, element in part.mesh.elements.items():
+            assert element.element_type == "TRIANGLE_3N"
+            assert element_id not in unique_element_ids
+            assert len(element.node_ids) == 3
+            unique_element_ids.append(element.id)
+
+        # check if nodes are generated correctly, i.e. if there are nodes in the mesh and if the node ids are unique
+        # and if the number of coordinates per node is correct
+        assert len(part.mesh.nodes) == 64
+        for node_id, node in part.mesh.nodes.items():
+            assert node_id not in unique_node_ids
+            assert len(node.coordinates) == 3
+            unique_node_ids.append(node.id)
+
+        # assert the output parts
+        part = model.process_model_parts[0]
+        assert part.mesh.ndim == 1
+
+        unique_node_ids = []
+        # check if nodes are generated correctly, number of nodes are equal to the one requested in output,
+        # no elements generated, unique node ids, and correct number of coordinates per node
+        assert len(part.mesh.nodes) == len(output_coordinates)
+        for node_id, node in part.mesh.nodes.items():
+            assert node_id not in unique_node_ids
+            assert len(node.coordinates) == 3
+            unique_node_ids.append(node.id)
+
+        assert part.mesh.elements == {}
+
+    def test_add_output_to_a_surface_3d(
+            self, create_default_3d_soil_material: SoilMaterial, create_default_outputs: Output
+    ):
+        """
+        Test if output nodes are correctly accounted for when meshing a surface in 3d.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+            - create_default_outputs (:class:`stem.output.Output`): the output object containing the \
+                output info.
+        """
+
+        # define layer coordinates
+        ndim = 3
+        layer1_coordinates = [(0, 0, 0), (4, 0, 0), (4, 1, 0), (0, 1, 0)]
+
+        # define soil materials
+        soil_material1 = create_default_3d_soil_material
+        soil_material1.name = "soil1"
+
+        # create model
+        model = Model(ndim)
+        model.extrusion_length = 4
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "soil1")
+
+        # synchronise geometry and recalculates the ids
+        model.synchronise_geometry()
+        # Define nodal results
+        nodal_results = [NodalOutput.ACCELERATION]
+        # Define output coordinates
+        output_coordinates = [(0, 1, 2), (2, 1, 2), (4, 1, 2)]
+
+        # add output settings
+        model.add_output_settings_by_coordinates(
+            output_coordinates,
+            part_name="nodal_accelerations",
+            output_name="json_nodal_accelerations_top",
+            output_dir="dir_test",
+            output_parameters=JsonOutputParameters(
+                output_interval=100,
+                nodal_results=nodal_results
+            )
+        )
+
+        model.synchronise_geometry()
+
+        model.generate_mesh()
+
+        unique_element_ids = []
+        unique_node_ids = []
+
+        body_model_part = model.body_model_parts[0]
+        assert body_model_part.mesh.ndim == 3
+
+        # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
+        # correct and if the element ids are unique and if the number of nodes per element is correct
+        assert len(body_model_part.mesh.elements) == 686
+
+        for element_id, element in body_model_part.mesh.elements.items():
+            assert element.element_type == "TETRAHEDRON_4N"
+            assert element_id not in unique_element_ids
+            assert len(element.node_ids) == 4
+            unique_element_ids.append(element.id)
+
+        # check if nodes are generated correctly, i.e. if there are nodes in the mesh and if the node ids are unique
+        # and if the number of coordinates per node is correct
+        assert len(body_model_part.mesh.nodes) == 237
+        for node_id, node in body_model_part.mesh.nodes.items():
+            assert node_id not in unique_node_ids
+            assert len(node.coordinates) == 3
+            unique_node_ids.append(node.id)
+
+        # assert the output parts
+        output_model_part = model.process_model_parts[0]
+        assert output_model_part.mesh.ndim == 1
+
+        unique_node_ids = []
+        # check if nodes are generated correctly, number of nodes are equal to the one requested in output,
+        # no elements generated, unique node ids, and correct number of coordinates per node
+        assert len(output_model_part.mesh.nodes) == len(output_coordinates)
+        for node_id, node in output_model_part.mesh.nodes.items():
+            assert node_id not in unique_node_ids
+            assert len(node.coordinates) == 3
+            unique_node_ids.append(node.id)
+
+        # No element outputs, so the element attribute of the mesh must be an empty dictionary
+        assert output_model_part.mesh.elements == {}
+
     def test_generate_mesh_with_only_a_body_model_part_3d(self, create_default_3d_soil_material: SoilMaterial):
         """
         Test if the mesh is generated correctly in 3D if there is only one body model part.
@@ -1185,6 +1440,7 @@ class TestModel:
 
         Args:
             - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
         """
         model = Model(2)
 
@@ -1340,6 +1596,247 @@ class TestModel:
         npt.assert_equal(node_ids_process_model_part_1, expected_process_connectivities)
         npt.assert_equal(node_ids_process_model_part_2, expected_process_connectivities)
 
+    def test_add_field_raises_errors(
+            self,
+            create_default_2d_soil_material: SoilMaterial
+    ):
+        """
+        Checks that the function to add parameter field raises errors correctly.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+        model = Model(2)
+
+        # add soil material
+        soil_material = create_default_2d_soil_material
+
+        # add fake body model part with no material
+        model.body_model_parts.append(
+            BodyModelPart(name="fake part")
+        )
+        # add soil layers
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
+        line_load_parameters = LineLoad(active=[True,True,True], value=[0, -1000, 0])
+        model.add_load_by_coordinates(name="line_load", coordinates=[(0, 0, 0), (0, 1, 0)],
+                                           load_parameters=line_load_parameters)
+
+        # Define the field generator
+        correct_rf_generator = RandomFieldGenerator(
+            n_dim=3, cov=0.1, model_name="Gaussian",
+            v_scale_fluctuation=5, anisotropy=[0.5, 0.5], angle=[0, 0], seed=42
+        )
+
+        # define the field parameters
+        correct_field_parameters_json = ParameterFieldParameters(
+            property_name="YOUNG_MODULUS",
+            function_type="json_file",
+            field_file_name="json_file.json",
+            field_generator=correct_rf_generator
+        )
+
+        # Define the field generator
+        wrong_rf_generator = RandomFieldGenerator(
+            n_dim=3, cov=0.1, model_name="Gaussian",
+            v_scale_fluctuation=5, anisotropy=[0.5, 0.5], angle=[0, 0], seed=42
+        )
+        wrong_field_parameters_json = ParameterFieldParameters(
+            property_name="YOUNGS_MODULUS",
+            function_type="json_file",
+            field_file_name="json_file.json",
+            field_generator=wrong_rf_generator
+        )
+
+        wrong_field_parameters_json_boolean = ParameterFieldParameters(
+            property_name="IS_DRAINED",
+            function_type="json_file",
+            field_file_name="json_file.json",
+            field_generator=wrong_rf_generator
+        )
+
+        # add random field to process model part
+        msg = "The target part, `line_load`, is not a body model part."
+        with pytest.raises(ValueError, match=msg):
+            model.add_field(part_name="line_load", field_parameters=correct_field_parameters_json)
+
+        # add random field to part with no material
+        msg = "No material assigned to the body model part!"
+        with pytest.raises(ValueError, match=msg):
+            model.add_field(part_name="fake part", field_parameters=correct_field_parameters_json)
+
+        # add random field to non-existing property
+        msg = "Property YOUNGS_MODULUS is not one of the parameters of the soil material"
+        with pytest.raises(ValueError, match=msg):
+            model.add_field(part_name="layer1", field_parameters=wrong_field_parameters_json)
+
+        # add random field to boolean property
+        msg = "The property for which a random field needs to be generated, `IS_DRAINED` is not a numeric value."
+        with pytest.raises(ValueError, match=msg):
+            model.add_field(part_name="layer1", field_parameters=wrong_field_parameters_json_boolean)
+
+    def test_get_centroids_elements(
+            self,
+            create_default_2d_soil_material: SoilMaterial
+    ):
+        """
+        Test the computation of the centroids from the mesh of a model part and raising of errors.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+
+        model = Model(2)
+
+        # add soil material
+        soil_material = create_default_2d_soil_material
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
+        point_load_parms = PointLoad(active=[True,True,True], value=[0, -1000, 0])
+        model.add_load_by_coordinates(name="point_load", coordinates=[(0, 0, 0)],
+                                           load_parameters=point_load_parms)
+
+        # non existing part
+        msg = ("Model part `layer2` is not part of the model parts in the model."
+               "Please add it or check the part name.")
+        with pytest.raises(ValueError, match=msg):
+            model.get_centroids_elements_model_part(part_name="layer2")
+
+        # non meshed part
+        msg = ("Mesh of model part `layer1` not available. Please run the"
+               " model.generate_mesh() method")
+        with pytest.raises(ValueError, match=re.escape(msg)):
+            model.get_centroids_elements_model_part(part_name="layer1")
+
+        # generate mesh
+        model.set_mesh_size(1)
+        model.generate_mesh()
+
+        # generate centroids and assert they are as expected
+        actual_entroids = model.get_centroids_elements_model_part(part_name="layer1")
+        expected_centroids = np.array(
+            [[0.5, 0.16666667, 0.],
+             [0.16666667, 0.5, 0.],
+             [0.83333333, 0.5, 0.],
+             [0.5, 0.83333333, 0.]]
+        )
+        npt.assert_allclose(actual_entroids,expected_centroids)
+
+        # test that error is raised when trying to get centroid from a part with no elements
+        model.process_model_parts[0].mesh.elements = None
+        # part without elements
+        msg = "No elements for model part `point_load`. Check if the a wrong part was selected."
+        with pytest.raises(ValueError, match=msg):
+            model.get_centroids_elements_model_part(part_name="point_load")
+
+    def test_random_field_generation_2d(
+            self,
+            create_default_2d_soil_material: SoilMaterial
+    ):
+        """
+        Test the correct generation of the random field for a 2D model with one body model part.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+        model = Model(2)
+
+        # add soil material
+        soil_material = create_default_2d_soil_material
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
+        model.set_mesh_size(1)
+
+        # Define the field generator
+        random_field_generator = RandomFieldGenerator(
+            n_dim=3, cov=0.1, model_name="Gaussian",
+            v_scale_fluctuation=1, anisotropy=[0.5], angle=[0], seed=42
+        )
+
+        field_parameters_json = ParameterFieldParameters(
+            property_name="YOUNG_MODULUS",
+            function_type="json_file",
+            field_generator=random_field_generator
+        )
+
+        model.add_field(part_name="layer1", field_parameters=field_parameters_json)
+        model.synchronise_geometry()
+
+        # generate mesh
+        model.generate_mesh()
+
+        actual_rf_values = model.process_model_parts[-1].parameters.field_generator.generated_field
+
+        # assert the number of generated values to be equal to the amount of elements of the part
+        assert len(actual_rf_values) == len(model.body_model_parts[0].mesh.elements)
+        # assert the generated values against the expected values
+        expected_rf_values = [104971256.1059345, 113280413.42177339, 105124797.09835173, 109686556.57934019]
+
+        npt.assert_allclose(actual=actual_rf_values, desired=expected_rf_values)
+
+    @pytest.mark.skipif(IS_LINUX, reason="The 3D random field samples different values for linux and windows, "
+                                         "because the mesh is slightly different. See also the test for mdpa_file in "
+                                         "3d in test_kratos_io.py.")
+    def test_random_field_generation_3d(
+            self,
+            create_default_3d_soil_material: SoilMaterial
+    ):
+        """
+        Test the correct generation of the random field for a 3D model with one body model part.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+        model = Model(3)
+        model.extrusion_length = 1
+
+        # add soil material
+        soil_material = create_default_3d_soil_material
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
+        model.set_mesh_size(1.0)
+
+        # Define the field generator
+        random_field_generator = RandomFieldGenerator(
+            n_dim=3, cov=0.1, model_name="Gaussian",
+            v_scale_fluctuation=1, anisotropy=[0.5, 0.5], angle=[0, 0], seed=42
+        )
+
+        field_parameters_json = ParameterFieldParameters(
+            property_name="YOUNG_MODULUS",
+            function_type="json_file",
+            field_generator=random_field_generator
+        )
+
+        model.add_field(part_name="layer1", field_parameters=field_parameters_json)
+
+        model.synchronise_geometry()
+
+        # generate mesh
+        model.generate_mesh()
+
+        actual_rf_values = model.process_model_parts[0].parameters.field_generator.generated_field
+
+        # TODO: make test for Unix  with different values
+
+        # assert the number of generated values to be equal to the amount of elements of the part
+        assert len(actual_rf_values) == len(model.body_model_parts[0].mesh.elements)
+
+        expected_rf_values = [109219152.50312316, 103358912.90787594, 105339578.47289738, 107804266.66256714,
+                                  116674453.0103657, 121205355.8771256, 117518624.66410118, 109641232.38516402,
+                                  108150391.42392428, 93740844.72077464, 106608642.49695791, 111016462.96330133,
+                                  95787906.70407471, 109879617.69834961, 103724463.91386327, 92715313.3744301,
+                                  115556177.86463425, 119222050.2452586, 112966908.38899206, 94554356.2203453,
+                                  112709106.84842391, 93573278.00303535, 100680007.50177462, 105511523.87671089]
+
+        npt.assert_allclose(actual=actual_rf_values, desired=expected_rf_values)
+
     def test_validate_expected_success(self):
         """
         Test if the model is validated correctly. A model is created with two process model parts which both have
@@ -1404,7 +1901,7 @@ class TestModel:
         no_rotation_parameters = RotationConstraint(active=[True, True, True], is_fixed=[True, True, True],
                                                     value=[0, 0, 0])
 
-        absorbing_parameters = AbsorbingBoundary(absorbing_factors=[1,1], virtual_thickness=0)
+        absorbing_parameters = AbsorbingBoundary(absorbing_factors=[1, 1], virtual_thickness=0)
 
         no_displacement_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True],
                                                             value=[0, 0, 0])
@@ -1412,7 +1909,6 @@ class TestModel:
         # add body model part
         soil_material = create_default_3d_soil_material
         model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "test_soil")
-
 
         # add boundary conditions in 0d, 1d and 2d
         model.add_boundary_condition_by_geometry_ids(0, [1, 2], no_rotation_parameters, "no_rotation")
@@ -1500,6 +1996,160 @@ class TestModel:
         for expected_geometry, model_part in zip(all_expected_geometries, model.process_model_parts):
 
             TestUtils.assert_almost_equal_geometries(expected_geometry, model_part.geometry)
+
+    def test_add_load_by_geometry_ids(self, create_default_3d_soil_material: SoilMaterial,
+                                      create_default_point_load_parameters: PointLoad,
+                                      create_default_line_load_parameters: LineLoad,
+                                      create_default_surface_load_parameters: SurfaceLoad):
+        """
+        Test if a load is added correctly to the model. Here the load is added to the model by
+        specifying the geometry ids to which the load should be applied.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+            - create_default_point_load_parameters (:class:`stem.load.PointLoad`): default point load parameters.
+            - create_default_surface_load_parameters (:class:`stem.load.SurfaceLoad`): default surface load parameters.
+
+        """
+
+        ndim = 3
+
+        # create a 3D model
+        model = Model(ndim)
+        model.extrusion_length = 1
+
+        # set expected parameters of the load conditions
+        expected_point_load_parameters = PointLoad(active=[False, True, False], value=[0, -200, 0])
+        expected_line_load_parameters = LineLoad(active=[False, True, False], value=[0, -20, 0])
+        expected_surface_load_parameters = SurfaceLoad(active=[False, True, False], value=[0, -2, 0])
+        expected_moving_load_parameters = MovingLoad(
+            origin=[0, 1, 0.5],
+            load=[0.0, -10.0, 0.0],
+            velocity=5.0,
+            offset=3.0,
+            direction=[1, 1, 1]
+        )
+
+        # add body model part
+        soil_material = create_default_3d_soil_material
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "test_soil")
+
+        # add point, line, surface and moving loads by geometry id
+        model.add_load_by_geometry_ids([3, 4, 7, 8], create_default_point_load_parameters, "point_loads")
+        model.add_load_by_geometry_ids([3, 8, 10, 11], create_default_line_load_parameters, "line_loads")
+        model.add_load_by_geometry_ids([4], create_default_surface_load_parameters, "surface_load")
+        model.add_load_by_geometry_ids([3, 8, 10], expected_moving_load_parameters, "moving_load")
+
+        # set expected geometry point load
+        expected_load_points = {3: Point.create([1, 1, 0], 3), 4:  Point.create([0, 1, 0], 4),
+                                7: Point.create([1, 1, 1], 7), 8:  Point.create([0, 1, 1], 8)}
+        expected_point_load_geometry = Geometry(expected_load_points, {}, {}, {})
+
+        # set expected geometry line load
+        expected_load_lines = {3: Line.create([3, 4], 3), 8: Line.create([3, 7], 8),
+                               10: Line.create([4, 8], 10), 11: Line.create([7, 8], 11)}
+
+        expected_line_load_geometry = Geometry(expected_load_points, expected_load_lines, {}, {})
+
+        # set expected geometry surface load
+        expected_surface_load_geometry = Geometry()
+        expected_surface_load_geometry.points = {
+            3: Point.create([1, 1, 0], 3), 7: Point.create([1, 1, 1], 7),
+            8:  Point.create([0, 1, 1], 8), 4:  Point.create([0, 1, 0], 4)
+        }
+        expected_surface_load_geometry.lines = {
+            8: Line.create([3, 7], 8), 11: Line.create([7, 8], 11),
+            10: Line.create([4, 8], 10), 3: Line.create([3, 4], 3)
+        }
+        expected_surface_load_geometry.surfaces = {
+            4: Surface.create([8, 11, -10, -3], 4)
+        }
+
+        # set expected geometry moving load
+        expected_surface_load_geometry = Geometry()
+        expected_surface_load_geometry.points = {
+            3: Point.create([1, 1, 0], 3), 7: Point.create([1, 1, 1], 7),
+            8:  Point.create([0, 1, 1], 8), 4:  Point.create([0, 1, 0], 4)
+        }
+        expected_surface_load_geometry.lines = {
+            8: Line.create([3, 7], 8), 11: Line.create([7, 8], 11),
+            10: Line.create([4, 8], 10), 3: Line.create([3, 4], 3)
+        }
+        expected_surface_load_geometry.surfaces = {
+            4: Surface.create([8, 11, -10, -3], 4)
+        }
+
+        # collect all expected geometriesl
+        all_expected_geometries = [
+            expected_point_load_geometry,
+            expected_line_load_geometry,
+            expected_surface_load_geometry
+        ]
+
+        for expected_geometry, model_part in zip(all_expected_geometries, model.process_model_parts):
+
+            TestUtils.assert_almost_equal_geometries(expected_geometry, model_part.geometry)
+
+        # check point load parameters
+        npt.assert_allclose(model.process_model_parts[0].parameters.value, expected_point_load_parameters.value)
+        npt.assert_allclose(model.process_model_parts[0].parameters.active, expected_point_load_parameters.active)
+
+        # check line load parameters
+        npt.assert_allclose(model.process_model_parts[1].parameters.value, expected_line_load_parameters.value)
+        npt.assert_allclose(model.process_model_parts[1].parameters.active, expected_line_load_parameters.active)
+
+        # check surface load parameters
+        npt.assert_allclose(model.process_model_parts[2].parameters.value, expected_surface_load_parameters.value)
+        npt.assert_allclose(model.process_model_parts[2].parameters.active, expected_surface_load_parameters.active)
+
+        # check moving load parameters
+        TestUtils.assert_dictionary_almost_equal(
+            model.process_model_parts[3].parameters.__dict__,  expected_moving_load_parameters.__dict__)
+
+    def test_add_load_by_geometry_ids_raises_error(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if a load is added correctly to the model. Here the load is added to the model by
+        specifying the geometry ids to which the load should be applied.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+
+        ndim = 3
+
+        # create a 3D model
+        model = Model(ndim)
+        model.extrusion_length = 1
+
+        soil_material = create_default_3d_soil_material
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "test_soil")
+
+        moving_load_parameters = MovingLoad(
+            origin=[0, 1, 0.5],
+            load=[0.0, -10.0, 0.0],
+            velocity=5.0,
+            offset=3.0,
+            direction=[1, 1, 1]
+        )
+
+        # check raising of errors
+        msg = "Load parameter provided is not supported: `GravityLoad`."
+        with pytest.raises(NotImplementedError, match=msg):
+            model.add_load_by_geometry_ids([1], GravityLoad(value=[0, -9.81, 0], active=[True, True, True]),
+                                           "gravity load")
+        # lines disconnected
+
+        msg = ("The lines defined for the moving load are not aligned on a path."
+               "Discontinuities or loops/branching points are found.")
+        with pytest.raises(ValueError, match=msg):
+            model.add_load_by_geometry_ids([8, 10], moving_load_parameters, "moving_load_wrong_1")
+
+        # origin not in path
+        # test for branching points
+        msg = "None of the lines are aligned with the origin of the moving load. Error."
+        with pytest.raises(ValueError, match=msg):
+            model.add_load_by_geometry_ids([3, 8, 11], moving_load_parameters, "moving_load_wrong_2")
 
     def test_add_gravity_load_1d_and_2d(self, create_default_2d_soil_material: SoilMaterial):
         """

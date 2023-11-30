@@ -1,5 +1,6 @@
 import re
 
+import numpy as np
 import pytest
 
 from stem.load import PointLoad, LineLoad, SurfaceLoad, MovingLoad, GravityLoad
@@ -212,8 +213,8 @@ class TestModelPart:
         beam_part = BodyModelPart("beam")
         beam_part.material = beam
 
-        assert beam_part.get_element_name(2, 2, AnalysisType.MECHANICAL) == "GeoCrBeamElement2D2N"
-        assert beam_part.get_element_name(3, 2, AnalysisType.MECHANICAL) == "GeoCrBeamElement3D2N"
+        assert beam_part.get_element_name(2, 2, AnalysisType.MECHANICAL) == "GeoCrBeamElementLinear2D2N"
+        assert beam_part.get_element_name(3, 2, AnalysisType.MECHANICAL) == "GeoCrBeamElementLinear3D2N"
 
         # wrong beam input
 
@@ -265,5 +266,21 @@ class TestModelPart:
                                            '6 nodes were provided.')):
             nodal_concentrated_part.get_element_name(3, 6, AnalysisType.MECHANICAL)
 
+    def test_repr_method_model_part(self):
+        """
+        Test that the repr method for process and body model part.
 
+        """
+        # check soil part repr
+        soil = TestUtils.create_default_soil_material(2)
+        soil_part = BodyModelPart("soil")
+        soil_part.material = soil
+        expected_string = "BodyModelPart(name=soil, material=SoilMaterial)"
+        assert expected_string == str(soil_part)
 
+        # check line load part repr
+        line_load = LineLoad([True, True, True], [0, 0, 0])
+        line_load_part = ModelPart("line_load_part")
+        line_load_part.parameters = line_load
+        expected_string = "ModelPart(name=line_load_part, parameters=LineLoad)"
+        assert expected_string == str(line_load_part)
