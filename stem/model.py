@@ -132,20 +132,20 @@ class Model:
         self.gmsh_io.add_physical_group(f"constraint_{rail_name}", 1, rail_constraint_geometry_ids)
 
         # create model part
-        model_part = ModelPart(rail_constraint_name)
+        constraint_model_part = ModelPart(rail_constraint_name)
 
         # retrieve geometry from gmsh and add to model part
-        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_constraint_name)
+        constraint_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_constraint_name)
 
         # add displacement_constraint in x and z direction
-        model_part.parameters = DisplacementConstraint(active=[True, True, True],  is_fixed=[True, False, True],
+        constraint_model_part.parameters = DisplacementConstraint(active=[True, True, True],  is_fixed=[True, False, True],
                                                        value=[0, 0, 0])
 
         self.body_model_parts.append(rail_model_part)
         self.body_model_parts.append(sleeper_model_part)
         self.body_model_parts.append(rail_pads_model_part)
 
-        self.process_model_parts.append(model_part)
+        self.process_model_parts.append(constraint_model_part)
 
         return sleeper_global_coords
 

@@ -8,7 +8,7 @@ from stem.load import MovingLoad
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, \
     NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
 from stem.output import NodalOutput, GiDOutputParameters, Output, VtkOutputParameters
-
+from stem.stem import Stem
 
 
 def test_moving_load_on_track():
@@ -42,11 +42,11 @@ def test_moving_load_on_track():
     model.add_load_by_geometry_ids([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], moving_load, "moving_load")
 
     model.synchronise_geometry()
-    model.generate_mesh()
+
     # model.gmsh_io.generate_mesh(3, open_gmsh_gui=True)
 
     # Set up solver settings
-    analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
+    analysis_type = AnalysisType.MECHANICAL
     solution_type = SolutionType.QUASI_STATIC
     # Set up start and end time of calculation, time step and etc
     time_integration = TimeIntegration(start_time=0.0, end_time=1.0, delta_time=0.01, reduction_factor=1.0,
@@ -55,12 +55,12 @@ def test_moving_load_on_track():
                                                             displacement_absolute_tolerance=1.0e-9)
     strategy_type = NewtonRaphsonStrategy(min_iterations=6, max_iterations=15, number_cycles=100)
     scheme_type = NewmarkScheme(newmark_beta=0.25, newmark_gamma=0.5, newmark_theta=0.5)
-    linear_solver_settings = Amgcl(tolerance=1e-8, max_iteration=500, scaling=True)
+    linear_solver_settings = Amgcl(tolerance=1e-8, max_iteration=500, scaling=False)
     stress_initialisation_type = StressInitialisationType.NONE
     solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
                                      stress_initialisation_type=stress_initialisation_type,
                                      time_integration=time_integration,
-                                     is_stiffness_matrix_constant=False, are_mass_and_damping_constant=False,
+                                     is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
                                      strategy_type=strategy_type, scheme=scheme_type,
                                      linear_solver_settings=linear_solver_settings, rayleigh_k=0.0,
@@ -97,8 +97,6 @@ def test_moving_load_on_track():
 
     model.output_settings = [vtk_output_process]
 
-
-    from stem.stem import Stem
 
     stem = Stem(model, "benchmark_moving_load2")
     stem.write_all_input_files()
