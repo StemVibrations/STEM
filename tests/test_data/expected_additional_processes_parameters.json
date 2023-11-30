@@ -4,14 +4,38 @@
             {
                 "python_module": "apply_excavation_process",
                 "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
-                "process_name":  "ApplyExcavationProcess",
-                "Parameters":    {
-                    "model_part_name":      "PorousDomain.test_excavation",
-                    "variable_name":        "EXCAVATION",
+                "process_name": "ApplyExcavationProcess",
+                "Parameters": {
+                    "model_part_name": "PorousDomain.test_excavation",
+                    "variable_name": "EXCAVATION",
                     "deactivate_soil_part": true
                 }
+            },
+            {
+                "python_module": "set_parameter_field_process",
+                "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+                "process_name": "SetParameterFieldProcess",
+                "Parameters": {
+                    "model_part_name": "PorousDomain.test_random_field_json",
+                    "variable_name": "YOUNG_MODULUS",
+                    "func_type": "json_file",
+                    "function": "dummy",
+                    "dataset": "dummy",
+                    "dataset_file_name": "json_file.json"
+                }
+            },
+            {
+                "python_module": "set_parameter_field_process",
+                "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+                "process_name": "SetParameterFieldProcess",
+                "Parameters": {
+                    "model_part_name": "PorousDomain.test_random_field_input",
+                    "variable_name": "YOUNG_MODULUS",
+                    "func_type": "input",
+                    "function": "20000*x + 30000*y",
+                    "dataset": "dummy"
+                }
             }
-        ],
-        "loads_process_list": []
+        ]
     }
 }

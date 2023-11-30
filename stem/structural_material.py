@@ -234,3 +234,24 @@ class StructuralMaterial:
 
         return self.material_parameters.get_element_name(n_dim_model, n_nodes_element, analysis_type)
 
+    def get_property_in_material(self, property_name: str) -> Any:
+        """
+        Function to retrieve the requested property for the structural material. The function is capital sensitive!
+
+        Args:
+            - property_name (str): The desired structural property name.
+
+        Raises:
+            - ValueError: If the property is not in not available in the structural material.
+
+        Returns:
+            - Any : The value of the structural property
+
+        """
+
+        property_value = self.material_parameters.__dict__.get(property_name)
+
+        if property_value is None:
+            raise ValueError(f"Property {property_name} is not one of the parameters of the structural material")
+
+        return property_value

@@ -76,39 +76,25 @@
         ]
     },
     "output_processes": {
-        "gid_output": [
+        "vtk_output": [
             {
-                "python_module": "gid_output_process",
+                "python_module": "vtk_output_process",
                 "kratos_module": "KratosMultiphysics",
-                "process_name": "GiDOutputProcess",
+                "process_name": "VtkOutputProcess",
                 "Parameters": {
                     "model_part_name": "PorousDomain.soil1",
-                    "output_name": "dir_test/gid_output_soil1",
-                    "postprocess_parameters": {
-                        "result_file_configuration": {
-                            "gidpost_flags": {
-                                "WriteDeformedMeshFlag": "WriteUndeformed",
-                                "WriteConditionsFlag": "WriteElementsOnly",
-                                "GiDPostMode": "GiD_PostBinary",
-                                "MultiFileFlag": "SingleFile"
-                            },
-                            "file_label": "step",
-                            "output_control_type": "step",
-                            "output_interval": 100,
-                            "body_output": true,
-                            "node_output": false,
-                            "skin_output": false,
-                            "plane_output": [],
-                            "nodal_results": [
-                                "DISPLACEMENT"
-                            ],
-                            "gauss_point_results": [
-                                "GREEN_LAGRANGE_STRAIN_TENSOR",
-                                "CAUCHY_STRESS_TENSOR"
-                            ]
-                        },
-                        "point_data_configuration": []
-                    }
+                    "output_path": "dir_test/output_vtk_soil1/output_vtk_soil1",
+                    "file_format": "ascii",
+                    "output_precision": 7,
+                    "output_control_type": "step",
+                    "output_interval": 100,
+                    "nodal_solution_step_data_variables": [
+                        "DISPLACEMENT"
+                    ],
+                    "gauss_point_variables_in_elements": [
+                        "GREEN_LAGRANGE_STRAIN_TENSOR",
+                        "CAUCHY_STRESS_TENSOR"
+                    ]
                 }
             }
         ]
