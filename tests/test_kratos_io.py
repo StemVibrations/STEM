@@ -348,14 +348,16 @@ class TestKratosModelIO:
         """
         model = create_default_2d_model
 
+        model.project_parameters = create_default_solver_settings
+        model.add_output_settings(**create_default_outputs.__dict__)
+
+        model.post_setup()
+
         model.set_mesh_size(1)
         model.generate_mesh()
 
         kratos_io = KratosIO(ndim=model.ndim)
         kratos_io.project_folder = "dir_test"
-
-        model.project_parameters = create_default_solver_settings
-        model.add_output_settings(**create_default_outputs.__dict__)
 
         actual_dict = kratos_io._KratosIO__write_project_parameters_json(
             model=model,
@@ -545,6 +547,9 @@ class TestKratosModelIO:
                 solver settings.
         """
         model = create_default_2d_model
+        model.project_parameters = create_default_solver_settings
+
+        model.post_setup()
 
         model.set_mesh_size(1)
         model.generate_mesh()
@@ -748,12 +753,18 @@ class TestKratosModelIO:
         """
         model = create_default_2d_model
 
+        # apply default solver settings and output settings
+        model.project_parameters = create_default_solver_settings
+        model.add_output_settings(**create_default_outputs.__dict__)
+
+        # perform post setup
+        model.post_setup()
+
+        # set mesh size and generate mesh
         model.set_mesh_size(1)
         model.generate_mesh()
 
         kratos_io = KratosIO(ndim=model.ndim)
-        model.project_parameters = create_default_solver_settings
-        model.add_output_settings(**create_default_outputs.__dict__)
 
         kratos_io.write_input_files_for_kratos(
             model=model,
@@ -864,10 +875,12 @@ class TestKratosModelIO:
         # load the default 2D model
         model = create_default_2d_model
 
+        model.project_parameters = TestUtils.create_default_solver_settings()
+
+        model.post_setup()
+
         model.set_mesh_size(1)
         model.generate_mesh()
-
-        model.project_parameters = TestUtils.create_default_solver_settings()
 
         # IO object
         kratos_io = KratosIO(ndim=model.ndim)

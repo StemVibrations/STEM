@@ -5,6 +5,7 @@ from typing import List, Dict, Any, Optional, Sequence
 import numpy as np
 
 from stem.IO.kratos_boundaries_io import KratosBoundariesIO
+from stem.IO.kratos_water_processes_io import KratosWaterProcessesIO
 from stem.IO.kratos_loads_io import KratosLoadsIO
 from stem.IO.kratos_material_io import KratosMaterialIO
 from stem.IO.kratos_output_io import KratosOutputsIO
@@ -14,6 +15,7 @@ from stem.structural_material import *
 from stem.boundary import BoundaryParametersABC, AbsorbingBoundary, DisplacementConstraint, RotationConstraint
 from stem.load import LoadParametersABC, LineLoad, MovingLoad, SurfaceLoad, PointLoad
 from stem.additional_processes import ParameterFieldParameters, AdditionalProcessesParametersABC
+from stem.water_processes import WaterProcessParametersABC
 from stem.mesh import Element, Node
 from stem.model import Model
 from stem.model_part import ModelPart, BodyModelPart
@@ -66,6 +68,7 @@ class KratosIO:
         self.material_io = KratosMaterialIO(self.ndim, DOMAIN)
         self.loads_io = KratosLoadsIO(DOMAIN)
         self.boundaries_io = KratosBoundariesIO(DOMAIN)
+        self.water_boundaries_io = KratosWaterProcessesIO(DOMAIN)
         self.outputs_io = KratosOutputsIO(DOMAIN)
         self.solver_io = KratosSolverIO(self.ndim, DOMAIN)
         self.additional_process_io = KratosAdditionalProcessesIO(DOMAIN)
@@ -931,12 +934,12 @@ class KratosIO:
 
             # add load
             if isinstance(mp.parameters, LoadParametersABC):
-                _parameters = self.loads_io.create_load_dict(mp.name, mp.parameters)
-                processes_dict["processes"]["loads_process_list"].append(_parameters)
+                parameters = self.loads_io.create_load_dict(mp.name, mp.parameters)
+                processes_dict["processes"]["loads_process_list"].append(parameters)
 
             # add boundary condition
             elif isinstance(mp.parameters, BoundaryParametersABC):
-                _parameters = self.boundaries_io.create_boundary_condition_dict(
+                parameters = self.boundaries_io.create_boundary_condition_dict(
                     mp.name, mp.parameters
                 )
 
@@ -944,7 +947,13 @@ class KratosIO:
                     _key = "constraints_process_list"
                 else:
                     _key = "loads_process_list"
-                processes_dict["processes"][_key].append(_parameters)
+                processes_dict["processes"][_key].append(parameters)
+
+            elif isinstance(mp.parameters, WaterProcessParametersABC):
+                parameters = self.water_boundaries_io.create_water_process_dict(
+                    mp.name, mp.parameters
+                )
+                processes_dict["processes"]["loads_process_list"].append(parameters)
 
             elif isinstance(mp.parameters, AdditionalProcessesParametersABC):
 

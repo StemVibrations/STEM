@@ -15,6 +15,7 @@ from stem.mesh import Mesh, MeshSettings, Node, Element
 from stem.output import Output, OutputParametersABC
 from stem.additional_processes import ParameterFieldParameters
 from stem.load import *
+from stem.water_processes import WaterProcessParametersABC, UniformWaterPressure
 from stem.solver import Problem, StressInitialisationType
 from stem.output import Output
 from stem.utils import Utils
@@ -1214,6 +1215,46 @@ class Model:
             self.project_parameters.settings.stress_initialisation_type == StressInitialisationType.GRAVITY_LOADING):
             self.__add_gravity_load()
 
+    def __add_water_condition_if_not_provided(self):
+        """
+        Add a water condition if not provided by the user.
+
+        """
+        for process_model_part in self.process_model_parts:
+            # if one of the model parts already contains water, do not add zero water pressure
+            if isinstance(process_model_part.parameters, WaterProcessParametersABC):
+                return
+
+        # if all model parts are structural, do not add water pressure
+        materials = [body_model_part.material for body_model_part in self.body_model_parts]
+        if all(isinstance(material, StructuralMaterial) for material in materials):
+            return
+
+        water_model_part = ModelPart("zero_water_pressure")
+        water_model_part.parameters = UniformWaterPressure(water_pressure=0.0)
+
+        geometry_ids = []
+
+        for body_model_part in self.body_model_parts:
+
+            # if body model part has geometry, add the geometry ids to the list
+            if body_model_part.geometry is not None:
+                if self.ndim == 2:
+                    geometry_ids.extend(list(body_model_part.geometry.surfaces.keys()))
+                elif self.ndim == 3:
+                    geometry_ids.extend(list(body_model_part.geometry.volumes.keys()))
+
+        # add physical group to gmsh
+        self.gmsh_io.add_physical_group(water_model_part.name, self.ndim, geometry_ids)
+
+        # retrieve geometry from gmsh and add to model part
+        water_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, water_model_part.name)
+
+        self.process_model_parts.append(water_model_part)
+
+        # re-synchronise the geometry as the water model part has been added
+        self.synchronise_geometry()
+
     def post_setup(self):
         """
         Post setup of the model.
@@ -1227,6 +1268,7 @@ class Model:
         self.synchronise_geometry()
         self.validate()
 
+        self.__add_water_condition_if_not_provided()
         self.__setup_stress_initialisation()
 
         # finalize gmsh
