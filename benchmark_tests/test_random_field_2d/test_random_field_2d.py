@@ -99,8 +99,6 @@ def test_stem():
 
     input_folder = "benchmark_tests/test_random_field_2d/inputs_kratos"
 
-    # Write KRATOS input files
-    # --------------------------------
     stem = Stem(model, input_folder)
     stem.write_all_input_files()
 
