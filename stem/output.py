@@ -1,54 +1,76 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, auto
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Sequence, Union
 
 
 class NodalOutput(Enum):
     """
     Enum class for variables at the nodes
     """
-    DISPLACEMENT = 1
-    DISPLACEMENT_X = 11
-    DISPLACEMENT_Y = 12
-    DISPLACEMENT_Z = 13
-    VELOCITY = 2
-    VELOCITY_X = 21
-    VELOCITY_Y = 22
-    VELOCITY_Z = 23
-    ACCELERATION = 3
-    ACCELERATION_X = 31
-    ACCELERATION_Y = 32
-    ACCELERATION_Z = 33
-    TOTAL_DISPLACEMENT = 4
-    TOTAL_DISPLACEMENT_X = 41
-    TOTAL_DISPLACEMENT_Y = 42
-    TOTAL_DISPLACEMENT_Z = 43
-    WATER_PRESSURE = 5
-    VOLUME_ACCELERATION = 6
-    VOLUME_ACCELERATION_X = 61
-    VOLUME_ACCELERATION_Y = 62
-    VOLUME_ACCELERATION_Z = 63
+    DISPLACEMENT = auto()
+    DISPLACEMENT_X = auto()
+    DISPLACEMENT_Y = auto()
+    DISPLACEMENT_Z = auto()
+    VELOCITY = auto()
+    VELOCITY_X = auto()
+    VELOCITY_Y = auto()
+    VELOCITY_Z = auto()
+    ACCELERATION = auto()
+    ACCELERATION_X = auto()
+    ACCELERATION_Y = auto()
+    ACCELERATION_Z = auto()
+    TOTAL_DISPLACEMENT = auto()
+    TOTAL_DISPLACEMENT_X = auto()
+    TOTAL_DISPLACEMENT_Y = auto()
+    TOTAL_DISPLACEMENT_Z = auto()
+    WATER_PRESSURE = auto()
+    VOLUME_ACCELERATION = auto()
+    VOLUME_ACCELERATION_X = auto()
+    VOLUME_ACCELERATION_Y = auto()
+    VOLUME_ACCELERATION_Z = auto()
 
 
 class GaussPointOutput(Enum):
     """
     Enum class for variables at the Gauss Point
     """
-    VON_MISES_STRESS = 1
-    FLUID_FLUX_VECTOR = 2
-    HYDRAULIC_HEAD = 3
-    GREEN_LAGRANGE_STRAIN_VECTOR = 41
-    GREEN_LAGRANGE_STRAIN_TENSOR = 42
-    ENGINEERING_STRAIN_VECTOR = 51
-    ENGINEERING_STRAIN_TENSOR = 52
-    CAUCHY_STRESS_VECTOR = 61
-    CAUCHY_STRESS_TENSOR = 62
-    TOTAL_STRESS_VECTOR = 71
-    TOTAL_STRESS_TENSOR = 72
-    FORCE = 81
-    MOMENT = 82
+    VON_MISES_STRESS = auto()
+    FLUID_FLUX_VECTOR = auto()
+    HYDRAULIC_HEAD = auto()
+    GREEN_LAGRANGE_STRAIN_VECTOR = auto()
+    GREEN_LAGRANGE_STRAIN_TENSOR = auto()
+    ENGINEERING_STRAIN_VECTOR = auto()
+    ENGINEERING_STRAIN_TENSOR = auto()
+    CAUCHY_STRESS_VECTOR = auto()
+    CAUCHY_STRESS_TENSOR = auto()
+    TOTAL_STRESS_VECTOR = auto()
+    TOTAL_STRESS_TENSOR = auto()
+
+    # MATERIAL PARAMETERS - soil
+    YOUNG_MODULUS = auto()
+    POISSON_RATIO = auto()
+    DENSITY_SOLID = auto()
+    POROSITY = auto()
+    PERMEABILITY_XX = auto()
+    PERMEABILITY_YY = auto()
+    PERMEABILITY_XY = auto()
+    BULK_MODULUS_SOLID = auto()
+    BIOT_COEFFICIENT = auto()
+
+    PERMEABILITY_YZ = auto()
+    PERMEABILITY_ZX = auto()
+    PERMEABILITY_ZZ = auto()
+    # Material parameters - fluid
+    DENSITY_FLUID = auto()
+    DYNAMIC_VISCOSITY = auto()
+    BULK_MODULUS_FLUID = auto()
+    # umat
+    UMAT_PARAMETERS = auto()
+
+    FORCE = auto()
+    MOMENT = auto()
 
 
 TENSOR_OUTPUTS = [
@@ -59,23 +81,82 @@ TENSOR_OUTPUTS = [
 ]
 
 
-def detect_vector_in_tensor_outputs(requested_outputs: List[GaussPointOutput]):
+def validate_nodal_point_output(nodal_results: Sequence[Union[NodalOutput, str]]):
     """
-    Detects whether gauss point outputs are requested and warns the user
+    Validates that the specified string requested for nodal outputs are compatible with the ones defined in the
+    corresponding enumeration.
 
     Args:
-        - requested_outputs (List[:class:`GaussPointOutput`]): list of requested outputs (gauss point)
+        - nodal_results (Sequence[Union[:class:`NodalOutput`, str]]): the requested nodal outputs.
+
+    Raises:
+        - ValueError: when incorrect outputs are found
+    """
+    __valid_nodal_outputs = list(NodalOutput.__members__.keys())
+    __invalid_outputs: List[str] = []
+    for nr in nodal_results:
+        if isinstance(nr, str) and nr not in __valid_nodal_outputs:
+            __invalid_outputs.append(nr)
+
+    if len(__invalid_outputs) > 0:
+        _invalid_strings = '\n'.join(__invalid_outputs)
+        raise ValueError(f"Incorrect requested output for Nodal outputs:\n"
+                         f"{_invalid_strings}. Check the available "
+                         f"nodal outputs in the Enum NodalOutput.")
+
+
+def validate_gauss_point_output(gauss_point_results: Sequence[Union[GaussPointOutput, str]]):
+    """
+    Validates that the specified string requested for gauss point outputs are compatible with the ones defined in
+    the corresponding enumeration.
+
+    Args:
+        - gauss_point_results (Sequence[Union[:class:`GaussPointOutput`, str]]): the requested gauss point outputs.
+
+    Raises:
+        - ValueError: when incorrect outputs are found
+    """
+    __valid_gauss_point_outputs = list(GaussPointOutput.__members__.keys())
+    __invalid_outputs: List[str] = []
+    for gr in gauss_point_results:
+        if isinstance(gr, str) and gr not in __valid_gauss_point_outputs:
+            __invalid_outputs.append(gr)
+
+    if len(__invalid_outputs) > 0:
+        _invalid_strings = '\n'.join(__invalid_outputs)
+        raise ValueError(f"Incorrect requested output for Gauss point outputs:\n"
+                         f"{_invalid_strings}. Check the available "
+                         f"gauss point outputs in the Enum GaussPointOutput.")
+
+
+def detect_vector_in_tensor_outputs(requested_outputs: Sequence[Union[GaussPointOutput, str]]):
+    """
+    Detects whether tensor gauss point outputs are requested as vector output instead and warns the user if some
+    cause problems. In GiD the vector output for tensors is incorrectly rendered. For example, for 2D tensor with 3
+    components, given the symmetry of the tensor, 6 component are expected when vector output is considered.
+    In GiD, this is rendered with 4 components.
+
+    If such output types are detected the script merely warns the user since the simulation can still run correctly.
+
+    Args:
+        - requested_outputs (Sequence[Union[:class:`GaussPointOutput`, str]]): list of requested outputs (gauss point)
     """
     if len(requested_outputs) > 0:
+        # initialise the detected tensor outputs with vector specification
         detected_tensor_outputs = []
-        for requested_output in requested_outputs:
+        # convert enumerations in strings
+        _string_requested_output = [out.name if isinstance(out, GaussPointOutput) else out for out in requested_outputs]
+        # loop over requested outputs
+        for requested_output in _string_requested_output:
+            # check for any requested output if a tensor output is specified with vector specification
+            # i.e. if it's in the list of TENSOR_OUTPUTS and "VECTOR" is present.
             for tensor_output in TENSOR_OUTPUTS:
-                if (
-                    tensor_output in requested_output.name
-                    and "_VECTOR" in requested_output.name
-                ):
-                    detected_tensor_outputs.append(tensor_output)
+                # if it is, append it to the initialised list
+                if tensor_output in requested_output and "_VECTOR" in requested_output:
+                    detected_tensor_outputs.append(requested_output)
                     break
+
+        # print an explanatory warning if any tensor output was detected
         if len(detected_tensor_outputs):
             _fmt_list = "".join([f" - {outpt} \n" for outpt in detected_tensor_outputs])
             _msg = (
@@ -85,20 +166,29 @@ def detect_vector_in_tensor_outputs(requested_outputs: List[GaussPointOutput]):
             print(_msg)
 
 
-def detect_tensor_outputs(requested_outputs: List[GaussPointOutput]):
+def detect_tensor_outputs(requested_outputs: Sequence[Union[GaussPointOutput, str]]):
     """
-    Detects whether gauss point outputs are requested and warns the user
+    Detects whether gauss point outputs are requested for specific gauss point outputs and warns the user if some
+    cause problems. In VTK and JSON output types the vector output are rendered incorrectly.
+
+    If such output types are detected the script merely warns the user since the simulation can still run correctly.
 
     Args:
         - requested_outputs (List[:class:`GaussPointOutput`]): list of requested outputs (gauss point)
     """
     if len(requested_outputs) > 0:
+        # initialise the detected tensor outputs
         detected_tensor_outputs = []
-        for requested_output in requested_outputs:
-            for tensor_output in TENSOR_OUTPUTS:
-                if tensor_output in requested_output.name:
-                    detected_tensor_outputs.append(tensor_output)
-                    break
+        # convert enumerations in strings
+        _string_requested_output = [out.name if isinstance(out, GaussPointOutput) else out for out in requested_outputs]
+        # loop over requested outputs
+        for requested_output in _string_requested_output:
+            # check for any requested output if a tensor output is specified
+            # i.e. if it's in the list of TENSOR_OUTPUTS
+            if any([tensor_output in requested_output for tensor_output in TENSOR_OUTPUTS]):
+                detected_tensor_outputs.append(requested_output)
+
+        # print an explanatory warning if any tensor output was detected
         if len(detected_tensor_outputs):
             _fmt_list = "".join([f" - {outpt} \n" for outpt in detected_tensor_outputs])
             _msg = (
@@ -117,16 +207,6 @@ class OutputParametersABC(ABC):
     Abstract class for the definition of user output parameters (GiD, VTK, json).
     """
 
-    @abstractmethod
-    def validate(self):
-        """
-        Abstract method for validating user inputs
-
-        Raises:
-            - Exception: Abstract method for validate output parameters is called
-        """
-        raise Exception("Abstract method for validate output parameters is called")
-
 
 @dataclass
 class GiDOutputParameters(OutputParametersABC):
@@ -142,36 +222,30 @@ class GiDOutputParameters(OutputParametersABC):
               `output_control_type` is `time`.
         - output_control_type (str): type of output control, either `step` or `time`.
         - file_format (str): format of output (`binary`,`ascii` or `hdf5`) for the gid_post_mode flag
-        - nodal_results (List[:class:`NodalOutput`]): list of nodal outputs as defined in :class:`NodalOutput`.
-        - gauss_point_results (List[:class:`GaussPointOutput`]): list of gauss point outputs as defined in :class:`GaussPointOutput`.
+        - nodal_results (Sequence[Union[:class:`NodalOutput`, str]]): list of nodal outputs as defined in \
+            :class:`NodalOutput`.
+        - gauss_point_results (Sequence[Union[:class:`GaussPointOutput`, str]]): list of gauss point outputs as \
+            defined in :class:`GaussPointOutput`.
         - file_label (str): labelling format for the files (`step` or `time`)
-        - body_output (bool):
-        - node_output (bool):
-        - skin_output (bool):
-        - plane_output (List[str]):
-        - point_data_configuration (List[str]):
     """
 
     # general inputs
     output_interval: float
     output_control_type: str = "step"
     file_format: str = "binary"
-    nodal_results: List[NodalOutput] = field(default_factory=lambda: [])
-    gauss_point_results: List[GaussPointOutput] = field(default_factory=lambda: [])
+    nodal_results: Sequence[Union[NodalOutput, str]] = field(default_factory=lambda: [])
+    gauss_point_results: Sequence[Union[GaussPointOutput, str]] = field(default_factory=lambda: [])
     # GiD specific inputs
     file_label: str = "step"
-    # optional
-    body_output: bool = True
-    node_output: bool = False
-    skin_output: bool = False
-    plane_output: List[str] = field(default_factory=lambda: [])
-    point_data_configuration: List[str] = field(default_factory=lambda: [])
 
-    def validate(self):
+    def __post_init__(self):
         """
-        Validates the gauss point results requested for GiD output.
+        Validates the asked outputs for both nodal and gauss point (element) outputs and \
+        validates the gauss point results requested for GiD output.
         Prints warnings if vector format is requested for tensor output.
         """
+        validate_nodal_point_output(self.nodal_results)
+        validate_gauss_point_output(self.gauss_point_results)
         detect_vector_in_tensor_outputs(requested_outputs=self.gauss_point_results)
 
 
@@ -189,9 +263,10 @@ class VtkOutputParameters(OutputParametersABC):
               `output_control_type` is `time`.
         - output_control_type (str): type of output control, either `step` or `time`.
         - file_format (str): file format for VTK, either `binary` or `ascii` are allowed.
-        - nodal_results (List[:class:`NodalOutput`]): list of nodal outputs as defined in :class:`NodalOutput`.
-        - gauss_point_results (List[:class:`GaussPointOutput`]): list of gauss point outputs as \
-              defined in :class:`GaussPointOutput`.
+        - nodal_results (Sequence[Union[:class:`NodalOutput`, str]]): list of nodal outputs as defined in \
+            :class:`NodalOutput`.
+        - gauss_point_results (Sequence[Union[:class:`GaussPointOutput`, str]]): list of gauss point outputs as \
+            defined in :class:`GaussPointOutput`.
           output_precision (int): precision of the output for ascii. Default is 7.
     """
 
@@ -199,17 +274,21 @@ class VtkOutputParameters(OutputParametersABC):
     output_interval: float
     output_control_type: str = "step"
     file_format: str = "binary"
-    nodal_results: List[NodalOutput] = field(default_factory=lambda: [])
-    gauss_point_results: List[GaussPointOutput] = field(default_factory=lambda: [])
+    nodal_results: Sequence[Union[NodalOutput, str]] = field(default_factory=lambda: [])
+    gauss_point_results: Sequence[Union[GaussPointOutput, str]] = field(default_factory=lambda: [])
     # VTK specif inputs
     output_precision: int = 7
 
-    def validate(self):
+    def __post_init__(self):
         """
-        Validates the gauss point results requested for VTK output.
+        Validates the asked outputs for both nodal and gauss point (element) outputs and \
+        validates the gauss point results requested for VTK output.
         Prints warnings if tensor are asked in output.
         """
+        validate_nodal_point_output(self.nodal_results)
+        validate_gauss_point_output(self.gauss_point_results)
         detect_tensor_outputs(requested_outputs=self.gauss_point_results)
+
 
 
 @dataclass
@@ -221,23 +300,27 @@ class JsonOutputParameters(OutputParametersABC):
         - :class:`OutputParametersABC`
 
     Attributes:
-        - time_frequency (float): time frequency of the output [s].
-        - nodal_results (List[:class:`NodalOutput`]): list of nodal outputs as defined in :class:`NodalOutput`.
-        - gauss_point_results (List[:class:`GaussPointOutput`]): list of gauss point outputs as \
-              defined in :class:`GaussPointOutput`.
+        - output_interval (float): time frequency of the output [s].
+        - nodal_results (Sequence[Union[:class:`NodalOutput`, str]]): list of nodal outputs as defined in \
+            :class:`NodalOutput`.
+        - gauss_point_results (Sequence[Union[:class:`GaussPointOutput`, str]]): list of gauss point outputs as \
+            defined in :class:`GaussPointOutput`.
     """
 
     # JSON specif inputs
-    time_frequency: float
+    output_interval: float
     # general inputs
-    nodal_results: List[NodalOutput] = field(default_factory=lambda: [])
-    gauss_point_results: List[GaussPointOutput] = field(default_factory=lambda: [])
+    nodal_results: Sequence[Union[NodalOutput, str]] = field(default_factory=lambda: [])
+    gauss_point_results: Sequence[Union[GaussPointOutput, str]] = field(default_factory=lambda: [])
 
-    def validate(self):
+    def __post_init__(self):
         """
-        Validates the gauss point results requested for JSON output.
+        Validates the asked outputs for both nodal and gauss point (element) outputs and \
+        the gauss point results requested for JSON output.
         Prints warnings if tensor are asked in output.
         """
+        validate_nodal_point_output(self.nodal_results)
+        validate_gauss_point_output(self.gauss_point_results)
         detect_tensor_outputs(requested_outputs=self.gauss_point_results)
 
 

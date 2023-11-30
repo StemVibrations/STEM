@@ -98,21 +98,15 @@ def test_stem():
     # Gauss point results
     gauss_point_results = []
 
-    # Define the output process
-    vtk_output_process = Output(
-        part_name="porous_computational_model_part",
-        output_name="vtk_output",
-        output_dir="output",
-        output_parameters=VtkOutputParameters(
-            file_format="ascii",
-            output_interval=10,
-            nodal_results=nodal_results,
-            gauss_point_results=gauss_point_results,
-            output_control_type="step"
-        )
-    )
 
-    model.output_settings = [vtk_output_process]
+    # Define the output process
+    model.add_output_settings(output_parameters=VtkOutputParameters(
+        file_format="ascii",
+        output_interval=10,
+        nodal_results=nodal_results,
+        gauss_point_results=gauss_point_results,
+        output_control_type="step"
+    ), part_name="porous_computational_model_part", output_dir="output", output_name="vtk_output")
 
     # Define the kratos input folder
     input_folder = r"benchmark_tests/test_lysmer_boundary_column2d_triangle/inputs_kratos"

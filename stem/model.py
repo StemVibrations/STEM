@@ -5,12 +5,15 @@ import numpy.typing as npty
 
 from gmsh_utils import gmsh_IO
 
+from stem.field_generator import RandomFieldGenerator
 from stem.model_part import ModelPart, BodyModelPart
 from stem.soil_material import *
 from stem.structural_material import *
 from stem.boundary import *
 from stem.geometry import Geometry
 from stem.mesh import Mesh, MeshSettings, Node, Element
+from stem.output import Output, OutputParametersABC
+from stem.additional_processes import ParameterFieldParameters
 from stem.load import *
 from stem.solver import Problem, StressInitialisationType
 from stem.output import Output
@@ -360,6 +363,228 @@ class Model:
 
         self.process_model_parts.append(model_part)
 
+    def add_output_settings(self, output_parameters: OutputParametersABC, part_name: Optional[str] = None,
+                            output_dir: str = "./", output_name: Optional[str] = None):
+
+        """
+        Adds an output to the model, including the output folder, the name of the output file (if applicable) and the
+        part of interest to output.
+
+        If no part is specified, the whole model is considered as output.
+
+        Args:
+            - output_parameters (:class:`OutputParametersABC`): class containing the output parameters
+            - part_name (Optional[str]): name of the submodelpart to be given in output. If None, all the model is
+                provided in  output.
+            - output_dir (str): output directory for the relative or absolute path to the output file. The \
+                path will be created if it does not exist yet. \n
+
+                example1='test1' results in the test1 output folder relative to current folder as './test1'\
+                example2='path1/path2/test2' saves the outputs in './path1/path2/test2' \
+                example3='C:/Documents/yourproject/test3' saves the outputs in 'C:/Documents/yourproject/test3'.
+
+                if output_dir is None, then the current directory is assumed.
+
+                [NOTE]: for VTK file type, the content of the target directory will be deleted. Therefore a subfolder is
+                always appended to the specified output directory to avoid erasing important memory content.
+                The appended folder is defined based on the submodelpart name specified.
+
+            - output_name (Optional[str]): Name for the output file. This parameter is \
+                  used by GiD and JSON outputs while is ignored in VTK. If the name is not \
+                  given, the part_name is used instead.
+
+        Raises:
+            - ValueError: if the model part for which output needs to be requested doesn't exist.
+
+        """
+
+        # check if the model part exists (if None, all model is output)
+        if (part_name is not None and part_name != "porous_computational_model_part" and
+                self.__get_model_part_by_name(part_name=part_name) is None):
+            raise ValueError("Model part for which output needs to be requested doesn't exist.")
+
+        self.output_settings.append(
+            Output(output_parameters=output_parameters,
+                   part_name=part_name,
+                   output_dir=output_dir,
+                   output_name=output_name)
+        )
+
+    def add_output_settings_by_coordinates(self, coordinates: Sequence[Sequence[float]],
+                                           output_parameters: OutputParametersABC, part_name: str,
+                                           output_dir: str = "./", output_name: Optional[str] = None):
+        """
+        Sets coordinates where the output is to be defined.
+        The coordinates have to be laying on an existing geometry surface.
+        Both the first- and end-point has to lie on one of the edges of the surface. A new process model part is
+        created, to specify the list of nodes of interest.
+
+        Current limitations:
+            - The nodes have to be laying on an existing geometry surface.
+            - The first and endpoint have to lie on one of the edges of the surface.
+            - A single point cannot be provided, but is always a sequence of lines.
+
+        Args:
+            - coordinates (Optional[Sequence[Sequence[float]]]): A list of nodes that are of interest for the
+                outputs.
+            - output_parameters (:class:`OutputParametersABC`): class containing the output parameters
+            - part_name (str): name of the submodelpart name for the output. Must be different from
+                existing parts.
+            - output_dir (Optional[str]): output directory for the relative or absolute path to the output file. The \
+                path will be created if it does not exist yet. \n
+
+                example1='test1' results in the test1 output folder relative to current folder as './test1'\
+                example2='path1/path2/test2' saves the outputs in './path1/path2/test2' \
+                example3='C:/Documents/yourproject/test3' saves the outputs in 'C:/Documents/yourproject/test3'.
+
+                if output_dir is None, then the current directory is assumed.
+
+                [NOTE]: for VTK file type, the content of the target directory will be deleted. Therefore, a subfolder
+                is always appended to the specified output directory to avoid erasing important memory content.
+                The appended folder is defined based on the submodelpart name specified.
+
+            - output_name (Optional[str]): Name for the output file. This parameter is \
+                  used by GiD and JSON outputs while is ignored in VTK. If the name is not \
+
+        """
+
+        # TODO: add validation for sequential pair of points to lie on the an existing geometry surface.
+        # TODO: add validation for start and end-point to lie on the edges
+
+        # validation of inputs
+        self.validate_coordinates(coordinates)
+
+        gmsh_input = {part_name: {"coordinates": coordinates, "ndim": 1}}
+
+        self.gmsh_io.generate_geometry(gmsh_input, "")
+
+        # create model part
+        model_part = ModelPart(part_name)
+        model_part.parameters = output_parameters
+
+        # set the geometry of the model part
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, part_name)
+
+        self.process_model_parts.append(model_part)
+
+        # add output to the output list
+        self.add_output_settings(output_parameters=output_parameters, part_name=part_name,
+                                 output_dir=output_dir, output_name=output_name)
+
+    @staticmethod
+    def __exclude_non_output_nodes(process_model_part: ModelPart, eps: float = 1e-06) -> Mesh:
+        """
+        Exclude the nodes that are further than `eps` to the requested output nodes for the output model part.
+
+        Args:
+            - process_model_part (:class:`stem.model_part.ModelPart`): the output process model part.
+            - eps (float): the radius distance to search for nodes. In practice is a tolerance for the search
+                algorithm to look for close nodes.
+
+        Raises:
+            - ValueError: if the parameters of the model part are None.
+            - ValueError: if the model part is not an output model part.
+            - ValueError: if the model part has no geometry.
+            - ValueError: if the model part is not yet meshed.
+
+        Returns:
+            - :class:`stem.mesh.Mesh`: the filtered mesh for the output process model part.
+
+        """
+
+        if process_model_part.parameters is None:
+            raise ValueError("The model part doesn't have parameters.")
+
+        if not isinstance(process_model_part.parameters, OutputParametersABC):
+            raise ValueError("The model part is not an output part.")
+
+        if process_model_part.geometry is None:
+            raise ValueError("The model part has no geometry.")
+
+        if process_model_part.mesh is None:
+            raise ValueError("process model part has not been meshed yet!")
+
+        # retrieve ids and coordinates of the nodes
+        ids = list(process_model_part.mesh.nodes.keys())
+        coordinates = np.stack([node.coordinates for node in process_model_part.mesh.nodes.values()])
+
+        # compute pairwise distances between the geometry nodes (actual outputs and subset of the mesh nodes) and the
+        # mesh nodes
+        output_coordinates = np.stack([np.array(point.coordinates)
+                                       for point in process_model_part.geometry.points.values()])
+
+        # find the ids of the nodes in the model that are close to the specified coordinates.
+        tmp_ids = np.where((np.isclose(output_coordinates[:, None], coordinates, atol=eps)).all(axis=2))[1]
+
+        # only keep the node ids close to the requested node (smaller than eps meters)
+        filtered_node_ids = np.array(ids)[tmp_ids]
+
+        new_mesh = Mesh(ndim=process_model_part.mesh.ndim)
+        new_mesh.nodes = {node_id: process_model_part.mesh.nodes[node_id] for node_id in filtered_node_ids}
+        new_mesh.elements = {}
+        return new_mesh
+
+    def add_field(self, part_name: str,  field_parameters: ParameterFieldParameters):
+        """
+        Add a parameter field to a given model part (specified by the part_name input). if the `mean_value` attribute
+        of the field generator is None, the corresponding material property is used as mean.
+
+        Args:
+            - part_name (str): model of the part name where to apply the random field generation.
+            - field_parameters (:class:`stem.additional_processes.ParameterFieldParameters`): the objects containing \
+                the parameters necessary for the definition of the field.
+
+        Raises:
+            - ValueError: if the part name is not a body model part.
+            - ValueError: if the body model part has no material.
+            - ValueError: if the mean value of the material property is a boolean.
+
+        """
+
+        # Check if the model part exists and retrieve the part
+        target_part = self.__get_model_part_by_name(part_name=part_name)
+
+        # Check if the model part is a body model part
+        if not isinstance(target_part, BodyModelPart):
+            raise ValueError(f"The target part, `{part_name}`, is not a body model part.")
+
+        # Check that the body model part has a material
+        if target_part.material is None:
+            raise ValueError(f"No material assigned to the body model part!")
+
+        # define the name of the new model part to generate the random field
+        new_part_name = part_name + "_" + field_parameters.property_name.lower() + "_field"
+
+        # validation for json input files
+        if field_parameters.function_type == "json_file":
+            if isinstance(field_parameters.field_generator, RandomFieldGenerator):
+                if field_parameters.field_generator.mean_value is None:
+
+                    # Get the property of the material, this is the mean value of the random field.
+                    # Checks also if the material of the body model part contains the desired parameter
+                    mean_value_material = target_part.material.get_property_in_material(
+                        property_name=field_parameters.property_name)
+
+                    if isinstance(mean_value_material, bool) or not isinstance(mean_value_material, (float, int)):
+                        raise ValueError("The property for which a random field needs to be generated, "
+                                         f"`{field_parameters.property_name}` is not a numeric value.")
+
+                    field_parameters.field_generator.mean_value = mean_value_material
+
+            if field_parameters.field_file_name is None:
+                field_parameters.field_file_name = new_part_name + ".json"
+
+        model_part_geometry_ids = self.gmsh_io.geo_data["physical_groups"][part_name]["geometry_ids"]
+        model_part_ndim = self.gmsh_io.geo_data["physical_groups"][part_name]["ndim"]
+        # create the field_parameter physical group and model part
+        self.gmsh_io.add_physical_group(new_part_name, model_part_ndim, model_part_geometry_ids)
+        model_part = ModelPart(new_part_name)
+
+        model_part.parameters = field_parameters
+
+        # add the field_parameter part to process model parts
+        self.process_model_parts.append(model_part)
+
     def synchronise_geometry(self):
         """
         Synchronise the geometry of all model parts and synchronise the geometry of the whole model. This function
@@ -393,15 +618,25 @@ class Model:
         """
         self.mesh_settings.element_size = element_size
 
-    def generate_mesh(self):
+    def generate_mesh(self, save_file: bool = False, mesh_output_dir: str = "./", mesh_name: str = "mesh_file",
+                      open_gmsh_gui: bool = False):
         """
         Generate the mesh for the whole model.
+
+        Args:
+            - save_file (bool): If True, saves mesh data to gmsh msh file. (default is False)
+            - mesh_name (str): Name of gmsh model and mesh output file.  (default is working directory)
+            - mesh_output_dir (bool): Output directory of mesh file. (default is `mesh_file`)
+            - open_gmsh_gui (bool): User indicates whether to open gmsh interface (default is False)
 
         """
 
         # generate mesh
-        self.gmsh_io.generate_mesh(self.ndim, element_size=self.mesh_settings.element_size,
-                                   order=self.mesh_settings.element_order)
+        self.gmsh_io.generate_mesh(
+            self.ndim,
+            element_size=self.mesh_settings.element_size, order=self.mesh_settings.element_order,
+            save_file=save_file, mesh_output_dir=mesh_output_dir, mesh_name=mesh_name, open_gmsh_gui=open_gmsh_gui
+        )
 
         # collect all model parts
         all_model_parts: List[Union[BodyModelPart, ModelPart]] = []
@@ -411,6 +646,11 @@ class Model:
         # add the mesh to each model part
         for model_part in all_model_parts:
             model_part.mesh = Mesh.create_mesh_from_gmsh_group(self.gmsh_io.mesh_data, model_part.name)
+
+            # adjust the mesh of output model parts. Exclude element, and keep only the nodes of corresponding to the
+            # output locations.
+            if isinstance(model_part.parameters, OutputParametersABC):
+                model_part.mesh = self.__exclude_non_output_nodes(model_part)
 
         # per process model part, check if the condition elements are applied to a body model part and set the
         # node ordering of the condition elements to match the body elements
@@ -423,6 +663,39 @@ class Model:
 
                 # check the ordering of the nodes of the conditions. If it does not match flip the order.
                 self.__check_ordering_process_model_part(matched_elements, process_model_part)
+
+        # perform post mesh operations
+        self.__post_mesh()
+
+    def __post_mesh(self):
+        """
+        Function to be called after the mesh is generated and finalised.
+            - initialise field parameters (e.g., random fields).
+
+        """
+        self.__initialise_fields()
+
+    def __initialise_fields(self):
+        """
+        Initialise the field parameters for the field generator objects.
+
+        Raises:
+            - ValueError: if the field generator is not provided for a parameter field.
+
+        """
+
+        for model_part in self.process_model_parts:
+
+            if isinstance(model_part.parameters, ParameterFieldParameters):
+
+                # initialise the fields for the json output files. Tiny expressions don't require it.
+                if model_part.parameters.function_type == "json_file":
+                    if model_part.parameters.field_generator is None:
+                        raise ValueError("Field generator is not provided for parameter field.")
+
+                    centroids = self.get_centroids_elements_model_part(model_part.name)
+                    if centroids is not None:
+                        model_part.parameters.field_generator.generate(centroids)
 
     @staticmethod
     def __get_model_part_element_connectivities(model_part: ModelPart) -> npty.NDArray[np.int64]:
@@ -628,6 +901,59 @@ class Model:
 
         # add gravity load to process model parts
         self.process_model_parts.append(model_part)
+
+    def __get_model_part_by_name(self, part_name: str) -> Optional[ModelPart]:
+        """
+        Find the model part matching the given part_name
+
+        Args:
+            - part_name (str): the name of the part to retrieve.
+
+        Returns:
+            - Optional[:class:`stem.model_part.ModelPart`]: matched model part or None if no match.
+        """
+
+        for model_part in self.get_all_model_parts():
+            if model_part.name == part_name:
+                return model_part
+        print(f"Model part `{part_name}` not found!")
+        return None
+
+    def get_centroids_elements_model_part(self, part_name: str) -> Optional[npty.NDArray[np.float64]]:
+        """
+        Returns the centroid of all the elements in the model part.
+
+        Args:
+            - part_name (str): the model part for which centroids are required.
+
+
+        Raises:
+            - ValueError: if part_name specified is not part of the model.
+            - ValueError: if the part_name has no mesh yet.
+            - ValueError: if the part_name has no elements.
+
+        Returns:
+            - Optional[npty.NDArray[np.float64]]: centroids of the N elements in the part name \
+                as (N,3) array.
+
+        """
+        model_part = self.__get_model_part_by_name(part_name)
+        if model_part is None:
+            raise ValueError(f"Model part `{part_name}` is not part of the model parts in the model."
+                             f"Please add it or check the part name.")
+        if model_part.mesh is None:
+            raise ValueError(f"Mesh of model part `{part_name}` not available. Please run the model.generate_mesh() "
+                             f"method.")
+
+        if model_part.mesh.elements is None:
+            raise ValueError(f"No elements for model part `{part_name}`. Check if the a wrong part was selected.")
+
+        nodes = model_part.mesh.nodes
+        coordinates = np.stack([[nodes[nid].coordinates for nid in el.node_ids]
+                                for el in model_part.mesh.elements.values()])
+
+        centroids: npty.NDArray[np.float64] = np.squeeze(np.mean(coordinates, axis=1))
+        return centroids
 
     def __add_gravity_load(self):
         """
