@@ -22,7 +22,7 @@ class TestWaterProcessesIO:
 
         # initialise model
         kratos_water_boundary_io = KratosWaterProcessesIO(domain="PorousDomain")
-        uniform_water_boundary_dict = kratos_water_boundary_io.create_water_boundary_condition_dict(
+        uniform_water_boundary_dict = kratos_water_boundary_io.create_water_process_dict(
             "test_water_boundary", water_boundary_parameters)
 
         # set expected water boundary dictionary
@@ -46,7 +46,7 @@ class TestWaterProcessesIO:
 
         # expected not implemented error
         with pytest.raises(NotImplementedError, match="Water boundary type: PointLoad not implemented."):
-            non_water_boundary_dict = kratos_water_boundary_io.create_water_boundary_condition_dict(
+            non_water_boundary_dict = kratos_water_boundary_io.create_water_process_dict(
                 "test_non_water_boundary", non_water_boundary)
 
 
