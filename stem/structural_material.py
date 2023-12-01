@@ -57,6 +57,8 @@ class EulerBeam(StructuralParametersABC):
     # Euler beam parameters for 3D
     I22: Optional[float] = None
     TORSIONAL_INERTIA: Optional[float] = None
+    RAYLEIGH_ALPHA: Optional[float] = 0.0
+    RAYLEIGH_BETA: Optional[float] = 0.0
 
     def __post_init__(self):
         """
@@ -98,7 +100,10 @@ class EulerBeam(StructuralParametersABC):
                                              "Euler beam")
 
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
-            element_name = f"GeoCrBeamElementLinear{n_dim_model}D{n_nodes_element}N"
+            if n_dim_model == 2:
+                element_name = f"GeoCrBeamElementLinear2D{n_nodes_element}N"
+            elif n_dim_model == 3:
+                element_name = f"GeoCrBeamElement3D{n_nodes_element}N"
         else:
             raise ValueError(f"Analysis type {analysis_type} is not implemented for euler beams.")
 

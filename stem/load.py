@@ -78,11 +78,16 @@ class PointLoad(LoadParametersABC):
         Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations,
                                              "Point load")
 
-        if analysis_type != AnalysisType.MECHANICAL_GROUNDWATER_FLOW and analysis_type != AnalysisType.MECHANICAL:
-            raise ValueError("Point load can only be applied in mechanical or mechanical groundwater flow analysis")
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+            element_name = f"PointLoadCondition{n_dim_model}D{n_nodes_element}N"
+
+        else:
+
+            if analysis_type != AnalysisType.MECHANICAL_GROUNDWATER_FLOW and analysis_type != AnalysisType.MECHANICAL:
+                raise ValueError("Point load can only be applied in mechanical or mechanical groundwater flow analysis")
 
         # Point load does not have a name
-        return None
+        return element_name
 
 
 @dataclass
