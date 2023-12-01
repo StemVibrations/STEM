@@ -60,10 +60,9 @@ def test_stem():
     # Synchronize geometry
     model.synchronise_geometry()
 
-    # Set mesh size and generate mesh
+    # Set mesh size
     # --------------------------------
     model.set_mesh_size(element_size=0.45)
-    model.generate_mesh()
 
     # Define project parameters
     # --------------------------------
@@ -96,19 +95,13 @@ def test_stem():
     nodal_results = [NodalOutput.VELOCITY]
 
     # Define the output process
-    vtk_output_process = Output(
-        output_name="vtk_output",
-        output_dir="output",
-        output_parameters=VtkOutputParameters(
-            file_format="ascii",
-            output_interval=10,
-            nodal_results=nodal_results,
-            gauss_point_results=[],
-            output_control_type="step"
-        )
-    )
-    # add the output process to the model
-    model.output_settings = [vtk_output_process]
+    model.add_output_settings(output_parameters=VtkOutputParameters(
+        file_format="ascii",
+        output_interval=10,
+        nodal_results=nodal_results,
+        gauss_point_results=[],
+        output_control_type="step"
+    ), output_dir="output", output_name="vtk_output")
 
     # Define the kratos input folder
     input_folder = "benchmark_tests/test_1d_wave_prop_drained_soil/inputs_kratos"

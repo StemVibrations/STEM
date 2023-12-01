@@ -93,10 +93,9 @@ def test_stem():
     # Show geometry and geometry ids
     # model.show_geometry(show_line_ids=True, show_point_ids=True)
 
-    # Set mesh size and generate mesh
+    # Set mesh size
     # --------------------------------
     model.set_mesh_size(element_size=0.05)
-    model.generate_mesh()
 
     # Define project parameters
     # --------------------------------
@@ -129,19 +128,14 @@ def test_stem():
     gauss_point_results = []
 
     # Define the output process
-    vtk_output_process = Output(
-        output_name="vtk_output",
-        output_dir="output",
-        output_parameters=VtkOutputParameters(
-            file_format="ascii",
-            output_interval=10,
-            nodal_results=nodal_results,
-            gauss_point_results=gauss_point_results,
-            output_control_type="step"
-        )
-    )
+    model.add_output_settings(output_parameters=VtkOutputParameters(
+        file_format="ascii",
+        output_interval=10,
+        nodal_results=nodal_results,
+        gauss_point_results=gauss_point_results,
+        output_control_type="step"
+    ), output_dir="output", output_name="vtk_output")
 
-    model.output_settings = [vtk_output_process]
     input_folder = "benchmark_tests/test_moving_load_on_beam_on_soil/inputs_kratos"
 
     # Write KRATOS input files

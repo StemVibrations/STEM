@@ -63,10 +63,9 @@ def test_stem():
     # Show geometry and geometry ids
     # model.show_geometry(show_line_ids=True)
 
-    # Set mesh size and generate mesh
+    # Set mesh size
     # --------------------------------
     model.set_mesh_size(element_size=2)
-    model.generate_mesh()
 
     # Define project parameters
     # --------------------------------
@@ -102,20 +101,13 @@ def test_stem():
     gauss_point_results = []
 
     # Define the output process
-    vtk_output_process = Output(
-        part_name="porous_computational_model_part",
-        output_name="vtk_output",
-        output_dir="output",
-        output_parameters=VtkOutputParameters(
-            file_format="ascii",
-            output_interval=10,
-            nodal_results=nodal_results,
-            gauss_point_results=gauss_point_results,
-            output_control_type="step"
-        )
-    )
-
-    model.output_settings = [vtk_output_process]
+    model.add_output_settings(output_parameters=VtkOutputParameters(
+        file_format="ascii",
+        output_interval=10,
+        nodal_results=nodal_results,
+        gauss_point_results=gauss_point_results,
+        output_control_type="step"
+    ), part_name="porous_computational_model_part", output_dir="output", output_name="vtk_output")
 
     input_folder = "benchmark_tests/test_lysmer_boundary_column2d_triangle_with_two_soils/inputs_kratos"
 

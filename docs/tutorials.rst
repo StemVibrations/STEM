@@ -167,14 +167,12 @@ dimension, "2".
     model.add_boundary_condition_by_geometry_ids(2, [2, 4, 5, 6, 7, 10, 11, 12, 15, 16, 17],
                                                  roller_displacement_parameters, "sides_roller")
 
-After which the mesh size can be set. The element size for the mesh can be defined as a single value and then the mesh
-can be generated.
+After which the mesh size can be set. The element size for the mesh can be defined as a single value, the mesh
+will be generated when the Stem class is initialised.
 
 .. code-block:: python
 
     model.set_mesh_size(element_size=1.0)
-
-    model.generate_mesh()
 
 Now that the geometry is defined, the solver settings of the model has to be set.
 The analysis type is set to "MECHANICAL" and the solution type is set to "DYNAMIC".
@@ -250,6 +248,7 @@ results will be written every time step.
 Now that the model is set up, the calculation is almost ready to be ran.
 
 Firstly the Stem class is initialised, with the model and the directory where the input files will be written to.
+While initialising the Stem class, the mesh will be generated.
 
 .. code-block:: python
 
@@ -438,14 +437,12 @@ dimension, "2".
     model.add_boundary_condition_by_geometry_ids(2, [2, 4, 5, 6, 7, 10, 11, 12, 15, 16, 17],
                                                  roller_displacement_parameters, "sides_roller")
 
-After which the mesh size can be set. The element size for the mesh can be defined as a single value and then the mesh
-can be generated.
+After which the mesh size can be set. The element size for the mesh can be defined as a single value, the mesh
+will be generated when the Stem class is initialised.
 
 .. code-block:: python
 
     model.set_mesh_size(element_size=1.0)
-
-    model.generate_mesh()
 
 Now that the geometry is defined, the solver settings of the model has to be set.
 The analysis type is set to "MECHANICAL" and the solution type is set to "DYNAMIC".
@@ -522,6 +519,7 @@ results will be written every time step.
 Now that the model is set up, the calculation is almost ready to be ran.
 
 Firstly the Stem class is initialised, with the model and the directory where the input files will be written to.
+While initialising the Stem class, the mesh will be generated.
 
 .. code-block:: python
 
