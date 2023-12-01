@@ -23,7 +23,6 @@ def test_stem():
     ndim = 2
     model = Model(ndim)
 
-
     spring_damper_material_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[0, 10000, 0],
                                                             NODAL_ROTATIONAL_STIFFNESS=[0, 0, 0],
                                                             NODAL_DAMPING_COEFFICIENT=[0, 0, 0],
@@ -34,6 +33,7 @@ def test_stem():
     spring_damper_coordinates = [(0, 0, 0), (0, -3, 0)]
     gmsh_input = {"spring_damper": {"coordinates": spring_damper_coordinates, "ndim": 1}}
     model.gmsh_io.generate_geometry(gmsh_input, "")
+
 
     spring_damper_model_part = BodyModelPart("spring_damper")
     spring_damper_model_part.material = spring_damper_material

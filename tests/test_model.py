@@ -1596,6 +1596,58 @@ class TestModel:
         npt.assert_equal(node_ids_process_model_part_1, expected_process_connectivities)
         npt.assert_equal(node_ids_process_model_part_2, expected_process_connectivities)
 
+    def test_adjusting_mesh_for_spring_dashpot_elements(self):
+        """
+        Test that the mesh is adjusted correctly when adding spring elements on nodes at the edges of a line.
+
+        """
+        model = Model(ndim=2)
+
+        # add elastic spring damper element
+        spring_damper = ElasticSpringDamper(
+            NODAL_DISPLACEMENT_STIFFNESS=[1, 1, 1],
+            NODAL_ROTATIONAL_STIFFNESS=[1, 1, 2],
+            NODAL_DAMPING_COEFFICIENT=[1, 1, 3],
+            NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[1, 1, 4])
+
+        # create model part
+        # 3 lines, one broken with a mid-point, which should result in 4 springs
+        # the lines are in different size so all the line are broken in smaller lines except the last.
+
+        top_coordinates = [(0, 1, 0), (0, 2, 0), (1, 1, 0), (2, 0.3, 0)]
+        bottom_coordinates = [(0, 0, 0), (0, 1, 0), (1, 0, 0), (2, 0, 0)]
+
+        gmsh_input_top = {"top_coordinates": {"coordinates": top_coordinates, "ndim": 0}}
+        gmsh_input_bottom = {"bottom_coordinates": {"coordinates": bottom_coordinates, "ndim": 0}}
+
+        model.gmsh_io.generate_geometry(gmsh_input_top, "")
+        model.gmsh_io.generate_geometry(gmsh_input_bottom, "")
+
+        # create rail pad geometries
+        top_point_ids = model.gmsh_io.make_points(top_coordinates)
+        bot_point_ids = model.gmsh_io.make_points(bottom_coordinates)
+
+        spring_line_ids = [model.gmsh_io.create_line([top_point_id, bot_point_id])
+                           for top_point_id, bot_point_id in zip(top_point_ids, bot_point_ids)]
+
+        model.gmsh_io.add_physical_group("spring_damper", 1, spring_line_ids)
+        # assign spring damper to geometry
+        spring_damper_model_part = BodyModelPart("spring_damper")
+        spring_damper_model_part.material = StructuralMaterial("spring_damper", spring_damper)
+        spring_damper_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, "spring_damper")
+
+        # add model parts to model
+        model.body_model_parts.append(spring_damper_model_part)
+        model.synchronise_geometry()
+        model.set_mesh_size(0.4)
+
+        model.generate_mesh()
+
+        # check the spring node ids are correct
+        npt.assert_equal(list(model.body_model_parts[0].mesh.nodes), [2, 1, 5, 3, 6, 4, 7])
+        # check that spring element ids are correct
+        npt.assert_almost_equal(list(model.body_model_parts[0].mesh.elements), [18, 19, 20, 21])
+
     def test_add_field_raises_errors(
             self,
             create_default_2d_soil_material: SoilMaterial

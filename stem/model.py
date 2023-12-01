@@ -1,4 +1,4 @@
-from typing import List, Sequence, Dict, Any, Optional, Union
+from typing import List, Sequence, Dict, Any, Optional, Union, Tuple
 
 import numpy as np
 import numpy.typing as npty
@@ -23,7 +23,7 @@ from stem.globals import ELEMENT_DATA, VERTICAL_AXIS, GRAVITY_VALUE,  OUT_OF_PLA
 
 
 NUMBER_TYPES = (int, float, np.int64, np.float64)
-
+MAX_ITERATIONS_WHILE = 100000
 
 class Model:
     """
@@ -504,20 +504,10 @@ class Model:
         if process_model_part.mesh is None:
             raise ValueError("process model part has not been meshed yet!")
 
-        # retrieve ids and coordinates of the nodes
-        ids = list(process_model_part.mesh.nodes.keys())
-        coordinates = np.stack([node.coordinates for node in process_model_part.mesh.nodes.values()])
-
-        # compute pairwise distances between the geometry nodes (actual outputs and subset of the mesh nodes) and the
-        # mesh nodes
-        output_coordinates = np.stack([np.array(point.coordinates)
-                                       for point in process_model_part.geometry.points.values()])
-
-        # find the ids of the nodes in the model that are close to the specified coordinates.
-        tmp_ids = np.where((np.isclose(output_coordinates[:, None], coordinates, atol=eps)).all(axis=2))[1]
-
-        # only keep the node ids close to the requested node (smaller than eps meters)
-        filtered_node_ids = np.array(ids)[tmp_ids]
+        # retrieve the node ids close to the geometry points (smaller than eps meters)
+        filtered_node_ids = Utils.find_node_ids_close_to_geometry_nodes(
+            mesh=process_model_part.mesh, geometry=process_model_part.geometry, eps=eps
+        )
 
         new_mesh = Mesh(ndim=process_model_part.mesh.ndim)
         new_mesh.nodes = {node_id: process_model_part.mesh.nodes[node_id] for node_id in filtered_node_ids}
@@ -700,7 +690,6 @@ class Model:
                     if centroids is not None:
                         model_part.parameters.field_generator.generate(centroids)
 
-
     def __adjust_mesh_spring_dampers(self):
         """
         Adjusts the mesh of the spring dampers which are normally added on an existing line.
@@ -709,19 +698,145 @@ class Model:
 
         """
 
+        # get the maximum mesh id:
+        counter_mesh_id = self.__get_maximum_mesh_id()
+
         # retrieve connectivities and cluster into individual spring-damper elements
         for mp in self.body_model_parts:
 
-            if isinstance(mp.parameters, ElasticSpringDamper):
-                # 1. find end-points of the clusters
-                end_nodes_cluster = self.__find_end_point_clusters_in_mesh(model_part=mp)
-                # 2. find the end-points of the spring-damper elements
+            if (
+                    isinstance(mp.material, StructuralMaterial) and
+                    isinstance(mp.material.material_parameters, ElasticSpringDamper)
+            ):
 
-        # 2. start with a node, find the elements connected to it and add them to the cluster
-        # 3. find the elements connected to the added nodes
-        pass
+                # get the sequences of springs in the body model part
+                spring_nodes_and_first_element = self.__get_spring_end_nodes_and_first_element(model_part=mp)
 
-    def __find_end_point_clusters_in_mesh(self, model_part:ModelPart):
+                # assert mesh is initialised
+                if mp.mesh is None:
+                    raise ValueError("Mesh not yet initialised. Please generate the mesh using Model.generate_mesh().")
+
+                model_part_nodes = mp.mesh.nodes
+                model_part_elements = mp.mesh.elements
+
+                new_mesh = Mesh(ndim=1)
+
+                for (start_node, end_node, first_element_id) in spring_nodes_and_first_element:
+
+                    counter_mesh_id += 1
+
+                    new_mesh.nodes[start_node] = model_part_nodes[start_node]
+                    new_mesh.nodes[end_node] = model_part_nodes[end_node]
+
+                    element_info = model_part_elements[first_element_id]
+                    new_mesh.elements[int(counter_mesh_id)] = Element(
+                        id=int(counter_mesh_id), element_type=element_info.element_type, node_ids=[start_node,end_node]
+                    )
+
+                # adjust the mesh_data in the gmsh_io, since we manually changed the mesh
+                self.gmsh_io.mesh_data["physical_groups"][mp.name]["node_ids"] = sorted(list(new_mesh.nodes.keys()))
+                self.gmsh_io.mesh_data["physical_groups"][mp.name]["element_ids"] = sorted(list(new_mesh.elements.keys()))
+
+                for element_id, element in new_mesh.elements.items():
+                    self.gmsh_io.mesh_data["elements"]["LINE_2N"][element_id] = element.node_ids
+
+                mp.mesh = new_mesh
+
+    def __get_maximum_mesh_id(self) -> int:
+        """
+        Returns the maximum id of the mesh from the mesh data
+
+        Returns:
+            - int: the maximum mesh id
+
+        """
+        all_mesh_ids: List[int] = []
+        for element_type, mesh_element_info in self.gmsh_io.mesh_data["elements"].items():
+            all_mesh_ids.extend(list(mesh_element_info.keys()))
+
+        return max(all_mesh_ids)
+
+    def __get_spring_end_nodes_and_first_element(self, model_part:ModelPart) -> List[List[int]]:
+        """
+        The script finds the end nodes of the mesh which is expected to be a line.
+        Then, using the geometry points and the end nodes, it finds the nodes that makes the start and end point of
+        each spring element in the body model part, as well as the first found element.
+
+        Args:
+            - model_part (:class:`stem.model_part.ModelPart`): model part from which the spring elements need to be
+                extracted.
+
+        Returns:
+            - List[List[int]]: a list lists which contains respectively the start, the end and an element
+                type of the spring element.
+
+        """
+
+        # assert mesh and geometry are initialised
+        if model_part.mesh is None or model_part.geometry is None:
+            raise ValueError("Mesh or geometry not yet initialised.")
+
+        # find end nodes
+        end_nodes = self.__find_end_nodes_in_mesh(model_part=model_part)
+        # find the node ids corresponding to the geometry points
+        node_ids_at_geometry_points = Utils.find_node_ids_close_to_geometry_nodes(
+            mesh=model_part.mesh, geometry=model_part.geometry, eps=1e-06
+        )
+
+        element_ids = list(model_part.mesh.elements.keys())
+        node_ids = list(model_part.mesh.nodes.keys())
+        # retrieve the connectivity
+        # node -> elements
+        node_to_elements = self.__map_node_to_elements(model_part=model_part)
+        # element -> nodes
+        element_to_nodes = {element.id: element.node_ids for element in model_part.mesh.elements.values()}
+
+        # initialise output list to later append the required info (start node, end node and element type)
+        spring_nodes_and_first_element = []
+        # initialise a list for end-point we have already encountered n the clustering algorithm
+        completed_points = []
+        for end_node in end_nodes:
+
+            # skip if the node at the end of a cluster is looped on during the for loop
+            if end_node in completed_points:
+                continue
+
+            # remove the end node from the list containing the node ids
+            node_ids.remove(end_node)
+
+            # get the next point along the elements that is in the geometry points (target_node_ids)
+            next_point, next_element = self.__find_next_node_along_elements(
+                start_node=end_node,
+                node_to_elements=node_to_elements,
+                element_to_nodes=element_to_nodes,
+                remaining_element_ids=element_ids,
+                remaining_node_ids=node_ids,
+                target_node_ids=node_ids_at_geometry_points
+            )
+            # add the spring information to the list (start node, end node and element type)
+            spring_nodes_and_first_element.append([end_node, next_point, next_element])
+            # if the point is not the end of the cluster, continue until you find the end of the cluster and include
+            # all the springs
+            while next_point not in end_nodes:
+                new_next_point, next_element = self.__find_next_node_along_elements(
+                    start_node=next_point,
+                    node_to_elements=node_to_elements,
+                    element_to_nodes=element_to_nodes,
+                    remaining_element_ids=element_ids,
+                    remaining_node_ids=node_ids,
+                    target_node_ids=node_ids_at_geometry_points
+                )
+                # add the spring information to the list (start node, end node and element type)
+                spring_nodes_and_first_element.append([next_point, new_next_point, next_element])
+                # update the next point for the search
+                next_point = new_next_point
+
+            # add the end point to the completed_points, so we don't use it to loop twice on the same path
+            completed_points.append(next_point)
+        return spring_nodes_and_first_element
+
+    @staticmethod
+    def __map_node_to_elements(model_part:ModelPart) -> Dict[int, List[int]]:
         """
         Finds the points at the edge of a mesh even if the mesh comprises multiple clusters.
 
@@ -729,32 +844,14 @@ class Model:
             - model_part (:class:`stem.model_part.ModelPart`): model part from which end-points needs to be
                 extracted.
 
-        Returns:
-            - end_point_cluster_nodes (Dict[int, :class:`stem.mesh.Node`): dictionary containing the nodes at the
-                edges of a mesh, if there is any (e.g. sphere would not have any edge nodes).
-
         Raises:
             - ValueError: if the mesh is not initialised.
 
+        Returns:
+            - edge_point_cluster_nodes (Dict[int, :class:`stem.mesh.Node`]): dictionary containing the nodes at the
+                edges of a mesh, if there is any (e.g. sphere would not have any edge nodes).
+
         """
-        if model_part.mesh is None:
-            raise ValueError("Mesh not initialised, clusters cannot be identified.")
-
-        # shorten variables
-        elements = model_part.mesh.elements
-        nodes = model_part.mesh.nodes
-
-        # find which nodes connected to only 1 element
-        end_point_cluster_nodes = {}
-        for node_id, node in nodes.items():
-
-            elements_connected = [element_id for element_id, element in elements if node_id in element.node_ids]
-            if len(elements_connected) == 1:
-                end_point_cluster_nodes[node_id] = node
-
-        return end_point_cluster_nodes
-
-    def __find_end_point_clusters_in_mesh(self, model_part: ModelPart):
 
         if model_part.mesh is None:
             raise ValueError("Mesh not initialised, clusters cannot be identified.")
@@ -763,15 +860,94 @@ class Model:
         elements = model_part.mesh.elements
         nodes = model_part.mesh.nodes
 
-        # find which nodes connected to only 1 element
-        end_point_cluster_nodes = {}
+        # find which elements are connected to each node
+        node_to_elements = {}
         for node_id, node in nodes.items():
 
-            elements_connected = [element_id for element_id, element in elements if node_id in element.node_ids]
-            if len(elements_connected) == 1:
-                end_point_cluster_nodes[node_id] = node
+            elements_connected = [element_id for element_id, element in elements.items() if node_id in element.node_ids]
+            node_to_elements[node_id] = elements_connected
 
-        return end_point_cluster_nodes
+        return node_to_elements
+
+    def __find_end_nodes_in_mesh(self, model_part:ModelPart) -> List[int]:
+        """
+        Finds the nodes at the end of a mesh even if the mesh comprises multiple clusters.
+
+        Args:
+            - model_part (:class:`stem.model_part.ModelPart`): model part from which end nodes needs to be
+                extracted.
+
+        Returns:
+            - edge_nodes (List[int]): list of the nodes at the end of elements ends of a mesh, which can be
+                comprised of multiple clusters.
+
+        """
+        nodes_to_elements = self.__map_node_to_elements(model_part=model_part)
+        edge_nodes = [node_id for node_id, elements in nodes_to_elements.items() if len(elements) == 1]
+        return edge_nodes
+
+    @staticmethod
+    def __find_next_node_along_elements(
+            start_node: int,
+            remaining_element_ids: List[int],
+            remaining_node_ids: List[int],
+            node_to_elements: Dict[int, List[int]],
+            element_to_nodes: Dict[int, List[int]],
+            target_node_ids: npty.NDArray[np.int64]
+    ) -> Tuple[int, int]:
+        """
+        Finds the first node in the target_node_ids next node along line element. The remaining_element_ids and
+        remaining_node_ids keeps truck of the direction of the previous searches and orients the search
+        on a unique direction.
+
+        Args:
+            - start_node (int): the node to start searching the next node along the elements.
+            - remaining_element_ids (List[int]): the element ids that have not been followed yet.
+            - remaining_node_ids (List[int]): the node ids that have not been crossed yet.
+            - node_to_elements (Dict[int, List[int]]): mapping of node_ids to the element_ids which is connected to.
+            - element_to_nodes (Dict[int, List[int]]): mapping of elements_ids to the nodes_ids which is connected to.
+            - target_node_ids (npty.NDArray[np.int64]): array of nodes to be searched for.
+
+        Raises:
+            - ValueError: if number of interation in the while loop are exceeded and something went wrong in the
+                algorithm.
+
+        Returns:
+            - Tuple[int, int]: the next node connected to the given starting node along the line elements and the \
+                first element.
+        """
+
+        # initialise variables before while loop
+        first_element = 0
+        count = 0
+        next_node = start_node
+
+        while True:
+
+            # find the element(s) connected to the node that have not yet been searched for.
+            elements_connected = [el for el in node_to_elements[next_node] if el in remaining_element_ids]
+            # there needs to be only one element (no forks)
+            assert len(elements_connected) == 1
+            next_element = elements_connected[0]
+            remaining_element_ids.remove(next_element)
+
+            if count == 0:
+                first_element = next_element
+
+            # find the node(s) connected to the element that have not yet been found yet.
+            nodes_connected = [nn for nn in element_to_nodes[next_element] if nn in remaining_node_ids]
+            # there needs to be only one node (no quadratic or 2d elements)
+            assert len(nodes_connected) == 1
+            next_node = nodes_connected[0]
+            remaining_node_ids.remove(next_node)
+
+            # if the node is one of the nodes of interest, return them, otherwise continue.
+            if next_node in target_node_ids:
+                return next_node, first_element
+
+            count += 1
+            if count > MAX_ITERATIONS_WHILE:
+                raise ValueError("Error in while loop. Max iterations exceeded.")
 
     @staticmethod
     def __get_model_part_element_connectivities(model_part: ModelPart) -> npty.NDArray[np.int64]:

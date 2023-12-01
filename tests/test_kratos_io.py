@@ -937,23 +937,19 @@ class TestKratosModelIO:
         # check if mdpa data is as expected
         npt.assert_equal(actual=actual_mdpa_text, desired=expected_mdpa_text)
 
-
-    def test_write_mdpa_with_spring_damper_and_mass_element(self,
-                                                            create_default_2d_model: Model,
-                                                            create_default_outputs: List[Output],
-                                                            create_default_solver_settings: Problem
+    def test_write_mdpa_with_spring_damper_element(
+            self, create_default_outputs: List[Output], create_default_solver_settings: Problem
     ):
         """
-        Test correct writing of the mdpa file for the default model 2 spring damper and a nodal concentrated elements.
+        Test correct writing of the mdpa file for the default model with 4 spring dampers of which two are in series.
 
         Args:
-            - create_default_2d_model (:class:`stem.model.Model`): the default 2D model of a square \
-                soil layer and a line load.
             - create_default_outputs (List[:class:`stem.output.Output`]): list of default output processes.
             - create_default_solver_settings (:class:`stem.solver.Problem`): the Problem object containing the \
                 solver settings.
+
         """
-        model = create_default_2d_model
+        model = Model(ndim=2)
         kratos_io = KratosIO(ndim=model.ndim)
         model.project_parameters = create_default_solver_settings
         model.output_settings = create_default_outputs
@@ -966,14 +962,32 @@ class TestKratosModelIO:
             NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[1, 1, 4])
 
         # create model part
-        # TODO: make model.add_nodal_element
+        # 3 lines, one broken with a mid-point, which should result in 4 springs
+        # the lines are in different size so all the line are broken in smaller lines except the last.
+
+        top_coordinates = [(0, 1, 0), (0, 2, 0), (1, 1, 0), (2, 0.3, 0)]
+        bottom_coordinates = [(0, 0, 0), (0, 1, 0), (1, 0, 0), (2, 0, 0)]
+
+        gmsh_input_top = {"top_coordinates": {"coordinates": top_coordinates, "ndim": 0}}
+        gmsh_input_bottom = {"bottom_coordinates": {"coordinates": bottom_coordinates, "ndim": 0}}
+
+        model.gmsh_io.generate_geometry(gmsh_input_top, "")
+        model.gmsh_io.generate_geometry(gmsh_input_bottom, "")
+
+        # create rail pad geometries
+        top_point_ids = model.gmsh_io.make_points(top_coordinates)
+        bot_point_ids = model.gmsh_io.make_points(bottom_coordinates)
+
+        spring_line_ids = [model.gmsh_io.create_line([top_point_id, bot_point_id])
+                           for top_point_id, bot_point_id in zip(top_point_ids, bot_point_ids)]
+
+        model.gmsh_io.add_physical_group("spring_damper", 1, spring_line_ids)
+        # assign spring damper to geometry
         spring_damper_model_part = BodyModelPart("spring_damper")
         spring_damper_model_part.material = StructuralMaterial("spring_damper", spring_damper)
-
-        # assign spring damper to geometry
-        model.gmsh_io.add_physical_group("spring_damper", 1, [1])
         spring_damper_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, "spring_damper")
 
+        # add concentrated masses on same and different points
         # add nodal concentrated element
         nodal_concentrated = NodalConcentrated(
             NODAL_MASS=1,
@@ -986,27 +1000,29 @@ class TestKratosModelIO:
         nodal_concentrated_model_part.material = StructuralMaterial("nodal_concentrated", nodal_concentrated)
 
         # assign nodal concentrated to geometry
-        model.gmsh_io.add_physical_group("nodal_concentrated", 0, [2])
+        model.gmsh_io.add_physical_group("nodal_concentrated", 0, [3])
         nodal_concentrated_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, "nodal_concentrated")
 
         # add model parts to model
         model.body_model_parts.append(spring_damper_model_part)
         model.body_model_parts.append(nodal_concentrated_model_part)
 
-        # write project parameters
-        actual_dict = kratos_io.write_project_parameters_json(
-            model=model,
-            mesh_file_name="dummy.mdpa",
-            materials_file_name="dummy.json",
-            output_folder="dummy"
-        )
+        model.synchronise_geometry()
+        model.set_mesh_size(0.4)
 
-        # load expected project parameters
-        expected_dict = json.load(open("tests/test_data/expected_ProjectParameters_with_nodal_parameters.json", 'r'))
+        model.generate_mesh()
 
-        # assert the dictionaries to be equal
-        TestUtils.assert_dictionary_almost_equal(expected_dict, actual_dict)
+        # write mdpa text
+        actual_mdpa_text = kratos_io._KratosIO__write_mdpa_text(model=model)
 
+        # get expected mdpa text
+        with open('tests/test_data/expected_mdpa_spring_dampers.mdpa', 'r') as f:
+            expected_mdpa_text = f.readlines()
+
+        expected_mdpa_text = [line.rstrip() for line in expected_mdpa_text]
+
+        # check if mdpa data is as expected
+        npt.assert_equal(actual=actual_mdpa_text, desired=expected_mdpa_text)
 
     def test_write_project_parameters_with_spring_damper_and_mass_element(self,
                                                                           create_default_2d_model: Model,
