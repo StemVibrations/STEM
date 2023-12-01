@@ -56,7 +56,6 @@ def test_stem():
     model.add_load_by_coordinates(load_coordinates, uvec_load, "uvec_load")
 
     model.synchronise_geometry()
-    model.show_geometry(show_surface_ids=True)
 
     # Define boundary conditions
     no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
@@ -73,7 +72,6 @@ def test_stem():
     # Set mesh size and generate mesh
     # --------------------------------
     model.set_mesh_size(element_size=1)
-    model.generate_mesh()
 
     # Define project parameters
     # --------------------------------

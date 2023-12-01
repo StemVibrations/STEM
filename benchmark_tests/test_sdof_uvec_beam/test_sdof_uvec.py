@@ -14,7 +14,7 @@ from shutil import rmtree, copytree
 from benchmark_tests.analytical_solutions.moving_vehicle import TwoDofVehicle
 from benchmark_tests.utils import assert_files_equal
 
-PLOT_RESULTS = True
+PLOT_RESULTS = False
 
 
 def test_stem():
@@ -86,8 +86,6 @@ def test_stem():
     # Set mesh size and generate mesh
     # --------------------------------
     model.set_mesh_size(element_size=0.1)
-    model.generate_mesh()
-
 
     # Define project parameters
     # --------------------------------
@@ -146,7 +144,6 @@ def test_stem():
     # Run Kratos calculation
     # --------------------------------
     stem.run_calculation()
-
 
     # read test.txt file
     with open(os.path.join(input_folder, "test.txt"), "r") as f:

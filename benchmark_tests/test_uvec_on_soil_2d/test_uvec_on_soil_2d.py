@@ -67,7 +67,6 @@ def test_stem():
     # Set mesh size and generate mesh
     # --------------------------------
     model.set_mesh_size(element_size=0.1)
-    model.generate_mesh()
 
     # Define project parameters
     # --------------------------------
