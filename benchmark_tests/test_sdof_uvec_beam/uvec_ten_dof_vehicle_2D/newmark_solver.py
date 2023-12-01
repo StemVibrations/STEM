@@ -1,45 +1,45 @@
-import numpy as np
 from typing import Tuple
+import numpy as np
 
 
 class NewmarkExplicit():
     """
-    Newmark integration scheme.
+    Newmark integration scheme for explicit time integration
 
     Attributes:
-        - beta (float): beta parameter of the Newmark integration scheme
-        - gamma (float): gamma parameter of the Newmark integration scheme
+        - beta (float): beta parameter
+        - gamma (float): gamma parameter
     """
 
     def __init__(self, beta:float=0.25, gamma:float=0.5):
         """
-        Constructor of the Newmark integration scheme.
+        Constructor of the NewmarkExplicit class
 
         Args:
-            - beta (float): beta parameter of the Newmark integration scheme
-            - gamma (float): gamma parameter of the Newmark integration scheme
+            - beta (float): beta parameter
+            - gamma (float): gamma parameter
         """
         self.beta = beta
         self.gamma = gamma
 
     def calculate(self, M: np.ndarray, C: np.ndarray, K: np.ndarray, F: np.ndarray, dt: float, t_index: int,
-                  u_ini: np.ndarray, v_ini: np.ndarray, a_ini: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+                   u_ini: np.ndarray, v_ini: np.ndarray, a_ini: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
-        Newmark integration scheme.
+        Newmark integration step.
 
         Args:
             - M (np.ndarray): mass matrix
             - C (np.ndarray): damping matrix
             - K (np.ndarray): stiffness matrix
             - F (np.ndarray): force vector
-            - dt (float): time step size
+            - dt (float): time step
             - t_index (int): time index
             - u_ini (np.ndarray): initial displacement
             - v_ini (np.ndarray): initial velocity
             - a_ini (np.ndarray): initial acceleration
 
         Returns:
-            - Tuple[np.ndarray, np.ndarray, np.ndarray]: displacement, velocity and acceleration
+            - Tuple[np.ndarray, np.ndarray, np.ndarray]: tuple containing the new displacement, velocity and acceleration
         """
 
         # calculate time step size

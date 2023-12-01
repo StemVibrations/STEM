@@ -64,7 +64,7 @@ def test_stem():
                        }
 
     uvec_load = UvecLoad(direction=[1, 1, 1], velocity=1000, origin=[0.75, 3, 5], wheel_configuration=[0.0, 2.5, 19.9, 22.4],
-                         uvec_file=r"uvec/sample_uvec.py", uvec_function_name="uvec", uvec_parameters=uvec_parameters)
+                         uvec_file=r"uvec_ten_dof_vehicle_2D/uvec.py", uvec_function_name="uvec", uvec_parameters=uvec_parameters)
     model.add_load_by_coordinates(load_coordinates, uvec_load, "train_load")
 
     # Define boundary conditions
@@ -135,7 +135,7 @@ def test_stem():
     input_folder = r"benchmark_tests\test_train_uvec_3d/input_kratos"
     # copy uvec to input folder
     os.makedirs(input_folder, exist_ok=True)
-    copytree(r"benchmark_tests\test_train_uvec_3d\uvec", os.path.join(input_folder, "uvec"), dirs_exist_ok=True)
+    copytree(r"benchmark_tests\test_train_uvec_3d\uvec_ten_dof_vehicle_2D", os.path.join(input_folder, "uvec_ten_dof_vehicle_2D"), dirs_exist_ok=True)
 
     # Write KRATOS input files
     # --------------------------------

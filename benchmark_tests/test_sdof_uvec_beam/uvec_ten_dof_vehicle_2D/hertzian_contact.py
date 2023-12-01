@@ -3,7 +3,7 @@ import numpy as np
 
 class HertzianContact():
     """
-    Hertzian contact model.
+    Hertzian contact model
 
     Attributes:
         - contact_coeff (float): contact coefficient
@@ -12,7 +12,7 @@ class HertzianContact():
 
     def __init__(self):
         """
-        Constructor of the Hertzian contact model.
+        Constructor of the HertzianContact class
         """
         self.contact_coeff = None  # contact coefficient
         self.contact_power = None  # contact power
@@ -28,6 +28,7 @@ class HertzianContact():
         Returns:
             - np.ndarray: contact force
         """
+
         contact_force = np.sign( -du) * np.nan_to_num((1 /self.contact_coeff * -du) ** self.contact_power)
         return contact_force
 
@@ -42,4 +43,5 @@ class HertzianContact():
         Returns:
             - np.ndarray: contact deformation
         """
+
         return np.sign(F) * self.contact_coeff * np.abs(F) ** (1 / self.contact_power)
