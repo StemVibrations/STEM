@@ -665,7 +665,6 @@ class Model:
 
         """
         self.__initialise_fields()
-
         self.__adjust_mesh_spring_dampers()
 
     def __initialise_fields(self):
@@ -756,7 +755,7 @@ class Model:
 
         return max(all_mesh_ids)
 
-    def __get_spring_end_nodes_and_first_element(self, model_part:ModelPart) -> List[List[int]]:
+    def __get_spring_end_nodes_and_first_element(self, model_part: ModelPart) -> List[List[int]]:
         """
         The script finds the end nodes of the mesh which is expected to be a line.
         Then, using the geometry points and the end nodes, it finds the nodes that makes the start and end point of
@@ -836,7 +835,7 @@ class Model:
         return spring_nodes_and_first_element
 
     @staticmethod
-    def __map_node_to_elements(model_part:ModelPart) -> Dict[int, List[int]]:
+    def __map_node_to_elements(model_part: ModelPart) -> Dict[int, List[int]]:
         """
         Finds the points at the edge of a mesh even if the mesh comprises multiple clusters.
 

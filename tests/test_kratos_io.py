@@ -18,7 +18,7 @@ from stem.model import Model
 from stem.model_part import *
 from stem.output import NodalOutput, GaussPointOutput, VtkOutputParameters, Output, JsonOutputParameters
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
-from stem.structural_material import ElasticSpringDamper, NodalConcentrated
+from stem.structural_material import ElasticSpringDamper, NodalConcentrated, EulerBeam
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, \
     NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
 from stem.table import Table
@@ -508,6 +508,59 @@ class TestKratosModelIO:
         expected_dict = json.load(open("tests/test_data/expected_ProjectParameters_random_field_2d.json", 'r'))
         TestUtils.assert_dictionary_almost_equal(expected_dict, actual_dict)
 
+    def test_adjust_project_parameters_json_for_randomfield_raises_error(self):
+        """
+        Test correct raising of errors when adjusting the field properties for writing the project parameters.
+
+        """
+        load_model_part = ModelPart(name="line_load")
+        load_model_part.parameters = LineLoad(active=[False, True, False], value=[0, -500, 0])
+
+        kratos_io = KratosIO(ndim=2)
+        kratos_io.project_folder = "dir_test"
+        # adjust parameter field for load process part returns None
+        assert kratos_io._KratosIO__adjust_parameter_field_parameters_and_write_json_file(load_model_part) is None
+
+        # input type field process part
+        input_field_process_part = ModelPart(name="input_field")
+        input_field_process_part.parameters = ParameterFieldParameters(
+            property_name="YOUNG_MODULUS",
+            function_type="input",
+            tiny_expr_function="cos(x)"
+        )
+        # adjust parameter field for input field process part returns None
+        assert kratos_io._KratosIO__adjust_parameter_field_parameters_and_write_json_file(
+            input_field_process_part) is None
+
+        # input type field process part
+        json_field_process_part = ModelPart(name="json_file_field")
+
+        random_field_generator = RandomFieldGenerator(
+            n_dim=3, cov=0.1, model_name="Gaussian",
+            v_scale_fluctuation=1, anisotropy=[0.5, 0.5], angle=[0, 0]
+        )
+        json_field_process_part.parameters = ParameterFieldParameters(
+            property_name="YOUNG_MODULUS",
+            function_type="json_file",
+            field_file_name=None,
+            field_generator=random_field_generator
+        )
+        # adjust parameter field for json_file field process part with no file name raises ValueError
+        msg = ("No name was provided for the json file containing the "
+               "field parameters of model part json_file_field and property YOUNG_MODULUS.")
+
+        with pytest.raises(ValueError, match=msg):
+            kratos_io._KratosIO__adjust_parameter_field_parameters_and_write_json_file(json_field_process_part)
+
+        # override random_field_generator and provide a name. It will raise a ValueError
+        json_field_process_part.parameters.field_generator = None
+        json_field_process_part.parameters.field_file_name = "dummy_name"
+        # adjust parameter field for json_file field process part with no file name raises ValueError
+        msg = ("Field generator object not provided for the field generation "
+               "of model part json_file_field and property YOUNG_MODULUS.")
+        with pytest.raises(ValueError, match=msg):
+            kratos_io._KratosIO__adjust_parameter_field_parameters_and_write_json_file(json_field_process_part)
+
     def test_write_material_parameters_json(
         self,
         create_default_2d_model: Model
@@ -529,6 +582,25 @@ class TestKratosModelIO:
         actual_dict = kratos_io._KratosIO__write_material_parameters_json(model=model)
         expected_dict = json.load(open("tests/test_data/expected_MaterialParameters.json", 'r'))
         TestUtils.assert_dictionary_almost_equal(expected_dict, actual_dict)
+
+    def test_write_material_parameters_json_raises_errors(
+        self
+    ):
+        """
+        Test correct writing of the material parameters for the default model.
+        Args:
+            - create_default_2d_model (:class:`stem.model.Model`): the default 2D model of a square \
+                soil layer and a line load.
+        """
+        model = Model(ndim=3)
+        model.body_model_parts.append(
+            BodyModelPart(name="dummy")
+        )
+
+        kratos_io = KratosIO(ndim=model.ndim)
+        msg = "Body model part dummy has no material assigned."
+        with pytest.raises(ValueError, match=msg):
+            kratos_io._KratosIO__write_material_parameters_json(model=model)
 
     def test_write_mdpa_file_2d(
         self,
@@ -852,6 +924,44 @@ class TestKratosModelIO:
 
         # assert the objects to be equal
         npt.assert_equal(actual=actual_text_load, desired=expected_text_load)
+
+    def test_write_submodel_part_raises_errors(self):
+        """
+        Tests that write submodel part raises error when mesh
+
+        Returns:
+
+        """
+
+        kratos_io = KratosIO(ndim=2)
+        body_model_part = BodyModelPart(name="dummy_body_model_part")
+        process_model_part = ModelPart(name="dummy_process_model_part")
+
+        # test raises of write submodel part for body model part
+        # writing body model part submodel part text using a process model part
+        msg="Model part dummy_process_model_part is not a body model part!"
+        with pytest.raises(ValueError, match=msg):
+            kratos_io.write_submodelpart_body_model_part(process_model_part)
+
+        # writing body model part submodel part without mesh info
+        msg = (f"Model part dummy_body_model_part has not been meshed."
+               f"Before creating the mdpa file, the model part needs to be meshed."
+               f"Please run Model.generate_mesh()")
+        with pytest.raises(ValueError, match=msg):
+            kratos_io.write_submodelpart_body_model_part(body_model_part)
+
+        # test raises of write submodel part for process model part
+        # writing process model part submodel part text using a body model part
+        msg = "Model part dummy_body_model_part is not a process model part!"
+        with pytest.raises(ValueError, match=msg):
+            kratos_io.write_submodelpart_process_model_part(body_model_part)
+
+        # writing process model part submodel part without mesh info
+        msg = (f"Model part dummy_process_model_part has not been meshed."
+               f"Before creating the mdpa file, the model part needs to be meshed."
+               f"Please run Model.generate_mesh()")
+        with pytest.raises(ValueError, match=msg):
+            kratos_io.write_submodelpart_process_model_part(process_model_part)
 
     def test_write_mdpa_text(self, create_default_2d_model: Model):
         """
