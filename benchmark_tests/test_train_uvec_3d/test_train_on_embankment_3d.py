@@ -8,6 +8,8 @@ from stem.output import NodalOutput, VtkOutputParameters, Output
 from stem.stem import Stem
 from shutil import rmtree, copytree
 
+import sys
+sys.path.append("./")
 from benchmark_tests.utils import assert_files_equal
 
 
@@ -91,7 +93,7 @@ def test_stem():
     analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
     solution_type = SolutionType.DYNAMIC
     # Set up start and end time of calculation, time step and etc
-    time_integration = TimeIntegration(start_time=0.0, end_time=0.01, delta_time=0.00005, reduction_factor=1.0,
+    time_integration = TimeIntegration(start_time=0.0, end_time=0.00999, delta_time=0.00005, reduction_factor=1.0,
                                     increase_factor=1.0, max_delta_time_factor=1000)
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-3,
                                                             displacement_absolute_tolerance=1.0e-9)
@@ -99,13 +101,13 @@ def test_stem():
     solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
                                     stress_initialisation_type=stress_initialisation_type,
                                     time_integration=time_integration,
-                                    is_stiffness_matrix_constant=False, are_mass_and_damping_constant=False,
+                                    is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
                                     convergence_criteria=convergence_criterion,
                                     rayleigh_k=0.001,
                                     rayleigh_m=0.01)
 
     # Set up problem data
-    problem = Problem(problem_name="uvec_3d", number_of_threads=1, settings=solver_settings)
+    problem = Problem(problem_name="uvec_3d", number_of_threads=8, settings=solver_settings)
     model.project_parameters = problem
 
     # Define the results to be written to the output file
@@ -150,3 +152,6 @@ def test_stem():
                                 os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
 
     rmtree(input_folder)
+
+if __name__  == "__main__":
+    test_stem()
