@@ -91,24 +91,29 @@ class Model:
         rail_global_coords[:, VERTICAL_AXIS] += small_thickness
 
         rail_geo_settings = {rail_name: {"coordinates": rail_global_coords, "ndim": 1}}
-        self.gmsh_io.generate_geometry(rail_geo_settings, "")
+
 
         # set sleepers geometry
         sleeper_global_coords = sleeper_local_coords[:, None].dot(normalized_direction_vector[None, :]) + origin_point
 
-        sleeper_geo_settings = {sleeper_name: {"coordinates": sleeper_global_coords, "ndim": 0}}
+        sleeper_geo_settings = {sleeper_name: {"coordinates": sleeper_global_coords, "ndim": 1}}
         self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
+        self.gmsh_io.generate_geometry(rail_geo_settings, "")
 
-        connection_lines = {f"rail_connection_{name}": {"coordinates": sleeper_global_coords, "ndim": 1}}
-        self.gmsh_io.generate_geometry(connection_lines, "")
+        rail_model_part = BodyModelPart(rail_name)
+        rail_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_name)
 
-        connection_model_part = ModelPart(f"rail_connection_{name}")
-        connection_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, f"rail_connection_{name}")
-        self.process_model_parts.append(connection_model_part)
+
+        sleeper_model_part = BodyModelPart(sleeper_name)
+        sleeper_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, sleeper_name)
 
         # create rail pad geometries
-        top_point_ids = self.gmsh_io.make_points(rail_global_coords)
-        bot_point_ids = self.gmsh_io.make_points(sleeper_global_coords)
+        # top_point_ids = self.gmsh_io.make_points(rail_global_coords)
+        # bot_point_ids = self.gmsh_io.make_points(sleeper_global_coords)
+
+        top_point_ids = list(rail_model_part.geometry.points.keys())
+        bot_point_ids = list(sleeper_model_part.geometry.points.keys())
+
 
         rail_pad_line_ids = [self.gmsh_io.create_line([top_point_id, bot_point_id])
                              for top_point_id, bot_point_id in zip(top_point_ids, bot_point_ids)]
@@ -116,12 +121,9 @@ class Model:
         self.gmsh_io.add_physical_group(rail_pads_name, 1, rail_pad_line_ids)
 
         # create rail, sleeper, and rail_pad body model parts
-        rail_model_part = BodyModelPart(rail_name)
-        rail_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_name)
+
         rail_model_part.material = StructuralMaterial(name=rail_name, material_parameters=rail_parameters)
 
-        sleeper_model_part = BodyModelPart(sleeper_name)
-        sleeper_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, sleeper_name)
         sleeper_model_part.material = StructuralMaterial(name=sleeper_name, material_parameters=sleeper_parameters)
 
         rail_pads_model_part = BodyModelPart(rail_pads_name)
@@ -148,6 +150,7 @@ class Model:
         self.body_model_parts.append(rail_pads_model_part)
 
         self.process_model_parts.append(constraint_model_part)
+
 
     def __del__(self):
         """
@@ -767,6 +770,10 @@ class Model:
 
         # get the complete geometry
         self.__get_geometry_from_geo_data(self.gmsh_io.geo_data)
+
+        for model_part in all_model_parts:
+            if "sleeper" in model_part.name:
+                model_part.geometry.lines = {}
 
     def set_mesh_size(self, element_size: float):
         """

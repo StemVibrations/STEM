@@ -1,4 +1,5 @@
-
+import sys
+sys.path.append("./")
 import numpy as np
 from stem.model import Model
 from stem.structural_material import EulerBeam, ElasticSpringDamper, NodalConcentrated
@@ -105,3 +106,6 @@ def test_moving_load_on_track():
     stem = Stem(model, "benchmark_moving_load2")
     stem.write_all_input_files()
     stem.run_calculation()
+
+if __name__ == "__main__":
+    test_moving_load_on_track()
