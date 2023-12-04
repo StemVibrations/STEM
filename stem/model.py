@@ -73,13 +73,11 @@ class Model:
             - rail_pad_parameters (:class:`stem.structural_material.ElasticSpringDamper`): rail pad parameters
             - origin_point (Sequence[float]): origin point of the track
             - direction_vector (Sequence[float]): direction vector of the track
-
-        Returns:
-            - np.ndarray: coordinates of the sleepers, i.e. the bottom coordinates of the track
-
+            - name (str): name of the track
+            - small_thickness (float): small thickness to avoid gmsh errors (default: 1e-3)
         """
 
-        rail_name = f"rail_{name}"
+        rail_name = f"{name}"
         sleeper_name = f"sleeper_{name}"
         rail_pads_name = f"rail_pads_{name}"
 
@@ -103,6 +101,10 @@ class Model:
 
         connection_lines = {f"rail_connection_{name}": {"coordinates": sleeper_global_coords, "ndim": 1}}
         self.gmsh_io.generate_geometry(connection_lines, "")
+
+        connection_model_part = ModelPart(f"rail_connection_{name}")
+        connection_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, f"rail_connection_{name}")
+        self.process_model_parts.append(connection_model_part)
 
         # create rail pad geometries
         top_point_ids = self.gmsh_io.make_points(rail_global_coords)
@@ -146,8 +148,6 @@ class Model:
         self.body_model_parts.append(rail_pads_model_part)
 
         self.process_model_parts.append(constraint_model_part)
-
-        return sleeper_global_coords
 
     def __del__(self):
         """
@@ -250,17 +250,17 @@ class Model:
                                  LoadParametersABC, name: str):
         """
         Add a load to the model by giving the geometry ids of the geometry where the load has to be applied.
-        The geometry dimension of the entity where the load needs to be applied is determined based on the 
+        The geometry dimension of the entity where the load needs to be applied is determined based on the
         load_parameters (0=point load, 1=line load, 2=surface load, 3=volume).
-        
+
         Args:
             - geometry_ids (Sequence[int]): geometry ids of the entities where the load needs to be applied.
             - load_parameters (:class:`stem.load.LoadParametersABC`): load parameters to define the load object.
             - name (str): name of the load.
-            
+
         Raises:
             - NotImplementedError: when the load parameter provided is not one of point, line, moving or surface loads.
-            
+
         """
 
         # point load can only be assigned to 0d geometry
@@ -359,47 +359,68 @@ class Model:
 
         self.process_model_parts.append(model_part)
 
-    def add_load_by_geometry_ids(self, geometry_ids: Sequence[int], load_parameters: LoadParametersABC, name: str):
+
+    def add_load_on_line_model_part(self, model_part_name: str, load_parameters: LoadParametersABC, load_name: str):
         """
-        Add a load to the model by giving the geometry ids of the geometry where the load has to be applied.
-        The geometry dimension of the entity where the load needs to be applied is determined based on the 
-        load_parameters (0=point load, 1=line load, 2=surface load, 3=volume).
+        Adds a load to the model by giving the name of the line model part where the load has to be applied.
+        It only works with LineLoad and MovingLoad.
 
         Args:
-            - geometry_ids (Sequence[int]): geometry ids of the entities where the load needs to be applied.
+            - model_part_name (str): name of the line model part where the load needs to be applied.
             - load_parameters (:class:`stem.load.LoadParametersABC`): load parameters to define the load object.
-            - name (str): name of the load.
+            - load_name (str): name of the load.
 
         Raises:
-            - NotImplementedError: when the load parameter provided is not one of point, line, moving or surface loads.
-
+            - ValueError: if the model part name is not found.
+            - ValueError: if the model part is not a line model part.
+            - ValueError: if the load parameters are not of type LineLoad or MovingLoad.
         """
 
-        # point load can only be assigned to 0d geometry
-        if isinstance(load_parameters, PointLoad):
-            ndim_load = 0
         # line and moving load can only be assigned to 1d geometry
-        elif isinstance(load_parameters, (LineLoad, MovingLoad)):
+        if isinstance(load_parameters, (LineLoad, MovingLoad)):
             ndim_load = 1
-        # surface load can only be assigned to 2d geometry
-        elif isinstance(load_parameters, SurfaceLoad):
-            ndim_load = 2
         else:
-            raise NotImplementedError(
-                f"Load parameter provided is not supported: `{load_parameters.__class__.__name__}`."
-            )
+            raise ValueError(f"Load parameter provided is not supported: `{load_parameters.__class__.__name__}`.")
+
+        # find index of bmp name
+        idx = [i for i, bmp in enumerate(self.body_model_parts) if bmp.name == model_part_name]
+        if len(idx) == 0:
+            raise ValueError(f"Model part with name `{model_part_name}` not found.")
+
+        # retrieve the indexes onf the bmp geometry => geometry ids
+        geometry_ids = list(self.body_model_parts[idx[0]].geometry.lines.keys())
+
         # add physical group to gmsh
-        self.gmsh_io.add_physical_group(name, ndim_load, geometry_ids)
+        self.gmsh_io.add_physical_group(load_name, ndim_load, geometry_ids)
 
         # create model part
-        model_part = ModelPart(name)
+        model_part = ModelPart(load_name)
 
         # retrieve geometry from gmsh and add to model part
-        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, load_name)
 
         # validations for non-empty geometry
         if model_part.geometry is None:
             raise ValueError("The geometry is not initialised for the model part.")
+
+        # validations for moving load input
+        if isinstance(load_parameters, MovingLoad):
+            # retrieve the coordinates of the points in the path of the load
+            coordinates = []
+            for line in model_part.geometry.lines.values():
+                line_coords = []
+                for k in line.point_ids:
+                    line_coords.append(model_part.geometry.points[k].coordinates)
+                coordinates.append(line_coords)
+
+            # check origin of moving load is in the path
+            if not Utils.is_point_aligned_and_between_any_of_points(coordinates, load_parameters.origin):
+                raise ValueError("None of the lines are aligned with the origin of the moving load. Error.")
+            # check that the path provided by geometry is correct (no loops, no branching out
+            # and no discontinuities in the path)
+            if not Utils.check_lines_geometry_are_path(model_part.geometry):
+                raise ValueError("The lines defined for the moving load are not aligned on a path."
+                                 "Discontinuities or loops/branching points are found.")
 
         # add load parameters to model part
         model_part.parameters = load_parameters

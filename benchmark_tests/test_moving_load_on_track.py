@@ -1,6 +1,8 @@
 
 import numpy as np
+import sys
 
+sys.path.append("./")
 from stem.model import Model
 from stem.structural_material import EulerBeam, ElasticSpringDamper, NodalConcentrated
 from stem.boundary import DisplacementConstraint
@@ -14,17 +16,23 @@ from stem.stem import Stem
 def test_moving_load_on_track():
     model = Model(3)
 
-    rail_parameters = EulerBeam(3, 1, 1, 1, 1, 1, 1, 1)
-    rail_pad_parameters = ElasticSpringDamper([1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1])
-    sleeper_parameters = NodalConcentrated([1, 1, 1], 1, [1, 1, 1])
+    rail_parameters = EulerBeam(ndim=3, YOUNG_MODULUS=30e6, POISSON_RATIO=0.2,
+                                DENSITY=7200, CROSS_AREA=0.01, I33=1e-4, I22=1e-4, TORSIONAL_INERTIA=1e-4)
+    rail_pad_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[1, 1, 1],
+                                              NODAL_ROTATIONAL_STIFFNESS=[1, 1, 1],
+                                              NODAL_DAMPING_COEFFICIENT=[1, 1, 1],
+                                              NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[1, 1, 1])
+    sleeper_parameters = NodalConcentrated(NODAL_DISPLACEMENT_STIFFNESS=[0, 0, 0],
+                                           NODAL_MASS=1,
+                                           NODAL_DAMPING_COEFFICIENT=[0, 0, 0])
 
     origin_point = np.array([0.0, 3.0, 1.0])
     direction_vector = np.array([1, 0, 0])
 
     # create a straight track with rails, sleepers and rail pads
-    connection_coordinates = model.generate_straight_track(0.6, 20, rail_parameters,
-                                                           sleeper_parameters, rail_pad_parameters, origin_point,
-                                                           direction_vector, "track_1")
+    model.generate_straight_track(0.6, 20, rail_parameters,
+                                  sleeper_parameters, rail_pad_parameters, origin_point,
+                                  direction_vector, "rail_track_1")
     model.synchronise_geometry()
 
     no_displacement_boundary = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True], value=[0, 0, 0])
@@ -36,10 +44,10 @@ def test_moving_load_on_track():
 
     model.synchronise_geometry()
 
-    load_coordinates = [(0.0, 3.001, 1.0), (11.4, 3.001, 1.0)]
     moving_load = MovingLoad(load=[0.0, 10.0, 0.0], direction=[1, 1, 1], velocity=5, origin=[0.0, 3.001, 1.0],
                              offset=0.75)
-    model.add_load_by_geometry_ids([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], moving_load, "moving_load")
+
+    model.add_load_on_line_model_part("rail_track_1", moving_load, "moving_load")
 
     model.synchronise_geometry()
 
@@ -101,3 +109,7 @@ def test_moving_load_on_track():
     stem = Stem(model, "benchmark_moving_load2")
     stem.write_all_input_files()
     stem.run_calculation()
+
+
+if __name__ == "__main__":
+    test_moving_load_on_track()
