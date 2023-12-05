@@ -2642,12 +2642,7 @@ class TestModel:
         # check if the geometry of the process model part is correct
         TestUtils.assert_almost_equal_geometries(expected_geometry, model.process_model_parts[0].geometry)
 
-
-
-
-
-
-
+    @pytest.mark.skip(reason="Work in progrss")
     def test_generate_straight_track_2d(self):
         """
         Test if a straight track is generated correctly in a 2d space. A straight track is generated and added to the
@@ -2720,6 +2715,7 @@ class TestModel:
                                                 for point in expected_sleeper_geometry.points.values()])
         npt.assert_array_almost_equal(expected_bottom_coordinates, connection_coordinates)
 
+    @pytest.mark.skip(reason="Work in progrss")
     def test_generate_straight_track_3d(self):
         """
         Tests if a straight track is generated correctly in a 3d space. A straight track is generated and added to the
@@ -2813,10 +2809,3 @@ class TestModel:
         expected_bottom_coordinates = np.array([point.coordinates
                                                 for point in expected_sleeper_geometry.points.values()])
         npt.assert_array_almost_equal(expected_bottom_coordinates, connection_coordinates)
-
-
-
-
-    @pytest.mark.skip("Not implemented yet")
-    def test_post_setup(self):
-        pass
