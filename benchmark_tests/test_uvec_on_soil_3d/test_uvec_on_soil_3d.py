@@ -87,7 +87,7 @@ def test_stem():
     solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
                                     stress_initialisation_type=stress_initialisation_type,
                                     time_integration=time_integration,
-                                    is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
+                                    is_stiffness_matrix_constant=False, are_mass_and_damping_constant=False,
                                     convergence_criteria=convergence_criterion,
                                     rayleigh_k=0.0001,
                                     rayleigh_m=0.01)
