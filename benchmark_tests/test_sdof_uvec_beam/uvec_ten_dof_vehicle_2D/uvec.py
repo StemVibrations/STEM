@@ -45,10 +45,12 @@ def uvec(json_string: str) -> str:
         state["u"] = u_static
         state["v"] = np.zeros_like(u_static)
         state["a"] = np.zeros_like(u_static)
+        state["previous_time"] = 0
 
     state["u"] = np.array(state["u"])
     state["v"] = np.array(state["v"])
     state["a"] = np.array(state["a"])
+    state["previous_time"] += time_step
 
     # calculate contact forces
     F_contact = calculate_contact_forces(u_vertical, train.calculate_static_contact_force(),
@@ -75,7 +77,7 @@ def uvec(json_string: str) -> str:
     # write to file to compare the results
     file_name = uvec_data["parameters"]["file_name"]
     with open(file_name, 'a+') as f:
-        f.write(f"{time_index*time_step};{uvec_data['loads'][1][1]};{state['u'][-3]};{u_vertical[0]}\n")
+        f.write(f"{state['previous_time']};{uvec_data['loads'][1][1]};{state['u'][-3]};{u_vertical[0]}\n")
 
     return json.dumps(uvec_data)
 
