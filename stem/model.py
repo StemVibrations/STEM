@@ -23,7 +23,6 @@ from stem.globals import ELEMENT_DATA, VERTICAL_AXIS, GRAVITY_VALUE,  OUT_OF_PLA
 
 
 NUMBER_TYPES = (int, float, np.int64, np.float64)
-MAX_ITERATIONS_WHILE = 100000
 
 class Model:
     """
@@ -886,17 +885,13 @@ class Model:
         return edge_nodes
 
     @staticmethod
-    def __find_next_node_along_elements(
-            start_node: int,
-            remaining_element_ids: List[int],
-            remaining_node_ids: List[int],
-            node_to_elements: Dict[int, List[int]],
-            element_to_nodes: Dict[int, List[int]],
-            target_node_ids: npty.NDArray[np.int64]
-    ) -> Tuple[int, int]:
+    def __find_next_node_along_elements(start_node: int, remaining_element_ids: List[int],
+                                        remaining_node_ids: List[int], node_to_elements: Dict[int, List[int]],
+                                        element_to_nodes: Dict[int, List[int]],
+                                        target_node_ids: npty.NDArray[np.int64]) -> Tuple[int, int]:
         """
         Finds the first node in the target_node_ids next node along line element. The remaining_element_ids and
-        remaining_node_ids keeps truck of the direction of the previous searches and orients the search
+        remaining_node_ids keeps track of the direction of the previous searches and orients the search
         on a unique direction.
 
         Args:
@@ -921,20 +916,32 @@ class Model:
         count = 0
         next_node = start_node
 
-        while True:
+        is_searching = True
+        max_iterations = len(remaining_element_ids) * len(remaining_node_ids)
 
+        while count < max_iterations:
             # find the element(s) connected to the node that have not yet been searched for.
             elements_connected = [el for el in node_to_elements[next_node] if el in remaining_element_ids]
+
+            if len(elements_connected) == 0:
+                # all elements have been found
+                break
+
             # there needs to be only one element (no forks)
             assert len(elements_connected) == 1
-            next_element = elements_connected[0]
-            remaining_element_ids.remove(next_element)
+            next_element_id = elements_connected[0]
+            remaining_element_ids.remove(next_element_id)
 
             if count == 0:
-                first_element = next_element
+                first_element_id = next_element_id
 
             # find the node(s) connected to the element that have not yet been found yet.
-            nodes_connected = [nn for nn in element_to_nodes[next_element] if nn in remaining_node_ids]
+            nodes_connected = [nn for nn in element_to_nodes[next_element_id] if nn in remaining_node_ids]
+
+            if len(nodes_connected) == 0:
+                # all nodes have been found
+                break
+
             # there needs to be only one node (no quadratic or 2d elements)
             assert len(nodes_connected) == 1
             next_node = nodes_connected[0]
@@ -945,8 +952,9 @@ class Model:
                 return next_node, first_element
 
             count += 1
-            if count > MAX_ITERATIONS_WHILE:
-                raise ValueError("Error in while loop. Max iterations exceeded.")
+
+        if count == max_iterations:
+            raise ValueError("Something went wrong in the algorithm. Maximum number of iterations exceeded.")
 
     @staticmethod
     def __get_model_part_element_connectivities(model_part: ModelPart) -> npty.NDArray[np.int64]:
