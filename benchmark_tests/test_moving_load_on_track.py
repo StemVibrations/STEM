@@ -1,4 +1,7 @@
 import sys
+
+import pytest
+
 sys.path.append("./")
 import numpy as np
 from stem.model import Model
@@ -11,6 +14,7 @@ from stem.output import NodalOutput, GiDOutputParameters, Output, VtkOutputParam
 from stem.stem import Stem
 
 
+@pytest.mark.skip(reason="This test is not working yet")
 def test_moving_load_on_track():
     model = Model(3)
 

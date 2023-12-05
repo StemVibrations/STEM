@@ -63,7 +63,8 @@ class Model:
                                 origin_point: Sequence[float], direction_vector: Sequence[float], name,
                                 small_thickness: float = 1e-3):
         """
-        Generates a track geometry. With rail, rail-pads and sleepers as mass elements.
+        Generates a track geometry. With rail, rail-pads and sleepers as mass elements. WIP, currently only rail is
+        generated.
 
         Args:
             - sleeper_distance (float): distance between sleepers
@@ -78,79 +79,95 @@ class Model:
         """
 
         rail_name = f"{name}"
-        sleeper_name = f"sleeper_{name}"
-        rail_pads_name = f"rail_pads_{name}"
+
+        # _______ WIP______________________________________________________________
+        # sleeper_name = f"sleeper_{name}"
+        # rail_pads_name = f"rail_pads_{name}"
+        # _______ WIP______________________________________________________________
 
         normalized_direction_vector = direction_vector / np.linalg.norm(direction_vector)
 
         rail_local_distance = np.linspace(0, sleeper_distance * (n_sleepers - 1), n_sleepers)
-        sleeper_local_coords = np.copy(rail_local_distance)
+
+        # _______ WIP______________________________________________________________
+        # sleeper_local_coords = np.copy(rail_local_distance)
+        # _______ WIP______________________________________________________________
 
         # set rail geometry
         rail_global_coords = rail_local_distance[:, None].dot(normalized_direction_vector[None, :]) + origin_point
-        rail_global_coords[:, VERTICAL_AXIS] += small_thickness
+
+        # _______ WIP______________________________________________________________
+        # rail_global_coords[:, VERTICAL_AXIS] += small_thickness
+        # _______ WIP______________________________________________________________
 
         rail_geo_settings = {rail_name: {"coordinates": rail_global_coords, "ndim": 1}}
 
+        #_______ WIP______________________________________________________________
+        # # set sleepers geometry
+        # sleeper_global_coords = sleeper_local_coords[:, None].dot(normalized_direction_vector[None, :]) + origin_point
+        #
+        # sleeper_geo_settings = {sleeper_name: {"coordinates": sleeper_global_coords, "ndim": 1}}
+        # self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
+        # _______ WIP______________________________________________________________
 
-        # set sleepers geometry
-        sleeper_global_coords = sleeper_local_coords[:, None].dot(normalized_direction_vector[None, :]) + origin_point
-
-        sleeper_geo_settings = {sleeper_name: {"coordinates": sleeper_global_coords, "ndim": 1}}
-        self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
         self.gmsh_io.generate_geometry(rail_geo_settings, "")
 
         rail_model_part = BodyModelPart(rail_name)
         rail_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_name)
 
+        # _______ WIP______________________________________________________________
+        # sleeper_model_part = BodyModelPart(sleeper_name)
+        # sleeper_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, sleeper_name)
+        #
+        #
+        # # create rail pad geometries
+        # # top_point_ids = self.gmsh_io.make_points(rail_global_coords)
+        # # bot_point_ids = self.gmsh_io.make_points(sleeper_global_coords)
+        #
+        # top_point_ids = list(rail_model_part.geometry.points.keys())
+        # bot_point_ids = list(sleeper_model_part.geometry.points.keys())
+        #
+        #
+        # rail_pad_line_ids = [self.gmsh_io.create_line([top_point_id, bot_point_id])
+        #                      for top_point_id, bot_point_id in zip(top_point_ids, bot_point_ids)]
+        #
+        # self.gmsh_io.add_physical_group(rail_pads_name, 1, rail_pad_line_ids)
+        #
+        # # create rail, sleeper, and rail_pad body model parts
+        #
+        # rail_model_part.material = StructuralMaterial(name=rail_name, material_parameters=rail_parameters)
+        #
+        # sleeper_model_part.material = StructuralMaterial(name=sleeper_name, material_parameters=sleeper_parameters)
+        #
+        # rail_pads_model_part = BodyModelPart(rail_pads_name)
+        # rail_pads_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_pads_name)
+        # rail_pads_model_part.material = StructuralMaterial(name=rail_pads_name, material_parameters=rail_pad_parameters)
+        #
+        # # add physical group to gmsh
+        # rail_constraint_name = f"constraint_{rail_name}"
+        # rail_constraint_geometry_ids = self.gmsh_io.geo_data["physical_groups"][rail_name]["geometry_ids"]
+        # self.gmsh_io.add_physical_group(f"constraint_{rail_name}", 1, rail_constraint_geometry_ids)
+        #
+        # # create model part
+        # constraint_model_part = ModelPart(rail_constraint_name)
+        #
+        # # retrieve geometry from gmsh and add to model part
+        # constraint_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_constraint_name)
+        #
+        # # add displacement_constraint in x and z direction
+        # constraint_model_part.parameters = DisplacementConstraint(active=[True, True, True],  is_fixed=[True, False, True],
+        #                                                value=[0, 0, 0])
 
-        sleeper_model_part = BodyModelPart(sleeper_name)
-        sleeper_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, sleeper_name)
-
-        # create rail pad geometries
-        # top_point_ids = self.gmsh_io.make_points(rail_global_coords)
-        # bot_point_ids = self.gmsh_io.make_points(sleeper_global_coords)
-
-        top_point_ids = list(rail_model_part.geometry.points.keys())
-        bot_point_ids = list(sleeper_model_part.geometry.points.keys())
-
-
-        rail_pad_line_ids = [self.gmsh_io.create_line([top_point_id, bot_point_id])
-                             for top_point_id, bot_point_id in zip(top_point_ids, bot_point_ids)]
-
-        self.gmsh_io.add_physical_group(rail_pads_name, 1, rail_pad_line_ids)
-
-        # create rail, sleeper, and rail_pad body model parts
-
-        rail_model_part.material = StructuralMaterial(name=rail_name, material_parameters=rail_parameters)
-
-        sleeper_model_part.material = StructuralMaterial(name=sleeper_name, material_parameters=sleeper_parameters)
-
-        rail_pads_model_part = BodyModelPart(rail_pads_name)
-        rail_pads_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_pads_name)
-        rail_pads_model_part.material = StructuralMaterial(name=rail_pads_name, material_parameters=rail_pad_parameters)
-
-        # add physical group to gmsh
-        rail_constraint_name = f"constraint_{rail_name}"
-        rail_constraint_geometry_ids = self.gmsh_io.geo_data["physical_groups"][rail_name]["geometry_ids"]
-        self.gmsh_io.add_physical_group(f"constraint_{rail_name}", 1, rail_constraint_geometry_ids)
-
-        # create model part
-        constraint_model_part = ModelPart(rail_constraint_name)
-
-        # retrieve geometry from gmsh and add to model part
-        constraint_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_constraint_name)
-
-        # add displacement_constraint in x and z direction
-        constraint_model_part.parameters = DisplacementConstraint(active=[True, True, True],  is_fixed=[True, False, True],
-                                                       value=[0, 0, 0])
+        # _______ WIP______________________________________________________________
 
         self.body_model_parts.append(rail_model_part)
-        self.body_model_parts.append(sleeper_model_part)
-        self.body_model_parts.append(rail_pads_model_part)
 
-        self.process_model_parts.append(constraint_model_part)
-
+        # _______ WIP______________________________________________________________
+        # self.body_model_parts.append(sleeper_model_part)
+        # self.body_model_parts.append(rail_pads_model_part)
+        #
+        # self.process_model_parts.append(constraint_model_part)
+        # _______ WIP______________________________________________________________
 
     def __del__(self):
         """
@@ -361,7 +378,6 @@ class Model:
         model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
 
         self.process_model_parts.append(model_part)
-
 
     def add_load_on_line_model_part(self, model_part_name: str, load_parameters: LoadParametersABC, load_name: str):
         """
