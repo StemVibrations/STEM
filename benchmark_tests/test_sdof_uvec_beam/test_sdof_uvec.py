@@ -192,7 +192,3 @@ def test_stem():
                                 os.path.join(input_folder, "output/output_vtk_full_model"))
 
     rmtree(input_folder)
-
-
-if __name__ == "__main__":
-    test_stem()
