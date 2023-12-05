@@ -46,6 +46,39 @@ class KratosLoadsIO:
 
         return load_dict
 
+    def __create_uvec_dict(self, part_name: str, parameters: UvecLoad) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the UVEC parameters
+
+        Args:
+            - part_name (str): name of the model part on which the load is applied
+            - parameters (:class:`stem.load.UvecLoad`): UVEC load parameters object
+
+        Returns:
+            - Dict[str, Any]: dictionary containing the UVEC load parameters
+
+        """
+
+        # initialize load parameters dictionary
+        parameters_dict = {"model_part_name":  f"{self.domain}.{part_name}",
+                           "compute_model_part_name": f"porous_computational_model_part",  # as hard-coded in Kratos
+                           "variable_name": "POINT_LOAD",
+                           "load": [1, 1, 1],  # dummy parameter
+                           "direction": parameters.direction,
+                           "velocity": parameters.velocity,
+                           "origin": parameters.origin,
+                           "configuration": parameters.wheel_configuration}
+
+        # initialize load dictionary
+        load_dict: Dict[str, Any] = {
+            "python_module": "set_multiple_moving_loads_process",
+            "kratos_module": "StemApplication",
+            "process_name": "SetMultipleMovingLoadsProcess",
+            "Parameters": parameters_dict
+        }
+
+        return load_dict
+
     def create_load_dict(self, part_name: str, parameters: LoadParametersABC) -> Union[Dict[str, Any], None]:
         """
         Creates a dictionary containing the load parameters
@@ -66,6 +99,8 @@ class KratosLoadsIO:
             return IOUtils.create_vector_constraint_table_process_dict(self.domain, part_name, parameters, "POINT_LOAD")
         elif isinstance(parameters, MovingLoad):
             return self.__create_moving_load_dict(part_name, parameters)
+        elif isinstance(parameters, UvecLoad):
+            return self.__create_uvec_dict(part_name, parameters)
         elif isinstance(parameters, LineLoad):
             return IOUtils.create_vector_constraint_table_process_dict(self.domain, part_name, parameters, "LINE_LOAD")
         elif isinstance(parameters, SurfaceLoad):

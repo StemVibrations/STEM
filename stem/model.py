@@ -155,8 +155,7 @@ class Model:
 
         self.body_model_parts.append(body_model_part)
 
-    def add_load_by_geometry_ids(self, geometry_ids: Sequence[int], load_parameters:
-                                 LoadParametersABC, name: str):
+    def add_load_by_geometry_ids(self, geometry_ids: Sequence[int], load_parameters: LoadParametersABC, name: str):
         """
         Add a load to the model by giving the geometry ids of the geometry where the load has to be applied.
         The geometry dimension of the entity where the load needs to be applied is determined based on the 
@@ -169,14 +168,13 @@ class Model:
             
         Raises:
             - NotImplementedError: when the load parameter provided is not one of point, line, moving or surface loads.
-            
         """
 
         # point load can only be assigned to 0d geometry
         if isinstance(load_parameters, PointLoad):
             ndim_load = 0
         # line and moving load can only be assigned to 1d geometry
-        elif isinstance(load_parameters, (LineLoad, MovingLoad)):
+        elif isinstance(load_parameters, (LineLoad, MovingLoad, UvecLoad)):
             ndim_load = 1
         # surface load can only be assigned to 2d geometry
         elif isinstance(load_parameters, SurfaceLoad):
@@ -199,7 +197,7 @@ class Model:
             raise ValueError("The geometry is not initialised for the model part.")
 
         # validations for moving load input
-        if isinstance(load_parameters, MovingLoad):
+        if isinstance(load_parameters, (MovingLoad, UvecLoad)):
 
             # retrieve the coordinates of the points in the path of the load
             coordinates = []
@@ -242,13 +240,13 @@ class Model:
 
         # validation of inputs
         self.validate_coordinates(coordinates)
-        if isinstance(load_parameters, MovingLoad):
+        if isinstance(load_parameters, (MovingLoad, UvecLoad)):
             self.__validate_moving_load_parameters(coordinates, load_parameters)
 
         # create input for gmsh
         if isinstance(load_parameters, PointLoad):
             gmsh_input = {name: {"coordinates": coordinates, "ndim": 0}}
-        elif isinstance(load_parameters, LineLoad) or isinstance(load_parameters, MovingLoad):
+        elif isinstance(load_parameters, (LineLoad, MovingLoad, UvecLoad)):
             gmsh_input = {name: {"coordinates": coordinates, "ndim": 1}}
         elif isinstance(load_parameters, SurfaceLoad):
             gmsh_input = {name: {"coordinates": coordinates, "ndim": 2}}
@@ -301,14 +299,15 @@ class Model:
                                      f"but {i} was given.")
 
     @staticmethod
-    def __validate_moving_load_parameters(coordinates: Sequence[Sequence[float]], load_parameters: MovingLoad) -> None:
+    def __validate_moving_load_parameters(coordinates: Sequence[Sequence[float]],
+                                          load_parameters: Union[MovingLoad, UvecLoad]) -> None:
         """
-        Validates the coordinates in input for the moving load and the trajectory (collinearity of the
+        Validates the coordinates in input for the moving load or Uvec load and the trajectory (collinearity of the
         points and if the origin is between the point).
 
         Args:
             - coordinates (Sequence[Sequence[float]]): The start-end coordinate of the moving load.
-            - parameters (:class:`stem.load.LoadParametersABC`): The parameters of the load.
+            - parameters (Union[:class:`stem.load.MovingLoad`,:class:`stem.load.UvecLoad` ): The parameters of the load.
 
         Raises:
             - ValueError: if moving load origin is not on trajectory
@@ -658,7 +657,8 @@ class Model:
         for process_model_part in self.process_model_parts:
 
             # only check if the process model part is a condition element
-            if isinstance(process_model_part.parameters, (LineLoad, MovingLoad, SurfaceLoad, AbsorbingBoundary)):
+            if isinstance(process_model_part.parameters,
+                          (LineLoad, MovingLoad, UvecLoad, SurfaceLoad, AbsorbingBoundary)):
                 # match the condition elements with the body elements on which the conditions are applied
                 matched_elements = self.__find_matching_body_elements_for_process_model_part(process_model_part)
 
