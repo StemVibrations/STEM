@@ -1,4 +1,6 @@
 import os
+from shutil import rmtree, copytree
+
 from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedLaw
 from stem.load import UvecLoad
@@ -6,10 +8,7 @@ from stem.boundary import DisplacementConstraint
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, StressInitialisationType, SolverSettings, Problem
 from stem.output import NodalOutput, VtkOutputParameters, Output
 from stem.stem import Stem
-from shutil import rmtree, copytree
 
-import sys
-sys.path.append("./")
 from benchmark_tests.utils import assert_files_equal
 
 
