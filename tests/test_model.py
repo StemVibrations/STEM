@@ -2642,7 +2642,170 @@ class TestModel:
         # check if the geometry of the process model part is correct
         TestUtils.assert_almost_equal_geometries(expected_geometry, model.process_model_parts[0].geometry)
 
+    @pytest.mark.skip(reason="Work in progrss")
+    def test_generate_straight_track_2d(self):
+        """
+        Test if a straight track is generated correctly in a 2d space. A straight track is generated and added to the
+        model. The geometry and material of the rails, sleepers and rail pads are checked.
+        """
 
+        # initialise model
+        model = Model(2)
 
+        rail_parameters = EulerBeam(2, 1, 1, 1, 1, 1)
+        rail_pad_parameters = ElasticSpringDamper([1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1])
+        sleeper_parameters = NodalConcentrated([1, 1, 1], 1, [1, 1, 1])
 
+        origin_point = np.array([2.0, 3.0, 0])
+        direction_vector = np.array([1, 0, 0])
 
+        # create a straight track with rails, sleepers and rail pads
+        connection_coordinates = model.generate_straight_track(0.6, 3, rail_parameters,
+                                                               sleeper_parameters, rail_pad_parameters, origin_point,
+                                                               direction_vector,"track_1")
+
+        # check geometry and material of the rail
+        expected_rail_points = {1: Point.create([2.0, 3.1, 0], 1),
+                                2: Point.create([2.6, 3.1, 0], 2),
+                                3: Point.create([3.2, 3.1, 0],3)}
+        expected_rail_lines = {1: Line.create([1, 2], 1), 2: Line.create([2, 3], 2)}
+
+        expected_rail_geometry = Geometry(expected_rail_points, expected_rail_lines)
+
+        # check rail model part
+        rail_model_part = model.body_model_parts[0]
+        calculated_rail_geometry = rail_model_part.geometry
+        calculated_rail_parameters = rail_model_part.material
+
+        TestUtils.assert_almost_equal_geometries(expected_rail_geometry, calculated_rail_geometry)
+        TestUtils.assert_dictionary_almost_equal(rail_parameters.__dict__, calculated_rail_parameters.__dict__)
+
+        # check geometry and material of the sleepers
+        expected_sleeper_points = {4: Point.create([2.0, 3.0, 0], 4),
+                                   5: Point.create([2.6, 3.0, 0], 5),
+                                   6: Point.create([3.2, 3.0, 0], 6)}
+        expected_sleeper_geometry = Geometry(expected_sleeper_points)
+
+        sleeper_model_part = model.body_model_parts[1]
+        calculated_sleeper_geometry = sleeper_model_part.geometry
+        calculated_sleeper_parameters = sleeper_model_part.material
+
+        TestUtils.assert_almost_equal_geometries(expected_sleeper_geometry, calculated_sleeper_geometry)
+        TestUtils.assert_dictionary_almost_equal(sleeper_parameters.__dict__, calculated_sleeper_parameters.__dict__)
+
+        # check geometry and material of the rail pads
+        rail_pad_model_part = model.body_model_parts[2]
+        calculated_rail_pad_geometry = rail_pad_model_part.geometry
+        calculated_rail_pad_parameters = rail_pad_model_part.material
+
+        expected_rail_pad_points = {1: Point.create([2.0, 3.1, 0], 1), 4: Point.create([2.0, 3.0, 0], 4),
+                                    2: Point.create([2.6, 3.1, 0], 2), 5: Point.create([2.6, 3.0, 0], 5),
+                                    3: Point.create( [3.2,3.1,0],3), 6: Point.create([3.2, 3.0, 0],6)}
+
+        expected_rail_pad_lines = {3: Line.create([1, 4], 3), 4: Line.create([2, 5], 4),
+                                   5: Line.create([3,6],5)}
+
+        expected_rail_pad_geometry = Geometry(expected_rail_pad_points, expected_rail_pad_lines)
+
+        TestUtils.assert_almost_equal_geometries(expected_rail_pad_geometry, calculated_rail_pad_geometry)
+        TestUtils.assert_dictionary_almost_equal(rail_pad_parameters.__dict__, calculated_rail_pad_parameters.__dict__)
+
+        # check the expected bottom coordinates
+        expected_bottom_coordinates = np.array([point.coordinates
+                                                for point in expected_sleeper_geometry.points.values()])
+        npt.assert_array_almost_equal(expected_bottom_coordinates, connection_coordinates)
+
+    @pytest.mark.skip(reason="Work in progrss")
+    def test_generate_straight_track_3d(self):
+        """
+        Tests if a straight track is generated correctly in a 3d space. A straight track is generated and added to the
+        model. The geometry and material of the rails, sleepers and rail pads are checked.
+        """
+
+        model = Model(3)
+
+        rail_parameters = EulerBeam(3, 1, 1, 1, 1, 1, 1, 1)
+        rail_pad_parameters = ElasticSpringDamper([1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1])
+        sleeper_parameters = NodalConcentrated([1, 1, 1], 1, [1, 1, 1])
+
+        origin_point = np.array([2.0, 3.0, 1.0])
+        direction_vector = np.array([1, 1, -1])
+
+        # create a straight track with rails, sleepers and rail pads
+        connection_coordinates = model.generate_straight_track(0.6, 20, rail_parameters,
+                                                               sleeper_parameters, rail_pad_parameters, origin_point,
+                                                               direction_vector,"track_1")
+
+        model.synchronise_geometry()
+        model.gmsh_io.generate_mesh(3, open_gmsh_gui=True)
+
+        distance_sleepers_xyz = 0.6 / 3**0.5
+
+        # check geometry and material of the rail
+        expected_rail_points = {1: Point.create([2.0, 3.1, 1.0], 1),
+                                2: Point.create([2.0 + distance_sleepers_xyz, 3.1 + distance_sleepers_xyz,
+                                                 1.0 - distance_sleepers_xyz], 2),
+                                3: Point.create([2.0 + 2 * distance_sleepers_xyz,
+                                                 3.1 + 2 * distance_sleepers_xyz,
+                                                 1.0 - 2 * distance_sleepers_xyz], 3)}
+        expected_rail_lines = {1: Line.create([1, 2], 1), 2: Line.create([2, 3], 2)}
+
+        expected_rail_geometry = Geometry(expected_rail_points, expected_rail_lines)
+
+        # check rail model part
+        rail_model_part = model.body_model_parts[0]
+        calculated_rail_geometry = rail_model_part.geometry
+        calculated_rail_parameters = rail_model_part.material
+
+        TestUtils.assert_almost_equal_geometries(expected_rail_geometry, calculated_rail_geometry)
+        TestUtils.assert_dictionary_almost_equal(rail_parameters.__dict__, calculated_rail_parameters.__dict__)
+
+        # check geometry and material of the sleepers
+        expected_sleeper_points = {4: Point.create([2.0, 3.0, 1.0], 4),
+                                   5: Point.create([2.0 + distance_sleepers_xyz,
+                                                              3.0 + distance_sleepers_xyz,
+                                                              1.0 - distance_sleepers_xyz], 5),
+                                   6: Point.create([2.0 + 2 * distance_sleepers_xyz,
+                                                              3.0 + 2 * distance_sleepers_xyz,
+                                                              1.0 - 2 * distance_sleepers_xyz], 6)}
+
+        expected_sleeper_geometry = Geometry(expected_sleeper_points)
+
+        sleeper_model_part = model.body_model_parts[1]
+        calculated_sleeper_geometry = sleeper_model_part.geometry
+        calculated_sleeper_parameters = sleeper_model_part.material
+
+        TestUtils.assert_almost_equal_geometries(expected_sleeper_geometry, calculated_sleeper_geometry)
+        TestUtils.assert_dictionary_almost_equal(sleeper_parameters.__dict__, calculated_sleeper_parameters.__dict__)
+
+        # check geometry and material of the rail pads
+        rail_pad_model_part = model.body_model_parts[2]
+        calculated_rail_pad_geometry = rail_pad_model_part.geometry
+        calculated_rail_pad_parameters = rail_pad_model_part.material
+
+        expected_rail_pad_points = {1: Point.create([2.0, 3.1, 1.0], 1),
+                                    4: Point.create([2.0, 3.0, 1.0], 4),
+                                    2: Point.create([2.0 + distance_sleepers_xyz, 3.1 + distance_sleepers_xyz,
+                                                               1.0 - distance_sleepers_xyz], 2),
+                                    5: Point.create([2.0 + distance_sleepers_xyz,
+                                                               3.0 + distance_sleepers_xyz,
+                                                               1.0 - distance_sleepers_xyz], 5),
+                                    3: Point.create([2.0 + 2 * distance_sleepers_xyz,
+                                                               3.1 + 2 * distance_sleepers_xyz,
+                                                               1.0 - 2 * distance_sleepers_xyz], 3),
+                                    6: Point.create([2.0 + 2 * distance_sleepers_xyz,
+                                                               3.0 + 2 * distance_sleepers_xyz,
+                                                               1.0 - 2 * distance_sleepers_xyz], 6)}
+
+        expected_rail_pad_lines = {3: Line.create([1, 4], 3), 4: Line.create([2, 5], 4),
+                                   5: Line.create([3, 6], 5)}
+
+        expected_rail_pad_geometry = Geometry(expected_rail_pad_points, expected_rail_pad_lines)
+
+        TestUtils.assert_almost_equal_geometries(expected_rail_pad_geometry, calculated_rail_pad_geometry)
+        TestUtils.assert_dictionary_almost_equal(rail_pad_parameters.__dict__, calculated_rail_pad_parameters.__dict__)
+
+        # check the expected bottom coordinates
+        expected_bottom_coordinates = np.array([point.coordinates
+                                                for point in expected_sleeper_geometry.points.values()])
+        npt.assert_array_almost_equal(expected_bottom_coordinates, connection_coordinates)

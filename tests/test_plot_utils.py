@@ -70,7 +70,7 @@ class TestPlotUtils:
         Create a geometry and plots it.
 
         Args:
-            - ndim (int): dimension of the geometry
+            - ndim (int): dimension of the model
             - material (:class:`stem.soil_material.SoilMaterial`): soil material
 
         """
