@@ -278,7 +278,8 @@ class Model:
             - name (str): name of the load.
 
         Raises:
-            - NotImplementedError: when the load parameter provided is not one of point, line, moving or surface loads.
+            - NotImplementedError: when the load parameter provided is not one of point, line, moving, UVEC
+            or surface loads.
         """
 
         # point load can only be assigned to 0d geometry
@@ -380,7 +381,7 @@ class Model:
     def add_load_on_line_model_part(self, model_part_name: str, load_parameters: LoadParametersABC, load_name: str):
         """
         Adds a load to the model by giving the name of the line model part where the load has to be applied.
-        It only works with LineLoad and MovingLoad.
+        It only works with LineLoad, MovingLoad and UvecLoad.
 
         Args:
             - model_part_name (str): name of the line model part where the load needs to be applied.
@@ -390,7 +391,7 @@ class Model:
         Raises:
             - ValueError: if the model part name is not found.
             - ValueError: if the model part is not a line model part.
-            - ValueError: if the load parameters are not of type LineLoad or MovingLoad.
+            - ValueError: if the load parameters are not of type LineLoad or MovingLoad or UvecLoad.
         """
 
         # line and moving load can only be assigned to 1d geometry
@@ -426,7 +427,7 @@ class Model:
             raise ValueError("The geometry is not initialised for the model part.")
 
         # validations for moving load input
-        if isinstance(load_parameters, MovingLoad):
+        if isinstance(load_parameters, (MovingLoad, UvecLoad)):
             # retrieve the coordinates of the points in the path of the load
             coordinates = []
             for line in model_part.geometry.lines.values():
