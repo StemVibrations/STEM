@@ -114,6 +114,7 @@ class Model:
 
         rail_model_part = BodyModelPart(rail_name)
         rail_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_name)
+        rail_model_part.material = StructuralMaterial(name=rail_name, material_parameters=rail_parameters)
 
         # _______ WIP______________________________________________________________
         # sleeper_model_part = BodyModelPart(sleeper_name)
@@ -135,7 +136,6 @@ class Model:
         #
         # # create rail, sleeper, and rail_pad body model parts
         #
-        # rail_model_part.material = StructuralMaterial(name=rail_name, material_parameters=rail_parameters)
         #
         # sleeper_model_part.material = StructuralMaterial(name=sleeper_name, material_parameters=sleeper_parameters)
         #
