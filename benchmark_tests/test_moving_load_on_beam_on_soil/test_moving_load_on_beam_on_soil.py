@@ -84,7 +84,7 @@ def test_stem():
                                                         value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
-    model.add_boundary_condition_by_geometry_ids(0, [3, 4], rotation_boundaries_parameters, "rotation")
+    model.add_boundary_condition_by_geometry_ids(0, [ 4], rotation_boundaries_parameters, "rotation")
     model.add_boundary_condition_by_geometry_ids(1, [1, 4, 2], displacementXYZ_parameters, "displacementXYZ")
 
     # Synchronize geometry
@@ -112,7 +112,7 @@ def test_stem():
     solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
                                      stress_initialisation_type=stress_initialisation_type,
                                      time_integration=time_integration,
-                                     is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
+                                     is_stiffness_matrix_constant=False, are_mass_and_damping_constant=False,
                                      convergence_criteria=convergence_criterion, rayleigh_k=0.001,
                                      rayleigh_m=0.1)
 
