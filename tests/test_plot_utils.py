@@ -6,7 +6,6 @@ from bs4 import BeautifulSoup
 from stem.model import Model
 from stem.soil_material import SoilMaterial, OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
 from stem.plot_utils import PlotUtils
-from stem.geometry import Point, Line
 
 from gmsh_utils import gmsh_IO
 
@@ -124,48 +123,6 @@ class TestPlotUtils:
 
         # remove generated file
         Path(f"tests/generated_geometry_{ndim}D.html").unlink()
-
-    @staticmethod
-    def create_geometry_with_loose_lines_plot_and_assert(ndim: int, material: SoilMaterial) -> None:
-        """
-        Create a geometry with loose lines and plots and asserts it.
-
-        Args:
-            - ndim (int): dimension of the geometry
-            - material (:class:`stem.soil_material.SoilMaterial`): soil material
-
-        """
-        new_points = {100: Point.create([0, 3, 0], 100),
-                      110: Point.create([1, 3, 0], 110)}
-        new_lines = {100: Line.create([100, 110], 100)}
-
-        # create geometry and plot it
-        model = TestPlotUtils.create_model(ndim, material)
-
-        # add loose line to geometry
-        model.geometry.points.update(new_points)
-        model.geometry.lines.update(new_lines)
-
-        # create figure
-        fig = PlotUtils.create_geometry_figure(model.ndim, model.geometry, True, True, True, True)
-
-        # save to eps for testing
-        fig.savefig(f"tests/generated_geometry_with_loose_lines_{ndim}D.eps", format="eps", bbox_inches="tight",
-                    pad_inches=0.1)
-
-        with open(f"tests/generated_geometry_with_loose_lines_{ndim}D.eps", "r") as f:
-            generated_geometry = f.readlines()
-
-        with open(f"tests/test_data/expected_geometry_with_loose_lines_{ndim}D.eps", "r") as f:
-            expected_geometry = f.readlines()
-
-        # skip checking header lines
-        n_header_lines = 9
-        for i in range(n_header_lines, len(generated_geometry)):
-            assert generated_geometry[i] == expected_geometry[i]
-
-        # remove generated file
-        Path(f"tests/generated_geometry_with_loose_lines_{ndim}D.eps").unlink()
 
     def test_plot_geometry_2D(self, create_default_2d_soil_material: SoilMaterial):
         """

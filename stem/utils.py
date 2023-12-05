@@ -494,33 +494,3 @@ class Utils:
             return str(path_obj.with_suffix(new_extension))
         else:
             return str(path_obj).replace(extensions, new_extension)
-
-    @staticmethod
-    def calculate_centre_of_mass(coordinates: npt.NDArray) -> npt.NDArray:
-        """
-        Calculate the centre of mass of a closed polygon.
-
-        Args:
-            - coordinates (npt.NDArray): coordinates of the points of a polygon
-
-        Returns:
-            - npt.NDArray: coordinates of the centre of mass
-
-        """
-        # add first point to the end of the array to close the polygon
-        connected_coordinates = np.vstack((coordinates[-1], coordinates))
-
-        # calculate length of attached lines to each point
-        diff = np.diff(connected_coordinates, axis=0)
-
-        # calculate middle coordinates of each line
-        middle_coordinates = (connected_coordinates[1:] + connected_coordinates[:-1]) / 2
-
-        # calculate weights of each line, which is the length of the line
-        weights = np.sqrt(np.sum(diff ** 2, axis=1))
-
-        # normalise weights
-        normalised_weights = weights / np.sum(weights)
-
-        # centre of mass is the weighted average of the middle coordinates
-        return middle_coordinates.T.dot(normalised_weights[:, None])[:, 0]
