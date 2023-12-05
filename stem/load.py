@@ -81,9 +81,7 @@ class PointLoad(LoadParametersABC):
             element_name = f"PointLoadCondition{n_dim_model}D{n_nodes_element}N"
 
         else:
-
-            if analysis_type != AnalysisType.MECHANICAL_GROUNDWATER_FLOW and analysis_type != AnalysisType.MECHANICAL:
-                raise ValueError("Point load can only be applied in mechanical or mechanical groundwater flow analysis")
+            raise ValueError("Point load can only be applied in mechanical or mechanical groundwater flow analysis")
 
         # Point load does not have a name
         return element_name
