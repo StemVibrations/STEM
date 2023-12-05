@@ -25,8 +25,10 @@ class TestModelPart:
         point_load_part = ModelPart("point_load_part")
         point_load_part.parameters = point_load
 
-        assert point_load_part.get_element_name(2, 1, AnalysisType.MECHANICAL) is None
-        assert point_load_part.get_element_name(3, 1, AnalysisType.MECHANICAL) is None
+        assert (point_load_part.get_element_name(2, 1, AnalysisType.MECHANICAL) ==
+                f"PointLoadCondition2D1N")
+        assert (point_load_part.get_element_name(3, 1, AnalysisType.MECHANICAL) ==
+                f"PointLoadCondition3D1N")
 
         # wrong point input
         with pytest.raises(ValueError, match= "Point load can only be applied in mechanical or mechanical groundwater "
@@ -214,10 +216,9 @@ class TestModelPart:
         beam_part.material = beam
 
         assert beam_part.get_element_name(2, 2, AnalysisType.MECHANICAL) == "GeoCrBeamElementLinear2D2N"
-        assert beam_part.get_element_name(3, 2, AnalysisType.MECHANICAL) == "GeoCrBeamElementLinear3D2N"
+        assert beam_part.get_element_name(3, 2, AnalysisType.MECHANICAL) == "GeoCrBeamElement3D2N"
 
         # wrong beam input
-
         with pytest.raises(ValueError, match= 'Analysis type AnalysisType.GROUNDWATER_FLOW is not implemented '
                                               'for euler beams.'):
             beam_part.get_element_name(2, 2, AnalysisType.GROUNDWATER_FLOW)
