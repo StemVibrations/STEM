@@ -244,6 +244,56 @@ class MovingLoad(LoadParametersABC):
 
         return element_name
 
+@dataclass
+class UvecLoad(LoadParametersABC):
+    """
+    Class containing the load parameters for a UVEC (User-defined VEhiCle) load.
+
+    Inheritance:
+        - :class:`LoadParametersABC`
+
+    Attributes:
+        - direction (List[int]):  Direction of the moving load (-1 or +1 in x, y, z direction) [-].
+        - velocity (Union[float, str]): Velocity of the moving load [m/s].
+        - origin (List[float]): Starting coordinates of the first wheel [m].
+        - wheel_configuration (List[float]): Wheel configuration, i.e. distances from the origin of each wheel [m].
+        - uvec_file (str): Path to the UVEC file.
+        - uvec_function_name (str): Name of the UVEC function.
+        - uvec_parameters (Dict[str, Any]): Parameters of the UVEC function.
+        - uvec_state_variables (Dict[str, Any]): State variables of the UVEC function.
+
+
+    """
+
+    direction: List[float]
+    velocity: Union[float, str]
+    origin: List[float]
+    wheel_configuration: List[float]
+    uvec_file: str
+    uvec_function_name: str
+    uvec_parameters: Dict[str, Any] = field(default_factory=dict)
+    uvec_state_variables: Dict[str, Any] = field(default_factory=dict)
+
+    @staticmethod
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
+        """
+        Static method to get the element name for a UVEC load.
+        """
+
+        # check if the number of nodes per element is correct
+        available_node_dim_combinations = {
+            2: [2, 3],
+            3: [2, 3],
+        }
+        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations,
+                                             "UVEC load")
+
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+            element_name = f"MovingLoadCondition{n_dim_model}D{n_nodes_element}N"
+        else:
+            raise ValueError("UVEC load can only be applied in mechanical or mechanical groundwater flow analysis")
+
+        return element_name
 
 @dataclass
 class GravityLoad(LoadParametersABC):

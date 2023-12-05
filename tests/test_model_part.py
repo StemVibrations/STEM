@@ -3,7 +3,7 @@ import re
 import numpy as np
 import pytest
 
-from stem.load import PointLoad, LineLoad, SurfaceLoad, MovingLoad, GravityLoad
+from stem.load import PointLoad, LineLoad, SurfaceLoad, MovingLoad, GravityLoad, UvecLoad
 from stem.boundary import DisplacementConstraint, RotationConstraint, AbsorbingBoundary
 from stem.structural_material import StructuralMaterial, EulerBeam, ElasticSpringDamper, NodalConcentrated
 from stem.model_part import ModelPart, BodyModelPart
@@ -102,6 +102,29 @@ class TestModelPart:
                            match=re.escape('In 3 dimensions, only [2, 3] noded Moving load elements are supported. '
                                            '4 nodes were provided.')):
             moving_load_part.get_element_name(3, 4, AnalysisType.MECHANICAL)
+
+        # check uvec load names
+        uvec_parameters = {"load_wheel_1": -10.0, "load_wheel_2": -20.0}
+        uvec_load = UvecLoad([10, 10, 10], 5, [0,0,0], [0, 2], r"sample_uvec.py", "uvec_test", uvec_parameters)
+
+        uvec_part = ModelPart("uvec_load_part")
+        uvec_part.parameters = uvec_load
+
+        assert uvec_part.get_element_name(2, 2, AnalysisType.MECHANICAL) == "MovingLoadCondition2D2N"
+        assert uvec_part.get_element_name(3, 2, AnalysisType.MECHANICAL) == "MovingLoadCondition3D2N"
+        assert uvec_part.get_element_name(2, 3, AnalysisType.MECHANICAL) == "MovingLoadCondition2D3N"
+        assert uvec_part.get_element_name(3, 3, AnalysisType.MECHANICAL) == "MovingLoadCondition3D3N"
+
+        # wrong uvec_load input
+        with pytest.raises(ValueError, match="UVEC load can only be applied in mechanical or mechanical groundwater "
+                                             "flow analysis"):
+            uvec_part.get_element_name(2, 2, AnalysisType.GROUNDWATER_FLOW)
+
+        # wrong ndim nnodes combination
+        with pytest.raises(ValueError,
+                           match=re.escape('In 3 dimensions, only [2, 3] noded UVEC load elements are supported. '
+                                           '4 nodes were provided.')):
+            uvec_part.get_element_name(3, 4, AnalysisType.MECHANICAL)
 
         # gravity load does not have element names
         gravity_load = GravityLoad([True, True, True], [0, 0, 0])
