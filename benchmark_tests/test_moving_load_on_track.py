@@ -1,16 +1,13 @@
-import sys
-
 import pytest
-
-sys.path.append("./")
 import numpy as np
+
 from stem.model import Model
 from stem.structural_material import EulerBeam, ElasticSpringDamper, NodalConcentrated
 from stem.boundary import DisplacementConstraint
 from stem.load import MovingLoad
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, \
     NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
-from stem.output import NodalOutput, GiDOutputParameters, Output, VtkOutputParameters
+from stem.output import NodalOutput, Output, VtkOutputParameters
 from stem.stem import Stem
 
 
@@ -37,7 +34,8 @@ def test_moving_load_on_track():
                                   direction_vector, "rail_track_1")
     model.synchronise_geometry()
 
-    no_displacement_boundary = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True], value=[0, 0, 0])
+    no_displacement_boundary = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True],
+                                                      value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(1,
