@@ -95,10 +95,6 @@ class ModelPart:
         """
         return f"ModelPart(name={self.name}, parameters={self.parameters.__class__.__name__})"
 
-    @property
-    def is_shifted(self):
-        return self._is_shifted
-
 
 class BodyModelPart(ModelPart):
     """

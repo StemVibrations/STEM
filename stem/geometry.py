@@ -494,4 +494,3 @@ class Geometry:
                 volumes[id] = volume
 
         return cls(points, lines, surfaces, volumes)
-

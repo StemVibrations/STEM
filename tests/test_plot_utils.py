@@ -66,16 +66,13 @@ class TestPlotUtils:
         return soil_material
 
     @staticmethod
-    def create_model(ndim: int, material: SoilMaterial) -> Model:
+    def create_geometry_plot_and_assert(ndim: int, material: SoilMaterial) -> None:
         """
-        Create a 2 layered model in either 2D or 3D.
+        Create a geometry and plots it.
 
         Args:
             - ndim (int): dimension of the model
             - material (:class:`stem.soil_material.SoilMaterial`): soil material
-
-        Returns:
-            - :class:`stem.model.Model`: model
 
         """
         layer1_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
@@ -98,19 +95,6 @@ class TestPlotUtils:
 
         # synchronise geometry
         model.synchronise_geometry()
-        return model
-
-    @staticmethod
-    def create_geometry_plot_and_assert(ndim: int, material: SoilMaterial) -> None:
-        """
-        Create a geometry and plots it.
-
-        Args:
-            - ndim (int): dimension of the geometry
-            - material (:class:`stem.soil_material.SoilMaterial`): soil material
-
-        """
-        model = TestPlotUtils.create_model(ndim, material)
 
         # create figure
         fig = PlotUtils.create_geometry_figure(model.ndim, model.geometry, True, True, True, True)
@@ -195,17 +179,6 @@ class TestPlotUtils:
         # create geometry and plot it
         self.create_geometry_plot_and_assert(2, create_default_2d_soil_material)
 
-    def test_plot_geometry_with_loose_lines_2D(self, create_default_2d_soil_material: SoilMaterial):
-        """
-        Test the plot of a 2D geometry, including loose lines.
-
-        Args:
-            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
-
-        """
-
-        self.create_geometry_with_loose_lines_plot_and_assert(2, create_default_2d_soil_material)
-
     def test_plot_geometry_3D(self, create_default_3d_soil_material: SoilMaterial):
         """
         Test the plot of a 3D geometry.
@@ -217,14 +190,3 @@ class TestPlotUtils:
 
         # create geometry and plot it
         self.create_geometry_plot_and_assert(3, create_default_3d_soil_material)
-
-    def test_plot_geometry_with_loose_lines_3D(self, create_default_3d_soil_material: SoilMaterial):
-        """
-        Test the plot of a 3D geometry, including loose lines.
-
-        Args:
-            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
-
-        """
-
-        self.create_geometry_with_loose_lines_plot_and_assert(3, create_default_3d_soil_material)

@@ -460,41 +460,6 @@ class TestUtilsStem:
         np.testing.assert_almost_equal(full_eval, expected_full_eval)
         np.testing.assert_almost_equal(half_eval, expected_half_eval)
 
-    def test_calculate_centre_of_mass_2d(self):
-        """
-        Test calculation of centre of mass of a 2D polygon
-        """
-
-        coordinates = np.array([[0, 0], [1, 0], [1, 1], [0, 1]])
-
-        actual_centre_of_mass = Utils.calculate_centre_of_mass(coordinates)
-        expected_centre_of_mass = np.array([0.5, 0.5])
-
-        npt.assert_allclose(expected_centre_of_mass, actual_centre_of_mass)
-
-        coordinates = np.array([[0, 0], [0.1, 0], [0.2, 0], [0.3, 0], [1, 0], [1, 1], [0, 1]])
-        actual_centre_of_mass = Utils.calculate_centre_of_mass(coordinates)
-
-        npt.assert_allclose(expected_centre_of_mass, actual_centre_of_mass)
-
-    def test_calculate_centre_of_mass_3d(self):
-        """
-        Test calculation of centre of mass of a 3D polygon
-
-        """
-
-        coordinates = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 1], [0, 1, 1]])
-
-        actual_centre_of_mass = Utils.calculate_centre_of_mass(coordinates)
-        expected_centre_of_mass = np.array([0.5, 0.5, 0.5])
-
-        npt.assert_allclose(expected_centre_of_mass, actual_centre_of_mass)
-
-        coordinates = np.array([[0, 0, 0], [0.1, 0, 0], [0.2, 0, 0], [0.3, 0, 0], [1, 0, 0], [1, 1, 1], [0, 1, 1]])
-        actual_centre_of_mass = Utils.calculate_centre_of_mass(coordinates)
-
-        npt.assert_allclose(expected_centre_of_mass, actual_centre_of_mass)
-
     def test_check_lines_geometry_are_path(self):
         """
         Tests that the lines in a geometry are connected and aligned along one path (no branching)

@@ -787,10 +787,6 @@ class Model:
         # get the complete geometry
         self.__get_geometry_from_geo_data(self.gmsh_io.geo_data)
 
-        for model_part in all_model_parts:
-            if "sleeper" in model_part.name:
-                model_part.geometry.lines = {}
-
     def set_mesh_size(self, element_size: float):
         """
         Set the element size to dimension [m].
