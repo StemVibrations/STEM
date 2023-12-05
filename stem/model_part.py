@@ -43,7 +43,6 @@ class ModelPart:
                          WaterProcessParametersABC, OutputParametersABC]] = None
         self.mesh: Optional[Mesh] = None
         self.id: Optional[int] = None
-        self._is_shifted: bool = False
 
     @property
     def name(self) -> str:
