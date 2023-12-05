@@ -141,7 +141,3 @@ def test_moving_load_on_track_on_soil():
 
     assert result is True
     rmtree(input_folder)
-
-
-if __name__ == "__main__":
-    test_moving_load_on_track_on_soil()
