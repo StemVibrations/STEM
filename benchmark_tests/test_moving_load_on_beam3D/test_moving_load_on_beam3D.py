@@ -18,7 +18,7 @@ def test_stem():
     # --------------------------------
 
     # Specify dimension and initiate the model
-    ndim = 2
+    ndim = 3
     model = Model(ndim)
 
     # Specify beam material model
@@ -27,7 +27,10 @@ def test_stem():
     DENSITY = 7850
     CROSS_AREA = 0.01
     I22 = 0.0001
-    beam_material = EulerBeam(ndim, YOUNG_MODULUS, POISSON_RATIO, DENSITY, CROSS_AREA, I22)
+    I33 = 0.0001
+
+    TORTIONAL_INERTIA = I22 + I33
+    beam_material = EulerBeam(ndim, YOUNG_MODULUS, POISSON_RATIO, DENSITY, CROSS_AREA, I33, I22, TORTIONAL_INERTIA)
     name = "beam"
     structural_material = StructuralMaterial(name, beam_material)
     # Specify the coordinates for the beam: x:1m x y:0m
@@ -55,15 +58,19 @@ def test_stem():
     model.add_load_by_geometry_ids([1], moving_load, "moving_load")
 
     # Define rotation boundary condition
-    rotation_boundaries_parameters = RotationConstraint(active=[True, True, True], is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
+    rotation_boundaries_parameters_right = RotationConstraint(active=[True, True, True], is_fixed=[True, True, True],
+                                                              value=[0, 0, 0])
+
+    rotation_boundaries_parameters_left = RotationConstraint(active=[True, True, True], is_fixed=[True, True, False],
+                                                             value=[0, 0, 0])
 
     # Define displacement conditions
     displacementXYZ_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True],
                                                         value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
-    model.add_boundary_condition_by_geometry_ids(0, [2], rotation_boundaries_parameters, "rotation")
+    model.add_boundary_condition_by_geometry_ids(0, [2], rotation_boundaries_parameters_right, "rotation_right")
+    model.add_boundary_condition_by_geometry_ids(0, [1], rotation_boundaries_parameters_left, "rotation_left")
     model.add_boundary_condition_by_geometry_ids(0, [1, 2], displacementXYZ_parameters, "displacementXYZ")
 
     # Synchronize geometry
@@ -94,7 +101,7 @@ def test_stem():
                                     rayleigh_m=0.1)
 
     # Set up problem data
-    problem = Problem(problem_name="calculate_moving_load_on_beam", number_of_threads=2, settings=solver_settings)
+    problem = Problem(problem_name="calculate_moving_load_on_beam3D", number_of_threads=2, settings=solver_settings)
     model.project_parameters = problem
 
     # Define the results to be written to the output file
@@ -113,7 +120,7 @@ def test_stem():
         output_control_type="step"
     ), output_dir="output", output_name="vtk_output")
 
-    input_folder = "benchmark_tests/test_moving_load_on_beam/inputs_kratos"
+    input_folder = "benchmark_tests/test_moving_load_on_beam3D/inputs_kratos"
 
     # Write KRATOS input files
     # --------------------------------
@@ -124,7 +131,7 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
-    assert assert_files_equal("benchmark_tests/test_moving_load_on_beam/output_/output_vtk_full_model",
+    assert assert_files_equal("benchmark_tests/test_moving_load_on_beam3D/output_/output_vtk_full_model",
                               os.path.join(input_folder, "output/output_vtk_full_model"))
 
     rmtree(input_folder)
