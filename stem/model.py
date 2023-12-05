@@ -85,7 +85,7 @@ class Model:
         # rail_pads_name = f"rail_pads_{name}"
         # _______ WIP______________________________________________________________
 
-        normalized_direction_vector = direction_vector / np.linalg.norm(direction_vector)
+        normalized_direction_vector = np.array(direction_vector) / np.linalg.norm(direction_vector)
 
         rail_local_distance = np.linspace(0, sleeper_distance * (n_sleepers - 1), n_sleepers)
 
@@ -406,8 +406,13 @@ class Model:
         if len(idx) == 0:
             raise ValueError(f"Model part with name `{model_part_name}` not found.")
 
-        # retrieve the indexes onf the bmp geometry => geometry ids
-        geometry_ids = list(self.body_model_parts[idx[0]].geometry.lines.keys())
+        geometry = self.body_model_parts[idx[0]].geometry
+
+        if isinstance(geometry, Geometry):
+            # retrieve the indexes onf the bmp geometry => geometry ids
+            geometry_ids = list(geometry.lines.keys())
+        else:
+            raise ValueError(f"Geometry is not initialised for model part `{model_part_name}`.")
 
         # add physical group to gmsh
         self.gmsh_io.add_physical_group(load_name, ndim_load, geometry_ids)
