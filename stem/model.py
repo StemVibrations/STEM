@@ -815,7 +815,7 @@ class Model:
             spring_nodes_and_first_element.append([end_node, next_point, next_element])
             # if the point is not the end of the cluster, continue until you find the end of the cluster and include
             # all the springs
-            while next_point not in end_nodes:
+            while next_point not in end_nodes and len(element_ids) > 0:
                 new_next_point, next_element = self.__find_next_node_along_elements(
                     start_node=next_point,
                     node_to_elements=node_to_elements,
@@ -912,20 +912,15 @@ class Model:
         """
 
         # initialise variables before while loop
-        first_element = 0
+        first_element_id = 0
         count = 0
         next_node = start_node
 
-        is_searching = True
-        max_iterations = len(remaining_element_ids) * len(remaining_node_ids)
+        max_iterations = len(remaining_element_ids)
 
         while count < max_iterations:
             # find the element(s) connected to the node that have not yet been searched for.
             elements_connected = [el for el in node_to_elements[next_node] if el in remaining_element_ids]
-
-            if len(elements_connected) == 0:
-                # all elements have been found
-                break
 
             # there needs to be only one element (no forks)
             assert len(elements_connected) == 1
@@ -938,18 +933,18 @@ class Model:
             # find the node(s) connected to the element that have not yet been found yet.
             nodes_connected = [nn for nn in element_to_nodes[next_element_id] if nn in remaining_node_ids]
 
-            if len(nodes_connected) == 0:
-                # all nodes have been found
-                break
+            # there needs to be only one node (no 2d elements)
 
-            # there needs to be only one node (no quadratic or 2d elements)
-            assert len(nodes_connected) == 1
+            if len(nodes_connected) != 1:
+                raise ValueError("Other than 1 node is connected to the element. "
+                                 "However only 1 node should be connected")
+
             next_node = nodes_connected[0]
             remaining_node_ids.remove(next_node)
 
             # if the node is one of the nodes of interest, return them, otherwise continue.
             if next_node in target_node_ids:
-                return next_node, first_element
+                return next_node, first_element_id
 
             count += 1
 
