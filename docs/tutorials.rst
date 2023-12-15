@@ -232,18 +232,17 @@ results will be written every time step.
 
 .. code-block:: python
 
-     vtk_output_process = Output(
-         part_name="porous_computational_model_part",
-         output_name="vtk_output",
-         output_dir="output",
-         output_parameters=VtkOutputParameters(
-             output_interval=1,
-             nodal_results=nodal_results,
-             gauss_point_results=gauss_point_results,
-             output_control_type="step"
+     model.add_output_settings(
+        part_name="porous_computational_model_part",
+        output_name="vtk_output",
+        output_dir="output",
+        output_parameters=VtkOutputParameters(
+            output_interval=1,
+            nodal_results=nodal_results,
+            gauss_point_results=gauss_point_results,
+            output_control_type="step"
         )
-     )
-     model.output_settings = [vtk_output_process]
+    )
 
 Now that the model is set up, the calculation is almost ready to be ran.
 
@@ -503,18 +502,17 @@ results will be written every time step.
 
 .. code-block:: python
 
-     vtk_output_process = Output(
-         part_name="porous_computational_model_part",
-         output_name="vtk_output",
-         output_dir="output",
-         output_parameters=VtkOutputParameters(
-             output_interval=1,
-             nodal_results=nodal_results,
-             gauss_point_results=gauss_point_results,
-             output_control_type="step"
+    model.add_output_settings(
+        part_name="porous_computational_model_part",
+        output_name="vtk_output",
+        output_dir="output",
+        output_parameters=VtkOutputParameters(
+            output_interval=1,
+            nodal_results=nodal_results,
+            gauss_point_results=gauss_point_results,
+            output_control_type="step"
         )
-     )
-     model.output_settings = [vtk_output_process]
+    )
 
 Now that the model is set up, the calculation is almost ready to be ran.
 
