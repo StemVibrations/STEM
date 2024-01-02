@@ -273,7 +273,7 @@ class NewtonRaphsonStrategy(StrategyTypeABC):
     """
     max_iterations: int = 15
     min_iterations: int = 6
-    number_cycles: int = 1
+    number_cycles: int = 100
 
     @property
     def strategy_type(self):

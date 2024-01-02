@@ -271,6 +271,10 @@ class KratosSolverIO:
         # Add the model part names
         solver_settings_dict.update(self.__create_model_part_name_dict(model_parts))
 
+        # set number of cycles to 1 if no time step reduction is used
+        if solver_settings_dict["reduction_factor"] == 1.0 and "number_cycles" in solver_settings_dict["number_cycles"]:
+            solver_settings_dict["number_cycles"] = 1
+
         # add  Uvec parameters if present
         uvec_settings = self.__create_uvec_parameters_dictionary(solver_settings_dict, model_parts)
         if uvec_settings is not None:
