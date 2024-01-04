@@ -117,8 +117,8 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
-    # result = assert_files_equal("benchmark_tests/test_moving_load_on_embankment_3d/output_/output_vtk_porous_computational_model_part",
-    #                             os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
-    #
-    # assert result is True
-    # rmtree(input_folder)
+    result = assert_files_equal("benchmark_tests/test_moving_load_on_embankment_3d/output_/output_vtk_porous_computational_model_part",
+                                os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
+
+    assert result is True
+    rmtree(input_folder)
