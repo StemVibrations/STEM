@@ -840,7 +840,6 @@ class TestModel:
 
             TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
-    @pytest.mark.skip(reason="tmp")
     def test_synchronise_geometry_2D(self,
                                      expected_geometry_two_layers_2D_after_sync: Tuple[Geometry, Geometry, Geometry],
                                      create_default_2d_soil_material: SoilMaterial):
@@ -887,7 +886,6 @@ class TestModel:
 
             TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
-    @pytest.mark.skip(reason="tmp")
     def test_synchronise_geometry_3D(self, create_default_3d_soil_material: SoilMaterial):
         """
         Test if the geometry is synchronised correctly in 3D after adding a new layer to the model. Where the new layer
