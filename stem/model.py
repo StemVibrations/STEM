@@ -702,10 +702,8 @@ class Model:
         # retrieve connectivities and cluster into individual spring-damper elements
         for mp in self.body_model_parts:
 
-            if (
-                    isinstance(mp.material, StructuralMaterial) and
-                    isinstance(mp.material.material_parameters, ElasticSpringDamper)
-            ):
+            if (isinstance(mp.material, StructuralMaterial)
+                    and isinstance(mp.material.material_parameters, ElasticSpringDamper)):
 
                 # get the sequences of springs in the body model part
                 spring_nodes_and_first_element = self.__get_spring_end_nodes_and_first_element(model_part=mp)
@@ -727,13 +725,14 @@ class Model:
                     new_mesh.nodes[end_node] = model_part_nodes[end_node]
 
                     element_info = model_part_elements[first_element_id]
-                    new_mesh.elements[int(counter_mesh_id)] = Element(
-                        id=int(counter_mesh_id), element_type=element_info.element_type, node_ids=[start_node,end_node]
+                    new_mesh.elements[counter_mesh_id] = Element(
+                        id=counter_mesh_id, element_type=element_info.element_type, node_ids=[start_node, end_node]
                     )
 
-                # adjust the mesh_data in the gmsh_io, since we manually changed the mesh
+                # add the new mesh to the mesh data
                 self.gmsh_io.mesh_data["physical_groups"][mp.name]["node_ids"] = sorted(list(new_mesh.nodes.keys()))
-                self.gmsh_io.mesh_data["physical_groups"][mp.name]["element_ids"] = sorted(list(new_mesh.elements.keys()))
+                self.gmsh_io.mesh_data["physical_groups"][mp.name]["element_ids"] = \
+                    sorted(list(new_mesh.elements.keys()))
 
                 for element_id, element in new_mesh.elements.items():
                     self.gmsh_io.mesh_data["elements"]["LINE_2N"][element_id] = element.node_ids
@@ -748,11 +747,11 @@ class Model:
             - int: the maximum mesh id
 
         """
-        all_mesh_ids: List[int] = []
+        all_mesh_ids: List[np.uint64] = []
         for element_type, mesh_element_info in self.gmsh_io.mesh_data["elements"].items():
             all_mesh_ids.extend(list(mesh_element_info.keys()))
 
-        return max(all_mesh_ids)
+        return int(max(all_mesh_ids))
 
     def __get_spring_end_nodes_and_first_element(self, model_part: ModelPart) -> List[List[int]]:
         """
@@ -888,7 +887,7 @@ class Model:
     def __find_next_node_along_elements(start_node: int, remaining_element_ids: List[int],
                                         remaining_node_ids: List[int], node_to_elements: Dict[int, List[int]],
                                         element_to_nodes: Dict[int, List[int]],
-                                        target_node_ids: npty.NDArray[np.int64]) -> Tuple[int, int]:
+                                        target_node_ids: npty.NDArray[np.int64]):
         """
         Finds the first node in the target_node_ids next node along line element. The remaining_element_ids and
         remaining_node_ids keeps track of the direction of the previous searches and orients the search
@@ -906,9 +905,6 @@ class Model:
             - ValueError: if number of interation in the while loop are exceeded and something went wrong in the
                 algorithm.
 
-        Returns:
-            - Tuple[int, int]: the next node connected to the given starting node along the line elements and the \
-                first element.
         """
 
         # initialise variables before while loop

@@ -1190,11 +1190,8 @@ class TestKratosModelIO:
         model.body_model_parts.append(nodal_concentrated_model_part)
 
         # write project parameters
-        actual_dict = kratos_io._KratosIO__write_project_parameters_json(
-            model=model,
-            mesh_file_name="dummy.mdpa",
-            materials_file_name="dummy.json",
-        )
+        actual_dict = kratos_io._KratosIO__write_project_parameters_json(model=model, mesh_file_name="dummy.mdpa",
+                                                                         materials_file_name="dummy.json")
 
         # load expected project parameters
         expected_dict = json.load(open("tests/test_data/expected_ProjectParameters_with_nodal_parameters.json", 'r'))

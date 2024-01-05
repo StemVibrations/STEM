@@ -1648,6 +1648,80 @@ class TestModel:
         # check that spring element ids are correct
         npt.assert_almost_equal(list(model.body_model_parts[0].mesh.elements), [18, 19, 20, 21])
 
+    def test_adjusting_mesh_for_spring_dashpot_elements_with_soil_layer(self,
+                                                                        create_default_2d_soil_material: SoilMaterial):
+        """
+        Test that the mesh is adjusted correctly when adding spring elements on top of a soil layer.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+        model = Model(ndim=2)
+
+        # add soil material
+        soil_material = create_default_2d_soil_material
+
+        top_coordinates = [(0, 2, 0), (1, 2, 0), (2, 2, 0)]
+        bottom_coordinates = [(0, 0, 0), (1, 0, 0), (2, 0, 0)]
+
+        soil_coordinates_loop = top_coordinates + bottom_coordinates[::-1]
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates(soil_coordinates_loop, soil_material, "layer1")
+
+        # add elastic spring damper element
+        spring_damper = ElasticSpringDamper(
+            NODAL_DISPLACEMENT_STIFFNESS=[1, 1, 1],
+            NODAL_ROTATIONAL_STIFFNESS=[1, 1, 2],
+            NODAL_DAMPING_COEFFICIENT=[1, 1, 3],
+            NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[1, 1, 4])
+
+        # generate geometries of bottom and top coordinates
+        gmsh_input_top = {"top_coordinates": {"coordinates": top_coordinates, "ndim": 0}}
+        gmsh_input_bottom = {"bottom_coordinates": {"coordinates": bottom_coordinates, "ndim": 0}}
+
+        model.gmsh_io.generate_geometry(gmsh_input_top, "")
+        model.gmsh_io.generate_geometry(gmsh_input_bottom, "")
+
+        # create spring damper geometries and physical group
+        top_point_ids = model.gmsh_io.make_points(top_coordinates)
+        bot_point_ids = model.gmsh_io.make_points(bottom_coordinates)
+
+        spring_line_ids = [model.gmsh_io.create_line([top_point_id, bot_point_id])
+                           for top_point_id, bot_point_id in zip(top_point_ids, bot_point_ids)]
+
+        model.gmsh_io.add_physical_group("spring_damper", 1, spring_line_ids)
+
+        # assign spring damper to geometry
+        spring_damper_model_part = BodyModelPart("spring_damper")
+        spring_damper_model_part.material = StructuralMaterial("spring_damper", spring_damper)
+        spring_damper_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, "spring_damper")
+
+        # add model part to model
+        model.body_model_parts.append(spring_damper_model_part)
+        model.synchronise_geometry()
+        model.set_mesh_size(1)
+
+        # generate mesh
+        model.generate_mesh(open_gmsh_gui=False)
+
+        # check if the soil layer is meshed correctly
+        assert len(model.body_model_parts[0].mesh.nodes) == 13
+        assert len(model.body_model_parts[0].mesh.elements) == 16
+
+        # check if the spring is meshed correctly
+        assert len(model.body_model_parts[1].mesh.nodes) == 6
+        for node in model.body_model_parts[1].mesh.nodes.values():
+            # check if spring damper node is also in soil layer and if the coordinates are the same
+            assert node.id in model.body_model_parts[0].mesh.nodes.keys()
+            npt.assert_almost_equal(node.coordinates,model.body_model_parts[0].mesh.nodes[node.id].coordinates)
+
+        # check if the spring element ids are correct and not in the soil layer
+        assert len(model.body_model_parts[1].mesh.elements) == 3
+        for element in model.body_model_parts[1].mesh.elements.values():
+            assert element.id not in model.body_model_parts[0].mesh.elements.keys()
+
     def test_add_field_raises_errors(
             self,
             create_default_2d_soil_material: SoilMaterial
