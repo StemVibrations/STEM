@@ -1,8 +1,9 @@
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from copy import deepcopy
 
 from stem.solver import *
 from stem.model_part import ModelPart, BodyModelPart
+from stem.load import UvecLoad
 
 
 class KratosSolverIO:
@@ -173,7 +174,45 @@ class KratosSolverIO:
         elif analysis_type == AnalysisType.GROUNDWATER_FLOW:
             return "Pw"
 
+    @staticmethod
+    def __create_uvec_parameters_dictionary(solver_settings_dict: Dict[str, Any], model_parts: List[ModelPart]) \
+            -> Optional[Dict[str, Any]]:
+        """
+        Creates a dictionary containing the uvec parameters
 
+        Args:
+            - solver_settings_dict (Dict[str, Any]): The solver settings dictionary
+            - model_parts (List[:class:`stem.model_part.ModelPart`]): The list of model parts
+
+        Returns:
+            - Optional[Dict[str, Any]]: dictionary containing the UVEC parameters or None if no UVEC load is found
+
+        """
+
+        # loop over model parts to check if there is a UVEC load
+        for model_part in model_parts:
+
+            # if there is a UVEC load, create the UVEC parameters dictionary
+            if isinstance(model_part.parameters, UvecLoad):
+
+                # set strategy type to newton_raphson_with_uvec
+                solver_settings_dict["strategy_type"] = "newton_raphson_with_uvec"
+
+                uvec_dict: Dict[str, Any] = {"uvec_path": model_part.parameters.uvec_file,
+                                             "uvec_method": model_part.parameters.uvec_function_name,
+                                             "uvec_model_part": model_part.name,
+                                             "uvec_data": {"dt": solver_settings_dict["time_stepping"]["time_step"],
+                                                           "u": {},
+                                                           "theta": {},
+                                                           "loads": {},
+                                                           "parameters": model_part.parameters.uvec_parameters,
+                                                           "state": model_part.parameters.uvec_state_variables}}
+
+                # return the UVEC parameters dictionary
+                return uvec_dict
+
+        # return None if no UVEC load is found
+        return None
 
     def __create_solver_settings_dictionary(self, solver_settings: SolverSettings, mesh_file_name: str,
                                             materials_file_name: str, model_parts: List[ModelPart]):
@@ -231,6 +270,11 @@ class KratosSolverIO:
 
         # Add the model part names
         solver_settings_dict.update(self.__create_model_part_name_dict(model_parts))
+
+        # add  Uvec parameters if present
+        uvec_settings = self.__create_uvec_parameters_dictionary(solver_settings_dict, model_parts)
+        if uvec_settings is not None:
+            solver_settings_dict.update({"uvec": uvec_settings})
 
         return solver_settings_dict
 

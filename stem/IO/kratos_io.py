@@ -5,6 +5,7 @@ from typing import List, Dict, Any, Optional, Sequence
 import numpy as np
 
 from stem.IO.kratos_boundaries_io import KratosBoundariesIO
+from stem.IO.kratos_water_processes_io import KratosWaterProcessesIO
 from stem.IO.kratos_loads_io import KratosLoadsIO
 from stem.IO.kratos_material_io import KratosMaterialIO
 from stem.IO.kratos_output_io import KratosOutputsIO
@@ -12,8 +13,9 @@ from stem.IO.kratos_solver_io import KratosSolverIO
 from stem.IO.kratos_additional_processes_io import KratosAdditionalProcessesIO
 from stem.structural_material import *
 from stem.boundary import BoundaryParametersABC, AbsorbingBoundary, DisplacementConstraint, RotationConstraint
-from stem.load import LoadParametersABC, LineLoad, MovingLoad, SurfaceLoad, PointLoad
+from stem.load import LoadParametersABC, LineLoad, MovingLoad, SurfaceLoad, PointLoad, UvecLoad
 from stem.additional_processes import ParameterFieldParameters, AdditionalProcessesParametersABC
+from stem.water_processes import WaterProcessParametersABC
 from stem.mesh import Element, Node
 from stem.model import Model
 from stem.model_part import ModelPart, BodyModelPart
@@ -66,6 +68,7 @@ class KratosIO:
         self.material_io = KratosMaterialIO(self.ndim, DOMAIN)
         self.loads_io = KratosLoadsIO(DOMAIN)
         self.boundaries_io = KratosBoundariesIO(DOMAIN)
+        self.water_boundaries_io = KratosWaterProcessesIO(DOMAIN)
         self.outputs_io = KratosOutputsIO(DOMAIN)
         self.solver_io = KratosSolverIO(self.ndim, DOMAIN)
         self.additional_process_io = KratosAdditionalProcessesIO(DOMAIN)
@@ -95,8 +98,8 @@ class KratosIO:
         Returns:
             - bool: whether the process model part writes condition elements
         """
-        return isinstance(process_model_part.parameters, (PointLoad, LineLoad, MovingLoad, SurfaceLoad,
-                                                          AbsorbingBoundary))
+        return isinstance(process_model_part.parameters, (PointLoad, LineLoad, MovingLoad, UvecLoad,
+                                                           SurfaceLoad, AbsorbingBoundary))
 
     def __initialise_process_model_part_ids(self, model: Model):
         """

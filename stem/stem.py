@@ -1,7 +1,7 @@
 import os
 
 import KratosMultiphysics
-from KratosMultiphysics.GeoMechanicsApplication.geomechanics_analysis import GeoMechanicsAnalysis
+from KratosMultiphysics.StemApplication.geomechanics_analysis import StemGeoMechanicsAnalysis
 
 from typing import List, Dict
 from stem.model import Model
@@ -36,6 +36,10 @@ class Stem:
         self.__stages: List[Model] = [initial_stage]
         self.__stage_settings_file_names: Dict[int, str] = {}
         self.__last_ran_stage_number: int = 0
+
+        # perform initial stage setup and mesh generation in this order
+        initial_stage.post_setup()
+        initial_stage.generate_mesh()
 
     @property
     def stages(self) -> List[Model]:
@@ -119,7 +123,7 @@ class Stem:
             kratos_parameters = KratosMultiphysics.Parameters(parameter_file.read())
 
         # run calculation
-        simulation = GeoMechanicsAnalysis(self.kratos_model, kratos_parameters)
+        simulation = StemGeoMechanicsAnalysis(self.kratos_model, kratos_parameters)
         simulation.Run()
 
         # update last ran stage number

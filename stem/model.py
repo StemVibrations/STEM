@@ -15,6 +15,7 @@ from stem.mesh import Mesh, MeshSettings, Node, Element
 from stem.output import Output, OutputParametersABC
 from stem.additional_processes import ParameterFieldParameters
 from stem.load import *
+from stem.water_processes import WaterProcessParametersABC, UniformWaterPressure
 from stem.solver import Problem, StressInitialisationType
 from stem.output import Output
 from stem.utils import Utils
@@ -62,6 +63,117 @@ class Model:
 
         """
         self.gmsh_io.finalize_gmsh()
+
+    def generate_straight_track(self, sleeper_distance: float, n_sleepers: int, rail_parameters: EulerBeam,
+                                sleeper_parameters: NodalConcentrated, rail_pad_parameters: ElasticSpringDamper,
+                                origin_point: Sequence[float], direction_vector: Sequence[float], name,
+                                small_thickness: float = 1e-3):
+        """
+        Generates a track geometry. With rail, rail-pads and sleepers as mass elements. WIP, currently only rail is
+        generated.
+
+        Args:
+            - sleeper_distance (float): distance between sleepers
+            - n_sleepers (int): number of sleepers
+            - rail_parameters (:class:`stem.structural_material.EulerBeam`): rail parameters
+            - sleeper_parameters (:class:`stem.structural_material.NodalConcentrated`): sleeper parameters
+            - rail_pad_parameters (:class:`stem.structural_material.ElasticSpringDamper`): rail pad parameters
+            - origin_point (Sequence[float]): origin point of the track
+            - direction_vector (Sequence[float]): direction vector of the track
+            - name (str): name of the track
+            - small_thickness (float): small thickness to avoid gmsh errors (default: 1e-3)
+        """
+
+        rail_name = f"{name}"
+
+        # _______ WIP______________________________________________________________
+        # sleeper_name = f"sleeper_{name}"
+        # rail_pads_name = f"rail_pads_{name}"
+        # _______ WIP______________________________________________________________
+
+        normalized_direction_vector = np.array(direction_vector) / np.linalg.norm(direction_vector)
+
+        rail_local_distance = np.linspace(0, sleeper_distance * (n_sleepers - 1), n_sleepers)
+
+        # _______ WIP______________________________________________________________
+        # sleeper_local_coords = np.copy(rail_local_distance)
+        # _______ WIP______________________________________________________________
+
+        # set rail geometry
+        rail_global_coords = rail_local_distance[:, None].dot(normalized_direction_vector[None, :]) + origin_point
+
+        # _______ WIP______________________________________________________________
+        # rail_global_coords[:, VERTICAL_AXIS] += small_thickness
+        # _______ WIP______________________________________________________________
+
+        rail_geo_settings = {rail_name: {"coordinates": rail_global_coords, "ndim": 1}}
+
+        #_______ WIP______________________________________________________________
+        # # set sleepers geometry
+        # sleeper_global_coords = sleeper_local_coords[:, None].dot(normalized_direction_vector[None, :]) + origin_point
+        #
+        # sleeper_geo_settings = {sleeper_name: {"coordinates": sleeper_global_coords, "ndim": 1}}
+        # self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
+        # _______ WIP______________________________________________________________
+
+        self.gmsh_io.generate_geometry(rail_geo_settings, "")
+
+        rail_model_part = BodyModelPart(rail_name)
+        rail_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_name)
+        rail_model_part.material = StructuralMaterial(name=rail_name, material_parameters=rail_parameters)
+
+        # _______ WIP______________________________________________________________
+        # sleeper_model_part = BodyModelPart(sleeper_name)
+        # sleeper_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, sleeper_name)
+        #
+        #
+        # # create rail pad geometries
+        # # top_point_ids = self.gmsh_io.make_points(rail_global_coords)
+        # # bot_point_ids = self.gmsh_io.make_points(sleeper_global_coords)
+        #
+        # top_point_ids = list(rail_model_part.geometry.points.keys())
+        # bot_point_ids = list(sleeper_model_part.geometry.points.keys())
+        #
+        #
+        # rail_pad_line_ids = [self.gmsh_io.create_line([top_point_id, bot_point_id])
+        #                      for top_point_id, bot_point_id in zip(top_point_ids, bot_point_ids)]
+        #
+        # self.gmsh_io.add_physical_group(rail_pads_name, 1, rail_pad_line_ids)
+        #
+        # # create rail, sleeper, and rail_pad body model parts
+        #
+        #
+        # sleeper_model_part.material = StructuralMaterial(name=sleeper_name, material_parameters=sleeper_parameters)
+        #
+        # rail_pads_model_part = BodyModelPart(rail_pads_name)
+        # rail_pads_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_pads_name)
+        # rail_pads_model_part.material = StructuralMaterial(name=rail_pads_name, material_parameters=rail_pad_parameters)
+        #
+        # # add physical group to gmsh
+        # rail_constraint_name = f"constraint_{rail_name}"
+        # rail_constraint_geometry_ids = self.gmsh_io.geo_data["physical_groups"][rail_name]["geometry_ids"]
+        # self.gmsh_io.add_physical_group(f"constraint_{rail_name}", 1, rail_constraint_geometry_ids)
+        #
+        # # create model part
+        # constraint_model_part = ModelPart(rail_constraint_name)
+        #
+        # # retrieve geometry from gmsh and add to model part
+        # constraint_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_constraint_name)
+        #
+        # # add displacement_constraint in x and z direction
+        # constraint_model_part.parameters = DisplacementConstraint(active=[True, True, True],  is_fixed=[True, False, True],
+        #                                                value=[0, 0, 0])
+
+        # _______ WIP______________________________________________________________
+
+        self.body_model_parts.append(rail_model_part)
+
+        # _______ WIP______________________________________________________________
+        # self.body_model_parts.append(sleeper_model_part)
+        # self.body_model_parts.append(rail_pads_model_part)
+        #
+        # self.process_model_parts.append(constraint_model_part)
+        # _______ WIP______________________________________________________________
 
     def __get_geometry_from_geo_data(self, geo_data: Dict[str, Any]):
         """
@@ -153,28 +265,27 @@ class Model:
 
         self.body_model_parts.append(body_model_part)
 
-    def add_load_by_geometry_ids(self, geometry_ids: Sequence[int], load_parameters:
-                                 LoadParametersABC, name: str):
+    def add_load_by_geometry_ids(self, geometry_ids: Sequence[int], load_parameters: LoadParametersABC, name: str):
         """
         Add a load to the model by giving the geometry ids of the geometry where the load has to be applied.
-        The geometry dimension of the entity where the load needs to be applied is determined based on the 
+        The geometry dimension of the entity where the load needs to be applied is determined based on the
         load_parameters (0=point load, 1=line load, 2=surface load, 3=volume).
-        
+
         Args:
             - geometry_ids (Sequence[int]): geometry ids of the entities where the load needs to be applied.
             - load_parameters (:class:`stem.load.LoadParametersABC`): load parameters to define the load object.
             - name (str): name of the load.
-            
+
         Raises:
-            - NotImplementedError: when the load parameter provided is not one of point, line, moving or surface loads.
-            
+            - NotImplementedError: when the load parameter provided is not one of point, line, moving, UVEC
+            or surface loads.
         """
 
         # point load can only be assigned to 0d geometry
         if isinstance(load_parameters, PointLoad):
             ndim_load = 0
         # line and moving load can only be assigned to 1d geometry
-        elif isinstance(load_parameters, (LineLoad, MovingLoad)):
+        elif isinstance(load_parameters, (LineLoad, MovingLoad, UvecLoad)):
             ndim_load = 1
         # surface load can only be assigned to 2d geometry
         elif isinstance(load_parameters, SurfaceLoad):
@@ -197,7 +308,7 @@ class Model:
             raise ValueError("The geometry is not initialised for the model part.")
 
         # validations for moving load input
-        if isinstance(load_parameters, MovingLoad):
+        if isinstance(load_parameters, (MovingLoad, UvecLoad)):
 
             # retrieve the coordinates of the points in the path of the load
             coordinates = []
@@ -240,13 +351,13 @@ class Model:
 
         # validation of inputs
         self.validate_coordinates(coordinates)
-        if isinstance(load_parameters, MovingLoad):
+        if isinstance(load_parameters, (MovingLoad, UvecLoad)):
             self.__validate_moving_load_parameters(coordinates, load_parameters)
 
         # create input for gmsh
         if isinstance(load_parameters, PointLoad):
             gmsh_input = {name: {"coordinates": coordinates, "ndim": 0}}
-        elif isinstance(load_parameters, LineLoad) or isinstance(load_parameters, MovingLoad):
+        elif isinstance(load_parameters, (LineLoad, MovingLoad, UvecLoad)):
             gmsh_input = {name: {"coordinates": coordinates, "ndim": 1}}
         elif isinstance(load_parameters, SurfaceLoad):
             gmsh_input = {name: {"coordinates": coordinates, "ndim": 2}}
@@ -263,6 +374,78 @@ class Model:
 
         # set the geometry of the model part
         model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
+
+        self.process_model_parts.append(model_part)
+
+    def add_load_on_line_model_part(self, model_part_name: str, load_parameters: LoadParametersABC, load_name: str):
+        """
+        Adds a load to the model by giving the name of the line model part where the load has to be applied.
+        It only works with LineLoad, MovingLoad and UvecLoad.
+
+        Args:
+            - model_part_name (str): name of the line model part where the load needs to be applied.
+            - load_parameters (:class:`stem.load.LoadParametersABC`): load parameters to define the load object.
+            - load_name (str): name of the load.
+
+        Raises:
+            - ValueError: if the model part name is not found.
+            - ValueError: if the model part is not a line model part.
+            - ValueError: if the load parameters are not of type LineLoad or MovingLoad or UvecLoad.
+        """
+
+        # line and moving load can only be assigned to 1d geometry
+        if isinstance(load_parameters, (LineLoad, MovingLoad, UvecLoad)):
+            ndim_load = 1
+        else:
+            raise ValueError(f"Load parameter provided is not supported: `{load_parameters.__class__.__name__}`.")
+
+        # find index of bmp name
+        idx = [i for i, bmp in enumerate(self.body_model_parts) if bmp.name == model_part_name]
+        if len(idx) == 0:
+            raise ValueError(f"Model part with name `{model_part_name}` not found.")
+
+        geometry = self.body_model_parts[idx[0]].geometry
+
+        if isinstance(geometry, Geometry):
+            # retrieve the indexes onf the bmp geometry => geometry ids
+            geometry_ids = list(geometry.lines.keys())
+        else:
+            raise ValueError(f"Geometry is not initialised for model part `{model_part_name}`.")
+
+        # add physical group to gmsh
+        self.gmsh_io.add_physical_group(load_name, ndim_load, geometry_ids)
+
+        # create model part
+        model_part = ModelPart(load_name)
+
+        # retrieve geometry from gmsh and add to model part
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, load_name)
+
+        # validations for non-empty geometry
+        if model_part.geometry is None:
+            raise ValueError("The geometry is not initialised for the model part.")
+
+        # validations for moving load input
+        if isinstance(load_parameters, (MovingLoad, UvecLoad)):
+            # retrieve the coordinates of the points in the path of the load
+            coordinates = []
+            for line in model_part.geometry.lines.values():
+                line_coords = []
+                for k in line.point_ids:
+                    line_coords.append(model_part.geometry.points[k].coordinates)
+                coordinates.append(line_coords)
+
+            # check origin of moving load is in the path
+            if not Utils.is_point_aligned_and_between_any_of_points(coordinates, load_parameters.origin):
+                raise ValueError("None of the lines are aligned with the origin of the moving load. Error.")
+            # check that the path provided by geometry is correct (no loops, no branching out
+            # and no discontinuities in the path)
+            if not Utils.check_lines_geometry_are_path(model_part.geometry):
+                raise ValueError("The lines defined for the moving load are not aligned on a path."
+                                 "Discontinuities or loops/branching points are found.")
+
+        # add load parameters to model part
+        model_part.parameters = load_parameters
 
         self.process_model_parts.append(model_part)
 
@@ -299,14 +482,15 @@ class Model:
                                      f"but {i} was given.")
 
     @staticmethod
-    def __validate_moving_load_parameters(coordinates: Sequence[Sequence[float]], load_parameters: MovingLoad) -> None:
+    def __validate_moving_load_parameters(coordinates: Sequence[Sequence[float]],
+                                          load_parameters: Union[MovingLoad, UvecLoad]) -> None:
         """
-        Validates the coordinates in input for the moving load and the trajectory (collinearity of the
+        Validates the coordinates in input for the moving load or Uvec load and the trajectory (collinearity of the
         points and if the origin is between the point).
 
         Args:
             - coordinates (Sequence[Sequence[float]]): The start-end coordinate of the moving load.
-            - parameters (:class:`stem.load.LoadParametersABC`): The parameters of the load.
+            - parameters (Union[:class:`stem.load.MovingLoad`,:class:`stem.load.UvecLoad` ): The parameters of the load.
 
         Raises:
             - ValueError: if moving load origin is not on trajectory
@@ -646,7 +830,8 @@ class Model:
         for process_model_part in self.process_model_parts:
 
             # only check if the process model part is a condition element
-            if isinstance(process_model_part.parameters, (LineLoad, MovingLoad, SurfaceLoad, AbsorbingBoundary)):
+            if isinstance(process_model_part.parameters,
+                          (LineLoad, MovingLoad, UvecLoad, SurfaceLoad, AbsorbingBoundary)):
                 # match the condition elements with the body elements on which the conditions are applied
                 matched_elements = self.__find_matching_body_elements_for_process_model_part(process_model_part)
 
@@ -1326,6 +1511,46 @@ class Model:
             self.project_parameters.settings.stress_initialisation_type == StressInitialisationType.GRAVITY_LOADING):
             self.__add_gravity_load()
 
+    def __add_water_condition_if_not_provided(self):
+        """
+        Add a water condition if not provided by the user.
+
+        """
+        for process_model_part in self.process_model_parts:
+            # if one of the model parts already contains water, do not add zero water pressure
+            if isinstance(process_model_part.parameters, WaterProcessParametersABC):
+                return
+
+        # if all model parts are structural, do not add water pressure
+        materials = [body_model_part.material for body_model_part in self.body_model_parts]
+        if all(isinstance(material, StructuralMaterial) for material in materials):
+            return
+
+        water_model_part = ModelPart("zero_water_pressure")
+        water_model_part.parameters = UniformWaterPressure(water_pressure=0.0)
+
+        geometry_ids = []
+
+        for body_model_part in self.body_model_parts:
+
+            # if body model part has geometry, add the geometry ids to the list
+            if body_model_part.geometry is not None:
+                if self.ndim == 2:
+                    geometry_ids.extend(list(body_model_part.geometry.surfaces.keys()))
+                elif self.ndim == 3:
+                    geometry_ids.extend(list(body_model_part.geometry.volumes.keys()))
+
+        # add physical group to gmsh
+        self.gmsh_io.add_physical_group(water_model_part.name, self.ndim, geometry_ids)
+
+        # retrieve geometry from gmsh and add to model part
+        water_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, water_model_part.name)
+
+        self.process_model_parts.append(water_model_part)
+
+        # re-synchronise the geometry as the water model part has been added
+        self.synchronise_geometry()
+
     def post_setup(self):
         """
         Post setup of the model.
@@ -1339,6 +1564,7 @@ class Model:
         self.synchronise_geometry()
         self.validate()
 
+        self.__add_water_condition_if_not_provided()
         self.__setup_stress_initialisation()
 
         # finalize gmsh

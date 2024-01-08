@@ -2593,11 +2593,11 @@ class TestModel:
         # remove file
         Path(r"tests/test_geometry.html").unlink()
 
-    def test_post_setup_with_gravity(self, expected_geometry_two_layers_2D: Tuple[Geometry, Geometry, Geometry],
-                                     create_default_2d_soil_material: SoilMaterial):
+    def test_post_setup_with_gravity_2D(self, expected_geometry_two_layers_2D: Tuple[Geometry, Geometry, Geometry],
+                                              create_default_2d_soil_material: SoilMaterial):
         """
-        Tests if gravity loading is added correctly when using post setup. Gravity load should be present on all nodes
-        of the model.
+        Tests if gravity loading and zero water pressure is added correctly when using post setup. Gravity load and zero
+        water pressure should be present on all nodes of the model.
 
         Args:
             - expected_geometry_single_layer_2D (Tuple[:class:`stem.geometry.Geometry`, \
@@ -2633,11 +2633,305 @@ class TestModel:
         # add gravity through post setup
         model.post_setup()
 
-        gravity_model_part = model.process_model_parts[0]
+        # get water and gravity model parts
+        water_pressure_model_part = model.process_model_parts[0]
+        gravity_model_part = model.process_model_parts[1]
 
-        # # assert if the gravity model part is the same as the expected gravity model part
+        # assert if the water and gravity model part are the same as the expected model parts
+        expected_water_pressure_geometry = expected_geometry_two_layers_2D[-1]
         expected_gravity_geometry = expected_geometry_two_layers_2D[-1]
 
+        TestUtils.assert_almost_equal_geometries(expected_water_pressure_geometry, water_pressure_model_part.geometry)
         TestUtils.assert_almost_equal_geometries(expected_gravity_geometry, gravity_model_part.geometry)
+
+        assert water_pressure_model_part.name == "zero_water_pressure"
+        assert gravity_model_part.name == "gravity_load_2d"
+
+        assert pytest.approx(water_pressure_model_part.parameters.water_pressure) == 0
+        assert water_pressure_model_part.parameters.is_fixed
+
         npt.assert_allclose([0, -9.81, 0], gravity_model_part.parameters.value)
         npt.assert_allclose([True, True, True], gravity_model_part.parameters.active)
+
+    def test_post_setup_with_water_pressure_3D(self,
+                                               expected_geometry_two_layers_3D_extruded: Tuple[Geometry, Geometry],
+                                               create_default_3d_soil_material: SoilMaterial):
+        """
+        Tests if gravity loading is not applied and zero water pressure is not added when using post setup. Water pressure
+        should only be present on layer 1.
+
+        Args:
+            - expected_geometry_two_layers_3D_extruded (Tuple[:class:`stem.geometry.Geometry`, \
+                :class:`stem.geometry.Geometry`]): expected geometry of the model
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+
+        """
+
+        ndim = 3
+
+        layer1_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+        layer2_coordinates = [(1, 1, 0), (0, 1, 0), (0, 2, 0), (1, 2, 0)]
+
+        # define soil materials
+        soil_material1 = create_default_3d_soil_material
+        soil_material1.name = "soil1"
+
+        soil_material2 = create_default_3d_soil_material
+        soil_material2.name = "soil2"
+
+        # create model
+        model = Model(ndim)
+        model.extrusion_length = 1
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
+        model.add_soil_layer_by_coordinates(layer2_coordinates, soil_material2, "layer2")
+
+        # manually add water pressure model part
+        water_pressure_model_part = ModelPart("water_pressure_part")
+        water_pressure_model_part.geometry = model.body_model_parts[0].geometry
+        water_pressure_model_part.parameters = UniformWaterPressure(water_pressure=100)
+        model.process_model_parts.append(water_pressure_model_part)
+
+        model.gmsh_io.add_physical_group("water_pressure_part", 3, geometry_ids=
+                                         model.gmsh_io.geo_data["physical_groups"]["layer1"]["geometry_ids"])
+
+        # add project parameters
+        project_parameters = TestUtils.create_default_solver_settings()
+
+        model.project_parameters = project_parameters
+        model.post_setup()
+
+        # only 1 process model part should be present which is the water pressure on layer 1
+        assert len(model.process_model_parts) == 1
+
+        # check if the water pressure model part is the same as the expected model part
+        assert model.process_model_parts[0].name == "water_pressure_part"
+        assert pytest.approx(model.process_model_parts[0].parameters.water_pressure) == 100
+        assert model.process_model_parts[0].parameters.is_fixed
+
+        # check if the water pressure is only applied to the nodes of layer 1
+        expected_water_pressure_geometry = expected_geometry_two_layers_3D_extruded[0]
+        TestUtils.assert_almost_equal_geometries(expected_water_pressure_geometry,
+                                                 model.process_model_parts[0].geometry)
+
+    def test_post_setup_only_structural_material(self):
+        """
+        Test if the post setup is done correctly when only structural materials are present. Gravity loading should
+        be applied, but no water pressures
+
+        """
+
+        ndim = 2
+
+        model = Model(ndim)
+
+        # Specify beam material model
+        beam_material = EulerBeam(ndim, 210e9, 0.3, 7850, 0.01, 0.0001)
+        name = "beam"
+        structural_material = StructuralMaterial(name, beam_material)
+        # Specify the coordinates for the beam: x:1m x y:0m
+        beam_coordinates = [(0, 0, 0), (1, 0, 0)]
+        # Create the beam
+        gmsh_input = {name: {"coordinates": beam_coordinates, "ndim": 1}}
+        # check if extrusion length is specified in 3D
+        model.gmsh_io.generate_geometry(gmsh_input, "")
+        #
+        # create body model part
+        body_model_part = BodyModelPart(name)
+        body_model_part.material = structural_material
+
+        # set the geometry of the body model part
+        body_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, name)
+        model.body_model_parts.append(body_model_part)
+
+        # add project parameters and set up gravity loading
+        project_parameters = TestUtils.create_default_solver_settings()
+        project_parameters.settings.stress_initialisation_type = StressInitialisationType.GRAVITY_LOADING
+
+        model.project_parameters = project_parameters
+
+        # add gravity through post setup, do not add water pressure through post setup
+        model.post_setup()
+
+        # set expected geometry
+        expected_geometry = Geometry()
+        expected_geometry.points = {1: Point.create([0, 0, 0], 1), 2: Point.create([1, 0, 0], 2)}
+        expected_geometry.lines = {1: Line.create([1, 2], 1)}
+
+        # check if only gravity process model part is present, no water pressure should be present
+        assert len(model.process_model_parts) == 1
+        assert model.process_model_parts[0].name == "gravity_load_1d"
+        assert model.process_model_parts[0].parameters.value == [0, -9.81, 0]
+        assert model.process_model_parts[0].parameters.active == [True, True, True]
+
+        # check if the geometry of the process model part is correct
+        TestUtils.assert_almost_equal_geometries(expected_geometry, model.process_model_parts[0].geometry)
+
+    @pytest.mark.skip(reason="Work in progrss")
+    def test_generate_straight_track_2d(self):
+        """
+        Test if a straight track is generated correctly in a 2d space. A straight track is generated and added to the
+        model. The geometry and material of the rails, sleepers and rail pads are checked.
+        """
+
+        # initialise model
+        model = Model(2)
+
+        rail_parameters = EulerBeam(2, 1, 1, 1, 1, 1)
+        rail_pad_parameters = ElasticSpringDamper([1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1])
+        sleeper_parameters = NodalConcentrated([1, 1, 1], 1, [1, 1, 1])
+
+        origin_point = np.array([2.0, 3.0, 0])
+        direction_vector = np.array([1, 0, 0])
+
+        # create a straight track with rails, sleepers and rail pads
+        connection_coordinates = model.generate_straight_track(0.6, 3, rail_parameters,
+                                                               sleeper_parameters, rail_pad_parameters, origin_point,
+                                                               direction_vector,"track_1")
+
+        # check geometry and material of the rail
+        expected_rail_points = {1: Point.create([2.0, 3.1, 0], 1),
+                                2: Point.create([2.6, 3.1, 0], 2),
+                                3: Point.create([3.2, 3.1, 0],3)}
+        expected_rail_lines = {1: Line.create([1, 2], 1), 2: Line.create([2, 3], 2)}
+
+        expected_rail_geometry = Geometry(expected_rail_points, expected_rail_lines)
+
+        # check rail model part
+        rail_model_part = model.body_model_parts[0]
+        calculated_rail_geometry = rail_model_part.geometry
+        calculated_rail_parameters = rail_model_part.material
+
+        TestUtils.assert_almost_equal_geometries(expected_rail_geometry, calculated_rail_geometry)
+        TestUtils.assert_dictionary_almost_equal(rail_parameters.__dict__, calculated_rail_parameters.__dict__)
+
+        # check geometry and material of the sleepers
+        expected_sleeper_points = {4: Point.create([2.0, 3.0, 0], 4),
+                                   5: Point.create([2.6, 3.0, 0], 5),
+                                   6: Point.create([3.2, 3.0, 0], 6)}
+        expected_sleeper_geometry = Geometry(expected_sleeper_points)
+
+        sleeper_model_part = model.body_model_parts[1]
+        calculated_sleeper_geometry = sleeper_model_part.geometry
+        calculated_sleeper_parameters = sleeper_model_part.material
+
+        TestUtils.assert_almost_equal_geometries(expected_sleeper_geometry, calculated_sleeper_geometry)
+        TestUtils.assert_dictionary_almost_equal(sleeper_parameters.__dict__, calculated_sleeper_parameters.__dict__)
+
+        # check geometry and material of the rail pads
+        rail_pad_model_part = model.body_model_parts[2]
+        calculated_rail_pad_geometry = rail_pad_model_part.geometry
+        calculated_rail_pad_parameters = rail_pad_model_part.material
+
+        expected_rail_pad_points = {1: Point.create([2.0, 3.1, 0], 1), 4: Point.create([2.0, 3.0, 0], 4),
+                                    2: Point.create([2.6, 3.1, 0], 2), 5: Point.create([2.6, 3.0, 0], 5),
+                                    3: Point.create( [3.2,3.1,0],3), 6: Point.create([3.2, 3.0, 0],6)}
+
+        expected_rail_pad_lines = {3: Line.create([1, 4], 3), 4: Line.create([2, 5], 4),
+                                   5: Line.create([3,6],5)}
+
+        expected_rail_pad_geometry = Geometry(expected_rail_pad_points, expected_rail_pad_lines)
+
+        TestUtils.assert_almost_equal_geometries(expected_rail_pad_geometry, calculated_rail_pad_geometry)
+        TestUtils.assert_dictionary_almost_equal(rail_pad_parameters.__dict__, calculated_rail_pad_parameters.__dict__)
+
+        # check the expected bottom coordinates
+        expected_bottom_coordinates = np.array([point.coordinates
+                                                for point in expected_sleeper_geometry.points.values()])
+        npt.assert_array_almost_equal(expected_bottom_coordinates, connection_coordinates)
+
+    @pytest.mark.skip(reason="Work in progrss")
+    def test_generate_straight_track_3d(self):
+        """
+        Tests if a straight track is generated correctly in a 3d space. A straight track is generated and added to the
+        model. The geometry and material of the rails, sleepers and rail pads are checked.
+        """
+
+        model = Model(3)
+
+        rail_parameters = EulerBeam(3, 1, 1, 1, 1, 1, 1, 1)
+        rail_pad_parameters = ElasticSpringDamper([1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1])
+        sleeper_parameters = NodalConcentrated([1, 1, 1], 1, [1, 1, 1])
+
+        origin_point = np.array([2.0, 3.0, 1.0])
+        direction_vector = np.array([1, 1, -1])
+
+        # create a straight track with rails, sleepers and rail pads
+        connection_coordinates = model.generate_straight_track(0.6, 20, rail_parameters,
+                                                               sleeper_parameters, rail_pad_parameters, origin_point,
+                                                               direction_vector,"track_1")
+
+        model.synchronise_geometry()
+        model.gmsh_io.generate_mesh(3, open_gmsh_gui=True)
+
+        distance_sleepers_xyz = 0.6 / 3**0.5
+
+        # check geometry and material of the rail
+        expected_rail_points = {1: Point.create([2.0, 3.1, 1.0], 1),
+                                2: Point.create([2.0 + distance_sleepers_xyz, 3.1 + distance_sleepers_xyz,
+                                                 1.0 - distance_sleepers_xyz], 2),
+                                3: Point.create([2.0 + 2 * distance_sleepers_xyz,
+                                                 3.1 + 2 * distance_sleepers_xyz,
+                                                 1.0 - 2 * distance_sleepers_xyz], 3)}
+        expected_rail_lines = {1: Line.create([1, 2], 1), 2: Line.create([2, 3], 2)}
+
+        expected_rail_geometry = Geometry(expected_rail_points, expected_rail_lines)
+
+        # check rail model part
+        rail_model_part = model.body_model_parts[0]
+        calculated_rail_geometry = rail_model_part.geometry
+        calculated_rail_parameters = rail_model_part.material
+
+        TestUtils.assert_almost_equal_geometries(expected_rail_geometry, calculated_rail_geometry)
+        TestUtils.assert_dictionary_almost_equal(rail_parameters.__dict__, calculated_rail_parameters.__dict__)
+
+        # check geometry and material of the sleepers
+        expected_sleeper_points = {4: Point.create([2.0, 3.0, 1.0], 4),
+                                   5: Point.create([2.0 + distance_sleepers_xyz,
+                                                              3.0 + distance_sleepers_xyz,
+                                                              1.0 - distance_sleepers_xyz], 5),
+                                   6: Point.create([2.0 + 2 * distance_sleepers_xyz,
+                                                              3.0 + 2 * distance_sleepers_xyz,
+                                                              1.0 - 2 * distance_sleepers_xyz], 6)}
+
+        expected_sleeper_geometry = Geometry(expected_sleeper_points)
+
+        sleeper_model_part = model.body_model_parts[1]
+        calculated_sleeper_geometry = sleeper_model_part.geometry
+        calculated_sleeper_parameters = sleeper_model_part.material
+
+        TestUtils.assert_almost_equal_geometries(expected_sleeper_geometry, calculated_sleeper_geometry)
+        TestUtils.assert_dictionary_almost_equal(sleeper_parameters.__dict__, calculated_sleeper_parameters.__dict__)
+
+        # check geometry and material of the rail pads
+        rail_pad_model_part = model.body_model_parts[2]
+        calculated_rail_pad_geometry = rail_pad_model_part.geometry
+        calculated_rail_pad_parameters = rail_pad_model_part.material
+
+        expected_rail_pad_points = {1: Point.create([2.0, 3.1, 1.0], 1),
+                                    4: Point.create([2.0, 3.0, 1.0], 4),
+                                    2: Point.create([2.0 + distance_sleepers_xyz, 3.1 + distance_sleepers_xyz,
+                                                               1.0 - distance_sleepers_xyz], 2),
+                                    5: Point.create([2.0 + distance_sleepers_xyz,
+                                                               3.0 + distance_sleepers_xyz,
+                                                               1.0 - distance_sleepers_xyz], 5),
+                                    3: Point.create([2.0 + 2 * distance_sleepers_xyz,
+                                                               3.1 + 2 * distance_sleepers_xyz,
+                                                               1.0 - 2 * distance_sleepers_xyz], 3),
+                                    6: Point.create([2.0 + 2 * distance_sleepers_xyz,
+                                                               3.0 + 2 * distance_sleepers_xyz,
+                                                               1.0 - 2 * distance_sleepers_xyz], 6)}
+
+        expected_rail_pad_lines = {3: Line.create([1, 4], 3), 4: Line.create([2, 5], 4),
+                                   5: Line.create([3, 6], 5)}
+
+        expected_rail_pad_geometry = Geometry(expected_rail_pad_points, expected_rail_pad_lines)
+
+        TestUtils.assert_almost_equal_geometries(expected_rail_pad_geometry, calculated_rail_pad_geometry)
+        TestUtils.assert_dictionary_almost_equal(rail_pad_parameters.__dict__, calculated_rail_pad_parameters.__dict__)
+
+        # check the expected bottom coordinates
+        expected_bottom_coordinates = np.array([point.coordinates
+                                                for point in expected_sleeper_geometry.points.values()])
+        npt.assert_array_almost_equal(expected_bottom_coordinates, connection_coordinates)

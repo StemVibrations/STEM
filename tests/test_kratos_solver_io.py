@@ -1,20 +1,24 @@
 import json
 
+import pytest
+
 from stem.IO.kratos_solver_io import KratosSolverIO
 from stem.model_part import ModelPart, BodyModelPart
 from stem.solver import *
+from stem.load import UvecLoad
 from tests.utils import TestUtils
 
 
 class TestKratosSolverIO:
 
-    def test_create_settings_dictionary(self):
+    @pytest.fixture()
+    def set_solver_settings(self) -> SolverSettings:
         """
-        Test the creation of the problem data and solver settings dictionary. This test compares a created dictionary
-        with a reference dictionary.
+        Set up solver settings for testing.
 
+        Returns:
+            - SolverSettings: solver settings for testing
         """
-
         # set up solver settings
         analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
 
@@ -42,6 +46,20 @@ class TestKratosSolverIO:
                                          strategy_type=strategy_type, scheme=scheme_type,
                                          linear_solver_settings=linear_solver_settings, rayleigh_k=0.001,
                                          rayleigh_m=0.001)
+
+        return solver_settings
+
+    def test_create_settings_dictionary(self, set_solver_settings: SolverSettings):
+        """
+        Test the creation of the problem data and solver settings dictionary. This test compares a created dictionary
+        with a reference dictionary.
+
+        Args:
+            - set_solver_settings (SolverSettings): solver settings for testing
+
+        """
+
+        solver_settings = set_solver_settings
 
         # set up problem data
         problem_data = Problem(problem_name="test", number_of_threads=2, settings=solver_settings)
@@ -88,6 +106,52 @@ class TestKratosSolverIO:
                                                          model_parts)
 
         assert test_dict["solver_settings"]["solution_type"] == "quasi_static"
+
+    def test_create_settings_dictionary_with_uvec(self, set_solver_settings: SolverSettings):
+        """
+        Test the creation of the problem data and solver settings dictionary including uvec data.
+        This test compares a created dictionary with a reference dictionary.
+
+        Args:
+            - set_solver_settings (SolverSettings): solver settings for testing
+
+        """
+
+        solver_settings = set_solver_settings
+
+        # set up uvec model part
+        uvec_model_part = ModelPart("UvecModelPart")
+
+        # set up uvec load
+        uvec_parameters = {"load_wheel_1": -10.0, "load_wheel_2": -20.0}
+        uvec_state_variables = {"state_1": [0.0, 1.0], "state_2": [9, 8]}
+        uvec_load = UvecLoad(direction=[1, 1, 0], velocity=5, origin=[0.0, 1.0, 0.0], wheel_configuration=[0.0, 2.0],
+                             uvec_file=r"sample_uvec.py", uvec_function_name="uvec_test",
+                             uvec_parameters=uvec_parameters, uvec_state_variables=uvec_state_variables)
+
+        uvec_model_part.parameters = uvec_load
+
+        model_parts = [uvec_model_part]
+
+        # set up problem data
+        problem_data = Problem(problem_name="test", number_of_threads=2, settings=solver_settings)
+
+        # create solver IO
+        solver_io = KratosSolverIO(3, "testDomain")
+
+        # create settings dictionary
+        test_dict = solver_io.create_settings_dictionary(problem_data, "mesh_test_name",
+                                                         "material_test_name.json", model_parts)
+
+        # open expected settings dictionary
+        with open("tests/test_data/expected_solver_settings_with_uvec.json") as f:
+            expected_solver_settings = json.load(f)
+
+        # assert that the settings dictionary is as expected
+        TestUtils.assert_dictionary_almost_equal(expected_solver_settings, test_dict)
+
+
+
 
 
 
