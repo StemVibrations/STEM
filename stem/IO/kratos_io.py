@@ -95,7 +95,8 @@ class KratosIO:
         Returns:
             - bool: whether the process model part writes condition elements
         """
-        return isinstance(process_model_part.parameters, (LineLoad, MovingLoad, SurfaceLoad, AbsorbingBoundary))
+        return isinstance(process_model_part.parameters, (PointLoad, LineLoad, MovingLoad, SurfaceLoad,
+                                                          AbsorbingBoundary))
 
     def __initialise_process_model_part_ids(self, model: Model):
         """
