@@ -935,12 +935,12 @@ class KratosIO:
 
             # add load
             if isinstance(mp.parameters, LoadParametersABC):
-                _parameters = self.loads_io.create_load_dict(mp.name, mp.parameters)
-                processes_dict["processes"]["loads_process_list"].append(_parameters)
+                parameters = self.loads_io.create_load_dict(mp.name, mp.parameters)
+                processes_dict["processes"]["loads_process_list"].append(parameters)
 
             # add boundary condition
             elif isinstance(mp.parameters, BoundaryParametersABC):
-                _parameters = self.boundaries_io.create_boundary_condition_dict(
+                parameters = self.boundaries_io.create_boundary_condition_dict(
                     mp.name, mp.parameters
                 )
 
@@ -948,7 +948,7 @@ class KratosIO:
                     _key = "constraints_process_list"
                 else:
                     _key = "loads_process_list"
-                processes_dict["processes"][_key].append(_parameters)
+                processes_dict["processes"][_key].append(parameters)
 
             elif isinstance(mp.parameters, AdditionalProcessesParametersABC):
 

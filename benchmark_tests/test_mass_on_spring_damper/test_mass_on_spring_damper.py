@@ -105,14 +105,12 @@ def test_stem():
     gauss_point_results = []
 
     # write output to json file
-    model.add_output_settings(output_dir="output", part_name="mass", output_name="output_mass",
+    model.add_output_settings(output_dir=".", part_name="mass", output_name="output_mass",
                               output_parameters=JsonOutputParameters(output_interval=delta_time*0.99,
                                                                      nodal_results=nodal_results,
                                                                      gauss_point_results=gauss_point_results))
 
-    model.post_setup()
     model.set_mesh_size(element_size=1)
-    model.generate_mesh()
 
     input_folder = "benchmark_tests/test_mass_on_spring_damper/inputs_kratos"
 
@@ -129,7 +127,7 @@ def test_stem():
     with open(r"benchmark_tests/test_mass_on_spring_damper/output_/expected_output_mass.json") as f:
         expected_data = json.load(f)
 
-    with open(os.path.join(input_folder, "output/output_mass.json")) as f:
+    with open(os.path.join(input_folder, "./output_mass.json")) as f:
         calculated_data = json.load(f)
 
     # Check if the expected displacement is equal to the calculated displacement

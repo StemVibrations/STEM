@@ -496,8 +496,8 @@ class Utils:
             return str(path_obj).replace(extensions, new_extension)
 
     @staticmethod
-    def find_node_ids_close_to_geometry_nodes(mesh: 'Mesh', geometry: 'Geometry', eps: float = 1e-6
-    ) -> npty.NDArray[np.int64]:
+    def find_node_ids_close_to_geometry_nodes(mesh: 'Mesh', geometry: 'Geometry', eps: float = 1e-6) \
+            -> npty.NDArray[np.int64]:
         """
         Searches the nodes in the mesh close to the point of a given geometry.
 
