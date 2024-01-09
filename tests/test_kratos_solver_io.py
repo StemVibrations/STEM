@@ -150,15 +150,44 @@ class TestKratosSolverIO:
         # assert that the settings dictionary is as expected
         TestUtils.assert_dictionary_almost_equal(expected_solver_settings, test_dict)
 
+    def test_number_of_cycles(self, set_solver_settings: SolverSettings):
+        """
+        Test if the number of cycles is set correctly in the settings dictionary. Firsty, the number of cycles is set
+        to 50. Secondly, the reduction factor is set to 1.0 which should result in a single cycle.
 
+        Args:
+            - set_solver_settings (SolverSettings): solver settings for testing
 
+        """
 
+        solver_settings = set_solver_settings
 
+        # set up problem data
+        problem_data = Problem(problem_name="test", number_of_threads=2, settings=solver_settings)
 
+        # create model parts
+        model_part1 = ModelPart("ModelPart1")
 
+        body_model_part1 = BodyModelPart("BodyModelPart1")
 
+        model_parts = [model_part1, body_model_part1]
 
+        # create solver IO
+        solver_io = KratosSolverIO(3, "testDomain")
 
+        # create settings dictionary
+        test_dict = solver_io.create_settings_dictionary(problem_data, "mesh_test_name", "material_test_name.json",
+                                                         model_parts)
 
+        # assert that the number of cycles is as expected
+        assert test_dict["solver_settings"]["number_cycles"] == 50
 
+        # set reduction factor to 1.0
+        solver_settings.time_integration.reduction_factor = 1.0
 
+        # create settings dictionary
+        test_dict = solver_io.create_settings_dictionary(problem_data, "mesh_test_name", "material_test_name.json",
+                                                         model_parts)
+
+        # assert that the number of cycles is as expected
+        assert test_dict["solver_settings"]["number_cycles"] == 1
