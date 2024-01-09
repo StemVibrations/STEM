@@ -950,6 +950,12 @@ class KratosIO:
                     _key = "loads_process_list"
                 processes_dict["processes"][_key].append(parameters)
 
+            elif isinstance(mp.parameters, WaterProcessParametersABC):
+                parameters = self.water_boundaries_io.create_water_process_dict(
+                    mp.name, mp.parameters
+                )
+                processes_dict["processes"]["loads_process_list"].append(parameters)
+
             elif isinstance(mp.parameters, AdditionalProcessesParametersABC):
 
                 # Validations and adjustment for json_file parameter field:
