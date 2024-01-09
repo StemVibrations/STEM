@@ -1061,9 +1061,8 @@ class Model:
                                              line_elements: Dict[int, Element],
                                              target_node_ids: npty.NDArray[np.int64]) -> Tuple[int, int]:
         """
-        Finds the first node in the target_node_ids next node along line element. The remaining_element_ids and
-        remaining_node_ids keeps track of the direction of the previous searches and orients the search
-        on a unique direction.
+        Finds the next node along line element. The remaining_element_ids and remaining_node_ids keeps track of
+        the direction of the previous searches and orients the search on a unique direction.
 
         Args:
             - start_node (int): the node to start searching the next node along the elements.
