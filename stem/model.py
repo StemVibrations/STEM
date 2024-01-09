@@ -1,4 +1,4 @@
-from typing import List, Sequence, Dict, Any, Optional, Union
+from typing import List, Sequence, Dict, Any, Optional, Union, Tuple
 
 import numpy as np
 import numpy.typing as npty
@@ -1059,7 +1059,7 @@ class Model:
     def __find_next_node_along_line_elements(start_node: int, remaining_element_ids: List[int],
                                              remaining_node_ids: List[int], node_to_elements: Dict[int, List[int]],
                                              line_elements: Dict[int, Element],
-                                             target_node_ids: npty.NDArray[np.int64]):
+                                             target_node_ids: npty.NDArray[np.int64]) -> Tuple[int, int]:
         """
         Finds the first node in the target_node_ids next node along line element. The remaining_element_ids and
         remaining_node_ids keeps track of the direction of the previous searches and orients the search
@@ -1078,6 +1078,9 @@ class Model:
             - ValueError: if there is a fork in the mesh, the algorithm cannot find the next node.
             - ValueError: if number of interation in the while loop are exceeded and something went wrong in the
                 algorithm.
+
+        Returns:
+            - Tuple[int, int]: the next node along the line and the first element id of the line.
 
         """
 
