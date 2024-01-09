@@ -182,42 +182,42 @@ class TestModel:
         geometry_1 = Geometry()
 
         geometry_1.points = {
-            1: Point.create([0, 0, 0], 1),
-            2: Point.create([1, 0, 0], 2),
+            8: Point.create([0, 0, 0], 8),
+            9: Point.create([1, 0, 0], 9),
             3: Point.create([1, 1, 0], 3),
-            4: Point.create([0.5, 1, 0], 4),
-            5: Point.create([0, 1, 0], 5)
+            7: Point.create([0.5, 1, 0], 7),
+            10: Point.create([0, 1, 0], 10)
         }
 
         geometry_1.lines = {
-            1: Line.create([1, 2], 1),
-            2: Line.create([2, 3], 2),
-            3: Line.create([3, 4], 3),
-            4: Line.create([4, 5], 4),
-            5: Line.create([5, 1], 5)
+            9: Line.create([8, 9], 9),
+            10: Line.create([9, 3], 10),
+            7: Line.create([7, 3], 7),
+            11: Line.create([7, 10], 11),
+            12: Line.create([10, 8], 12)
         }
 
         geometry_1.surfaces = {
-            1: Surface.create([1, 2, 3, 4, 5], 1)
+            1: Surface.create([9, 10, -7, 11, 12], 1)
         }
 
         geometry_2 = Geometry()
         geometry_2.points = {
-            6: Point.create([1.0, 2.0, 0.0], 6),
-            7: Point.create([0.5, 2.0, 0.0], 7),
-            4: Point.create([0.5, 1, 0], 4),
+            5: Point.create([1.0, 2.0, 0.0], 5),
+            6: Point.create([0.5, 2.0, 0.0], 6),
+            7: Point.create([0.5, 1, 0], 7),
             3: Point.create([1, 1, 0], 3)
         }
 
         geometry_2.lines = {
+            5: Line.create([5, 6], 5),
             6: Line.create([6, 7], 6),
-            7: Line.create([7, 4], 7),
-            3: Line.create([3, 4], 3),
-            8: Line.create([3, 6], 8)
+            7: Line.create([7, 3], 7),
+            8: Line.create([3, 5], 8)
         }
 
         geometry_2.surfaces = {
-            2: Surface.create([6, 7, -3, 8], 2)
+            2: Surface.create([5, 6, 7, 8], 2)
         }
 
         geometry_2.volumes = {}
@@ -225,29 +225,29 @@ class TestModel:
         # create expected full geometry
         full_geometry = Geometry()
         full_geometry.points = {
-            1: Point.create([0, 0, 0], 1),
-            2: Point.create([1, 0, 0], 2),
             3: Point.create([1, 1, 0], 3),
-            4: Point.create([0.5, 1, 0], 4),
-            5: Point.create([0, 1, 0], 5),
-            6: Point.create([1, 2, 0], 6),
-            7: Point.create([0.5, 2, 0], 7)
+            5: Point.create([1, 2, 0], 5),
+            6: Point.create([0.5, 2, 0], 6),
+            7: Point.create([0.5, 1, 0], 7),
+            8: Point.create([0, 0, 0], 8),
+            9: Point.create([1, 0, 0], 9),
+            10: Point.create([0, 1, 0], 10)
         }
 
         full_geometry.lines = {
-            1: Line.create([1, 2], 1),
-            2: Line.create([2, 3], 2),
-            3: Line.create([3, 4], 3),
-            4: Line.create([4, 5], 4),
-            5: Line.create([5, 1], 5),
+            5: Line.create([5, 6], 5),
             6: Line.create([6, 7], 6),
-            7: Line.create([7, 4], 7),
-            8: Line.create([3, 6], 8)
+            7: Line.create([7, 3], 7),
+            8: Line.create([3, 5], 8),
+            9: Line.create([8, 9], 9),
+            10: Line.create([9, 3], 10),
+            11: Line.create([7, 10], 11),
+            12: Line.create([10, 8], 12)
         }
 
         full_geometry.surfaces = {
-            1: Surface.create([1, 2, 3, 4, 5], 1),
-            2: Surface.create([6, 7, -3, 8], 2)
+            1: Surface.create([9, 10, -7, 11, 12], 1),
+            2: Surface.create([5, 6, 7, 8], 2)
         }
 
         full_geometry.volumes = {}
