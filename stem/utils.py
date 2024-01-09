@@ -520,7 +520,6 @@ class Utils:
 
         # find the ids of the nodes in the model that are close to the specified coordinates.
         tmp_ids: npty.NDArray[np.int64] = np.where(
-            (np.isclose(output_coordinates[:, None], coordinates, atol=eps)).all(axis=2)
-        )[1]
+            (np.isclose(output_coordinates[:, None], coordinates, atol=eps)).all(axis=2))[1]
         # only keep the node ids close to the requested node (smaller than eps meters)
         return np.array(ids)[tmp_ids]

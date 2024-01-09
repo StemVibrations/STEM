@@ -960,7 +960,7 @@ class Model:
             raise ValueError("Mesh or geometry not yet initialised.")
 
         # find end nodes
-        end_nodes = self.__find_end_nodes_of_line_strings(model_part=model_part)
+        end_nodes = self.__find_end_nodes_of_line_strings(model_part.mesh)
         # find the node ids corresponding to the geometry points
         node_ids_at_geometry_points = Utils.find_node_ids_close_to_geometry_nodes(
             mesh=model_part.mesh, geometry=model_part.geometry, eps=1e-06
@@ -968,11 +968,10 @@ class Model:
 
         element_ids = list(model_part.mesh.elements.keys())
         node_ids = list(model_part.mesh.nodes.keys())
+
         # retrieve the connectivity
         # node -> elements
-        node_to_elements = self.__map_node_to_elements(model_part=model_part)
-        # element -> nodes
-        # element_to_nodes = {element.id: element.node_ids for element in model_part.mesh.elements.values()}
+        node_to_elements = self.__map_node_to_elements(model_part.mesh)
 
         # initialise output list to later append the required info (start node, end node and element type)
         spring_nodes_and_first_element = []
@@ -1018,16 +1017,12 @@ class Model:
         return spring_nodes_and_first_element
 
     @staticmethod
-    def __map_node_to_elements(model_part: ModelPart) -> Dict[int, List[int]]:
+    def __map_node_to_elements(mesh: Mesh) -> Dict[int, List[int]]:
         """
         Finds the points at the edge of a mesh even if the mesh comprises multiple clusters.
 
         Args:
-            - model_part (:class:`stem.model_part.ModelPart`): model part from which end-points needs to be
-                extracted.
-
-        Raises:
-            - ValueError: if the mesh is not initialised.
+            - mesh (:class:`stem.mesh.Mesh`): mesh from which end-points needs to be extracted.
 
         Returns:
             - edge_point_cluster_nodes (Dict[int, :class:`stem.mesh.Node`]): dictionary containing the nodes at the
@@ -1035,35 +1030,28 @@ class Model:
 
         """
 
-        if model_part.mesh is None:
-            raise ValueError("Mesh not initialised, clusters cannot be identified.")
-
-        # shorten variables
-        elements = model_part.mesh.elements
-        nodes = model_part.mesh.nodes
-
         # find which elements are connected to each node
         node_to_elements = {}
-        for node_id, node in nodes.items():
+        for node_id, node in mesh.nodes.items():
 
-            elements_connected = [element_id for element_id, element in elements.items() if node_id in element.node_ids]
+            elements_connected = [element_id
+                                  for element_id, element in mesh.elements.items() if node_id in element.node_ids]
             node_to_elements[node_id] = elements_connected
 
         return node_to_elements
 
-    def __find_end_nodes_of_line_strings(self, model_part: ModelPart) -> List[int]:
+    def __find_end_nodes_of_line_strings(self, mesh: Mesh) -> List[int]:
         """
         Finds the nodes at the end of linestrings.
 
         Args:
-            - model_part (:class:`stem.model_part.ModelPart`): model part from which end nodes needs to be
-                extracted.
+            - mesh (:class:`stem.mesh.Mesh`): mesh from which end nodes needs to be extracted.
 
         Returns:
             - end_nodes (List[int]): End node ids of linestring clusters.
 
         """
-        nodes_to_elements = self.__map_node_to_elements(model_part=model_part)
+        nodes_to_elements = self.__map_node_to_elements(mesh)
         end_nodes = [node_id for node_id, elements in nodes_to_elements.items() if len(elements) == 1]
         return end_nodes
 
@@ -1100,12 +1088,11 @@ class Model:
 
         # initialise variables before while loop
         first_element_id = 0
-        count = 0
         next_node = start_node
 
         max_iterations = len(remaining_element_ids)
 
-        while count < max_iterations:
+        for i in range(max_iterations):
             # find the element(s) connected to the node that have not yet been searched for.
             elements_connected = [el for el in node_to_elements[next_node] if el in remaining_element_ids]
 
@@ -1117,7 +1104,7 @@ class Model:
             next_element_id = elements_connected[0]
             remaining_element_ids.remove(next_element_id)
 
-            if count == 0:
+            if i == 0:
                 first_element_id = next_element_id
 
             # find the node(s) connected to the element that have not yet been found yet.
@@ -1130,8 +1117,6 @@ class Model:
             # if the node is one of the nodes of interest, return them, otherwise continue.
             if next_node in target_node_ids:
                 return next_node, first_element_id
-
-            count += 1
 
         raise ValueError("Next node along the line cannot be found. Maximum number of iterations exceeded.")
 
