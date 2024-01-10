@@ -30,7 +30,8 @@ def test_stem():
                                                             NODAL_DAMPING_COEFFICIENT=[0, 100, 0],
                                                             NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0])
 
-    spring_damper_material = StructuralMaterial(name="spring_damper", material_parameters=spring_damper_material_parameters)
+    spring_damper_material = StructuralMaterial(name="spring_damper",
+                                                material_parameters=spring_damper_material_parameters)
 
     spring_damper_coordinates = [(0, 0, 0), (0, -3, 0)]
     gmsh_input = {"spring_damper": {"coordinates": spring_damper_coordinates, "ndim": 1}}
@@ -68,9 +69,6 @@ def test_stem():
 
     # Synchronize geometry
     model.synchronise_geometry()
-
-    # Set mesh size and generate mesh
-    # --------------------------------
 
     # Define project parameters
     # --------------------------------
@@ -133,6 +131,7 @@ def test_stem():
     # Check if the expected displacement is equal to the calculated displacement
     npt.assert_almost_equal(calculated_data["NODE_2"]["DISPLACEMENT_Y"], expected_data["NODE_2"]["DISPLACEMENT_Y"])
 
+    # Only calculate analytical solution and show results if SHOW_RESULTS is True
     if SHOW_RESULTS:
         import matplotlib.pyplot as plt
         # calculate spring damper mass system analytically
