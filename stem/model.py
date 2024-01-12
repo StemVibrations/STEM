@@ -943,17 +943,15 @@ class Model:
 
     def __get_line_string_end_nodes(self, model_part: ModelPart) -> List[List[int]]:
         """
-        The script finds the end nodes of the mesh which is expected to be a line.
-        Then, using the geometry points and the end nodes, it finds the nodes that makes the start and end point of
-        each spring element in the body model part, as well as the first found element.
+        Finds the nodes at both of the line string ends. A line string end is defined as the node which coincides with
+        a geometry point.
 
         Args:
             - model_part (:class:`stem.model_part.ModelPart`): model part from which the spring elements need to be
                 extracted.
 
         Returns:
-            - List[List[int]]: a list lists which contains respectively the start, the end and an element
-                type of the spring element.
+            - List[List[int]]: a list of lists which contains both end nodes for separate each line string.
 
         """
 
@@ -978,7 +976,7 @@ class Model:
         # node -> elements
         node_to_elements = self.__map_node_to_elements(model_part.mesh)
 
-        # initialise output list to later append the required info (start node, end node and element type)
+        # initialise output list
         line_node_ids = []
         # initialise a list for end-point we have already encountered n the clustering algorithm
         completed_points = []
@@ -992,7 +990,7 @@ class Model:
                 first_node_id = None
 
                 # if the point is not the end of the cluster, continue until you find the end of the cluster and include
-                # all the springs
+                # all the line strings
                 while first_node_id not in end_nodes and len(element_ids_search_space) > 0:
 
                     # first point is the end node
@@ -1004,12 +1002,12 @@ class Model:
                                                                                model_part.mesh.elements,
                                                                                node_ids_at_geometry_points)
 
-                    # add the spring information to the list (start node, end node and element type)
+                    # add the end nodes to the list (start node, end node)
                     line_node_ids.append([first_node_id, second_node_id])
                     # update the next point for the search
                     first_node_id = second_node_id
 
-                # add the end point to the completed_points, so we don't use it to loop twice on the same path
+                # add the end point to the completed_points in order to reduce the search space
                 completed_points.append(first_node_id)
         return line_node_ids
 
@@ -1053,7 +1051,7 @@ class Model:
         return end_nodes
 
     @staticmethod
-    def __find_next_node_along_line_elements(start_node: int, remaining_element_ids: List[int],
+    def __find_next_node_along_line_elements(start_node_id: int, remaining_element_ids: List[int],
                                              remaining_node_ids: List[int], node_to_elements: Dict[int, List[int]],
                                              line_elements: Dict[int, Element],
                                              target_node_ids: npty.NDArray[np.int64]) -> int:
@@ -1062,7 +1060,7 @@ class Model:
         the direction of the previous searches and orients the search on a unique direction.
 
         Args:
-            - start_node (int): the node to start searching the next node along the elements.
+            - start_node_id (int): the node id to start searching the next node along the elements.
             - remaining_element_ids (List[int]): the element ids that have not been followed yet.
             - remaining_node_ids (List[int]): the node ids that have not been crossed yet.
             - node_to_elements (Dict[int, List[int]]): mapping of node_ids to the element_ids which is connected to.
@@ -1076,7 +1074,7 @@ class Model:
                 algorithm.
 
         Returns:
-            - int: the next node along the line and the first element id of the line.
+            - int: the node id which is connected to the start_node_id within the search space.
 
         """
 
@@ -1086,15 +1084,16 @@ class Model:
                 raise ValueError("Not all elements are line elements.")
 
         # initialise variables before loop
-        next_node = start_node
+        next_node = start_node_id
 
+        # start the search for the connected node
         max_iterations = len(remaining_element_ids)
-
         for i in range(max_iterations):
+
             # find the element(s) connected to the node that have not yet been searched for.
             elements_connected = [el for el in node_to_elements[next_node] if el in remaining_element_ids]
 
-            # there needs to be only one element (no forks)
+            # check if there is a fork in the mesh, which is not allowed
             if len(elements_connected) > 1:
                 raise ValueError(f"There is a fork in the mesh at elements: {elements_connected}, the next node along "
                                  f"the line cannot be found.")
