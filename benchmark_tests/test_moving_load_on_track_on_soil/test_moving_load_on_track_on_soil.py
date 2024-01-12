@@ -42,7 +42,7 @@ def test_moving_load_on_track_on_soil():
     # add the track
     rail_parameters = EulerBeam(ndim=ndim, YOUNG_MODULUS=30e9, POISSON_RATIO=0.2,
                                 DENSITY=7200, CROSS_AREA=0.01, I33=1e-4, I22=1e-4, TORSIONAL_INERTIA=2e-4)
-    rail_pad_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[1, 1, 1],
+    rail_pad_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[1, 1e10, 1],
                                               NODAL_ROTATIONAL_STIFFNESS=[1, 1, 1],
                                               NODAL_DAMPING_COEFFICIENT=[1, 1, 1],
                                               NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[1, 1, 1])
@@ -57,13 +57,13 @@ def test_moving_load_on_track_on_soil():
     model.generate_straight_track(0.5, 21, rail_parameters,
                                   sleeper_parameters, rail_pad_parameters, origin_point,
                                   direction_vector, "rail_track_1")
-    moving_load = MovingLoad(load=[0.0, -10000.0, 0.0], direction=[1, 1, 1], velocity=10, origin=[1.0, 3.0, 0.0],
+    moving_load = MovingLoad(load=[0.0, -10000.0, 0.0], direction=[1, 1, 1], velocity=10, origin=[1.0, 3.001, 0.0],
                              offset=0.0)
 
     model.add_load_on_line_model_part("rail_track_1", moving_load, "moving_load")
 
     # model.synchronise_geometry()
-    # model.show_geometry(show_surface_ids=True)
+    model.show_geometry(show_surface_ids=True, show_point_ids=True)
 
     # Define boundary conditions
     no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
