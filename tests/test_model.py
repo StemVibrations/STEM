@@ -1648,6 +1648,13 @@ class TestModel:
         # check that spring element ids are correct
         npt.assert_almost_equal(list(model.body_model_parts[0].mesh.elements), [18, 19, 20, 21])
 
+        # remove mesh and check if raises are raised correctly
+        model.body_model_parts[0].mesh = None
+        # check that the function raises an error when the mesh is not generated
+        expected_message = "Mesh not yet initialised. Please generate the mesh using Model.generate_mesh()"
+        with pytest.raises(ValueError, match=expected_message):
+            model._Model__adjust_mesh_spring_dampers()
+
     def test_adjusting_mesh_for_spring_dashpot_elements_with_soil_layer(self,
                                                                         create_default_2d_soil_material: SoilMaterial):
         """
@@ -1721,6 +1728,98 @@ class TestModel:
         assert len(model.body_model_parts[1].mesh.elements) == 3
         for element in model.body_model_parts[1].mesh.elements.values():
             assert element.id not in model.body_model_parts[0].mesh.elements.keys()
+
+    def test__get_line_string_end_nodes_expected_raises(self):
+        """
+        Test that the function to get the spring end nodes and first element raises errors correctly.
+
+        """
+
+        # create empty modelpart
+        model = Model(ndim=2)
+        model_part = ModelPart("test")
+
+        # check that the function raises an error when the geometry is not initialised
+        with pytest.raises(ValueError, match=f"Geometry of model part `test` not yet initialised."):
+            model._Model__get_line_string_end_nodes(model_part)
+
+        # check that the function raises an error when the mesh is not initialised
+        model_part.geometry = Geometry()
+        with pytest.raises(ValueError, match=f"Mesh of model part `test` not yet initialised."):
+            model._Model__get_line_string_end_nodes(model_part)
+
+    def test_find_next_node_along_line_elements(self):
+        """
+        Test that the function to find the next node along the line elements works correctly. And that it raises
+        errors correctly.
+
+        """
+
+        # create empty model
+        model = Model(ndim=2)
+
+        # create remaining element ids in random order
+        remaining_element_ids = [4, 5, 3, 2, 1]
+
+        # create remaining node ids in random order
+        remaining_node_ids = [2, 6, 4, 3, 5]
+
+        # fill in which elements are connected to which nodes
+        node_to_elements = {1: [1], 2: [2, 3], 3: [1, 2], 4: [3, 4], 5: [4, 5], 6: [5]}
+
+        # create 5 connected line elements
+        line_elements = {1: Element(1, "LINE_2N", [1, 3]), 2: Element(2, "LINE_2N", [3, 2]),
+                         3: Element(3, "LINE_2N", [2, 4]), 4: Element(4, "LINE_2N", [4, 5]),
+                         5: Element(5, "LINE_2N", [5, 6])}
+        target_node_ids = np.array([2, 3, 4, 5, 6])
+
+        # define expected connected nodes in correct order
+        expected_connected_nodes = [3, 2, 4, 5, 6]
+
+        # first node is the start node
+        first_node = 1
+
+        # find next node along line elements
+        for i in range(len(expected_connected_nodes)):
+            next_node = model._Model__find_next_node_along_line_elements(first_node, remaining_element_ids,
+                                                                         remaining_node_ids, node_to_elements,
+                                                                         line_elements, target_node_ids)
+
+            assert next_node == expected_connected_nodes[i]
+
+            first_node = next_node
+
+        # check if error is raised because the next node cannot be found
+        target_node_ids = np.array([9])
+
+        with pytest.raises(ValueError, match=re.escape("Next node along the line cannot be found. "
+                                                       "Maximum number of iterations exceeded.")):
+            _ = model._Model__find_next_node_along_line_elements(first_node, remaining_element_ids,
+                                                                 remaining_node_ids, node_to_elements,
+                                                                 line_elements, target_node_ids)
+
+        # create a fork
+        line_elements[6] = Element(6, "LINE_2N", [3, 7])
+        target_node_ids = np.array([3])
+        remaining_node_ids = [2, 6, 4, 3, 5, 7]
+        remaining_element_ids = [1, 2, 6]
+        node_to_elements[3] = [1, 2, 6]
+        node_to_elements[7] = [6]
+
+        # check if fork is detected and error is raised
+        first_node = 3
+        with pytest.raises(ValueError, match=re.escape("There is a fork in the mesh at elements: [1, 2, 6], "
+                                                       "the next node along the line cannot be found.")):
+            _ = model._Model__find_next_node_along_line_elements(first_node, remaining_element_ids,
+                                                                 remaining_node_ids, node_to_elements,
+                                                                 line_elements, target_node_ids)
+
+        # check if error is raised when not all elements are line elements
+        line_elements[7] = Element(7, "TRIANGLE_3N", [3, 7, 8])
+        with pytest.raises(ValueError, match=re.escape("Not all elements are line elements.")):
+            _ = model._Model__find_next_node_along_line_elements(first_node, remaining_element_ids,
+                                                                 remaining_node_ids, node_to_elements,
+                                                                 line_elements, target_node_ids)
 
     def test_add_field_raises_errors(
             self,
