@@ -187,7 +187,7 @@ class KratosOutputsIO:
             output_name = f"{part_name}" + ".json"
 
         # create the target folder for json or simulation will not run.
-        output_dir.mkdir(parents=True, exist_ok=True)
+        # output_dir.mkdir(parents=True, exist_ok=True)
 
         output_path = output_dir.joinpath(output_name)
         if output_path.suffix == "":

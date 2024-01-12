@@ -1,3 +1,4 @@
+import os
 from functools import reduce
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Sequence
@@ -20,7 +21,7 @@ from stem.mesh import Element, Node
 from stem.model import Model
 from stem.model_part import ModelPart, BodyModelPart
 from stem.table import Table
-from stem.output import Output, OutputParametersABC
+from stem.output import Output, OutputParametersABC, JsonOutputParameters
 from stem.utils import Utils
 from stem.IO.io_utils import IOUtils
 
@@ -897,6 +898,27 @@ class KratosIO:
             model.get_all_model_parts(),
         )
 
+    def __write_folder_for_json_output(self, output_settings: Optional[List[Output]] = None) -> None:
+        """
+        Creates the output folder for the JSON outputs if specified.
+
+        Args:
+            - output_settings (Optional[List[:class:`stem.output.Output`]]): The list of output processes objects to \
+              write  in outputs.
+
+        Returns:
+            - None
+        """
+
+        if output_settings is not None and len(output_settings) > 0:
+
+            for output in output_settings:
+
+                if isinstance(output.output_parameters, JsonOutputParameters):
+
+                    json_output_folder = os.path.join(self.project_folder, output.output_dir)
+                    os.makedirs(json_output_folder, exist_ok=True)
+
     def __create_output_process_dictionary(self, output_settings: Optional[List[Output]] = None) -> Dict[str, Any]:
         """
         Creates a dictionary containing the output settings.
@@ -911,6 +933,7 @@ class KratosIO:
         if output_settings is None or len(output_settings) == 0:
             return {"output_processes": {}, "processes": {}}
         else:
+            self.__write_folder_for_json_output(output_settings=output_settings)
             return self.outputs_io.create_output_process_dictionary(output_settings=output_settings)
 
     def __create_process_model_parts_dictionary(self, model: Model) -> Dict[str, Any]:
@@ -1078,6 +1101,8 @@ class KratosIO:
                 processes_dict["processes"]["auxiliary_process_list"].append(parameters)
 
         return processes_dict
+
+
 
     def __write_project_parameters_json(self, model: Model, mesh_file_name: str, materials_file_name: str,
                                         project_file_name: str = "ProjectParameters.json") -> Dict[str, Any]:
