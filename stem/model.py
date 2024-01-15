@@ -70,8 +70,10 @@ class Model:
                                 rail_pad_thickness: float, origin_point: Sequence[float],
                                 direction_vector: Sequence[float], name):
         """
-        Generates a track geometry. With rail, rail-pads and sleepers as mass elements. WIP, currently only rail is
-        generated.
+        Generates a track geometry. With rail, rail-pads and sleepers as mass elements. Sleepers are placed at the
+        bottom of the track with a distance of sleeper_distance between them. The sleepers are connected to the rail
+        with rail-pads with a thickness of rail_pad_thickness. The track is generated in the direction of the
+        direction_vector starting from the origin_point. The track can only move in the vertical direction.
 
         Args:
             - sleeper_distance (float): distance between sleepers
@@ -151,9 +153,10 @@ class Model:
         # retrieve geometry from gmsh and add to model part
         constraint_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_constraint_name)
 
-        # add displacement_constraint in x and z direction
+        # add displacement_constraint in the non-vertical directions
         constraint_model_part.parameters = DisplacementConstraint(active=[True, True, True],
-                                                                  is_fixed=[True, False, True], value=[0, 0, 0])
+                                                                  is_fixed=[True, True, True], value=[0, 0, 0])
+        constraint_model_part.parameters.is_fixed[VERTICAL_AXIS] = False
 
         self.body_model_parts.append(rail_model_part)
         self.body_model_parts.append(sleeper_model_part)
