@@ -67,8 +67,8 @@ class Model:
 
     def generate_straight_track(self, sleeper_distance: float, n_sleepers: int, rail_parameters: EulerBeam,
                                 sleeper_parameters: NodalConcentrated, rail_pad_parameters: ElasticSpringDamper,
-                                origin_point: Sequence[float], direction_vector: Sequence[float], name,
-                                small_thickness: float = 1e-3):
+                                rail_pad_thickness: float, origin_point: Sequence[float],
+                                direction_vector: Sequence[float], name):
         """
         Generates a track geometry. With rail, rail-pads and sleepers as mass elements. WIP, currently only rail is
         generated.
@@ -79,10 +79,10 @@ class Model:
             - rail_parameters (:class:`stem.structural_material.EulerBeam`): rail parameters
             - sleeper_parameters (:class:`stem.structural_material.NodalConcentrated`): sleeper parameters
             - rail_pad_parameters (:class:`stem.structural_material.ElasticSpringDamper`): rail pad parameters
+            - rail_pad_thickness (float): thickness of the rail pad
             - origin_point (Sequence[float]): origin point of the track
             - direction_vector (Sequence[float]): direction vector of the track
             - name (str): name of the track
-            - small_thickness (float): small thickness to avoid gmsh errors (default: 1e-3)
         """
 
         rail_name = f"{name}"
@@ -98,7 +98,7 @@ class Model:
 
         # set rail geometry
         rail_global_coords = rail_local_distance[:, None].dot(normalized_direction_vector[None, :]) + origin_point
-        rail_global_coords[:, VERTICAL_AXIS] += small_thickness
+        rail_global_coords[:, VERTICAL_AXIS] += rail_pad_thickness
 
         rail_geo_settings = {rail_name: {"coordinates": rail_global_coords, "ndim": 1}}
 
@@ -126,18 +126,10 @@ class Model:
         sleeper_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, sleeper_name)
 
         # create rail pad geometries
-        top_point_ids = list(rail_model_part.geometry.points.keys())
-        bot_point_ids = list(sleeper_model_part.geometry.points.keys())
+        rail_pad_line_ids_aux = [self.gmsh_io.make_geometry_1d((top_coordinates, bot_coordinates))
+                                 for top_coordinates, bot_coordinates in zip(rail_global_coords, sleeper_global_coords)]
 
-        #todo connect correct top and bottom points, as they are not sorted currently
-
-        rail_pad_line_ids_tmp =[self.gmsh_io.make_geometry_1d((top_coordinates, bot_coordinates)) for top_coordinates, bot_coordinates in zip(rail_global_coords, sleeper_global_coords)]
-
-        # rail_pad_line_ids = [self.gmsh_io.create_line([top_point_id, bot_point_id])
-        #                      for top_point_id, bot_point_id in zip(top_point_ids, bot_point_ids)]
-
-        rail_pad_line_ids = [ids[0] for ids in rail_pad_line_ids_tmp]
-
+        rail_pad_line_ids = [ids[0] for ids in rail_pad_line_ids_aux]
 
         self.gmsh_io.add_physical_group(rail_pads_name, 1, rail_pad_line_ids)
 

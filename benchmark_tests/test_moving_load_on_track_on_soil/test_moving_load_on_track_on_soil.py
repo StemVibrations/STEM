@@ -42,23 +42,25 @@ def test_moving_load_on_track_on_soil():
     # add the track
     rail_parameters = EulerBeam(ndim=ndim, YOUNG_MODULUS=30e9, POISSON_RATIO=0.2,
                                 DENSITY=7200, CROSS_AREA=0.01, I33=1e-4, I22=1e-4, TORSIONAL_INERTIA=2e-4)
-    rail_pad_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[1, 1e10, 1],
-                                              NODAL_ROTATIONAL_STIFFNESS=[1, 1, 1],
-                                              NODAL_DAMPING_COEFFICIENT=[1, 1, 1],
-                                              NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[1, 1, 1])
+    rail_pad_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[1, 750e6, 1],
+                                              NODAL_ROTATIONAL_STIFFNESS=[0, 0, 0],
+                                              NODAL_DAMPING_COEFFICIENT=[1, 750e3, 1],
+                                              NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0])
     sleeper_parameters = NodalConcentrated(NODAL_DISPLACEMENT_STIFFNESS=[0, 0, 0],
-                                           NODAL_MASS=1,
+                                           NODAL_MASS=140,
                                            NODAL_DAMPING_COEFFICIENT=[0, 0, 0])
 
     origin_point = np.array([1.0, 3.0, 0.0])
     direction_vector = np.array([0, 0, 1])
+    rail_pad_thickness = 0.025
 
     # create a straight track with rails, sleepers and rail pads
     model.generate_straight_track(0.5, 21, rail_parameters,
-                                  sleeper_parameters, rail_pad_parameters, origin_point,
+                                  sleeper_parameters, rail_pad_parameters, rail_pad_thickness, origin_point,
                                   direction_vector, "rail_track_1")
-    moving_load = MovingLoad(load=[0.0, -10000.0, 0.0], direction=[1, 1, 1], velocity=10, origin=[1.0, 3.001, 0.0],
-                             offset=0.0)
+
+    moving_load = MovingLoad(load=[0.0, -10000.0, 0.0], direction=[1, 1, 1], velocity=10,
+                             origin=[1.0, 3 + rail_pad_thickness, 0.0], offset=0.0)
 
     model.add_load_on_line_model_part("rail_track_1", moving_load, "moving_load")
 
@@ -69,7 +71,7 @@ def test_moving_load_on_track_on_soil():
     no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
                                                         is_fixed=[True, True, True], value=[0, 0, 0])
     roller_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                            is_fixed=[True, False, False], value=[0, 0, 0])
+                                                            is_fixed=[True, False, True], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(2, [2], no_displacement_parameters, "base_fixed")
