@@ -2666,7 +2666,7 @@ class TestModel:
         expected_rail_points = {4: Point.create([2.0, 3.02, 0], 4),
                                 5: Point.create([2.6, 3.02, 0], 5),
                                 6: Point.create([3.2, 3.02, 0],6)}
-        expected_rail_lines = {1: Line.create([4, 5], 1), 2: Line.create([5, 6], 2)}
+        expected_rail_lines = {3: Line.create([4, 5], 3), 4: Line.create([5, 6], 4)}
 
         expected_rail_geometry = Geometry(expected_rail_points, expected_rail_lines)
 
@@ -2700,8 +2700,8 @@ class TestModel:
                                     5: Point.create([2.6, 3.02, 0], 5), 2: Point.create([2.6, 3.0, 0], 2),
                                     6: Point.create( [3.2, 3.02, 0],6), 3: Point.create([3.2, 3.0, 0],3)}
 
-        expected_rail_pad_lines = {3: Line.create([4, 1], 3), 4: Line.create([5, 2], 4),
-                                   5: Line.create([6,3],5)}
+        expected_rail_pad_lines = {5: Line.create([4, 1], 5), 6: Line.create([5, 2], 6),
+                                   7: Line.create([6, 3],7)}
 
         expected_rail_pad_geometry = Geometry(expected_rail_pad_points, expected_rail_pad_lines)
 
@@ -2737,7 +2737,7 @@ class TestModel:
                                 6: Point.create([2.0 + 2 * distance_sleepers_xyz,
                                                  3.02 + 2 * distance_sleepers_xyz,
                                                  1.0 - 2 * distance_sleepers_xyz], 6)}
-        expected_rail_lines = {1: Line.create([4, 5], 1), 2: Line.create([5, 6], 2)}
+        expected_rail_lines = {3: Line.create([4, 5], 3), 4: Line.create([5, 6], 4)}
 
         expected_rail_geometry = Geometry(expected_rail_points, expected_rail_lines)
 
@@ -2786,8 +2786,8 @@ class TestModel:
                                                                3.0 + 2 * distance_sleepers_xyz,
                                                                1.0 - 2 * distance_sleepers_xyz], 3)}
 
-        expected_rail_pad_lines = {3: Line.create([4, 1], 3), 4: Line.create([5, 2], 4),
-                                   5: Line.create([6, 3], 5)}
+        expected_rail_pad_lines = {5: Line.create([4, 1], 5), 6: Line.create([5, 2], 6),
+                                   7: Line.create([6, 3], 7)}
 
         expected_rail_pad_geometry = Geometry(expected_rail_pad_points, expected_rail_pad_lines)
 

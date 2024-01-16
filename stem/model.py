@@ -105,12 +105,13 @@ class Model:
 
         # set sleepers geometry
         sleeper_global_coords = sleeper_local_coords[:, None].dot(normalized_direction_vector[None, :]) + origin_point
+        connection_geo_settings = {"": {"coordinates": sleeper_global_coords, "ndim": 1}}
+
         sleeper_geo_settings = {sleeper_name: {"coordinates": sleeper_global_coords, "ndim": 0}}
 
         # firstly create lines for the connection between the track and the foundation
-        self.gmsh_io.make_geometry_1d(sleeper_global_coords)
-        self.synchronise_geometry()
-        self.gmsh_io.extract_geo_data()
+
+        self.gmsh_io.generate_geometry(connection_geo_settings, "")
 
         # add the sleepers to the track
         self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
