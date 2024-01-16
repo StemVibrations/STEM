@@ -94,19 +94,17 @@ class Model:
 
         normalized_direction_vector = np.array(direction_vector) / np.linalg.norm(direction_vector)
 
+        # set local rail geometry
         rail_local_distance = np.linspace(0, sleeper_distance * (n_sleepers - 1), n_sleepers)
-
         sleeper_local_coords = np.copy(rail_local_distance)
 
-        # set rail geometry
+        # set global rail geometry
         rail_global_coords = rail_local_distance[:, None].dot(normalized_direction_vector[None, :]) + origin_point
         rail_global_coords[:, VERTICAL_AXIS] += rail_pad_thickness
-
         rail_geo_settings = {rail_name: {"coordinates": rail_global_coords, "ndim": 1}}
 
         # set sleepers geometry
         sleeper_global_coords = sleeper_local_coords[:, None].dot(normalized_direction_vector[None, :]) + origin_point
-
         sleeper_geo_settings = {sleeper_name: {"coordinates": sleeper_global_coords, "ndim": 0}}
 
         # firstly create lines for the connection between the track and the foundation

@@ -358,10 +358,7 @@ class Geometry:
 
         # create line and lower dimensional objects
         line_id = abs(line_id)
-        try:
-            line = Line.create(geo_data["lines"][line_id], line_id)
-        except KeyError:
-            raise KeyError(f"Line with id {line_id} not found in geometry data.")
+        line = Line.create(geo_data["lines"][line_id], line_id)
 
         # Using list comprehension to get the points
         points = [Geometry.__set_point(geo_data, point_id) for point_id in line.point_ids]
