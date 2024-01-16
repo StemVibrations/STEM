@@ -68,7 +68,7 @@ class Model:
     def generate_straight_track(self, sleeper_distance: float, n_sleepers: int, rail_parameters: EulerBeam,
                                 sleeper_parameters: NodalConcentrated, rail_pad_parameters: ElasticSpringDamper,
                                 rail_pad_thickness: float, origin_point: Sequence[float],
-                                direction_vector: Sequence[float], name):
+                                direction_vector: Sequence[float], name: str):
         """
         Generates a track geometry. With rail, rail-pads and sleepers as mass elements. Sleepers are placed at the
         bottom of the track with a distance of sleeper_distance between them. The sleepers are connected to the rail
