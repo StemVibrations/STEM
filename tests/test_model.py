@@ -2438,6 +2438,67 @@ class TestModel:
         # flipped, such that the normal is inwards
         assert process_model_part.mesh.elements[1].node_ids == [3, 1, 2]
 
+    def test_check_ordering_process_model_part_3d_multiple_elements(self):
+        """
+        Test if the node order of the first element in process model part is flipped, such that the normal is inwards.
+        The second element should not be flipped. This test check for any order of the process element to body element
+        mapping.
+
+        """
+
+        # create model
+        model = Model(3)
+
+        # manually set mesh data nodes
+        model.gmsh_io._GmshIO__mesh_data = {"nodes": {1: [0, 0, 0], 2: [1, 0, 0], 3: [1, 1, 0], 4: [0, 0, 1]}}
+
+        # manually create process model part with nodes in outwards normal order
+        process_element1 = Element(1, "TRIANGLE_3N", [2, 1, 3])
+        process_element2 = Element(2, "TRIANGLE_3N", [4, 3, 2])
+        process_model_part = ModelPart("process")
+        process_mesh = Mesh(2)
+        process_mesh.elements = {1: process_element1,
+                                 2: process_element2}
+        process_mesh.nodes = {1: Node(1, [0, 0, 0]), 2: Node(2, [1, 0, 0]),
+                              3: Node(3, [1, 1, 0]), 4: Node(4, [0, 0, 1])}
+        process_model_part.mesh = process_mesh
+        model.process_model_parts = [ModelPart("process")]
+
+        # create body_model_part
+        body_element = Element(2, "TETRAHEDRON_4N", [1, 2, 3, 4])
+
+        # add process_element and body_element to mapper
+        mapper = {process_element1: body_element,
+                  process_element2: body_element}
+
+        # check ordering of process model part connectivities
+        model._Model__check_ordering_process_model_part(mapper, process_model_part)
+
+        # check if the node ids of the process model part are in the correct order, i.e. the node order of only the
+        # first element should be flipped, such that the normal is inwards
+        assert process_model_part.mesh.elements[1].node_ids == [3, 1, 2]
+        assert process_model_part.mesh.elements[2].node_ids == [4, 3, 2]
+
+        # redefine process elements and redefine mapper in reverse order
+        # manually create process model part with nodes in outwards normal order
+        process_element1 = Element(1, "TRIANGLE_3N", [2, 1, 3])
+        process_element2 = Element(2, "TRIANGLE_3N", [4, 3, 2])
+        process_mesh.elements = {1: process_element1,
+                                 2: process_element2}
+
+        # add process_element and body_element to mapper
+        mapper = {process_element2: body_element,
+                  process_element1: body_element}
+
+        # check ordering of process model part connectivities
+        model._Model__check_ordering_process_model_part(mapper, process_model_part)
+
+        # check if the node ids of the process model part are in the correct order, i.e. the node order of only the
+        # first element should be flipped, such that the normal is inwards (the same order as before)
+        assert process_model_part.mesh.elements[1].node_ids == [3, 1, 2]
+        assert process_model_part.mesh.elements[2].node_ids == [4, 3, 2]
+
+
     def test_show_geometry_file(self, create_default_3d_soil_material):
         """
         Test if the geometry html file is generated. A model is created with a soil layer. The geometry is plotted to a
