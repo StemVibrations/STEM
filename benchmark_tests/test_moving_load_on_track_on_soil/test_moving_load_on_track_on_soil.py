@@ -64,8 +64,7 @@ def test_moving_load_on_track_on_soil():
 
     model.add_load_on_line_model_part("rail_track_1", moving_load, "moving_load")
 
-    # model.synchronise_geometry()
-    model.show_geometry(show_surface_ids=True, show_point_ids=True)
+    # model.show_geometry(show_surface_ids=True, show_point_ids=True)
 
     # Define boundary conditions
     no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
