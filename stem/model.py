@@ -936,7 +936,7 @@ class Model:
 
         """
         max_element_id = 0
-        for element_type, mesh_element_info in self.gmsh_io.mesh_data["elements"].items():
+        for mesh_element_info in self.gmsh_io.mesh_data["elements"].values():
             max_element_id = max(max_element_id, max(mesh_element_info.keys()))
 
         return int(max_element_id)
@@ -949,6 +949,10 @@ class Model:
         Args:
             - model_part (:class:`stem.model_part.ModelPart`): model part from which the spring elements need to be
                 extracted.
+
+        Raises:
+            - ValueError: if the geometry is not initialised.
+            - ValueError: if the mesh is not initialised.
 
         Returns:
             - List[List[int]]: a list of lists which contains both end nodes for separate each line string.
@@ -978,7 +982,7 @@ class Model:
 
         # initialise output list
         line_node_ids = []
-        # initialise a list for end-point we have already encountered n the clustering algorithm
+        # initialise a list for end-point we have already encountered in the clustering algorithm
         completed_points = []
         for end_node in end_nodes:
 
@@ -1020,8 +1024,8 @@ class Model:
             - mesh (:class:`stem.mesh.Mesh`): mesh from which end-points needs to be extracted.
 
         Returns:
-            - edge_point_cluster_nodes (Dict[int, :class:`stem.mesh.Node`]): dictionary containing the nodes at the
-                edges of a mesh, if there is any (e.g. sphere would not have any edge nodes).
+            - Dict[int, List[int]]: dictionary containing node ids as keys and  a list of element ids which are
+            connected to the node as values.
 
         """
 
@@ -1088,7 +1092,7 @@ class Model:
 
         # start the search for the connected node
         max_iterations = len(remaining_element_ids)
-        for i in range(max_iterations):
+        for _ in range(max_iterations):
 
             # find the element(s) connected to the node that have not yet been searched for.
             elements_connected = [el for el in node_to_elements[next_node] if el in remaining_element_ids]
@@ -1104,10 +1108,8 @@ class Model:
             remaining_element_ids.remove(next_element_id)
 
             # find the node(s) connected to the element that have not yet been found yet.
-            for node_id in line_elements[next_element_id].node_ids:
-                if node_id in remaining_node_ids:
-                    next_node = node_id
-                    break
+            next_node = next(node_id for node_id in line_elements[next_element_id].node_ids
+                             if node_id in remaining_node_ids)
 
             # reduce search space for next iteration
             remaining_node_ids.remove(next_node)
@@ -1116,7 +1118,7 @@ class Model:
             if next_node in target_node_ids:
                 return next_node
 
-        raise ValueError("Next node along the line cannot be found. Maximum number of iterations exceeded.")
+        raise ValueError("Next node along the line cannot be found. As it is not included in the search space")
 
     @staticmethod
     def __get_model_part_element_connectivities(model_part: ModelPart) -> npty.NDArray[np.int64]:

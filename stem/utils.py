@@ -3,6 +3,7 @@ from typing import Sequence, Dict, Any, List, Union, Optional, Generator, TYPE_C
 
 import numpy as np
 import numpy.typing as npty
+from scipy.spatial import cKDTree
 
 from stem.globals import ELEMENT_DATA
 
@@ -511,15 +512,16 @@ class Utils:
 
         """
         # retrieve ids and coordinates of the nodes
-        ids = list(mesh.nodes.keys())
+        node_ids = list(mesh.nodes.keys())
         coordinates = np.stack([node.coordinates for node in mesh.nodes.values()])
 
         # compute pairwise distances between the geometry nodes (actual outputs and subset of the mesh nodes) and the
         # mesh nodes
-        output_coordinates = np.stack([np.array(point.coordinates) for point in geometry.points.values()])
+        output_coordinates = np.stack([np.array(point.coordinates) for point in geometry.points.values()], dtype=float)
+
+        # set up the tree for fast querying
+        tree = cKDTree(coordinates)
 
         # find the ids of the nodes in the model that are close to the specified coordinates.
-        tmp_ids: npty.NDArray[np.int64] = np.where(
-            (np.isclose(output_coordinates[:, None], coordinates, atol=eps)).all(axis=2))[1]
-        # only keep the node ids close to the requested node (smaller than eps meters)
-        return np.array(ids)[tmp_ids]
+        close_indices = tree.query_ball_point(output_coordinates, np.ones(output_coordinates.shape[0]) * eps, p=2.)
+        return np.array(node_ids)[np.hstack(close_indices, dtype=np.int64)]

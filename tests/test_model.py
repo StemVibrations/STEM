@@ -1793,7 +1793,7 @@ class TestModel:
         target_node_ids = np.array([9])
 
         with pytest.raises(ValueError, match=re.escape("Next node along the line cannot be found. "
-                                                       "Maximum number of iterations exceeded.")):
+                                                       "As it is not included in the search space")):
             _ = model._Model__find_next_node_along_line_elements(first_node, remaining_element_ids,
                                                                  remaining_node_ids, node_to_elements,
                                                                  line_elements, target_node_ids)
