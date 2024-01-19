@@ -284,7 +284,7 @@ class Utils:
 
     @staticmethod
     def is_volume_edge_defined_outwards(edge_element: 'Element', body_element: 'Element',
-                                        nodes: Dict[int, Sequence[float]]) -> Optional[bool]:
+                                        nodes: Dict[int, Sequence[float]]) -> bool:
         """
         Checks if the normal vector of the edge element is pointing outwards of the body element.
 
@@ -299,7 +299,7 @@ class Utils:
             - ValueError: when not all nodes of the edge element are part of the body element.
 
         Returns:
-            - Optional[bool]: True if the normal vector of the edge element is pointing outwards of the body element,
+            - bool: True if the normal vector of the edge element is pointing outwards of the body element,
                 False otherwise.
 
         """
