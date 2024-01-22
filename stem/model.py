@@ -1,4 +1,4 @@
-from typing import List, Sequence, Dict, Any, Optional, Union
+from typing import List, Sequence, Dict, Any, Optional, Union, Tuple
 
 import numpy as np
 import numpy.typing as npty
@@ -21,7 +21,6 @@ from stem.output import Output
 from stem.utils import Utils
 from stem.plot_utils import PlotUtils
 from stem.globals import ELEMENT_DATA, VERTICAL_AXIS, GRAVITY_VALUE,  OUT_OF_PLANE_AXIS_2D
-
 
 NUMBER_TYPES = (int, float, np.int64, np.float64)
 
@@ -688,20 +687,10 @@ class Model:
         if process_model_part.mesh is None:
             raise ValueError("process model part has not been meshed yet!")
 
-        # retrieve ids and coordinates of the nodes
-        ids = list(process_model_part.mesh.nodes.keys())
-        coordinates = np.stack([node.coordinates for node in process_model_part.mesh.nodes.values()])
-
-        # compute pairwise distances between the geometry nodes (actual outputs and subset of the mesh nodes) and the
-        # mesh nodes
-        output_coordinates = np.stack([np.array(point.coordinates)
-                                       for point in process_model_part.geometry.points.values()])
-
-        # find the ids of the nodes in the model that are close to the specified coordinates.
-        tmp_ids = np.where((np.isclose(output_coordinates[:, None], coordinates, atol=eps)).all(axis=2))[1]
-
-        # only keep the node ids close to the requested node (smaller than eps meters)
-        filtered_node_ids = np.array(ids)[tmp_ids]
+        # retrieve the node ids close to the geometry points (smaller than eps meters)
+        filtered_node_ids = Utils.find_node_ids_close_to_geometry_nodes(
+            mesh=process_model_part.mesh, geometry=process_model_part.geometry, eps=eps
+        )
 
         new_mesh = Mesh(ndim=process_model_part.mesh.ndim)
         new_mesh.nodes = {node_id: process_model_part.mesh.nodes[node_id] for node_id in filtered_node_ids}
@@ -856,9 +845,11 @@ class Model:
         """
         Function to be called after the mesh is generated and finalised.
             - initialise field parameters (e.g., random fields).
+            - adjust the elements for the spring damper parts.
 
         """
         self.__initialise_fields()
+        self.__adjust_mesh_spring_dampers()
 
     def __initialise_fields(self):
         """
@@ -881,6 +872,253 @@ class Model:
                     centroids = self.get_centroids_elements_model_part(model_part.name)
                     if centroids is not None:
                         model_part.parameters.field_generator.generate(centroids)
+
+    def __adjust_mesh_spring_dampers(self):
+        """
+        Adjusts the mesh of the spring dampers which are normally added on an existing line.
+        If the line is broken in multiple elements, mesh requires to be adjusted so that there is only one element
+        per spring-damper.
+
+        Raises:
+            - ValueError: if the mesh is not initialised.
+
+        """
+
+        # get the new element id which is the maximum current element id + 1
+        new_element_id = self.__get_maximum_element_id() + 1
+
+        # retrieve connectivities and cluster into individual spring-damper elements
+        for mp in self.body_model_parts:
+
+            if (isinstance(mp.material, StructuralMaterial)
+                    and isinstance(mp.material.material_parameters, ElasticSpringDamper)):
+
+                # assert mesh is initialised
+                if mp.mesh is None:
+                    raise ValueError("Mesh not yet initialised. Please generate the mesh using Model.generate_mesh().")
+
+                # get the sequences of springs in the body model part
+                spring_node_ids = self.__get_line_string_end_nodes(model_part=mp)
+
+                new_mesh = Mesh(ndim=1)
+
+                # loop over each spring-damper sequence
+                for (start_node_id, end_node_id) in spring_node_ids:
+
+                    # add the existing nodes to the new mesh
+                    new_mesh.nodes[start_node_id] = mp.mesh.nodes[start_node_id]
+                    new_mesh.nodes[end_node_id] = mp.mesh.nodes[end_node_id]
+
+                    # create new 2n line element
+                    new_mesh.elements[new_element_id] = Element(id=new_element_id,
+                                                                element_type="LINE_2N",
+                                                                node_ids=[start_node_id, end_node_id])
+
+                    # increment the element id
+                    new_element_id += 1
+
+                # add the new mesh to the mesh data
+                self.gmsh_io.mesh_data["physical_groups"][mp.name]["node_ids"] = sorted(list(new_mesh.nodes.keys()))
+                self.gmsh_io.mesh_data["physical_groups"][mp.name]["element_ids"] = \
+                    sorted(list(new_mesh.elements.keys()))
+
+                for element_id, element in new_mesh.elements.items():
+                    self.gmsh_io.mesh_data["elements"]["LINE_2N"][element_id] = element.node_ids
+
+                mp.mesh = new_mesh
+
+    def __get_maximum_element_id(self) -> int:
+        """
+        Returns the maximum element id within the mesh from the mesh data
+
+        Returns:
+            - int: the maximum element id
+
+        """
+        max_element_id = 0
+        for mesh_element_info in self.gmsh_io.mesh_data["elements"].values():
+            max_element_id = max(max_element_id, max(mesh_element_info.keys()))
+
+        return int(max_element_id)
+
+    def __get_line_string_end_nodes(self, model_part: ModelPart) -> List[List[int]]:
+        """
+        Finds the nodes at both of the line string ends. A line string end is defined as the node which coincides with
+        a geometry point.
+
+        Args:
+            - model_part (:class:`stem.model_part.ModelPart`): model part from which the spring elements need to be
+                extracted.
+
+        Raises:
+            - ValueError: if the geometry is not initialised.
+            - ValueError: if the mesh is not initialised.
+
+        Returns:
+            - List[List[int]]: a list of lists which contains both end nodes for separate each line string.
+
+        """
+
+        # assert mesh and geometry are initialised
+        if model_part.geometry is None:
+            raise ValueError(f"Geometry of model part `{model_part.name}` not yet initialised.")
+
+        if model_part.mesh is None:
+            raise ValueError(f"Mesh of model part `{model_part.name}` not yet initialised.")
+
+        # find end nodes
+        end_nodes = self.__find_end_nodes_of_line_strings(model_part.mesh)
+        # find the node ids corresponding to the geometry points
+        node_ids_at_geometry_points = Utils.find_node_ids_close_to_geometry_nodes(
+            mesh=model_part.mesh, geometry=model_part.geometry, eps=1e-06
+        )
+
+        element_ids_search_space = list(model_part.mesh.elements.keys())
+        node_ids_search_space = list(model_part.mesh.nodes.keys())
+
+        # retrieve the connectivity
+        # node -> elements
+        node_to_elements = self.__map_node_to_elements(model_part.mesh)
+
+        # initialise output list
+        line_node_ids = []
+        # initialise a list for end-point we have already encountered in the clustering algorithm
+        completed_points = []
+        for end_node in end_nodes:
+
+            # only consider the end nodes that are not already in the completed_points list
+            if end_node not in completed_points:
+
+                # remove the end node from the list containing the node ids
+                node_ids_search_space.remove(end_node)
+                first_node_id = None
+
+                # if the point is not the end of the cluster, continue until you find the end of the cluster and include
+                # all the line strings
+                while first_node_id not in end_nodes and len(element_ids_search_space) > 0:
+
+                    # first point is the end node
+                    if first_node_id is None:
+                        first_node_id = end_node
+
+                    second_node_id = self.__find_next_node_along_line_elements(first_node_id, element_ids_search_space,
+                                                                               node_ids_search_space, node_to_elements,
+                                                                               model_part.mesh.elements,
+                                                                               node_ids_at_geometry_points)
+
+                    # add the end nodes to the list (start node, end node)
+                    line_node_ids.append([first_node_id, second_node_id])
+                    # update the next point for the search
+                    first_node_id = second_node_id
+
+                # add the end point to the completed_points in order to reduce the search space
+                completed_points.append(first_node_id)
+        return line_node_ids
+
+    @staticmethod
+    def __map_node_to_elements(mesh: Mesh) -> Dict[int, List[int]]:
+        """
+        Finds the points at the edge of a mesh even if the mesh comprises multiple clusters.
+
+        Args:
+            - mesh (:class:`stem.mesh.Mesh`): mesh from which end-points needs to be extracted.
+
+        Returns:
+            - Dict[int, List[int]]: dictionary containing node ids as keys and  a list of element ids which are
+            connected to the node as values.
+
+        """
+
+        # find which elements are connected to each node
+        node_to_elements = {}
+        for node_id, node in mesh.nodes.items():
+
+            elements_connected = [element_id
+                                  for element_id, element in mesh.elements.items() if node_id in element.node_ids]
+            node_to_elements[node_id] = elements_connected
+
+        return node_to_elements
+
+    def __find_end_nodes_of_line_strings(self, mesh: Mesh) -> List[int]:
+        """
+        Finds the nodes at the end of linestrings.
+
+        Args:
+            - mesh (:class:`stem.mesh.Mesh`): mesh from which end nodes needs to be extracted.
+
+        Returns:
+            - end_nodes (List[int]): End node ids of linestring clusters.
+
+        """
+        nodes_to_elements = self.__map_node_to_elements(mesh)
+        end_nodes = [node_id for node_id, elements in nodes_to_elements.items() if len(elements) == 1]
+        return end_nodes
+
+    @staticmethod
+    def __find_next_node_along_line_elements(start_node_id: int, remaining_element_ids: List[int],
+                                             remaining_node_ids: List[int], node_to_elements: Dict[int, List[int]],
+                                             line_elements: Dict[int, Element],
+                                             target_node_ids: npty.NDArray[np.int64]) -> int:
+        """
+        Finds the next node along line element. The remaining_element_ids and remaining_node_ids keeps track of
+        the direction of the previous searches and orients the search on a unique direction.
+
+        Args:
+            - start_node_id (int): the node id to start searching the next node along the elements.
+            - remaining_element_ids (List[int]): the element ids that have not been followed yet.
+            - remaining_node_ids (List[int]): the node ids that have not been crossed yet.
+            - node_to_elements (Dict[int, List[int]]): mapping of node_ids to the element_ids which is connected to.
+            - line_elements (Dict[int, :class:`stem.mesh.Element`]): dictionary of line elements.
+            - target_node_ids (npty.NDArray[np.int64]): array of nodes to be searched for.
+
+        Raises:
+            - ValueError: if not all elements are line elements.
+            - ValueError: if there is a fork in the mesh, the algorithm cannot find the next node.
+            - ValueError: if number of interation in the while loop are exceeded and something went wrong in the
+                algorithm.
+
+        Returns:
+            - int: the node id which is connected to the start_node_id within the search space.
+
+        """
+
+        # check if all elements are line elements
+        for element in line_elements.values():
+            if element.element_type != "LINE_2N" and element.element_type != "LINE_3N":
+                raise ValueError("Not all elements are line elements.")
+
+        # initialise variables before loop
+        next_node = start_node_id
+
+        # start the search for the connected node
+        max_iterations = len(remaining_element_ids)
+        for _ in range(max_iterations):
+
+            # find the element(s) connected to the node that have not yet been searched for.
+            elements_connected = [el for el in node_to_elements[next_node] if el in remaining_element_ids]
+
+            # check if there is a fork in the mesh, which is not allowed
+            if len(elements_connected) > 1:
+                raise ValueError(f"There is a fork in the mesh at elements: {elements_connected}, the next node along "
+                                 f"the line cannot be found.")
+
+            next_element_id = elements_connected[0]
+
+            # reduce search space for next iteration
+            remaining_element_ids.remove(next_element_id)
+
+            # find the node(s) connected to the element that have not yet been found yet.
+            next_node = next(node_id for node_id in line_elements[next_element_id].node_ids
+                             if node_id in remaining_node_ids)
+
+            # reduce search space for next iteration
+            remaining_node_ids.remove(next_node)
+
+            # if the node is one of the nodes of interest, return them, otherwise continue.
+            if next_node in target_node_ids:
+                return next_node
+
+        raise ValueError("Next node along the line cannot be found. As it is not included in the search space")
 
     @staticmethod
     def __get_model_part_element_connectivities(model_part: ModelPart) -> npty.NDArray[np.int64]:

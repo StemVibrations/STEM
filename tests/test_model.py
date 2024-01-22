@@ -1596,6 +1596,231 @@ class TestModel:
         npt.assert_equal(node_ids_process_model_part_1, expected_process_connectivities)
         npt.assert_equal(node_ids_process_model_part_2, expected_process_connectivities)
 
+    def test_adjusting_mesh_for_spring_dashpot_elements(self):
+        """
+        Test that the mesh is adjusted correctly when adding spring elements on nodes at the edges of a line.
+
+        """
+        model = Model(ndim=2)
+
+        # add elastic spring damper element
+        spring_damper = ElasticSpringDamper(
+            NODAL_DISPLACEMENT_STIFFNESS=[1, 1, 1],
+            NODAL_ROTATIONAL_STIFFNESS=[1, 1, 2],
+            NODAL_DAMPING_COEFFICIENT=[1, 1, 3],
+            NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[1, 1, 4])
+
+        # create model part
+        # 3 lines, one broken with a mid-point, which should result in 4 springs
+        # the lines are in different size so all the line are broken in smaller lines except the last.
+
+        top_coordinates = [(0, 1, 0), (0, 2, 0), (1, 1, 0), (2, 0.3, 0)]
+        bottom_coordinates = [(0, 0, 0), (0, 1, 0), (1, 0, 0), (2, 0, 0)]
+
+        gmsh_input_top = {"top_coordinates": {"coordinates": top_coordinates, "ndim": 0}}
+        gmsh_input_bottom = {"bottom_coordinates": {"coordinates": bottom_coordinates, "ndim": 0}}
+
+        model.gmsh_io.generate_geometry(gmsh_input_top, "")
+        model.gmsh_io.generate_geometry(gmsh_input_bottom, "")
+
+        # create rail pad geometries
+        top_point_ids = model.gmsh_io.make_points(top_coordinates)
+        bot_point_ids = model.gmsh_io.make_points(bottom_coordinates)
+
+        spring_line_ids = [model.gmsh_io.create_line([top_point_id, bot_point_id])
+                           for top_point_id, bot_point_id in zip(top_point_ids, bot_point_ids)]
+
+        model.gmsh_io.add_physical_group("spring_damper", 1, spring_line_ids)
+        # assign spring damper to geometry
+        spring_damper_model_part = BodyModelPart("spring_damper")
+        spring_damper_model_part.material = StructuralMaterial("spring_damper", spring_damper)
+        spring_damper_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, "spring_damper")
+
+        # add model parts to model
+        model.body_model_parts.append(spring_damper_model_part)
+        model.synchronise_geometry()
+        model.set_mesh_size(0.4)
+
+        model.generate_mesh()
+
+        # check the spring node ids are correct
+        npt.assert_equal(list(model.body_model_parts[0].mesh.nodes), [2, 1, 5, 3, 6, 4, 7])
+        # check that spring element ids are correct
+        npt.assert_almost_equal(list(model.body_model_parts[0].mesh.elements), [18, 19, 20, 21])
+
+        # remove mesh and check if raises are raised correctly
+        model.body_model_parts[0].mesh = None
+        # check that the function raises an error when the mesh is not generated
+        expected_message = "Mesh not yet initialised. Please generate the mesh using Model.generate_mesh()"
+        with pytest.raises(ValueError, match=expected_message):
+            model._Model__adjust_mesh_spring_dampers()
+
+    def test_adjusting_mesh_for_spring_dashpot_elements_with_soil_layer(self,
+                                                                        create_default_2d_soil_material: SoilMaterial):
+        """
+        Test that the mesh is adjusted correctly when adding spring elements on top of a soil layer.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+        model = Model(ndim=2)
+
+        # add soil material
+        soil_material = create_default_2d_soil_material
+
+        top_coordinates = [(0, 2, 0), (1, 2, 0), (2, 2, 0)]
+        bottom_coordinates = [(0, 0, 0), (1, 0, 0), (2, 0, 0)]
+
+        soil_coordinates_loop = top_coordinates + bottom_coordinates[::-1]
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates(soil_coordinates_loop, soil_material, "layer1")
+
+        # add elastic spring damper element
+        spring_damper = ElasticSpringDamper(
+            NODAL_DISPLACEMENT_STIFFNESS=[1, 1, 1],
+            NODAL_ROTATIONAL_STIFFNESS=[1, 1, 2],
+            NODAL_DAMPING_COEFFICIENT=[1, 1, 3],
+            NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[1, 1, 4])
+
+        # generate geometries of bottom and top coordinates
+        gmsh_input_top = {"top_coordinates": {"coordinates": top_coordinates, "ndim": 0}}
+        gmsh_input_bottom = {"bottom_coordinates": {"coordinates": bottom_coordinates, "ndim": 0}}
+
+        model.gmsh_io.generate_geometry(gmsh_input_top, "")
+        model.gmsh_io.generate_geometry(gmsh_input_bottom, "")
+
+        # create spring damper geometries and physical group
+        top_point_ids = model.gmsh_io.make_points(top_coordinates)
+        bot_point_ids = model.gmsh_io.make_points(bottom_coordinates)
+
+        spring_line_ids = [model.gmsh_io.create_line([top_point_id, bot_point_id])
+                           for top_point_id, bot_point_id in zip(top_point_ids, bot_point_ids)]
+
+        model.gmsh_io.add_physical_group("spring_damper", 1, spring_line_ids)
+
+        # assign spring damper to geometry
+        spring_damper_model_part = BodyModelPart("spring_damper")
+        spring_damper_model_part.material = StructuralMaterial("spring_damper", spring_damper)
+        spring_damper_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, "spring_damper")
+
+        # add model part to model
+        model.body_model_parts.append(spring_damper_model_part)
+        model.synchronise_geometry()
+        model.set_mesh_size(1)
+
+        # generate mesh
+        model.generate_mesh(open_gmsh_gui=False)
+
+        # check if the soil layer is meshed correctly
+        assert len(model.body_model_parts[0].mesh.nodes) == 13
+        assert len(model.body_model_parts[0].mesh.elements) == 16
+
+        # check if the spring is meshed correctly
+        assert len(model.body_model_parts[1].mesh.nodes) == 6
+        for node in model.body_model_parts[1].mesh.nodes.values():
+            # check if spring damper node is also in soil layer and if the coordinates are the same
+            assert node.id in model.body_model_parts[0].mesh.nodes.keys()
+            npt.assert_almost_equal(node.coordinates,model.body_model_parts[0].mesh.nodes[node.id].coordinates)
+
+        # check if the spring element ids are correct and not in the soil layer
+        assert len(model.body_model_parts[1].mesh.elements) == 3
+        for element in model.body_model_parts[1].mesh.elements.values():
+            assert element.id not in model.body_model_parts[0].mesh.elements.keys()
+
+    def test__get_line_string_end_nodes_expected_raises(self):
+        """
+        Test that the function to get the spring end nodes and first element raises errors correctly.
+
+        """
+
+        # create empty modelpart
+        model = Model(ndim=2)
+        model_part = ModelPart("test")
+
+        # check that the function raises an error when the geometry is not initialised
+        with pytest.raises(ValueError, match=f"Geometry of model part `test` not yet initialised."):
+            model._Model__get_line_string_end_nodes(model_part)
+
+        # check that the function raises an error when the mesh is not initialised
+        model_part.geometry = Geometry()
+        with pytest.raises(ValueError, match=f"Mesh of model part `test` not yet initialised."):
+            model._Model__get_line_string_end_nodes(model_part)
+
+    def test_find_next_node_along_line_elements(self):
+        """
+        Test that the function to find the next node along the line elements works correctly. And that it raises
+        errors correctly.
+
+        """
+
+        # create empty model
+        model = Model(ndim=2)
+
+        # create remaining element ids in random order
+        remaining_element_ids = [4, 5, 3, 2, 1]
+
+        # create remaining node ids in random order
+        remaining_node_ids = [2, 6, 4, 3, 5]
+
+        # fill in which elements are connected to which nodes
+        node_to_elements = {1: [1], 2: [2, 3], 3: [1, 2], 4: [3, 4], 5: [4, 5], 6: [5]}
+
+        # create 5 connected line elements
+        line_elements = {1: Element(1, "LINE_2N", [1, 3]), 2: Element(2, "LINE_2N", [3, 2]),
+                         3: Element(3, "LINE_2N", [2, 4]), 4: Element(4, "LINE_2N", [4, 5]),
+                         5: Element(5, "LINE_2N", [5, 6])}
+        target_node_ids = np.array([2, 3, 4, 5, 6])
+
+        # define expected connected nodes in correct order
+        expected_connected_nodes = [3, 2, 4, 5, 6]
+
+        # first node is the start node
+        first_node = 1
+
+        # find next node along line elements
+        for i in range(len(expected_connected_nodes)):
+            next_node = model._Model__find_next_node_along_line_elements(first_node, remaining_element_ids,
+                                                                         remaining_node_ids, node_to_elements,
+                                                                         line_elements, target_node_ids)
+
+            assert next_node == expected_connected_nodes[i]
+
+            first_node = next_node
+
+        # check if error is raised because the next node cannot be found
+        target_node_ids = np.array([9])
+
+        with pytest.raises(ValueError, match=re.escape("Next node along the line cannot be found. "
+                                                       "As it is not included in the search space")):
+            _ = model._Model__find_next_node_along_line_elements(first_node, remaining_element_ids,
+                                                                 remaining_node_ids, node_to_elements,
+                                                                 line_elements, target_node_ids)
+
+        # create a fork
+        line_elements[6] = Element(6, "LINE_2N", [3, 7])
+        target_node_ids = np.array([3])
+        remaining_node_ids = [2, 6, 4, 3, 5, 7]
+        remaining_element_ids = [1, 2, 6]
+        node_to_elements[3] = [1, 2, 6]
+        node_to_elements[7] = [6]
+
+        # check if fork is detected and error is raised
+        first_node = 3
+        with pytest.raises(ValueError, match=re.escape("There is a fork in the mesh at elements: [1, 2, 6], "
+                                                       "the next node along the line cannot be found.")):
+            _ = model._Model__find_next_node_along_line_elements(first_node, remaining_element_ids,
+                                                                 remaining_node_ids, node_to_elements,
+                                                                 line_elements, target_node_ids)
+
+        # check if error is raised when not all elements are line elements
+        line_elements[7] = Element(7, "TRIANGLE_3N", [3, 7, 8])
+        with pytest.raises(ValueError, match=re.escape("Not all elements are line elements.")):
+            _ = model._Model__find_next_node_along_line_elements(first_node, remaining_element_ids,
+                                                                 remaining_node_ids, node_to_elements,
+                                                                 line_elements, target_node_ids)
+
     def test_add_field_raises_errors(
             self,
             create_default_2d_soil_material: SoilMaterial

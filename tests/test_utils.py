@@ -6,7 +6,7 @@ import pytest
 
 from stem.geometry import Geometry, Point, Line
 from stem.utils import Utils
-from stem.mesh import Mesh, Element
+from stem.mesh import Mesh, Element, Node
 from stem.globals import ELEMENT_DATA
 
 from tests.utils import TestUtils
@@ -585,3 +585,31 @@ class TestUtilsStem:
         assert Utils.replace_extensions(filename1, ".json") == desired_filename
         assert Utils.replace_extensions(filename2, ".json") == desired_filename
         assert Utils.replace_extensions(filename3, ".json") == desired_filename
+
+    def test_find_nodes_close_to_geometry_points(self):
+        """
+        Tests that nodes close to given geometry points are correctly identified.
+
+        """
+
+        # define geometry
+        geometry = Geometry()
+        geometry.points = {
+            1: Point.create([1, 0, 0], 1),
+            2: Point.create([3, 0, 0], 2),
+            3: Point.create([5, 0, 0], 3)
+        }
+
+        # define mesh
+        mesh = Mesh(ndim=2)
+        mesh.nodes = {
+            1: Node(id=1, coordinates=[1, 0, 0]),
+            2: Node(id=2, coordinates=[2, 0, 0]),
+            3: Node(id=3, coordinates=[3, 0, 0]),
+            4: Node(id=4, coordinates=[4, 0, 0]),
+            5: Node(id=5, coordinates=[5, 0, 0])
+        }
+        expected_ids = [1, 3, 5]
+        actual_ids = Utils.find_node_ids_close_to_geometry_nodes(mesh=mesh, geometry=geometry)
+
+        np.testing.assert_equal(actual=actual_ids, desired=expected_ids)
