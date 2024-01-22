@@ -2858,7 +2858,7 @@ class TestModel:
         # set base mesh size
         model.set_mesh_size(1)
 
-        # set element size of process model part
+        # set element size of process model parts
         model.set_element_size_of_group(0.5, "process_1d")
         model.set_element_size_of_group(1, "process_1d_2")
         model.generate_mesh(open_gmsh_gui=False)
