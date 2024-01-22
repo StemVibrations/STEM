@@ -2809,3 +2809,81 @@ class TestModel:
         expected_bottom_coordinates = np.array([point.coordinates
                                                 for point in expected_sleeper_geometry.points.values()])
         npt.assert_array_almost_equal(expected_bottom_coordinates, connection_coordinates)
+
+    def test_set_element_size_of_group(self, create_default_2d_soil_material: SoilMaterial):
+        """
+        Tests setting the element size of a group. A model is created with a soil layer. The element size of the
+        process model part is set to half the size of the rest of the mesh. The mesh is visually checked in Gmsh if it
+        is as expected. In this test the only performed checks are the amount of elements and nodes per model part.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+        model = Model(2)
+
+        # add soil material
+        soil_material = create_default_2d_soil_material
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
+
+        # add process geometry
+        gmsh_process_input = {"process_1d": {"coordinates": [[0, 1, 0], [1, 1, 0]], "ndim": 1}}
+        model.gmsh_io.generate_geometry(gmsh_process_input, "")
+
+        # create process model part
+        process_model_part = ModelPart("process_1d")
+
+        # set the geometry of the process model part
+        process_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, "process_1d")
+
+        # add process geometry
+        gmsh_process_input = {"process_1d_2": {"coordinates": [[0, 1, 0], [1, 1, 0]], "ndim": 1}}
+        model.gmsh_io.generate_geometry(gmsh_process_input, "")
+
+        # create process model part
+        process_model_part2 = ModelPart("process_1d_2")
+
+        # set the geometry of the process model part
+        process_model_part2.get_geometry_from_geo_data(model.gmsh_io.geo_data, "process_1d_2")
+
+        # add process model parts
+        model.process_model_parts.append(process_model_part)
+        model.process_model_parts.append(process_model_part2)
+
+        # synchronise geometry and generate mesh
+        model.synchronise_geometry()
+
+        # set base mesh size
+        model.set_mesh_size(1)
+
+        # set element size of process model part
+        model.set_element_size_of_group(0.5, "process_1d")
+        model.set_element_size_of_group(1, "process_1d_2")
+        model.generate_mesh(open_gmsh_gui=False)
+
+        # check mesh of body model part
+        mesh_body = model.body_model_parts[0].mesh
+        assert len(mesh_body.elements) == 13
+        assert len(mesh_body.nodes) == 11
+
+        # check process model parts, both process model parts should have the same amount of elements and nodes
+        mesh_process = model.process_model_parts[0].mesh
+        assert len(mesh_process.elements) == 2
+        assert len(mesh_process.nodes) == 3
+
+        mesh_process = model.process_model_parts[1].mesh
+        assert len(mesh_process.elements) == 2
+        assert len(mesh_process.nodes) == 3
+
+    def test_set_element_size_of_group_expected_raise(self):
+        """
+        Tests if a ValueError is raised when the group name is not found while setting the element size of a group
+
+        """
+
+        model = Model(2)
+
+        with pytest.raises(ValueError, match=f"Group name `non_existing_group` not found."):
+            model.set_element_size_of_group(1, "non_existing_group")

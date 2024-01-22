@@ -1319,3 +1319,21 @@ class Model:
 
         # finalize gmsh
         self.gmsh_io.finalize_gmsh()
+
+    def set_element_size_of_group(self, element_size: float, group_name: str):
+        """
+        Set the element size of a group of elements. In multiple groups share the same mesh, the lowest element size is
+        used.
+
+        Args:
+            - element_size (float): The element size.
+            - group_name (str): The name of the group.
+
+        Raises:
+            - ValueError: If the group name is not found.
+
+        """
+        if group_name not in self.gmsh_io.geo_data["physical_groups"]:
+            raise ValueError(f"Group name `{group_name}` not found.")
+        else:
+            self.gmsh_io.geo_data["physical_groups"][group_name]["element_size"] = element_size
