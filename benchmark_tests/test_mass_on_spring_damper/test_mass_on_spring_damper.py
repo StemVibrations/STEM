@@ -1,20 +1,22 @@
 import os
-import pytest
+import json
 
+import numpy.testing as npt
 from stem.model import Model
 from stem.model_part import BodyModelPart
 from stem.structural_material import *
-from stem.load import PointLoad
-from stem.boundary import RotationConstraint
 from stem.boundary import DisplacementConstraint
 from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
                          StressInitialisationType, SolverSettings, Problem)
-from stem.output import NodalOutput, GaussPointOutput, VtkOutputParameters, Output
+from stem.output import NodalOutput, JsonOutputParameters
 from stem.stem import Stem
-from benchmark_tests.utils import assert_files_equal
+
+from benchmark_tests.analytical_solutions.linear_spring_damper_mass import LinearSpringDamperMass
 from shutil import rmtree
 
-@pytest.mark.skip(reason="work in progress")
+SHOW_RESULTS = False
+
+
 def test_stem():
     # Define geometry, conditions and material parameters
     # --------------------------------
@@ -23,13 +25,13 @@ def test_stem():
     ndim = 2
     model = Model(ndim)
 
-
     spring_damper_material_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[0, 10000, 0],
                                                             NODAL_ROTATIONAL_STIFFNESS=[0, 0, 0],
-                                                            NODAL_DAMPING_COEFFICIENT=[0, 0, 0],
+                                                            NODAL_DAMPING_COEFFICIENT=[0, 100, 0],
                                                             NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0])
 
-    spring_damper_material = StructuralMaterial(name="spring_damper", material_parameters=spring_damper_material_parameters)
+    spring_damper_material = StructuralMaterial(name="spring_damper",
+                                                material_parameters=spring_damper_material_parameters)
 
     spring_damper_coordinates = [(0, 0, 0), (0, -3, 0)]
     gmsh_input = {"spring_damper": {"coordinates": spring_damper_coordinates, "ndim": 1}}
@@ -68,9 +70,6 @@ def test_stem():
     # Synchronize geometry
     model.synchronise_geometry()
 
-    # Set mesh size and generate mesh
-    # --------------------------------
-
     # Define project parameters
     # --------------------------------
 
@@ -78,18 +77,19 @@ def test_stem():
     analysis_type = AnalysisType.MECHANICAL
     solution_type = SolutionType.DYNAMIC
     # Set up start and end time of calculation, time step and etc
-    time_integration = TimeIntegration(start_time=0.0, end_time=1.00, delta_time=0.01, reduction_factor=1.0,
-                                       increase_factor=1.0, max_delta_time_factor=1000)
-    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
+    delta_time = 0.001
+    time_integration = TimeIntegration(start_time=0.0-delta_time, end_time=1.00, delta_time=delta_time,
+                                       reduction_factor=1.0, increase_factor=1.0, max_delta_time_factor=1000)
+    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-6,
                                                             displacement_absolute_tolerance=1.0e-12)
     stress_initialisation_type = StressInitialisationType.GRAVITY_LOADING
 
     solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
-                                    stress_initialisation_type=stress_initialisation_type,
-                                    time_integration=time_integration,
-                                    is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
-                                    convergence_criteria=convergence_criterion, rayleigh_k=0.001,
-                                    rayleigh_m=0.1)
+                                     stress_initialisation_type=stress_initialisation_type,
+                                     time_integration=time_integration,
+                                     is_stiffness_matrix_constant=True, are_mass_and_damping_constant=False,
+                                     convergence_criteria=convergence_criterion, rayleigh_k=0.0,
+                                     rayleigh_m=0.0)
 
     # Set up problem data
     problem = Problem(problem_name="calculate_mass_on_spring_damper", number_of_threads=2, settings=solver_settings)
@@ -98,28 +98,17 @@ def test_stem():
     # Define the results to be written to the output file
 
     # Nodal results
-    nodal_results = [NodalOutput.DISPLACEMENT]
+    nodal_results = [NodalOutput.DISPLACEMENT_Y]
     # Gauss point results
     gauss_point_results = []
 
-    # Define the output process
-    vtk_output_process = Output(
-        output_name="vtk_output",
-        output_dir="output",
-        output_parameters=VtkOutputParameters(
-            file_format="ascii",
-            output_interval=1,
-            nodal_results=nodal_results,
-            gauss_point_results=gauss_point_results,
-            output_control_type="step"
-        )
-    )
+    # write output to json file
+    model.add_output_settings(output_dir=".", part_name="mass", output_name="output_mass",
+                              output_parameters=JsonOutputParameters(output_interval=delta_time*0.99,
+                                                                     nodal_results=nodal_results,
+                                                                     gauss_point_results=gauss_point_results))
 
-    model.output_settings = [vtk_output_process]
-
-    model.post_setup()
-    model.set_mesh_size(element_size=3)
-    model.generate_mesh()
+    model.set_mesh_size(element_size=1)
 
     input_folder = "benchmark_tests/test_mass_on_spring_damper/inputs_kratos"
 
@@ -131,8 +120,37 @@ def test_stem():
     # Run Kratos calculation
     # --------------------------------
     stem.run_calculation()
-    #
-    # assert assert_files_equal("benchmark_tests/test_mass_on_sring_damper/output_/output_vtk_full_model",
-    #                           os.path.join(input_folder, "output/output_vtk_full_model"))
-    #
-    # rmtree(input_folder)
+
+    # Assert results
+    with open(r"benchmark_tests/test_mass_on_spring_damper/output_/expected_output_mass.json") as f:
+        expected_data = json.load(f)
+
+    with open(os.path.join(input_folder, "./output_mass.json")) as f:
+        calculated_data = json.load(f)
+
+    # Check if the expected displacement is equal to the calculated displacement
+    npt.assert_almost_equal(calculated_data["NODE_2"]["DISPLACEMENT_Y"], expected_data["NODE_2"]["DISPLACEMENT_Y"])
+
+    # Only calculate analytical solution and show results if SHOW_RESULTS is True
+    if SHOW_RESULTS:
+        import matplotlib.pyplot as plt
+        # calculate spring damper mass system analytically
+        end_time = time_integration.end_time
+        nsteps = int(end_time / time_integration.delta_time)+1
+        analytical_solution = LinearSpringDamperMass(k=spring_damper_material_parameters.NODAL_DISPLACEMENT_STIFFNESS[1],
+                                                     c=spring_damper_material_parameters.NODAL_DAMPING_COEFFICIENT[1],
+                                                     m=mass_material_parameters.NODAL_MASS,
+                                                     g=9.81,
+                                                     end_time=end_time, n_steps=nsteps)
+
+        analytical_solution.solve()
+
+        # start at 0 displacement
+        amplitude = analytical_solution.displacement[0]
+        analytical_solution.displacement -= amplitude
+
+        plt.plot(analytical_solution.time, analytical_solution.displacement)
+        plt.plot(calculated_data["TIME"], calculated_data["NODE_2"]["DISPLACEMENT_Y"])
+        plt.show()
+
+    rmtree(input_folder)

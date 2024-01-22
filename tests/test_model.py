@@ -1596,6 +1596,231 @@ class TestModel:
         npt.assert_equal(node_ids_process_model_part_1, expected_process_connectivities)
         npt.assert_equal(node_ids_process_model_part_2, expected_process_connectivities)
 
+    def test_adjusting_mesh_for_spring_dashpot_elements(self):
+        """
+        Test that the mesh is adjusted correctly when adding spring elements on nodes at the edges of a line.
+
+        """
+        model = Model(ndim=2)
+
+        # add elastic spring damper element
+        spring_damper = ElasticSpringDamper(
+            NODAL_DISPLACEMENT_STIFFNESS=[1, 1, 1],
+            NODAL_ROTATIONAL_STIFFNESS=[1, 1, 2],
+            NODAL_DAMPING_COEFFICIENT=[1, 1, 3],
+            NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[1, 1, 4])
+
+        # create model part
+        # 3 lines, one broken with a mid-point, which should result in 4 springs
+        # the lines are in different size so all the line are broken in smaller lines except the last.
+
+        top_coordinates = [(0, 1, 0), (0, 2, 0), (1, 1, 0), (2, 0.3, 0)]
+        bottom_coordinates = [(0, 0, 0), (0, 1, 0), (1, 0, 0), (2, 0, 0)]
+
+        gmsh_input_top = {"top_coordinates": {"coordinates": top_coordinates, "ndim": 0}}
+        gmsh_input_bottom = {"bottom_coordinates": {"coordinates": bottom_coordinates, "ndim": 0}}
+
+        model.gmsh_io.generate_geometry(gmsh_input_top, "")
+        model.gmsh_io.generate_geometry(gmsh_input_bottom, "")
+
+        # create rail pad geometries
+        top_point_ids = model.gmsh_io.make_points(top_coordinates)
+        bot_point_ids = model.gmsh_io.make_points(bottom_coordinates)
+
+        spring_line_ids = [model.gmsh_io.create_line([top_point_id, bot_point_id])
+                           for top_point_id, bot_point_id in zip(top_point_ids, bot_point_ids)]
+
+        model.gmsh_io.add_physical_group("spring_damper", 1, spring_line_ids)
+        # assign spring damper to geometry
+        spring_damper_model_part = BodyModelPart("spring_damper")
+        spring_damper_model_part.material = StructuralMaterial("spring_damper", spring_damper)
+        spring_damper_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, "spring_damper")
+
+        # add model parts to model
+        model.body_model_parts.append(spring_damper_model_part)
+        model.synchronise_geometry()
+        model.set_mesh_size(0.4)
+
+        model.generate_mesh()
+
+        # check the spring node ids are correct
+        npt.assert_equal(list(model.body_model_parts[0].mesh.nodes), [2, 1, 5, 3, 6, 4, 7])
+        # check that spring element ids are correct
+        npt.assert_almost_equal(list(model.body_model_parts[0].mesh.elements), [18, 19, 20, 21])
+
+        # remove mesh and check if raises are raised correctly
+        model.body_model_parts[0].mesh = None
+        # check that the function raises an error when the mesh is not generated
+        expected_message = "Mesh not yet initialised. Please generate the mesh using Model.generate_mesh()"
+        with pytest.raises(ValueError, match=expected_message):
+            model._Model__adjust_mesh_spring_dampers()
+
+    def test_adjusting_mesh_for_spring_dashpot_elements_with_soil_layer(self,
+                                                                        create_default_2d_soil_material: SoilMaterial):
+        """
+        Test that the mesh is adjusted correctly when adding spring elements on top of a soil layer.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+        model = Model(ndim=2)
+
+        # add soil material
+        soil_material = create_default_2d_soil_material
+
+        top_coordinates = [(0, 2, 0), (1, 2, 0), (2, 2, 0)]
+        bottom_coordinates = [(0, 0, 0), (1, 0, 0), (2, 0, 0)]
+
+        soil_coordinates_loop = top_coordinates + bottom_coordinates[::-1]
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates(soil_coordinates_loop, soil_material, "layer1")
+
+        # add elastic spring damper element
+        spring_damper = ElasticSpringDamper(
+            NODAL_DISPLACEMENT_STIFFNESS=[1, 1, 1],
+            NODAL_ROTATIONAL_STIFFNESS=[1, 1, 2],
+            NODAL_DAMPING_COEFFICIENT=[1, 1, 3],
+            NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[1, 1, 4])
+
+        # generate geometries of bottom and top coordinates
+        gmsh_input_top = {"top_coordinates": {"coordinates": top_coordinates, "ndim": 0}}
+        gmsh_input_bottom = {"bottom_coordinates": {"coordinates": bottom_coordinates, "ndim": 0}}
+
+        model.gmsh_io.generate_geometry(gmsh_input_top, "")
+        model.gmsh_io.generate_geometry(gmsh_input_bottom, "")
+
+        # create spring damper geometries and physical group
+        top_point_ids = model.gmsh_io.make_points(top_coordinates)
+        bot_point_ids = model.gmsh_io.make_points(bottom_coordinates)
+
+        spring_line_ids = [model.gmsh_io.create_line([top_point_id, bot_point_id])
+                           for top_point_id, bot_point_id in zip(top_point_ids, bot_point_ids)]
+
+        model.gmsh_io.add_physical_group("spring_damper", 1, spring_line_ids)
+
+        # assign spring damper to geometry
+        spring_damper_model_part = BodyModelPart("spring_damper")
+        spring_damper_model_part.material = StructuralMaterial("spring_damper", spring_damper)
+        spring_damper_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, "spring_damper")
+
+        # add model part to model
+        model.body_model_parts.append(spring_damper_model_part)
+        model.synchronise_geometry()
+        model.set_mesh_size(1)
+
+        # generate mesh
+        model.generate_mesh(open_gmsh_gui=False)
+
+        # check if the soil layer is meshed correctly
+        assert len(model.body_model_parts[0].mesh.nodes) == 13
+        assert len(model.body_model_parts[0].mesh.elements) == 16
+
+        # check if the spring is meshed correctly
+        assert len(model.body_model_parts[1].mesh.nodes) == 6
+        for node in model.body_model_parts[1].mesh.nodes.values():
+            # check if spring damper node is also in soil layer and if the coordinates are the same
+            assert node.id in model.body_model_parts[0].mesh.nodes.keys()
+            npt.assert_almost_equal(node.coordinates,model.body_model_parts[0].mesh.nodes[node.id].coordinates)
+
+        # check if the spring element ids are correct and not in the soil layer
+        assert len(model.body_model_parts[1].mesh.elements) == 3
+        for element in model.body_model_parts[1].mesh.elements.values():
+            assert element.id not in model.body_model_parts[0].mesh.elements.keys()
+
+    def test__get_line_string_end_nodes_expected_raises(self):
+        """
+        Test that the function to get the spring end nodes and first element raises errors correctly.
+
+        """
+
+        # create empty modelpart
+        model = Model(ndim=2)
+        model_part = ModelPart("test")
+
+        # check that the function raises an error when the geometry is not initialised
+        with pytest.raises(ValueError, match=f"Geometry of model part `test` not yet initialised."):
+            model._Model__get_line_string_end_nodes(model_part)
+
+        # check that the function raises an error when the mesh is not initialised
+        model_part.geometry = Geometry()
+        with pytest.raises(ValueError, match=f"Mesh of model part `test` not yet initialised."):
+            model._Model__get_line_string_end_nodes(model_part)
+
+    def test_find_next_node_along_line_elements(self):
+        """
+        Test that the function to find the next node along the line elements works correctly. And that it raises
+        errors correctly.
+
+        """
+
+        # create empty model
+        model = Model(ndim=2)
+
+        # create remaining element ids in random order
+        remaining_element_ids = [4, 5, 3, 2, 1]
+
+        # create remaining node ids in random order
+        remaining_node_ids = [2, 6, 4, 3, 5]
+
+        # fill in which elements are connected to which nodes
+        node_to_elements = {1: [1], 2: [2, 3], 3: [1, 2], 4: [3, 4], 5: [4, 5], 6: [5]}
+
+        # create 5 connected line elements
+        line_elements = {1: Element(1, "LINE_2N", [1, 3]), 2: Element(2, "LINE_2N", [3, 2]),
+                         3: Element(3, "LINE_2N", [2, 4]), 4: Element(4, "LINE_2N", [4, 5]),
+                         5: Element(5, "LINE_2N", [5, 6])}
+        target_node_ids = np.array([2, 3, 4, 5, 6])
+
+        # define expected connected nodes in correct order
+        expected_connected_nodes = [3, 2, 4, 5, 6]
+
+        # first node is the start node
+        first_node = 1
+
+        # find next node along line elements
+        for i in range(len(expected_connected_nodes)):
+            next_node = model._Model__find_next_node_along_line_elements(first_node, remaining_element_ids,
+                                                                         remaining_node_ids, node_to_elements,
+                                                                         line_elements, target_node_ids)
+
+            assert next_node == expected_connected_nodes[i]
+
+            first_node = next_node
+
+        # check if error is raised because the next node cannot be found
+        target_node_ids = np.array([9])
+
+        with pytest.raises(ValueError, match=re.escape("Next node along the line cannot be found. "
+                                                       "As it is not included in the search space")):
+            _ = model._Model__find_next_node_along_line_elements(first_node, remaining_element_ids,
+                                                                 remaining_node_ids, node_to_elements,
+                                                                 line_elements, target_node_ids)
+
+        # create a fork
+        line_elements[6] = Element(6, "LINE_2N", [3, 7])
+        target_node_ids = np.array([3])
+        remaining_node_ids = [2, 6, 4, 3, 5, 7]
+        remaining_element_ids = [1, 2, 6]
+        node_to_elements[3] = [1, 2, 6]
+        node_to_elements[7] = [6]
+
+        # check if fork is detected and error is raised
+        first_node = 3
+        with pytest.raises(ValueError, match=re.escape("There is a fork in the mesh at elements: [1, 2, 6], "
+                                                       "the next node along the line cannot be found.")):
+            _ = model._Model__find_next_node_along_line_elements(first_node, remaining_element_ids,
+                                                                 remaining_node_ids, node_to_elements,
+                                                                 line_elements, target_node_ids)
+
+        # check if error is raised when not all elements are line elements
+        line_elements[7] = Element(7, "TRIANGLE_3N", [3, 7, 8])
+        with pytest.raises(ValueError, match=re.escape("Not all elements are line elements.")):
+            _ = model._Model__find_next_node_along_line_elements(first_node, remaining_element_ids,
+                                                                 remaining_node_ids, node_to_elements,
+                                                                 line_elements, target_node_ids)
+
     def test_add_field_raises_errors(
             self,
             create_default_2d_soil_material: SoilMaterial
@@ -2405,6 +2630,62 @@ class TestModel:
         # check if the node ids of the process model part are in the correct order
         assert process_model_part.mesh.elements[1].node_ids == [1, 2]
 
+    def test_check_ordering_process_model_part_2d_multiple_elements(self):
+        """
+        Test if the node order of the first element in process model part is flipped in a 2D case. The second element
+        should not be flipped. This test check for any order of the process element to body element mapping.
+
+        """
+
+        # create model
+        model = Model(2)
+
+        # manually set mesh data nodes
+        model.gmsh_io._GmshIO__mesh_data = {"nodes": {1: [0, 0, 0], 2: [1, 0, 0], 3: [1, 1, 0], 4: [0, 1, 0]}}
+
+        # manually create process model part with nodes in reverse order
+        process_element1 = Element(1, "LINE_2N", [2, 1])
+        process_element2 = Element(2, "LINE_2N", [2, 3])
+        process_model_part = ModelPart("process")
+        process_mesh = Mesh(1)
+        process_mesh.elements = {1: process_element1,
+                                 2: process_element2}
+        process_mesh.nodes = {1: Node(1, [0, 0, 0]), 2: Node(2, [1, 0, 0]), 3: Node(3, [1, 1, 0])}
+        process_model_part.mesh = process_mesh
+        model.process_model_parts = [ModelPart("process")]
+
+        # create body_model_part
+        body_element = Element(2, "TRIANGLE_3N", [1, 2, 3])
+
+        # check ordering of process model part connectivities
+        mapper = {process_element1: body_element,
+                  process_element2: body_element}
+        model._Model__check_ordering_process_model_part(mapper, process_model_part)
+
+        # check if the node ids of the process model part are in the correct order, i.e. the node order of only the
+        # first element should be flipped
+        assert process_model_part.mesh.elements[1].node_ids == [1, 2]
+        assert process_model_part.mesh.elements[2].node_ids == [2, 3]
+
+        # redefine process elements and redefine mapper in reverse order
+        # manually create process model part with nodes in outwards normal order
+        process_element1 = Element(1, "LINE_2N", [2, 1])
+        process_element2 = Element(2, "LINE_2N", [2, 3])
+        process_mesh.elements = {1: process_element1,
+                                 2: process_element2}
+
+        # add process_element and body_element to mapper
+        mapper = {process_element2: body_element,
+                  process_element1: body_element}
+
+        # check ordering of process model part connectivities
+        model._Model__check_ordering_process_model_part(mapper, process_model_part)
+
+        # check if the node ids of the process model part are in the correct order, i.e. the node order of only the
+        # first element should be flipped (the same order as before)
+        assert process_model_part.mesh.elements[1].node_ids == [1, 2]
+        assert process_model_part.mesh.elements[2].node_ids == [2, 3]
+
     def test_check_ordering_process_model_part_3d(self):
         """
         Test if the node order of the process model part is flipped, such that the normal is inwards. After filling in
@@ -2437,6 +2718,67 @@ class TestModel:
         # check if the node ids of the process model part are in the correct order, i.e. the node order should be
         # flipped, such that the normal is inwards
         assert process_model_part.mesh.elements[1].node_ids == [3, 1, 2]
+
+    def test_check_ordering_process_model_part_3d_multiple_elements(self):
+        """
+        Test if the node order of the first element in process model part is flipped, such that the normal is inwards.
+        The second element should not be flipped. This test check for any order of the process element to body element
+        mapping.
+
+        """
+
+        # create model
+        model = Model(3)
+
+        # manually set mesh data nodes
+        model.gmsh_io._GmshIO__mesh_data = {"nodes": {1: [0, 0, 0], 2: [1, 0, 0], 3: [1, 1, 0], 4: [0, 0, 1]}}
+
+        # manually create process model part with nodes in outwards normal order
+        process_element1 = Element(1, "TRIANGLE_3N", [2, 1, 3])
+        process_element2 = Element(2, "TRIANGLE_3N", [4, 3, 2])
+        process_model_part = ModelPart("process")
+        process_mesh = Mesh(2)
+        process_mesh.elements = {1: process_element1,
+                                 2: process_element2}
+        process_mesh.nodes = {1: Node(1, [0, 0, 0]), 2: Node(2, [1, 0, 0]),
+                              3: Node(3, [1, 1, 0]), 4: Node(4, [0, 0, 1])}
+        process_model_part.mesh = process_mesh
+        model.process_model_parts = [ModelPart("process")]
+
+        # create body_model_part
+        body_element = Element(2, "TETRAHEDRON_4N", [1, 2, 3, 4])
+
+        # add process_element and body_element to mapper
+        mapper = {process_element1: body_element,
+                  process_element2: body_element}
+
+        # check ordering of process model part connectivities
+        model._Model__check_ordering_process_model_part(mapper, process_model_part)
+
+        # check if the node ids of the process model part are in the correct order, i.e. the node order of only the
+        # first element should be flipped, such that the normal is inwards
+        assert process_model_part.mesh.elements[1].node_ids == [3, 1, 2]
+        assert process_model_part.mesh.elements[2].node_ids == [4, 3, 2]
+
+        # redefine process elements and redefine mapper in reverse order
+        # manually create process model part with nodes in outwards normal order
+        process_element1 = Element(1, "TRIANGLE_3N", [2, 1, 3])
+        process_element2 = Element(2, "TRIANGLE_3N", [4, 3, 2])
+        process_mesh.elements = {1: process_element1,
+                                 2: process_element2}
+
+        # add process_element and body_element to mapper
+        mapper = {process_element2: body_element,
+                  process_element1: body_element}
+
+        # check ordering of process model part connectivities
+        model._Model__check_ordering_process_model_part(mapper, process_model_part)
+
+        # check if the node ids of the process model part are in the correct order, i.e. the node order of only the
+        # first element should be flipped, such that the normal is inwards (the same order as before)
+        assert process_model_part.mesh.elements[1].node_ids == [3, 1, 2]
+        assert process_model_part.mesh.elements[2].node_ids == [4, 3, 2]
+
 
     def test_show_geometry_file(self, create_default_3d_soil_material):
         """
@@ -2642,7 +2984,6 @@ class TestModel:
         # check if the geometry of the process model part is correct
         TestUtils.assert_almost_equal_geometries(expected_geometry, model.process_model_parts[0].geometry)
 
-    @pytest.mark.skip(reason="Work in progrss")
     def test_generate_straight_track_2d(self):
         """
         Test if a straight track is generated correctly in a 2d space. A straight track is generated and added to the
@@ -2660,35 +3001,34 @@ class TestModel:
         direction_vector = np.array([1, 0, 0])
 
         # create a straight track with rails, sleepers and rail pads
-        connection_coordinates = model.generate_straight_track(0.6, 3, rail_parameters,
-                                                               sleeper_parameters, rail_pad_parameters, origin_point,
-                                                               direction_vector,"track_1")
+        model.generate_straight_track(0.6, 3, rail_parameters, sleeper_parameters, rail_pad_parameters, 0.02,
+                                      origin_point, direction_vector,"track_1")
 
         # check geometry and material of the rail
-        expected_rail_points = {1: Point.create([2.0, 3.1, 0], 1),
-                                2: Point.create([2.6, 3.1, 0], 2),
-                                3: Point.create([3.2, 3.1, 0],3)}
-        expected_rail_lines = {1: Line.create([1, 2], 1), 2: Line.create([2, 3], 2)}
+        expected_rail_points = {4: Point.create([2.0, 3.02, 0], 4),
+                                5: Point.create([2.6, 3.02, 0], 5),
+                                6: Point.create([3.2, 3.02, 0],6)}
+        expected_rail_lines = {3: Line.create([4, 5], 3), 4: Line.create([5, 6], 4)}
 
         expected_rail_geometry = Geometry(expected_rail_points, expected_rail_lines)
 
         # check rail model part
         rail_model_part = model.body_model_parts[0]
         calculated_rail_geometry = rail_model_part.geometry
-        calculated_rail_parameters = rail_model_part.material
+        calculated_rail_parameters = rail_model_part.material.material_parameters
 
         TestUtils.assert_almost_equal_geometries(expected_rail_geometry, calculated_rail_geometry)
         TestUtils.assert_dictionary_almost_equal(rail_parameters.__dict__, calculated_rail_parameters.__dict__)
 
         # check geometry and material of the sleepers
-        expected_sleeper_points = {4: Point.create([2.0, 3.0, 0], 4),
-                                   5: Point.create([2.6, 3.0, 0], 5),
-                                   6: Point.create([3.2, 3.0, 0], 6)}
+        expected_sleeper_points = {1: Point.create([2.0, 3.0, 0], 1),
+                                   2: Point.create([2.6, 3.0, 0], 2),
+                                   3: Point.create([3.2, 3.0, 0], 3)}
         expected_sleeper_geometry = Geometry(expected_sleeper_points)
 
         sleeper_model_part = model.body_model_parts[1]
         calculated_sleeper_geometry = sleeper_model_part.geometry
-        calculated_sleeper_parameters = sleeper_model_part.material
+        calculated_sleeper_parameters = sleeper_model_part.material.material_parameters
 
         TestUtils.assert_almost_equal_geometries(expected_sleeper_geometry, calculated_sleeper_geometry)
         TestUtils.assert_dictionary_almost_equal(sleeper_parameters.__dict__, calculated_sleeper_parameters.__dict__)
@@ -2696,26 +3036,20 @@ class TestModel:
         # check geometry and material of the rail pads
         rail_pad_model_part = model.body_model_parts[2]
         calculated_rail_pad_geometry = rail_pad_model_part.geometry
-        calculated_rail_pad_parameters = rail_pad_model_part.material
+        calculated_rail_pad_parameters = rail_pad_model_part.material.material_parameters
 
-        expected_rail_pad_points = {1: Point.create([2.0, 3.1, 0], 1), 4: Point.create([2.0, 3.0, 0], 4),
-                                    2: Point.create([2.6, 3.1, 0], 2), 5: Point.create([2.6, 3.0, 0], 5),
-                                    3: Point.create( [3.2,3.1,0],3), 6: Point.create([3.2, 3.0, 0],6)}
+        expected_rail_pad_points = {4: Point.create([2.0, 3.02, 0], 4), 1: Point.create([2.0, 3.0, 0], 1),
+                                    5: Point.create([2.6, 3.02, 0], 5), 2: Point.create([2.6, 3.0, 0], 2),
+                                    6: Point.create( [3.2, 3.02, 0],6), 3: Point.create([3.2, 3.0, 0],3)}
 
-        expected_rail_pad_lines = {3: Line.create([1, 4], 3), 4: Line.create([2, 5], 4),
-                                   5: Line.create([3,6],5)}
+        expected_rail_pad_lines = {5: Line.create([4, 1], 5), 6: Line.create([5, 2], 6),
+                                   7: Line.create([6, 3],7)}
 
         expected_rail_pad_geometry = Geometry(expected_rail_pad_points, expected_rail_pad_lines)
 
         TestUtils.assert_almost_equal_geometries(expected_rail_pad_geometry, calculated_rail_pad_geometry)
         TestUtils.assert_dictionary_almost_equal(rail_pad_parameters.__dict__, calculated_rail_pad_parameters.__dict__)
 
-        # check the expected bottom coordinates
-        expected_bottom_coordinates = np.array([point.coordinates
-                                                for point in expected_sleeper_geometry.points.values()])
-        npt.assert_array_almost_equal(expected_bottom_coordinates, connection_coordinates)
-
-    @pytest.mark.skip(reason="Work in progrss")
     def test_generate_straight_track_3d(self):
         """
         Tests if a straight track is generated correctly in a 3d space. A straight track is generated and added to the
@@ -2732,48 +3066,45 @@ class TestModel:
         direction_vector = np.array([1, 1, -1])
 
         # create a straight track with rails, sleepers and rail pads
-        connection_coordinates = model.generate_straight_track(0.6, 20, rail_parameters,
-                                                               sleeper_parameters, rail_pad_parameters, origin_point,
-                                                               direction_vector,"track_1")
-
-        model.synchronise_geometry()
-        model.gmsh_io.generate_mesh(3, open_gmsh_gui=True)
+        model.generate_straight_track(0.6, 3, rail_parameters,
+                                      sleeper_parameters, rail_pad_parameters, 0.02,
+                                      origin_point, direction_vector,"track_1")
 
         distance_sleepers_xyz = 0.6 / 3**0.5
 
         # check geometry and material of the rail
-        expected_rail_points = {1: Point.create([2.0, 3.1, 1.0], 1),
-                                2: Point.create([2.0 + distance_sleepers_xyz, 3.1 + distance_sleepers_xyz,
-                                                 1.0 - distance_sleepers_xyz], 2),
-                                3: Point.create([2.0 + 2 * distance_sleepers_xyz,
-                                                 3.1 + 2 * distance_sleepers_xyz,
-                                                 1.0 - 2 * distance_sleepers_xyz], 3)}
-        expected_rail_lines = {1: Line.create([1, 2], 1), 2: Line.create([2, 3], 2)}
+        expected_rail_points = {4: Point.create([2.0, 3.02, 1.0], 4),
+                                5: Point.create([2.0 + distance_sleepers_xyz, 3.02 + distance_sleepers_xyz,
+                                                 1.0 - distance_sleepers_xyz], 5),
+                                6: Point.create([2.0 + 2 * distance_sleepers_xyz,
+                                                 3.02 + 2 * distance_sleepers_xyz,
+                                                 1.0 - 2 * distance_sleepers_xyz], 6)}
+        expected_rail_lines = {3: Line.create([4, 5], 3), 4: Line.create([5, 6], 4)}
 
         expected_rail_geometry = Geometry(expected_rail_points, expected_rail_lines)
 
         # check rail model part
         rail_model_part = model.body_model_parts[0]
         calculated_rail_geometry = rail_model_part.geometry
-        calculated_rail_parameters = rail_model_part.material
+        calculated_rail_parameters = rail_model_part.material.material_parameters
 
         TestUtils.assert_almost_equal_geometries(expected_rail_geometry, calculated_rail_geometry)
         TestUtils.assert_dictionary_almost_equal(rail_parameters.__dict__, calculated_rail_parameters.__dict__)
 
         # check geometry and material of the sleepers
-        expected_sleeper_points = {4: Point.create([2.0, 3.0, 1.0], 4),
-                                   5: Point.create([2.0 + distance_sleepers_xyz,
+        expected_sleeper_points = {1: Point.create([2.0, 3.0, 1.0], 1),
+                                   2: Point.create([2.0 + distance_sleepers_xyz,
                                                               3.0 + distance_sleepers_xyz,
-                                                              1.0 - distance_sleepers_xyz], 5),
-                                   6: Point.create([2.0 + 2 * distance_sleepers_xyz,
+                                                              1.0 - distance_sleepers_xyz], 2),
+                                   3: Point.create([2.0 + 2 * distance_sleepers_xyz,
                                                               3.0 + 2 * distance_sleepers_xyz,
-                                                              1.0 - 2 * distance_sleepers_xyz], 6)}
+                                                              1.0 - 2 * distance_sleepers_xyz], 3)}
 
         expected_sleeper_geometry = Geometry(expected_sleeper_points)
 
         sleeper_model_part = model.body_model_parts[1]
         calculated_sleeper_geometry = sleeper_model_part.geometry
-        calculated_sleeper_parameters = sleeper_model_part.material
+        calculated_sleeper_parameters = sleeper_model_part.material.material_parameters
 
         TestUtils.assert_almost_equal_geometries(expected_sleeper_geometry, calculated_sleeper_geometry)
         TestUtils.assert_dictionary_almost_equal(sleeper_parameters.__dict__, calculated_sleeper_parameters.__dict__)
@@ -2781,34 +3112,29 @@ class TestModel:
         # check geometry and material of the rail pads
         rail_pad_model_part = model.body_model_parts[2]
         calculated_rail_pad_geometry = rail_pad_model_part.geometry
-        calculated_rail_pad_parameters = rail_pad_model_part.material
+        calculated_rail_pad_parameters = rail_pad_model_part.material.material_parameters
 
-        expected_rail_pad_points = {1: Point.create([2.0, 3.1, 1.0], 1),
-                                    4: Point.create([2.0, 3.0, 1.0], 4),
-                                    2: Point.create([2.0 + distance_sleepers_xyz, 3.1 + distance_sleepers_xyz,
-                                                               1.0 - distance_sleepers_xyz], 2),
-                                    5: Point.create([2.0 + distance_sleepers_xyz,
-                                                               3.0 + distance_sleepers_xyz,
+        expected_rail_pad_points = {4: Point.create([2.0, 3.02, 1.0], 4),
+                                    1: Point.create([2.0, 3.0, 1.0], 1),
+                                    5: Point.create([2.0 + distance_sleepers_xyz, 3.02 + distance_sleepers_xyz,
                                                                1.0 - distance_sleepers_xyz], 5),
-                                    3: Point.create([2.0 + 2 * distance_sleepers_xyz,
-                                                               3.1 + 2 * distance_sleepers_xyz,
-                                                               1.0 - 2 * distance_sleepers_xyz], 3),
+                                    2: Point.create([2.0 + distance_sleepers_xyz,
+                                                               3.0 + distance_sleepers_xyz,
+                                                               1.0 - distance_sleepers_xyz], 2),
                                     6: Point.create([2.0 + 2 * distance_sleepers_xyz,
+                                                               3.02 + 2 * distance_sleepers_xyz,
+                                                               1.0 - 2 * distance_sleepers_xyz], 6),
+                                    3: Point.create([2.0 + 2 * distance_sleepers_xyz,
                                                                3.0 + 2 * distance_sleepers_xyz,
-                                                               1.0 - 2 * distance_sleepers_xyz], 6)}
+                                                               1.0 - 2 * distance_sleepers_xyz], 3)}
 
-        expected_rail_pad_lines = {3: Line.create([1, 4], 3), 4: Line.create([2, 5], 4),
-                                   5: Line.create([3, 6], 5)}
+        expected_rail_pad_lines = {5: Line.create([4, 1], 5), 6: Line.create([5, 2], 6),
+                                   7: Line.create([6, 3], 7)}
 
         expected_rail_pad_geometry = Geometry(expected_rail_pad_points, expected_rail_pad_lines)
 
         TestUtils.assert_almost_equal_geometries(expected_rail_pad_geometry, calculated_rail_pad_geometry)
         TestUtils.assert_dictionary_almost_equal(rail_pad_parameters.__dict__, calculated_rail_pad_parameters.__dict__)
-
-        # check the expected bottom coordinates
-        expected_bottom_coordinates = np.array([point.coordinates
-                                                for point in expected_sleeper_geometry.points.values()])
-        npt.assert_array_almost_equal(expected_bottom_coordinates, connection_coordinates)
 
     def test_set_element_size_of_group(self, create_default_2d_soil_material: SoilMaterial):
         """

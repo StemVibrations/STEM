@@ -2,12 +2,13 @@ from pathlib import Path
 from typing import Sequence, Dict, Any, List, Union, Optional, Generator, TYPE_CHECKING
 
 import numpy as np
-import numpy.typing as npt
+import numpy.typing as npty
+from scipy.spatial import cKDTree
 
 from stem.globals import ELEMENT_DATA
 
 if TYPE_CHECKING:
-    from stem.mesh import Element
+    from stem.mesh import Element, Mesh
     from stem.geometry import Geometry
 
 
@@ -230,7 +231,7 @@ class Utils:
         return list({id(obj): obj for obj in input_sequence}.values())
 
     @staticmethod
-    def get_element_edges(element: 'Element') -> npt.NDArray[np.int64]:
+    def get_element_edges(element: 'Element') -> npty.NDArray[np.int64]:
         """
         Gets the nodal connectivities of the line edges of elements
 
@@ -238,12 +239,12 @@ class Utils:
             - element (:class:`stem.mesh.Element`): element object
 
         Returns:
-            - npt.NDArray[np.int64]: nodal connectivities of the line edges of the element
+            - npty.NDArray[np.int64]: nodal connectivities of the line edges of the element
 
         """
 
         # get nodal connectivities of the line edges from the local element edges dictionary
-        node_ids: npt.NDArray[np.int64] = np.array(element.node_ids, dtype=int)[
+        node_ids: npty.NDArray[np.int64] = np.array(element.node_ids, dtype=int)[
             ELEMENT_DATA[element.element_type]["edges"]]
 
         return node_ids
@@ -284,7 +285,7 @@ class Utils:
 
     @staticmethod
     def is_volume_edge_defined_outwards(edge_element: 'Element', body_element: 'Element',
-                                        nodes: Dict[int, Sequence[float]]) -> Optional[bool]:
+                                        nodes: Dict[int, Sequence[float]]) -> bool:
         """
         Checks if the normal vector of the edge element is pointing outwards of the body element.
 
@@ -299,7 +300,7 @@ class Utils:
             - ValueError: when not all nodes of the edge element are part of the body element.
 
         Returns:
-            - Optional[bool]: True if the normal vector of the edge element is pointing outwards of the body element,
+            - bool: True if the normal vector of the edge element is pointing outwards of the body element,
                 False otherwise.
 
         """
@@ -386,7 +387,7 @@ class Utils:
                                                o
 
         Args:
-            - geometry: geometry to be checked
+            - geometry (:class:`stem.geometry.Geometry`): geometry to be checked.
 
         Raises:
             - ValueError: when geometry is not provided (is None).
@@ -494,3 +495,33 @@ class Utils:
             return str(path_obj.with_suffix(new_extension))
         else:
             return str(path_obj).replace(extensions, new_extension)
+
+    @staticmethod
+    def find_node_ids_close_to_geometry_nodes(mesh: 'Mesh', geometry: 'Geometry', eps: float = 1e-6) \
+            -> npty.NDArray[np.int64]:
+        """
+        Searches the nodes in the mesh close to the point of a given geometry.
+
+        Args:
+            - mesh (:class:`stem.mesh.Mesh`): mesh object for which the node ids are required to be computed.
+            - geometry (:class:`stem.geometry.Geometry`): geometry containing the points of interest.
+            - eps (float): tolerance for searching close nodes.
+
+        Returns:
+            - npty.NDArray[np.int64]: list of ids of the nodes close to the geometry points
+
+        """
+        # retrieve ids and coordinates of the nodes
+        node_ids = list(mesh.nodes.keys())
+        coordinates = np.stack([node.coordinates for node in mesh.nodes.values()])
+
+        # compute pairwise distances between the geometry nodes (actual outputs and subset of the mesh nodes) and the
+        # mesh nodes
+        output_coordinates = np.stack([np.array(point.coordinates) for point in geometry.points.values()], dtype=float)
+
+        # set up the tree for fast querying
+        tree = cKDTree(coordinates)
+
+        # find the ids of the nodes in the model that are close to the specified coordinates.
+        close_indices = tree.query_ball_point(output_coordinates, np.ones(output_coordinates.shape[0]) * eps, p=2.)
+        return np.array(node_ids)[np.hstack(close_indices, dtype=np.int64)]
