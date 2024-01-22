@@ -1569,5 +1569,5 @@ class Model:
         """
         if group_name not in self.gmsh_io.geo_data["physical_groups"]:
             raise ValueError(f"Group name `{group_name}` not found.")
-        else:
-            self.gmsh_io.geo_data["physical_groups"][group_name]["element_size"] = element_size
+
+        self.gmsh_io.geo_data["physical_groups"][group_name]["element_size"] = element_size
