@@ -1232,7 +1232,7 @@ class Model:
             raise ValueError(f"Mesh of process model part: {process_model_part.name} is not yet initialised.")
 
         # loop over the matched elements
-        flip_node_order = np.zeros(len(matched_elements), dtype=bool)
+        flip_node_order: Dict[int, bool] = {}
 
         for i, (process_element, body_element) in enumerate(matched_elements.items()):
 
@@ -1242,24 +1242,31 @@ class Model:
 
             if process_el_info["ndim"] == 1:
 
+                # initialise flip node order to False
+                flip_node_order[process_element.id] = False
+
                 # get all line edges of the body element and check if the process element is defined on one of them
                 # if the nodes are equal, but the node order isn't, flip the node order of the process element
                 body_line_edges = Utils.get_element_edges(body_element)
                 for edge in body_line_edges:
                     if set(edge) == set(process_element.node_ids):
                         if list(edge) != process_element.node_ids:
-                            flip_node_order[i] = True
+                            flip_node_order[process_element.id] = True
 
             elif body_el_info["ndim"] == 3 and process_el_info["ndim"] == 2:
 
                 # check if the normal of the condition element is defined outwards of the body element
-                flip_node_order[i] = Utils.is_volume_edge_defined_outwards(process_element, body_element,
-                                                                           self.gmsh_io.mesh_data["nodes"])
+                flip_node_order[process_element.id] = Utils.is_volume_edge_defined_outwards(process_element,
+                                                                                            body_element,
+                                                                                            self.gmsh_io.mesh_data[
+                                                                                                "nodes"])
 
         # flip condition elements if required
-        if any(flip_node_order):
-            # elements to be flipped
-            elements = np.array(list(process_model_part.mesh.elements.values()))[flip_node_order]
+        if any(list(flip_node_order.values())):
+
+            # get the elements to be flipped
+            elements = [process_model_part.mesh.elements[el_id] for el_id in flip_node_order.keys() if
+                        flip_node_order[el_id]]
 
             # flip elements, it is required that all elements in the array are of the same type
             Utils.flip_node_order(elements)
