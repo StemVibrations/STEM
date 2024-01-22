@@ -510,7 +510,7 @@ class SolverSettings:
     linear_solver_settings: LinearSolverSettingsABC = field(default_factory=Amgcl)
     rayleigh_m: Optional[float] = None
     rayleigh_k: Optional[float] = None
-    echo_level: int = 1
+    echo_level: int = 0
 
     def __post_init__(self):
         """

@@ -7,6 +7,7 @@ from typing import List, Dict
 from stem.model import Model
 from stem.IO.kratos_io import KratosIO
 
+
 class Stem:
     """
     Class containing the main calculation.
