@@ -134,4 +134,4 @@ def test_stem():
     assert assert_files_equal("benchmark_tests/test_moving_load_on_beam3D/output_/output_vtk_full_model",
                               os.path.join(input_folder, "output/output_vtk_full_model"))
 
-    # rmtree(input_folder)
+    rmtree(input_folder)
