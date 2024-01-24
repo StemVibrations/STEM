@@ -96,7 +96,7 @@ def test_stem():
     solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
                                     stress_initialisation_type=stress_initialisation_type,
                                     time_integration=time_integration,
-                                    is_stiffness_matrix_constant=False, are_mass_and_damping_constant=False,
+                                    is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
                                     convergence_criteria=convergence_criterion, rayleigh_k=0.001,
                                     rayleigh_m=0.1)
 
@@ -134,4 +134,4 @@ def test_stem():
     assert assert_files_equal("benchmark_tests/test_moving_load_on_beam3D/output_/output_vtk_full_model",
                               os.path.join(input_folder, "output/output_vtk_full_model"))
 
-    rmtree(input_folder)
+    # rmtree(input_folder)
