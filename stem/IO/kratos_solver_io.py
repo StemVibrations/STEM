@@ -1,5 +1,6 @@
 from typing import Dict, Any, List, Optional
 from copy import deepcopy
+import math
 
 from stem.solver import *
 from stem.model_part import ModelPart, BodyModelPart
@@ -270,6 +271,10 @@ class KratosSolverIO:
 
         # Add the model part names
         solver_settings_dict.update(self.__create_model_part_name_dict(model_parts))
+
+        # set number of cycles to 1 if no time step reduction is used
+        if math.isclose(solver_settings_dict["reduction_factor"], 1.0) and "number_cycles" in solver_settings_dict:
+            solver_settings_dict["number_cycles"] = 1
 
         # add  Uvec parameters if present
         uvec_settings = self.__create_uvec_parameters_dictionary(solver_settings_dict, model_parts)

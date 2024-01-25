@@ -1038,8 +1038,8 @@ class KratosIO:
         # check that the name is not none!
         if process_model_part.parameters.field_generator is None:
             raise ValueError("Field generator object not provided for the field generation"
-                             " of model part {mp.name} and property {mp.parameters.property_name}."
-                             )
+                             f" of model part {process_model_part.name} and "
+                             f"property {process_model_part.parameters.property_name}.")
 
         # write field values in the json input file
         IOUtils.write_json_file(

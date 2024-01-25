@@ -1,0 +1,65 @@
+
+Begin Properties 1
+End Properties
+
+
+Begin Properties 2
+End Properties
+
+
+Begin Nodes
+  1   0.0000000000  1.0000000000  0.0000000000
+  2   0.0000000000  2.0000000000  0.0000000000
+  3   1.0000000000  1.0000000000  0.0000000000
+  4   2.0000000000  0.3000000000  0.0000000000
+  5   0.0000000000  0.0000000000  0.0000000000
+  6   1.0000000000  0.0000000000  0.0000000000
+  7   2.0000000000  0.0000000000  0.0000000000
+End Nodes
+
+
+Begin Elements SpringDamperElement2D
+  18  1  2 1
+  19  1  1 5
+  20  1  3 6
+  21  1  4 7
+End Elements
+
+
+Begin Elements NodalConcentratedElement2D1N
+  3  2  3
+End Elements
+
+
+Begin SubModelPart spring_damper
+  Begin SubModelPartTables
+  End SubModelPartTables
+  Begin SubModelPartNodes
+  2
+  1
+  5
+  3
+  6
+  4
+  7
+  End SubModelPartNodes
+  Begin SubModelPartElements
+  18
+  19
+  20
+  21
+  End SubModelPartElements
+End SubModelPart
+
+
+Begin SubModelPart nodal_concentrated
+  Begin SubModelPartTables
+  End SubModelPartTables
+  Begin SubModelPartNodes
+  3
+  End SubModelPartNodes
+  Begin SubModelPartElements
+  3
+  End SubModelPartElements
+End SubModelPart
+

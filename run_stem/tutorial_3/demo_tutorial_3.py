@@ -6,8 +6,9 @@ import numpy as np
 
 from stem.structural_material import ElasticSpringDamper, NodalConcentrated
 
-input_files_dir = "uvec_load_on_embankment_tutorial_rf"
+input_files_dir = "run_stem/tutorial_3/check_1"
 results_dir = "output_uvec_load"
+uvec_folder = "benchmark_tests/test_train_uvec_3d/uvec_ten_dof_vehicle_2D"
 
 from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
@@ -67,14 +68,14 @@ material_embankment = SoilMaterial("embankment", soil_formulation_3, constitutiv
 rail_parameters = DefaultMaterial.Rail_54E1_3D.value
 
 # Define point spring/damper for the pad
-rail_pad_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[1, 1, 1],
-                                          NODAL_ROTATIONAL_STIFFNESS=[1, 1, 1],
-                                          NODAL_DAMPING_COEFFICIENT=[1, 1, 1],
-                                          NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[1, 1, 1])
-# Define sleeper parameter
+rail_pad_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[1, 750e6, 1],
+                                          NODAL_ROTATIONAL_STIFFNESS=[0, 0, 0],
+                                          NODAL_DAMPING_COEFFICIENT=[1, 750e3, 1],
+                                          NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0])
 sleeper_parameters = NodalConcentrated(NODAL_DISPLACEMENT_STIFFNESS=[0, 0, 0],
-                                       NODAL_MASS=1,
+                                       NODAL_MASS=140,
                                        NODAL_DAMPING_COEFFICIENT=[0, 0, 0])
+rail_pad_thickness = 0.025
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -93,11 +94,12 @@ model.add_soil_layer_by_coordinates(soil2_coordinates, material_soil_2, "soil_la
 model.add_soil_layer_by_coordinates(embankment_coordinates, material_embankment, "embankment_layer")
 # ----------------------------------------------------------------------------------------------------------------------
 # create a straight track with rails, sleepers and rail pads
-model.generate_straight_track(0.5, 101, rail_parameters.material_parameters, sleeper_parameters, rail_pad_parameters, origin_point,
+model.generate_straight_track(0.5, 101, rail_parameters.material_parameters, sleeper_parameters, rail_pad_parameters,
+                              rail_pad_thickness, origin_point,
                               direction_vector, "rail_track_1")
 # ----------------------------------------------------------------------------------------------------------------------
 # Define UVEC load
-load_coordinates = [(0.75, 3.0, 0.0), (0.75, 3.0, 50.0)]
+load_coordinates = [(0.75, 3.0+rail_pad_thickness, 0.0), (0.75, 3.0+rail_pad_thickness, 50.0)]
 
 uvec_parameters = {"n_carts": 1,
                    "cart_inertia": (1128.8e3) / 2,
@@ -117,7 +119,7 @@ uvec_parameters = {"n_carts": 1,
                    "initialisation_steps": 100,
                    }
 
-uvec_load = UvecLoad(direction=[1, 1, 1], velocity=40, origin=[0.75, 3, 5],
+uvec_load = UvecLoad(direction=[1, 1, 1], velocity=40, origin=[0.75, 3+rail_pad_thickness, 5],
                      wheel_configuration=[0.0, 2.5, 19.9, 22.4],
                      uvec_file=r"uvec_ten_dof_vehicle_2D\uvec.py", uvec_function_name="uvec",
                      uvec_parameters=uvec_parameters)
@@ -143,19 +145,19 @@ model.add_boundary_condition_by_geometry_ids(2, [1], no_displacement_parameters,
 model.add_boundary_condition_by_geometry_ids(2, [4, 10], roller_displacement_parameters, "sides_roller")
 # ----------------------------------------------------------------------------------------------------------------------
 # Define the field generator
-random_field_generator = RandomFieldGenerator(
-    n_dim=3, cov=0.1, v_scale_fluctuation=1,
-    anisotropy=[20.0], angle=[0],
-    model_name="Gaussian", seed=14
-)
-
-field_parameters_json = ParameterFieldParameters(
-    property_name="YOUNG_MODULUS",
-    function_type="json_file",
-    field_generator=random_field_generator
-)
-# add the random field to the model
-model.add_field(part_name="soil_layer_2", field_parameters=field_parameters_json)
+# random_field_generator = RandomFieldGenerator(
+#     n_dim=3, cov=0.1, v_scale_fluctuation=1,
+#     anisotropy=[20.0], angle=[0],
+#     model_name="Gaussian", seed=14
+# )
+#
+# field_parameters_json = ParameterFieldParameters(
+#     property_name="YOUNG_MODULUS",
+#     function_type="json_file",
+#     field_generator=random_field_generator
+# )
+# # add the random field to the model
+# model.add_field(part_name="soil_layer_2", field_parameters=field_parameters_json)
 # ----------------------------------------------------------------------------------------------------------------------
 model.set_mesh_size(element_size=1.0)
 # ----------------------------------------------------------------------------------------------------------------------
@@ -164,7 +166,7 @@ model.set_mesh_size(element_size=1.0)
 analysis_type = AnalysisType.MECHANICAL
 solution_type = SolutionType.DYNAMIC
 # Set up start and end time of calculation, time step and etc
-end_time = 0.2
+end_time = 0.5
 # nsteps = 3000
 delta_time = 1e-03
 # 30m/s -> 50/30 = 1.67 seconds
@@ -199,7 +201,7 @@ output_step = int(np.round(1/delta_time/output_fs))
 
 model.add_output_settings(
     part_name="porous_computational_model_part",
-    output_dir="output",
+    output_dir=results_dir,
     output_name="vtk_output",
     output_parameters=VtkOutputParameters(
         file_format="ascii",
@@ -221,7 +223,7 @@ output_dt = 1/output_fs
 
 model.add_output_settings_by_coordinates(
     part_name="subset_outputs",
-    output_dir="output",
+    output_dir=results_dir,
     output_name="json_output",
     coordinates=desired_output_points,
     output_parameters=JsonOutputParameters(
@@ -236,7 +238,7 @@ model.synchronise_geometry()
 # copy uvec to input folder
 os.makedirs(input_files_dir, exist_ok=True)
 copytree(
-    r"uvec_ten_dof_vehicle_2D",
+    uvec_folder,
     os.path.join(input_files_dir, "uvec_ten_dof_vehicle_2D"),
     dirs_exist_ok=True
 )
@@ -256,7 +258,7 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 with open(
-        os.path.join(input_files_dir, "output","json_output.json"), "r"
+        os.path.join(input_files_dir, results_dir,"json_output.json"), "r"
 ) as outfile:
     point_outputs = json.load(outfile)
 
