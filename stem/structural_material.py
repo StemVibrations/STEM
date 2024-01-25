@@ -101,7 +101,7 @@ class EulerBeam(StructuralParametersABC):
             if n_dim_model == 2:
                 element_name = f"GeoCrBeamElementLinear2D{n_nodes_element}N"
             else:
-                element_name = f"GeoCrBeamElement3D{n_nodes_element}N"
+                element_name = f"CrLinearBeamElement3D{n_nodes_element}N"
 
         else:
             raise ValueError(f"Analysis type {analysis_type} is not implemented for euler beams.")

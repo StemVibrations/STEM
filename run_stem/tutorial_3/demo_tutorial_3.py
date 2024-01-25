@@ -6,7 +6,7 @@ import numpy as np
 
 from stem.structural_material import ElasticSpringDamper, NodalConcentrated
 
-input_files_dir = "uvec_load_on_embankment_40mps"
+input_files_dir = "uvec_load_on_embankment_tutorial_rf"
 results_dir = "output_uvec_load"
 
 from stem.model import Model
@@ -97,7 +97,7 @@ model.generate_straight_track(0.5, 101, rail_parameters.material_parameters, sle
                               direction_vector, "rail_track_1")
 # ----------------------------------------------------------------------------------------------------------------------
 # Define UVEC load
-load_coordinates = [(1.0, 3.0, 0.0), (1.0, 3.0, 50.0)]
+load_coordinates = [(0.75, 3.0, 0.0), (0.75, 3.0, 50.0)]
 
 uvec_parameters = {"n_carts": 1,
                    "cart_inertia": (1128.8e3) / 2,
@@ -112,8 +112,8 @@ uvec_parameters = {"n_carts": 1,
                    "wheel_stiffness": 4800e3,
                    "wheel_damping": 0.25e3,
                    "gravity_axis": 1,
-                   "contact_coefficient": 9.1e-5,
-                   "contact_power": 1.5,
+                   "contact_coefficient": 9.1e-7,
+                   "contact_power": 1,
                    "initialisation_steps": 100,
                    }
 
@@ -142,50 +142,51 @@ model.add_boundary_condition_by_geometry_ids(2, [2, 5, 6, 7, 11, 12, 15, 16, 17]
 model.add_boundary_condition_by_geometry_ids(2, [1], no_displacement_parameters, "base_fixed")
 model.add_boundary_condition_by_geometry_ids(2, [4, 10], roller_displacement_parameters, "sides_roller")
 # ----------------------------------------------------------------------------------------------------------------------
-# # Define the field generator
-# random_field_generator = RandomFieldGenerator(
-#     n_dim=3, cov=0.1, v_scale_fluctuation=1,
-#     anisotropy=[20.0], angle=[0],
-#     model_name="Gaussian", seed=14
-# )
-# 
-# field_parameters_json = ParameterFieldParameters(
-#     property_name="YOUNG_MODULUS",
-#     function_type="json_file",
-#     field_generator=random_field_generator
-# )
-# # add the random field to the model
-# model.add_field(part_name="soil_layer_2", field_parameters=field_parameters_json)
+# Define the field generator
+random_field_generator = RandomFieldGenerator(
+    n_dim=3, cov=0.1, v_scale_fluctuation=1,
+    anisotropy=[20.0], angle=[0],
+    model_name="Gaussian", seed=14
+)
+
+field_parameters_json = ParameterFieldParameters(
+    property_name="YOUNG_MODULUS",
+    function_type="json_file",
+    field_generator=random_field_generator
+)
+# add the random field to the model
+model.add_field(part_name="soil_layer_2", field_parameters=field_parameters_json)
 # ----------------------------------------------------------------------------------------------------------------------
 model.set_mesh_size(element_size=1.0)
 # ----------------------------------------------------------------------------------------------------------------------
 # analysis_type = AnalysisType.MECHANICAL
 # solution_type = SolutionType.DYNAMIC
-analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
-solution_type = SolutionType.QUASI_STATIC
+analysis_type = AnalysisType.MECHANICAL
+solution_type = SolutionType.DYNAMIC
 # Set up start and end time of calculation, time step and etc
-end_time = 1.25
+end_time = 0.2
 # nsteps = 3000
-delta_time = 0.00002
+delta_time = 1e-03
 # 30m/s -> 50/30 = 1.67 seconds
 nsteps = int(end_time/delta_time)
 time_integration = TimeIntegration(start_time=0.0, end_time=end_time, delta_time=delta_time,
-                                   reduction_factor=1.0, increase_factor=1.0, max_delta_time_factor=1000)
+                                   reduction_factor=1, increase_factor=1, max_delta_time_factor=1000)
 
 convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
                                                         displacement_absolute_tolerance=1.0e-12)
+strategy = NewtonRaphsonStrategy(max_iterations=50)
 stress_initialisation_type = StressInitialisationType.NONE
 solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
                                  stress_initialisation_type=stress_initialisation_type,
                                  time_integration=time_integration,
-                                 is_stiffness_matrix_constant=False, are_mass_and_damping_constant=False,
-                                 convergence_criteria=convergence_criterion,
+                                 is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
+                                 convergence_criteria=convergence_criterion, strategy_type=strategy,
                                  rayleigh_k=0.0001,
                                  rayleigh_m=0.01)
 # ----------------------------------------------------------------------------------------------------------------------
 # Set up problem data
 problem = Problem(problem_name="calculate_uvec_on_embankment_random_fields_and_abs_boundaries",
-                  number_of_threads=1,
+                  number_of_threads=8,
                   settings=solver_settings)
 model.project_parameters = problem
 # ----------------------------------------------------------------------------------------------------------------------
@@ -212,7 +213,7 @@ model.add_output_settings(
 # ----------------------------------------------------------------------------------------------------------------------
 desired_output_points = [
     (0.0, 3.0, 25.0), (0.75, 3.0, 25.0), (1.5, 3.0, 25.0),
-    (2.25, 2.5, 25.0), (3, 2.0, 25.0), (4, 2.0, 25.0),
+    (3, 2.0, 25.0), (4, 2.0, 25.0),
     (5, 2.0, 25.0)
 ]
 output_fs = 1000  # hz
@@ -249,33 +250,86 @@ stem.write_all_input_files()
 stem.run_calculation()
 
 # ----------------------------------------------------------------------------------------------------------------------
-# import json
-# import matplotlib.pyplot as plt
-#
-# with open(
-#         os.path.join(input_files_dir, "output","json_output.json"), "r"
-# ) as outfile:
-#     point_outputs = json.load(outfile)
-#
-# otp_nodes = list(point_outputs.keys())[1:]
-# time = point_outputs["TIME"]
+import json
+import matplotlib
+matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
+
+with open(
+        os.path.join(input_files_dir, "output","json_output.json"), "r"
+) as outfile:
+    point_outputs = json.load(outfile)
+
+otp_nodes = list(point_outputs.keys())[1:]
+time = point_outputs["TIME"]
+dt = np.mean(np.diff(time))
+
+fig, ax = plt.subplots(3, 1, sharex="all", sharey="all")
+comp = "DISPLACEMENT"
+unit = " [m]"
+for otp in otp_nodes:
+
+    for ii, res in enumerate(["X", "Y", "Z"]):
+        ax[ii].plot(time, point_outputs[otp][comp + "_" + res])
+        ax[ii].set_ylabel(comp + "_" + res + unit)
+
+plt.xlabel("time [s]")
+
+fig, ax = plt.subplots(3, 1, sharex="all", sharey="all")
+comp = "VELOCITY"
+unit = " [m]"
+for otp in otp_nodes:
+
+    for ii, res in enumerate(["X", "Y", "Z"]):
+
+        x = point_outputs[otp][comp + "_" + res]
+
+        # freq =
+        xf = np.fft.rfft(x, n=2**12)
+        freq = np.fft.rfftfreq(n=2**12)*1/dt
+        # ax[ii].plot(time, x)
+        ax[ii].plot(freq, np.abs(xf))
+        ax[ii].set_ylabel(comp + "_" + res + unit)
+        ax[ii].set_yscale('log')
+
+plt.xlabel("frequency [s]")
+
+
+fig, ax = plt.subplots(3, 1, sharex="all", sharey="all")
+comp = "VELOCITY"
+unit = " [m/s]"
+for otp in otp_nodes:
+
+    for ii, res in enumerate(["X", "Y", "Z"]):
+
+        x = point_outputs[otp][comp + "_" + res]
+
+        # freq =
+        # xf = np.fft.rfft(x, n=2**10)
+        # freq = np.fft.rfftfreq(n=2**10)*1/dt
+        ax[ii].plot(time, x)
+        # ax[ii].plot(freq, np.abs(xf))
+        ax[ii].set_ylabel(comp + "_" + res + unit)
+        # ax[ii].set_yscale('log')
+
+plt.xlabel("time [s]")
+
 # fig, ax = plt.subplots(3, 1)
-# comp = "DISPLACEMENT"
-# unit = " [m]"
-# for otp in otp_nodes:
-#
-#     for ii, res in enumerate(["X", "Y", "Z"]):
-#         ax[ii].plot(time, point_outputs[otp][comp + "_" + res])
-#         ax[ii].set_ylabel(comp + "_" + res + unit)
-#
-# fig, ax = plt.subplots(3, 1)
-# comp = "VELOCITY"
-# unit = " [m]"
+# comp = "ACCELERATION"
+# unit = " [m/s^2]"
 # for otp in otp_nodes:
 #
 #     for ii, res in enumerate(["X", "Y", "Z"]):
 #
 #         x = point_outputs[otp][comp + "_" + res]
-#         fft
-#         ax[ii].plot(time, point_outputs[otp][comp + "_" + res])
+#
+#         # freq =
+#         # xf = np.fft.rfft(x, n=2**10)
+#         # freq = np.fft.rfftfreq(n=2**10)*1/dt
+#         ax[ii].plot(time, x)
+#         # ax[ii].plot(freq, np.abs(xf))
 #         ax[ii].set_ylabel(comp + "_" + res + unit)
+#         # ax[ii].set_yscale('log')
+
+
+plt.show()
