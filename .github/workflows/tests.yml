@@ -53,13 +53,23 @@ jobs:
       - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v3
   benchmarks:
-    runs-on: windows-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest ]
+        python-version: [ ' 3.10' ]
     steps:
+      - name: Install libGLU library on Ubuntu
+        run: |
+              if [ "$RUNNER_OS" == "Linux" ]; then
+                  sudo apt-get install -y libglu1-mesa
+              fi
+        shell: bash
       - uses: actions/checkout@v4
-      - name: Set up Python 3.10
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
-          python-version: "3.10"
+          python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
