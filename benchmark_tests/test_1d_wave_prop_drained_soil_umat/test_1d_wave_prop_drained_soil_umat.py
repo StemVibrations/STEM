@@ -1,4 +1,8 @@
 import os
+import sys
+
+import pytest
+
 from stem.model import Model
 from stem.soil_material import OnePhaseSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw, SmallStrainUmatLaw
 from stem.load import LineLoad
@@ -11,6 +15,7 @@ from benchmark_tests.utils import assert_files_equal
 from shutil import rmtree
 
 
+@pytest.mark.skipif(sys.platform == "linux", reason="linear elastic is currently not available for linux")
 def test_stem():
     # Define geometry, conditions and material parameters
     # --------------------------------
