@@ -4,7 +4,8 @@ __pycache__
 venv/*
 pytest_cache/*
 build/*
-STEM.egg-info/*
+dist/*
+STEM_Vibrations.egg-info/*
 .coverage
 .tox/*
 docs/build/*
