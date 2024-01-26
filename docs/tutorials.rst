@@ -560,6 +560,7 @@ directory as the simulation input files, i.e. in 'input_files_dir' in the follow
 
     from stem.model import Model
     from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
+    from stem.structural_material import ElasticSpringDamper, NodalConcentrated
     from stem.default_materials import DefaultMaterial
     from stem.load import MovingLoad, UvecLoad
     from stem.boundary import DisplacementConstraint, AbsorbingBoundary
@@ -573,7 +574,8 @@ directory as the simulation input files, i.e. in 'input_files_dir' in the follow
 For setting up the model, Model class is imported from stem.model. And for setting up the soil material, OnePhaseSoil,
 LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw classes are imported.
 In this tutorial, a train model load (modelled using the UVEC) is used on top of a track.
-For this purpose, the UvecLoad class is imported from stem.load.
+For this purpose, the ElasticSpringDamper and NodalConcentrated classes are imported from stem.structural_material,
+the UvecLoad class is imported from stem.load.
 
 To define the default rail properties, the DefaultMaterial class is imported.
 As for setting the boundary conditions, the DisplacementConstraint class and the AbsorbingBoundary class are imported
@@ -698,8 +700,8 @@ are spaced 0.5m from each others which results in a 50m straight track, with par
 
 .. code-block:: python
 
-    origin_point = np.array([0.75, 3.0, 0.0])
-    direction_vector = np.array([0, 0, 1])
+    origin_point = [0.75, 3.0, 0.0]
+    direction_vector = [0, 0, 1]
     number_of_sleepers = 101
     sleeper_spacing = 0.5
     rail_pad_thickness = 0.025
@@ -723,6 +725,7 @@ In this tutorial, the uvec model is copied from the benchmark tests folder
 to the input files directory. But any UVEC model can be used as long as it is located in the input files directory.
 
 .. code-block:: python
+
     # copy UVEC model to input files directory
     import os
     from shutil import copytree
@@ -934,7 +937,7 @@ the calculation time step `delta_time` is required.
         output_name="json_output",
         coordinates=desired_output_points,
         output_parameters=JsonOutputParameters(
-            output_interval=output_dt-1e-10,
+            output_interval=delta_time-1e-10,
             nodal_results=nodal_results,
             gauss_point_results=gauss_point_results
         )
