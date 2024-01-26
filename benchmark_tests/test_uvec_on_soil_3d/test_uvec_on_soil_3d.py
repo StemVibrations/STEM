@@ -1,4 +1,5 @@
 import os
+import sys
 from shutil import rmtree, copyfile
 
 from stem.model import Model
@@ -135,7 +136,13 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
-    assert assert_files_equal("benchmark_tests/test_uvec_on_soil_3d/output_/output_vtk_porous_computational_model_part",
-                              os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
+    if sys.platform == "win32":
+        expected_output_dir = "benchmark_tests/test_uvec_on_soil_3d/output_windows/output_vtk_porous_computational_model_part"
+    elif sys.platform == "linux":
+        expected_output_dir = "benchmark_tests/test_uvec_on_soil_3d/output_linux/output_vtk_porous_computational_model_part"
+    else:
+        raise Exception("Unknown platform")
+
+    assert assert_files_equal(expected_output_dir,os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
 
     rmtree(input_folder)

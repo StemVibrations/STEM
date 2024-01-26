@@ -131,10 +131,10 @@ def test_stem():
 
     model.output_settings = [vtk_output_process]
 
-    input_folder = r"benchmark_tests\test_sdof_uvec_beam\input_kratos"
+    input_folder = r"benchmark_tests/test_sdof_uvec_beam/input_kratos"
     # copy uvec to input folder
     os.makedirs(input_folder, exist_ok=True)
-    copytree(r"benchmark_tests\test_sdof_uvec_beam\uvec_ten_dof_vehicle_2D", os.path.join(input_folder, "uvec_ten_dof_vehicle_2D"), dirs_exist_ok=True)
+    copytree(r"benchmark_tests/test_sdof_uvec_beam/uvec_ten_dof_vehicle_2D", os.path.join(input_folder, "uvec_ten_dof_vehicle_2D"), dirs_exist_ok=True)
 
     # Write KRATOS input files
     # --------------------------------

@@ -15,7 +15,7 @@ from benchmark_tests.utils import assert_files_equal
 from shutil import rmtree
 
 
-@pytest.mark.skipif(sys.platform == "linux", reason="linear elastic is currently not available for linux")
+@pytest.mark.skipif(sys.platform == "linux", reason="linear elastic umat is currently not available for linux")
 def test_stem():
     # Define geometry, conditions and material parameters
     # --------------------------------

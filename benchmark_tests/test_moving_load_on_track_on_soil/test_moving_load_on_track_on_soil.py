@@ -1,4 +1,5 @@
 import os
+import sys
 from shutil import rmtree
 
 import numpy as np
@@ -137,7 +138,14 @@ def test_moving_load_on_track_on_soil():
     # --------------------------------
     stem.run_calculation()
 
-    assert_floats_in_files_almost_equal("benchmark_tests/test_moving_load_on_track_on_soil/output_/output_vtk_porous_computational_model_part",
-                                os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"), 4)
+
+    if sys.platform == "win32":
+        expected_output_dir = "benchmark_tests/test_moving_load_on_track_on_soil/output_windows/output_vtk_porous_computational_model_part"
+    elif sys.platform == "linux":
+        expected_output_dir = "benchmark_tests/test_moving_load_on_track_on_soil/output_linux/output_vtk_porous_computational_model_part"
+    else:
+        raise Exception("Unknown platform")
+
+    assert_floats_in_files_almost_equal(expected_output_dir, os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"), 4)
 
     rmtree(input_folder)
