@@ -36,8 +36,6 @@ html_theme_options = {
      'display_version': True,
      'prev_next_buttons_location': 'bottom',
      'style_external_links': True,
-     'vcs_pageview_mode': 'display_github',
-    #  'style_nav_header_background': 'white',
     # Toc options
     'collapse_navigation': False,
     'sticky_navigation': True,
