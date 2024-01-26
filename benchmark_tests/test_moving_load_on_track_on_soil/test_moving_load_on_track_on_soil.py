@@ -1,4 +1,5 @@
 import os
+import sys
 from shutil import rmtree
 
 import numpy as np
@@ -13,7 +14,7 @@ from stem.solver import AnalysisType, SolutionType, TimeIntegration, Displacemen
     NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
 from stem.output import NodalOutput, Output, VtkOutputParameters
 from stem.stem import Stem
-from benchmark_tests.utils import assert_files_equal
+from benchmark_tests.utils import assert_floats_in_files_almost_equal
 
 
 def test_moving_load_on_track_on_soil():
@@ -88,7 +89,7 @@ def test_moving_load_on_track_on_soil():
     solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
                                      stress_initialisation_type=stress_initialisation_type,
                                      time_integration=time_integration,
-                                     is_stiffness_matrix_constant=False, are_mass_and_damping_constant=False,
+                                     is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion, rayleigh_k=0.01, rayleigh_m=0.0001)
 
     # Set up problem data
@@ -137,8 +138,14 @@ def test_moving_load_on_track_on_soil():
     # --------------------------------
     stem.run_calculation()
 
-    result = assert_files_equal("benchmark_tests/test_moving_load_on_track_on_soil/output_/output_vtk_porous_computational_model_part",
-                                os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
 
-    assert result is True
+    if sys.platform == "win32":
+        expected_output_dir = "benchmark_tests/test_moving_load_on_track_on_soil/output_windows/output_vtk_porous_computational_model_part"
+    elif sys.platform == "linux":
+        expected_output_dir = "benchmark_tests/test_moving_load_on_track_on_soil/output_linux/output_vtk_porous_computational_model_part"
+    else:
+        raise Exception("Unknown platform")
+
+    assert_floats_in_files_almost_equal(expected_output_dir, os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"), 4)
+
     rmtree(input_folder)
