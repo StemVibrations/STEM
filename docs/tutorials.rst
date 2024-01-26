@@ -226,7 +226,6 @@ are left empty.
     nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY, NodalOutput.ACCELERATION]
     gauss_point_results = []
 
-
 The output process is added to the model using the `Model.add_output_settings` method. The results will be then written to the output directory in vtk
 format. In this case, the output interval is set to 1 and the output control type is set to "step", meaning that the
 results will be written every time step.
@@ -497,7 +496,6 @@ are left empty.
     nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY, NodalOutput.ACCELERATION]
     gauss_point_results = []
 
-
 The output process is added to the model using the `Model.add_output_settings` method. The results will be then written to the output directory in vtk
 format. In this case, the output interval is set to 1 and the output control type is set to "step", meaning that the
 results will be written every time step.
@@ -515,7 +513,6 @@ results will be written every time step.
             output_control_type="step"
         )
     )
-
 
 Now that the model is set up, the calculation is almost ready to be ran.
 
@@ -544,24 +541,22 @@ The calculation is then ran by calling the run_calculation function within the s
 
 .. _tutorial3:
 
-Train model (UVEC) on tracks and embankment in 3D
+Train model (UVEC) on track and embankment in 3D
 ----------------------------------
 This tutorial shows step by step guide on how to set up a train model
-on top of an embankment with two soil layers underneath, in a 3D model.
-The UVEC (User defined VEhiCle model) is a model used to represent train as a dynamic load on the system.
+on top of track on an embankment with two soil layers underneath, in a 3D model.
+The UVEC (User defined VEhiCle model) is a model used to represent a train as dynamic loads on the system.
 
-First the necessary packages are imported and paths are defined.
+Firstly the necessary packages are imported and paths are defined.
 
-For the UVEC, it is important to define the folder containing the source code of the UVEC model.
-Please note that the
-# TODO: add the extra information on the UVEC.
+For the UVEC, before the calculation starts, it is important that the UVEC source code is located in the same
+directory as the simulation input files, i.e. in 'input_files_dir' in the following code.
 
 .. code-block:: python
 
     input_files_dir = "uvec_train_model"
     results_dir = "output_uvec_train_model"
-    # change the UVEC folder to the proper root!
-    uvec_folder = "benchmark_tests/test_train_uvec_3d/uvec_ten_dof_vehicle_2D"
+    #uvec_folder = "benchmark_tests/test_train_uvec_3d/uvec_ten_dof_vehicle_2D"
 
     from stem.model import Model
     from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
@@ -577,20 +572,20 @@ Please note that the
 
 For setting up the model, Model class is imported from stem.model. And for setting up the soil material, OnePhaseSoil,
 LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw classes are imported.
-In this tutorial, a train model load (modelled using the UVEC) is used on top of the embankment.
+In this tutorial, a train model load (modelled using the UVEC) is used on top of a track.
 For this purpose, the UvecLoad class is imported from stem.load.
 
-To define the default track geometry and material properties, the DefaultMaterial is imported.
-As for setting the boundary conditions, DisplacementConstraint class is imported from stem.boundary.
-For setting up the solver settings, necessary classes are imported from stem.solver.
+To define the default rail properties, the DefaultMaterial class is imported.
+As for setting the boundary conditions, the DisplacementConstraint class and the AbsorbingBoundary class are imported
+from stem.boundary. For setting up the solver settings, necessary classes are imported from stem.solver.
 Classes needed for the output, are NodalOutput, VtkOutputParameters and Output which are imported from stem.output.
-Lastly, Stem class is imported from stem.stem, in order to run the simulation.
+Lastly, the Stem class is imported from stem.stem, in order to run the simulation.
 
-In this tutorial, the option to provide a random field to the soil layers is also provided. For this the classes
-ParameterFieldParameters is imported from stem.additional_processes and RandomFieldGenerator is imported from stem.field_generator.
+In this tutorial, a random field is also added on the soil layers. For this the classes ParameterFieldParameters is
+imported from stem.additional_processes and RandomFieldGenerator is imported from stem.field_generator.
 
-In this step, the geometry, conditions, and material parameters for the simulation is defined.
-First the dimension of the model is indicated which in this case is 3. After which the model can be initialised.
+In this step, the geometry, conditions, and material parameters for the simulation are defined.
+Firstly the dimension of the model is indicated which in this case is 3. After which the model can be initialised.
 
 .. code-block:: python
 
@@ -649,21 +644,21 @@ The soil is a one-phase soil, meaning that the flow of water through the soil is
     retention_parameters_3 = SaturatedBelowPhreaticLevelLaw()
     material_embankment = SoilMaterial("embankment", soil_formulation_3, constitutive_law_3, retention_parameters_3)
 
-For the rails, a steel beam element is adopted with the properties of a 54e1 profile.
-To facilitate the user, we have defined already the properties in the DefaultMaterial class, which also includes
-the 46E3 and 60E1 rail profiles.
-The rail pads are modelled by means of elastic spring dampers while the sleepers are modelled using concentrated masses.
+For the rails, default properties of a 54e1 rail profile are used.
+Other rail profiles for which default material properties are provided are: the 46E3 and 60E1 rail profiles.
+The rail pads are modelled by means of elastic spring dampers while the sleepers are modelled using nodal concentrated
+masses.
 
 .. code-block:: python
 
-    rail_parameters = DefaultMaterial.Rail_54E1_3D.value
-    rail_pad_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[1, 1, 1],
-                                          NODAL_ROTATIONAL_STIFFNESS=[1, 1, 1],
-                                          NODAL_DAMPING_COEFFICIENT=[1, 1, 1],
-                                          NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[1, 1, 1])
+    rail_parameters = DefaultMaterial.Rail_54E1_3D.value.material_parameters
+    rail_pad_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[0, 750e6, 0],
+                                              NODAL_ROTATIONAL_STIFFNESS=[0, 0, 0],
+                                              NODAL_DAMPING_COEFFICIENT=[0, 750e3, 0], # damping coefficient [Ns/m]
+                                              NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0])
     sleeper_parameters = NodalConcentrated(NODAL_DISPLACEMENT_STIFFNESS=[0, 0, 0],
-                                       NODAL_MASS=1,
-                                       NODAL_DAMPING_COEFFICIENT=[0, 0, 0])
+                                           NODAL_MASS=140,
+                                           NODAL_DAMPING_COEFFICIENT=[0, 0, 0])
 
 The coordinates of the model are defined in the following way. Each of the layers are defined by a list of coordinates,
 defined in th x-y plane. For 3D models, the x-y plane can be extruded in the z-direction. In this case, the extrusion
@@ -693,54 +688,78 @@ a unique name.
     model.add_soil_layer_by_coordinates(embankment_coordinates, material_embankment, "embankment_layer")
 
 The tracks are added by specifying the origin point of the track and the direction for the extrusion that creates
-the rail as well as rail pads and sleepers. In this tutorial, we generate a straight track parallel to the z-axis at 0.75 m distance from the x-axis.
-To do this, we set the origin point of the track with coordinates [0.75, 3.0, 0.0] and extruding parallel to the positive z direction, [0, 0, 1].
-The length of the track is specified by the number of pads and their spacing.
-In this tutorial, 101 rail pads 0.025m thick are spaced 0.5m from each others are generated resulting in a 50m straight track, with part name "rail_track_1"
+the rail as well as rail pads and sleepers. Important is that the origin point and the end of the track lie on
+geometry edges. In this tutorial, a straight track is generated parallel to the z-axis at 0.75 m distance from the x-axis,
+on top of the embankment. To do this, the origin point of the track is set with coordinates [0.75, 3.0, 0.0] and the
+extrusion is done parallel to the positive z-axis, i.e. with a direction vector of [0, 0, 1].
+The length of the track is defined by the number of sleepers and their spacing.
+In this tutorial, 101 sleepers are placed which are connected by to the rail by 0.025m thick railpads. The sleepers
+are spaced 0.5m from each others which results in a 50m straight track, with part name "rail_track_1"
 
 .. code-block:: python
 
     origin_point = np.array([0.75, 3.0, 0.0])
     direction_vector = np.array([0, 0, 1])
-    number_of_pads = 101
-    pad_spacing = 0.5
-    rail_pad_thicknes = 0.025
+    number_of_sleepers = 101
+    sleeper_spacing = 0.5
+    rail_pad_thickness = 0.025
 
-    model.generate_straight_track(pad_spacing, number_of_pads, rail_parameters.material_parameters,
-        sleeper_parameters, rail_pad_parameters,
-        rail_pad_thickness, origin_point,
-        direction_vector, "rail_track_1")
+    model.generate_straight_track(sleeper_spacing, number_of_sleepers, rail_parameters,
+                                  sleeper_parameters, rail_pad_parameters,
+                                  rail_pad_thickness, origin_point,
+                                  direction_vector, "rail_track_1")
 
-The UVEC model is then defined using the UvecLoad class. The load coordinates are is defined following a list of coordinates,
-Along which the uvec moves. This should correspond with the defined tracks above, therefore the UVEC load is applied
-on a line with a 0.75 meter distance from the x-axis on top of the embankment, on the rail. The velocity of
-the moving load is 40 m/s.
-To keep into account the pad thickness, the y-coordinate of the load coordinates and the origing of the moving load
-are increased by of the thickness of the pad, defined before (`rail_pad_thickness`).
-WIP: UVEC as import. Parameter and explaination follow later.
+The UVEC model is then defined using the UvecLoad class. The train moves in positive direction from the origin, this is
+defined in `direction=[1, 1, 1]`, values greater than 0 indicate positive direction, values smaller than 0 indicate
+negative direction. The velocity of the train is 40 m/s. The train starts moving from the origin point, which has to be
+located on top of the track, that includes an extra thickness of the rail-pad, as shown above in `rail_pad_thickness`.
+The wheel configuration is defined as a list of distances from the origin point to the wheels. The `uvec_file` parameter
+is the name of the python file that contains the UVEC model. The `uvec_function_name` parameter is the name of the main
+function within the uvec file which starts the uvec calculation. The `uvec_parameters` parameter is a dictionary which
+contains the parameters of the UVEC model. The UVEC load is added on top of the previously defined track with the name
+"rail_track_1". And the name of the load is set to "train_load".
+
+In this tutorial, the uvec model is copied from the benchmark tests folder
+to the input files directory. But any UVEC model can be used as long as it is located in the input files directory.
+
+.. code-block:: python
+    # copy UVEC model to input files directory
+    import os
+    from shutil import copytree
+
+    uvec_folder = "benchmark_tests/test_sdof_uvec_beam/uvec_ten_dof_vehicle_2D"
+    os.makedirs(input_files_dir, exist_ok=True)
+    copytree(uvec_folder, os.path.join(input_files_dir, "uvec_ten_dof_vehicle_2D"), dirs_exist_ok=True)
+
+A schematisation of the UVEC model as defined in this tutorial is shown below.
+
+.. image:: _static/figure_uvec.png
+
+Below the uvec parameters are defined.
 
 .. code-block:: python
 
-    load_coordinates = [(0.75, 3.0+rail_pad_thickness, 0.0), (0.75, 3.0+rail_pad_thickness, 50.0)]
-
-    uvec_parameters = {"n_carts": 1,
-                       "cart_inertia": (1128.8e3) / 2,
-                       "cart_mass": (50e3) / 2,
-                       "cart_stiffness": 2708e3,
-                       "cart_damping": 64e3,
-                       "bogie_distances": [-9.95, 9.95],
-                       "bogie_inertia": (0.31e3) / 2,
-                       "bogie_mass": (6e3) / 2,
-                       "wheel_distances": [-1.25, 1.25],
-                       "wheel_mass": 1.5e3,
-                       "wheel_stiffness": 4800e3,
-                       "wheel_damping": 0.25e3,
-                       "gravity_axis": 1,
-                       "contact_coefficient": 9.1e-7,
-                       "contact_power": 1,
-                       "initialisation_steps": 100,
+    # define uvec parameters
+    uvec_parameters = {"n_carts": 1, # number of carts [-]
+                       "cart_inertia": (1128.8e3) / 2, # inertia of the cart [kgm2]
+                       "cart_mass": (50e3) / 2, # mass of the cart [kg]
+                       "cart_stiffness": 2708e3, # stiffness between the cart and bogies [N/m]
+                       "cart_damping": 64e3, # damping coefficient between the cart and bogies [Ns/m]
+                       "bogie_distances": [-9.95, 9.95], # distances of the bogies from the centre of the cart [m]
+                       "bogie_inertia": (0.31e3) / 2, # inertia of the bogie [kgm2]
+                       "bogie_mass": (6e3) / 2, # mass of the bogie [kg]
+                       "wheel_distances": [-1.25, 1.25], # distances of the wheels from the centre of the bogie [m]
+                       "wheel_mass": 1.5e3, # mass of the wheel [kg]
+                       "wheel_stiffness": 4800e3, # stiffness between the wheel and the bogie [N/m]
+                       "wheel_damping": 0.25e3, # damping coefficient between the wheel and the bogie [Ns/m]
+                       "gravity_axis": 1, # axis on which gravity works [x =0, y = 1, z = 2]
+                       "contact_coefficient": 9.1e-7, # Hertzian contact coefficient between the wheel and the rail [N/m]
+                       "contact_power": 1.0, # Hertzian contact power between the wheel and the rail [-]
+                       "initialisation_steps": 100, # number of time steps on which the gravity on the UVEC is
+                                                    # gradually increased [-]
                        }
 
+    # define the UVEC load
     uvec_load = UvecLoad(direction=[1, 1, 1], velocity=40, origin=[0.75, 3+rail_pad_thickness, 5],
                          wheel_configuration=[0.0, 2.5, 19.9, 22.4],
                          uvec_file=r"uvec_ten_dof_vehicle_2D\uvec.py", uvec_function_name="uvec",
@@ -749,37 +768,17 @@ WIP: UVEC as import. Parameter and explaination follow later.
     # add the load on the tracks
     model.add_load_on_line_model_part("rail_track_1", uvec_load, "train_load")
 
-The boundary conditions are defined on geometry ids, which are created by gmsh when making the geometry. Gmsh will
-assign an id to each of the points, lines, surfaces and volumes created.
-The geometry ids can be seen after using the show_geometry function.
-
-This function is only used for visualisation of the geometry ids after creation of the geometry, to be able to see the
-geometry ids issued by gmsh, and to know which ids belong to each boundary conditions.
-For visualisation of surface ids, "show_surface_ids" should be set to "True".
-Also for visualisation of line ids, "show_line_ids" and for visualisation of point ids, "show_point_ids"
-should be set to "True".
-
-.. code-block:: python
-
-    model.synchronise_geometry()
-
-    model.show_geometry(show_surface_ids=True)
-
-The geometry ids can be seen in the pictures below.
-
-.. image:: _static/geometry_ids_with_track.png
-
-Additionally, a random field can be generated for one of the defined model part.
-This part is optional and can be omitted. The random field is generated by means of the RandomFieldGenerator class.
-First, the generator object is created. In this tutorial a Gaussian model is used with 10\% coefficient of variation (cov)
-and a fluctuation of 1m in the vertical direction and 20m in the horizontal direction (anisotropy=20)
-without inclination (angle=0). For consistency of the random process, the seed for the random generator is fixed to 14.
+Additionally, a random field can be generated for one of the defined model part. The random field is generated by
+means of the RandomFieldGenerator class. Firstly, the generator object is created. In this tutorial a
+Gaussian model is used with 10\% coefficient of variation (cov) and a scale of fluctuation of 1m in the vertical
+direction and 20m in the horizontal direction (anisotropy=20) without inclination (angle=0).
+For consistency of the random process, the seed for the random generator is fixed to 14.
 
 Subsequently, the field parameters are generated using the ParameterFieldParameters class. In this tutorial, the random
-field is applied to the Young's modulus by creating a json file that is read by KRATOS (the FEM solver).
+field is applied to the Young's modulus by creating a json file that is read by Kratos Multiphysics (the FEM solver).
 
 Finally, we add the field to the model part of interest. Here the random field is applied to the "soil_layer_2".
-The median of the property is automatically obtained from the material property already defined above (`material_soil_2`).
+The mean of the property is automatically obtained from the material property already defined above (`material_soil_2`).
 
 .. code-block:: python
 
@@ -798,12 +797,27 @@ The median of the property is automatically obtained from the material property 
     model.add_field(part_name="soil_layer_2", field_parameters=field_parameters_json)
 
 
+The boundary conditions are defined on geometry ids, which are created by gmsh when making the geometry. Gmsh will
+assign an id to each of the points, lines, surfaces and volumes created.
+The geometry ids can be seen after using the show_geometry function.
+
+This function is only used for visualisation of the geometry ids after creation of the geometry, to be able to see the
+geometry ids issued by gmsh, and to know which ids belong to each boundary conditions.
+For visualisation of surface ids, "show_surface_ids" should be set to "True".
+Also for visualisation of line ids, "show_line_ids" and for visualisation of point ids, "show_point_ids"
+should be set to "True".
+
+.. code-block:: python
+
+    model.show_geometry(show_surface_ids=True)
+
+
 Below the boundary conditions are defined. The base of the model is fixed in all directions with the name "base_fixed".
-For the surfaces ath the symmetry plane, roller boundary condition is applied with the name "sides_roller".
+For the surfaces at the symmetry plane, roller boundary condition is applied with the name "sides_roller".
 To prevent reflections from the sides of the model, absorbing boundaries are applied with virtual thickness of 40 meters.
 The boundary conditions are added to the model on the edge surfaces, i.e. the boundary conditions are applied to a list
 of surface ids (which can be visualised using: "model.show_geometry(show_surface_ids=True)")  with the corresponding
-dimension, "2".
+surface-dimension, "2".
 
 .. code-block:: python
 
@@ -817,8 +831,8 @@ dimension, "2".
     model.add_boundary_condition_by_geometry_ids(2, [1], no_displacement_parameters, "base_fixed")
     model.add_boundary_condition_by_geometry_ids(2, [4, 10], roller_displacement_parameters, "sides_roller")
     model.add_boundary_condition_by_geometry_ids(2, [2, 5, 6, 7, 11, 12, 15, 16, 17], absorbing_boundaries_parameters, "abs")
-After which the mesh size can be set. The element size for the mesh can be defined as a single value, the mesh
-will be generated when the Stem class is initialised.
+
+After which the mesh size can be set. The mesh will be generated when the Stem class is initialised.
 
 .. code-block:: python
 
@@ -829,15 +843,12 @@ The analysis type is set to "MECHANICAL" and the solution type is set to "DYNAMI
 Then the start time is set to 0.0 second and the end time is set to 0.2 second. The time step size is set to 0.001 second.
 Furthermore, the reduction factor and increase factor are set to 1.0, such that the time step size is constant throughout
 the simulation. Displacement convergence criteria is set to 1.0e-4 for the relative tolerance and 1.0e-12 for the
-absolute tolerance. Newton-Raphson is used as a solving strategy. And Newmark is used as an integration with maximum 10 iterations.
+absolute tolerance. Newton-Raphson is used as a solving strategy. And Newmark is used for the time integration.
 Amgcl is used as a linear solver. Stresses are not initialised since the "stress_initialisation_type" is set to "NONE".
 Other options are "StressInitialisationType.GRAVITY_LOADING" and "StressInitialisationType.K0_PROCEDURE".
 Since the problem is linear elastic, the stiffness matrix is constant and the mass and
 damping matrices are constant, defining the matrices as constant will speed up the computation. Rayleigh damping is
 assumed, with a damping coefficient of 0.12 for the stiffness matrix and 0.0001 for the mass matrix.
-
-Given that the problem in this tutorial is linear, the stiffness, damping and mass matrices are set to constant to improve the
-computational performance.
 
 .. code-block:: python
 
@@ -851,15 +862,19 @@ computational performance.
 
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
                                                         displacement_absolute_tolerance=1.0e-12)
-    strategy = NewtonRaphsonStrategy(max_iterations=10)
+
+    strategy_type = NewtonRaphsonStrategy()
+    scheme_type = NewmarkScheme()
+    linear_solver_settings = Amgcl()
     stress_initialisation_type = StressInitialisationType.NONE
     solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
                                      stress_initialisation_type=stress_initialisation_type,
                                      time_integration=time_integration,
                                      is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
-                                     convergence_criteria=convergence_criterion, strategy_type=strategy,
-                                     rayleigh_k=0.0001,
-                                     rayleigh_m=0.01)
+                                     convergence_criteria=convergence_criterion,
+                                     strategy_type=strategy_type, scheme=scheme_type,
+                                     linear_solver_settings=linear_solver_settings, rayleigh_k=0.12,
+                                     rayleigh_m=0.0001)
 
 Now the problem data should be set up. The problem should be given a name, in this case it is
 "calculate_uvec_on_embankment_with_absorbing_boundaries". Then the solver settings are added to the problem.
@@ -871,8 +886,8 @@ Now the problem data should be set up. The problem should be given a name, in th
                       settings=solver_settings)
     model.project_parameters = problem
 
-Before starting the calculation, it is required to specify why output is desired. In this case, displacement,
-velocity and acceleration is given on the nodes and written to the output file. In this test case, gauss point results
+Before starting the calculation, it is required to specify which output is desired. In this case, displacement,
+velocity and acceleration are given on the nodes and written to the output files. In this test case, gauss point results
 are left empty.
 
 .. code-block:: python
@@ -880,9 +895,9 @@ are left empty.
     nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY, NodalOutput.ACCELERATION]
     gauss_point_results = []
 
-The output process is added to the model using the `Model.add_output_settings` method. The results will be then written to the output directory in vtk
-format. In this case, the output interval is set to 1 and the output control type is set to "step", meaning that the
-results will be written every time step.
+The output process is added to the model using the `Model.add_output_settings` method. The results will be then
+written to the output directory in vtk format. In this case, the output interval is set to 1 and the output control
+type is set to "step", meaning that the results will be written every time step.
 
 .. code-block:: python
 
@@ -899,11 +914,11 @@ results will be written every time step.
         )
     )
 
-Additionally, nodal outputs can be requested for points as long as they belong on a surface.
-For this tutorial, we consider few points at the surface and following the embankment at z=25m.
-The results will be stored in a json file in the output folder. In this case, the output interval
-has to be defined in seconds. To output data at each time step, we use a slightly smaller time interval than the
-calculation time step (delta_time).
+Additionally, nodal output can be retrieved on given coordinates, however it is required that these coordinates are
+placed on an existing surface within the model. For this tutorial, output is given on a few points perpendicular to
+the track. The results will be stored in a json file in the output folder. for json output it is required that the
+output interval is defined in seconds. In order to output data at each time step, a slightly smaller time interval than
+the calculation time step `delta_time` is required.
 
 .. code-block:: python
 
@@ -925,29 +940,12 @@ calculation time step (delta_time).
         )
     )
 
-When adding output points, the geometry requires to be synchronised again, and the output point can be visualised by
+When adding output settings by coordinates, the geometry is altered. The new geometry can again be visualised by
 calling the `Model.show_geometry` method.
 
 .. code-block:: python
 
-    model.synchronise_geometry()
     model.show_geometry()
-
-The new geometry can be seen in the pictures below where the output points are now also visible.
-
-.. image:: _static/geometry_ids_with_track_and_output_locations.png
-
-Before running the model, the source code of the UVEC is copied in the folder containing the input files for the analysis.
-First the input folder is created and then the UVEC folder is copied using the `shutil` module.
-
-.. code-block:: python
-
-    os.makedirs(input_files_dir, exist_ok=True)
-    copytree(
-        uvec_folder,
-        os.path.join(input_files_dir, "uvec_ten_dof_vehicle_2D"),
-        dirs_exist_ok=True
-    )
 
 Now that the model is set up, the calculation is almost ready to be ran.
 
