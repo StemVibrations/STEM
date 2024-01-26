@@ -1,4 +1,6 @@
 import os
+import sys
+
 from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
 from stem.load import MovingLoad
@@ -113,7 +115,14 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
-    result = assert_files_equal("benchmark_tests/test_moving_load_on_soil_3d/output_/output_vtk_porous_computational_model_part",
+    if sys.platform == "win32":
+        expected_output_dir = "benchmark_tests/test_moving_load_on_soil_3d/output_windows/output_vtk_porous_computational_model_part"
+    elif sys.platform == "linux":
+        expected_output_dir = "benchmark_tests/test_moving_load_on_soil_3d/output_linux/output_vtk_porous_computational_model_part"
+    else:
+        raise Exception("Unknown platform")
+
+    result = assert_files_equal(expected_output_dir,
                                 os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
 
     assert result is True

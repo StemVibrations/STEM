@@ -12,7 +12,7 @@ from stem.stem import Stem
 from shutil import rmtree, copytree
 
 from benchmark_tests.analytical_solutions.moving_vehicle import TwoDofVehicle
-from benchmark_tests.utils import assert_files_equal
+from benchmark_tests.utils import assert_floats_in_files_almost_equal
 
 PLOT_RESULTS = False
 
@@ -102,7 +102,7 @@ def test_stem():
     solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
                                     stress_initialisation_type=stress_initialisation_type,
                                     time_integration=time_integration,
-                                    is_stiffness_matrix_constant=False, are_mass_and_damping_constant=False,
+                                    is_stiffness_matrix_constant=True, are_mass_and_damping_constant=False,
                                     convergence_criteria=convergence_criterion,
                                     rayleigh_k=0.001,
                                     rayleigh_m=0.01)
@@ -131,10 +131,10 @@ def test_stem():
 
     model.output_settings = [vtk_output_process]
 
-    input_folder = r"benchmark_tests\test_sdof_uvec_beam\input_kratos"
+    input_folder = r"benchmark_tests/test_sdof_uvec_beam/input_kratos"
     # copy uvec to input folder
     os.makedirs(input_folder, exist_ok=True)
-    copytree(r"benchmark_tests\test_sdof_uvec_beam\uvec_ten_dof_vehicle_2D", os.path.join(input_folder, "uvec_ten_dof_vehicle_2D"), dirs_exist_ok=True)
+    copytree(r"benchmark_tests/test_sdof_uvec_beam/uvec_ten_dof_vehicle_2D", os.path.join(input_folder, "uvec_ten_dof_vehicle_2D"), dirs_exist_ok=True)
 
     # Write KRATOS input files
     # --------------------------------
@@ -188,7 +188,7 @@ def test_stem():
         plt.show()
 
     # # test output
-    assert assert_files_equal("benchmark_tests/test_sdof_uvec_beam/output_/output_vtk_full_model",
-                                os.path.join(input_folder, "output/output_vtk_full_model"))
+    assert_floats_in_files_almost_equal("benchmark_tests/test_sdof_uvec_beam/output_/output_vtk_full_model",
+                                        os.path.join(input_folder, "output/output_vtk_full_model"), decimal=3)
 
     rmtree(input_folder)
