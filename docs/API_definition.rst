@@ -5,7 +5,7 @@ Interface definitions
 
 User-defined vehicle model
 --------------------------
-STEM support the definition of user-defined vehicle models. To define the vehicle model the user needs to create an _Python UVEC file_.
+STEM support the definition of user-defined vehicle models. To define the vehicle model the user needs to create an *Python UVEC file*.
 The UVEC file is a Python script that defines the vehicle model. The UVEC file must contain a function called `uvec` that has the following structure:
 
 .. code-block:: python
@@ -48,7 +48,8 @@ In this example the uvec_data contains the structure that it is used in STEM. Th
     * *uvec_data["parameters"]* - the parameters of the vehicle model (can be any JSON serialisable data structure). This can be used to pass information regarding the vehicle model, such as stiffness, mass and damping parameters
     * *uvec_data["loads"]* - the loads at the wheels
 
-An example of a UVEC file can be found in the :ref:`tutorial3`.
+An example of the usage of a UVEC file can be found in the :ref:`tutorial3`.
+For further information about the UVEC please refer to `Vehicle Models <https://github.com/StemVibrations/vehicle_models>`_.
 
 
 .. _umat:
@@ -57,12 +58,12 @@ User-defined soil models
 ------------------------
 STEM supports two types of user-defined soil models:
 
-#. User-defined mechanical material behaviour (UMAT)
+#. User-defined mechanical material behaviour (UMAT):
 
     UMAT is a format defined by `Abaqus <https://www.simuleon.com/simulia-abaqus/>`_.
     Examples of UMAT material models can be found in `Soil Models <https://soilmodels.com>`_.
 
-#. User-defined soil model (UDSM)
+#. User-defined soil model (UDSM):
 
     UDSM is a format defined by `Plaxis <https://www.bentley.com/software/plaxis-3d/>`_.
     More information about UDSM material models can be found in `here <https://communities.bentley.com/products/geotech-analysis/w/wiki/45468/creating-user-defined-soil-models>`_.
