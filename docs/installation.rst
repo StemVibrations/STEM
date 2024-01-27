@@ -18,7 +18,7 @@ Currently, STEM supports Python 3.9, 3.10 and 3.11, therefore, you need to creat
 
 Installing STEM as a user
 .........................
-To install STEM stable release, run the following code:
+To install STEM stable release, run the following code in your environment:
 
 .. code-block::
 
