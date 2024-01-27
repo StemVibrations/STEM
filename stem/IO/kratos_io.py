@@ -916,10 +916,12 @@ class KratosIO:
 
                     # check if the output folder is absolute or relative, if relative create it in the project folder
                     if os.path.isabs(output.output_dir):
-                        os.makedirs(output.output_dir, exist_ok=True)
+                        json_output_folder = output.output_dir
+
                     else:
                         json_output_folder = os.path.join(self.project_folder, output.output_dir)
-                        os.makedirs(json_output_folder, exist_ok=True)
+
+                    os.makedirs(json_output_folder, exist_ok=True)
 
     def __create_output_process_dictionary(self, output_settings: Optional[List[Output]] = None) -> Dict[str, Any]:
         """
