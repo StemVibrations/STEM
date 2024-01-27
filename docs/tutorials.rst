@@ -703,7 +703,7 @@ on top of the embankment. To do this, the origin point of the track is set with 
 extrusion is done parallel to the positive z-axis, i.e. with a direction vector of [0, 0, 1].
 The length of the track is defined by the number of sleepers and their spacing.
 In this tutorial, 101 sleepers are placed which are connected by to the rail by 0.025m thick railpads. The sleepers
-are spaced 0.5m from each others which results in a 50m straight track, with part name "rail_track_1"
+are spaced 0.5m from each others which results in a 50m straight track, with part name "rail_track_1."
 
 .. code-block:: python
 
