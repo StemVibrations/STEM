@@ -19,13 +19,41 @@ The STEM model is based on the finite element method and it is powered by
 
 User guide
 ==========
-Installation
-............
+
+Background information
+......................
+STEM is a numerical model based on the finite element method.
+It is recommended to have a basic understanding of the finite element theory before using STEM.
+
+STEM is build in Python. It is recommended to have a basic understanding of Python before using STEM.
+For new users of Python, the following resources are recommended:
+
+* `Python beginners guide <https://wiki.python.org/moin/BeginnersGuide>`_
+
+Alternatively, you can follow one of the many online free courses, for example (the STEM team is not
+affiliated to any of these courses):
+
+* `Introduction to Python <https://www.udacity.com/course/introduction-to-python--ud1110>`_
+* `Programming for Everybody <https://www.coursera.org/learn/python>`_
+
+To use STEM it is convenient to use an IDE (Integrated Development Environment) for Python. The STEM team
+recommends to use `PyCharm <https://www.jetbrains.com/pycharm/>`_ or `Visual Studio Code <https://code.visualstudio.com/>`_.
+More information can be found in the following links:
+
+* `VS Code in Python <https://code.visualstudio.com/docs/languages/python>`_
+* `PyCharm in Python <https://www.jetbrains.com/help/pycharm/quick-start-guide.html>`_
+
+To visualise the results STEM makes use of `ParaView <https://www.paraview.org/>`_. It is recommended to have a basic
+understanding of ParaView before using STEM. The following resources are recommended:
+
+* `ParaView tutorials <https://www.paraview.org/tutorials/>`_
+
+
+STEM Installation
+.................
 To install STEM you need to install the following items:
 
 * :ref:`python_stem`
-
-* :ref:`kratos`
 
 * :ref:`parav`
 
@@ -38,6 +66,8 @@ Tutorials
 * :ref:`tutorial1`
 
 * :ref:`tutorial2`
+
+* :ref:`tutorial3`
 
 STEM interface definitions
 ==========================

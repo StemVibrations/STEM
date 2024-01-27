@@ -7,7 +7,6 @@ def install_external_dependency():
     """
     Install external dependencies for STEM
     """
-    
     # check if gmsh utils is installed and it is version 1.0
     if not check_package_version('gmsh_utils', '1.0'):
         subprocess.run(['pip', 'install', "git+https://github.com/StemVibrations/gmsh_utils@v1.0"])
