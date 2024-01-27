@@ -1,7 +1,10 @@
-import json
 import sys
+import os
+
+import json
 from typing import List
 import re
+from shutil import rmtree
 
 import numpy as np
 import numpy.testing as npt
@@ -1128,5 +1131,31 @@ class TestKratosModelIO:
         with pytest.raises(ValueError, match=f"Body model part empty_body_model_part has no id initialised."):
             kratos_io._KratosIO__create_auxiliary_process_list_dictionary(model=model)
 
+    def test_create_folder_for_json_output(self):
+        """
+        Test the creation of the folder for the json output. Since the folder is not created by kratos.
 
+        """
 
+        # check relative directory creation
+        kratos_io = KratosIO(ndim=2)
+        kratos_io.project_folder = "json_test_project_folder"
+        output_settings = [Output(output_parameters=JsonOutputParameters(
+            output_interval=1),output_dir="json_test_output"
+        )]
+
+        kratos_io._KratosIO__create_folder_for_json_output(output_settings)
+
+        expected_folder = os.path.join("json_test_project_folder", "json_test_output")
+
+        assert os.path.exists(expected_folder)
+        rmtree(expected_folder)
+
+        # check absolute path directory creation
+        absolute_path_json_output = os.path.join(os.getcwd(), "json_test_output")
+        output_settings[0].output_dir = absolute_path_json_output
+
+        kratos_io._KratosIO__create_folder_for_json_output(output_settings)
+
+        assert os.path.exists(absolute_path_json_output)
+        rmtree(absolute_path_json_output)
