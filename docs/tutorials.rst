@@ -653,7 +653,7 @@ The soil is a one-phase soil, meaning that the flow of water through the soil is
     retention_parameters_3 = SaturatedBelowPhreaticLevelLaw()
     material_embankment = SoilMaterial("embankment", soil_formulation_3, constitutive_law_3, retention_parameters_3)
 
-For the rails, default properties of a 54e1 rail profile are used.
+For the rails, default properties of a  54E1 rail profile are used.
 Other rail profiles for which default material properties are provided are: the 46E3 and 60E1 rail profiles.
 The rail pads are modelled by means of elastic spring dampers while the sleepers are modelled using nodal concentrated
 masses.
