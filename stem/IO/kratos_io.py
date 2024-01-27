@@ -898,7 +898,7 @@ class KratosIO:
             model.get_all_model_parts(),
         )
 
-    def __write_folder_for_json_output(self, output_settings: Optional[List[Output]] = None):
+    def __create_folder_for_json_output(self, output_settings: Optional[List[Output]] = None):
         """
         Creates the output folder for the JSON outputs if specified.
 
@@ -937,7 +937,7 @@ class KratosIO:
         if output_settings is None or len(output_settings) == 0:
             return {"output_processes": {}, "processes": {}}
         else:
-            self.__write_folder_for_json_output(output_settings=output_settings)
+            self.__create_folder_for_json_output(output_settings=output_settings)
             return self.outputs_io.create_output_process_dictionary(output_settings=output_settings)
 
     def __create_process_model_parts_dictionary(self, model: Model) -> Dict[str, Any]:

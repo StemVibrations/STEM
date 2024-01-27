@@ -1131,7 +1131,7 @@ class TestKratosModelIO:
         with pytest.raises(ValueError, match=f"Body model part empty_body_model_part has no id initialised."):
             kratos_io._KratosIO__create_auxiliary_process_list_dictionary(model=model)
 
-    def test_write_folder_for_json_output(self):
+    def test_create_folder_for_json_output(self):
         """
         Test the creation of the folder for the json output. Since the folder is not created by kratos.
 
@@ -1144,7 +1144,7 @@ class TestKratosModelIO:
             output_interval=1),output_dir="json_test_output"
         )]
 
-        kratos_io._KratosIO__write_folder_for_json_output(output_settings)
+        kratos_io._KratosIO__create_folder_for_json_output(output_settings)
 
         expected_folder = os.path.join("json_test_project_folder", "json_test_output")
 
@@ -1155,7 +1155,7 @@ class TestKratosModelIO:
         absolute_path_json_output = os.path.join(os.getcwd(), "json_test_output")
         output_settings[0].output_dir = absolute_path_json_output
 
-        kratos_io._KratosIO__write_folder_for_json_output(output_settings)
+        kratos_io._KratosIO__create_folder_for_json_output(output_settings)
 
         assert os.path.exists(absolute_path_json_output)
         rmtree(absolute_path_json_output)

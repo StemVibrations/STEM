@@ -897,7 +897,7 @@ Now the problem data should be set up. The problem should be given a name, in th
 .. code-block:: python
 
     # Set up problem data
-    problem = Problem(problem_name="calculate_uvec_on_embankment_with_absorbing_boundaries", number_of_threads=1,
+    problem = Problem(problem_name="calculate_uvec_on_embankment_with_absorbing_boundaries", number_of_threads=4,
                       settings=solver_settings)
     model.project_parameters = problem
 
