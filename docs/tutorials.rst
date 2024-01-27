@@ -547,16 +547,23 @@ This tutorial shows step by step guide on how to set up a train model
 on top of track on an embankment with two soil layers underneath, in a 3D model.
 The UVEC (User defined VEhiCle model) is a model used to represent a train as dynamic loads on the system.
 
-Firstly the necessary packages are imported and paths are defined.
+In order to use the UVEC, before all the packages are imported, the directory where the UVEC source code is located
+should be appended to the python paths. This is required such that the imports within the UVEC source code can be found.
+Again, note that it is important that this is done before importing the stem packages.
 
-For the UVEC, before the calculation starts, it is important that the UVEC source code is located in the same
-directory as the simulation input files, i.e. in 'input_files_dir' in the following code.
+.. code-block:: python
+
+    import sys
+    uvec_module_path = r"benchmark_tests/test_train_uvec_3d"
+    sys.path.append(uvec_module_path)
+
+After the path of the UVEC module is added, the necessary packages are imported and paths are defined where the input
+input and output files will be located.
 
 .. code-block:: python
 
     input_files_dir = "uvec_train_model"
     results_dir = "output_uvec_train_model"
-    #uvec_folder = "benchmark_tests/test_train_uvec_3d/uvec_ten_dof_vehicle_2D"
 
     from stem.model import Model
     from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
@@ -716,13 +723,12 @@ defined in `direction=[1, 1, 1]`, values greater than 0 indicate positive direct
 negative direction. The velocity of the train is 40 m/s. The train starts moving from the origin point, which has to be
 located on top of the track, that includes an extra thickness of the rail-pad, as shown above in `rail_pad_thickness`.
 The wheel configuration is defined as a list of distances from the origin point to the wheels. The `uvec_file` parameter
-is the name of the python file that contains the UVEC model. The `uvec_function_name` parameter is the name of the main
-function within the uvec file which starts the uvec calculation. The `uvec_parameters` parameter is a dictionary which
-contains the parameters of the UVEC model. The UVEC load is added on top of the previously defined track with the name
-"rail_track_1". And the name of the load is set to "train_load".
-
-In this tutorial, the uvec model is copied from the benchmark tests folder
-to the input files directory. But any UVEC model can be used as long as it is located in the input files directory.
+is the name of the python file that contains the UVEC model, this file name is relative to the input files directory or
+it can be an absolute path. For the sake of this tutorial, the UVEC model is copied from the benchmark tests folder
+to the input files directory. The `uvec_function_name` parameter is the name of the main function within the uvec file
+which starts the uvec calculation. The `uvec_parameters` parameter is a dictionary which contains the parameters of the
+UVEC model. The UVEC load is added on top of the previously defined track with the name "rail_track_1". And the name
+of the load is set to "train_load".
 
 .. code-block:: python
 
@@ -730,11 +736,14 @@ to the input files directory. But any UVEC model can be used as long as it is lo
     import os
     from shutil import copytree
 
-    uvec_folder = "benchmark_tests/test_sdof_uvec_beam/uvec_ten_dof_vehicle_2D"
+    # the name of the uvec module
+    uvec_folder = os.path.join(uvec_module_path, "uvec_ten_dof_vehicle_2D")
+    # create input files directory, since it might not have been created yet
     os.makedirs(input_files_dir, exist_ok=True)
+    # copy uvec module to input files directory
     copytree(uvec_folder, os.path.join(input_files_dir, "uvec_ten_dof_vehicle_2D"), dirs_exist_ok=True)
 
-A schematisation of the UVEC model as defined in this tutorial is shown below.
+A schematisation of the UVEC model as defined in this tutorial, is shown below.
 
 .. image:: _static/figure_uvec.png
 
@@ -758,7 +767,7 @@ Below the uvec parameters are defined.
                        "gravity_axis": 1, # axis on which gravity works [x =0, y = 1, z = 2]
                        "contact_coefficient": 9.1e-7, # Hertzian contact coefficient between the wheel and the rail [N/m]
                        "contact_power": 1.0, # Hertzian contact power between the wheel and the rail [-]
-                       "initialisation_steps": 100, # number of time steps on which the gravity on the UVEC is
+                       "initialisation_steps": 20, # number of time steps on which the gravity on the UVEC is
                                                     # gradually increased [-]
                        }
 
@@ -807,7 +816,7 @@ The geometry ids can be seen after using the show_geometry function.
 This function is only used for visualisation of the geometry ids after creation of the geometry, to be able to see the
 geometry ids issued by gmsh, and to know which ids belong to each boundary conditions.
 For visualisation of surface ids, "show_surface_ids" should be set to "True".
-Also for visualisation of line ids, "show_line_ids" and for visualisation of point ids, "show_point_ids"
+For visualisation of line ids, "show_line_ids" and for visualisation of point ids, "show_point_ids"
 should be set to "True".
 
 .. code-block:: python
@@ -843,9 +852,12 @@ After which the mesh size can be set. The mesh will be generated when the Stem c
 
 Now that the geometry is defined, the solver settings of the model has to be set.
 The analysis type is set to "MECHANICAL" and the solution type is set to "DYNAMIC".
-Then the start time is set to 0.0 second and the end time is set to 0.2 second. The time step size is set to 0.001 second.
-Furthermore, the reduction factor and increase factor are set to 1.0, such that the time step size is constant throughout
-the simulation. Displacement convergence criteria is set to 1.0e-4 for the relative tolerance and 1.0e-12 for the
+Then the start time is set to 0.0 second and the end time is set to 0.2 second, note that for the sake of this
+tutorial, the end time is kept low, such that the calculation does not take too long. The time step size is set to
+0.001 second.Note that in this tutorial, the contact between the uvec and the rails is non-linear, therefore a small
+time step size is required, otherwise, the calculation will diverge. Furthermore, the reduction factor and increase
+factor are set to 1.0, such that the time step size is constant throughout the simulation. Displacement convergence
+criteria is set to 1.0e-4 for the relative tolerance and 1.0e-12 for the
 absolute tolerance. Newton-Raphson is used as a solving strategy. And Newmark is used for the time integration.
 Amgcl is used as a linear solver. Stresses are not initialised since the "stress_initialisation_type" is set to "NONE".
 Other options are "StressInitialisationType.GRAVITY_LOADING" and "StressInitialisationType.K0_PROCEDURE".
