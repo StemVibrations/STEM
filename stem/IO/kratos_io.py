@@ -1106,8 +1106,6 @@ class KratosIO:
 
         return processes_dict
 
-
-
     def __write_project_parameters_json(self, model: Model, mesh_file_name: str, materials_file_name: str,
                                         project_file_name: str = "ProjectParameters.json") -> Dict[str, Any]:
         """
