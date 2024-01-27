@@ -774,7 +774,7 @@ Below the uvec parameters are defined.
     # define the UVEC load
     uvec_load = UvecLoad(direction=[1, 1, 1], velocity=40, origin=[0.75, 3+rail_pad_thickness, 5],
                          wheel_configuration=[0.0, 2.5, 19.9, 22.4],
-                         uvec_file=r"uvec_ten_dof_vehicle_2D\uvec.py", uvec_function_name="uvec",
+                         uvec_file=r"uvec_ten_dof_vehicle_2D/uvec.py", uvec_function_name="uvec",
                          uvec_parameters=uvec_parameters)
 
     # add the load on the tracks
