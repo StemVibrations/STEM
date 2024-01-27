@@ -23,8 +23,8 @@ def check_package_version(package_name: str, target_version: str) -> bool:
     Check if a package is installed and if the installed version matches the target version
 
     Args:
-        package_name (str): Name of the package to check
-        target_version (str): Version of the package to check
+        - package_name (str): Name of the package to check
+        - target_version (str): Version of the package to check
 
     Returns:
         bool: True if the package is installed and the version matches the target version, False otherwise
