@@ -962,7 +962,7 @@ calling the `Model.show_geometry` method.
 
     model.show_geometry()
 
-Now that the model is set up, the calculation is almost ready to be ran.
+Now that the model is set up, the calculation is almost ready to be run.
 
 Firstly the Stem class is initialised, with the model and the directory where the input files will be written to.
 While initialising the Stem class, the mesh will be generated.
