@@ -653,7 +653,7 @@ The soil is a one-phase soil, meaning that the flow of water through the soil is
     retention_parameters_3 = SaturatedBelowPhreaticLevelLaw()
     material_embankment = SoilMaterial("embankment", soil_formulation_3, constitutive_law_3, retention_parameters_3)
 
-For the rails, default properties of a 54e1 rail profile are used.
+For the rails, default properties of a  54E1 rail profile are used.
 Other rail profiles for which default material properties are provided are: the 46E3 and 60E1 rail profiles.
 The rail pads are modelled by means of elastic spring dampers while the sleepers are modelled using nodal concentrated
 masses.
@@ -703,7 +703,7 @@ on top of the embankment. To do this, the origin point of the track is set with 
 extrusion is done parallel to the positive z-axis, i.e. with a direction vector of [0, 0, 1].
 The length of the track is defined by the number of sleepers and their spacing.
 In this tutorial, 101 sleepers are placed which are connected by to the rail by 0.025m thick railpads. The sleepers
-are spaced 0.5m from each others which results in a 50m straight track, with part name "rail_track_1"
+are spaced 0.5m from each others which results in a 50m straight track, with part name "rail_track_1."
 
 .. code-block:: python
 
@@ -931,7 +931,7 @@ type is set to "step", meaning that the results will be written every time step.
 
 Additionally, nodal output can be retrieved on given coordinates, however it is required that these coordinates are
 placed on an existing surface within the model. For this tutorial, output is given on a few points perpendicular to
-the track. The results will be stored in a json file in the output folder. for json output it is required that the
+the track. The results will be stored in a json file in the output folder. For json output it is required that the
 output interval is defined in seconds. In order to output data at each time step, a slightly smaller time interval than
 the calculation time step `delta_time` is required.
 
@@ -962,7 +962,7 @@ calling the `Model.show_geometry` method.
 
     model.show_geometry()
 
-Now that the model is set up, the calculation is almost ready to be ran.
+Now that the model is set up, the calculation is almost ready to be run.
 
 Firstly the Stem class is initialised, with the model and the directory where the input files will be written to.
 While initialising the Stem class, the mesh will be generated.
