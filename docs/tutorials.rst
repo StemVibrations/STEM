@@ -931,7 +931,7 @@ type is set to "step", meaning that the results will be written every time step.
 
 Additionally, nodal output can be retrieved on given coordinates, however it is required that these coordinates are
 placed on an existing surface within the model. For this tutorial, output is given on a few points perpendicular to
-the track. The results will be stored in a json file in the output folder. for json output it is required that the
+the track. The results will be stored in a json file in the output folder. For json output it is required that the
 output interval is defined in seconds. In order to output data at each time step, a slightly smaller time interval than
 the calculation time step `delta_time` is required.
 
