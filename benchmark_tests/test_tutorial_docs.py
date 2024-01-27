@@ -74,3 +74,12 @@ def test_tutorial_2():
     data = read_tutorial(tutorial_file, name)
     exec("\n".join(data))
     shutil.rmtree("moving_load")
+
+def test_tutorial_3():
+    """Test the code in tutorial 3"""
+    name = "_tutorial3"
+    tutorial_file = "./docs/tutorials.rst"
+
+    data = read_tutorial(tutorial_file, name)
+    exec("\n".join(data))
+    shutil.rmtree("uvec_train_model")
