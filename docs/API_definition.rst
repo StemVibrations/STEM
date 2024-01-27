@@ -44,7 +44,7 @@ In this example the uvec_data contains the structure that it is used in STEM. Th
     * *uvec_data["theta"]* - the rotation of the vehicle at the location of the wheel
     * *uvec_data["time_index"]* - the time index of the analysis
     * *uvec_data["dt"]* - the time step of the integration step
-    * *uvec_data["state"]* - the state of the vehicle model (can be any JSON serializable data structure). This can be used to pass information regarding the degrees of freedom of the vehicle model or any other information needed to compute the loads at the wheels
+    * *uvec_data["state"]* - the state of the vehicle model (can be any JSON serialisable data structure). This can be used to pass information regarding the degrees of freedom of the vehicle model or any other information needed to compute the loads at the wheels
     * *uvec_data["parameters"]* - the parameters of the vehicle model (can be any json serialisable data structure). This can be used to pass information regarding the vehicle model, such as stiffness, mass and damping parameters
     * *uvec_data["loads"]* - the loads at the wheels
 
