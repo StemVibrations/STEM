@@ -22,7 +22,7 @@ To install STEM stable release, run the following code in your environment:
 
 .. code-block::
 
-   pip install Stem-Vibrations
+   pip install STEM-Vibrations
 
 If you want to install the latest development version of STEM (no guarantee of stability), run the following code in your environment:
 
