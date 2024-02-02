@@ -63,10 +63,3 @@ class TestSolverSettings:
         with pytest.raises(ValueError,
                            match="Kratos Multiphysics does not support the K0-procedure for dynamic analysis"):
             solver_settings.validate_settings()
-
-
-
-
-
-
-
