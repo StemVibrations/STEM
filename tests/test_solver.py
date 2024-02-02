@@ -5,8 +5,11 @@ from stem.solver import *
 
 class TestSolverSettings:
 
-
     def test_initialise_instance_and_validate(self):
+        """
+        Test that the solver settings are initialised correctly and validated correctly.
+
+        """
         analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
         solution_type = SolutionType.DYNAMIC
         time_integration = TimeIntegration(start_time=0.0, end_time=0.15, delta_time=0.0025, reduction_factor=1.0,
