@@ -514,20 +514,19 @@ class SolverSettings:
 
     def __post_init__(self):
         """
-        Post initialization method, validates solver settings
+        Post initialisation method, validates solver settings
 
         """
         self.validate_settings()
 
     def validate_settings(self):
         """
-        Validates the solver settings, and changes settings when needed.
+        Validates the solver settings, and changes settings when needed. If the solution type is quasi static, the time
+        integration scheme is set to Backward Euler.
 
         Raises:
             - ValueError: if the Rayleigh damping parameters are not provided for dynamic analysis
             - ValueError: if the K0-procedure is selected for dynamic analysis
-
-
         """
         if self.solution_type == SolutionType.DYNAMIC:
             if self.rayleigh_m is None or self.rayleigh_k is None:
@@ -543,6 +542,7 @@ class SolverSettings:
             # mass and damping matrices are set to not constant, as they are not used in quasi static analysis. This
             # prevents the calling of the wrong function in the Kratos model
             self.are_mass_and_damping_constant = False
+
 
 @dataclass
 class Problem:
