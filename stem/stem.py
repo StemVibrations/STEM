@@ -32,6 +32,7 @@ class Stem:
         self.input_files_dir = input_files_dir
         self.kratos_io = KratosIO(initial_stage.ndim)
         self.kratos_model = KratosMultiphysics.Model()
+        self.kratos_stages = []
 
         self.__stages: List[Model] = [initial_stage]
         self.__stage_settings_file_names: Dict[int, str] = {}
@@ -65,7 +66,15 @@ class Stem:
             - NotImplementedError: Adding calculation stages is not implemented yet.
 
         """
-        NotImplementedError("Adding calculation stages is not implemented yet. Currently only one stage is supported.")
+        self.__stages.append(stage)
+
+        # add the geo data to gmsh
+        stage.gmsh_io.generate_geo_from_geo_data()
+
+        # post setup and generate mesh
+        stage.post_setup()
+        stage.generate_mesh()
+
 
     def validate_stages(self):
         """
@@ -98,7 +107,7 @@ class Stem:
 
                 self.__stage_settings_file_names[stage_nr+1] = project_settings_file_name
 
-    def run_stage(self, stage_number: int):
+    def run_stage(self, stage_number: int, time_step):
         """
         Runs a single stage of the calculation.
 
@@ -122,23 +131,55 @@ class Stem:
         with open(parameters_file_name, "r") as parameter_file:
             kratos_parameters = KratosMultiphysics.Parameters(parameter_file.read())
 
+        # if stage_number >1:
+        #     mdpa_text = "Begin Properties 1\n" + "End Properties"
+        #
+        #     with open("test_multi_stage_block_stage_2.mdpa", "w") as mdpa_file:
+        #         mdpa_file.write(mdpa_text)
+
         # run calculation
         simulation = StemGeoMechanicsAnalysis(self.kratos_model, kratos_parameters)
-        simulation.Run()
+        simulation.Initialize()
+        simulation._GetSolver().GetComputingModelPart().ProcessInfo[KratosMultiphysics.STEP] = time_step
+        simulation.RunSolutionLoop()
+        simulation.Finalize()
+
+        time_step = simulation._GetSolver().GetComputingModelPart().ProcessInfo[KratosMultiphysics.STEP]
+
+        # simulation.Run()
 
         # update last ran stage number
         self.__last_ran_stage_number = stage_number
 
+        self.kratos_stages.append(simulation)
+
         # change working directory back to original working directory
         os.chdir(cwd)
+
+        return time_step
 
     def run_calculation(self):
         """
         Run the full calculation.
 
         """
-
+        timestep = 0
         for stage_nr, stage in enumerate(self.stages):
-            self.run_stage(stage_nr + 1)
+            timestep = self.run_stage(stage_nr + 1, time_step=timestep)
 
+        # time_step = 0
+        # cwd = os.getcwd()
+        # os.chdir(self.input_files_dir)
+        # for stage in self.kratos_stages:
+        #     stage.Initialize()
+        #     stage._GetSolver().GetComputingModelPart().ProcessInfo[KratosMultiphysics.STEP] = time_step
+        #     stage.RunSolutionLoop()
+        #     stage.Finalize()
+        #
+        #     time_step = stage._GetSolver().GetComputingModelPart().ProcessInfo[KratosMultiphysics.STEP]
+        #
+        #
+        #     # stage._GetSolver().GetComputingModelPart().ProcessInfo[KratosMultiphysics.STEP] += 1
+        #
+        # os.chdir(cwd)
 
