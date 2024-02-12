@@ -124,6 +124,10 @@ class Stem:
 
         for stage_nr, stage in enumerate(self.stages):
             if stage.project_parameters is not None:
+
+                # validate settings
+                stage.project_parameters.settings.validate_settings()
+
                 mesh_name = stage.project_parameters.problem_name + f"_stage_{stage_nr+1}.mdpa"
                 project_settings_file_name = f"ProjectParameters_stage_{stage_nr+1}.json"
                 material_settings_file_name = f"MaterialParameters_stage_{stage_nr+1}.json"
