@@ -512,9 +512,10 @@ class SolverSettings:
     rayleigh_k: Optional[float] = None
     echo_level: int = 1
 
-    def __post_init__(self):
+    def validate_settings(self):
         """
-        Post initialization method
+        Validates the solver settings, and changes settings when needed. If the solution type is quasi-static, the time
+        integration scheme is set to Backward Euler.
 
         Raises:
             - ValueError: if the Rayleigh damping parameters are not provided for dynamic analysis
@@ -526,6 +527,15 @@ class SolverSettings:
 
             if self.stress_initialisation_type == StressInitialisationType.K0_PROCEDURE:
                 raise ValueError("Kratos Multiphysics does not support the K0-procedure for dynamic analysis")
+
+        elif self.solution_type == SolutionType.QUASI_STATIC:
+            Warning("In quasi-static analysis, the time integration scheme is set to Backward Euler")
+            self.scheme = BackwardEulerScheme()
+
+            # todo remove this once updated in Kratos
+            # mass and damping matrices are set to not constant, as they are not used in quasi static analysis. This
+            # prevents the calling of the wrong function in the Kratos model
+            self.are_mass_and_damping_constant = False
 
 
 @dataclass
