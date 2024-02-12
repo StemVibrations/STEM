@@ -74,6 +74,7 @@ def test_stem():
 
     scheme = BackwardEulerScheme()
     # Set up start and end time of calculation, time step and etc
+    delta_time = 0.0025
     time_integration = TimeIntegration(start_time=0.0, end_time=0.15, delta_time=0.0025, reduction_factor=1.0,
                                        increase_factor=1.0, max_delta_time_factor=1000)
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0E-12,
@@ -107,12 +108,14 @@ def test_stem():
         output_control_type="step"
     ), output_dir="output", output_name="vtk_output")
 
+    # define the STEM instance
+    input_folder = "benchmark_tests/test_multi_stage/inputs_kratos"
+    stem = Stem(model_stage_1, input_folder)
 
-    from copy import deepcopy
-    model_stage_2 = deepcopy(model_stage_1)
+    # create new stage
+    model_stage_2 = stem.create_new_stage(delta_time, 0.15)
 
-    model_stage_2.project_parameters.settings.time_integration.start_time = 0.15
-    model_stage_2.project_parameters.settings.time_integration.end_time = 0.3
+    # Set up solver settings for the new stage
     model_stage_2.project_parameters.settings.solution_type = SolutionType.DYNAMIC
     model_stage_2.project_parameters.settings.scheme.newmark_beta = 0.25
     model_stage_2.project_parameters.settings.scheme.newmark_gamma = 0.5
@@ -120,20 +123,14 @@ def test_stem():
     model_stage_2.project_parameters.settings.rayleigh_m = 0.02
     model_stage_2.project_parameters.settings.scheme = NewmarkScheme()
 
-
-    model_stage_2.process_model_parts[0].parameters.value = [0, -1501, 0]
+    model_stage_2.process_model_parts[0].parameters.value = [0, -1500, 0]
     model_stage_2.output_settings[0].output_dir = "vtk_output_stage_2"
-    model_stage_2.output_settings[0].output_parameters.nodal_results = [ NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY]
+    model_stage_2.output_settings[0].output_parameters.nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY]
 
-    # Define the kratos input folder
-    input_folder = "benchmark_tests/test_multi_stage/inputs_kratos"
-
-    # Write KRATOS input files
-    # --------------------------------
-    stem = Stem(model_stage_1, input_folder)
-
+    # add the new stage to the calculation
     stem.add_calculation_stage(model_stage_2)
 
+    # write the kratos input files
     stem.write_all_input_files()
 
     # Run Kratos calculation

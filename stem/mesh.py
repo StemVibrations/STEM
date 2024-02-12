@@ -1,6 +1,8 @@
 from typing import Dict, List, Sequence, Any
 from enum import Enum
 
+import numpy as np
+
 from stem.globals import ELEMENT_DATA
 from stem.utils import Utils
 
@@ -94,6 +96,20 @@ class Node:
         self.id: int = id
         self.coordinates: Sequence[float] = coordinates
 
+    def __eq__(self, other: 'Node'):
+        """
+        Check if two nodes are equal. Nodes are considered equal if their ids and coordinates are equal.
+
+        Args:
+            - other ('Node'): The other node.
+
+        Returns:
+            - bool: True if the nodes are equal, False otherwise.
+
+        """
+
+        return self.id == other.id and np.isclose(self.coordinates, other.coordinates).all()
+
 
 class Element:
     """
@@ -118,6 +134,20 @@ class Element:
         self.id: int = id
         self.element_type: str = element_type
         self.node_ids: List[int] = node_ids
+
+    def __eq__(self, other: 'Element'):
+        """
+        Check if two elements are equal. Elements are considered equal if their ids, element types and node ids are
+        equal.
+
+        Args:
+            - other (:class:`Element`):
+
+        Returns:
+            - bool: True if the elements are equal, False otherwise.
+        """
+
+        return self.id == other.id and self.element_type == other.element_type and self.node_ids == other.node_ids
 
 
 class Mesh:
@@ -163,6 +193,19 @@ class Mesh:
             raise AttributeError(f"Cannot call class method: {item} from an initialised mesh instance.")
         else:
             return super().__getattribute__(item)
+
+    def __eq__(self, other: 'Mesh'):
+        """
+        Check if two meshes are equal. Two meshes are considered equal if their nodes and elements are equal.
+
+        Args:
+            - other (:class:`Mesh`): The other mesh.
+
+        Returns:
+            - bool: True if the meshes are equal, False otherwise.
+
+        """
+        return self.ndim == other.ndim and self.nodes == other.nodes and self.elements == other.elements
 
     @classmethod
     def create_mesh_from_gmsh_group(cls, mesh_data: Dict[str, Any], group_name: str) -> "Mesh":
