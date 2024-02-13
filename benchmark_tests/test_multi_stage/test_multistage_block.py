@@ -72,10 +72,8 @@ def test_stem():
     analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
     solution_type = SolutionType.QUASI_STATIC
 
-    scheme = BackwardEulerScheme()
     # Set up start and end time of calculation, time step and etc
-    delta_time = 0.0025
-    time_integration = TimeIntegration(start_time=0.0, end_time=0.15, delta_time=0.0025, reduction_factor=1.0,
+    time_integration = TimeIntegration(start_time=0.0, end_time=0.15, delta_time=0.05, reduction_factor=1.0,
                                        increase_factor=1.0, max_delta_time_factor=1000)
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0E-12,
                                                             displacement_absolute_tolerance=1.0E-6)
@@ -87,9 +85,7 @@ def test_stem():
                                     are_mass_and_damping_constant=False,
                                     convergence_criteria=convergence_criterion,
                                     rayleigh_k=0.0,
-                                    rayleigh_m=0.0,
-                                    scheme=scheme
-                                    )
+                                    rayleigh_m=0.0)
 
     # Set up problem data
     problem = Problem(problem_name="test_multi_stage_block", number_of_threads=2, settings=solver_settings)
@@ -113,18 +109,15 @@ def test_stem():
     stem = Stem(model_stage_1, input_folder)
 
     # create new stage
-    model_stage_2 = stem.create_new_stage(delta_time, 0.15)
+    model_stage_2 = stem.create_new_stage(0.0025, 0.15)
 
     # Set up solver settings for the new stage
     model_stage_2.project_parameters.settings.solution_type = SolutionType.DYNAMIC
-    model_stage_2.project_parameters.settings.scheme.newmark_beta = 0.25
-    model_stage_2.project_parameters.settings.scheme.newmark_gamma = 0.5
     model_stage_2.project_parameters.settings.rayleigh_k = 1e-6
     model_stage_2.project_parameters.settings.rayleigh_m = 0.02
-    model_stage_2.project_parameters.settings.scheme = NewmarkScheme()
 
-    model_stage_2.process_model_parts[0].parameters.value = [0, -1500, 0]
-    model_stage_2.output_settings[0].output_dir = "vtk_output_stage_2"
+    model_stage_2.process_model_parts[0].parameters.value = [0, -1050, 0]
+    # model_stage_2.output_settings[0].output_dir = "vtk_output_stage_2"
     model_stage_2.output_settings[0].output_parameters.nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY]
 
     # add the new stage to the calculation
