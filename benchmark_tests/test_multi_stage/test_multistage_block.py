@@ -5,7 +5,7 @@ from stem.load import LineLoad
 from stem.table import Table
 from stem.boundary import DisplacementConstraint
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, StressInitialisationType, SolverSettings, Problem, BackwardEulerScheme, NewmarkScheme
-from stem.output import NodalOutput, VtkOutputParameters, Output
+from stem.output import NodalOutput, VtkOutputParameters, Output, GiDOutputParameters
 from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
 from shutil import rmtree
@@ -79,13 +79,13 @@ def test_stem():
                                                             displacement_absolute_tolerance=1.0E-6)
     stress_initialisation_type = StressInitialisationType.NONE
     solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
-                                    stress_initialisation_type=stress_initialisation_type,
-                                    time_integration=time_integration,
-                                    is_stiffness_matrix_constant=False,
-                                    are_mass_and_damping_constant=False,
-                                    convergence_criteria=convergence_criterion,
-                                    rayleigh_k=0.0,
-                                    rayleigh_m=0.0)
+                                     stress_initialisation_type=stress_initialisation_type,
+                                     time_integration=time_integration,
+                                     is_stiffness_matrix_constant=False,
+                                     are_mass_and_damping_constant=False,
+                                     convergence_criteria=convergence_criterion,
+                                     rayleigh_k=0.0,
+                                     rayleigh_m=0.0)
 
     # Set up problem data
     problem = Problem(problem_name="test_multi_stage_block", number_of_threads=2, settings=solver_settings)
@@ -93,16 +93,18 @@ def test_stem():
 
     # Define the results to be written to the output file
     # Nodal results
-    nodal_results = [ NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY]
+    nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY]
 
     # Define the output process
-    model_stage_1.add_output_settings(output_parameters=VtkOutputParameters(
-        file_format="ascii",
-        output_interval=1,
-        nodal_results=nodal_results,
-        gauss_point_results=[],
-        output_control_type="step"
-    ), output_dir="output", output_name="vtk_output")
+    model_stage_1.add_output_settings(output_parameters=VtkOutputParameters(file_format="ascii", output_interval=1,
+                                                                            nodal_results=nodal_results,
+                                                                            gauss_point_results=[],
+                                                                            output_control_type="step"),
+                                      output_dir="output", output_name="vtk_output")
+
+    model_stage_1.add_output_settings(output_parameters=GiDOutputParameters(output_interval=1, file_format="binary",
+                                                                            nodal_results=nodal_results),
+                                      output_dir="output", output_name="gid_output", )
 
     # define the STEM instance
     input_folder = "benchmark_tests/test_multi_stage/inputs_kratos"

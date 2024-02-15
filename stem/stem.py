@@ -7,7 +7,7 @@ from KratosMultiphysics.StemApplication.geomechanics_analysis import StemGeoMech
 
 from typing import List, Dict
 from stem.model import Model
-from stem.output import VtkOutputParameters
+from stem.output import VtkOutputParameters, GiDOutputParameters, JsonOutputParameters
 from stem.IO.kratos_io import KratosIO
 
 
@@ -82,9 +82,12 @@ class Stem:
         new_stage.project_parameters.settings.time_integration.delta_time = (
             delta_time)
 
-        # set output directory new stage
+        # set output directory and output name new stage
         for output_settings in new_stage.output_settings:
-            output_settings.output_dir = Path(str(output_settings.output_dir) + f"_stage_{len(self.__stages) + 1}")
+            if isinstance(output_settings.output_parameters, VtkOutputParameters):
+                output_settings.output_dir = Path(str(output_settings.output_dir) + f"_stage_{len(self.__stages) + 1}")
+            elif isinstance(output_settings.output_parameters, (GiDOutputParameters, JsonOutputParameters)):
+                output_settings.output_name = f"{output_settings.output_name}_stage_{len(self.__stages) + 1}"
 
         # todo check json output and gid output
 
@@ -258,7 +261,8 @@ class Stem:
 
     def __transfer_vtk_files_to_main_output_directories(self):
         """
-        Transfer vtk files from the stage output directory to the main output directory.
+        Transfer vtk files from the stage output directory to the main output directory. This is required as vtk files
+        are always written to a new directory, in order to avoid overwriting directories from previous stages.
 
         """
 
