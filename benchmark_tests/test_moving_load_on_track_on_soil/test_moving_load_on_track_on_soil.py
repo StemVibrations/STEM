@@ -1,4 +1,5 @@
 import os
+import sys
 from shutil import rmtree
 
 import numpy as np
@@ -13,7 +14,7 @@ from stem.solver import AnalysisType, SolutionType, TimeIntegration, Displacemen
     NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
 from stem.output import NodalOutput, Output, VtkOutputParameters
 from stem.stem import Stem
-from benchmark_tests.utils import assert_files_equal
+from benchmark_tests.utils import assert_floats_in_files_almost_equal
 
 
 def test_moving_load_on_track_on_soil():
@@ -42,34 +43,35 @@ def test_moving_load_on_track_on_soil():
     # add the track
     rail_parameters = EulerBeam(ndim=ndim, YOUNG_MODULUS=30e9, POISSON_RATIO=0.2,
                                 DENSITY=7200, CROSS_AREA=0.01, I33=1e-4, I22=1e-4, TORSIONAL_INERTIA=2e-4)
-    rail_pad_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[1, 1, 1],
-                                              NODAL_ROTATIONAL_STIFFNESS=[1, 1, 1],
-                                              NODAL_DAMPING_COEFFICIENT=[1, 1, 1],
-                                              NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[1, 1, 1])
+    rail_pad_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[1, 750e6, 1],
+                                              NODAL_ROTATIONAL_STIFFNESS=[0, 0, 0],
+                                              NODAL_DAMPING_COEFFICIENT=[1, 750e3, 1],
+                                              NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0])
     sleeper_parameters = NodalConcentrated(NODAL_DISPLACEMENT_STIFFNESS=[0, 0, 0],
-                                           NODAL_MASS=1,
+                                           NODAL_MASS=140,
                                            NODAL_DAMPING_COEFFICIENT=[0, 0, 0])
 
     origin_point = np.array([1.0, 3.0, 0.0])
     direction_vector = np.array([0, 0, 1])
+    rail_pad_thickness = 0.025
 
     # create a straight track with rails, sleepers and rail pads
     model.generate_straight_track(0.5, 21, rail_parameters,
-                                  sleeper_parameters, rail_pad_parameters, origin_point,
+                                  sleeper_parameters, rail_pad_parameters, rail_pad_thickness, origin_point,
                                   direction_vector, "rail_track_1")
-    moving_load = MovingLoad(load=[0.0, -10000.0, 0.0], direction=[1, 1, 1], velocity=10, origin=[1.0, 3.0, 0.0],
-                             offset=0.0)
+
+    moving_load = MovingLoad(load=[0.0, -10000.0, 0.0], direction=[1, 1, 1], velocity=10,
+                             origin=[1.0, 3 + rail_pad_thickness, 0.0], offset=0.0)
 
     model.add_load_on_line_model_part("rail_track_1", moving_load, "moving_load")
 
-    # model.synchronise_geometry()
-    # model.show_geometry(show_surface_ids=True)
+    # model.show_geometry(show_surface_ids=True, show_point_ids=True)
 
     # Define boundary conditions
     no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
                                                         is_fixed=[True, True, True], value=[0, 0, 0])
     roller_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                            is_fixed=[True, False, False], value=[0, 0, 0])
+                                                            is_fixed=[True, False, True], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(2, [2], no_displacement_parameters, "base_fixed")
@@ -87,7 +89,7 @@ def test_moving_load_on_track_on_soil():
     solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
                                      stress_initialisation_type=stress_initialisation_type,
                                      time_integration=time_integration,
-                                     is_stiffness_matrix_constant=False, are_mass_and_damping_constant=False,
+                                     is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion, rayleigh_k=0.01, rayleigh_m=0.0001)
 
     # Set up problem data
@@ -136,8 +138,14 @@ def test_moving_load_on_track_on_soil():
     # --------------------------------
     stem.run_calculation()
 
-    result = assert_files_equal("benchmark_tests/test_moving_load_on_track_on_soil/output_/output_vtk_porous_computational_model_part",
-                                os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
 
-    assert result is True
+    if sys.platform == "win32":
+        expected_output_dir = "benchmark_tests/test_moving_load_on_track_on_soil/output_windows/output_vtk_porous_computational_model_part"
+    elif sys.platform == "linux":
+        expected_output_dir = "benchmark_tests/test_moving_load_on_track_on_soil/output_linux/output_vtk_porous_computational_model_part"
+    else:
+        raise Exception("Unknown platform")
+
+    assert_floats_in_files_almost_equal(expected_output_dir, os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"), 4)
+
     rmtree(input_folder)

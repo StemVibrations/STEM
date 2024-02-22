@@ -898,7 +898,7 @@ class KratosIO:
             model.get_all_model_parts(),
         )
 
-    def __write_folder_for_json_output(self, output_settings: Optional[List[Output]] = None) -> None:
+    def __create_folder_for_json_output(self, output_settings: Optional[List[Output]] = None):
         """
         Creates the output folder for the JSON outputs if specified.
 
@@ -906,17 +906,21 @@ class KratosIO:
             - output_settings (Optional[List[:class:`stem.output.Output`]]): The list of output processes objects to \
               write  in outputs.
 
-        Returns:
-            - None
         """
 
         if output_settings is not None and len(output_settings) > 0:
-
             for output in output_settings:
 
+                # create folder for json output
                 if isinstance(output.output_parameters, JsonOutputParameters):
 
-                    json_output_folder = os.path.join(self.project_folder, output.output_dir)
+                    # check if the output folder is absolute or relative, if relative create it in the project folder
+                    if os.path.isabs(output.output_dir):
+                        json_output_folder = output.output_dir
+
+                    else:
+                        json_output_folder = os.path.join(self.project_folder, output.output_dir)
+
                     os.makedirs(json_output_folder, exist_ok=True)
 
     def __create_output_process_dictionary(self, output_settings: Optional[List[Output]] = None) -> Dict[str, Any]:
@@ -933,7 +937,7 @@ class KratosIO:
         if output_settings is None or len(output_settings) == 0:
             return {"output_processes": {}, "processes": {}}
         else:
-            self.__write_folder_for_json_output(output_settings=output_settings)
+            self.__create_folder_for_json_output(output_settings=output_settings)
             return self.outputs_io.create_output_process_dictionary(output_settings=output_settings)
 
     def __create_process_model_parts_dictionary(self, model: Model) -> Dict[str, Any]:
@@ -1038,8 +1042,8 @@ class KratosIO:
         # check that the name is not none!
         if process_model_part.parameters.field_generator is None:
             raise ValueError("Field generator object not provided for the field generation"
-                             " of model part {mp.name} and property {mp.parameters.property_name}."
-                             )
+                             f" of model part {process_model_part.name} and "
+                             f"property {process_model_part.parameters.property_name}.")
 
         # write field values in the json input file
         IOUtils.write_json_file(
@@ -1101,8 +1105,6 @@ class KratosIO:
                 processes_dict["processes"]["auxiliary_process_list"].append(parameters)
 
         return processes_dict
-
-
 
     def __write_project_parameters_json(self, model: Model, mesh_file_name: str, materials_file_name: str,
                                         project_file_name: str = "ProjectParameters.json") -> Dict[str, Any]:

@@ -1,4 +1,5 @@
 import os
+import sys
 from shutil import rmtree, copytree
 
 from stem.model import Model
@@ -132,10 +133,10 @@ def test_stem():
 
     model.output_settings = [vtk_output_process]
 
-    input_folder = r"benchmark_tests\test_train_uvec_3d/input_kratos"
+    input_folder = r"benchmark_tests/test_train_uvec_3d/input_kratos"
     # copy uvec to input folder
     os.makedirs(input_folder, exist_ok=True)
-    copytree(r"benchmark_tests\test_train_uvec_3d\uvec_ten_dof_vehicle_2D", os.path.join(input_folder, "uvec_ten_dof_vehicle_2D"), dirs_exist_ok=True)
+    copytree(r"benchmark_tests/test_train_uvec_3d/uvec_ten_dof_vehicle_2D", os.path.join(input_folder, "uvec_ten_dof_vehicle_2D"), dirs_exist_ok=True)
 
     # Write KRATOS input files
     # --------------------------------
@@ -146,11 +147,15 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
+
+    if sys.platform == "win32":
+        expected_output_dir = "benchmark_tests/test_train_uvec_3d/output_windows/output_vtk_porous_computational_model_part"
+    elif sys.platform == "linux":
+        expected_output_dir = "benchmark_tests/test_train_uvec_3d/output_linux/output_vtk_porous_computational_model_part" 
+    else:
+        raise Exception("Unknown platform")
+
     # test output
-    assert assert_files_equal("benchmark_tests/test_train_uvec_3d/output_/output_vtk_porous_computational_model_part",
-                                os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
+    assert assert_files_equal(expected_output_dir, os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
 
     rmtree(input_folder)
-
-if __name__  == "__main__":
-    test_stem()

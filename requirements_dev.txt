@@ -1,11 +1,14 @@
 numpy==1.24.2
+scipy==1.10.1
 plotly==5.15.0
 gmsh_utils @ git+https://github.com/StemVibrations/gmsh_utils
 random_fields @ git+https://github.com/StemVibrations/RandomFields
-pytest==7.2.2
+StemKratos @ git+https://github.com/StemVibrations/StemKratos
+pytest==7.4.2
 pytest-cov==4.0.0
 tox==4.4.11
 mypy==1.1.1
 Sphinx==6.2.1
 sphinx-rtd-theme==1.2.2
 beautifulsoup4==4.12.2
+matplotlib==3.7.4

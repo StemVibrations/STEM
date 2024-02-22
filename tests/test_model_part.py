@@ -239,7 +239,7 @@ class TestModelPart:
         beam_part.material = beam
 
         assert beam_part.get_element_name(2, 2, AnalysisType.MECHANICAL) == "GeoCrBeamElementLinear2D2N"
-        assert beam_part.get_element_name(3, 2, AnalysisType.MECHANICAL) == "GeoCrBeamElement3D2N"
+        assert beam_part.get_element_name(3, 2, AnalysisType.MECHANICAL) == "CrLinearBeamElement3D2N"
 
         # wrong beam input
         with pytest.raises(ValueError, match= 'Analysis type AnalysisType.GROUNDWATER_FLOW is not implemented '

@@ -1,4 +1,6 @@
 numpy==1.24.2
+scipy==1.10.1
 plotly==5.15.0
 gmsh_utils @ git+https://github.com/StemVibrations/gmsh_utils
 random_fields @ git+https://github.com/StemVibrations/RandomFields
+StemKratos @ git+https://github.com/StemVibrations/StemKratos

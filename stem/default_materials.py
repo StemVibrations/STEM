@@ -1,11 +1,4 @@
 from enum import Enum
-from stem.soil_material import (
-    SoilMaterial,
-    TwoPhaseSoil,
-    LinearElasticSoil,
-    SaturatedBelowPhreaticLevelLaw,
-    FluidProperties,
-)
 from stem.structural_material import StructuralMaterial, EulerBeam
 
 
