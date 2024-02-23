@@ -19,6 +19,7 @@ def uvec_static(json_string: str) -> str:
 
     # Get the uvec data
     uvec_data = json.loads(json_string)
+    print(json_string)
 
     # load the data
     u = uvec_data["u"]
@@ -41,9 +42,14 @@ def uvec_static(json_string: str) -> str:
     # calculate static displacement
     u_static = train.calculate_initial_displacement(K, F_train, u_vertical)
 
-    state["u"] = u_static
-    state["v"] = np.zeros_like(u_static)
-    state["a"] = np.zeros_like(u_static)
+    state["u"] = u_static.tolist()
+    state["v"] = np.zeros_like(u_static).tolist()
+    state["a"] = np.zeros_like(u_static).tolist()
+
+    if time_index <= 0:
+        state["previous_time"] = 0
+
+    state["previous_time"] += time_step
 
     # calculate contact forces
     F_contact = calculate_contact_forces(u_vertical, train.calculate_static_contact_force(),
@@ -60,7 +66,12 @@ def uvec_static(json_string: str) -> str:
     uvec_data["loads"] = aux
 
     print(uvec_data["loads"])
+    print(uvec_data)
 
+    # write to file to compare the results
+    file_name = uvec_data["parameters"]["file_name"]
+    with open(file_name, 'a+') as f:
+        f.write(f"{state['previous_time']};{uvec_data['loads'][1][1]};{state['u'][-3]};{u_vertical[0]}\n")
     return json.dumps(uvec_data)
 
 
@@ -88,7 +99,6 @@ def uvec(json_string: str) -> str:
 
     # initialise the train system
     (M, C, K, F_train), train = initialise(time_index, parameters, state)
-
 
     # calculate norm of u vector, gravity is downwards
     gravity_axis = parameters["gravity_axis"]
@@ -139,7 +149,7 @@ def uvec(json_string: str) -> str:
 
 
 def initialise(time_index: int, parameters: dict, state: dict) -> \
-                                    Tuple[Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray], TrainModel]:
+        Tuple[Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray], TrainModel]:
     """
     Initialise the train system
 
@@ -151,7 +161,6 @@ def initialise(time_index: int, parameters: dict, state: dict) -> \
     Returns:
         - Tuple[Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray], TrainModel]: tuple containing the global matrices (M, C, K, F) and the train model
     """
-
 
     train = TrainModel()
 
@@ -175,7 +184,6 @@ def initialise(time_index: int, parameters: dict, state: dict) -> \
 
     # set global matrices
     K, C, M, F = train.generate_global_matrices()
-
 
     return (M, C, K, F), train
 
@@ -211,7 +219,7 @@ def calculate_contact_forces(u: np.ndarray, F_static: np.ndarray, state: dict, p
 
 
 def calculate(state: dict, matrices: Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray], time_step, t) -> \
-                                                                        Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Calculate the new state
 

@@ -7,6 +7,7 @@ from KratosMultiphysics.StemApplication.geomechanics_analysis import StemGeoMech
 
 from typing import List, Dict
 from stem.model import Model
+from stem.load import UvecLoad, MovingLoad
 from stem.output import VtkOutputParameters, GiDOutputParameters, JsonOutputParameters
 from stem.IO.kratos_io import KratosIO
 
@@ -41,6 +42,17 @@ class Stem:
         self.__stages: List[Model] = [initial_stage]
         self.__stage_settings_file_names: Dict[int, str] = {}
         self.__last_ran_stage_number: int = 0
+
+        # uvec_params = KM.Parameters("""{
+        #     "uvec_path"                     :     "C:/Users/jdnut/Desktop/StemPython/UVEC/my_sample_uvec.py",
+        #     "uvec_method"				    :     "uvec_test",
+        #     "uvec_data"						:     "{'dt': 0.0, 'u':{}, 'theta':{}, 'loads':{}, 'parameters' :{}, 'state':{}}"
+        # }""")
+        self.__last_uvec_data = KratosMultiphysics.Parameters("""{"u": {},
+                                                               "theta": {},
+                                                               "loads": {},
+                                                               "state": {}}""")
+        # self.__last_uvec_state = KratosMultiphysics.Parameters()
 
         # perform initial stage setup and mesh generation in this order
         initial_stage.post_setup()
@@ -90,6 +102,42 @@ class Stem:
                 output_settings.output_name = f"{output_settings.output_name}_stage_{len(self.__stages) + 1}"
 
         # todo check json output and gid output
+
+        duration_previous_stage = self.__stages[-1].project_parameters.settings.time_integration.end_time - \
+                                  self.__stages[-1].project_parameters.settings.time_integration.start_time
+
+        for model_part in new_stage.process_model_parts:
+            if isinstance(model_part.parameters, (UvecLoad, MovingLoad)):
+                distance_traveled = 0
+                if isinstance(model_part.parameters.velocity, float):
+                    distance_traveled = duration_previous_stage * model_part.parameters.velocity
+                elif isinstance(model_part.parameters.velocity, str):
+                    # read tiny expression lambda function
+                    func = model_part.parameters.velocity
+
+
+
+                    func = func.replace("t", f"{duration_previous_stage} + {delta_time}")
+                    func = func.replace("x", "0")
+                    func = func.replace("y", "0")
+                    func = func.replace("z", "0")
+
+
+
+
+
+                    #todo support tiny expr
+                    distance_traveled = 0
+                    pass
+
+                if isinstance(model_part.parameters, UvecLoad):
+                    model_part.parameters.wheel_configuration = [wheel_distance + distance_traveled
+                                                                 for wheel_distance in model_part.parameters.wheel_configuration]
+                elif isinstance(model_part.parameters, MovingLoad):
+                    model_part.parameters.offset += distance_traveled
+
+                # model_part.name = f"{model_part.name}_stage_{len(self.__stages) + 1}"
+
 
         return new_stage
 
@@ -177,6 +225,12 @@ class Stem:
         with open(parameters_file_name, "r") as parameter_file:
             kratos_parameters = KratosMultiphysics.Parameters(parameter_file.read())
 
+        # # set uvec state
+        # kratos_parameters["solver_settings"]["uvec"]["uvec_data"]["state"] = self.__last_uvec_data["state"]
+        # kratos_parameters["solver_settings"]["uvec"]["uvec_data"]["u"] = self.__last_uvec_data["u"]
+        # kratos_parameters["solver_settings"]["uvec"]["uvec_data"]["theta"] = self.__last_uvec_data["theta"]
+        # kratos_parameters["solver_settings"]["uvec"]["uvec_data"]["loads"] = self.__last_uvec_data["loads"]
+
         # run calculation
         simulation = StemGeoMechanicsAnalysis(self.kratos_model, kratos_parameters)
 
@@ -188,6 +242,10 @@ class Stem:
         simulation.RunSolutionLoop()
         # finalize the simulation
         simulation.Finalize()
+        simulation._GetSolver().GetComputingModelPart().ProcessInfo[KratosMultiphysics.IS_RESTARTED] = True
+
+        # self.__last_uvec_data = simulation._GetSolver().solver.uvec_data["state"]
+        # self.__last_uvec_data = simulation._GetSolver().solver.uvec_data
 
         # get the new time step number
         time_step_nr = simulation._GetSolver().GetComputingModelPart().ProcessInfo[KratosMultiphysics.STEP]
