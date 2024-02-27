@@ -86,11 +86,11 @@ class TestPlotUtils:
 
         # create model
         model = Model(ndim)
-        model.extrusion_length = 1
+        model.add_3d_section(section_name="S1", z_start=0, z_end=1)
 
         # add soil layers
-        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
-        model.add_soil_layer_by_coordinates(layer2_coordinates, soil_material2, "layer2")
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1", section_name="S1")
+        model.add_soil_layer_by_coordinates(layer2_coordinates, soil_material2, "layer2", section_name="S1")
 
         # synchronise geometry
         model.synchronise_geometry()

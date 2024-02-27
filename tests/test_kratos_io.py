@@ -249,10 +249,10 @@ class TestKratosModelIO:
 
         # create model
         model = Model(ndim)
-        model.extrusion_length = 1
+        model.add_3d_section(section_name="S1", z_start=0, z_end=1)
 
         # add soil layer and line load and mesh them
-        model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
+        model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1", section_name="S1")
         model.add_load_by_coordinates(load_coordinates_top, surface_load_top, "load_top")
         model.add_load_by_coordinates(load_coordinates_bottom, surface_load_bottom, "load_bottom")
 

@@ -54,8 +54,7 @@ class Model:
         self.body_model_parts: List[BodyModelPart] = []
         self.process_model_parts: List[ModelPart] = []
         self.output_settings: List[Output] = []
-
-        self.extrusion_length: Optional[float] = None
+        self.sections: Dict[str, Tuple[float, float]] = {}
 
     def __del__(self):
         """
@@ -210,11 +209,34 @@ class Model:
             else:
                 self.process_model_parts.append(model_part)
 
-    def add_soil_layer_by_coordinates(self, coordinates: Sequence[Sequence[float]],
-                                      material_parameters: Union[SoilMaterial, StructuralMaterial], name: str):
+
+    def add_3d_section(self, section_name:str, z_start:float, z_end: float):
+        """
+        Adds a 3d section to the model to be used for extruding soil layers. The section is extruded in the z-direction
+        from the `z_start` to the `z_end` coordinate. The section names must be always unique.
+
+        Args:
+            - section_name (str): The name of the soil layer.
+            - z_start (float): The start z-coordinate for the extrusion.
+            - z_end (float): The end z-coordinate for the extrusion.
+
+        Raises:
+            - ValueError: if the section_name matches an already an existing 3D section.
+        """
+        if section_name in self.sections.keys():
+            raise ValueError(f"The section `{section_name}` already exists, but section names must be unique.")
+
+        self.sections[section_name] = (z_start, z_end)
+
+    def add_soil_layer_by_coordinates(
+            self, coordinates: Sequence[Sequence[float]],
+            material_parameters: Union[SoilMaterial, StructuralMaterial],
+            name: str, section_name:Optional[str]=None):
         """
         Adds a soil layer to the model by giving a sequence of 2D coordinates. In 3D the 2D geometry is extruded in
-        the out of plane direction.
+        the out of plane direction which is always the z-direction. For 2D models, the z-coordinate of the `coordinates`
+        variable is set to zero while for 3D extrusion is ignored and set as the starting z-coordinate of the
+        specified section.
 
         Args:
             - coordinates (Sequence[Sequence[float]]): The plane coordinates of the soil layer.
@@ -223,22 +245,37 @@ class Model:
             - name (str): The name of the soil layer.
 
         Raises:
-            - ValueError: if extrusion_length is not specified in 3D.
+            - ValueError: if the model is 3D but no section_name is specified for the extrusion of the soil layer.
+            - ValueError: if the model is 3D and the specified section_name doesn't exist.
         """
 
         # sort coordinates in anti-clockwise order, such that elements in mesh are also in anti-clockwise order
         if Utils.are_2d_coordinates_clockwise(coordinates):
             coordinates = coordinates[::-1]
 
+
         gmsh_input = {name: {"coordinates": coordinates, "ndim": self.ndim}}
+
         # check if extrusion length is specified in 3D
         if self.ndim == 3:
-            if self.extrusion_length is None:
-                raise ValueError("Extrusion length must be specified for 3D models")
 
-            extrusion_length: List[float] = [0, 0, 0]
-            extrusion_length[OUT_OF_PLANE_AXIS_2D] = self.extrusion_length
-            gmsh_input[name]["extrusion_length"] = extrusion_length
+            if section_name is None:
+                raise ValueError(f"Name of the section to witch the element belongs is a mandatory parameter"
+                                 f" for 3D models.")
+
+            if section_name not in self.sections.keys():
+                raise ValueError(f"Non-existent section specified `{section_name}`.")
+
+            # retrieve end and start z coordinate for extruding the section
+            z_start, z_end = self.sections[section_name]
+
+            extrusion_vector: List[float] = [0, 0, 0]
+            extrusion_vector[OUT_OF_PLANE_AXIS_2D] = z_end - z_start
+            gmsh_input[name]["extrusion_length"] = extrusion_vector
+            gmsh_input[name]["coordinates"] = [[point[0], point[1], z_start] for point in coordinates]
+
+        elif self.ndim == 2:
+            gmsh_input[name]["coordinates"] = [[point[0], point[1], 0] for point in coordinates]
 
         # todo check if this function in gmsh io can be improved
         self.gmsh_io.generate_geometry(gmsh_input, "")

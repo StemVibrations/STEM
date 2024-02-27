@@ -93,15 +93,17 @@ The soil is a one-phase soil, meaning that the flow of water through the soil is
     material_embankment = SoilMaterial("embankment", soil_formulation_3, constitutive_law_3, retention_parameters_3)
 
 The coordinates of the model are defined in the following way. Each of the layers are defined by a list of coordinates,
-defined in th x-y plane. For 3D models, the x-y plane can be extruded in the z-direction. In this case, the extrusion
-length is 50 m in the z-direction.
+defined in th x-y plane. For 3D models, the x-y plane can be extruded in the z-direction. The model allows for
+appending consecutive extruded sections, which have to be pre-defined by the user. In this case one section is
+considered with extrusion between 0 and 50 m in the z-direction. The Z coordinate of the points below are ignored.
 
 .. code-block:: python
 
-    soil1_coordinates = [(0.0, 0.0, 0.0), (5.0, 0.0, 0.0), (5.0, 1.0, 0.0), (0.0, 1.0, 0.0)]
-    soil2_coordinates = [(0.0, 1.0, 0.0), (5.0, 1.0, 0.0), (5.0, 2.0, 0.0), (0.0, 2.0, 0.0)]
-    embankment_coordinates = [(0.0, 2.0, 0.0), (3.0, 2.0, 0.0), (1.5, 3.0, 0.0), (0.75, 3.0, 0.0), (0, 3.0, 0.0)]
-    model.extrusion_length = 50
+    soil1_coordinates = [(0.0, 0.0), (5.0, 0.0), (5.0, 1.0), (0.0, 1.0)]
+    soil2_coordinates = [(0.0, 1.0), (5.0, 1.0), (5.0, 2.0), (0.0, 2.0)]
+    embankment_coordinates = [(0.0, 2.0), (3.0, 2.0), (1.5, 3.0), (0.75, 3.0), (0, 3.0)]
+
+    model.add_3d_section(section_name="Section 1", z_start=0, z_end=50)
 
 The geometry is shown in the figures below.
 
@@ -115,9 +117,9 @@ a unique name.
 
 .. code-block:: python
 
-    model.add_soil_layer_by_coordinates(soil1_coordinates, material_soil_1, "soil_layer_1")
-    model.add_soil_layer_by_coordinates(soil2_coordinates, material_soil_2, "soil_layer_2")
-    model.add_soil_layer_by_coordinates(embankment_coordinates, material_embankment, "embankment_layer")
+    model.add_soil_layer_by_coordinates(soil1_coordinates, material_soil_1, "soil_layer_1", "Section 1")
+    model.add_soil_layer_by_coordinates(soil2_coordinates, material_soil_2, "soil_layer_2", "Section 1")
+    model.add_soil_layer_by_coordinates(embankment_coordinates, material_embankment, "embankment_layer", "Section 1")
 
 For the line load, LineLoad class is called. The load is defined following a list of coordinates. In this case,
 a line load is applied along the load coordinates. The line load can be defined along which axis is active,
@@ -360,15 +362,17 @@ The soil is a one-phase soil, meaning that the flow of water through the soil is
     material_embankment = SoilMaterial("embankment", soil_formulation_3, constitutive_law_3, retention_parameters_3)
 
 The coordinates of the model are defined in the following way. Each of the layers are defined by a list of coordinates,
-defined in th x-y plane. For 3D models, the x-y plane can be extruded in the z-direction. In this case, the extrusion
-length is 50 m in the z-direction.
+defined in th x-y plane. For 3D models, the x-y plane can be extruded in the z-direction. The model allows for
+appending consecutive extruded sections, which have to be pre-defined by the user. In this case one section is
+considered with extrusion between 0 and 50 m in the z-direction. The Z coordinate of the points below are ignored.
 
 .. code-block:: python
 
-    soil1_coordinates = [(0.0, 0.0, 0.0), (5.0, 0.0, 0.0), (5.0, 1.0, 0.0), (0.0, 1.0, 0.0)]
-    soil2_coordinates = [(0.0, 1.0, 0.0), (5.0, 1.0, 0.0), (5.0, 2.0, 0.0), (0.0, 2.0, 0.0)]
-    embankment_coordinates = [(0.0, 2.0, 0.0), (3.0, 2.0, 0.0), (1.5, 3.0, 0.0), (0.75, 3.0, 0.0), (0, 3.0, 0.0)]
-    model.extrusion_length = 50
+    soil1_coordinates = [(0.0, 0.0), (5.0, 0.0), (5.0, 1.0), (0.0, 1.0)]
+    soil2_coordinates = [(0.0, 1.0), (5.0, 1.0), (5.0, 2.0), (0.0, 2.0)]
+    embankment_coordinates = [(0.0, 2.0), (3.0, 2.0), (1.5, 3.0), (0.75, 3.0), (0, 3.0)]
+
+    model.add_3d_section(section_name="Section 1", z_start=0, z_end=50)
 
 The geometry is shown in the figures below.
 
@@ -382,9 +386,9 @@ a unique name.
 
 .. code-block:: python
 
-    model.add_soil_layer_by_coordinates(soil1_coordinates, material_soil_1, "soil_layer_1")
-    model.add_soil_layer_by_coordinates(soil2_coordinates, material_soil_2, "soil_layer_2")
-    model.add_soil_layer_by_coordinates(embankment_coordinates, material_embankment, "embankment_layer")
+    model.add_soil_layer_by_coordinates(soil1_coordinates, material_soil_1, "soil_layer_1", "Section 1")
+    model.add_soil_layer_by_coordinates(soil2_coordinates, material_soil_2, "soil_layer_2", "Section 1")
+    model.add_soil_layer_by_coordinates(embankment_coordinates, material_embankment, "embankment_layer", "Section 1")
 
 For the moving load, MovingLoad class is called. The load is defined following a list of coordinates. In this case,
 a moving load is applied on a line with a 0.75 meter distance from the x-axis on top of the embankment. The velocity of
@@ -670,15 +674,17 @@ masses.
                                            NODAL_DAMPING_COEFFICIENT=[0, 0, 0])
 
 The coordinates of the model are defined in the following way. Each of the layers are defined by a list of coordinates,
-defined in th x-y plane. For 3D models, the x-y plane can be extruded in the z-direction. In this case, the extrusion
-length is 50 m in the z-direction.
+defined in th x-y plane. For 3D models, the x-y plane can be extruded in the z-direction. The model allows for
+appending consecutive extruded sections, which have to be pre-defined by the user. In this case one section is
+considered with extrusion between 0 and 50 m in the z-direction. The Z coordinate of the points below are ignored.
 
 .. code-block:: python
 
-    soil1_coordinates = [(0.0, 0.0, 0.0), (5.0, 0.0, 0.0), (5.0, 1.0, 0.0), (0.0, 1.0, 0.0)]
-    soil2_coordinates = [(0.0, 1.0, 0.0), (5.0, 1.0, 0.0), (5.0, 2.0, 0.0), (0.0, 2.0, 0.0)]
-    embankment_coordinates = [(0.0, 2.0, 0.0), (3.0, 2.0, 0.0), (1.5, 3.0, 0.0), (0.75, 3.0, 0.0), (0, 3.0, 0.0)]
-    model.extrusion_length = 50
+    soil1_coordinates = [(0.0, 0.0), (5.0, 0.0), (5.0, 1.0), (0.0, 1.0)]
+    soil2_coordinates = [(0.0, 1.0), (5.0, 1.0), (5.0, 2.0), (0.0, 2.0)]
+    embankment_coordinates = [(0.0, 2.0), (3.0, 2.0), (1.5, 3.0), (0.75, 3.0), (0, 3.0)]
+
+    model.add_3d_section(section_name="Section 1", z_start=0, z_end=50)
 
 The geometry is shown in the figures below.
 
@@ -692,9 +698,9 @@ a unique name.
 
 .. code-block:: python
 
-    model.add_soil_layer_by_coordinates(soil1_coordinates, material_soil_1, "soil_layer_1")
-    model.add_soil_layer_by_coordinates(soil2_coordinates, material_soil_2, "soil_layer_2")
-    model.add_soil_layer_by_coordinates(embankment_coordinates, material_embankment, "embankment_layer")
+    model.add_soil_layer_by_coordinates(soil1_coordinates, material_soil_1, "soil_layer_1", "Section 1")
+    model.add_soil_layer_by_coordinates(soil2_coordinates, material_soil_2, "soil_layer_2", "Section 1")
+    model.add_soil_layer_by_coordinates(embankment_coordinates, material_embankment, "embankment_layer", "Section 1")
 
 The tracks are added by specifying the origin point of the track and the direction for the extrusion that creates
 the rail as well as rail pads and sleepers. Important is that the origin point and the end of the track lie on

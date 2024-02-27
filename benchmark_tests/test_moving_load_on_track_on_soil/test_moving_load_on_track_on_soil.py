@@ -20,6 +20,8 @@ from benchmark_tests.utils import assert_floats_in_files_almost_equal
 def test_moving_load_on_track_on_soil():
     ndim = 3
     model = Model(ndim)
+    # Add sections for extrusion
+    model.add_3d_section(section_name="Section 1", z_start=0, z_end=10)
 
     # Specify material model
     # Linear elastic drained soil with a Density of 2650, a Young's modulus of 30e6,
@@ -35,10 +37,9 @@ def test_moving_load_on_track_on_soil():
 
     # Specify the coordinates for the column: x:5m x y:1m
     layer1_coordinates = [(0.0, 0.0, 0.0), (5.0, 0.0, 0.0), (5.0, 3.0, 0.0), (0.0, 3.0, 0.0)]
-    model.extrusion_length = 10
 
     # Create the soil layer
-    model.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil_layer")
+    model.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil_layer", "Section 1")
 
     # add the track
     rail_parameters = EulerBeam(ndim=ndim, YOUNG_MODULUS=30e9, POISSON_RATIO=0.2,

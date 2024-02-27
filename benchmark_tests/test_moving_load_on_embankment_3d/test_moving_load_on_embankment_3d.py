@@ -19,6 +19,8 @@ def test_stem():
     # Specify dimension and initiate the model
     ndim = 3
     model = Model(ndim)
+    # add sections for extrusions
+    model.add_3d_section("Section 1", z_start=0, z_end=10)
 
     # Specify material model
     solid_density = 2650
@@ -36,12 +38,11 @@ def test_stem():
     soil1_coordinates = [(0.0, 0.0, 0.0), (5.0, 0.0, 0.0), (5.0, 1.0, 0.0), (0.0, 1.0, 0.0)]
     soil2_coordinates = [(0.0, 1.0, 0.0), (5.0, 1.0, 0.0), (5.0, 2.0, 0.0), (0.0, 2.0, 0.0)]
     embankment_coordinates = [(0.0, 2.0, 0.0), (3.0, 2.0, 0.0), (1.5, 3.0, 0.0), (0.75, 3.0, 0.0), (0, 3.0, 0.0)]
-    model.extrusion_length = 10
 
     # Create the soil layer
-    model.add_soil_layer_by_coordinates(soil1_coordinates, material_soil1, "soil1")
-    model.add_soil_layer_by_coordinates(soil2_coordinates, material_soil2, "soil2")
-    model.add_soil_layer_by_coordinates(embankment_coordinates, material_embankment, "embankment")
+    model.add_soil_layer_by_coordinates(soil1_coordinates, material_soil1, "soil1", "Section 1")
+    model.add_soil_layer_by_coordinates(soil2_coordinates, material_soil2, "soil2", "Section 1")
+    model.add_soil_layer_by_coordinates(embankment_coordinates, material_embankment, "embankment", "Section 1")
 
     # Define moving load
     load_coordinates = [(0.75, 3.0, 0.0), (0.75, 3.0, 10.0)]
