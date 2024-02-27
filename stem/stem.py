@@ -95,49 +95,10 @@ class Stem:
             delta_time)
 
         # set output directory and output name new stage
-        for output_settings in new_stage.output_settings:
-            if isinstance(output_settings.output_parameters, VtkOutputParameters):
-                output_settings.output_dir = Path(str(output_settings.output_dir) + f"_stage_{len(self.__stages) + 1}")
-            elif isinstance(output_settings.output_parameters, (GiDOutputParameters, JsonOutputParameters)):
-                output_settings.output_name = f"{output_settings.output_name}_stage_{len(self.__stages) + 1}"
+        self.__set_output_name_new_stage(new_stage, len(self.__stages) + 1)
 
-        # todo check json output and gid output
-
-        duration_previous_stage = self.__stages[-1].project_parameters.settings.time_integration.end_time - \
-                                  self.__stages[-1].project_parameters.settings.time_integration.start_time
-
-        for model_part in new_stage.process_model_parts:
-            if isinstance(model_part.parameters, (UvecLoad, MovingLoad)):
-                distance_traveled = 0
-                if isinstance(model_part.parameters.velocity, float):
-                    distance_traveled = duration_previous_stage * model_part.parameters.velocity
-                elif isinstance(model_part.parameters.velocity, str):
-                    # read tiny expression lambda function
-                    func = model_part.parameters.velocity
-
-
-
-                    func = func.replace("t", f"{duration_previous_stage} + {delta_time}")
-                    func = func.replace("x", "0")
-                    func = func.replace("y", "0")
-                    func = func.replace("z", "0")
-
-
-
-
-
-                    #todo support tiny expr
-                    distance_traveled = 0
-                    pass
-
-                if isinstance(model_part.parameters, UvecLoad):
-                    model_part.parameters.wheel_configuration = [wheel_distance + distance_traveled
-                                                                 for wheel_distance in model_part.parameters.wheel_configuration]
-                elif isinstance(model_part.parameters, MovingLoad):
-                    model_part.parameters.offset += distance_traveled
-
-                # model_part.name = f"{model_part.name}_stage_{len(self.__stages) + 1}"
-
+        # update the state of model parts
+        self.__update_state_of_model_parts(new_stage)
 
         return new_stage
 
@@ -148,9 +109,17 @@ class Stem:
         Args:
             - stage (:class:`stem.model.Model`): The model of the stage to be added.
 
-
         """
         self.__stages.append(stage)
+
+        # # get uvec model part
+        # for part in stage.process_model_parts:
+        #     if isinstance(part.parameters, UvecLoad):
+        #         uvec_model_part = part
+        #         old_name = uvec_model_part.name
+        #         new_uvec_name = f"{old_name}_stage_{len(self.__stages)}"
+        #         uvec_model_part.name = new_uvec_name
+        #         stage.gmsh_io.geo_data["physical_groups"][new_uvec_name] = stage.gmsh_io.geo_data["physical_groups"].pop(old_name)
 
         # add the geo data to gmsh
         stage.gmsh_io.generate_geo_from_geo_data()
@@ -164,7 +133,7 @@ class Stem:
 
     def validate_stages(self):
         """
-        Validate the stages of the calculation. Currently stages are not validated, but this method is reserved for
+        Validate the stages of the calculation. Currently, stages are not validated, but this method is reserved for
         when multi-stage calculations are implemented. In this case, the mesh in all stages should be the same.
         Furthermore, time should be continuous between stages.
 
@@ -225,11 +194,15 @@ class Stem:
         with open(parameters_file_name, "r") as parameter_file:
             kratos_parameters = KratosMultiphysics.Parameters(parameter_file.read())
 
-        # # set uvec state
-        # kratos_parameters["solver_settings"]["uvec"]["uvec_data"]["state"] = self.__last_uvec_data["state"]
-        # kratos_parameters["solver_settings"]["uvec"]["uvec_data"]["u"] = self.__last_uvec_data["u"]
-        # kratos_parameters["solver_settings"]["uvec"]["uvec_data"]["theta"] = self.__last_uvec_data["theta"]
-        # kratos_parameters["solver_settings"]["uvec"]["uvec_data"]["loads"] = self.__last_uvec_data["loads"]
+        # if stage_number > 1:
+        #     kratos_parameters["solver_settings"]["model_import_settings"]["input_type"].SetString("rest")
+
+        # set uvec state
+        if kratos_parameters["solver_settings"].Has("uvec"):
+            kratos_parameters["solver_settings"]["uvec"]["uvec_data"]["state"] = self.__last_uvec_data["state"]
+            kratos_parameters["solver_settings"]["uvec"]["uvec_data"]["u"] = self.__last_uvec_data["u"]
+            kratos_parameters["solver_settings"]["uvec"]["uvec_data"]["theta"] = self.__last_uvec_data["theta"]
+            kratos_parameters["solver_settings"]["uvec"]["uvec_data"]["loads"] = self.__last_uvec_data["loads"]
 
         # run calculation
         simulation = StemGeoMechanicsAnalysis(self.kratos_model, kratos_parameters)
@@ -245,7 +218,9 @@ class Stem:
         simulation._GetSolver().GetComputingModelPart().ProcessInfo[KratosMultiphysics.IS_RESTARTED] = True
 
         # self.__last_uvec_data = simulation._GetSolver().solver.uvec_data["state"]
-        # self.__last_uvec_data = simulation._GetSolver().solver.uvec_data
+        if hasattr(simulation._GetSolver().solver, 'uvec_data'):
+        # if simulation._GetSolver().solver.
+            self.__last_uvec_data = simulation._GetSolver().solver.uvec_data
 
         # get the new time step number
         time_step_nr = simulation._GetSolver().GetComputingModelPart().ProcessInfo[KratosMultiphysics.STEP]
@@ -356,3 +331,35 @@ class Stem:
                         # remove the stage vtk output dir if it is empty
                         if not os.listdir(stage_vtk_output_dir):
                             os.rmdir(stage_vtk_output_dir)
+
+    def __set_output_name_new_stage(self, new_stage, stage_nr):
+        for output_settings in new_stage.output_settings:
+            if isinstance(output_settings.output_parameters, VtkOutputParameters):
+                output_settings.output_dir = Path(str(output_settings.output_dir) + f"_stage_{stage_nr}")
+            elif isinstance(output_settings.output_parameters, (GiDOutputParameters, JsonOutputParameters)):
+                output_settings.output_name = f"{output_settings.output_name}_stage_{stage_nr}"
+
+                # todo check json output and gid output
+
+    def __update_state_of_model_parts(self, new_stage: Model):
+        duration_previous_stage = self.__stages[-1].project_parameters.settings.time_integration.end_time - \
+                                  self.__stages[-1].project_parameters.settings.time_integration.start_time
+
+        # update position of moving load and uvec load
+        for model_part in new_stage.process_model_parts:
+            if isinstance(model_part.parameters, (UvecLoad, MovingLoad)):
+                distance_traveled = 0
+                if isinstance(model_part.parameters.velocity, float):
+                    distance_traveled = duration_previous_stage * model_part.parameters.velocity
+                elif isinstance(model_part.parameters.velocity, str):
+                    raise NotImplementedError("Velocity as a function of time is not supported for moving loads in"
+                                              "multi-stage calculations.")
+
+                if isinstance(model_part.parameters, UvecLoad):
+                    model_part.parameters.wheel_configuration = [wheel_distance + distance_traveled
+                                                                 for wheel_distance in
+                                                                 model_part.parameters.wheel_configuration]
+                elif isinstance(model_part.parameters, MovingLoad):
+                    model_part.parameters.offset += distance_traveled
+
+
