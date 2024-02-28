@@ -36,7 +36,9 @@ class Model:
         - body_model_parts (List[:class:`stem.model_part.BodyModelPart`]): A list containing the body model parts.
         - process_model_parts (List[:class:`stem.model_part.ModelPart`]): A list containing the process model parts.
         - output_settings (List[:class:`stem.output.Output`]): A list containing the output settings.
-        - extrusion_length (Optional[float]): The extrusion length in the out of plane direction.
+        - sections (Dict[str, Tuple[float, float]]): A dictionary collecting the sections for extruding geometries on \
+            the z-axis. The dictionary is structured as section names (keys) and starting and ending z-coordinates of \
+            the section (values).
 
     """
     def __init__(self, ndim: int):
@@ -243,6 +245,8 @@ class Model:
             - material_parameters (Union[:class:`stem.soil_material.SoilMaterial`, \
                 :class:`stem.structural_material.StructuralMaterial`]): The material parameters of the soil layer.
             - name (str): The name of the soil layer.
+            - section_name (Optional[str]): The name of the 3d section name for extruding the layer in the z-dimension. \
+                This is a mandatory input for 3D models.
 
         Raises:
             - ValueError: if the model is 3D but no section_name is specified for the extrusion of the soil layer.
@@ -268,13 +272,15 @@ class Model:
 
             # retrieve end and start z coordinate for extruding the section
             z_start, z_end = self.sections[section_name]
-
+            # extrusion length is computed as the difference between end and start z coordinate.
             extrusion_vector: List[float] = [0, 0, 0]
             extrusion_vector[OUT_OF_PLANE_AXIS_2D] = z_end - z_start
             gmsh_input[name]["extrusion_length"] = extrusion_vector
+            # set z-coordinate of the points as the starting z-coordinate of the section.
             gmsh_input[name]["coordinates"] = [[point[0], point[1], z_start] for point in coordinates]
 
         elif self.ndim == 2:
+            # if model is 2D, the z-coordinate is not relevant and is set to zero.
             gmsh_input[name]["coordinates"] = [[point[0], point[1], 0] for point in coordinates]
 
         # todo check if this function in gmsh io can be improved

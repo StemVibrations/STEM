@@ -928,7 +928,6 @@ class TestModel:
         }
 
         expected_geometries = [geometry_1, geometry_2]
-        TestUtils.assert_almost_equal_geometries(model.body_model_parts[0].geometry, geometry_1)
 
         for model_part, expected_geometry in zip(model.body_model_parts, expected_geometries):
 
