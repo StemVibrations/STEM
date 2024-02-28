@@ -17,7 +17,7 @@ from stem.stem import Stem
 IS_LINUX = sys.platform == "linux"
 
 @pytest.mark.skipif(IS_LINUX, reason="calculate_moving_load_on_3_sections_3d: test not implemented for linux system yet."
-                                     "Expected linux output needs to be generated from a unix machine")
+                                     "Expected linux output needs to be generated from a unix machine.")
 def test_stem():
     # Define geometry, conditions and material parameters
     # --------------------------------
