@@ -14,9 +14,10 @@ from stem.solver import AnalysisType, SolutionType, TimeIntegration, Displacemen
     StressInitialisationType, SolverSettings, Problem
 from stem.stem import Stem
 
-IS_lINUX = sys.platform == "linux"
+IS_LINUX = sys.platform == "linux"
 
-@pytest.skip(IS_lINUX, "calculate_moving_load_on_3_sections_3d: test not implemented for linux system yet.")
+@pytest.mark.skipif(IS_LINUX, reason="calculate_moving_load_on_3_sections_3d: test not implemented for linux system yet."
+                                     "Expected linux output needs to be generated from a unix machine")
 def test_stem():
     # Define geometry, conditions and material parameters
     # --------------------------------
