@@ -919,7 +919,7 @@ class KratosIO:
                         json_output_folder = output.output_dir
 
                     else:
-                        json_output_folder = os.path.join(self.project_folder, output.output_dir)
+                        json_output_folder = Path(os.path.join(self.project_folder, output.output_dir))
 
                     os.makedirs(json_output_folder, exist_ok=True)
 
