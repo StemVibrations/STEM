@@ -26,9 +26,9 @@ def test_stem():
     ndim = 3
     model = Model(ndim)
     # add sections for extrusions
-    model.add_3d_section("Section 1", z_start=0, z_end=2)
-    model.add_3d_section("Section 2", z_start=2, z_end=3)
-    model.add_3d_section("Section 3", z_start=3, z_end=5)
+    model.add_group("Section 1", start_coordinate=0, length=2)
+    model.add_group("Section 2", start_coordinate=2, length=1)
+    model.add_group("Section 3", start_coordinate=3, length=2)
 
     # Specify material model
     solid_density = 2650

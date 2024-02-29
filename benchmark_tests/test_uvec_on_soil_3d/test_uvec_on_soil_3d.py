@@ -25,8 +25,7 @@ def test_stem():
     # Specify dimension and initiate the model
     ndim = 3
     model = Model(ndim)
-    # Add sections for extrusion
-    model.add_3d_section(section_name="Section 1", z_start=0, z_end=10)
+    model.extrusion_length = 10
 
     # Specify material model
     # Linear elastic drained soil with a Density of 2650, a Young's modulus of 30e6,
@@ -44,7 +43,7 @@ def test_stem():
     layer1_coordinates = [(0.0, 0.0, 0.0), (5.0, 0.0, 0.0), (5.0, 1.0, 0.0), (0.0, 1.0, 0.0)]
 
     # Create the soil layer
-    model.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil_layer", "Section 1")
+    model.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil_layer")
 
     # Define UVEC load
     load_coordinates = [(0.0, 1.0, 0.0), (0.0, 1.0, 10)]

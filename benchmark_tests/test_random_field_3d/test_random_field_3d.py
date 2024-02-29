@@ -29,8 +29,7 @@ def test_stem():
     # Specify dimension and initiate the model
     ndim = 3
     model = Model(ndim)
-    # Add sections for extrusion
-    model.add_3d_section(section_name="Section 1", z_start=0, z_end=20)
+    model.extrusion_length = 20
 
     soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
     constitutive_law = LinearElasticSoil(YOUNG_MODULUS=10, POISSON_RATIO=0.3)
@@ -39,12 +38,8 @@ def test_stem():
     width = 20
     height = 20
     # add soil layers
-    model.add_soil_layer_by_coordinates(
-        [(0, 0, 0), (width, 0, 0), (width, height, 0), (0, height, 0)],
-        soil_material,
-        "layer1",
-        "Section 1"
-    )
+    model.add_soil_layer_by_coordinates([(0, 0, 0), (width, 0, 0), (width, height, 0), (0, height, 0)], soil_material,
+                                        "layer1")
 
     # Define the field generator
     random_field_generator = RandomFieldGenerator(

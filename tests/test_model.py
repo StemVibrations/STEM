@@ -655,12 +655,12 @@ class TestModel:
 
         # create model
         model = Model(ndim)
-        model.add_3d_section(section_name="S1", z_start=0, z_end=1)
+        model.extrusion_length = 1
 
         model.project_parameters = TestUtils.create_default_solver_settings()
 
         # add soil layer
-        model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1", section_name="S1")
+        model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
 
         # check if layer is added correctly
         assert len(model.body_model_parts) == 1
@@ -748,11 +748,11 @@ class TestModel:
 
         # create model
         model = Model(ndim)
-        model.add_3d_section(section_name="S1", z_start=0, z_end=1)
+        model.extrusion_length = 1
 
         # add soil layers
-        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1", section_name="S1")
-        model.add_soil_layer_by_coordinates(layer2_coordinates, soil_material2, "layer2", section_name="S1")
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
+        model.add_soil_layer_by_coordinates(layer2_coordinates, soil_material2, "layer2")
 
         model.synchronise_geometry()
 
@@ -770,9 +770,9 @@ class TestModel:
 
             TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
-    def test_validation_of_sections(self, create_default_3d_soil_material: SoilMaterial):
+    def test_validation_of_groups_for_extrusion(self, create_default_3d_soil_material: SoilMaterial):
         """
-        Tests that errors are raised when sections are not specified or added multiple times.
+        Tests that errors are raised when groups are not specified or added multiple times.
 
         Args:
             - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
@@ -789,25 +789,55 @@ class TestModel:
 
         # create model
         model = Model(ndim)
-        model.add_3d_section(section_name="S1", z_start=0, z_end=1)
+        # add a valid group
+        model.add_group(group_name="Group1", start_coordinate=0, length=1)
+
+
         # expect it raises an error when adding an already existing section
-        with pytest.raises(
-                ValueError, match="The section `S1` already exists, but section names must be unique."
-        ):
-            model.add_3d_section(section_name="S1", z_start=0, z_end=1)
+        with pytest.raises(ValueError, match="The group `Group1` already exists, but group names must be unique."):
+            model.add_group(group_name="Group1", start_coordinate=0, length=1)
 
         # expect it raises an error when adding a layer to a non-existing section
         with pytest.raises(
                 ValueError,
-                match="Name of the section to witch the element belongs is a mandatory parameter for 3D models."
+                match="For 3D models either the extrusion length or the group name for the extrusion must be specified."
         ):
             model.add_soil_layer_by_coordinates(shape1, soil_material1, "layer1")
 
         # expect it raises an error when adding a layer to a non-existing section
         with pytest.raises(
-                ValueError, match="Non-existent section specified `S2`."
+                ValueError, match="Non-existent group specified `Group2`."
         ):
-            model.add_soil_layer_by_coordinates(shape1, soil_material1, "layer1", section_name="S2")
+            model.add_soil_layer_by_coordinates(shape1, soil_material1, "layer1", group_name="Group2")
+
+    def test_adding_model_parts_to_groups(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Tests validation of adding model parts to groups.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+        """
+
+        ndim = 3
+
+        shape1 = [(0, 0), (1, 0), (1, 1), (0, 1)]
+
+        # define soil materials
+        soil_material1 = create_default_3d_soil_material
+        soil_material1.name = "soil1"
+
+        # create model
+        model = Model(ndim)
+        # add a valid group
+        model.add_group(group_name="Group1", start_coordinate=0, length=1)
+
+        # test if raises an error when adding a model part to a non existing group
+        with pytest.raises(ValueError, match="The group specified `Group2` does not exist."):
+            model.add_model_part_to_group(group_name="Group2", part_name="test_part")
+
+        # test if raises an error when adding a non existing model part to a group
+        with pytest.raises(ValueError, match="The model part specified `test_part` does not exist."):
+            model.add_model_part_to_group(group_name="Group1", part_name="test_part")
 
 
     def test_add_multiple_sections_3D(self, create_default_3d_soil_material: SoilMaterial):
@@ -835,12 +865,12 @@ class TestModel:
 
         # create model
         model = Model(ndim)
-        model.add_3d_section(section_name="S1", z_start=0, z_end=1)
-        model.add_3d_section(section_name="S2", z_start=1, z_end=2)
+        model.add_group(group_name="Group1", start_coordinate=0, length=1)
+        model.add_group(group_name="Group2", start_coordinate=1, length=1)
 
         # add soil layers
-        model.add_soil_layer_by_coordinates(shape1, soil_material1, "layer1", section_name="S1")
-        model.add_soil_layer_by_coordinates(shape2, soil_material2, "layer2", section_name="S2")
+        model.add_soil_layer_by_coordinates(shape1, soil_material1, "layer1", group_name="Group1")
+        model.add_soil_layer_by_coordinates(shape2, soil_material2, "layer2", group_name="Group2")
 
         model.synchronise_geometry()
 
@@ -1073,11 +1103,11 @@ class TestModel:
 
         # create model
         model = Model(ndim)
-        model.add_3d_section(section_name="S1", z_start=0, z_end=1)
+        model.extrusion_length = 1
 
         # add soil layers
-        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1", section_name="S1")
-        model.add_soil_layer_by_coordinates(layer2_coordinates, soil_material2, "layer2", section_name="S1")
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
+        model.add_soil_layer_by_coordinates(layer2_coordinates, soil_material2, "layer2")
 
         # synchronise geometry and recalculates the ids
         model.synchronise_geometry()
@@ -1484,10 +1514,10 @@ class TestModel:
 
         # create model
         model = Model(ndim)
-        model.add_3d_section(section_name="S1", z_start=0, z_end=4)
+        model.extrusion_length = 4
 
         # add soil layers
-        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "soil1", section_name="S1")
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "soil1")
 
         # synchronise geometry and recalculates the ids
         model.synchronise_geometry()
@@ -1561,14 +1591,13 @@ class TestModel:
 
         """
         model = Model(3)
-        model.add_3d_section(section_name="S1", z_start=0, z_end=1)
+        model.extrusion_length = 1
 
         # add soil material
         soil_material = create_default_3d_soil_material
 
         # add soil layers
-        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1",
-                                            section_name="S1")
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
         model.synchronise_geometry()
 
         # generate mesh
@@ -2182,14 +2211,13 @@ class TestModel:
 
         """
         model = Model(3)
-        model.add_3d_section(section_name="S1", z_start=0, z_end=1)
+        model.extrusion_length = 1
 
         # add soil material
         soil_material = create_default_3d_soil_material
 
         # add soil layers
-        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1",
-                                            section_name="S1")
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
         model.set_mesh_size(1.0)
 
         # Define the field generator
@@ -2285,7 +2313,7 @@ class TestModel:
 
         # create a 3D model
         model = Model(3)
-        model.add_3d_section(section_name="S1", z_start=0, z_end=1)
+        model.extrusion_length = 1
 
         # create multiple boundary condition parameters
         no_rotation_parameters = RotationConstraint(active=[True, True, True], is_fixed=[True, True, True],
@@ -2298,8 +2326,7 @@ class TestModel:
 
         # add body model part
         soil_material = create_default_3d_soil_material
-        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "test_soil",
-                                            section_name="S1")
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "test_soil")
 
         # add boundary conditions in 0d, 1d and 2d
         model.add_boundary_condition_by_geometry_ids(0, [1, 2], no_rotation_parameters, "no_rotation")
@@ -2407,7 +2434,7 @@ class TestModel:
 
         # create a 3D model
         model = Model(ndim)
-        model.add_3d_section(section_name="S1", z_start=0, z_end=1)
+        model.extrusion_length = 1
 
         # set expected parameters of the load conditions
         expected_point_load_parameters = PointLoad(active=[False, True, False], value=[0, -200, 0])
@@ -2423,8 +2450,7 @@ class TestModel:
 
         # add body model part
         soil_material = create_default_3d_soil_material
-        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "test_soil",
-                                            section_name="S1")
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "test_soil")
 
         # add point, line, surface and moving loads by geometry id
         model.add_load_by_geometry_ids([3, 4, 7, 8], create_default_point_load_parameters, "point_loads")
@@ -2512,12 +2538,10 @@ class TestModel:
 
         # create a 3D model
         model = Model(ndim)
-        model.add_3d_section(section_name="S1", z_start=0, z_end=1)
+        model.extrusion_length = 1
 
-        # add body model part
         soil_material = create_default_3d_soil_material
-        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "test_soil",
-                                            section_name="S1")
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "test_soil")
 
         moving_load_parameters = MovingLoad(
             origin=[0, 1, 0.5],
@@ -2625,7 +2649,8 @@ class TestModel:
 
         # add a 2d layer
         model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0)], create_default_2d_soil_material, "soil1")
-        model.add_soil_layer_by_coordinates([(1, 0, 0), (0, 0, 0), (1, -1, 0)], create_default_2d_soil_material, "soil2")
+        model.add_soil_layer_by_coordinates([(1, 0, 0), (0, 0, 0), (1, -1, 0)], create_default_2d_soil_material,
+                                            "soil2")
 
         model.synchronise_geometry()
 
@@ -2658,12 +2683,10 @@ class TestModel:
 
         # create model
         model = Model(3)
-        model.add_3d_section(section_name="S1", z_start=0, z_end=1)
+        model.extrusion_length = 1
 
-        # add body model part
-        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0)], create_default_3d_soil_material, "soil1",
-                                            section_name="S1")
-
+        # add a 2d layer
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0)], create_default_3d_soil_material, "soil1")
 
         model.synchronise_geometry()
 
@@ -2965,11 +2988,11 @@ class TestModel:
 
         # create model
         model = Model(3)
-        model.add_3d_section(section_name="S1", z_start=0, z_end=1)
+        model.extrusion_length = 1
 
         # add soil layer
         layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
-        model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1", section_name="S1")
+        model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
         model.synchronise_geometry()
 
         model.show_geometry(file_name=r"tests/test_geometry.html", auto_open=False)
@@ -3068,11 +3091,11 @@ class TestModel:
 
         # create model
         model = Model(ndim)
-        model.add_3d_section(section_name="S1", z_start=0, z_end=1)
+        model.extrusion_length = 1
 
         # add soil layers
-        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1", section_name="S1")
-        model.add_soil_layer_by_coordinates(layer2_coordinates, soil_material2, "layer2", section_name="S1")
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
+        model.add_soil_layer_by_coordinates(layer2_coordinates, soil_material2, "layer2")
 
         # manually add water pressure model part
         water_pressure_model_part = ModelPart("water_pressure_part")

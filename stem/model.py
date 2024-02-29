@@ -36,9 +36,10 @@ class Model:
         - body_model_parts (List[:class:`stem.model_part.BodyModelPart`]): A list containing the body model parts.
         - process_model_parts (List[:class:`stem.model_part.ModelPart`]): A list containing the process model parts.
         - output_settings (List[:class:`stem.output.Output`]): A list containing the output settings.
-        - sections (Dict[str, Tuple[float, float]]): A dictionary collecting the sections for extruding geometries on \
-            the z-axis. The dictionary is structured as section names (keys) and starting and ending z-coordinates of \
-            the section (values).
+        - extrusion_length (Optional[float]): The extrusion length in the out of plane direction.
+        - groups (Dict[str, Tuple[float, float]]): A dictionary collecting the groups for extruding geometries on \
+            the out of plane direction. The dictionary links the group name to the model part belonging to the group \
+            and information for extruding the model parts for 3D models.
 
     """
     def __init__(self, ndim: int):
@@ -56,7 +57,8 @@ class Model:
         self.body_model_parts: List[BodyModelPart] = []
         self.process_model_parts: List[ModelPart] = []
         self.output_settings: List[Output] = []
-        self.sections: Dict[str, Tuple[float, float]] = {}
+        self.extrusion_length: Optional[float] = None
+        self.groups: Dict[str, Any] = {}
 
     def __del__(self):
         """
@@ -212,44 +214,79 @@ class Model:
                 self.process_model_parts.append(model_part)
 
 
-    def add_3d_section(self, section_name:str, z_start:float, z_end: float):
+    def add_group(self, group_name:str, start_coordinate:float, length: float):
         """
-        Adds a 3d section to the model to be used for extruding soil layers. The section is extruded in the z-direction
-        from the `z_start` to the `z_end` coordinate. The section names must be always unique.
+        Adds a group for extrusion which consists of a starting coordinate in the out of plane direction a name and the
+        the length for the extrusion. The group must be always unique while extrusion length can also be negative.
 
         Args:
-            - section_name (str): The name of the soil layer.
-            - z_start (float): The start z-coordinate for the extrusion.
-            - z_end (float): The end z-coordinate for the extrusion.
+            - group_name (str): The name of the group. Must be unique.
+            - start_coordinate (float): The start coordinate for the extrusion in the out of plane direction.
+            - length (float): The length of the group used for the extrusion. It can also be negative
 
         Raises:
             - ValueError: if the section_name matches an already an existing 3D section.
         """
-        if section_name in self.sections.keys():
-            raise ValueError(f"The section `{section_name}` already exists, but section names must be unique.")
+        if group_name in self.groups.keys():
+            raise ValueError(f"The group `{group_name}` already exists, but group names must be unique.")
 
-        self.sections[section_name] = (z_start, z_end)
+        direction_vector: List[float] = [0, 0, 0]
+        direction_vector[OUT_OF_PLANE_AXIS_2D] = 1
+
+        start_coordinates: List[float]  = [0, 0, 0]
+        start_coordinates[OUT_OF_PLANE_AXIS_2D] = start_coordinate
+
+        self.groups[group_name] = {
+            "model_part_names": [],
+            "extrusion_parameters":{
+                "start_coord":start_coordinates,
+                "length": length,
+                "direction_vector": direction_vector
+            }
+        }
+
+
+    def add_model_part_to_group(self, group_name:str, part_name:str):
+        """
+        Adds a model part name to a pre-existing group for extrusion.
+
+        Args:
+            - section_name (str): The name of the soil layer.
+            - start_coordinate (float): The start coordinate for the extrusion in the out of plane direction.
+            - length (float): The length of the group used for the extrusion. It can also be negative
+
+        Raises:
+            - ValueError: if the section_name matches an already an existing 3D section.
+        """
+        if group_name not in self.groups.keys():
+            raise ValueError(f"The group specified `{group_name}` does not exist.")
+
+        if self.__get_model_part_by_name(part_name) is None:
+            raise ValueError(f"The model part specified `{part_name}` does not exist.")
+
+        self.groups[group_name]["model_part_names"].append(part_name)
 
     def add_soil_layer_by_coordinates(
             self, coordinates: Sequence[Sequence[float]],
             material_parameters: Union[SoilMaterial, StructuralMaterial],
-            name: str, section_name:Optional[str]=None):
+            name: str, group_name:Optional[str]=None):
         """
         Adds a soil layer to the model by giving a sequence of 2D coordinates. In 3D the 2D geometry is extruded in
-        the out of plane direction which is always the z-direction. For 2D models, the z-coordinate of the `coordinates`
-        variable is set to zero while for 3D extrusion is ignored and set as the starting z-coordinate of the
-        specified section.
+        the out of plane direction. For 2D models, the out of plane coordinate of the `coordinates`
+        variable is set to zero. In 3D the 2D geometry is extruded in the out of plane direction.
+        For this, either the `model.extrusion_length` attribute has to be set or the extrusion group name has to be
+        specified. If both are specified priority is given to the the extrusion group.
 
         Args:
             - coordinates (Sequence[Sequence[float]]): The plane coordinates of the soil layer.
             - material_parameters (Union[:class:`stem.soil_material.SoilMaterial`, \
                 :class:`stem.structural_material.StructuralMaterial`]): The material parameters of the soil layer.
             - name (str): The name of the soil layer.
-            - section_name (Optional[str]): The name of the 3d section name for extruding the layer in the z-dimension. \
-                This is a mandatory input for 3D models.
+            - group_name (Optional[str]): The name of the 3d group name for extruding the layer in the out of plane
+                direction. This is a mandatory input for 3D models if the model.extrusion_length is not set.
 
         Raises:
-            - ValueError: if the model is 3D but no section_name is specified for the extrusion of the soil layer.
+            - ValueError: if the model is 3D but no group_name nor model.extrusion-length are specified.
             - ValueError: if the model is 3D and the specified section_name doesn't exist.
         """
 
@@ -263,21 +300,31 @@ class Model:
         # check if extrusion length is specified in 3D
         if self.ndim == 3:
 
-            if section_name is None:
-                raise ValueError(f"Name of the section to witch the element belongs is a mandatory parameter"
-                                 f" for 3D models.")
+            if self.extrusion_length is None and group_name is None:
+                raise ValueError("For 3D models either the extrusion length or the group name for the extrusion must be"
+                                 " specified.")
 
-            if section_name not in self.sections.keys():
-                raise ValueError(f"Non-existent section specified `{section_name}`.")
+            elif group_name is not None:
 
-            # retrieve end and start z coordinate for extruding the section
-            z_start, z_end = self.sections[section_name]
-            # extrusion length is computed as the difference between end and start z coordinate.
-            extrusion_vector: List[float] = [0, 0, 0]
-            extrusion_vector[OUT_OF_PLANE_AXIS_2D] = z_end - z_start
-            gmsh_input[name]["extrusion_length"] = extrusion_vector
-            # set z-coordinate of the points as the starting z-coordinate of the section.
-            gmsh_input[name]["coordinates"] = [[point[0], point[1], z_start] for point in coordinates]
+                if group_name not in self.groups.keys():
+                    raise ValueError(f"Non-existent group specified `{group_name}`.")
+
+                # retrieve end and start z coordinate for extruding the section
+                extrusion_parameters = self.groups[group_name]["extrusion_parameters"]
+                # extrusion length is computed as the difference between end and start z coordinate.
+                direction_vector = extrusion_parameters["direction_vector"]
+                extrusion_vector: List[float] = [dv * extrusion_parameters["length"] for dv in direction_vector]
+                gmsh_input[name]["extrusion_length"] = extrusion_vector
+                initial_extrusion_coordinate = extrusion_parameters["start_coord"][OUT_OF_PLANE_AXIS_2D]
+                # set z-coordinate of the points as the starting z-coordinate of the section.
+                gmsh_input[name]["coordinates"] = [[point[0], point[1], initial_extrusion_coordinate] for point in coordinates]
+
+            elif self.extrusion_length is not None:
+
+                extrusion_vector: List[float] = [0, 0, 0]
+                extrusion_vector[OUT_OF_PLANE_AXIS_2D] = self.extrusion_length
+                gmsh_input[name]["extrusion_length"] = extrusion_vector
+
 
         elif self.ndim == 2:
             # if model is 2D, the z-coordinate is not relevant and is set to zero.
@@ -294,6 +341,10 @@ class Model:
         body_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
 
         self.body_model_parts.append(body_model_part)
+
+        # add the model part to the group
+        if self.ndim == 3 and group_name is not None:
+            self.add_model_part_to_group(group_name, part_name=name)
 
     def add_load_by_geometry_ids(self, geometry_ids: Sequence[int], load_parameters: LoadParametersABC, name: str):
         """

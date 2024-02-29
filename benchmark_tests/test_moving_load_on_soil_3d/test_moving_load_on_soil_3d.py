@@ -18,8 +18,7 @@ def test_stem():
     # Specify dimension and initiate the model
     ndim = 3
     model = Model(ndim)
-    # Add sections for extrusion
-    model.add_3d_section(section_name="Section 1", z_start=0, z_end=3)
+
     # Specify material model
     # Linear elastic drained soil with a Density of 2650, a Young's modulus of 30e6,
     # a Poisson ratio of 0.2 & a Porosity of 0.3 is specified.
@@ -34,9 +33,10 @@ def test_stem():
 
     # Specify the coordinates for the column: x:5m x y:1m
     layer1_coordinates = [(0.0, 0.0, 0.0), (5.0, 0.0, 0.0), (5.0, 1.0, 0.0), (0.0, 1.0, 0.0)]
+    model.extrusion_length = 3
 
     # Create the soil layer
-    model.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil_layer", "Section 1")
+    model.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil_layer")
 
     # Define moving load
     load_coordinates = [(0.0, 1.0, 3.0), (0.0, 0.0, 3.0), (5.0, 0.0, 3.0), (5.0, 1.0, 3.0)]
