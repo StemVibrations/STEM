@@ -9,6 +9,7 @@ from stem.solver import AnalysisType
 from stem.table import Table
 from stem.utils import Utils
 
+
 @dataclass
 class LoadParametersABC(ABC):
     """
@@ -244,6 +245,7 @@ class MovingLoad(LoadParametersABC):
 
         return element_name
 
+
 @dataclass
 class UvecLoad(LoadParametersABC):
     """
@@ -294,6 +296,7 @@ class UvecLoad(LoadParametersABC):
             raise ValueError("UVEC load can only be applied in mechanical or mechanical groundwater flow analysis")
 
         return element_name
+
 
 @dataclass
 class GravityLoad(LoadParametersABC):

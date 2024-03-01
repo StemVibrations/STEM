@@ -40,7 +40,7 @@ class KratosAdditionalProcessesIO:
         process_dict: Dict[str, Any] = {
             "python_module": "apply_excavation_process",
             "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
-            "process_name":  "ApplyExcavationProcess",
+            "process_name": "ApplyExcavationProcess",
             "Parameters": {},
         }
 
@@ -58,7 +58,8 @@ class KratosAdditionalProcessesIO:
 
         Args:
             - part_name (str): part name where the parameter field is applied
-            - parameters (:class:`stem.additional_processes.ParameterFieldParameters`): parameter field parameters object
+            - parameters (:class:`stem.additional_processes.ParameterFieldParameters`): parameter field parameters \
+                object
 
         Returns:
             - Dict[str, Any]: dictionary containing the additional process parameters
@@ -68,7 +69,7 @@ class KratosAdditionalProcessesIO:
         process_dict: Dict[str, Any] = {
             "python_module": "set_parameter_field_process",
             "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
-            "process_name":  "SetParameterFieldProcess",
+            "process_name": "SetParameterFieldProcess",
             "Parameters": {},
         }
 

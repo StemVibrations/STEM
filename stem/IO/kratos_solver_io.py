@@ -195,7 +195,6 @@ class KratosSolverIO:
 
             # if there is a UVEC load, create the UVEC parameters dictionary
             if isinstance(model_part.parameters, UvecLoad):
-
                 # set strategy type to newton_raphson_with_uvec
                 solver_settings_dict["strategy_type"] = "newton_raphson_with_uvec"
 
@@ -239,7 +238,8 @@ class KratosSolverIO:
                                                     "materials_filename": materials_file_name},
                                                 "time_stepping": {
                                                     "time_step": solver_settings.time_integration.delta_time,
-                                                    "max_delta_time_factor": solver_settings.time_integration.max_delta_time_factor},
+                                                    "max_delta_time_factor":
+                                                        solver_settings.time_integration.max_delta_time_factor},
                                                 "reduction_factor": solver_settings.time_integration.reduction_factor,
                                                 "increase_factor": solver_settings.time_integration.increase_factor,
                                                 "buffer_size": 2,
@@ -250,14 +250,14 @@ class KratosSolverIO:
                                                 "reform_dofs_at_each_step": False,
                                                 "nodal_smoothing": solver_settings.calculate_stresses_on_nodes,
                                                 "block_builder": True,
-                                                "rebuild_level": 0 if solver_settings.is_stiffness_matrix_constant
-                                                                   else 2,
+                                                "rebuild_level": (0 if solver_settings.is_stiffness_matrix_constant
+                                                                  else 2),
                                                 "prebuild_dynamics": solver_settings.are_mass_and_damping_constant,
                                                 "solution_type": self.__set_solution_type(solver_settings),
-                                                "rayleigh_m": solver_settings.rayleigh_m if solver_settings.rayleigh_m
-                                                                                            is not None else 0,
-                                                "rayleigh_k": solver_settings.rayleigh_k if solver_settings.rayleigh_k
-                                                                                            is not None else 0,
+                                                "rayleigh_m": (solver_settings.rayleigh_m
+                                                               if solver_settings.rayleigh_m is not None else 0),
+                                                "rayleigh_k": (solver_settings.rayleigh_k
+                                                               if solver_settings.rayleigh_k is not None else 0),
                                                 "calculate_reactions": True,
                                                 "rotation_dofs": True,
                                                 "reset_displacements": solver_settings.reset_displacements

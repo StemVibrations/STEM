@@ -2,7 +2,7 @@
 This module contains global variables used in the stem package.
 """
 
-from typing import Dict,  Any
+from typing import Dict, Any
 
 GRAVITY_VALUE = -9.81  # [m/s2]
 VERTICAL_AXIS = 1  # [0, 1, 2] = [x, y, z]

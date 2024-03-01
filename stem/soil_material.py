@@ -1,4 +1,4 @@
-from typing import List, Any, Optional, Union
+from typing import List, Any, Optional
 from dataclasses import dataclass, field
 from abc import ABC
 
@@ -46,6 +46,7 @@ class FluidProperties:
     DENSITY_FLUID: float = 1000
     DYNAMIC_VISCOSITY: float = 1.3e-3
     BULK_MODULUS_FLUID: float = 2e9
+
 
 @dataclass
 class OnePhaseSoil(SoilFormulationParametersABC):

@@ -1,9 +1,10 @@
-from typing import List, Any, Optional, Union
+from typing import List, Any, Optional
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 
 from stem.solver import AnalysisType
 from stem.utils import Utils
+
 
 @dataclass
 class StructuralParametersABC(ABC):

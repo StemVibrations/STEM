@@ -1,4 +1,4 @@
-from typing import List, Dict, Any, Union, Optional
+from typing import List, Union, Optional
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 
@@ -67,7 +67,7 @@ class DisplacementConstraint(BoundaryParametersABC):
     def is_constraint(self) -> bool:
         """
         Property which indicates if boundary condition is a constraint. True for DisplacementConstraint.
-        
+
         Returns:
             - bool
         """
@@ -135,7 +135,7 @@ class RotationConstraint(BoundaryParametersABC):
     def is_constraint(self) -> bool:
         """
         Property which indicates if boundary condition is a constraint. True for RotationConstraint.
-        
+
         Returns:
             - bool
         """
@@ -198,7 +198,7 @@ class AbsorbingBoundary(BoundaryParametersABC):
     def is_constraint(self) -> bool:
         """
         Property which indicates if boundary condition is a constraint. False for AbsorbingBoundary.
-        
+
         Returns:
             - bool
         """
@@ -234,6 +234,6 @@ class AbsorbingBoundary(BoundaryParametersABC):
             element_name = f"UPwLysmerAbsorbingCondition{n_dim_model}D{n_nodes_element}N"
         else:
             raise ValueError("Absorbing boundary conditions can only be applied in mechanical or mechanical "
-                            "groundwater flow analysis")
+                             "groundwater flow analysis")
 
         return element_name

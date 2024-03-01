@@ -1,4 +1,4 @@
-from typing import List, Sequence, Dict, Any, Optional, Union, Tuple
+from typing import List, Sequence, Dict, Any, Optional, Union
 
 import numpy as np
 import numpy.typing as npty
@@ -17,10 +17,9 @@ from stem.additional_processes import ParameterFieldParameters
 from stem.load import *
 from stem.water_processes import WaterProcessParametersABC, UniformWaterPressure
 from stem.solver import Problem, StressInitialisationType
-from stem.output import Output
 from stem.utils import Utils
 from stem.plot_utils import PlotUtils
-from stem.globals import ELEMENT_DATA, VERTICAL_AXIS, GRAVITY_VALUE,  OUT_OF_PLANE_AXIS_2D
+from stem.globals import ELEMENT_DATA, VERTICAL_AXIS, GRAVITY_VALUE, OUT_OF_PLANE_AXIS_2D
 
 NUMBER_TYPES = (int, float, np.int64, np.float64)
 
@@ -456,7 +455,7 @@ class Model:
             coordinates = np.array(coordinates, dtype=np.float64)
 
         if len(coordinates.shape) != 2:
-            raise ValueError(f"Coordinates are not a sequence of a sequence or a 2D array.")
+            raise ValueError("Coordinates are not a sequence of a sequence or a 2D array.")
 
         if coordinates.shape[1] != 3:
             raise ValueError(f"Coordinates should be 3D but {coordinates.shape[1]} coordinates were given.")
@@ -504,7 +503,7 @@ class Model:
                 return
 
         # none of the lines contain the origin, then raise an error
-        raise ValueError(f"Origin is not in the trajectory of the moving load.")
+        raise ValueError("Origin is not in the trajectory of the moving load.")
 
     def add_boundary_condition_by_geometry_ids(self, ndim_boundary: int, geometry_ids: Sequence[int],
                                                boundary_parameters: BoundaryParametersABC, name: str):
@@ -684,7 +683,7 @@ class Model:
         new_mesh.elements = {}
         return new_mesh
 
-    def add_field(self, part_name: str,  field_parameters: ParameterFieldParameters):
+    def add_field(self, part_name: str, field_parameters: ParameterFieldParameters):
         """
         Add a parameter field to a given model part (specified by the part_name input). if the `mean_value` attribute
         of the field generator is None, the corresponding material property is used as mean.
@@ -710,7 +709,7 @@ class Model:
 
         # Check that the body model part has a material
         if target_part.material is None:
-            raise ValueError(f"No material assigned to the body model part!")
+            raise ValueError("No material assigned to the body model part!")
 
         # define the name of the new model part to generate the random field
         new_part_name = part_name + "_" + field_parameters.property_name.lower() + "_field"
@@ -1388,7 +1387,7 @@ class Model:
 
         # get geometry ids and ndim for each body model part
         model_parts_geometry_ids = np.array([self.gmsh_io.geo_data["physical_groups"][name]["geometry_ids"] for name in
-                                    body_model_part_names])
+                                             body_model_part_names])
 
         model_parts_ndim = np.array([self.gmsh_io.geo_data["physical_groups"][name]["ndim"]
                                      for name in body_model_part_names]).ravel()
@@ -1473,8 +1472,8 @@ class Model:
         if self.geometry is None:
             raise ValueError("Geometry must be set before showing the geometry")
 
-        fig = PlotUtils.create_geometry_figure(self.ndim, self.geometry, show_volume_ids, show_surface_ids, show_line_ids,
-                                               show_point_ids)
+        fig = PlotUtils.create_geometry_figure(self.ndim, self.geometry, show_volume_ids, show_surface_ids,
+                                               show_line_ids, show_point_ids)
 
         fig.write_html(file_name, auto_open=auto_open)
 
@@ -1491,8 +1490,9 @@ class Model:
             raise ValueError("Project parameters must be set before setting up the stress initialisation")
 
         # add gravity load if K0 procedure or gravity loading is used
-        if (self.project_parameters.settings.stress_initialisation_type == StressInitialisationType.K0_PROCEDURE) or (
-            self.project_parameters.settings.stress_initialisation_type == StressInitialisationType.GRAVITY_LOADING):
+        if (self.project_parameters.settings.stress_initialisation_type == StressInitialisationType.K0_PROCEDURE or
+                (self.project_parameters.settings.stress_initialisation_type
+                 == StressInitialisationType.GRAVITY_LOADING)):
             self.__add_gravity_load()
 
     def __add_water_condition_if_not_provided(self):

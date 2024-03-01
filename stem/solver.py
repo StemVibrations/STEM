@@ -70,6 +70,7 @@ class DisplacementConvergenceCriteria(ConvergenceCriteriaABC):
         """
         return "displacement_criterion"
 
+
 @dataclass
 class ResidualConvergenceCriteria(ConvergenceCriteriaABC):
     """
@@ -127,6 +128,7 @@ class WaterPressureConvergenceCriteria(ConvergenceCriteriaABC):
             - str: The type of the water pressure convergence criterion
         """
         return "water_pressure_criterion"
+
 
 @dataclass
 class DisplacementAndWaterPressureConvergenceCriteria(ConvergenceCriteriaABC):
@@ -265,8 +267,8 @@ class NewtonRaphsonStrategy(StrategyTypeABC):
             decreased and the algorithm is restarted. Default value is 15.
         - min_iterations (int): minimum number of iterations, below this number, the time step size is increased.\
             Default value is 6.
-        - number_cycles (int): number of allowed cycles of decreasing the time step size until the algorithm is stopped.\
-            Default value is 100.
+        - number_cycles (int): number of allowed cycles of decreasing the time step size until the algorithm is \
+            stopped. Default value is 100.
 
     Inheritance:
         - :class:`StrategyTypeABC`
@@ -299,8 +301,8 @@ class LineSearchStrategy(StrategyTypeABC):
             decreased and the algorithm is restarted. Default value is 15.
         - min_iterations (int): minimum number of iterations, below this number, the time step size is increased.\
             Default value is 6.
-        - number_cycles (int): number of allowed cycles of decreasing the time step size until the algorithm is stopped.\
-            Default value is 100.
+        - number_cycles (int): number of allowed cycles of decreasing the time step size until the algorithm \
+            is stopped. Default value is 100.
         - max_line_search_iterations (int): maximum number of line search iterations. Default value is 10.
         - first_alpha_value (float): first alpha guess value used for the first iteration. Default value is 1.0.
         - second_alpha_value (float): second alpha guess value used for the first iteration. Default value is 0.5.
@@ -345,8 +347,8 @@ class ArcLengthStrategy(StrategyTypeABC):
             decreased and the algorithm is restarted. Default value is 15.
         - min_iterations (int): minimum number of iterations, below this number, the time step size is increased.\
             Default value is 6.
-        - number_cycles (int): number of allowed cycles of decreasing the time step size until the algorithm is stopped.\
-            Default value is 100.
+        - number_cycles (int): number of allowed cycles of decreasing the time step size until the algorithm \
+            is stopped. Default value is 100.
         - desired_iterations (int): This is used to calculate the radius of the next step. Default value is 10.
         - max_radius_factor (float): maximum radius factor of the arc. Default value is 1.0.
         - min_radius_factor (float): minimum radius factor of the arc. Default value is 0.1.
@@ -553,4 +555,3 @@ class Problem:
     problem_name: str
     number_of_threads: int
     settings: SolverSettings
-

@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from pathlib import Path
@@ -288,7 +288,6 @@ class VtkOutputParameters(OutputParametersABC):
         validate_nodal_point_output(self.nodal_results)
         validate_gauss_point_output(self.gauss_point_results)
         detect_tensor_outputs(requested_outputs=self.gauss_point_results)
-
 
 
 @dataclass

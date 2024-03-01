@@ -1,4 +1,4 @@
-from typing import Dict, Union, Any, List
+from typing import Dict, Union, Any
 from copy import deepcopy
 
 from stem.soil_material import *
@@ -13,7 +13,7 @@ class KratosMaterialIO:
         - ndim (int): number of dimensions of the mesh
     """
 
-    def __init__(self, ndim: int, domain:str):
+    def __init__(self, ndim: int, domain: str):
         """
         Constructor of KratosMaterialIO class
 
@@ -110,8 +110,8 @@ class KratosMaterialIO:
         is set to the correct law for the dimension of the problem.
 
         Args:
-            - material (:class:`stem.soil_material.SoilConstitutiveLawABC`): soil constitutive law object containing the material parameters for a
-                linear elastic soil material
+            - material (:class:`stem.soil_material.SoilConstitutiveLawABC`): soil constitutive law object containing
+                the material parameters for a linear elastic soil material
 
         Returns:
             - Dict[str, Any]: dictionary containing the material parameters
@@ -136,8 +136,8 @@ class KratosMaterialIO:
         the correct law for the dimension of the problem.
 
         Args:
-            - material (:class:`stem.soil_material.SoilConstitutiveLawABC`): soil constitutive law object containing the material parameters for a
-                UMAT soil material
+            - material (:class:`stem.soil_material.SoilConstitutiveLawABC`): soil constitutive law object containing
+                the material parameters for a UMAT soil material
 
         Returns:
             - Dict[str, Any]: dictionary containing the material parameters
@@ -162,8 +162,8 @@ class KratosMaterialIO:
         the correct law for the dimension of the problem.
 
         Args:
-            - material (:class:`stem.soil_material.SoilConstitutiveLawABC`): soil constitutive law object containing the material parameters for a
-                UDSM soil material
+            - material (:class:`stem.soil_material.SoilConstitutiveLawABC`): soil constitutive law object containing
+                the material parameters for a UDSM soil material
 
         Returns:
             - Dict[str, Any]: dictionary containing the material parameters
@@ -358,8 +358,8 @@ class KratosMaterialIO:
 
         return structural_material_dict
 
-    def create_material_dict(
-            self, part_name:str, material: Union[SoilMaterial, StructuralMaterial], material_id: int) -> Dict[str, Any]:
+    def create_material_dict(self, part_name: str,
+                             material: Union[SoilMaterial, StructuralMaterial], material_id: int) -> Dict[str, Any]:
         """
         Creates a dictionary containing the material parameters
 

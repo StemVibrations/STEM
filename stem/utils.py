@@ -72,7 +72,7 @@ class Utils:
         return signed_area > 0.0
 
     @staticmethod
-    def check_dimensions(points:Sequence[Sequence[float]]) -> None:
+    def check_dimensions(points: Sequence[Sequence[float]]) -> None:
         """
 
         Check if points have the same dimensions (2D or 3D).
@@ -128,7 +128,8 @@ class Utils:
         return is_collinear
 
     @staticmethod
-    def is_point_between_points(point:Sequence[float], start_point:Sequence[float], end_point:Sequence[float]) -> bool:
+    def is_point_between_points(point: Sequence[float], start_point: Sequence[float], end_point: Sequence[float]) \
+            -> bool:
         """
         Check if point is between the other two. Points must have the same dimension (2D or 3D).
 

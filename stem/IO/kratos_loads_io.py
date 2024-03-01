@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import Dict, List, Any, Union
+from typing import Dict, Any, Union
 from stem.load import *
 from stem.IO.io_utils import IOUtils
 
@@ -60,8 +60,8 @@ class KratosLoadsIO:
         """
 
         # initialize load parameters dictionary
-        parameters_dict = {"model_part_name":  f"{self.domain}.{part_name}",
-                           "compute_model_part_name": f"porous_computational_model_part",  # as hard-coded in Kratos
+        parameters_dict = {"model_part_name": f"{self.domain}.{part_name}",
+                           "compute_model_part_name": "porous_computational_model_part",  # as hard-coded in Kratos
                            "variable_name": "POINT_LOAD",
                            "load": [1, 1, 1],  # dummy parameter
                            "direction": parameters.direction,

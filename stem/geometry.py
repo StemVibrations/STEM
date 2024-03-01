@@ -1,5 +1,6 @@
-from typing import Dict, List, Any, Optional, Sequence
+from typing import Dict, Any, Sequence
 from abc import ABC, abstractmethod
+
 
 class GeometricalObjectABC(ABC):
     """
@@ -278,8 +279,8 @@ class Volume(GeometricalObjectABC):
         Creates a volume object from a list of surface ids and a volume id.
 
         Args:
-            - surface_ids (Sequence[int]): A sequence of four or more integers representing the ids of the surfaces that\
-                make up the volume.
+            - surface_ids (Sequence[int]): A sequence of four or more integers representing the ids of the surfaces \
+                that make up the volume.
             - id (int): The id of the volume.
 
         Returns:
@@ -422,11 +423,11 @@ class Geometry:
 
         # add lines to geometry
         for key, value in geo_data["lines"].items():
-            lines[key] = Line.create(value,key)
+            lines[key] = Line.create(value, key)
 
         # add points to geometry
         for key, value in geo_data["points"].items():
-            points[key] = Point.create(value,key)
+            points[key] = Point.create(value, key)
 
         # create the geometry class
         return cls(points, lines, surfaces, volumes)

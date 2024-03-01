@@ -272,8 +272,9 @@ class KratosOutputsIO:
         Returns:
             - output_dict (Dict[str, Any]): dictionary containing two other dictionary \
                                             for output properties: \n
-                                            - the first containing the "output_process" dictionary.
-                                            - the second containing the "processes" dictionary, which includes JSON outputs.
+                                            - the first containing the "output_process" dictionary. \
+                                            - the second containing the "processes" dictionary, \
+                                                which includes JSON outputs.
         """
         output_dict: Dict[str, Any] = {"output_processes": {}, "processes": {}}
 

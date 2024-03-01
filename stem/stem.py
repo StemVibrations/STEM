@@ -7,6 +7,7 @@ from typing import List, Dict
 from stem.model import Model
 from stem.IO.kratos_io import KratosIO
 
+
 class Stem:
     """
     Class containing the main calculation.
@@ -100,7 +101,7 @@ class Stem:
                                                             materials_file_name=material_settings_file_name,
                                                             project_file_name=project_settings_file_name)
 
-                self.__stage_settings_file_names[stage_nr+1] = project_settings_file_name
+                self.__stage_settings_file_names[stage_nr + 1] = project_settings_file_name
 
     def run_stage(self, stage_number: int):
         """
@@ -144,5 +145,3 @@ class Stem:
 
         for stage_nr, stage in enumerate(self.stages):
             self.run_stage(stage_nr + 1)
-
-

@@ -1,7 +1,7 @@
 import os
 from functools import reduce
 from pathlib import Path
-from typing import List, Dict, Any, Optional, Sequence
+from typing import List, Dict, Any, Optional
 
 import numpy as np
 
@@ -21,7 +21,7 @@ from stem.mesh import Element, Node
 from stem.model import Model
 from stem.model_part import ModelPart, BodyModelPart
 from stem.table import Table
-from stem.output import Output, OutputParametersABC, JsonOutputParameters
+from stem.output import Output, JsonOutputParameters
 from stem.utils import Utils
 from stem.IO.io_utils import IOUtils
 
@@ -100,7 +100,7 @@ class KratosIO:
             - bool: whether the process model part writes condition elements
         """
         return isinstance(process_model_part.parameters, (PointLoad, LineLoad, MovingLoad, UvecLoad,
-                                                           SurfaceLoad, AbsorbingBoundary))
+                                                          SurfaceLoad, AbsorbingBoundary))
 
     def __initialise_process_model_part_ids(self, model: Model):
         """
@@ -289,7 +289,7 @@ class KratosIO:
         block_text = self.__write_sub_model_part_block(
             block_text, block_name="Elements", block_entities=entities
         )
-        block_text += [f"End SubModelPart", ""]
+        block_text += ["End SubModelPart", ""]
         return block_text
 
     def write_submodelpart_process_model_part(self, process_model_part: ModelPart) -> List[str]:
@@ -353,7 +353,7 @@ class KratosIO:
                     block_text, block_name="Elements", block_entities=entities
                 )
 
-        block_text += [f"End SubModelPart", ""]
+        block_text += ["End SubModelPart", ""]
         return block_text
 
     @staticmethod
@@ -441,13 +441,9 @@ class KratosIO:
 
         # initialise block
         block_text = ["", f"Begin Table {table.id} TIME VALUE"]
-        block_text.extend(
-            [
-                self.__write_table_line(table.times[ix], table.values[ix])
-                for ix in range(len(table.values))
-             ]
-        )
-        block_text += [f"End Table", ""]
+        block_text.extend([self.__write_table_line(table.times[ix], table.values[ix])
+                           for ix in range(len(table.values))])
+        block_text += ["End Table", ""]
         return block_text
 
     @staticmethod
@@ -508,7 +504,7 @@ class KratosIO:
             element_name = model_part.get_element_name(n_dimensions, n_nodes_element, analysis_type)
         else:
             raise ValueError(
-                f"Analysis type not specified in the model. Please initialise the model with the analysis type."
+                "Analysis type not specified in the model. Please initialise the model with the analysis type."
             )
 
         return element_name
@@ -568,7 +564,7 @@ class KratosIO:
                     for el in body_model_part.mesh.elements.values()
                 ]
             )
-        block_text += [f"End Elements", ""]
+        block_text += ["End Elements", ""]
         return block_text
 
     def write_conditions_process_model_part(self, process_model_part: ModelPart, mat_id: int,
@@ -607,7 +603,7 @@ class KratosIO:
             block_text.extend(
                 [self.__write_element_line(mat_id, el) for el in process_model_part.mesh.elements.values()]
             )
-            block_text += [f"End Conditions", ""]
+            block_text += ["End Conditions", ""]
         else:
             block_text = []
 
@@ -826,7 +822,8 @@ class KratosIO:
 
         return output_formatted_txt
 
-    def __write_material_parameters_json(self, model: Model, materials_file_name: str = "MaterialParameters.json") -> Dict[str, Any]:
+    def __write_material_parameters_json(self, model: Model, materials_file_name: str = "MaterialParameters.json") \
+            -> Dict[str, Any]:
         """
         Writes the material parameters to json format for Kratos.
 
