@@ -11,3 +11,5 @@ repos:
     rev: 7.0.0
     hooks:
       - id: flake8
+        files: "./stem"
+
