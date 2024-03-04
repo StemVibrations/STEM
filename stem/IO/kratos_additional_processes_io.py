@@ -22,9 +22,8 @@ class KratosAdditionalProcessesIO:
         """
         self.domain = domain
 
-    def __create_excavation_dict(
-        self, part_name: str, parameters: Excavation
-    ) -> Dict[str, Any]:
+    def __create_excavation_dict(self, part_name: str,
+                                 parameters: Excavation) -> Dict[str, Any]:
         """
         Creates a dictionary containing the parameters for the excavation process
 
@@ -50,9 +49,7 @@ class KratosAdditionalProcessesIO:
 
         return process_dict
 
-    def __create_parameter_field_dict(
-        self, part_name: str, parameters: ParameterFieldParameters
-    ) -> Dict[str, Any]:
+    def __create_parameter_field_dict(self, part_name: str, parameters: ParameterFieldParameters) -> Dict[str, Any]:
         """
         Creates a dictionary containing the parameters for the parameter field process
 
@@ -91,9 +88,8 @@ class KratosAdditionalProcessesIO:
 
         return process_dict
 
-    def create_additional_processes_dict(
-        self, part_name: str, parameters: AdditionalProcessesParametersABC
-    ) -> Union[Dict[str, Any], None]:
+    def create_additional_processes_dict(self, part_name: str,
+                                         parameters: AdditionalProcessesParametersABC) -> Union[Dict[str, Any], None]:
         """
         Creates a dictionary containing the boundary parameters
 
