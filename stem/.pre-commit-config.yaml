@@ -1,0 +1,13 @@
+repos:
+  - repo: local
+    hooks:
+      - id: yapf
+        name: yapf
+        language: python
+        entry: yapf
+        args: [-i]
+        types: [python]
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
