@@ -24,9 +24,8 @@ class KratosBoundariesIO:
         """
         self.domain = domain
 
-    def __create_absorbing_boundary_dict(
-        self, part_name: str, parameters: AbsorbingBoundary
-    ) -> Dict[str, Any]:
+    def __create_absorbing_boundary_dict(self, part_name: str,
+                                         parameters: AbsorbingBoundary) -> Dict[str, Any]:
         """
         Creates a dictionary containing the absorbing boundary parameters
 
@@ -50,9 +49,8 @@ class KratosBoundariesIO:
 
         return boundary_dict
 
-    def create_boundary_condition_dict(
-        self, part_name: str, parameters: BoundaryParametersABC
-    ) -> Union[Dict[str, Any], None]:
+    def create_boundary_condition_dict(self, part_name: str,
+                                       parameters: BoundaryParametersABC) -> Union[Dict[str, Any], None]:
         """
         Creates a dictionary containing the boundary parameters
 
@@ -67,11 +65,12 @@ class KratosBoundariesIO:
         # add boundary parameters to dictionary based on boundary type.
 
         if isinstance(parameters, DisplacementConstraint):
-            return IOUtils.create_vector_constraint_table_process_dict(self.domain, part_name, parameters,
+            return IOUtils.create_vector_constraint_table_process_dict(self.domain,
+                                                                       part_name,
+                                                                       parameters,
                                                                        "DISPLACEMENT")
         elif isinstance(parameters, RotationConstraint):
-            return IOUtils.create_vector_constraint_table_process_dict(self.domain, part_name, parameters,
-                                                                       "ROTATION")
+            return IOUtils.create_vector_constraint_table_process_dict(self.domain, part_name, parameters, "ROTATION")
         elif isinstance(parameters, AbsorbingBoundary):
             return self.__create_absorbing_boundary_dict(part_name, parameters)
         else:
