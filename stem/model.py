@@ -214,7 +214,7 @@ class Model:
                 self.process_model_parts.append(model_part)
 
 
-    def add_group(self, group_name:str, start_coordinate:float, length: float):
+    def add_group_for_extrusion(self, group_name: str, reference_depth: float, extrusion_length: float):
         """
         Adds a group for extrusion which consists of a starting coordinate in the out of plane direction a name and the
         the length for the extrusion. The group must be always unique while extrusion length can also be negative.
@@ -233,20 +233,20 @@ class Model:
         direction_vector: List[float] = [0, 0, 0]
         direction_vector[OUT_OF_PLANE_AXIS_2D] = 1
 
-        start_coordinates: List[float]  = [0, 0, 0]
-        start_coordinates[OUT_OF_PLANE_AXIS_2D] = start_coordinate
+        reference_coordinate: List[float]  = [0, 0, 0]
+        reference_coordinate[OUT_OF_PLANE_AXIS_2D] = reference_depth
 
         self.groups[group_name] = {
             "model_part_names": [],
             "extrusion_parameters":{
-                "start_coord":start_coordinates,
+                "reference_coordinate": reference_coordinate,
                 "length": length,
                 "direction_vector": direction_vector
             }
         }
 
 
-    def add_model_part_to_group(self, group_name:str, part_name:str):
+    def add_model_part_to_group(self, group_name: str, part_name: str):
         """
         Adds a model part name to a pre-existing group for extrusion.
 
@@ -282,12 +282,11 @@ class Model:
             - material_parameters (Union[:class:`stem.soil_material.SoilMaterial`, \
                 :class:`stem.structural_material.StructuralMaterial`]): The material parameters of the soil layer.
             - name (str): The name of the soil layer.
-            - group_name (Optional[str]): The name of the 3d group name for extruding the layer in the out of plane
-                direction. This is a mandatory input for 3D models if the model.extrusion_length is not set.
+            - group_name (Optional[str]): The name of the 3D group name for extruding the layer. 
 
         Raises:
-            - ValueError: if the model is 3D but no group_name nor model.extrusion-length are specified.
-            - ValueError: if the model is 3D and the specified section_name doesn't exist.
+            - ValueError: if the model is 3D but no group_name nor model.extrusion_length are specified.
+            - ValueError: if the model is 3D and the specified group_name doesn't exist.
         """
 
         # sort coordinates in anti-clockwise order, such that elements in mesh are also in anti-clockwise order
