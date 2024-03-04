@@ -250,8 +250,7 @@ class KratosSolverIO:
                                                 "reform_dofs_at_each_step": False,
                                                 "nodal_smoothing": solver_settings.calculate_stresses_on_nodes,
                                                 "block_builder": True,
-                                                "rebuild_level": (0 if solver_settings.is_stiffness_matrix_constant
-                                                                  else 2),
+                                                "rebuild_level": (0 if solver_settings.is_stiffness_matrix_constant else 2),
                                                 "prebuild_dynamics": solver_settings.are_mass_and_damping_constant,
                                                 "solution_type": self.__set_solution_type(solver_settings),
                                                 "rayleigh_m": (solver_settings.rayleigh_m
