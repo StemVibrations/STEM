@@ -163,8 +163,7 @@ class RotationConstraint(BoundaryParametersABC):
             2: [None],
             3: [None],
         }
-        Utils.check_ndim_nnodes_combinations(n_dim_model, None,
-                                             available_node_dim_combinations, "Rotation constraint")
+        Utils.check_ndim_nnodes_combinations(n_dim_model, None,    available_node_dim_combinations, "Rotation constraint")
 
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
             # rotation constraint does not have an element name
