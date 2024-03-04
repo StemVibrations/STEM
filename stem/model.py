@@ -37,9 +37,7 @@ class Model:
         - process_model_parts (List[:class:`stem.model_part.ModelPart`]): A list containing the process model parts.
         - output_settings (List[:class:`stem.output.Output`]): A list containing the output settings.
         - extrusion_length (Optional[float]): The extrusion length in the out of plane direction.
-        - groups (Dict[str, Tuple[float, float]]): A dictionary collecting the groups for extruding geometries on \
-            the out of plane direction. The dictionary links the group name to the model part belonging to the group \
-            and information for extruding the model parts for 3D models.
+        - groups (Dict[str, Any]): A dictionary containing shared information among sets of model parts.
 
     """
     def __init__(self, ndim: int):
@@ -214,14 +212,14 @@ class Model:
                 self.process_model_parts.append(model_part)
 
 
-    def add_group(self, group_name:str, start_coordinate:float, length: float):
+    def add_group(self, group_name:str, reference_depth:float, length: float):
         """
         Adds a group for extrusion which consists of a starting coordinate in the out of plane direction a name and the
         the length for the extrusion. The group must be always unique while extrusion length can also be negative.
 
         Args:
             - group_name (str): The name of the group. Must be unique.
-            - start_coordinate (float): The start coordinate for the extrusion in the out of plane direction.
+            - reference_depth (float): The reference (starting) depth for the extrusion in the out of plane direction.
             - length (float): The length of the group used for the extrusion. It can also be negative
 
         Raises:
@@ -234,12 +232,12 @@ class Model:
         direction_vector[OUT_OF_PLANE_AXIS_2D] = 1
 
         start_coordinates: List[float]  = [0, 0, 0]
-        start_coordinates[OUT_OF_PLANE_AXIS_2D] = start_coordinate
+        start_coordinates[OUT_OF_PLANE_AXIS_2D] = reference_depth
 
         self.groups[group_name] = {
             "model_part_names": [],
             "extrusion_parameters":{
-                "start_coord":start_coordinates,
+                "reference_depth":reference_depth,
                 "length": length,
                 "direction_vector": direction_vector
             }
@@ -271,11 +269,9 @@ class Model:
             material_parameters: Union[SoilMaterial, StructuralMaterial],
             name: str, group_name:Optional[str]=None):
         """
-        Adds a soil layer to the model by giving a sequence of 2D coordinates. In 3D the 2D geometry is extruded in
-        the out of plane direction. For 2D models, the out of plane coordinate of the `coordinates`
-        variable is set to zero. In 3D the 2D geometry is extruded in the out of plane direction.
-        For this, either the `model.extrusion_length` attribute has to be set or the extrusion group name has to be
-        specified. If both are specified priority is given to the the extrusion group.
+        Adds a soil layer to the model by giving a sequence of 2D coordinates.
+        In a 3D model, the 2D geometry is extruded in the direction of the extrusion group.
+        If no extrusion group is provided, the geometry is extruded in the out of plane direction.
 
         Args:
             - coordinates (Sequence[Sequence[float]]): The plane coordinates of the soil layer.
@@ -294,6 +290,9 @@ class Model:
         if Utils.are_2d_coordinates_clockwise(coordinates):
             coordinates = coordinates[::-1]
 
+        # validation of group_name
+        if group_name is not None and group_name not in self.groups.keys():
+            raise ValueError(f"Non-existent group specified `{group_name}`.")
 
         gmsh_input = {name: {"coordinates": coordinates, "ndim": self.ndim}}
 
@@ -306,29 +305,23 @@ class Model:
 
             elif group_name is not None:
 
-                if group_name not in self.groups.keys():
-                    raise ValueError(f"Non-existent group specified `{group_name}`.")
-
-                # retrieve end and start z coordinate for extruding the section
+                # retrieve information about group
                 extrusion_parameters = self.groups[group_name]["extrusion_parameters"]
-                # extrusion length is computed as the difference between end and start z coordinate.
+                # normalise the direction vector and scale it by the extrusion length
                 direction_vector = extrusion_parameters["direction_vector"]
-                extrusion_vector: List[float] = [dv * extrusion_parameters["length"] for dv in direction_vector]
+                norm = np.linalg.norm(direction_vector)
+                extrusion_vector: List[float] = [dv * extrusion_parameters["length"] / norm for dv in direction_vector]
                 gmsh_input[name]["extrusion_length"] = extrusion_vector
-                initial_extrusion_coordinate = extrusion_parameters["start_coord"][OUT_OF_PLANE_AXIS_2D]
-                # set z-coordinate of the points as the starting z-coordinate of the section.
-                gmsh_input[name]["coordinates"] = [[point[0], point[1], initial_extrusion_coordinate] for point in coordinates]
+
+                # initial_extrusion_coordinate = extrusion_parameters["start_coord"][OUT_OF_PLANE_AXIS_2D]
+                # # set z-coordinate of the points as the starting out-of-plane coordinate of the section.
+                # gmsh_input[name]["coordinates"] = [[point[0], point[1], initial_extrusion_coordinate] for point in coordinates]
 
             elif self.extrusion_length is not None:
 
                 extrusion_vector: List[float] = [0, 0, 0]
                 extrusion_vector[OUT_OF_PLANE_AXIS_2D] = self.extrusion_length
                 gmsh_input[name]["extrusion_length"] = extrusion_vector
-
-
-        elif self.ndim == 2:
-            # if model is 2D, the z-coordinate is not relevant and is set to zero.
-            gmsh_input[name]["coordinates"] = [[point[0], point[1], 0] for point in coordinates]
 
         # todo check if this function in gmsh io can be improved
         self.gmsh_io.generate_geometry(gmsh_input, "")
@@ -343,7 +336,7 @@ class Model:
         self.body_model_parts.append(body_model_part)
 
         # add the model part to the group
-        if self.ndim == 3 and group_name is not None:
+        if group_name is not None:
             self.add_model_part_to_group(group_name, part_name=name)
 
     def add_load_by_geometry_ids(self, geometry_ids: Sequence[int], load_parameters: LoadParametersABC, name: str):
