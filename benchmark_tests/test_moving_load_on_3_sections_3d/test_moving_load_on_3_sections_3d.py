@@ -65,7 +65,7 @@ def test_stem():
     model.add_soil_layer_by_coordinates(embankment_coordinates, material_soil, "embankment1", "Section 1")
     model.add_soil_layer_by_coordinates(bridge_coordinates, material_bridge, "bridge", "Section 2")
     model.add_soil_layer_by_coordinates(embankment_coordinates, material_soil, "embankment2", "Section 3")
-    model.show_geometry(show_surface_ids=True)
+    # model.show_geometry(show_surface_ids=True)
 
     # Define moving load
     load_coordinates = [(0.5, 1.0, 0.0), (0.5, 1.0, 5.0)]
