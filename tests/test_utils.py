@@ -682,7 +682,6 @@ class TestUtilsStem:
         # test that None is returned if points are collinear
         assert Utils.find_first_three_non_collinear_points(points=[(0, 0, 0), (0.5, 0.5, 0), (1, 1, 0)]) is None
 
-
     def test_is_polygon_planar(self):
         """
         Checks whether points in a polygon lie on the same plane, also for trivial 2d points.
@@ -719,16 +718,11 @@ class TestUtilsStem:
         coplanar_point = (0.5, 0.5, 0)
         non_coplanar_point = (0.5, 0.5, 1)
 
-        assert Utils.is_point_coplanar_to_polygon(
-            polygon_points=polygon, point=coplanar_point
-        )
-        assert not Utils.is_point_coplanar_to_polygon(
-            polygon_points=polygon, point=non_coplanar_point
-        )
+        assert Utils.is_point_coplanar_to_polygon(polygon_points=polygon, point=coplanar_point)
+        assert not Utils.is_point_coplanar_to_polygon(polygon_points=polygon, point=non_coplanar_point)
 
         # error is raised if points in the polygon are collinear
         msg = "All the points in the polygon are collinear."
         with pytest.raises(ValueError, match=msg):
-            Utils.is_point_coplanar_to_polygon(
-                polygon_points=[(0, 0, 0), (0.5, 0, 0), (1, 0, 0)], point=non_coplanar_point
-            )
+            Utils.is_point_coplanar_to_polygon(polygon_points=[(0, 0, 0), (0.5, 0, 0), (1, 0, 0)],
+                                               point=non_coplanar_point)

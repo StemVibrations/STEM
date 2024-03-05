@@ -529,9 +529,8 @@ class Utils:
         return np.array(node_ids)[np.hstack(close_indices, dtype=np.int64)]
 
     @staticmethod
-    def find_first_three_non_collinear_points(
-            points: Sequence[Sequence[float]], a_tol=1e-06
-    ) -> Optional[Sequence[Sequence[float]]]:
+    def find_first_three_non_collinear_points(points: Sequence[Sequence[float]],
+                                              a_tol=1e-06) -> Optional[Sequence[Sequence[float]]]:
         """
         Find the first 3 non-collinear points in sequence of points. If all are collinear, the function returns `None`.
 
@@ -560,9 +559,9 @@ class Utils:
         return None
 
     @staticmethod
-    def is_point_coplanar_to_polygon(
-            point: Sequence[float], polygon_points: Sequence[Sequence[float]], a_tol=1e-06
-    ) -> bool:
+    def is_point_coplanar_to_polygon(point: Sequence[float],
+                                     polygon_points: Sequence[Sequence[float]],
+                                     a_tol=1e-06) -> bool:
         """
         Checks whether a point is coplanar to a list of points defining a polygon
 

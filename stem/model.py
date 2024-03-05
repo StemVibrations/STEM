@@ -214,7 +214,6 @@ class Model:
             else:
                 self.process_model_parts.append(model_part)
 
-
     def add_group_for_extrusion(self, group_name: str, reference_depth: float, extrusion_length: float):
         """
         Adds a group for extrusion which consists of a starting coordinate in the out of plane direction a name and the
@@ -234,18 +233,17 @@ class Model:
         direction_vector: List[float] = [0, 0, 0]
         direction_vector[OUT_OF_PLANE_AXIS_2D] = 1
 
-        reference_coordinate: List[float]  = [0, 0, 0]
+        reference_coordinate: List[float] = [0, 0, 0]
         reference_coordinate[OUT_OF_PLANE_AXIS_2D] = reference_depth
 
         self.groups[group_name] = {
             "model_part_names": [],
-            "extrusion_parameters":{
+            "extrusion_parameters": {
                 "reference_coordinate": reference_coordinate,
                 "length": extrusion_length,
                 "direction_vector": direction_vector
             }
         }
-
 
     def add_model_part_to_group(self, group_name: str, part_name: str):
         """
@@ -267,10 +265,11 @@ class Model:
 
         self.groups[group_name]["model_part_names"].append(part_name)
 
-    def add_soil_layer_by_coordinates(
-            self, coordinates: Sequence[Sequence[float]],
-            material_parameters: Union[SoilMaterial, StructuralMaterial],
-            name: str, group_name:Optional[str]=None):
+    def add_soil_layer_by_coordinates(self,
+                                      coordinates: Sequence[Sequence[float]],
+                                      material_parameters: Union[SoilMaterial, StructuralMaterial],
+                                      name: str,
+                                      group_name: Optional[str] = None):
         """
         Adds a soil layer to the model by giving a sequence of 3D coordinates.
         The coordinates have to belong to the same plane.
@@ -325,8 +324,9 @@ class Model:
                 reference_point_group = extrusion_parameters["reference_coordinate"]
 
                 if not Utils.is_point_coplanar_to_polygon(reference_point_group, coordinates):
-                    raise ValueError(f"The reference coordinate of group: {group_name}, does not lay on the same plane as soil layer: {name}")
-
+                    raise ValueError(
+                        f"The reference coordinate of group: {group_name}, does not lay on the same plane as soil layer: {name}"
+                    )
 
             elif self.extrusion_length is not None:
 

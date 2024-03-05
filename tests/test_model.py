@@ -800,27 +800,23 @@ class TestModel:
             model.add_soil_layer_by_coordinates(shape1, soil_material1, "layer1")
 
         # expect it raises an error when adding a layer to a non-existing section
-        with pytest.raises(
-                ValueError, match="Non-existent group specified `Group2`."
-        ):
+        with pytest.raises(ValueError, match="Non-existent group specified `Group2`."):
             model.add_soil_layer_by_coordinates(shape1, soil_material1, "layer1", group_name="Group2")
 
         # add a soil layer that doesn't contain the reference point of the group
         shape2 = [(0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1)]
 
         with pytest.raises(
-                ValueError, match="The reference coordinate of group: Group1, does not lay on the same plane as soil layer: layer2"
+                ValueError,
+                match="The reference coordinate of group: Group1, does not lay on the same plane as soil layer: layer2"
         ):
             model.add_soil_layer_by_coordinates(shape2, soil_material1, "layer2", group_name="Group1")
 
         # add a soil layer which section is not planar
         shape3 = [(0, 0, 0), (1, 0, 0), (1, 1, 2), (0, 1, 3)]
 
-        with pytest.raises(
-                ValueError, match="Polygon for the soil layer are not on the same plane."
-        ):
+        with pytest.raises(ValueError, match="Polygon for the soil layer are not on the same plane."):
             model.add_soil_layer_by_coordinates(shape3, soil_material1, "layer3", group_name="Group1")
-
 
     def test_validation_of_adding_groups(self):
         """
@@ -860,7 +856,6 @@ class TestModel:
         with pytest.raises(ValueError, match="The model part specified `test_part` does not exist."):
             model.add_model_part_to_group(group_name="Group1", part_name="test_part")
 
-
     def test_add_multiple_sections_3D(self, create_default_3d_soil_material: SoilMaterial):
         """
         Test if two extruded sections are added correctly to the model in a 3D space. Two triangular sections are
@@ -875,7 +870,6 @@ class TestModel:
 
         shape1 = [(0, 0, 0), (1, 0, 0), (0, 1, 0)]
         shape2 = [(0, 0.5, 1), (0.5, 0.5, 1), (0, 1, 1)]
-
 
         # define soil materials
         soil_material1 = create_default_3d_soil_material
@@ -931,17 +925,15 @@ class TestModel:
         }
 
         geometry_1.surfaces = {
-            11 : Surface.create([19, 22, -20, -21], 11),
-            12 : Surface.create([20, 25, 11, -23, -24], 12),
-            13 : Surface.create([23, 12, 27, -19, -26], 13),
-            14 : Surface.create([21, 24, 26], 14),
-            15 : Surface.create([27, 22, 25, -10], 15),
-            6 : Surface.create([10, 11, 12], 6)
+            11: Surface.create([19, 22, -20, -21], 11),
+            12: Surface.create([20, 25, 11, -23, -24], 12),
+            13: Surface.create([23, 12, 27, -19, -26], 13),
+            14: Surface.create([21, 24, 26], 14),
+            15: Surface.create([27, 22, 25, -10], 15),
+            6: Surface.create([10, 11, 12], 6)
         }
 
-        geometry_1.volumes = {
-            1: Volume.create([-11, -12, -13, -14, 15, 6], 1)
-        }
+        geometry_1.volumes = {1: Volume.create([-11, -12, -13, -14, 15, 6], 1)}
 
         geometry_2 = Geometry()
 
@@ -974,9 +966,7 @@ class TestModel:
             10: Surface.create([15, 17, 18], 10)
         }
 
-        geometry_2.volumes = {
-            2: Volume.create([-7, -8, -9, -6, 10], 2)
-        }
+        geometry_2.volumes = {2: Volume.create([-7, -8, -9, -6, 10], 2)}
 
         expected_geometries = [geometry_1, geometry_2]
 
