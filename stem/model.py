@@ -325,7 +325,7 @@ class Model:
 
             elif self.extrusion_length is not None:
 
-                extrusion_vector: List[float] = [0, 0, 0]
+                extrusion_vector = [0, 0, 0]
                 extrusion_vector[OUT_OF_PLANE_AXIS_2D] = self.extrusion_length
                 gmsh_input[name]["extrusion_length"] = extrusion_vector
 
