@@ -269,7 +269,8 @@ class Model:
             material_parameters: Union[SoilMaterial, StructuralMaterial],
             name: str, group_name:Optional[str]=None):
         """
-        Adds a soil layer to the model by giving a sequence of 2D coordinates.
+        Adds a soil layer to the model by giving a sequence of 3D coordinates.
+        The coordinates have to belong to the same plane.
         In a 3D model, the 2D geometry is extruded in the direction of the extrusion group.
         If no extrusion group is provided, the geometry is extruded in the out of plane direction.
 
@@ -281,8 +282,11 @@ class Model:
             - group_name (Optional[str]): The name of the 3D group name for extruding the layer.
 
         Raises:
-            - ValueError: if the model is 3D but no group_name nor model.extrusion_length are specified.
+            - ValueError: if the polygon of the soil layer is not planar.
             - ValueError: if the model is 3D and the specified group_name doesn't exist.
+            - ValueError: if the model is 3D but no group_name nor model.extrusion_length are specified.
+            - ValueError: if the model is 3D, a valid group is specified, but the reference point of the group \
+                is not in the same plane of the polygon of the soil layer.
         """
 
         # sort coordinates in anti-clockwise order, such that elements in mesh are also in anti-clockwise order
