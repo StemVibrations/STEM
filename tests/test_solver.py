@@ -12,8 +12,12 @@ class TestSolverSettings:
         """
         analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
         solution_type = SolutionType.DYNAMIC
-        time_integration = TimeIntegration(start_time=0.0, end_time=0.15, delta_time=0.0025, reduction_factor=1.0,
-                                           increase_factor=1.0, max_delta_time_factor=1000)
+        time_integration = TimeIntegration(start_time=0.0,
+                                           end_time=0.15,
+                                           delta_time=0.0025,
+                                           reduction_factor=1.0,
+                                           increase_factor=1.0,
+                                           max_delta_time_factor=1000)
         convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0E-12,
                                                                 displacement_absolute_tolerance=1.0E-6)
         stress_initialisation_type = StressInitialisationType.NONE
@@ -21,7 +25,8 @@ class TestSolverSettings:
         strategy = NewtonRaphsonStrategy()
         scheme = NewmarkScheme()
 
-        solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
+        solver_settings = SolverSettings(analysis_type=analysis_type,
+                                         solution_type=solution_type,
                                          stress_initialisation_type=stress_initialisation_type,
                                          time_integration=time_integration,
                                          is_stiffness_matrix_constant=True,
@@ -30,8 +35,7 @@ class TestSolverSettings:
                                          scheme=scheme,
                                          convergence_criteria=convergence_criterion,
                                          rayleigh_k=6e-6,
-                                         rayleigh_m=0.02
-                                         )
+                                         rayleigh_m=0.02)
 
         # check if validated settings have not changed compared to the input
         assert isinstance(solver_settings.scheme, NewmarkScheme)

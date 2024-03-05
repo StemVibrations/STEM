@@ -52,7 +52,8 @@ def test_stem():
 
     # Define displacement conditions
     displacement_parameters = DisplacementConstraint(active=[True, True, False],
-                                                    is_fixed=[True, True, False], value=[0, 0, 0])
+                                                     is_fixed=[True, True, False],
+                                                     value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
 
@@ -76,19 +77,26 @@ def test_stem():
     analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
     solution_type = SolutionType.DYNAMIC
     # Set up start and end time of calculation, time step and etc
-    time_integration = TimeIntegration(start_time=0.0, end_time=1.0, delta_time=0.01, reduction_factor=1.0,
-                                    increase_factor=1.0, max_delta_time_factor=1000)
+    time_integration = TimeIntegration(start_time=0.0,
+                                       end_time=1.0,
+                                       delta_time=0.01,
+                                       reduction_factor=1.0,
+                                       increase_factor=1.0,
+                                       max_delta_time_factor=1000)
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
                                                             displacement_absolute_tolerance=1.0e-9)
     strategy_type = NewtonRaphsonStrategy(min_iterations=6, max_iterations=15, number_cycles=100)
     stress_initialisation_type = StressInitialisationType.NONE
-    solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
-                                    stress_initialisation_type=stress_initialisation_type,
-                                    time_integration=time_integration,
-                                    is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
-                                    convergence_criteria=convergence_criterion,
-                                    strategy_type=strategy_type, rayleigh_k=0.001,
-                                    rayleigh_m=0.1)
+    solver_settings = SolverSettings(analysis_type=analysis_type,
+                                     solution_type=solution_type,
+                                     stress_initialisation_type=stress_initialisation_type,
+                                     time_integration=time_integration,
+                                     is_stiffness_matrix_constant=True,
+                                     are_mass_and_damping_constant=True,
+                                     convergence_criteria=convergence_criterion,
+                                     strategy_type=strategy_type,
+                                     rayleigh_k=0.001,
+                                     rayleigh_m=0.1)
 
     # Set up problem data
     problem = Problem(problem_name="test_lysmer_boundary_column3d_tetra", number_of_threads=1, settings=solver_settings)
@@ -97,19 +105,19 @@ def test_stem():
     # Define the results to be written to the output file
 
     # Nodal results
-    nodal_results = [NodalOutput.DISPLACEMENT,
-                    NodalOutput.VELOCITY]
+    nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY]
     # Gauss point results
     gauss_point_results = []
 
     # Define the output process
-    model.add_output_settings(output_parameters=VtkOutputParameters(
-        file_format="ascii",
-        output_interval=10,
-        nodal_results=nodal_results,
-        gauss_point_results=gauss_point_results,
-        output_control_type="step"
-    ), part_name="porous_computational_model_part", output_dir="output", output_name="vtk_output")
+    model.add_output_settings(output_parameters=VtkOutputParameters(file_format="ascii",
+                                                                    output_interval=10,
+                                                                    nodal_results=nodal_results,
+                                                                    gauss_point_results=gauss_point_results,
+                                                                    output_control_type="step"),
+                              part_name="porous_computational_model_part",
+                              output_dir="output",
+                              output_name="vtk_output")
 
     input_folder = "benchmark_tests/test_lysmer_boundary_column3d_tetra/inputs_kratos"
 

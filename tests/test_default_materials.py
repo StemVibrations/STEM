@@ -6,18 +6,15 @@ from tests.utils import TestUtils
 
 
 class TestDefaultMaterials:
+
     def test_default_structural_materials(self):
         """
         Test the default material parameters to be used in STEM.
         """
         ndim = 3
         default_materials = [
-            DefaultMaterial.Rail_46E3_3D.value,
-            DefaultMaterial.Rail_54E1_3D.value,
-            DefaultMaterial.Rail_60E1_3D.value,
-            DefaultMaterial.Rail_46E3_2D.value,
-            DefaultMaterial.Rail_54E1_2D.value,
-            DefaultMaterial.Rail_60E1_2D.value
+            DefaultMaterial.Rail_46E3_3D.value, DefaultMaterial.Rail_54E1_3D.value, DefaultMaterial.Rail_60E1_3D.value,
+            DefaultMaterial.Rail_46E3_2D.value, DefaultMaterial.Rail_54E1_2D.value, DefaultMaterial.Rail_60E1_2D.value
         ]
 
         all_materials = {m_obj.name: m_obj for m_obj in default_materials}
@@ -33,14 +30,9 @@ class TestDefaultMaterials:
                     part_name=part_name,
                     material=material_parameters,
                     material_id=ix + 1,
-                )
-            )
+                ))
 
-        expected_material_parameters_json = json.load(
-            open("tests/test_data/expected_default_materials.json")
-        )
+        expected_material_parameters_json = json.load(open("tests/test_data/expected_default_materials.json"))
 
         # compare json files using custom dictionary comparison
-        TestUtils.assert_dictionary_almost_equal(
-            expected_material_parameters_json, test_dict
-        )
+        TestUtils.assert_dictionary_almost_equal(expected_material_parameters_json, test_dict)

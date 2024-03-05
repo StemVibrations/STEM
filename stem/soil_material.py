@@ -276,8 +276,7 @@ class SoilMaterial:
             2: [3, 4, 6, 8],
             3: [4, 8, 10, 20],
         }
-        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations,
-                                             "Soil")
+        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations, "Soil")
 
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
 

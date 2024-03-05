@@ -2,6 +2,7 @@ import numpy as np
 
 GRAVITY = 9.81
 
+
 class Cart():
     """
     Cart class
@@ -10,6 +11,7 @@ class Cart():
         - bogies (list): list of bogies
         - dofs (list): list of degrees of freedom
     """
+
     def __init__(self):
         """
         Initialise the cart
@@ -26,12 +28,13 @@ class Bogie():
         - wheels (list): list of wheels
         - dofs (list): list of degrees of freedom
     """
+
     def __init__(self):
         """
         Initialise the bogie
         """
         self.wheels = []
-        self.dofs =[]
+        self.dofs = []
 
 
 class Wheel():
@@ -41,10 +44,9 @@ class Wheel():
     Attributes:
         - dofs (list): list of degrees of freedom
     """
+
     def __init__(self):
         self.dofs = []
-
-
 
 
 class TrainModel():
@@ -54,7 +56,6 @@ class TrainModel():
         self.n_carts = None
         self.n_bogies = None
         self.n_wheels = None
-
 
         self.cart_intertia = None
         self.cart_mass = None
@@ -76,7 +77,6 @@ class TrainModel():
 
         self.contact_coeff = None
         self.contact_power = None
-
 
     def initialise(self):
         """
@@ -131,15 +131,15 @@ class TrainModel():
             i_dof += 2
 
             for bogie in cart.bogies:
-                    # bogie has displacement and rotation dof
-                    bogie.dofs = [i_dof, i_dof + 1]
-                    i_dof += 2
+                # bogie has displacement and rotation dof
+                bogie.dofs = [i_dof, i_dof + 1]
+                i_dof += 2
 
-                    for wheel in bogie.wheels:
-                        # wheel has displacement dof
-                        wheel.dofs = [i_dof]
-                        self.contact_dofs.append(i_dof)
-                        i_dof += 1
+                for wheel in bogie.wheels:
+                    # wheel has displacement dof
+                    wheel.dofs = [i_dof]
+                    self.contact_dofs.append(i_dof)
+                    i_dof += 1
 
         self.ndof = i_dof
 
@@ -149,7 +149,6 @@ class TrainModel():
         """
 
         mass_matrix = np.zeros((self.ndof, self.ndof))
-
 
         for cart in self.carts:
             mass_matrix[cart.dofs[0], cart.dofs[0]] += self.cart_mass
@@ -184,12 +183,11 @@ class TrainModel():
 
                 stiffness_matrix[bogie.dofs[0], bogie.dofs[0]] += self.cart_stiffness
 
-
                 stiffness_matrix[bogie.dofs[0], bogie.dofs[0]] += self.wheel_stiffness * len(bogie.wheels)
 
                 for w, wheel in enumerate(bogie.wheels):
 
-                    stiffness_matrix[bogie.dofs[1], bogie.dofs[1]] += self.wheel_stiffness * self.wheel_distances[w] ** 2
+                    stiffness_matrix[bogie.dofs[1], bogie.dofs[1]] += self.wheel_stiffness * self.wheel_distances[w]**2
                     stiffness_matrix[bogie.dofs[0], wheel.dofs[0]] += -self.wheel_stiffness
                     stiffness_matrix[wheel.dofs[0], bogie.dofs[0]] += -self.wheel_stiffness
 
@@ -225,7 +223,7 @@ class TrainModel():
 
                 damping_matrix[bogie.dofs[0], bogie.dofs[0]] += self.wheel_damping * len(bogie.wheels)
                 for w, wheel in enumerate(bogie.wheels):
-                    damping_matrix[bogie.dofs[1], bogie.dofs[1]] += self.wheel_damping * self.wheel_distances[w] ** 2
+                    damping_matrix[bogie.dofs[1], bogie.dofs[1]] += self.wheel_damping * self.wheel_distances[w]**2
                     damping_matrix[bogie.dofs[0], wheel.dofs[0]] += -self.wheel_damping
                     damping_matrix[wheel.dofs[0], bogie.dofs[0]] += -self.wheel_damping
 
@@ -246,12 +244,13 @@ class TrainModel():
             force_vector[cart.dofs[0]] = -self.cart_mass * GRAVITY
 
             for bogie in cart.bogies:
-                force_vector[bogie.dofs[0]] = - self.bogie_mass * GRAVITY
+                force_vector[bogie.dofs[0]] = -self.bogie_mass * GRAVITY
 
                 for wheel in bogie.wheels:
-                    force_vector[wheel.dofs[0]] = - self.wheel_mass * GRAVITY
+                    force_vector[wheel.dofs[0]] = -self.wheel_mass * GRAVITY
 
         return force_vector
+
     def calculate_static_contact_force(self):
         """
         Calculate static contact force
@@ -272,7 +271,6 @@ class TrainModel():
                 for _ in bogie.wheels:
                     contact_force = self.wheel_mass * -GRAVITY + distributed_load_bogie
                     contact_forces.append(contact_force)
-
 
         return np.array(contact_forces)
 
@@ -325,7 +323,6 @@ class TrainModel():
 
         return u
 
-
     def generate_global_matrices(self):
         """
         Generate global matrices
@@ -349,7 +346,3 @@ class TrainModel():
         F[mask] = 0
 
         return K, C, M, F
-
-
-
-

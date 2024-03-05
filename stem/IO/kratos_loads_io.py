@@ -60,14 +60,16 @@ class KratosLoadsIO:
         """
 
         # initialize load parameters dictionary
-        parameters_dict = {"model_part_name": f"{self.domain}.{part_name}",
-                           "compute_model_part_name": "porous_computational_model_part",  # as hard-coded in Kratos
-                           "variable_name": "POINT_LOAD",
-                           "load": [1, 1, 1],  # dummy parameter
-                           "direction": parameters.direction,
-                           "velocity": parameters.velocity,
-                           "origin": parameters.origin,
-                           "configuration": parameters.wheel_configuration}
+        parameters_dict = {
+            "model_part_name": f"{self.domain}.{part_name}",
+            "compute_model_part_name": "porous_computational_model_part",  # as hard-coded in Kratos
+            "variable_name": "POINT_LOAD",
+            "load": [1, 1, 1],  # dummy parameter
+            "direction": parameters.direction,
+            "velocity": parameters.velocity,
+            "origin": parameters.origin,
+            "configuration": parameters.wheel_configuration
+        }
 
         # initialize load dictionary
         load_dict: Dict[str, Any] = {

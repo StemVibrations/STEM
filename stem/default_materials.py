@@ -47,9 +47,7 @@ def set_default_steel_rail_material(ndim: int, rail_type: RailTypes) -> Structur
         raise ValueError(f"Rail type {rail_type} is not implemented")
 
     name = f"default_elastic_{rail_type.name}_{ndim}D"
-    beam_object = EulerBeam(
-        ndim=ndim, DENSITY=7850, YOUNG_MODULUS=2.1e11, POISSON_RATIO=0.3, **parameters
-    )
+    beam_object = EulerBeam(ndim=ndim, DENSITY=7850, YOUNG_MODULUS=2.1e11, POISSON_RATIO=0.3, **parameters)
     return StructuralMaterial(name=name, material_parameters=beam_object)
 
 

@@ -5,6 +5,7 @@ from stem.mesh import *
 
 
 class TestMesh:
+
     def test_create_0d_mesh_from_gmsh_group(self):
         """
         Test the creation of a 0D mesh from a gmsh group.
@@ -14,10 +15,23 @@ class TestMesh:
         # Set up the mesh data
         mesh_data = {
             "ndim": 0,
-            "nodes": {1: [0, 0, 0], 2: [0.5, 0, 0]},
-            "elements": {"POINT_1N": {1: [1], 2: [2]}},
+            "nodes": {
+                1: [0, 0, 0],
+                2: [0.5, 0, 0]
+            },
+            "elements": {
+                "POINT_1N": {
+                    1: [1],
+                    2: [2]
+                }
+            },
             "physical_groups": {
-                "points_group": {"ndim": 0, "element_ids": [1, 2], "node_ids": [1, 2], "element_type": "POINT_1N"}
+                "points_group": {
+                    "ndim": 0,
+                    "element_ids": [1, 2],
+                    "node_ids": [1, 2],
+                    "element_type": "POINT_1N"
+                }
             },
         }
 
@@ -54,10 +68,24 @@ class TestMesh:
         # Set up the mesh data
         mesh_data = {
             "ndim": 1,
-            "nodes": {1: [0, 0, 0], 2: [0.5, 0, 0], 3: [1, 0, 0]},
-            "elements": {"LINE_2N": {1: [1, 2], 2: [2, 3]}},
+            "nodes": {
+                1: [0, 0, 0],
+                2: [0.5, 0, 0],
+                3: [1, 0, 0]
+            },
+            "elements": {
+                "LINE_2N": {
+                    1: [1, 2],
+                    2: [2, 3]
+                }
+            },
             "physical_groups": {
-                "lines_group": {"ndim": 1, "element_ids": [1, 2], "node_ids": [1, 2, 3], "element_type": "LINE_2N"}
+                "lines_group": {
+                    "ndim": 1,
+                    "element_ids": [1, 2],
+                    "node_ids": [1, 2, 3],
+                    "element_type": "LINE_2N"
+                }
             },
         }
 
@@ -94,8 +122,21 @@ class TestMesh:
         # Set up the mesh data
         mesh_data = {
             "ndim": 2,
-            "nodes": {1: [0, 0, 0], 2: [0.5, 0, 0], 3: [1, 0, 0], 4: [0, 0.5, 0], 5: [0.5, 0.5, 0], 6: [1, 0.5, 0]},
-            "elements": {"TRIANGLE_3N": {1: [1, 2, 4], 2: [2, 3, 5], 3: [3, 6, 5]}},
+            "nodes": {
+                1: [0, 0, 0],
+                2: [0.5, 0, 0],
+                3: [1, 0, 0],
+                4: [0, 0.5, 0],
+                5: [0.5, 0.5, 0],
+                6: [1, 0.5, 0]
+            },
+            "elements": {
+                "TRIANGLE_3N": {
+                    1: [1, 2, 4],
+                    2: [2, 3, 5],
+                    3: [3, 6, 5]
+                }
+            },
             "physical_groups": {
                 "triangles_group": {
                     "ndim": 2,
@@ -240,16 +281,30 @@ class TestMesh:
         # Set up the mesh data
         mesh_data = {
             "ndim": 0,
-            "nodes": {1: [0, 0, 0], 2: [0.5, 0, 0]},
-            "elements": {"POINT_1N": {1: [1], 2: [2]}},
+            "nodes": {
+                1: [0, 0, 0],
+                2: [0.5, 0, 0]
+            },
+            "elements": {
+                "POINT_1N": {
+                    1: [1],
+                    2: [2]
+                }
+            },
             "physical_groups": {
-                "points_group": {"ndim": 0, "element_ids": [1, 2], "node_ids": [1, 2], "element_type": "POINT_1N"}
+                "points_group": {
+                    "ndim": 0,
+                    "element_ids": [1, 2],
+                    "node_ids": [1, 2],
+                    "element_type": "POINT_1N"
+                }
             },
         }
 
         # Create the mesh from the gmsh group
         with pytest.raises(ValueError):
             Mesh.create_mesh_from_gmsh_group(mesh_data, "non_existing_group")
+
 
 class TestMeshSettings:
     """

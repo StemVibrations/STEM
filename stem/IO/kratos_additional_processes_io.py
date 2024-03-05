@@ -22,8 +22,7 @@ class KratosAdditionalProcessesIO:
         """
         self.domain = domain
 
-    def __create_excavation_dict(self, part_name: str,
-                                 parameters: Excavation) -> Dict[str, Any]:
+    def __create_excavation_dict(self, part_name: str, parameters: Excavation) -> Dict[str, Any]:
         """
         Creates a dictionary containing the parameters for the excavation process
 

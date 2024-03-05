@@ -17,10 +17,10 @@ class Utils:
     Class containing utility methods.
 
     """
+
     @staticmethod
     def check_ndim_nnodes_combinations(n_dim: int, n_nodes_element: Optional[int],
-                                       available_combinations: Dict[int, List[Any]],
-                                       class_name: str):
+                                       available_combinations: Dict[int, List[Any]], class_name: str):
         """
         Check if the combination of number of global dimensions and number of nodes per element is supported.
 
@@ -45,8 +45,7 @@ class Utils:
         if n_nodes_element not in available_combinations[n_dim]:
             raise ValueError(
                 f"In {n_dim} dimensions, only {available_combinations[n_dim]} noded {class_name} elements are "
-                f"supported. {n_nodes_element} nodes were provided."
-            )
+                f"supported. {n_nodes_element} nodes were provided.")
 
     @staticmethod
     def are_2d_coordinates_clockwise(coordinates: Sequence[Sequence[float]]) -> bool:
@@ -96,7 +95,9 @@ class Utils:
             raise ValueError("Dimension of the points should be 2D or 3D.")
 
     @staticmethod
-    def is_collinear(point: Sequence[float], start_point: Sequence[float], end_point: Sequence[float],
+    def is_collinear(point: Sequence[float],
+                     start_point: Sequence[float],
+                     end_point: Sequence[float],
                      a_tol: float = 1e-06) -> bool:
         """
         Check if point is aligned with the other two on a line. Points must have the same dimension (2D or 3D)
@@ -153,7 +154,7 @@ class Utils:
         vec_2 = np.asarray(end_point) - np.asarray(start_point)
 
         # Calculate the scalar projections of vector1 onto vector2
-        scalar_projection = sum(v1 * v2 for v1, v2 in zip(vec_1, vec_2)) / sum(v ** 2 for v in vec_2)
+        scalar_projection = sum(v1 * v2 for v1, v2 in zip(vec_1, vec_2)) / sum(v**2 for v in vec_2)
 
         # Check if the scalar projection is between 0 and 1 (inclusive)
         is_between: bool = 0 <= scalar_projection <= 1
@@ -245,8 +246,8 @@ class Utils:
         """
 
         # get nodal connectivities of the line edges from the local element edges dictionary
-        node_ids: npty.NDArray[np.int64] = np.array(element.node_ids, dtype=int)[
-            ELEMENT_DATA[element.element_type]["edges"]]
+        node_ids: npty.NDArray[np.int64] = np.array(element.node_ids,
+                                                    dtype=int)[ELEMENT_DATA[element.element_type]["edges"]]
 
         return node_ids
 
@@ -460,13 +461,13 @@ class Utils:
 
         for ix in range(len(coordinates)):
             # check origin is collinear to the edges of the line
-            collinear_check = Utils.is_collinear(
-                point=origin, start_point=coordinates[ix][0], end_point=coordinates[ix][1]
-            )
+            collinear_check = Utils.is_collinear(point=origin,
+                                                 start_point=coordinates[ix][0],
+                                                 end_point=coordinates[ix][1])
             # check origin is between the edges of the line (edges included)
-            is_between_check = Utils.is_point_between_points(
-                point=origin, start_point=coordinates[ix][0], end_point=coordinates[ix][1]
-            )
+            is_between_check = Utils.is_point_between_points(point=origin,
+                                                             start_point=coordinates[ix][0],
+                                                             end_point=coordinates[ix][1])
             # check if point complies
             is_on_line = collinear_check and is_between_check
             # exit at the first success of the test (point in the line) and return True

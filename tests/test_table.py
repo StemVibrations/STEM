@@ -17,10 +17,10 @@ class TestTable:
 
         # mismatch between times and values
         values = [0, 5, 10, 5, 0, 0, 10, 2]
-                       
+
         msg1 = ("Dimension mismatch between times and values in table:\n"
-                 f" - times: {len(time)}\n"
-                 f" - values: {len(values)}\n")
+                f" - times: {len(time)}\n"
+                f" - values: {len(values)}\n")
 
         with pytest.raises(ValueError, match=msg1):
             Table(times=time, values=values)

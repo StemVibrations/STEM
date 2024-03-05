@@ -31,6 +31,7 @@ class Point(GeometricalObjectABC):
         - __id (int): A unique identifier for the point.
         - coordinates (Sequence[float]): A sequence of floats representing the x, y and z coordinates of the point.
     """
+
     def __init__(self, id: int):
         """
         Constructor for the point class.
@@ -174,6 +175,7 @@ class Surface(GeometricalObjectABC):
         - line_ids (Sequence[int]): A sequence of three or more integers representing the ids of the lines that make\
             up the surface.
     """
+
     def __init__(self, id: int):
         self.__id: int = id
         self.line_ids: Sequence[int] = []
@@ -239,6 +241,7 @@ class Volume(GeometricalObjectABC):
         - surface_ids (Sequence[int]): A sequence of four or more integers representing the ids of the surfaces that\
             make up the volume.
     """
+
     def __init__(self, id: int):
         self.__id: int = id
         self.surface_ids: Sequence[int] = []
@@ -303,8 +306,12 @@ class Geometry:
           geometry.
         - volumes (Dict[int, :class:`Volume`]): A dictionary of Volume objects representing the volumes in the geometry.
     """
-    def __init__(self, points: Dict[int, Point] = {}, lines: Dict[int, Line] = {},
-                 surfaces: Dict[int, Surface] = {}, volumes: Dict[int, Volume] = {}):
+
+    def __init__(self,
+                 points: Dict[int, Point] = {},
+                 lines: Dict[int, Line] = {},
+                 surfaces: Dict[int, Surface] = {},
+                 volumes: Dict[int, Volume] = {}):
         self.points: Dict[int, Point] = points
         self.lines: Dict[int, Line] = lines
         self.surfaces: Dict[int, Surface] = surfaces

@@ -8,6 +8,7 @@ GRAVITY_VALUE = -9.81  # [m/s2]
 VERTICAL_AXIS = 1  # [0, 1, 2] = [x, y, z]
 OUT_OF_PLANE_AXIS_2D = 2  # [0, 1, 2] = [x, y, z]
 
+# yapf: disable
 #: Element data for supported element types in STEM. The data contains the following information: \
 #: - ndim (int): number of dimensions
 #: - order (int): element order
@@ -80,3 +81,5 @@ ELEMENT_DATA: Dict[str, Any] = {"POINT_1N": {"ndim": 0,
                                 #                              [4, 5, 16], [5, 6, 17], [6, 7, 18], [7, 4, 19],
                                 #                              [0, 4, 12], [1, 5, 13], [2, 6, 14], [3, 7, 15]]}
                                 }
+
+# yapf: enable

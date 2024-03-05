@@ -118,8 +118,7 @@ class KratosMaterialIO:
         """
 
         # initialize material dictionary
-        material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""},
-                                         "Variables": deepcopy(material.__dict__)}
+        material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""}, "Variables": deepcopy(material.__dict__)}
         if self.ndim == 2:
             material_dict["constitutive_law"]["name"] = "GeoLinearElasticPlaneStrain2DLaw"
 
@@ -144,8 +143,12 @@ class KratosMaterialIO:
         """
 
         # initialize material dictionary
-        material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""},
-                                         "Variables": self.__create_umat_material_dict(material)}
+        material_dict: Dict[str, Any] = {
+            "constitutive_law": {
+                "name": ""
+            },
+            "Variables": self.__create_umat_material_dict(material)
+        }
 
         if self.ndim == 2:
             material_dict["constitutive_law"]["name"] = "SmallStrainUMAT2DPlaneStrainLaw"
@@ -170,8 +173,12 @@ class KratosMaterialIO:
         """
 
         # initialize material dictionary
-        material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""},
-                                         "Variables": self.__create_udsm_material_dict(material)}
+        material_dict: Dict[str, Any] = {
+            "constitutive_law": {
+                "name": ""
+            },
+            "Variables": self.__create_udsm_material_dict(material)
+        }
 
         if self.ndim == 2:
             material_dict["constitutive_law"]["name"] = "SmallStrainUDSM2DPlaneStrainLaw"
@@ -270,8 +277,7 @@ class KratosMaterialIO:
             - Dict[str, Any]: dictionary containing the soil material parameters
         """
 
-        soil_material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""},
-                                              "Variables": {}}
+        soil_material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""}, "Variables": {}}
 
         # add material parameters to dictionary based on material type.
         if isinstance(material.constitutive_law, LinearElasticSoil):
@@ -321,8 +327,12 @@ class KratosMaterialIO:
             material_parameters_dict.pop("ndim")
 
         # initialize material dictionary
-        euler_beam_parameters_dict: Dict[str, Any] = {"constitutive_law": {"name": ""},
-                                                      "Variables": material_parameters_dict}
+        euler_beam_parameters_dict: Dict[str, Any] = {
+            "constitutive_law": {
+                "name": ""
+            },
+            "Variables": material_parameters_dict
+        }
 
         # add constitutive law name to dictionary based on dimension
         if self.ndim == 2:
@@ -358,8 +368,8 @@ class KratosMaterialIO:
 
         return structural_material_dict
 
-    def create_material_dict(self, part_name: str,
-                             material: Union[SoilMaterial, StructuralMaterial], material_id: int) -> Dict[str, Any]:
+    def create_material_dict(self, part_name: str, material: Union[SoilMaterial, StructuralMaterial],
+                             material_id: int) -> Dict[str, Any]:
         """
         Creates a dictionary containing the material parameters
 
@@ -377,11 +387,14 @@ class KratosMaterialIO:
         """
 
         # initialize material dictionary
-        material_dict: Dict[str, Any] = {"model_part_name": f"{self.domain}.{part_name}",
-                                         "properties_id": material_id,
-                                         "Material": {"Variables": {}},
-                                         "Tables": {}
-                                         }
+        material_dict: Dict[str, Any] = {
+            "model_part_name": f"{self.domain}.{part_name}",
+            "properties_id": material_id,
+            "Material": {
+                "Variables": {}
+            },
+            "Tables": {}
+        }
 
         # add material parameters to dictionary based on material type.
         if isinstance(material, SoilMaterial):

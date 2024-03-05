@@ -30,6 +30,7 @@ class ModelPart:
         - mesh (Optional[:class:`stem.mesh.Mesh`]): mesh of the model part
         - id (Optional[int]): the id of the model part
     """
+
     def __init__(self, name: str):
         """
         Initialize the model part
