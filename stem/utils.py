@@ -531,14 +531,13 @@ class Utils:
             points: Sequence[Sequence[float]], a_tol=1e-06
     ) -> Optional[Sequence[Sequence[float]]]:
         """
-        Find the first 3 non-collinear points in sequence of points.
+        Find the first 3 non-collinear points in sequence of points. If all are collinear, the function returns `None`.
 
         Args:
             - points (Sequence[Sequence[float]]): points from which the non-collinear points should be searched for.
 
         Raises:
-            -  ValueError: if less than three points are provided
-            -  ValueError: if all the points are collinear.
+            -  ValueError: if less than three points are provided.
 
         Returns:
             - Optional[List[Sequence[float]]]: list of the first three points that are not collinear. If all are collinear, None is returned.
@@ -570,6 +569,7 @@ class Utils:
 
         Raises:
             -  ValueError: if the polygon itself is not planar.
+            -  ValueError: if all the points in the polygon are collinear.
 
         Returns:
             - bool: whether the point is coplanar with the polygon.
@@ -622,6 +622,7 @@ class Utils:
 
         Raises:
             -  ValueError: if less than three points are provided.
+            -  ValueError: if all the points in the polygon are collinear.
 
         Returns:
             - bool: whether the polygon is planar.
