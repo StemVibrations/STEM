@@ -809,7 +809,7 @@ class TestModel:
         shape2 = [(0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1)]
 
         with pytest.raises(
-                ValueError, match="The polygon specified for the soil layer doesn't contain the reference point for the group."
+                ValueError, match="The reference coordinate of group: Group1, does not lay on the same plane as soil layer: layer2"
         ):
             model.add_soil_layer_by_coordinates(shape2, soil_material1, "layer2", group_name="Group1")
 
@@ -817,7 +817,7 @@ class TestModel:
         shape3 = [(0, 0, 0), (1, 0, 0), (1, 1, 2), (0, 1, 3)]
 
         with pytest.raises(
-                ValueError, match="Polygon for the soil layer is not belonging to a unique plane."
+                ValueError, match="Polygon for the soil layer are not on the same plane."
         ):
             model.add_soil_layer_by_coordinates(shape3, soil_material1, "layer3", group_name="Group1")
 
