@@ -249,12 +249,12 @@ class Model:
         Adds a model part name to a pre-existing group for extrusion.
 
         Args:
-            - section_name (str): The name of the soil layer.
-            - start_coordinate (float): The start coordinate for the extrusion in the out of plane direction.
-            - length (float): The length of the group used for the extrusion. It can also be negative
+            - group_name (str): The name of the group.
+            - part_name (str): The name of the model part to be added to the group.
 
         Raises:
-            - ValueError: if the section_name matches an already an existing 3D section.
+            - ValueError: if the group doesn't exist.
+            - ValueError: if the model part doesn't exist.
         """
         if group_name not in self.groups.keys():
             raise ValueError(f"The group specified `{group_name}` does not exist.")
@@ -289,6 +289,9 @@ class Model:
         if Utils.are_2d_coordinates_clockwise(coordinates):
             coordinates = coordinates[::-1]
 
+        if not Utils.is_polygon_planar(coordinates):
+            raise ValueError(f"Polygon for the soil layer is not belonging to a unique plane.")
+
         # validation of group_name
         if group_name is not None and group_name not in self.groups.keys():
             raise ValueError(f"Non-existent group specified `{group_name}`.")
@@ -312,9 +315,13 @@ class Model:
                 extrusion_vector: List[float] = [dv * extrusion_parameters["length"] / norm for dv in direction_vector]
                 gmsh_input[name]["extrusion_length"] = extrusion_vector
 
-                # initial_extrusion_coordinate = extrusion_parameters["start_coord"][OUT_OF_PLANE_AXIS_2D]
-                # # set z-coordinate of the points as the starting out-of-plane coordinate of the section.
-                # gmsh_input[name]["coordinates"] = [[point[0], point[1], initial_extrusion_coordinate] for point in coordinates]
+                reference_point_group = extrusion_parameters["reference_coordinate"]
+
+                if not Utils.is_point_coplanar_to_polygon(reference_point_group, coordinates):
+                    raise ValueError("The polygon specified for the soil layer doesn't contain the reference point for "
+                                     "the group.")
+
+                # set z-coordinate of the points as the starting out-of-plane coordinate of the section.
 
             elif self.extrusion_length is not None:
 

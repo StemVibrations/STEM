@@ -770,7 +770,7 @@ class TestModel:
 
             TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
-    def test_validation_of_groups_for_extrusion(self, create_default_3d_soil_material: SoilMaterial):
+    def test_validation_of_adding_soil_layers(self, create_default_3d_soil_material: SoilMaterial):
         """
         Tests that errors are raised when groups are not specified or added multiple times.
 
@@ -781,7 +781,7 @@ class TestModel:
 
         ndim = 3
 
-        shape1 = [(0, 0), (1, 0), (1, 1), (0, 1)]
+        shape1 = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
 
         # define soil materials
         soil_material1 = create_default_3d_soil_material
@@ -790,12 +790,7 @@ class TestModel:
         # create model
         model = Model(ndim)
         # add a valid group
-        model.add_group(group_name="Group1", start_coordinate=0, length=1)
-
-
-        # expect it raises an error when adding an already existing section
-        with pytest.raises(ValueError, match="The group `Group1` already exists, but group names must be unique."):
-            model.add_group(group_name="Group1", start_coordinate=0, length=1)
+        model.add_group_for_extrusion(group_name="Group1", reference_depth=0, extrusion_length=1)
 
         # expect it raises an error when adding a layer to a non-existing section
         with pytest.raises(
@@ -810,17 +805,35 @@ class TestModel:
         ):
             model.add_soil_layer_by_coordinates(shape1, soil_material1, "layer1", group_name="Group2")
 
-    def test_adding_model_parts_to_groups(self, create_default_3d_soil_material: SoilMaterial):
+        # add a soil layer that doesn't contain the reference point of the group
+        shape2 = [(0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1)]
+
+        with pytest.raises(
+                ValueError, match="The polygon specified for the soil layer doesn't contain the reference point for the group."
+        ):
+            model.add_soil_layer_by_coordinates(shape2, soil_material1, "layer2", group_name="Group1")
+
+        # add a soil layer which section is not planar
+        shape3 = [(0, 0, 0), (1, 0, 0), (1, 1, 2), (0, 1, 3)]
+
+        with pytest.raises(
+                ValueError, match="Polygon for the soil layer is not belonging to a unique plane."
+        ):
+            model.add_soil_layer_by_coordinates(shape3, soil_material1, "layer3", group_name="Group1")
+
+
+    def test_validation_of_adding_groups(self, create_default_3d_soil_material: SoilMaterial):
         """
-        Tests validation of adding model parts to groups.
+        Tests that errors are raised when groups are not specified or added multiple times.
 
         Args:
             - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+
         """
 
         ndim = 3
 
-        shape1 = [(0, 0), (1, 0), (1, 1), (0, 1)]
+        shape1 = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
 
         # define soil materials
         soil_material1 = create_default_3d_soil_material
@@ -829,7 +842,24 @@ class TestModel:
         # create model
         model = Model(ndim)
         # add a valid group
-        model.add_group(group_name="Group1", start_coordinate=0, length=1)
+        model.add_group_for_extrusion(group_name="Group1", reference_depth=0, extrusion_length=1)
+
+        # expect it raises an error when adding an already existing section
+        with pytest.raises(ValueError, match="The group `Group1` already exists, but group names must be unique."):
+            model.add_group_for_extrusion(group_name="Group1", reference_depth=0, extrusion_length=1)
+
+    def test_adding_model_parts_to_groups(self):
+        """
+        Tests validation of adding model parts to groups.
+
+        """
+
+        ndim = 3
+
+        # create model
+        model = Model(ndim)
+        # add a valid group
+        model.add_group_for_extrusion(group_name="Group1", reference_depth=0, extrusion_length=1)
 
         # test if raises an error when adding a model part to a non existing group
         with pytest.raises(ValueError, match="The group specified `Group2` does not exist."):
@@ -852,8 +882,8 @@ class TestModel:
 
         ndim = 3
 
-        shape1 = [(0, 0), (1, 0), (0, 1)]
-        shape2 = [(0, 0.5), (0.5, 0.5), (0, 1)]
+        shape1 = [(0, 0, 0), (1, 0, 0), (0, 1, 0)]
+        shape2 = [(0, 0.5, 1), (0.5, 0.5, 1), (0, 1, 1)]
 
 
         # define soil materials
@@ -865,8 +895,8 @@ class TestModel:
 
         # create model
         model = Model(ndim)
-        model.add_group(group_name="Group1", start_coordinate=0, length=1)
-        model.add_group(group_name="Group2", start_coordinate=1, length=1)
+        model.add_group_for_extrusion(group_name="Group1", reference_depth=0, extrusion_length=1)
+        model.add_group_for_extrusion(group_name="Group2", reference_depth=1, extrusion_length=1)
 
         # add soil layers
         model.add_soil_layer_by_coordinates(shape1, soil_material1, "layer1", group_name="Group1")

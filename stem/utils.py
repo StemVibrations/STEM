@@ -525,3 +525,143 @@ class Utils:
         # find the ids of the nodes in the model that are close to the specified coordinates.
         close_indices = tree.query_ball_point(output_coordinates, np.ones(output_coordinates.shape[0]) * eps, p=2.)
         return np.array(node_ids)[np.hstack(close_indices, dtype=np.int64)]
+
+    @staticmethod
+    def find_first_three_non_collinear_points(
+            points: Sequence[Sequence[float]], a_tol=1e-06
+    ):
+        """
+        Find the first 3 non-collinear points in sequence of points.
+
+        Args:
+            - points (Sequence[Sequence[float]]): points from which the non-collinear points should be searched for.
+
+        Raises:
+            -  ValueError: if less than three points are provided
+            -  ValueError: if all the points are collinear.
+
+        Returns:
+            - List[Sequence[float]]: list of the first three points that are not collinear.
+
+        """
+        if len(points) < 3:
+            raise ValueError("Less than 3 points are provided.")
+
+        p1 = points[0]
+        p2 = points[1]
+
+        for p_candidate in points[2:]:
+
+            if not Utils.is_collinear(p_candidate, p1, p2, a_tol=a_tol):
+                return [p1, p2, p_candidate]
+
+        raise ValueError("All the points in the polygon are collinear.")
+
+    @staticmethod
+    def is_point_coplanar_to_polygon(
+            point: Sequence[float], polygon_points: Sequence[Sequence[float]], a_tol=1e-06
+    ):
+        """
+        Checks whether a point is coplanar to a list of points defining a polygon
+
+        Args:
+            - points (Sequence[Sequence[float]]): points to be checked.
+            - polygon_points (Sequence[Sequence[float]]): points belonging to the polygon.
+
+        Raises:
+            -  ValueError: if the polygon itself is not planar.
+
+        Returns:
+            - bool: whether the point is coplanar with the polygon.
+
+        """
+
+        # check that polygon is coplanar
+        if not Utils.is_polygon_planar(polygon_points=polygon_points, a_tol=a_tol):
+            raise ValueError("Points in the polygon are not co-planar.")
+
+        # Choose three non-collinear points from the polygon
+
+        non_collinear_points = Utils.find_first_three_non_collinear_points(points=polygon_points, a_tol=a_tol)
+        # Convert points to a NumPy array for easier manipulation
+
+        p1, p2, p3 = np.array(non_collinear_points)
+
+        # Calculate vectors from p1 to p2 and p1 to p3
+        v1 = p2 - p1
+        v2 = p3 - p1
+
+        # Calculate the normal vector of the plane formed by v1 and v2
+        normal = np.cross(v1, v2)
+
+        # Transform point in numpy array
+        point_array = np.array(point)
+
+        # Calculate the vector from p1 to the current point
+        vector_to_point = point_array - p1
+
+        # Calculate the dot product of normal and vector_to_point
+        dot_product = np.dot(normal, vector_to_point)
+
+        # If the dot product is not close to 0 (within a small tolerance),
+        # the points are not coplanar
+        if not np.isclose(dot_product, 0, atol=1e-6):
+            return False
+        return True
+
+    @staticmethod
+    def is_polygon_planar(polygon_points: Sequence[Sequence[float]], a_tol=1e-06):
+        """
+        Checks whether a polygon is planar, i.e. all its point lie on the same plane.
+
+        Args:
+            - polygon_points (Sequence[Sequence[float]]): points belonging to the polygon.
+
+        Raises:
+            -  ValueError: if less than three points are provided.
+
+        Returns:
+            - bool: whether the polygon is planar.
+
+        """
+        if len(polygon_points) < 3:
+            raise ValueError("Less than 3 points are given, the shape is not a polygon.")
+
+        # get the first 3 non-collinear points in polygon
+        non_collinear_points = Utils.find_first_three_non_collinear_points(points=polygon_points, a_tol=a_tol)
+
+        # 3 non-collinear points form always a unique plane
+        if len(polygon_points) == 3:
+            return True
+
+        # Convert points to a NumPy array for easier manipulation
+
+        points_array = np.array(non_collinear_points)
+
+        # Choose the first three non-collinear points
+        p1, p2, p3 = points_array[:3]
+
+        # Calculate vectors from p1 to p2 and p1 to p3
+        v1 = p2 - p1
+        v2 = p3 - p1
+
+        # Calculate the normal vector of the plane formed by v1 and v2
+        normal = np.cross(v1, v2)
+
+        # Check if all other points lie on the plane
+        for point in polygon_points:
+
+            point_array = np.array(point)
+            # Calculate the vector from p1 to the current point
+            vector_to_point = point_array - p1
+
+            # Calculate the dot product of normal and vector_to_point
+            dot_product = np.dot(normal, vector_to_point)
+
+            # If the dot product is not close to 0 (within a small tolerance),
+            # the points are not coplanar
+            if not np.isclose(dot_product, 0, atol=1e-6):
+                return False
+
+        # If the dot product is 0, the point is on the plane
+        return True

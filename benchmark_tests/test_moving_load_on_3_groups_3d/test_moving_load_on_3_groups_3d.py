@@ -25,10 +25,10 @@ def test_stem():
     # Specify dimension and initiate the model
     ndim = 3
     model = Model(ndim)
-    # add sections for extrusions
-    model.add_group("Section 1", start_coordinate=0, length=2)
-    model.add_group("Section 2", start_coordinate=2, length=1)
-    model.add_group("Section 3", start_coordinate=3, length=2)
+    # add groups for extrusions
+    model.add_group_for_extrusion("Group 1", reference_depth=0, extrusion_length=2)
+    model.add_group_for_extrusion("Group 2", reference_depth=2, extrusion_length=1)
+    model.add_group_for_extrusion("Group 3", reference_depth=3, extrusion_length=2)
 
     # Specify material model
     solid_density = 2650
@@ -56,15 +56,16 @@ def test_stem():
         bridge_retention_parameters
     )
 
-    # Specify the coordinates for the shapes to extrude: x, y (z is ignored if defined, overwritten by sections)
+    # Specify the coordinates for the shapes to extrude: x, y, z [m]
 
-    embankment_coordinates = [(0.0, 0.0, 0.0), (3.0, 0.0, 0.0), (1.5, 1.0, 0.0), (0, 1.0, 0.0)]
-    bridge_coordinates = [(0.0, 0.8, 0.0), (1.0, 0.8, 0.0), (1.0, 1.0, 0.0), (0., 1.0, 0.0)]
+    embankment_coordinates_1 = [(0.0, 0.0, 0.0), (3.0, 0.0, 0.0), (1.5, 1.0, 0.0), (0, 1.0, 0.0)]
+    bridge_coordinates = [(0.0, 0.8, 2.0), (1.0, 0.8, 2.0), (1.0, 1.0, 2.0), (0., 1.0, 2.0)]
+    embankment_coordinates_2 = [(0.0, 0.0, 3.0), (3.0, 0.0, 3.0), (1.5, 1.0, 3.0), (0, 1.0, 3.0)]
 
     # Create the soil layer
-    model.add_soil_layer_by_coordinates(embankment_coordinates, material_soil, "embankment1", "Section 1")
-    model.add_soil_layer_by_coordinates(bridge_coordinates, material_bridge, "bridge", "Section 2")
-    model.add_soil_layer_by_coordinates(embankment_coordinates, material_soil, "embankment2", "Section 3")
+    model.add_soil_layer_by_coordinates(embankment_coordinates_1, material_soil, "embankment1", "Group 1")
+    model.add_soil_layer_by_coordinates(bridge_coordinates, material_bridge, "bridge", "Group 2")
+    model.add_soil_layer_by_coordinates(embankment_coordinates_2, material_soil, "embankment2", "Group 3")
     # model.show_geometry(show_surface_ids=True)
 
     # Define moving load
@@ -112,7 +113,7 @@ def test_stem():
                                     rayleigh_m=0.0)
 
     # Set up problem data
-    problem = Problem(problem_name="calculate_moving_load_on_3_sections_3d", number_of_threads=1, settings=solver_settings)
+    problem = Problem(problem_name="calculate_moving_load_on_3_groups_3d", number_of_threads=1, settings=solver_settings)
     model.project_parameters = problem
 
     # Define the results to be written to the output file
@@ -132,7 +133,7 @@ def test_stem():
         output_control_type="step"
     ), part_name="porous_computational_model_part", output_dir="output", output_name="vtk_output")
 
-    input_folder = "benchmark_tests/test_moving_load_on_3_sections_3d/inputs_kratos"
+    input_folder = "benchmark_tests/test_moving_load_on_3_groups_3d/inputs_kratos"
 
     # Write KRATOS input files
     # --------------------------------
@@ -144,9 +145,9 @@ def test_stem():
     stem.run_calculation()
 
     if sys.platform == "win32":
-        expected_output_dir = "benchmark_tests/test_moving_load_on_3_sections_3d/output_windows/output_vtk_porous_computational_model_part"
+        expected_output_dir = "benchmark_tests/test_moving_load_on_3_groups_3d/output_windows/output_vtk_porous_computational_model_part"
     elif sys.platform == "linux":
-        expected_output_dir = "benchmark_tests/test_moving_load_on_3_sections_3d/output_linux/output_vtk_porous_computational_model_part"
+        expected_output_dir = "benchmark_tests/test_moving_load_on_3_groups_3d/output_linux/output_vtk_porous_computational_model_part"
     else:
         raise Exception("Unknown platform")
 
