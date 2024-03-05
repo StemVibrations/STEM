@@ -565,7 +565,7 @@ class Utils:
         Checks whether a point is coplanar to a list of points defining a polygon
 
         Args:
-            - points (Sequence[Sequence[float]]): points to be checked.
+            - point (Sequence[float]): point to be checked.
             - polygon_points (Sequence[Sequence[float]]): points belonging to the polygon.
 
         Raises:
@@ -631,12 +631,12 @@ class Utils:
         non_collinear_points = Utils.find_first_three_non_collinear_points(points=polygon_points, a_tol=a_tol)
 
         # 3 non-collinear points form always a unique plane
-        if len(polygon_points) == 3:
+        if len(non_collinear_points) == 3:
             return True
 
         # Convert points to a NumPy array for easier manipulation
 
-        points_array = np.array(non_collinear_points)
+        non_collinear_points_array = np.array(non_collinear_points)
 
         # Choose the first three non-collinear points
         p1, p2, p3 = points_array[:3]
