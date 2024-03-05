@@ -770,6 +770,220 @@ class TestModel:
 
             TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
+    def test_validation_of_adding_soil_layers(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Tests that errors are raised when groups are not specified or added multiple times.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+
+        """
+
+        ndim = 3
+
+        shape1 = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+
+        # define soil materials
+        soil_material1 = create_default_3d_soil_material
+        soil_material1.name = "soil1"
+
+        # create model
+        model = Model(ndim)
+        # add a valid group
+        model.add_group_for_extrusion(group_name="Group1", reference_depth=0, extrusion_length=1)
+
+        # expect it raises an error when adding a layer to a non-existing section
+        with pytest.raises(
+                ValueError,
+                match="For 3D models either the extrusion length or the group name for the extrusion must be specified."
+        ):
+            model.add_soil_layer_by_coordinates(shape1, soil_material1, "layer1")
+
+        # expect it raises an error when adding a layer to a non-existing section
+        with pytest.raises(
+                ValueError, match="Non-existent group specified `Group2`."
+        ):
+            model.add_soil_layer_by_coordinates(shape1, soil_material1, "layer1", group_name="Group2")
+
+        # add a soil layer that doesn't contain the reference point of the group
+        shape2 = [(0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1)]
+
+        with pytest.raises(
+                ValueError, match="The reference coordinate of group: Group1, does not lay on the same plane as soil layer: layer2"
+        ):
+            model.add_soil_layer_by_coordinates(shape2, soil_material1, "layer2", group_name="Group1")
+
+        # add a soil layer which section is not planar
+        shape3 = [(0, 0, 0), (1, 0, 0), (1, 1, 2), (0, 1, 3)]
+
+        with pytest.raises(
+                ValueError, match="Polygon for the soil layer are not on the same plane."
+        ):
+            model.add_soil_layer_by_coordinates(shape3, soil_material1, "layer3", group_name="Group1")
+
+
+    def test_validation_of_adding_groups(self):
+        """
+        Tests that errors are raised when groups are not specified or added multiple times.
+
+        """
+
+        ndim = 3
+
+        # create model
+        model = Model(ndim)
+        # add a valid group
+        model.add_group_for_extrusion(group_name="Group1", reference_depth=0, extrusion_length=1)
+
+        # expect it raises an error when adding an already existing section
+        with pytest.raises(ValueError, match="The group `Group1` already exists, but group names must be unique."):
+            model.add_group_for_extrusion(group_name="Group1", reference_depth=0, extrusion_length=1)
+
+    def test_adding_model_parts_to_groups(self):
+        """
+        Tests validation of adding model parts to groups.
+
+        """
+
+        ndim = 3
+
+        # create model
+        model = Model(ndim)
+        # add a valid group
+        model.add_group_for_extrusion(group_name="Group1", reference_depth=0, extrusion_length=1)
+
+        # test if raises an error when adding a model part to a non existing group
+        with pytest.raises(ValueError, match="The group specified `Group2` does not exist."):
+            model.add_model_part_to_group(group_name="Group2", part_name="test_part")
+
+        # test if raises an error when adding a non existing model part to a group
+        with pytest.raises(ValueError, match="The model part specified `test_part` does not exist."):
+            model.add_model_part_to_group(group_name="Group1", part_name="test_part")
+
+
+    def test_add_multiple_sections_3D(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if two extruded sections are added correctly to the model in a 3D space. Two triangular sections are
+        sequentially extruded and multiple soil materials are created and added to the model.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+
+        """
+
+        ndim = 3
+
+        shape1 = [(0, 0, 0), (1, 0, 0), (0, 1, 0)]
+        shape2 = [(0, 0.5, 1), (0.5, 0.5, 1), (0, 1, 1)]
+
+
+        # define soil materials
+        soil_material1 = create_default_3d_soil_material
+        soil_material1.name = "soil1"
+
+        soil_material2 = create_default_3d_soil_material
+        soil_material2.name = "soil2"
+
+        # create model
+        model = Model(ndim)
+        model.add_group_for_extrusion(group_name="Group1", reference_depth=0, extrusion_length=1)
+        model.add_group_for_extrusion(group_name="Group2", reference_depth=1, extrusion_length=1)
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates(shape1, soil_material1, "layer1", group_name="Group1")
+        model.add_soil_layer_by_coordinates(shape2, soil_material2, "layer2", group_name="Group2")
+
+        model.synchronise_geometry()
+
+        # check if layers are added correctly
+        assert len(model.body_model_parts) == 2
+        assert model.body_model_parts[0].name == "layer1"
+        assert model.body_model_parts[0].material == soil_material1
+        assert model.body_model_parts[1].name == "layer2"
+        assert model.body_model_parts[1].material == soil_material2
+
+        # check if geometry is added correctly for each layer
+        geometry_1 = Geometry()
+        geometry_1.points = {
+            12: Point.create([0.0, 0.0, 0.0], 12),
+            13: Point.create([0.0, 0.0, 1.0], 13),
+            15: Point.create([1.0, 0.0, 1.0], 15),
+            14: Point.create([1.0, 0.0, 0.0], 14),
+            8: Point.create([0.5, 0.5, 1.0], 8),
+            6: Point.create([0.0, 1.0, 1.0], 6),
+            16: Point.create([0.0, 1.0, 0.0], 16),
+            7: Point.create([0.0, 0.5, 1.0], 7)
+        }
+
+        geometry_1.lines = {
+            19: Line.create([12, 13], 19),
+            22: Line.create([13, 15], 22),
+            20: Line.create([14, 15], 20),
+            21: Line.create([12, 14], 21),
+            25: Line.create([15, 8], 25),
+            11: Line.create([8, 6], 11),
+            23: Line.create([16, 6], 23),
+            24: Line.create([14, 16], 24),
+            12: Line.create([6, 7], 12),
+            27: Line.create([7, 13], 27),
+            26: Line.create([16, 12], 26),
+            10: Line.create([7, 8], 10)
+        }
+
+        geometry_1.surfaces = {
+            11 : Surface.create([19, 22, -20, -21], 11),
+            12 : Surface.create([20, 25, 11, -23, -24], 12),
+            13 : Surface.create([23, 12, 27, -19, -26], 13),
+            14 : Surface.create([21, 24, 26], 14),
+            15 : Surface.create([27, 22, 25, -10], 15),
+            6 : Surface.create([10, 11, 12], 6)
+        }
+
+        geometry_1.volumes = {
+            1: Volume.create([-11, -12, -13, -14, 15, 6], 1)
+        }
+
+        geometry_2 = Geometry()
+
+        geometry_2.points = {
+            7: Point.create([0.0, 0.5, 1.0], 7),
+            9: Point.create([0.0, 0.5, 2.0], 9),
+            10: Point.create([0.5, 0.5, 2.0], 10),
+            8: Point.create([0.5, 0.5, 1.0], 8),
+            11: Point.create([0.0, 1.0, 2.0], 11),
+            6: Point.create([0.0, 1.0, 1.0], 6)
+        }
+
+        geometry_2.lines = {
+            13: Line.create([7, 9], 13),
+            15: Line.create([9, 10], 15),
+            14: Line.create([8, 10], 14),
+            10: Line.create([7, 8], 10),
+            17: Line.create([10, 11], 17),
+            16: Line.create([6, 11], 16),
+            11: Line.create([8, 6], 11),
+            18: Line.create([11, 9], 18),
+            12: Line.create([6, 7], 12)
+        }
+
+        geometry_2.surfaces = {
+            7: Surface.create([13, 15, -14, -10], 7),
+            8: Surface.create([14, 17, -16, -11], 8),
+            9: Surface.create([16, 18, -13, -12], 9),
+            6: Surface.create([10, 11, 12], 6),
+            10: Surface.create([15, 17, 18], 10)
+        }
+
+        geometry_2.volumes = {
+            2: Volume.create([-7, -8, -9, -6, 10], 2)
+        }
+
+        expected_geometries = [geometry_1, geometry_2]
+
+        for model_part, expected_geometry in zip(model.body_model_parts, expected_geometries):
+
+            TestUtils.assert_almost_equal_geometries(expected_geometry, model_part.geometry)
+
     def test_add_all_layers_from_geo_file_2D(self, expected_geometry_two_layers_2D: Tuple[Geometry, Geometry,
                                                                                           Geometry]):
         """

@@ -36,6 +36,7 @@ class Model:
         - process_model_parts (List[:class:`stem.model_part.ModelPart`]): A list containing the process model parts.
         - output_settings (List[:class:`stem.output.Output`]): A list containing the output settings.
         - extrusion_length (Optional[float]): The extrusion length in the out of plane direction.
+        - groups (Dict[str, Any]): A dictionary containing shared information among sets of model parts.
 
     """
 
@@ -54,8 +55,8 @@ class Model:
         self.body_model_parts: List[BodyModelPart] = []
         self.process_model_parts: List[ModelPart] = []
         self.output_settings: List[Output] = []
-
         self.extrusion_length: Optional[float] = None
+        self.groups: Dict[str, Any] = {}
 
     def __del__(self):
         """
@@ -213,35 +214,125 @@ class Model:
             else:
                 self.process_model_parts.append(model_part)
 
-    def add_soil_layer_by_coordinates(self, coordinates: Sequence[Sequence[float]],
-                                      material_parameters: Union[SoilMaterial, StructuralMaterial], name: str):
+
+    def add_group_for_extrusion(self, group_name: str, reference_depth: float, extrusion_length: float):
         """
-        Adds a soil layer to the model by giving a sequence of 2D coordinates. In 3D the 2D geometry is extruded in
-        the out of plane direction.
+        Adds a group for extrusion which consists of a starting coordinate in the out of plane direction a name and the
+        the length for the extrusion. The group must be always unique while extrusion length can also be negative.
+
+        Args:
+            - group_name (str): The name of the group. Must be unique.
+            - reference_depth (float): The reference (starting) depth for the extrusion in the out of plane direction.
+            - extrusion_length (float): The length of the group used for the extrusion. It can also be negative
+
+        Raises:
+            - ValueError: if the section_name matches an already an existing 3D section.
+        """
+        if group_name in self.groups.keys():
+            raise ValueError(f"The group `{group_name}` already exists, but group names must be unique.")
+
+        direction_vector: List[float] = [0, 0, 0]
+        direction_vector[OUT_OF_PLANE_AXIS_2D] = 1
+
+        reference_coordinate: List[float]  = [0, 0, 0]
+        reference_coordinate[OUT_OF_PLANE_AXIS_2D] = reference_depth
+
+        self.groups[group_name] = {
+            "model_part_names": [],
+            "extrusion_parameters":{
+                "reference_coordinate": reference_coordinate,
+                "length": extrusion_length,
+                "direction_vector": direction_vector
+            }
+        }
+
+
+    def add_model_part_to_group(self, group_name: str, part_name: str):
+        """
+        Adds a model part name to a pre-existing group for extrusion.
+
+        Args:
+            - group_name (str): The name of the group.
+            - part_name (str): The name of the model part to be added to the group.
+
+        Raises:
+            - ValueError: if the group doesn't exist.
+            - ValueError: if the model part doesn't exist.
+        """
+        if group_name not in self.groups.keys():
+            raise ValueError(f"The group specified `{group_name}` does not exist.")
+
+        if self.__get_model_part_by_name(part_name) is None:
+            raise ValueError(f"The model part specified `{part_name}` does not exist.")
+
+        self.groups[group_name]["model_part_names"].append(part_name)
+
+    def add_soil_layer_by_coordinates(
+            self, coordinates: Sequence[Sequence[float]],
+            material_parameters: Union[SoilMaterial, StructuralMaterial],
+            name: str, group_name:Optional[str]=None):
+        """
+        Adds a soil layer to the model by giving a sequence of 3D coordinates.
+        The coordinates have to belong to the same plane.
+        In a 3D model, the 2D geometry is extruded in the direction of the extrusion group.
+        If no extrusion group is provided, the geometry is extruded in the out of plane direction.
 
         Args:
             - coordinates (Sequence[Sequence[float]]): The plane coordinates of the soil layer.
             - material_parameters (Union[:class:`stem.soil_material.SoilMaterial`, \
                 :class:`stem.structural_material.StructuralMaterial`]): The material parameters of the soil layer.
             - name (str): The name of the soil layer.
+            - group_name (Optional[str]): The name of the 3D group name for extruding the layer.
 
         Raises:
-            - ValueError: if extrusion_length is not specified in 3D.
+            - ValueError: if the polygon of the soil layer is not planar.
+            - ValueError: if the model is 3D and the specified group_name doesn't exist.
+            - ValueError: if the model is 3D but no group_name nor model.extrusion_length are specified.
+            - ValueError: if the model is 3D, a valid group is specified, but the reference point of the group \
+                is not in the same plane of the polygon of the soil layer.
         """
 
         # sort coordinates in anti-clockwise order, such that elements in mesh are also in anti-clockwise order
         if Utils.are_2d_coordinates_clockwise(coordinates):
             coordinates = coordinates[::-1]
 
+        if not Utils.is_polygon_planar(coordinates):
+            raise ValueError(f"Polygon for the soil layer are not on the same plane.")
+
+        # validation of group_name
+        if group_name is not None and group_name not in self.groups.keys():
+            raise ValueError(f"Non-existent group specified `{group_name}`.")
+
         gmsh_input = {name: {"coordinates": coordinates, "ndim": self.ndim}}
+
         # check if extrusion length is specified in 3D
         if self.ndim == 3:
-            if self.extrusion_length is None:
-                raise ValueError("Extrusion length must be specified for 3D models")
 
-            extrusion_length: List[float] = [0, 0, 0]
-            extrusion_length[OUT_OF_PLANE_AXIS_2D] = self.extrusion_length
-            gmsh_input[name]["extrusion_length"] = extrusion_length
+            if self.extrusion_length is None and group_name is None:
+                raise ValueError("For 3D models either the extrusion length or the group name for the extrusion must be"
+                                 " specified.")
+
+            elif group_name is not None:
+
+                # retrieve information about group
+                extrusion_parameters = self.groups[group_name]["extrusion_parameters"]
+                # normalise the direction vector and scale it by the extrusion length
+                direction_vector = extrusion_parameters["direction_vector"]
+                norm = np.linalg.norm(direction_vector)
+                extrusion_vector: List[float] = [dv * extrusion_parameters["length"] / norm for dv in direction_vector]
+                gmsh_input[name]["extrusion_length"] = extrusion_vector
+
+                reference_point_group = extrusion_parameters["reference_coordinate"]
+
+                if not Utils.is_point_coplanar_to_polygon(reference_point_group, coordinates):
+                    raise ValueError(f"The reference coordinate of group: {group_name}, does not lay on the same plane as soil layer: {name}")
+
+
+            elif self.extrusion_length is not None:
+
+                extrusion_vector = [0, 0, 0]
+                extrusion_vector[OUT_OF_PLANE_AXIS_2D] = self.extrusion_length
+                gmsh_input[name]["extrusion_length"] = extrusion_vector
 
         # todo check if this function in gmsh io can be improved
         self.gmsh_io.generate_geometry(gmsh_input, "")
@@ -254,6 +345,10 @@ class Model:
         body_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
 
         self.body_model_parts.append(body_model_part)
+
+        # add the model part to the group
+        if group_name is not None:
+            self.add_model_part_to_group(group_name, part_name=name)
 
     def add_load_by_geometry_ids(self, geometry_ids: Sequence[int], load_parameters: LoadParametersABC, name: str):
         """
