@@ -631,15 +631,14 @@ class Utils:
         non_collinear_points = Utils.find_first_three_non_collinear_points(points=polygon_points, a_tol=a_tol)
 
         # 3 non-collinear points form always a unique plane
-        if len(non_collinear_points) == 3:
+        if len(polygon_points) == 3:
             return True
 
         # Convert points to a NumPy array for easier manipulation
-
         non_collinear_points_array = np.array(non_collinear_points)
 
         # Choose the first three non-collinear points
-        p1, p2, p3 = points_array[:3]
+        p1, p2, p3 = non_collinear_points_array[:3]
 
         # Calculate vectors from p1 to p2 and p1 to p3
         v1 = p2 - p1
