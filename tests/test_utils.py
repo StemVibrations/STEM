@@ -632,10 +632,8 @@ class TestUtilsStem:
         with pytest.raises(ValueError, match=msg):
             Utils.find_first_three_non_collinear_points(points=[(0, 0, 0), (1, 0, 0)])
 
-        # test that raises an error if all the points are collinear
-        msg = "All the points in the polygon are collinear."
-        with pytest.raises(ValueError, match=msg):
-            Utils.find_first_three_non_collinear_points(points=[(0, 0, 0), (0.5, 0.5, 0), (1, 1, 0)])
+        # test that None is returned if points are collinear
+        assert Utils.find_first_three_non_collinear_points(points=[(0, 0, 0), (0.5, 0.5, 0), (1, 1, 0)]) is None
 
 
     def test_is_polygon_planar(self):
@@ -654,6 +652,11 @@ class TestUtilsStem:
         msg = "Less than 3 points are given, the shape is not a polygon."
         with pytest.raises(ValueError, match=msg):
             Utils.is_polygon_planar(polygon_points=[(0, 0, 0), (1, 0, 0)])
+
+        # error is raised if points in the polygon are collinear
+        msg = "All the points in the polygon are collinear."
+        with pytest.raises(ValueError, match=msg):
+            Utils.is_polygon_planar(polygon_points=[(0, 0, 0), (0.5, 0, 0), (1, 0, 0)])
 
         # assert this also works for 2d polygons (trivial)
         planar_polygon_2d = [(0, 0), (1, 0), (0, 1)]
@@ -675,3 +678,10 @@ class TestUtilsStem:
         assert not Utils.is_point_coplanar_to_polygon(
             polygon_points=polygon, point=non_coplanar_point
         )
+
+        # error is raised if points in the polygon are collinear
+        msg = "All the points in the polygon are collinear."
+        with pytest.raises(ValueError, match=msg):
+            Utils.is_point_coplanar_to_polygon(
+                polygon_points=[(0, 0, 0), (0.5, 0, 0), (1, 0, 0)], point=non_coplanar_point
+            )

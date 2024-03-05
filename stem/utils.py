@@ -529,7 +529,7 @@ class Utils:
     @staticmethod
     def find_first_three_non_collinear_points(
             points: Sequence[Sequence[float]], a_tol=1e-06
-    ):
+    ) -> Optional[Sequence[Sequence[float]]]:
         """
         Find the first 3 non-collinear points in sequence of points.
 
@@ -541,7 +541,7 @@ class Utils:
             -  ValueError: if all the points are collinear.
 
         Returns:
-            - List[Sequence[float]]: list of the first three points that are not collinear.
+            - Optional[List[Sequence[float]]]: list of the first three points that are not collinear. If all are collinear, None is returned.
 
         """
         if len(points) < 3:
@@ -555,12 +555,12 @@ class Utils:
             if not Utils.is_collinear(p_candidate, p1, p2, a_tol=a_tol):
                 return [p1, p2, p_candidate]
 
-        raise ValueError("All the points in the polygon are collinear.")
+        return None
 
     @staticmethod
     def is_point_coplanar_to_polygon(
             point: Sequence[float], polygon_points: Sequence[Sequence[float]], a_tol=1e-06
-    ):
+    ) -> bool:
         """
         Checks whether a point is coplanar to a list of points defining a polygon
 
@@ -584,6 +584,9 @@ class Utils:
 
         non_collinear_points = Utils.find_first_three_non_collinear_points(points=polygon_points, a_tol=a_tol)
         # Convert points to a NumPy array for easier manipulation
+
+        if non_collinear_points is None:
+            raise ValueError("All the points in the polygon are collinear.")
 
         p1, p2, p3 = np.array(non_collinear_points)
 
@@ -610,7 +613,7 @@ class Utils:
         return True
 
     @staticmethod
-    def is_polygon_planar(polygon_points: Sequence[Sequence[float]], a_tol=1e-06):
+    def is_polygon_planar(polygon_points: Sequence[Sequence[float]], a_tol=1e-06) -> bool:
         """
         Checks whether a polygon is planar, i.e. all its point lie on the same plane.
 
@@ -629,6 +632,9 @@ class Utils:
 
         # get the first 3 non-collinear points in polygon
         non_collinear_points = Utils.find_first_three_non_collinear_points(points=polygon_points, a_tol=a_tol)
+
+        if non_collinear_points is None:
+            raise ValueError("All the points in the polygon are collinear.")
 
         # 3 non-collinear points form always a unique plane
         if len(polygon_points) == 3:

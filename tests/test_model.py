@@ -822,22 +822,13 @@ class TestModel:
             model.add_soil_layer_by_coordinates(shape3, soil_material1, "layer3", group_name="Group1")
 
 
-    def test_validation_of_adding_groups(self, create_default_3d_soil_material: SoilMaterial):
+    def test_validation_of_adding_groups(self):
         """
         Tests that errors are raised when groups are not specified or added multiple times.
-
-        Args:
-            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
 
         """
 
         ndim = 3
-
-        shape1 = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
-
-        # define soil materials
-        soil_material1 = create_default_3d_soil_material
-        soil_material1.name = "soil1"
 
         # create model
         model = Model(ndim)
