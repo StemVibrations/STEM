@@ -546,14 +546,15 @@ class Utils:
         if len(points) < 3:
             raise ValueError("Less than 3 points are provided.")
 
+        # select the first 2 points in the sequence
         p1 = points[0]
         p2 = points[1]
 
         for p_candidate in points[2:]:
-
+            # the first point that is not collinear with the first 2, is returned altogether with p1 and p2
             if not Utils.is_collinear(p_candidate, p1, p2, a_tol=a_tol):
                 return [p1, p2, p_candidate]
-
+        # all are collinear, None is returned
         return None
 
     @staticmethod
@@ -608,7 +609,7 @@ class Utils:
 
         # If the dot product is not close to 0 (within a small tolerance),
         # the points are not coplanar
-        if not np.isclose(dot_product, 0, atol=1e-6):
+        if not np.isclose(dot_product, 0, atol=a_tol):
             return False
         return True
 
@@ -666,7 +667,7 @@ class Utils:
 
             # If the dot product is not close to 0 (within a small tolerance),
             # the points are not coplanar
-            if not np.isclose(dot_product, 0, atol=1e-6):
+            if not np.isclose(dot_product, 0, atol=a_tol):
                 return False
 
         # If the dot product is 0, the point is on the plane
