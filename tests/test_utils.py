@@ -640,7 +640,7 @@ class TestUtilsStem:
 
     def test_is_polygon_planar(self):
         """
-        Checks whether points in a polygon lie on the same plane.
+        Checks whether points in a polygon lie on the same plane, also for trivial 2d points.
         """
 
         planar_polygon_3n = [(0, 0, 0), (1, 0, 0), (0, 1, 0)]
@@ -655,6 +655,9 @@ class TestUtilsStem:
         with pytest.raises(ValueError, match=msg):
             Utils.is_polygon_planar(polygon_points=[(0, 0, 0), (1, 0, 0)])
 
+        # assert this also works for 2d polygons (trivial)
+        planar_polygon_2d = [(0, 0), (1, 0), (0, 1)]
+        assert Utils.is_polygon_planar(polygon_points=planar_polygon_2d)
 
     def test_is_point_coplanar_to_polygon(self):
         """
