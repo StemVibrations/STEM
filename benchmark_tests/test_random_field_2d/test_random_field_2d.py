@@ -29,7 +29,8 @@ def test_stem():
     width = 25
     height = 12
     # add soil layers
-    model.add_soil_layer_by_coordinates([(0, 0, 0), (width, 0, 0), (width, height, 0), (0, height, 0)], soil_material, "layer1")
+    model.add_soil_layer_by_coordinates([(0, 0, 0), (width, 0, 0), (width, height, 0), (0, height, 0)], soil_material,
+                                        "layer1")
 
     # Define the field generator
     random_field_generator = RandomFieldGenerator(
