@@ -7,6 +7,13 @@ repos:
         entry: yapf
         args: [-i]
         types: [python]
+      - id: mypy
+        name: mypy
+        language: python
+        entry: mypy
+        files: "./stem"
+        args: [ --config-file, "pyproject.toml" ]
+        types: [python]
   - repo: https://github.com/pycqa/flake8
     rev: 7.0.0
     hooks:
