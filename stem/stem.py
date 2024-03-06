@@ -43,16 +43,10 @@ class Stem:
         self.__stage_settings_file_names: Dict[int, str] = {}
         self.__last_ran_stage_number: int = 0
 
-        # uvec_params = KM.Parameters("""{
-        #     "uvec_path"                     :     "C:/Users/jdnut/Desktop/StemPython/UVEC/my_sample_uvec.py",
-        #     "uvec_method"				    :     "uvec_test",
-        #     "uvec_data"						:     "{'dt': 0.0, 'u':{}, 'theta':{}, 'loads':{}, 'parameters' :{}, 'state':{}}"
-        # }""")
         self.__last_uvec_data = KratosMultiphysics.Parameters("""{"u": {},
                                                                "theta": {},
                                                                "loads": {},
                                                                "state": {}}""")
-        # self.__last_uvec_state = KratosMultiphysics.Parameters()
 
         # perform initial stage setup and mesh generation in this order
         initial_stage.post_setup()
@@ -217,9 +211,7 @@ class Stem:
         simulation.Finalize()
         simulation._GetSolver().GetComputingModelPart().ProcessInfo[KratosMultiphysics.IS_RESTARTED] = True
 
-        # self.__last_uvec_data = simulation._GetSolver().solver.uvec_data["state"]
         if hasattr(simulation._GetSolver().solver, 'uvec_data'):
-        # if simulation._GetSolver().solver.
             self.__last_uvec_data = simulation._GetSolver().solver.uvec_data
 
         # get the new time step number
