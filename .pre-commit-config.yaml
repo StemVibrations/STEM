@@ -11,8 +11,11 @@ repos:
         name: mypy
         language: python
         entry: mypy
-        files: "./stem"
+        files: "^stem/"
         args: [ --config-file, "pyproject.toml" ]
         types: [python]
       - id: flake8
-        files: "./stem"
+        name: flake8
+        language: python
+        entry: flake8
+        files: "^stem/"

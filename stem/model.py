@@ -296,7 +296,7 @@ class Model:
             coordinates = coordinates[::-1]
 
         if not Utils.is_polygon_planar(coordinates):
-            raise ValueError(f"Polygon for the soil layer are not on the same plane.")
+            raise ValueError("Polygon for the soil layer are not on the same plane.")
 
         # validation of group_name
         if group_name is not None and group_name not in self.groups.keys():
@@ -324,9 +324,8 @@ class Model:
                 reference_point_group = extrusion_parameters["reference_coordinate"]
 
                 if not Utils.is_point_coplanar_to_polygon(reference_point_group, coordinates):
-                    raise ValueError(
-                        f"The reference coordinate of group: {group_name}, does not lay on the same plane as soil layer: {name}"
-                    )
+                    raise ValueError(f"The reference coordinate of group: {group_name}, "
+                                     f"does not lay on the same plane as soil layer: {name}")
 
             elif self.extrusion_length is not None:
 
