@@ -14,9 +14,5 @@ repos:
         files: "./stem"
         args: [ --config-file, "pyproject.toml" ]
         types: [python]
-  - repo: https://github.com/pycqa/flake8
-    rev: 7.0.0
-    hooks:
       - id: flake8
         files: "./stem"
-
