@@ -48,8 +48,13 @@ def uvec_static(json_string: str) -> str:
 
     if time_index <= 0:
         state["previous_time"] = 0
+        state["previous_time_index"] = time_index
 
-    state["previous_time"] += time_step
+    # state["previous_time"] += time_step
+
+    if time_index > state["previous_time_index"]:
+        state["previous_time"] += time_step
+        print(f"Previous time: {state['previous_time']}, time step: {time_step}, time index: {time_index}")
 
     # calculate contact forces
     F_contact = calculate_contact_forces(u_vertical, train.calculate_static_contact_force(),
@@ -58,6 +63,23 @@ def uvec_static(json_string: str) -> str:
     # calculate force vector
     F = F_train
     F[train.contact_dofs] = F[train.contact_dofs] + F_contact
+    #
+    # contact_method = HertzianContact()
+    # contact_method.contact_coeff = parameters["contact_coefficient"]
+    # contact_method.contact_power = parameters["contact_power"]
+    #
+    # u_wheel = np.array(state["u"])[train.contact_dofs]
+    #
+    # static_contact_u = contact_method.calculate_contact_deformation(train.calculate_static_contact_force())
+    #
+    # # du = u_wheel + static_contact_u - u
+    #
+    # print(f"u_static = {u_static}, static_contact_u = {static_contact_u}")
+    #
+    # u_static[train.contact_dofs] +=static_contact_u
+    #
+    # state["u"] = u_static.tolist()
+
 
     # calculate unit vector
     aux = {}
@@ -72,6 +94,9 @@ def uvec_static(json_string: str) -> str:
     file_name = uvec_data["parameters"]["file_name"]
     with open(file_name, 'a+') as f:
         f.write(f"{state['previous_time']};{uvec_data['loads'][1][1]};{state['u'][-3]};{u_vertical[0]}\n")
+
+    state["previous_time_index"] = time_index
+
     return json.dumps(uvec_data)
 
 
@@ -105,19 +130,22 @@ def uvec(json_string: str) -> str:
 
     u_vertical = [u[uw][gravity_axis] for uw in u.keys()]
 
-    # calculate static displacement
-    u_static = train.calculate_initial_displacement(K, F_train, u_vertical)
-
     if time_index <= 0:
+        # calculate static displacement
+        u_static = train.calculate_initial_displacement(K, F_train, u_vertical)
         state["u"] = u_static
         state["v"] = np.zeros_like(u_static)
         state["a"] = np.zeros_like(u_static)
         state["previous_time"] = 0
+        state["previous_time_index"] = time_index
 
     state["u"] = np.array(state["u"])
     state["v"] = np.array(state["v"])
     state["a"] = np.array(state["a"])
-    state["previous_time"] += time_step
+
+    if time_index > state["previous_time_index"]:
+        state["previous_time"] += time_step
+        print(f"Previous time: {state['previous_time']}, time step: {time_step}, time index: {time_index}")
 
     # calculate contact forces
     F_contact = calculate_contact_forces(u_vertical, train.calculate_static_contact_force(),
@@ -140,10 +168,14 @@ def uvec(json_string: str) -> str:
         aux[i + 1] = [0., (-val).tolist(), 0.]
     uvec_data["loads"] = aux
 
+    print(uvec_data)
+
     # write to file to compare the results
     file_name = uvec_data["parameters"]["file_name"]
     with open(file_name, 'a+') as f:
         f.write(f"{state['previous_time']};{uvec_data['loads'][1][1]};{state['u'][-3]};{u_vertical[0]}\n")
+
+    state["previous_time_index"] = time_index
 
     return json.dumps(uvec_data)
 

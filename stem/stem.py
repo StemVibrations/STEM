@@ -194,8 +194,6 @@ class Stem:
         # set uvec state
         if kratos_parameters["solver_settings"].Has("uvec"):
             kratos_parameters["solver_settings"]["uvec"]["uvec_data"]["state"] = self.__last_uvec_data["state"]
-            kratos_parameters["solver_settings"]["uvec"]["uvec_data"]["u"] = self.__last_uvec_data["u"]
-            kratos_parameters["solver_settings"]["uvec"]["uvec_data"]["theta"] = self.__last_uvec_data["theta"]
             kratos_parameters["solver_settings"]["uvec"]["uvec_data"]["loads"] = self.__last_uvec_data["loads"]
 
         # run calculation
