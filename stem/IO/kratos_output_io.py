@@ -60,11 +60,9 @@ class KratosOutputsIO:
         elif output_parameters.file_format == "hdf5":
             gid_post_mode = "GiD_PostHDF5"
         else:
-            raise ValueError(
-                "Incorrect selected output for GiD `file_format` "
-                f"variable:{output_parameters.file_format}.\n"
-                f"Accepted inputs are `binary`, `ascii` or `hdf5`."
-            )
+            raise ValueError("Incorrect selected output for GiD `file_format` "
+                             f"variable:{output_parameters.file_format}.\n"
+                             f"Accepted inputs are `binary`, `ascii` or `hdf5`.")
 
         model_part_name = f"{self.domain}"
         if part_name is not None:
@@ -72,9 +70,7 @@ class KratosOutputsIO:
 
         # make everything a string (if it's not a string) before passing it to the dictionary
         # the if statement is required because we accept mixed objects (string or Enum)
-        nodal_results = [
-            op.name if isinstance(op, NodalOutput) else op for op in output_parameters.nodal_results
-        ]
+        nodal_results = [op.name if isinstance(op, NodalOutput) else op for op in output_parameters.nodal_results]
         # make everything a string (if it's not a string) before passing it to the dictionary
         # the if statement is required because we accept mixed objects (string or Enum)
         gauss_results = [
@@ -135,9 +131,7 @@ class KratosOutputsIO:
 
         # make everything a string (if it's not a string) before passing it to the dictionary
         # the if statement is required because we accept mixed objects (string or Enum)
-        nodal_results = [
-            op.name if isinstance(op, NodalOutput) else op for op in output_parameters.nodal_results
-        ]
+        nodal_results = [op.name if isinstance(op, NodalOutput) else op for op in output_parameters.nodal_results]
         # make everything a string (if it's not a string) before passing it to the dictionary
         # the if statement is required because we accept mixed objects (string or Enum)
         gauss_results = [
@@ -198,9 +192,7 @@ class KratosOutputsIO:
 
         # make everything a string (if it's not a string) before passing it to the dictionary
         # the if statement is required because we accept mixed objects (string or Enum)
-        nodal_results = [
-            op.name if isinstance(op, NodalOutput) else op for op in output_parameters.nodal_results
-        ]
+        nodal_results = [op.name if isinstance(op, NodalOutput) else op for op in output_parameters.nodal_results]
         # make everything a string (if it's not a string) before passing it to the dictionary
         # the if statement is required because we accept mixed objects (string or Enum)
         gauss_results = [
@@ -272,17 +264,16 @@ class KratosOutputsIO:
         Returns:
             - output_dict (Dict[str, Any]): dictionary containing two other dictionary \
                                             for output properties: \n
-                                            - the first containing the "output_process" dictionary.
-                                            - the second containing the "processes" dictionary, which includes JSON outputs.
+                                            - the first containing the "output_process" dictionary. \
+                                            - the second containing the "processes" dictionary, \
+                                                which includes JSON outputs.
         """
         output_dict: Dict[str, Any] = {"output_processes": {}, "processes": {}}
 
         for output in output_settings:
 
             key_output, _parameters_output = self.__create_output_dict(output)
-            key_process = KratosOutputsIO.__get_process_type_for_output(
-                output.output_parameters
-            )
+            key_process = KratosOutputsIO.__get_process_type_for_output(output.output_parameters)
             if key_output in output_dict[key_process].keys():
                 output_dict[key_process][key_output].append(_parameters_output)
             else:

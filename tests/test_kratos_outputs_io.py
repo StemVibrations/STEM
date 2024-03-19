@@ -10,7 +10,6 @@ from tests.utils import TestUtils
 
 class TestKratosOutputsIO:
 
-
     def test_check_validation_of_requested_output(self):
         """
         Test the creation of the output process dictionary for the
@@ -24,13 +23,9 @@ class TestKratosOutputsIO:
 
         # Gauss point results
         gauss_point_results1 = [
-            GaussPointOutput.GREEN_LAGRANGE_STRAIN_TENSOR,
-            GaussPointOutput.YOUNG_MODULUS,
-            "YOUNG_MODULUS"
+            GaussPointOutput.GREEN_LAGRANGE_STRAIN_TENSOR, GaussPointOutput.YOUNG_MODULUS, "YOUNG_MODULUS"
         ]
-        gauss_point_results2 = [
-            "YOUNGS_MODULUS"
-        ]
+        gauss_point_results2 = ["YOUNGS_MODULUS"]
         # define output parameters
         # 1. GiD
         GiDOutputParameters(
@@ -129,7 +124,6 @@ class TestKratosOutputsIO:
                 gauss_point_results=gauss_point_results2,
             )
 
-
     def test_create_output_process_dictionary(self):
         """
         Test the creation of the output process dictionary for the
@@ -147,10 +141,8 @@ class TestKratosOutputsIO:
             GaussPointOutput.HYDRAULIC_HEAD,
         ]
         gauss_point_results2 = [
-            GaussPointOutput.GREEN_LAGRANGE_STRAIN_TENSOR,
-            GaussPointOutput.ENGINEERING_STRAIN_TENSOR,
-            GaussPointOutput.CAUCHY_STRESS_TENSOR,
-            GaussPointOutput.TOTAL_STRESS_TENSOR,
+            GaussPointOutput.GREEN_LAGRANGE_STRAIN_TENSOR, GaussPointOutput.ENGINEERING_STRAIN_TENSOR,
+            GaussPointOutput.CAUCHY_STRESS_TENSOR, GaussPointOutput.TOTAL_STRESS_TENSOR,
             GaussPointOutput.GREEN_LAGRANGE_STRAIN_VECTOR
         ]
         # define output parameters
@@ -245,13 +237,8 @@ class TestKratosOutputsIO:
             output_parameters=json_output_parameters2,
         )
         all_outputs = [
-            gid_output_process1,
-            vtk_output_process1,
-            json_output_process1,
-            gid_output_process2,
-            vtk_output_process2,
-            json_output_process2,
-            gid_output_process3
+            gid_output_process1, vtk_output_process1, json_output_process1, gid_output_process2, vtk_output_process2,
+            json_output_process2, gid_output_process3
         ]
 
         # write dictionary for the output(s)
@@ -259,11 +246,7 @@ class TestKratosOutputsIO:
         test_output = kratos_outputs_io.create_output_process_dictionary(all_outputs)
 
         # load expected dictionary from the json
-        expected_load_parameters_json = json.load(
-            open("tests/test_data/expected_output_parameters.json")
-        )
+        expected_load_parameters_json = json.load(open("tests/test_data/expected_output_parameters.json"))
 
         # assert the objects to be equal
-        TestUtils.assert_dictionary_almost_equal(
-            expected_load_parameters_json, test_output
-        )
+        TestUtils.assert_dictionary_almost_equal(expected_load_parameters_json, test_output)

@@ -1,0 +1,14 @@
+[style]
+based_on_style = pep8
+SPLIT_ALL_TOP_LEVEL_COMMA_SEPARATED_VALUES = False
+dedent_closing_brackets = False
+EACH_DICT_ENTRY_ON_SEPARATE_LINE = True
+FORCE_MULTILINE_DICT = False
+coalesce_brackets = True
+column_limit = 120
+split_arguments_when_comma_terminated = True
+SPLIT_BEFORE_FIRST_ARGUMENT = False
+#SPLIT_PENALTY_FOR_ADDED_LINE_SPLIT = 1
+ALLOW_SPLIT_BEFORE_DICT_VALUE = False
+
+

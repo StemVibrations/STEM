@@ -12,18 +12,42 @@ class TestSoilMaterial:
         """
 
         # create 3d two phase soil without zz permeability, which is not allowed
-        pytest.raises(ValueError, TwoPhaseSoil, ndim=3, DENSITY_SOLID=2650, POROSITY=0.3, BULK_MODULUS_SOLID=1E9,
-                      PERMEABILITY_XX=1E-15, PERMEABILITY_YY=1E-15, PERMEABILITY_XY=1, PERMEABILITY_ZX=2,
+        pytest.raises(ValueError,
+                      TwoPhaseSoil,
+                      ndim=3,
+                      DENSITY_SOLID=2650,
+                      POROSITY=0.3,
+                      BULK_MODULUS_SOLID=1E9,
+                      PERMEABILITY_XX=1E-15,
+                      PERMEABILITY_YY=1E-15,
+                      PERMEABILITY_XY=1,
+                      PERMEABILITY_ZX=2,
                       PERMEABILITY_YZ=3)
 
         # create 3d two phase soil without yz permeability, which is not allowed
-        pytest.raises(ValueError, TwoPhaseSoil, ndim=3, DENSITY_SOLID=2650, POROSITY=0.3, BULK_MODULUS_SOLID=1E9,
-                      PERMEABILITY_XX=1E-15, PERMEABILITY_YY=1E-15, PERMEABILITY_ZX=1, PERMEABILITY_ZZ=2,
+        pytest.raises(ValueError,
+                      TwoPhaseSoil,
+                      ndim=3,
+                      DENSITY_SOLID=2650,
+                      POROSITY=0.3,
+                      BULK_MODULUS_SOLID=1E9,
+                      PERMEABILITY_XX=1E-15,
+                      PERMEABILITY_YY=1E-15,
+                      PERMEABILITY_ZX=1,
+                      PERMEABILITY_ZZ=2,
                       PERMEABILITY_YZ=None)
 
         # create 3d two phase soil without zx permeability, which is not allowed
-        pytest.raises(ValueError, TwoPhaseSoil, ndim=3, DENSITY_SOLID=2650, POROSITY=0.3, BULK_MODULUS_SOLID=1E9,
-                      PERMEABILITY_XX=1E-15, PERMEABILITY_YY=1E-15, PERMEABILITY_XY=1, PERMEABILITY_ZX=None,
+        pytest.raises(ValueError,
+                      TwoPhaseSoil,
+                      ndim=3,
+                      DENSITY_SOLID=2650,
+                      POROSITY=0.3,
+                      BULK_MODULUS_SOLID=1E9,
+                      PERMEABILITY_XX=1E-15,
+                      PERMEABILITY_YY=1E-15,
+                      PERMEABILITY_XY=1,
+                      PERMEABILITY_ZX=None,
                       PERMEABILITY_ZZ=3)
 
     def test_get_property_in_soil_material(self):
@@ -33,7 +57,9 @@ class TestSoilMaterial:
         ndim = 2
         soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
         constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
-        soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
+        soil_material = SoilMaterial(name="soil",
+                                     soil_formulation=soil_formulation,
+                                     constitutive_law=constitutive_law,
                                      retention_parameters=SaturatedBelowPhreaticLevelLaw())
 
         assert soil_material.get_property_in_material("YOUNG_MODULUS") == 100e6

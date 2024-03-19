@@ -6,7 +6,6 @@ import numpy as np
 
 @dataclass
 class Table:
-
     """
     Class to write time-dependent functions for imposed load and constraints.
     If analysis runs outside the specified time-steps, the function is linearly extrapolated.

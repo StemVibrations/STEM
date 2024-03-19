@@ -46,8 +46,8 @@ class ParameterFieldParameters(AdditionalProcessesParametersABC):
             as provided in the function documentation.
         - field_file_name (Optional[str]): Name for the json file where the field parameters will be stored.
             This is optional for `json` function_type.
-        - field_generator (Optional[:class:`stem.field_generator.FieldGeneratorABC`]): the field generator to produce the \
-            values in the json file. Currently only random fields is supported but will be in the future \
+        - field_generator (Optional[:class:`stem.field_generator.FieldGeneratorABC`]): the field generator to produce \
+            the values in the json file. Currently only random fields is supported but will be in the future \
             implemented as custom functions that take in input X, Y, Z coordinates. Not required for \
             `python` and `input` function types. This is optional for `json` function_type.
 

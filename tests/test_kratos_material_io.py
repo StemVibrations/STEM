@@ -8,6 +8,7 @@ from tests.utils import TestUtils
 
 
 class TestKratosMaterialIO:
+
     def test_write_soil_material_dict(self):
         """
         Test writing a material list to json. In this test, the material list contains a UMAT and a UDSM material.
@@ -83,9 +84,7 @@ class TestKratosMaterialIO:
         )
 
         # Define two phase constitutive law parameters
-        two_phase_constitutive_parameters = LinearElasticSoil(
-            YOUNG_MODULUS=1e9, POISSON_RATIO=0.3
-        )
+        two_phase_constitutive_parameters = LinearElasticSoil(YOUNG_MODULUS=1e9, POISSON_RATIO=0.3)
         two_phase_retention_parameters = SaturatedBelowPhreaticLevelLaw()
 
         # Create materials
@@ -133,17 +132,12 @@ class TestKratosMaterialIO:
                     part_name=part_name,
                     material=material_parameters,
                     material_id=ix + 1,
-                )
-            )
+                ))
 
-        expected_material_parameters_json = json.load(
-            open("tests/test_data/expected_material_parameters.json")
-        )
+        expected_material_parameters_json = json.load(open("tests/test_data/expected_material_parameters.json"))
 
         # compare json files using custom dictionary comparison
-        TestUtils.assert_dictionary_almost_equal(
-            expected_material_parameters_json, test_dict
-        )
+        TestUtils.assert_dictionary_almost_equal(expected_material_parameters_json, test_dict)
 
     def test_write_structural_material_dict(self):
         """
@@ -178,9 +172,7 @@ class TestKratosMaterialIO:
         )
 
         # Create structural materials
-        beam_material = StructuralMaterial(
-            name="test_beam_material", material_parameters=beam_material_parameters
-        )
+        beam_material = StructuralMaterial(name="test_beam_material", material_parameters=beam_material_parameters)
         spring_damper_material = StructuralMaterial(
             name="test_spring_damper_material",
             material_parameters=spring_damper_material_parameters,
@@ -207,14 +199,10 @@ class TestKratosMaterialIO:
                     part_name=part_name,
                     material=material_parameters,
                     material_id=ix + 1,
-                )
-            )
+                ))
 
         expected_material_parameters_json = json.load(
-            open("tests/test_data/expected_structural_material_parameters.json")
-        )
+            open("tests/test_data/expected_structural_material_parameters.json"))
 
         # compare json files using custom dictionary comparison
-        TestUtils.assert_dictionary_almost_equal(
-            expected_material_parameters_json, test_dict
-        )
+        TestUtils.assert_dictionary_almost_equal(expected_material_parameters_json, test_dict)

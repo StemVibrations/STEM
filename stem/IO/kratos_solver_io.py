@@ -38,12 +38,14 @@ class KratosSolverIO:
         Returns:
             - Dict[str, Any]: dictionary containing the problem data
         """
-        problem_data_dict: Dict[str, Any] = {"problem_name": problem_data.problem_name,
-                                             "start_time": problem_data.settings.time_integration.start_time,
-                                             "end_time": problem_data.settings.time_integration.end_time,
-                                             "echo_level": 1,
-                                             "parallel_type": "OpenMP",
-                                             "number_of_threads": problem_data.number_of_threads}
+        problem_data_dict: Dict[str, Any] = {
+            "problem_name": problem_data.problem_name,
+            "start_time": problem_data.settings.time_integration.start_time,
+            "end_time": problem_data.settings.time_integration.end_time,
+            "echo_level": 1,
+            "parallel_type": "OpenMP",
+            "number_of_threads": problem_data.number_of_threads
+        }
 
         return problem_data_dict
 
@@ -93,7 +95,8 @@ class KratosSolverIO:
         """
 
         convergence_criterion_dict: Dict[str, Any] = {
-            "convergence_criterion": convergence_criterion.convergence_criterion}
+            "convergence_criterion": convergence_criterion.convergence_criterion
+        }
         convergence_criterion_dict.update(deepcopy(convergence_criterion.__dict__))
         return convergence_criterion_dict
 
@@ -124,9 +127,11 @@ class KratosSolverIO:
         Returns:
             - Dict[str, Any]: dictionary containing the model part names
         """
-        model_parts_dict: Dict[str, Any] = {"problem_domain_sub_model_part_list": [],
-                                            "processes_sub_model_part_list": [],
-                                            "body_domain_sub_model_part_list": []}
+        model_parts_dict: Dict[str, Any] = {
+            "problem_domain_sub_model_part_list": [],
+            "processes_sub_model_part_list": [],
+            "body_domain_sub_model_part_list": []
+        }
 
         # loop over model parts and add body model parts and other model parts to the corresponding lists
         for model_part in model_parts:
@@ -195,19 +200,22 @@ class KratosSolverIO:
 
             # if there is a UVEC load, create the UVEC parameters dictionary
             if isinstance(model_part.parameters, UvecLoad):
-
                 # set strategy type to newton_raphson_with_uvec
                 solver_settings_dict["strategy_type"] = "newton_raphson_with_uvec"
 
-                uvec_dict: Dict[str, Any] = {"uvec_path": model_part.parameters.uvec_file,
-                                             "uvec_method": model_part.parameters.uvec_function_name,
-                                             "uvec_model_part": model_part.name,
-                                             "uvec_data": {"dt": solver_settings_dict["time_stepping"]["time_step"],
-                                                           "u": {},
-                                                           "theta": {},
-                                                           "loads": {},
-                                                           "parameters": model_part.parameters.uvec_parameters,
-                                                           "state": model_part.parameters.uvec_state_variables}}
+                uvec_dict: Dict[str, Any] = {
+                    "uvec_path": model_part.parameters.uvec_file,
+                    "uvec_method": model_part.parameters.uvec_function_name,
+                    "uvec_model_part": model_part.name,
+                    "uvec_data": {
+                        "dt": solver_settings_dict["time_stepping"]["time_step"],
+                        "u": {},
+                        "theta": {},
+                        "loads": {},
+                        "parameters": model_part.parameters.uvec_parameters,
+                        "state": model_part.parameters.uvec_state_variables
+                    }
+                }
 
                 # return the UVEC parameters dictionary
                 return uvec_dict
@@ -229,39 +237,40 @@ class KratosSolverIO:
         Returns:
             - Dict[str, Any]: dictionary containing the solver settings
         """
-        solver_settings_dict: Dict[str, Any] = {"solver_type": self.__set_analysis_type(solver_settings.analysis_type),
-                                                "model_part_name": self.domain,
-                                                "domain_size": self.ndim,
-                                                "model_import_settings": {
-                                                    "input_type": "mdpa",
-                                                    "input_filename": mesh_file_name},
-                                                "material_import_settings": {
-                                                    "materials_filename": materials_file_name},
-                                                "time_stepping": {
-                                                    "time_step": solver_settings.time_integration.delta_time,
-                                                    "max_delta_time_factor": solver_settings.time_integration.max_delta_time_factor},
-                                                "reduction_factor": solver_settings.time_integration.reduction_factor,
-                                                "increase_factor": solver_settings.time_integration.increase_factor,
-                                                "buffer_size": 2,
-                                                "echo_level": solver_settings.echo_level,
-                                                "clear_storage": False,
-                                                "compute_reactions": False,
-                                                "move_mesh_flag": False,
-                                                "reform_dofs_at_each_step": False,
-                                                "nodal_smoothing": solver_settings.calculate_stresses_on_nodes,
-                                                "block_builder": True,
-                                                "rebuild_level": 0 if solver_settings.is_stiffness_matrix_constant
-                                                                   else 2,
-                                                "prebuild_dynamics": solver_settings.are_mass_and_damping_constant,
-                                                "solution_type": self.__set_solution_type(solver_settings),
-                                                "rayleigh_m": solver_settings.rayleigh_m if solver_settings.rayleigh_m
-                                                                                            is not None else 0,
-                                                "rayleigh_k": solver_settings.rayleigh_k if solver_settings.rayleigh_k
-                                                                                            is not None else 0,
-                                                "calculate_reactions": True,
-                                                "rotation_dofs": True,
-                                                "reset_displacements": solver_settings.reset_displacements
-                                                }
+        solver_settings_dict: Dict[str, Any] = {
+            "solver_type": self.__set_analysis_type(solver_settings.analysis_type),
+            "model_part_name": self.domain,
+            "domain_size": self.ndim,
+            "model_import_settings": {
+                "input_type": "mdpa",
+                "input_filename": mesh_file_name
+            },
+            "material_import_settings": {
+                "materials_filename": materials_file_name
+            },
+            "time_stepping": {
+                "time_step": solver_settings.time_integration.delta_time,
+                "max_delta_time_factor": solver_settings.time_integration.max_delta_time_factor
+            },
+            "reduction_factor": solver_settings.time_integration.reduction_factor,
+            "increase_factor": solver_settings.time_integration.increase_factor,
+            "buffer_size": 2,
+            "echo_level": solver_settings.echo_level,
+            "clear_storage": False,
+            "compute_reactions": False,
+            "move_mesh_flag": False,
+            "reform_dofs_at_each_step": False,
+            "nodal_smoothing": solver_settings.calculate_stresses_on_nodes,
+            "block_builder": True,
+            "rebuild_level": (0 if solver_settings.is_stiffness_matrix_constant else 2),
+            "prebuild_dynamics": solver_settings.are_mass_and_damping_constant,
+            "solution_type": self.__set_solution_type(solver_settings),
+            "rayleigh_m": (solver_settings.rayleigh_m if solver_settings.rayleigh_m is not None else 0),
+            "rayleigh_k": (solver_settings.rayleigh_k if solver_settings.rayleigh_k is not None else 0),
+            "calculate_reactions": True,
+            "rotation_dofs": True,
+            "reset_displacements": solver_settings.reset_displacements
+        }
 
         # Add the settings of the scheme, strategy, convergence criterion and linear solver
         solver_settings_dict.update(self.__create_scheme_dict(solver_settings.scheme))
@@ -298,11 +307,10 @@ class KratosSolverIO:
             - Dict[str, Any]: dictionary containing the problem data and the solver settings
         """
 
-        settings_dict: Dict[str, Any] = {"problem_data": self.__create_problem_data_dictionary(problem_data),
-                                         "solver_settings":
-                                             self.__create_solver_settings_dictionary(problem_data.settings,
-                                                                                      mesh_file_name,
-                                                                                      materials_file_name,
-                                                                                      model_parts)}
+        settings_dict: Dict[str, Any] = {
+            "problem_data": self.__create_problem_data_dictionary(problem_data),
+            "solver_settings": self.__create_solver_settings_dictionary(problem_data.settings, mesh_file_name,
+                                                                        materials_file_name, model_parts)
+        }
 
         return settings_dict

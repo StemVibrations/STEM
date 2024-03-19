@@ -43,7 +43,9 @@ class TestPlotUtils:
         ndim = 2
         soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
         constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
-        soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
+        soil_material = SoilMaterial(name="soil",
+                                     soil_formulation=soil_formulation,
+                                     constitutive_law=constitutive_law,
                                      retention_parameters=SaturatedBelowPhreaticLevelLaw())
         return soil_material
 
@@ -60,7 +62,9 @@ class TestPlotUtils:
         ndim = 3
         soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
         constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
-        soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
+        soil_material = SoilMaterial(name="soil",
+                                     soil_formulation=soil_formulation,
+                                     constitutive_law=constitutive_law,
                                      retention_parameters=SaturatedBelowPhreaticLevelLaw())
         return soil_material
 

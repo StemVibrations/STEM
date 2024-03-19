@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from pathlib import Path
@@ -159,10 +159,8 @@ def detect_vector_in_tensor_outputs(requested_outputs: Sequence[Union[GaussPoint
         # print an explanatory warning if any tensor output was detected
         if len(detected_tensor_outputs):
             _fmt_list = "".join([f" - {outpt} \n" for outpt in detected_tensor_outputs])
-            _msg = (
-                f"\n[WARNING] Vector specified for tensor output:\n{_fmt_list}"
-                f"In GiD, Such outputs are incorrectly rendered."
-            )
+            _msg = (f"\n[WARNING] Vector specified for tensor output:\n{_fmt_list}"
+                    f"In GiD, Such outputs are incorrectly rendered.")
             print(_msg)
 
 
@@ -191,13 +189,11 @@ def detect_tensor_outputs(requested_outputs: Sequence[Union[GaussPointOutput, st
         # print an explanatory warning if any tensor output was detected
         if len(detected_tensor_outputs):
             _fmt_list = "".join([f" - {outpt} \n" for outpt in detected_tensor_outputs])
-            _msg = (
-                f"\n[WARNING] tensor output detected:\n{_fmt_list}"
-                f"The outputs are incorrectly rendered in VTK and JSON output types:\n"
-                f"For VECTOR the output is incorrectly produced ans misses "
-                f"components.\n"
-                f"For TENSOR the output is ignored.\n"
-            )
+            _msg = (f"\n[WARNING] tensor output detected:\n{_fmt_list}"
+                    f"The outputs are incorrectly rendered in VTK and JSON output types:\n"
+                    f"For VECTOR the output is incorrectly produced ans misses "
+                    f"components.\n"
+                    f"For TENSOR the output is ignored.\n")
             print(_msg)
 
 
@@ -290,7 +286,6 @@ class VtkOutputParameters(OutputParametersABC):
         detect_tensor_outputs(requested_outputs=self.gauss_point_results)
 
 
-
 @dataclass
 class JsonOutputParameters(OutputParametersABC):
     """
@@ -335,13 +330,11 @@ class Output:
         - output_name (Optional[str]): name for the output file
     """
 
-    def __init__(
-        self,
-        output_parameters: OutputParametersABC,
-        part_name: Optional[str] = None,
-        output_dir: str = "./",
-        output_name: Optional[str] = None
-    ):
+    def __init__(self,
+                 output_parameters: OutputParametersABC,
+                 part_name: Optional[str] = None,
+                 output_dir: str = "./",
+                 output_name: Optional[str] = None):
         """
         Constructor of the output process class
 

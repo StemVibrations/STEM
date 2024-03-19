@@ -1,5 +1,3 @@
-
-
 #todo group input into geometry, settings, ...
 
 from gmsh_utils.gmsh_IO import GmshIO
@@ -23,11 +21,9 @@ mesh_name = "geometry"
 # set output directory
 mesh_output_dir = "./"
 
-
 gmsh_io = GmshIO()
 
 gmsh_io.generate_gmsh_mesh(input_points, extrusion_length, element_size, dims, name_label, mesh_name, mesh_output_dir,
                            save_file, open_gmsh_gui)
 
 mesh_data = gmsh_io.mesh_data
-
