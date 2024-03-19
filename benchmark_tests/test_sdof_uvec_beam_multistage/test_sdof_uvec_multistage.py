@@ -64,12 +64,12 @@ def test_stem():
                        "wheel_mass": 5750,
                        "wheel_stiffness": 1595e5,
                        "wheel_damping": 1000,
-                       "contact_coefficient": 9.1e-8,
+                       "contact_coefficient": 9.1e-7,
                        "contact_power": 1,
                        "gravity_axis": 1,
                        "file_name": r"test.txt"}
 
-    uvec_load = UvecLoad(direction=[1, 1, 0], velocity=velocity, origin=[0.0, 0, 0], wheel_configuration=[0.0],
+    uvec_load = UvecLoad(direction=[1, 1, 0], velocity=0, origin=[12.5, 0, 0], wheel_configuration=[0.0],
                          uvec_file=r"uvec_ten_dof_vehicle_2D/uvec.py", uvec_function_name="uvec_static", uvec_parameters=uvec_parameters)
     model.add_load_by_geometry_ids([1], uvec_load, "uvec_load")
 
@@ -94,9 +94,9 @@ def test_stem():
     analysis_type = AnalysisType.MECHANICAL
     solution_type = SolutionType.QUASI_STATIC
     # Set up start and end time of calculation, time step and etc
-    time_integration = TimeIntegration(start_time=0.0, end_time=0.45, delta_time=0.05, reduction_factor=1.0,
+    time_integration = TimeIntegration(start_time=-0.15, end_time=0.45, delta_time=0.15, reduction_factor=1.0,
                                        increase_factor=1.0, max_delta_time_factor=1000)
-    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
+    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-5,
                                                             displacement_absolute_tolerance=1.0e-12)
     stress_initialisation_type = StressInitialisationType.NONE
     solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
@@ -141,11 +141,12 @@ def test_stem():
     # --------------------------------
     stem = Stem(model, input_folder)
     model_stage_2 = stem.create_new_stage(0.0005, 0.45)
-    # model_stage_2.project_parameters.settings.solution_type = SolutionType.DYNAMIC
+    model_stage_2.project_parameters.settings.solution_type = SolutionType.DYNAMIC
     # model_stage_2.project_parameters.settings.rayleigh_k = 1e-6
     # model_stage_2.project_parameters.settings.rayleigh_m = 0.02
 
-    # model_stage_2.process_model_parts[0].parameters.uvec_function_name = "uvec_static"
+    model_stage_2.process_model_parts[0].parameters.uvec_function_name = "uvec"
+    model_stage_2.process_model_parts[0].parameters.velocity = velocity
 
     stem.add_calculation_stage(model_stage_2)
 
@@ -177,18 +178,18 @@ def test_stem():
 
     if PLOT_RESULTS:
         import matplotlib.pyplot as plt
-
-        ss = TwoDofVehicle()
-        ss.vehicle(uvec_parameters["bogie_mass"], uvec_parameters["wheel_mass"], velocity,
-                    uvec_parameters["wheel_stiffness"], uvec_parameters["wheel_damping"])
-        ss.beam(YOUNG_MODULUS, I22, DENSITY, CROSS_AREA, 25)
-        ss.compute()
+        #
+        # ss = TwoDofVehicle()
+        # ss.vehicle(uvec_parameters["bogie_mass"], uvec_parameters["wheel_mass"], velocity,
+        #             uvec_parameters["wheel_stiffness"], uvec_parameters["wheel_damping"])
+        # ss.beam(YOUNG_MODULUS, I22, DENSITY, CROSS_AREA, 25)
+        # ss.compute()
 
         fig, ax = plt.subplots(2, 1, sharex=True)
         ax[0].plot(time, displacement_top, label="kraton body", color='b')
         ax[1].plot(time, displacement_bottom, label="kraton wheel", color='r')
-        ax[0].plot(ss.time, -ss.displacement[:, 0], color='b', linestyle="--", label="analytical")
-        ax[1].plot(ss.time, -ss.displacement[:, 1], color='r', linestyle="--", label="analytical")
+        # ax[0].plot(ss.time, -ss.displacement[:, 0], color='b', linestyle="--", label="analytical")
+        # ax[1].plot(ss.time, -ss.displacement[:, 1], color='r', linestyle="--", label="analytical")
         ax[0].set_ylabel("Displacement beam [m]")
         ax[1].set_ylabel("Displacement bogie [m]")
         ax[1].set_xlabel("Time [s]")

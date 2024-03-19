@@ -194,7 +194,7 @@ class Stem:
         # set uvec state
         if kratos_parameters["solver_settings"].Has("uvec"):
             kratos_parameters["solver_settings"]["uvec"]["uvec_data"]["state"] = self.__last_uvec_data["state"]
-            kratos_parameters["solver_settings"]["uvec"]["uvec_data"]["loads"] = self.__last_uvec_data["loads"]
+            # kratos_parameters["solver_settings"]["uvec"]["uvec_data"]["loads"] = self.__last_uvec_data["loads"]
 
         # run calculation
         simulation = StemGeoMechanicsAnalysis(self.kratos_model, kratos_parameters)
@@ -202,12 +202,12 @@ class Stem:
         # Initialize the simulation
         simulation.Initialize()
         # make sure the time step number is set to the correct value
-        simulation._GetSolver().GetComputingModelPart().ProcessInfo[KratosMultiphysics.STEP] = time_step_nr
+        # simulation._GetSolver().GetComputingModelPart().ProcessInfo[KratosMultiphysics.STEP] = time_step_nr
         # run the simulation
         simulation.RunSolutionLoop()
         # finalize the simulation
         simulation.Finalize()
-        simulation._GetSolver().GetComputingModelPart().ProcessInfo[KratosMultiphysics.IS_RESTARTED] = True
+        # simulation._GetSolver().GetComputingModelPart().ProcessInfo[KratosMultiphysics.IS_RESTARTED] = True
 
         if hasattr(simulation._GetSolver().solver, 'uvec_data'):
             self.__last_uvec_data = simulation._GetSolver().solver.uvec_data
@@ -335,21 +335,21 @@ class Stem:
         duration_previous_stage = self.__stages[-1].project_parameters.settings.time_integration.end_time - \
                                   self.__stages[-1].project_parameters.settings.time_integration.start_time
 
-        # update position of moving load and uvec load
-        for model_part in new_stage.process_model_parts:
-            if isinstance(model_part.parameters, (UvecLoad, MovingLoad)):
-                distance_traveled = 0
-                if isinstance(model_part.parameters.velocity, float):
-                    distance_traveled = duration_previous_stage * model_part.parameters.velocity
-                elif isinstance(model_part.parameters.velocity, str):
-                    raise NotImplementedError("Velocity as a function of time is not supported for moving loads in"
-                                              "multi-stage calculations.")
-
-                if isinstance(model_part.parameters, UvecLoad):
-                    model_part.parameters.wheel_configuration = [wheel_distance + distance_traveled
-                                                                 for wheel_distance in
-                                                                 model_part.parameters.wheel_configuration]
-                elif isinstance(model_part.parameters, MovingLoad):
-                    model_part.parameters.offset += distance_traveled
+        # # update position of moving load and uvec load
+        # for model_part in new_stage.process_model_parts:
+        #     if isinstance(model_part.parameters, (UvecLoad, MovingLoad)):
+        #         distance_traveled = 0
+        #         if isinstance(model_part.parameters.velocity, float):
+        #             distance_traveled = duration_previous_stage * model_part.parameters.velocity
+        #         elif isinstance(model_part.parameters.velocity, str):
+        #             raise NotImplementedError("Velocity as a function of time is not supported for moving loads in"
+        #                                       "multi-stage calculations.")
+        #
+        #         if isinstance(model_part.parameters, UvecLoad):
+        #             model_part.parameters.wheel_configuration = [wheel_distance + distance_traveled
+        #                                                          for wheel_distance in
+        #                                                          model_part.parameters.wheel_configuration]
+        #         elif isinstance(model_part.parameters, MovingLoad):
+        #             model_part.parameters.offset += distance_traveled
 
 
