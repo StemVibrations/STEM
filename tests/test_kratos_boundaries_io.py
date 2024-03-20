@@ -25,7 +25,9 @@ class TestKratosBoundariesIO:
         # define soil material
         soil_formulation = OnePhaseSoil(2, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
         constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
-        soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
+        soil_material = SoilMaterial(name="soil",
+                                     soil_formulation=soil_formulation,
+                                     constitutive_law=constitutive_law,
                                      retention_parameters=SaturatedBelowPhreaticLevelLaw())
         # define tables
         _time = np.array([0, 1, 2, 3, 4, 5])
@@ -51,9 +53,7 @@ class TestKratosBoundariesIO:
         )
 
         # Absorbing boundaries
-        absorbing_boundaries_parameters = AbsorbingBoundary(
-            absorbing_factors=[1.0, 1.0], virtual_thickness=1000.0
-        )
+        absorbing_boundaries_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=1000.0)
 
         model.project_parameters = TestUtils.create_default_solver_settings()
 
@@ -69,18 +69,13 @@ class TestKratosBoundariesIO:
         # write dictionary for the load(s)
         kratos_io = KratosIO(ndim=model.ndim)
 
-        test_dictionary = kratos_io._KratosIO__write_project_parameters_json(
-            model=model,
-            mesh_file_name="test_load_parameters.mdpa",
-            materials_file_name=""
-        )
+        test_dictionary = kratos_io._KratosIO__write_project_parameters_json(model=model,
+                                                                             mesh_file_name="test_load_parameters.mdpa",
+                                                                             materials_file_name="")
 
         # load expected dictionary from the json
         expected_boundary_parameters_json = json.load(
-            open("tests/test_data/expected_boundary_conditions_parameters.json")
-        )
+            open("tests/test_data/expected_boundary_conditions_parameters.json"))
 
         # assert the objects to be equal
-        TestUtils.assert_dictionary_almost_equal(
-            expected_boundary_parameters_json, test_dictionary
-        )
+        TestUtils.assert_dictionary_almost_equal(expected_boundary_parameters_json, test_dictionary)

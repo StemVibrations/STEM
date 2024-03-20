@@ -14,18 +14,19 @@ class TestAdditionalProcesses:
 
         """
         # Create a valid random field generator
-        random_field_generator = RandomFieldGenerator(
-            n_dim=2, cov=0.1, model_name="Gaussian",
-            v_scale_fluctuation=1, anisotropy=[0.5], angle=[0], seed=42,
-            mean_value=10
-        )
+        random_field_generator = RandomFieldGenerator(n_dim=2,
+                                                      cov=0.1,
+                                                      model_name="Gaussian",
+                                                      v_scale_fluctuation=1,
+                                                      anisotropy=[0.5],
+                                                      angle=[0],
+                                                      seed=42,
+                                                      mean_value=10)
 
-        field_parameters_object = ParameterFieldParameters(
-            property_name="YOUNG_MODULUS",
-            function_type="json_file",
-            field_file_name="test_random_field_json",
-            field_generator=random_field_generator
-        )
+        field_parameters_object = ParameterFieldParameters(property_name="YOUNG_MODULUS",
+                                                           function_type="json_file",
+                                                           field_file_name="test_random_field_json",
+                                                           field_generator=random_field_generator)
 
         # Generate random field
         field_parameters_object.field_generator.generate(coordinates=np.array([(0, 1), (0, 5)]))
@@ -34,7 +35,6 @@ class TestAdditionalProcesses:
 
         # assert if the generated field is correct
         npt.assert_allclose(actual_parameters, expected_parameters)
-
 
     def test_random_field_generator_expected_errors(self):
         """
@@ -45,30 +45,22 @@ class TestAdditionalProcesses:
         msg = ("`field_generator` parameter is a required when `json_file` field parameter is "
                "selected for `function_type`.")
         with pytest.raises(ValueError, match=msg):
-            ParameterFieldParameters(
-                property_name="YOUNG_MODULUS",
-                function_type="json_file",
-                field_file_name="test_random_field_json",
-                field_generator=None
-            )
+            ParameterFieldParameters(property_name="YOUNG_MODULUS",
+                                     function_type="json_file",
+                                     field_file_name="test_random_field_json",
+                                     field_generator=None)
 
         # Raise error if values are asked but generator is None (from python or input function type)
         msg = ("ParameterField Error:`function_type` is not understood: python."
                r"Should be one of \['json_file', 'input'\].")
         with pytest.raises(ValueError, match=msg):
-            ParameterFieldParameters(
-                property_name="YOUNG_MODULUS",
-                function_type="python",
-                field_file_name=None,
-                field_generator=None
-            )
+            ParameterFieldParameters(property_name="YOUNG_MODULUS",
+                                     function_type="python",
+                                     field_file_name=None,
+                                     field_generator=None)
 
         # Raise error if values are asked but generator is None (from python or input function type)
         msg = ("`tiny_expr_function` parameter is a required when `input` field parameter is "
                "selected for `function_type`.")
         with pytest.raises(ValueError, match=msg):
-            ParameterFieldParameters(
-                property_name="YOUNG_MODULUS",
-                function_type="input"
-            )
-
+            ParameterFieldParameters(property_name="YOUNG_MODULUS", function_type="input")

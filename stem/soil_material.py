@@ -1,4 +1,4 @@
-from typing import List, Any, Optional, Union
+from typing import List, Any, Optional
 from dataclasses import dataclass, field
 from abc import ABC
 
@@ -46,6 +46,7 @@ class FluidProperties:
     DENSITY_FLUID: float = 1000
     DYNAMIC_VISCOSITY: float = 1.3e-3
     BULK_MODULUS_FLUID: float = 2e9
+
 
 @dataclass
 class OnePhaseSoil(SoilFormulationParametersABC):
@@ -275,8 +276,7 @@ class SoilMaterial:
             2: [3, 4, 6, 8],
             3: [4, 8, 10, 20],
         }
-        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations,
-                                             "Soil")
+        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations, "Soil")
 
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
 

@@ -49,8 +49,13 @@ def test_stem():
     load_coordinates = [(0.0, 1.0, 0.0), (0.0, 1.0, 10)]
 
     uvec_parameters = {"load_wheel_1": -30.0, "load_wheel_2": -10.0}
-    uvec_load = UvecLoad(direction=[1, 1, 1], velocity=5, origin=[0.0, 1.0, 0.0], wheel_configuration=[1.0, 2.0],
-                           uvec_file=r"sample_uvec.py", uvec_function_name="uvec_test",uvec_parameters=uvec_parameters)
+    uvec_load = UvecLoad(direction=[1, 1, 1],
+                         velocity=5,
+                         origin=[0.0, 1.0, 0.0],
+                         wheel_configuration=[1.0, 2.0],
+                         uvec_file=r"sample_uvec.py",
+                         uvec_function_name="uvec_test",
+                         uvec_parameters=uvec_parameters)
 
     model.add_load_by_coordinates(load_coordinates, uvec_load, "uvec_load")
 
@@ -58,8 +63,11 @@ def test_stem():
 
     # Define boundary conditions
     no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True], value=[0, 0, 0])
-    roller_displacement_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, False, False], value=[0, 0, 0])
+                                                        is_fixed=[True, True, True],
+                                                        value=[0, 0, 0])
+    roller_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+                                                            is_fixed=[True, False, False],
+                                                            value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(2, [2], no_displacement_parameters, "base_fixed")
@@ -79,19 +87,25 @@ def test_stem():
     analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
     solution_type = SolutionType.QUASI_STATIC
     # Set up start and end time of calculation, time step and etc
-    time_integration = TimeIntegration(start_time=0.0, end_time=1.0, delta_time=0.01, reduction_factor=1.0,
-                                       increase_factor=1.0, max_delta_time_factor=1000)
+    time_integration = TimeIntegration(start_time=0.0,
+                                       end_time=1.0,
+                                       delta_time=0.01,
+                                       reduction_factor=1.0,
+                                       increase_factor=1.0,
+                                       max_delta_time_factor=1000)
 
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
                                                             displacement_absolute_tolerance=1.0e-12)
     stress_initialisation_type = StressInitialisationType.NONE
-    solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
-                                    stress_initialisation_type=stress_initialisation_type,
-                                    time_integration=time_integration,
-                                    is_stiffness_matrix_constant=False, are_mass_and_damping_constant=False,
-                                    convergence_criteria=convergence_criterion,
-                                    rayleigh_k=0.0001,
-                                    rayleigh_m=0.01)
+    solver_settings = SolverSettings(analysis_type=analysis_type,
+                                     solution_type=solution_type,
+                                     stress_initialisation_type=stress_initialisation_type,
+                                     time_integration=time_integration,
+                                     is_stiffness_matrix_constant=False,
+                                     are_mass_and_damping_constant=False,
+                                     convergence_criteria=convergence_criterion,
+                                     rayleigh_k=0.0001,
+                                     rayleigh_m=0.01)
 
     # Set up problem data
     problem = Problem(problem_name="calculate_uvec_on_soil_3d", number_of_threads=1, settings=solver_settings)
@@ -100,24 +114,19 @@ def test_stem():
     # Define the results to be written to the output file
 
     # Nodal results
-    nodal_results = [NodalOutput.DISPLACEMENT,
-                     NodalOutput.TOTAL_DISPLACEMENT]
+    nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.TOTAL_DISPLACEMENT]
     # Gauss point results
     gauss_point_results = []
 
     # Define the output process
-    vtk_output_process = Output(
-        part_name="porous_computational_model_part",
-        output_name="vtk_output",
-        output_dir="output",
-        output_parameters=VtkOutputParameters(
-            file_format="ascii",
-            output_interval=10,
-            nodal_results=nodal_results,
-            gauss_point_results=gauss_point_results,
-            output_control_type="step"
-        )
-    )
+    vtk_output_process = Output(part_name="porous_computational_model_part",
+                                output_name="vtk_output",
+                                output_dir="output",
+                                output_parameters=VtkOutputParameters(file_format="ascii",
+                                                                      output_interval=10,
+                                                                      nodal_results=nodal_results,
+                                                                      gauss_point_results=gauss_point_results,
+                                                                      output_control_type="step"))
 
     model.output_settings = [vtk_output_process]
 
@@ -143,6 +152,7 @@ def test_stem():
     else:
         raise Exception("Unknown platform")
 
-    assert assert_files_equal(expected_output_dir,os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
+    assert assert_files_equal(expected_output_dir,
+                              os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
 
     rmtree(input_folder)

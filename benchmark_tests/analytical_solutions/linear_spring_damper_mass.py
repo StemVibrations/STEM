@@ -55,10 +55,10 @@ class LinearSpringDamperMass:
             sys.exit("The system is overdamped.\nAnalytical solution not valid.")
 
         # resonance frequency of damped system
-        omega_1 = omega_0 * np.sqrt(1 - qsi ** 2)
+        omega_1 = omega_0 * np.sqrt(1 - qsi**2)
 
         # phase angle
-        psi = np.arctan(qsi / np.sqrt(1 - qsi ** 2))
+        psi = np.arctan(qsi / np.sqrt(1 - qsi**2))
 
         # calculate displacement
         self.displacement = u_0 * np.cos(omega_1 * self.time - psi) / np.cos(psi) * np.exp(-qsi * omega_0 * self.time)

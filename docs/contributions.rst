@@ -23,6 +23,15 @@ Code style guide
 ----------------
 The additional features should follow the style of the STEM project.
 
+We follow the PEP 8 style guide for Python code, with our custom modifications as defined in the
+`Yapf file <../../.style.yapf>`_ and the `flake8 file <../../.flake8>`_. These files can be ran manually by using the
+following command from the root directory of the project:
+
+.. code-block::
+
+    pre-commit run --all-files
+
+
 The class or function name should be clear and descriptive of the functionality it provides.
 
 There should be a docstring at the beginning of the class or function describing its purpose and usage.

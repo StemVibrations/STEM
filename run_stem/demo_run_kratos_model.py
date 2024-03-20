@@ -13,8 +13,7 @@ sys.path.append(os.path.join(pth_kratos, r"KratosGeoMechanics\libs"))
 
 import KratosMultiphysics.GeoMechanicsApplication
 from KratosMultiphysics.GeoMechanicsApplication.geomechanics_analysis import (
-    GeoMechanicsAnalysis,
-)
+    GeoMechanicsAnalysis, )
 
 project_folder = "dir_test"
 # -------------------------------------------------------------------------------------

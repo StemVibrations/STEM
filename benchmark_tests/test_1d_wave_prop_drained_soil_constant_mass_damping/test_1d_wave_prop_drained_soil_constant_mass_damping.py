@@ -48,7 +48,8 @@ def test_stem():
     model.add_load_by_coordinates(load_coordinates, line_load, "load")
 
     # Define boundary conditions
-    no_displacement_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True],
+    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+                                                        is_fixed=[True, True, True],
                                                         value=[0, 0, 0])
     sym_parameters = DisplacementConstraint(active=[True, False, True], is_fixed=[True, False, False], value=[0, 0, 0])
 
@@ -70,24 +71,30 @@ def test_stem():
     analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
     solution_type = SolutionType.DYNAMIC
     # Set up start and end time of calculation, time step and etc
-    time_integration = TimeIntegration(start_time=0.0, end_time=0.15, delta_time=0.0025, reduction_factor=1.0,
-                                       increase_factor=1.0, max_delta_time_factor=1000)
+    time_integration = TimeIntegration(start_time=0.0,
+                                       end_time=0.15,
+                                       delta_time=0.0025,
+                                       reduction_factor=1.0,
+                                       increase_factor=1.0,
+                                       max_delta_time_factor=1000)
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0E-12,
                                                             displacement_absolute_tolerance=1.0E-6)
     stress_initialisation_type = StressInitialisationType.NONE
 
-    solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
-                                    stress_initialisation_type=stress_initialisation_type,
-                                    time_integration=time_integration,
-                                    is_stiffness_matrix_constant=True,
-                                    are_mass_and_damping_constant=True,
-                                    convergence_criteria=convergence_criterion,
-                                    rayleigh_k=6e-6,
-                                    rayleigh_m=0.02
-                                    )
+    solver_settings = SolverSettings(analysis_type=analysis_type,
+                                     solution_type=solution_type,
+                                     stress_initialisation_type=stress_initialisation_type,
+                                     time_integration=time_integration,
+                                     is_stiffness_matrix_constant=True,
+                                     are_mass_and_damping_constant=True,
+                                     convergence_criteria=convergence_criterion,
+                                     rayleigh_k=6e-6,
+                                     rayleigh_m=0.02)
 
     # Set up problem data
-    problem = Problem(problem_name="test_1d_wave_prop_drained_soil_constant_mass_damping", number_of_threads=4, settings=solver_settings)
+    problem = Problem(problem_name="test_1d_wave_prop_drained_soil_constant_mass_damping",
+                      number_of_threads=4,
+                      settings=solver_settings)
     model.project_parameters = problem
 
     # Define the results to be written to the output file
@@ -97,13 +104,14 @@ def test_stem():
     gauss_point_results = []
 
     # Define the output process and add to the model
-    model.add_output_settings(output_parameters=VtkOutputParameters(
-        file_format="ascii",
-        output_interval=10,
-        nodal_results=nodal_results,
-        gauss_point_results=gauss_point_results,
-        output_control_type="step"
-    ), part_name="porous_computational_model_part", output_dir="output", output_name="vtk_output")
+    model.add_output_settings(output_parameters=VtkOutputParameters(file_format="ascii",
+                                                                    output_interval=10,
+                                                                    nodal_results=nodal_results,
+                                                                    gauss_point_results=gauss_point_results,
+                                                                    output_control_type="step"),
+                              part_name="porous_computational_model_part",
+                              output_dir="output",
+                              output_name="vtk_output")
 
     # Define the kratos input folder
     input_folder = "benchmark_tests/test_1d_wave_prop_drained_soil_constant_mass_damping/inputs_kratos"
@@ -117,8 +125,9 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
-    result = assert_files_equal("benchmark_tests/test_1d_wave_prop_drained_soil_constant_mass_damping/output_/output_vtk_porous_computational_model_part",
-                                os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
+    result = assert_files_equal(
+        "benchmark_tests/test_1d_wave_prop_drained_soil_constant_mass_damping/output_/output_vtk_porous_computational_model_part",
+        os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
 
     assert result is True
     rmtree(input_folder)

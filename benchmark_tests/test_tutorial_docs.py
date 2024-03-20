@@ -39,7 +39,7 @@ def read_tutorial(rst_file: str, name: str) -> List[str]:
     idx_end = [i for i, val in enumerate(lines) if "_tutorial" in val]
     idx_end = find_first_greater(idx_end, idx_ini)
 
-    tutorial = lines[idx_ini: idx_end]
+    tutorial = lines[idx_ini:idx_end]
 
     # find start of python code in tutorial, by checking for: '.. code-block:: python'
     idx_ini = [i for i, val, in enumerate(tutorial) if val == ".. code-block:: python"]
@@ -49,12 +49,13 @@ def read_tutorial(rst_file: str, name: str) -> List[str]:
     # for each code block
     for i in range(len(idx_ini) - 1):
         # find end line
-        for val in tutorial[idx_ini[i]:idx_ini[i+1]]:
+        for val in tutorial[idx_ini[i]:idx_ini[i + 1]]:
             # find the code inside the code block. the code should have at least 4 spaces and not be empty
             if len(val.lstrip()) > 0 and re.search('\S', val).start() >= 4:
                 data.append(val.lstrip())
 
     return data
+
 
 def test_tutorial_1():
     """Test the code in tutorial 1"""
@@ -74,6 +75,7 @@ def test_tutorial_2():
     data = read_tutorial(tutorial_file, name)
     exec("\n".join(data))
     shutil.rmtree("moving_load")
+
 
 def test_tutorial_3():
     """Test the code in tutorial 3"""

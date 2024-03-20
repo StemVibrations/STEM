@@ -11,7 +11,7 @@ class NewmarkExplicit():
         - gamma (float): gamma parameter
     """
 
-    def __init__(self, beta:float=0.25, gamma:float=0.5):
+    def __init__(self, beta: float = 0.25, gamma: float = 0.5):
         """
         Constructor of the NewmarkExplicit class
 
@@ -23,7 +23,7 @@ class NewmarkExplicit():
         self.gamma = gamma
 
     def calculate(self, M: np.ndarray, C: np.ndarray, K: np.ndarray, F: np.ndarray, dt: float, t_index: int,
-                   u_ini: np.ndarray, v_ini: np.ndarray, a_ini: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+                  u_ini: np.ndarray, v_ini: np.ndarray, a_ini: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Newmark integration step.
 
@@ -54,7 +54,7 @@ class NewmarkExplicit():
             a_ini = np.linalg.solve(M, F - C.dot(v_ini) - K.dot(u_ini))
 
         #calculate newmark constants
-        a0 = 1 / (beta * dt ** 2)
+        a0 = 1 / (beta * dt**2)
         a1 = gamma / (beta * dt)
         a2 = 1 / (beta * dt)
         a3 = 1 / (2 * beta) - 1

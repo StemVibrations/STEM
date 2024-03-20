@@ -9,6 +9,7 @@ from stem.solver import AnalysisType
 from stem.table import Table
 from stem.utils import Utils
 
+
 @dataclass
 class LoadParametersABC(ABC):
     """
@@ -124,8 +125,7 @@ class LineLoad(LoadParametersABC):
             2: [2, 3],
             3: [2, 3],
         }
-        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations,
-                                             "Line load")
+        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations, "Line load")
 
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
             if n_dim_model == 2 and n_nodes_element > 2:
@@ -244,6 +244,7 @@ class MovingLoad(LoadParametersABC):
 
         return element_name
 
+
 @dataclass
 class UvecLoad(LoadParametersABC):
     """
@@ -285,8 +286,7 @@ class UvecLoad(LoadParametersABC):
             2: [2, 3],
             3: [2, 3],
         }
-        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations,
-                                             "UVEC load")
+        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations, "UVEC load")
 
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
             element_name = f"MovingLoadCondition{n_dim_model}D{n_nodes_element}N"
@@ -294,6 +294,7 @@ class UvecLoad(LoadParametersABC):
             raise ValueError("UVEC load can only be applied in mechanical or mechanical groundwater flow analysis")
 
         return element_name
+
 
 @dataclass
 class GravityLoad(LoadParametersABC):

@@ -61,7 +61,8 @@ def test_stem():
     model.body_model_parts.append(mass_model_part)
 
     # Define displacement conditions
-    displacementXYZ_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True],
+    displacementXYZ_parameters = DisplacementConstraint(active=[True, True, True],
+                                                        is_fixed=[True, True, True],
                                                         value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
@@ -78,17 +79,24 @@ def test_stem():
     solution_type = SolutionType.DYNAMIC
     # Set up start and end time of calculation, time step and etc
     delta_time = 0.001
-    time_integration = TimeIntegration(start_time=0.0-delta_time, end_time=1.00, delta_time=delta_time,
-                                       reduction_factor=1.0, increase_factor=1.0, max_delta_time_factor=1000)
+    time_integration = TimeIntegration(start_time=0.0 - delta_time,
+                                       end_time=1.00,
+                                       delta_time=delta_time,
+                                       reduction_factor=1.0,
+                                       increase_factor=1.0,
+                                       max_delta_time_factor=1000)
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-6,
                                                             displacement_absolute_tolerance=1.0e-12)
     stress_initialisation_type = StressInitialisationType.GRAVITY_LOADING
 
-    solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
+    solver_settings = SolverSettings(analysis_type=analysis_type,
+                                     solution_type=solution_type,
                                      stress_initialisation_type=stress_initialisation_type,
                                      time_integration=time_integration,
-                                     is_stiffness_matrix_constant=True, are_mass_and_damping_constant=False,
-                                     convergence_criteria=convergence_criterion, rayleigh_k=0.0,
+                                     is_stiffness_matrix_constant=True,
+                                     are_mass_and_damping_constant=False,
+                                     convergence_criteria=convergence_criterion,
+                                     rayleigh_k=0.0,
                                      rayleigh_m=0.0)
 
     # Set up problem data
@@ -103,8 +111,10 @@ def test_stem():
     gauss_point_results = []
 
     # write output to json file
-    model.add_output_settings(output_dir=".", part_name="mass", output_name="output_mass",
-                              output_parameters=JsonOutputParameters(output_interval=delta_time*0.99,
+    model.add_output_settings(output_dir=".",
+                              part_name="mass",
+                              output_name="output_mass",
+                              output_parameters=JsonOutputParameters(output_interval=delta_time * 0.99,
                                                                      nodal_results=nodal_results,
                                                                      gauss_point_results=gauss_point_results))
 
@@ -136,12 +146,14 @@ def test_stem():
         import matplotlib.pyplot as plt
         # calculate spring damper mass system analytically
         end_time = time_integration.end_time
-        nsteps = int(end_time / time_integration.delta_time)+1
-        analytical_solution = LinearSpringDamperMass(k=spring_damper_material_parameters.NODAL_DISPLACEMENT_STIFFNESS[1],
-                                                     c=spring_damper_material_parameters.NODAL_DAMPING_COEFFICIENT[1],
-                                                     m=mass_material_parameters.NODAL_MASS,
-                                                     g=9.81,
-                                                     end_time=end_time, n_steps=nsteps)
+        nsteps = int(end_time / time_integration.delta_time) + 1
+        analytical_solution = LinearSpringDamperMass(
+            k=spring_damper_material_parameters.NODAL_DISPLACEMENT_STIFFNESS[1],
+            c=spring_damper_material_parameters.NODAL_DAMPING_COEFFICIENT[1],
+            m=mass_material_parameters.NODAL_MASS,
+            g=9.81,
+            end_time=end_time,
+            n_steps=nsteps)
 
         analytical_solution.solve()
 

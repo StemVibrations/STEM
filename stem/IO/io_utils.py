@@ -1,4 +1,4 @@
-from typing import Sequence, Dict, Any, List, Union, Optional, Tuple
+from typing import Dict, Any, List, Union, Tuple
 from pathlib import Path
 import json
 from copy import deepcopy
@@ -6,6 +6,7 @@ from copy import deepcopy
 from stem.table import Table
 from stem.boundary import BoundaryParametersABC
 from stem.load import LoadParametersABC
+
 
 class IOUtils:
 

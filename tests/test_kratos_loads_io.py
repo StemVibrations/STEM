@@ -9,6 +9,7 @@ from tests.utils import TestUtils
 
 
 class TestKratosLoadsIO:
+
     def test_create_load_process_dict_no_tables(self):
         """
         Test the creation of the load process dictionary for the
@@ -26,15 +27,11 @@ class TestKratosLoadsIO:
 
         # define load(s) parameters
         # point load
-        point_load_parameters = PointLoad(
-            active=[True, False, True], value=[1000, 0, 0]
-        )
+        point_load_parameters = PointLoad(active=[True, False, True], value=[1000, 0, 0])
         # line load
         line_load_parameters = LineLoad(active=[False, True, False], value=[0, -300, 0])
         # surface load
-        surface_load_parameters = SurfaceLoad(
-            active=[False, False, True], value=[0, 0, 500]
-        )
+        surface_load_parameters = SurfaceLoad(active=[False, False, True], value=[0, 0, 500])
         # moving (point) load
         moving_point_load_parameters = MovingLoad(
             origin=[1.0, 0.1, 0.0],
@@ -46,8 +43,13 @@ class TestKratosLoadsIO:
 
         uvec_parameters = {"load_wheel_1": -10.0, "load_wheel_2": -20.0}
 
-        uvec_load = UvecLoad(direction=[1, 1, 0], velocity=5, origin=[0.0, 1.0, 0.0], wheel_configuration=[0.0, 2.0],
-                             uvec_file=r"sample_uvec.py", uvec_function_name="uvec_test", uvec_parameters=uvec_parameters)
+        uvec_load = UvecLoad(direction=[1, 1, 0],
+                             velocity=5,
+                             origin=[0.0, 1.0, 0.0],
+                             wheel_configuration=[0.0, 2.0],
+                             uvec_file=r"sample_uvec.py",
+                             uvec_function_name="uvec_test",
+                             uvec_parameters=uvec_parameters)
 
         # add loads to process model parts:
         model.add_load_by_coordinates(point_load_coords, point_load_parameters, 'test_point_load')
@@ -60,24 +62,21 @@ class TestKratosLoadsIO:
         # create load process dictionary
         kratos_loads_io = KratosLoadsIO(domain="PorousDomain")
 
-        loads_processes = [kratos_loads_io.create_load_dict("test_point_load", point_load_parameters),
-                           kratos_loads_io.create_load_dict("test_line_load", line_load_parameters),
-                           kratos_loads_io.create_load_dict("test_surface_load", surface_load_parameters),
-                           kratos_loads_io.create_load_dict("test_moving_load", moving_point_load_parameters),
-                           kratos_loads_io.create_load_dict("test_uvec_load", uvec_load)]
+        loads_processes = [
+            kratos_loads_io.create_load_dict("test_point_load", point_load_parameters),
+            kratos_loads_io.create_load_dict("test_line_load", line_load_parameters),
+            kratos_loads_io.create_load_dict("test_surface_load", surface_load_parameters),
+            kratos_loads_io.create_load_dict("test_moving_load", moving_point_load_parameters),
+            kratos_loads_io.create_load_dict("test_uvec_load", uvec_load)
+        ]
 
-        test_dictionary = {"loads_process_list": loads_processes,
-                            "constraints_process_list": []}
+        test_dictionary = {"loads_process_list": loads_processes, "constraints_process_list": []}
 
         # load expected dictionary from the json
-        expected_load_parameters_json = json.load(
-            open("tests/test_data/expected_load_parameters_no_table.json")
-        )
+        expected_load_parameters_json = json.load(open("tests/test_data/expected_load_parameters_no_table.json"))
 
         # assert the objects to be equal
-        TestUtils.assert_dictionary_almost_equal(
-            expected_load_parameters_json["processes"], test_dictionary
-        )
+        TestUtils.assert_dictionary_almost_equal(expected_load_parameters_json["processes"], test_dictionary)
 
     def test_create_load_process_dict_with_tables(self):
         """
@@ -106,15 +105,11 @@ class TestKratosLoadsIO:
 
         # define load(s) parameters
         # point load
-        point_load_parameters = PointLoad(
-            active=[True, False, True], value=[table1, -20, 0]
-        )
+        point_load_parameters = PointLoad(active=[True, False, True], value=[table1, -20, 0])
         # line load
         line_load_parameters = LineLoad(active=[False, True, False], value=[-10, table2, 30])
         # surface load
-        surface_load_parameters = SurfaceLoad(
-            active=[False, False, True], value=[0, 0, -200]
-        )
+        surface_load_parameters = SurfaceLoad(active=[False, False, True], value=[0, 0, -200])
         # moving (point) load
         moving_point_load_parameters = MovingLoad(
             origin=[1.0, 0.1, 0.0],
@@ -134,20 +129,17 @@ class TestKratosLoadsIO:
         # create load process dictionary
         kratos_loads_io = KratosLoadsIO(domain="PorousDomain")
 
-        loads_processes = [kratos_loads_io.create_load_dict("test_point_load", point_load_parameters),
-                           kratos_loads_io.create_load_dict("test_line_load", line_load_parameters),
-                           kratos_loads_io.create_load_dict("test_surface_load", surface_load_parameters),
-                           kratos_loads_io.create_load_dict("test_moving_load", moving_point_load_parameters)]
+        loads_processes = [
+            kratos_loads_io.create_load_dict("test_point_load", point_load_parameters),
+            kratos_loads_io.create_load_dict("test_line_load", line_load_parameters),
+            kratos_loads_io.create_load_dict("test_surface_load", surface_load_parameters),
+            kratos_loads_io.create_load_dict("test_moving_load", moving_point_load_parameters)
+        ]
 
-        test_dictionary = {"loads_process_list": loads_processes,
-                           "constraints_process_list": []}
+        test_dictionary = {"loads_process_list": loads_processes, "constraints_process_list": []}
 
         # load expected dictionary from the json
-        expected_load_parameters_json = json.load(
-            open("tests/test_data/expected_load_parameters_with_table.json")
-        )
+        expected_load_parameters_json = json.load(open("tests/test_data/expected_load_parameters_with_table.json"))
 
         # assert the objects to be equal
-        TestUtils.assert_dictionary_almost_equal(
-            expected_load_parameters_json["processes"], test_dictionary
-        )
+        TestUtils.assert_dictionary_almost_equal(expected_load_parameters_json["processes"], test_dictionary)
