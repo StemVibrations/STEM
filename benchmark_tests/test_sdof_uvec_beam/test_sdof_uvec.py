@@ -14,7 +14,7 @@ from shutil import rmtree, copytree
 from benchmark_tests.analytical_solutions.moving_vehicle import TwoDofVehicle
 from benchmark_tests.utils import assert_floats_in_files_almost_equal
 
-PLOT_RESULTS = False
+PLOT_RESULTS = True
 
 
 def test_stem():
@@ -94,8 +94,8 @@ def test_stem():
     analysis_type = AnalysisType.MECHANICAL
     solution_type = SolutionType.DYNAMIC
     # Set up start and end time of calculation, time step and etc
-    time_integration = TimeIntegration(start_time=0.0, end_time=0.9, delta_time=0.0005, reduction_factor=1.0,
-                                    increase_factor=1.0, max_delta_time_factor=1000)
+    time_integration = TimeIntegration(start_time=0.0, end_time=0.9, delta_time=0.002, reduction_factor=1.0,
+                                       increase_factor=1.0, max_delta_time_factor=1000)
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-3,
                                                             displacement_absolute_tolerance=1.0e-8)
     stress_initialisation_type = StressInitialisationType.NONE
@@ -122,7 +122,7 @@ def test_stem():
         output_dir="output",
         output_parameters=VtkOutputParameters(
             file_format="ascii",
-            output_interval=400,
+            output_interval=40,
             nodal_results=nodal_results,
             gauss_point_results=gauss_point_results,
             output_control_type="step"
@@ -134,7 +134,8 @@ def test_stem():
     input_folder = r"benchmark_tests/test_sdof_uvec_beam/input_kratos"
     # copy uvec to input folder
     os.makedirs(input_folder, exist_ok=True)
-    copytree(r"benchmark_tests/test_sdof_uvec_beam/uvec_ten_dof_vehicle_2D", os.path.join(input_folder, "uvec_ten_dof_vehicle_2D"), dirs_exist_ok=True)
+    copytree(r"benchmark_tests/test_sdof_uvec_beam/uvec_ten_dof_vehicle_2D",
+             os.path.join(input_folder, "uvec_ten_dof_vehicle_2D"), dirs_exist_ok=True)
 
     # Write KRATOS input files
     # --------------------------------
@@ -145,35 +146,35 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
-    # read test.txt file
-    with open(os.path.join(input_folder, "test.txt"), "r") as f:
-        test_data = f.read().splitlines()
-    test_data = np.array([list(map(float, t.split(";"))) for t in test_data])
-
-    # get the last values at the time
-
-    # Extract unique time values and corresponding displacements
-    unique_time_values = np.unique(test_data[:, 0])
-
-    displacement_top = []
-    displacement_bottom = []
-    time = []
-    for time_value in unique_time_values:
-        # Find the corresponding displacement for each unique time value
-        index = np.where(test_data[:, 0] == time_value)[0][-1]
-        displacement_top.append(np.array(test_data)[index, 2])
-        displacement_bottom.append(np.array(test_data)[index, 3])
-        time.append(np.array(test_data)[index, 0])
-
     if PLOT_RESULTS:
         import matplotlib.pyplot as plt
 
+        # read test.txt file with the numerical solution
+        with open(os.path.join(input_folder, "test.txt"), "r") as f:
+            test_data = f.read().splitlines()
+        test_data = np.array([list(map(float, t.split(";"))) for t in test_data])
+
+        # Extract unique time values and corresponding displacements
+        unique_time_values = np.unique(test_data[:, 0])
+
+        displacement_top = []
+        displacement_bottom = []
+        time = []
+        for time_value in unique_time_values:
+            # Find the corresponding displacement for each unique time value
+            index = np.where(test_data[:, 0] == time_value)[0][-1]
+            displacement_top.append(np.array(test_data)[index, 2])
+            displacement_bottom.append(np.array(test_data)[index, 3])
+            time.append(np.array(test_data)[index, 0])
+
+        # calculate analytical solution
         ss = TwoDofVehicle()
         ss.vehicle(uvec_parameters["bogie_mass"], uvec_parameters["wheel_mass"], velocity,
                     uvec_parameters["wheel_stiffness"], uvec_parameters["wheel_damping"])
         ss.beam(YOUNG_MODULUS, I22, DENSITY, CROSS_AREA, 25)
         ss.compute()
 
+        # plot numerical and analytical solution
         fig, ax = plt.subplots(2, 1, sharex=True)
         ax[0].plot(time, displacement_top, label="kraton body", color='b')
         ax[1].plot(time, displacement_bottom, label="kraton wheel", color='r')
@@ -187,7 +188,7 @@ def test_stem():
         plt.tight_layout()
         plt.show()
 
-    # # test output
+    # test output
     assert_floats_in_files_almost_equal("benchmark_tests/test_sdof_uvec_beam/output_/output_vtk_full_model",
                                         os.path.join(input_folder, "output/output_vtk_full_model"), decimal=3)
 
