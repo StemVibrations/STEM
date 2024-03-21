@@ -1,0 +1,21 @@
+repos:
+  - repo: local
+    hooks:
+      - id: yapf
+        name: yapf
+        language: python
+        entry: yapf
+        args: [-i]
+        types: [python]
+      - id: mypy
+        name: mypy
+        language: python
+        entry: mypy
+        files: "^stem/"
+        args: [ --config-file, "pyproject.toml" ]
+        types: [python]
+      - id: flake8
+        name: flake8
+        language: python
+        entry: flake8
+        files: "^stem/"

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Union, List
+from typing import Any, Dict, Union
 
 from stem.water_processes import *
 
@@ -22,9 +22,7 @@ class KratosWaterProcessesIO:
         """
         self.domain = domain
 
-    def __create_uniform_water_pressure_dict(
-        self, part_name: str, parameters: UniformWaterPressure
-    ) -> Dict[str, Any]:
+    def __create_uniform_water_pressure_dict(self, part_name: str, parameters: UniformWaterPressure) -> Dict[str, Any]:
         """
         Creates a dictionary containing the uniform water pressure parameters
 
@@ -41,19 +39,20 @@ class KratosWaterProcessesIO:
             "python_module": "apply_scalar_constraint_table_process",
             "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
             "process_name": "ApplyScalarConstraintTableProcess",
-            "Parameters": {"model_part_name": f"{self.domain}.{part_name}",
-                           "variable_name": "WATER_PRESSURE",
-                           "table": 0,
-                           "value": parameters.water_pressure,
-                           "is_fixed": parameters.is_fixed,
-                           "fluid_pressure_type": "Uniform"}
+            "Parameters": {
+                "model_part_name": f"{self.domain}.{part_name}",
+                "variable_name": "WATER_PRESSURE",
+                "table": 0,
+                "value": parameters.water_pressure,
+                "is_fixed": parameters.is_fixed,
+                "fluid_pressure_type": "Uniform"
+            }
         }
 
         return water_dict
 
-    def create_water_process_dict(
-        self, part_name: str, parameters: WaterProcessParametersABC
-    ) -> Union[Dict[str, Any], None]:
+    def create_water_process_dict(self, part_name: str,
+                                  parameters: WaterProcessParametersABC) -> Union[Dict[str, Any], None]:
         """
         Creates a dictionary containing the water process parameters
 

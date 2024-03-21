@@ -29,7 +29,9 @@ class MeshSettings:
         - __element_order (int): The element order. 1 for linear elements, 2 for quadratic elements. (default 1)
     """
 
-    def __init__(self, element_size: float = -1, element_order: int = 1,
+    def __init__(self,
+                 element_size: float = -1,
+                 element_order: int = 1,
                  element_shape: ElementShape = ElementShape.TRIANGLE):
         """
         Initialize the mesh settings.
@@ -85,6 +87,7 @@ class Node:
         - coordinates (Sequence[float]): node coordinates
 
     """
+
     def __init__(self, id: int, coordinates: Sequence[float]):
         """
         Initialize the node.
@@ -239,9 +242,10 @@ class Mesh:
         nodes: Dict[int, Node] = {node_id: Node(node_id, mesh_data["nodes"][node_id]) for node_id in group_node_ids}
 
         # create element per element id
-        elements: Dict[int, Element] = {element_id: Element(element_id, group_element_type,
-                                                            mesh_data["elements"][group_element_type][element_id])
-                                        for element_id in group_data["element_ids"]}
+        elements: Dict[int, Element] = {
+            element_id: Element(element_id, group_element_type, mesh_data["elements"][group_element_type][element_id])
+            for element_id in group_data["element_ids"]
+        }
 
         # In 2D check if vertices of element are clockwise and flip element if they are
         if len(group_element_ids) > 0 and group_data["ndim"] == 2:

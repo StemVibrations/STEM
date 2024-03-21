@@ -17,10 +17,10 @@ class Utils:
     Class containing utility methods.
 
     """
+
     @staticmethod
     def check_ndim_nnodes_combinations(n_dim: int, n_nodes_element: Optional[int],
-                                       available_combinations: Dict[int, List[Any]],
-                                       class_name: str):
+                                       available_combinations: Dict[int, List[Any]], class_name: str):
         """
         Check if the combination of number of global dimensions and number of nodes per element is supported.
 
@@ -45,8 +45,7 @@ class Utils:
         if n_nodes_element not in available_combinations[n_dim]:
             raise ValueError(
                 f"In {n_dim} dimensions, only {available_combinations[n_dim]} noded {class_name} elements are "
-                f"supported. {n_nodes_element} nodes were provided."
-            )
+                f"supported. {n_nodes_element} nodes were provided.")
 
     @staticmethod
     def are_2d_coordinates_clockwise(coordinates: Sequence[Sequence[float]]) -> bool:
@@ -72,7 +71,7 @@ class Utils:
         return signed_area > 0.0
 
     @staticmethod
-    def check_dimensions(points:Sequence[Sequence[float]]) -> None:
+    def check_dimensions(points: Sequence[Sequence[float]]) -> None:
         """
 
         Check if points have the same dimensions (2D or 3D).
@@ -96,7 +95,9 @@ class Utils:
             raise ValueError("Dimension of the points should be 2D or 3D.")
 
     @staticmethod
-    def is_collinear(point: Sequence[float], start_point: Sequence[float], end_point: Sequence[float],
+    def is_collinear(point: Sequence[float],
+                     start_point: Sequence[float],
+                     end_point: Sequence[float],
                      a_tol: float = 1e-06) -> bool:
         """
         Check if point is aligned with the other two on a line. Points must have the same dimension (2D or 3D)
@@ -128,7 +129,8 @@ class Utils:
         return is_collinear
 
     @staticmethod
-    def is_point_between_points(point:Sequence[float], start_point:Sequence[float], end_point:Sequence[float]) -> bool:
+    def is_point_between_points(point: Sequence[float], start_point: Sequence[float], end_point: Sequence[float]) \
+            -> bool:
         """
         Check if point is between the other two. Points must have the same dimension (2D or 3D).
 
@@ -152,7 +154,7 @@ class Utils:
         vec_2 = np.asarray(end_point) - np.asarray(start_point)
 
         # Calculate the scalar projections of vector1 onto vector2
-        scalar_projection = sum(v1 * v2 for v1, v2 in zip(vec_1, vec_2)) / sum(v ** 2 for v in vec_2)
+        scalar_projection = sum(v1 * v2 for v1, v2 in zip(vec_1, vec_2)) / sum(v**2 for v in vec_2)
 
         # Check if the scalar projection is between 0 and 1 (inclusive)
         is_between: bool = 0 <= scalar_projection <= 1
@@ -244,8 +246,8 @@ class Utils:
         """
 
         # get nodal connectivities of the line edges from the local element edges dictionary
-        node_ids: npty.NDArray[np.int64] = np.array(element.node_ids, dtype=int)[
-            ELEMENT_DATA[element.element_type]["edges"]]
+        node_ids: npty.NDArray[np.int64] = np.array(element.node_ids,
+                                                    dtype=int)[ELEMENT_DATA[element.element_type]["edges"]]
 
         return node_ids
 
@@ -459,13 +461,13 @@ class Utils:
 
         for ix in range(len(coordinates)):
             # check origin is collinear to the edges of the line
-            collinear_check = Utils.is_collinear(
-                point=origin, start_point=coordinates[ix][0], end_point=coordinates[ix][1]
-            )
+            collinear_check = Utils.is_collinear(point=origin,
+                                                 start_point=coordinates[ix][0],
+                                                 end_point=coordinates[ix][1])
             # check origin is between the edges of the line (edges included)
-            is_between_check = Utils.is_point_between_points(
-                point=origin, start_point=coordinates[ix][0], end_point=coordinates[ix][1]
-            )
+            is_between_check = Utils.is_point_between_points(point=origin,
+                                                             start_point=coordinates[ix][0],
+                                                             end_point=coordinates[ix][1])
             # check if point complies
             is_on_line = collinear_check and is_between_check
             # exit at the first success of the test (point in the line) and return True
@@ -527,20 +529,21 @@ class Utils:
         return np.array(node_ids)[np.hstack(close_indices, dtype=np.int64)]
 
     @staticmethod
-    def find_first_three_non_collinear_points(
-            points: Sequence[Sequence[float]], a_tol=1e-06
-    ) -> Optional[Sequence[Sequence[float]]]:
+    def find_first_three_non_collinear_points(points: Sequence[Sequence[float]],
+                                              a_tol: float = 1e-06) -> Optional[Sequence[Sequence[float]]]:
         """
         Find the first 3 non-collinear points in sequence of points. If all are collinear, the function returns `None`.
 
         Args:
             - points (Sequence[Sequence[float]]): points from which the non-collinear points should be searched for.
+            - a_tol (float): absolute tolerance to check collinearity (default 1e-6)
 
         Raises:
             -  ValueError: if less than three points are provided.
 
         Returns:
-            - Optional[List[Sequence[float]]]: list of the first three points that are not collinear. If all are collinear, None is returned.
+            - Optional[List[Sequence[float]]]: list of the first three points that are not collinear. If all are
+            collinear, None is returned.
 
         """
         if len(points) < 3:
@@ -558,15 +561,16 @@ class Utils:
         return None
 
     @staticmethod
-    def is_point_coplanar_to_polygon(
-            point: Sequence[float], polygon_points: Sequence[Sequence[float]], a_tol=1e-06
-    ) -> bool:
+    def is_point_coplanar_to_polygon(point: Sequence[float],
+                                     polygon_points: Sequence[Sequence[float]],
+                                     a_tol: float = 1e-06) -> bool:
         """
         Checks whether a point is coplanar to a list of points defining a polygon
 
         Args:
             - point (Sequence[float]): point to be checked.
             - polygon_points (Sequence[Sequence[float]]): points belonging to the polygon.
+            - a_tol (float): absolute tolerance to check planarity (default 1e-6)
 
         Raises:
             -  ValueError: if the polygon itself is not planar.
@@ -584,11 +588,11 @@ class Utils:
         # Choose three non-collinear points from the polygon
 
         non_collinear_points = Utils.find_first_three_non_collinear_points(points=polygon_points, a_tol=a_tol)
-        # Convert points to a NumPy array for easier manipulation
 
         if non_collinear_points is None:
             raise ValueError("All the points in the polygon are collinear.")
 
+        # Convert points to a NumPy array for easier manipulation
         p1, p2, p3 = np.array(non_collinear_points)
 
         # Calculate vectors from p1 to p2 and p1 to p3
@@ -614,12 +618,13 @@ class Utils:
         return True
 
     @staticmethod
-    def is_polygon_planar(polygon_points: Sequence[Sequence[float]], a_tol=1e-06) -> bool:
+    def is_polygon_planar(polygon_points: Sequence[Sequence[float]], a_tol: float = 1e-06) -> bool:
         """
         Checks whether a polygon is planar, i.e. all its point lie on the same plane.
 
         Args:
             - polygon_points (Sequence[Sequence[float]]): points belonging to the polygon.
+            - a_tol (float): absolute tolerance to check planarity (default 1e-6)
 
         Raises:
             -  ValueError: if less than three points are provided.

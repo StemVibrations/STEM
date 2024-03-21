@@ -154,11 +154,12 @@ class Stem:
                 project_settings_file_name = f"ProjectParameters_stage_{stage_nr+1}.json"
                 material_settings_file_name = f"MaterialParameters_stage_{stage_nr+1}.json"
                 self.kratos_io.project_folder = self.input_files_dir
-                self.kratos_io.write_input_files_for_kratos(stage, mesh_name,
+                self.kratos_io.write_input_files_for_kratos(stage,
+                                                            mesh_name,
                                                             materials_file_name=material_settings_file_name,
                                                             project_file_name=project_settings_file_name)
 
-                self.__stage_settings_file_names[stage_nr+1] = project_settings_file_name
+                self.__stage_settings_file_names[stage_nr + 1] = project_settings_file_name
 
     def run_stage(self, stage_number: int, time_step_nr: int):
         """
@@ -351,5 +352,3 @@ class Stem:
         #                                                          model_part.parameters.wheel_configuration]
         #         elif isinstance(model_part.parameters, MovingLoad):
         #             model_part.parameters.offset += distance_traveled
-
-

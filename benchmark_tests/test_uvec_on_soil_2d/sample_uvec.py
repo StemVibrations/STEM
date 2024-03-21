@@ -21,4 +21,3 @@ def uvec_test(json_string: str) -> str:
     # Set the load data
     uvec_data['loads'] = {1: [0, load_wheel_1, 0], 2: [0, load_wheel_2, 0]}
     return json.dumps(uvec_data)
-    

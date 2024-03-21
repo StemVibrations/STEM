@@ -65,10 +65,12 @@ class TestKratosModelIO:
         # define soil material
         soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
         constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
-        soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
+        soil_material = SoilMaterial(name="soil",
+                                     soil_formulation=soil_formulation,
+                                     constitutive_law=constitutive_law,
                                      retention_parameters=SaturatedBelowPhreaticLevelLaw())
         # define tables
-        time = np.arange(6)*0.5
+        time = np.arange(6) * 0.5
         values = np.array([0, 5, 10, 5, 0, 0])
         table1 = Table(times=time, values=values)
         table2 = Table(times=time, values=-values)
@@ -89,7 +91,8 @@ class TestKratosModelIO:
         model.add_load_by_coordinates(load_coordinates_right, line_load2, "load_right")
 
         # add pin parameters
-        no_displacement_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True],
+        no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+                                                            is_fixed=[True, True, True],
                                                             value=[0, 0, 0])
 
         # add boundary conditions in 0d, 1d and 2d
@@ -117,10 +120,12 @@ class TestKratosModelIO:
         # define soil material
         soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
         constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
-        soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
+        soil_material = SoilMaterial(name="soil",
+                                     soil_formulation=soil_formulation,
+                                     constitutive_law=constitutive_law,
                                      retention_parameters=SaturatedBelowPhreaticLevelLaw())
         # define tables
-        _time = np.arange(6)*0.5
+        _time = np.arange(6) * 0.5
         _value1 = np.array([0, 5, 10, 5, 0, 0])
         table1 = Table(times=_time, values=_value1)
 
@@ -136,7 +141,8 @@ class TestKratosModelIO:
         model.add_load_by_coordinates(load_coordinates_top, line_load1, "load_top")
 
         # add pin parameters
-        no_displacement_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True],
+        no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+                                                            is_fixed=[True, True, True],
                                                             value=[0, 0, 0])
 
         # add boundary conditions in 0d, 1d and 2d
@@ -146,16 +152,12 @@ class TestKratosModelIO:
         # - Nodal results
         nodal_results = [NodalOutput.ACCELERATION, NodalOutput.VELOCITY, NodalOutput.DISPLACEMENT]
         # - define output process
-        model.add_output_settings_by_coordinates(
-            coordinates=output_coordinates,
-            part_name="line_output_soil1",
-            output_name="json_line_output_soil1",
-            output_dir="dir_test",
-            output_parameters=JsonOutputParameters(
-                output_interval=100,
-                nodal_results=nodal_results
-            )
-        )
+        model.add_output_settings_by_coordinates(coordinates=output_coordinates,
+                                                 part_name="line_output_soil1",
+                                                 output_name="json_line_output_soil1",
+                                                 output_dir="dir_test",
+                                                 output_parameters=JsonOutputParameters(output_interval=100,
+                                                                                        nodal_results=nodal_results))
 
         model.synchronise_geometry()
 
@@ -177,7 +179,9 @@ class TestKratosModelIO:
         # define soil material
         soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
         constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
-        soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
+        soil_material = SoilMaterial(name="soil",
+                                     soil_formulation=soil_formulation,
+                                     constitutive_law=constitutive_law,
                                      retention_parameters=SaturatedBelowPhreaticLevelLaw())
 
         # define load properties
@@ -192,23 +196,24 @@ class TestKratosModelIO:
         model.add_load_by_coordinates(load_coordinates_top, line_load1, "load_top")
 
         # add pin parameters
-        no_displacement_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True],
+        no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+                                                            is_fixed=[True, True, True],
                                                             value=[0, 0, 0])
 
         # add boundary conditions in 0d, 1d and 2d
         model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "no_displacement")
 
         # Define the field generator
-        random_field_generator = RandomFieldGenerator(
-            n_dim=3, cov=0.1, model_name="Gaussian",
-            v_scale_fluctuation=1, anisotropy=[0.5, 0.5], angle=[0, 0]
-        )
+        random_field_generator = RandomFieldGenerator(n_dim=3,
+                                                      cov=0.1,
+                                                      model_name="Gaussian",
+                                                      v_scale_fluctuation=1,
+                                                      anisotropy=[0.5, 0.5],
+                                                      angle=[0, 0])
 
-        field_parameters_json = ParameterFieldParameters(
-            property_name="YOUNG_MODULUS",
-            function_type="json_file",
-            field_generator=random_field_generator
-        )
+        field_parameters_json = ParameterFieldParameters(property_name="YOUNG_MODULUS",
+                                                         function_type="json_file",
+                                                         field_generator=random_field_generator)
 
         model.add_field(part_name="soil1", field_parameters=field_parameters_json)
 
@@ -232,11 +237,13 @@ class TestKratosModelIO:
         # define soil material
         soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
         constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
-        soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
+        soil_material = SoilMaterial(name="soil",
+                                     soil_formulation=soil_formulation,
+                                     constitutive_law=constitutive_law,
                                      retention_parameters=SaturatedBelowPhreaticLevelLaw())
 
         # define tables
-        _time = np.arange(6)*0.5
+        _time = np.arange(6) * 0.5
         _value1 = np.array([0, 5, 10, 5, 0, 0])
         table1 = Table(times=_time, values=-_value1)
         table2 = Table(times=_time, values=_value1)
@@ -257,7 +264,8 @@ class TestKratosModelIO:
         model.add_load_by_coordinates(load_coordinates_bottom, surface_load_bottom, "load_bottom")
 
         # add pin parameters
-        no_displacement_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True],
+        no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+                                                            is_fixed=[True, True, True],
                                                             value=[0, table2, 0])
 
         # add boundary conditions in 0d, 1d and 2d
@@ -281,23 +289,18 @@ class TestKratosModelIO:
         # Nodal results
         nodal_results = [NodalOutput.DISPLACEMENT]
         # Gauss point results
-        gauss_point_results = [
-            GaussPointOutput.GREEN_LAGRANGE_STRAIN_TENSOR,
-            GaussPointOutput.CAUCHY_STRESS_TENSOR
-        ]
+        gauss_point_results = [GaussPointOutput.GREEN_LAGRANGE_STRAIN_TENSOR, GaussPointOutput.CAUCHY_STRESS_TENSOR]
         # define output process
 
-        vtk_output_process = Output(
-            part_name="soil1",
-            output_name="vtk_output_soil1",
-            output_dir="dir_test",
-            output_parameters=VtkOutputParameters(
-                file_format="ascii",
-                output_interval=100,
-                nodal_results=nodal_results,
-                gauss_point_results=gauss_point_results,
-            )
-        )
+        vtk_output_process = Output(part_name="soil1",
+                                    output_name="vtk_output_soil1",
+                                    output_dir="dir_test",
+                                    output_parameters=VtkOutputParameters(
+                                        file_format="ascii",
+                                        output_interval=100,
+                                        nodal_results=nodal_results,
+                                        gauss_point_results=gauss_point_results,
+                                    ))
 
         return vtk_output_process
 
@@ -313,32 +316,36 @@ class TestKratosModelIO:
         # set up solver settings
         analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
         solution_type = SolutionType.DYNAMIC
-        time_integration = TimeIntegration(start_time=0.0, end_time=1.0, delta_time=0.1, reduction_factor=0.5,
-                                           increase_factor=2.0, max_delta_time_factor=500)
+        time_integration = TimeIntegration(start_time=0.0,
+                                           end_time=1.0,
+                                           delta_time=0.1,
+                                           reduction_factor=0.5,
+                                           increase_factor=2.0,
+                                           max_delta_time_factor=500)
         convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1e-5,
                                                                 displacement_absolute_tolerance=1e-7)
         strategy_type = NewtonRaphsonStrategy(min_iterations=5, max_iterations=30, number_cycles=50)
         scheme_type = NewmarkScheme(newmark_beta=0.35, newmark_gamma=0.4, newmark_theta=0.6)
         linear_solver_settings = Amgcl(tolerance=1e-8, max_iteration=500, scaling=False)
         stress_initialisation_type = StressInitialisationType.NONE
-        solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
+        solver_settings = SolverSettings(analysis_type=analysis_type,
+                                         solution_type=solution_type,
                                          stress_initialisation_type=stress_initialisation_type,
                                          time_integration=time_integration,
-                                         is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
+                                         is_stiffness_matrix_constant=True,
+                                         are_mass_and_damping_constant=True,
                                          convergence_criteria=convergence_criterion,
-                                         strategy_type=strategy_type, scheme=scheme_type,
-                                         linear_solver_settings=linear_solver_settings, rayleigh_k=0.001,
+                                         strategy_type=strategy_type,
+                                         scheme=scheme_type,
+                                         linear_solver_settings=linear_solver_settings,
+                                         rayleigh_k=0.001,
                                          rayleigh_m=0.001)
 
         # set up problem data
         return Problem(problem_name="test", number_of_threads=2, settings=solver_settings)
 
-    def test_write_project_parameters_json(
-        self,
-        create_default_2d_model: Model,
-        create_default_outputs: List[Output],
-        create_default_solver_settings: Problem
-    ):
+    def test_write_project_parameters_json(self, create_default_2d_model: Model, create_default_outputs: List[Output],
+                                           create_default_solver_settings: Problem):
         """
         Test correct writing of the project parameters for the default output, model and settings.
 
@@ -370,12 +377,10 @@ class TestKratosModelIO:
         expected_dict = json.load(open("tests/test_data/expected_ProjectParameters.json", 'r'))
         TestUtils.assert_dictionary_almost_equal(expected_dict, actual_dict)
 
-    def test_write_project_parameters_json_for_line_output(
-        self,
-        create_default_2d_model_and_output_by_coordinates: Model,
-        create_default_outputs: List[Output],
-        create_default_solver_settings: Problem
-    ):
+    def test_write_project_parameters_json_for_line_output(self,
+                                                           create_default_2d_model_and_output_by_coordinates: Model,
+                                                           create_default_outputs: List[Output],
+                                                           create_default_solver_settings: Problem):
         """
         Test correct writing of the project parameters for the default output, model and settings.
 
@@ -404,12 +409,9 @@ class TestKratosModelIO:
         expected_dict = json.load(open("tests/test_data/expected_ProjectParameters_line_output.json", 'r'))
         TestUtils.assert_dictionary_almost_equal(expected_dict, actual_dict)
 
-    def test_write_random_field_json_file(
-        self,
-        create_default_2d_model_randomfield: Model,
-        create_default_outputs: List[Output],
-        create_default_solver_settings: Problem
-    ):
+    def test_write_random_field_json_file(self, create_default_2d_model_randomfield: Model,
+                                          create_default_outputs: List[Output],
+                                          create_default_solver_settings: Problem):
         """
         Test correct writing of the random field parameters.
 
@@ -430,12 +432,12 @@ class TestKratosModelIO:
         model.project_parameters = create_default_solver_settings
         model.add_output_settings(**create_default_outputs.__dict__)
 
-        kratos_io._KratosIO__write_project_parameters_json(
-            model=model, mesh_file_name="test_mdpa_file.mdpa", materials_file_name="MaterialParameters.json"
-        )
+        kratos_io._KratosIO__write_project_parameters_json(model=model,
+                                                           mesh_file_name="test_mdpa_file.mdpa",
+                                                           materials_file_name="MaterialParameters.json")
 
-        expected_random_field_values = json.load(open("tests/test_data/expected_json_soil1_young_modulus_field.json",
-                                                      'r'))
+        expected_random_field_values = json.load(
+            open("tests/test_data/expected_json_soil1_young_modulus_field.json", 'r'))
 
         actual_random_field_values = json.load(open("soil1_young_modulus_field.json", 'r'))
 
@@ -444,11 +446,8 @@ class TestKratosModelIO:
 
         TestUtils.assert_dictionary_almost_equal(expected_random_field_values, actual_random_field_values)
 
-    def test_validation_of_random_field_parameters(
-        self,
-        create_default_2d_model_randomfield: Model,
-        create_default_solver_settings: Problem
-    ):
+    def test_validation_of_random_field_parameters(self, create_default_2d_model_randomfield: Model,
+                                                   create_default_solver_settings: Problem):
         """
         Test correct writing of the random field parameters.
 
@@ -466,12 +465,12 @@ class TestKratosModelIO:
 
         model.project_parameters = create_default_solver_settings
 
-        kratos_io._KratosIO__write_project_parameters_json(
-            model=model, mesh_file_name="test_mdpa_file.mdpa", materials_file_name="MaterialParameters.json"
-        )
+        kratos_io._KratosIO__write_project_parameters_json(model=model,
+                                                           mesh_file_name="test_mdpa_file.mdpa",
+                                                           materials_file_name="MaterialParameters.json")
 
-        expected_random_field_values = json.load(open("tests/test_data/expected_json_soil1_young_modulus_field.json",
-                                                      'r'))
+        expected_random_field_values = json.load(
+            open("tests/test_data/expected_json_soil1_young_modulus_field.json", 'r'))
 
         actual_random_field_values = json.load(open("soil1_young_modulus_field.json", 'r'))
 
@@ -480,12 +479,9 @@ class TestKratosModelIO:
 
         TestUtils.assert_dictionary_almost_equal(expected_random_field_values, actual_random_field_values)
 
-    def test_write_project_parameters_json_for_randomfield(
-        self,
-        create_default_2d_model_randomfield: Model,
-        create_default_outputs: List[Output],
-        create_default_solver_settings: Problem
-    ):
+    def test_write_project_parameters_json_for_randomfield(self, create_default_2d_model_randomfield: Model,
+                                                           create_default_outputs: List[Output],
+                                                           create_default_solver_settings: Problem):
         """
         Test correct writing of the project parameters for the default output, model and settings.
 
@@ -513,10 +509,7 @@ class TestKratosModelIO:
         expected_dict = json.load(open("tests/test_data/expected_ProjectParameters_random_field_2d.json", 'r'))
         TestUtils.assert_dictionary_almost_equal(expected_dict, actual_dict)
 
-    def test_write_material_parameters_json(
-        self,
-        create_default_2d_model: Model
-    ):
+    def test_write_material_parameters_json(self, create_default_2d_model: Model):
         """
         Test correct writing of the material parameters for the default model.
         Args:
@@ -535,11 +528,7 @@ class TestKratosModelIO:
         expected_dict = json.load(open("tests/test_data/expected_MaterialParameters.json", 'r'))
         TestUtils.assert_dictionary_almost_equal(expected_dict, actual_dict)
 
-    def test_write_mdpa_file_2d(
-        self,
-        create_default_2d_model: Model,
-        create_default_solver_settings: Problem
-    ):
+    def test_write_mdpa_file_2d(self, create_default_2d_model: Model, create_default_solver_settings: Problem):
         """
         Test correct writing of the mdpa file (mesh) for the default model and solver settings in 2D.
 
@@ -562,20 +551,14 @@ class TestKratosModelIO:
 
         model.project_parameters = create_default_solver_settings
 
-        actual_text = kratos_io._KratosIO__write_mesh_to_mdpa(
-            model=model,
-            mesh_file_name="test_mdpa_file.mdpa"
-        )
+        actual_text = kratos_io._KratosIO__write_mesh_to_mdpa(model=model, mesh_file_name="test_mdpa_file.mdpa")
         with open('tests/test_data/expected_mdpa_file.mdpa', 'r') as openfile:
             expected_text = openfile.readlines()
 
         npt.assert_equal(actual=actual_text, desired=expected_text)
 
-    def test_write_mdpa_file_with_line_output(
-        self,
-        create_default_2d_model_and_output_by_coordinates: Model,
-        create_default_solver_settings: Problem
-    ):
+    def test_write_mdpa_file_with_line_output(self, create_default_2d_model_and_output_by_coordinates: Model,
+                                              create_default_solver_settings: Problem):
         """
         Test correct writing of the mdpa file (mesh) for the default model and solver settings in 2D.
 
@@ -594,20 +577,15 @@ class TestKratosModelIO:
 
         model.project_parameters = create_default_solver_settings
 
-        actual_text = kratos_io._KratosIO__write_mesh_to_mdpa(
-            model=model,
-            mesh_file_name="mdpa_file_with_line_output_2d.mdpa"
-        )
+        actual_text = kratos_io._KratosIO__write_mesh_to_mdpa(model=model,
+                                                              mesh_file_name="mdpa_file_with_line_output_2d.mdpa")
         with open('tests/test_data/expected_mdpa_file_with_line_output_2d.mdpa', 'r') as openfile:
             expected_text = openfile.readlines()
 
         npt.assert_equal(actual=actual_text, desired=expected_text)
 
-    def test_write_mdpa_file_with_random_field(
-        self,
-        create_default_2d_model_randomfield: Model,
-        create_default_solver_settings: Problem
-    ):
+    def test_write_mdpa_file_with_random_field(self, create_default_2d_model_randomfield: Model,
+                                               create_default_solver_settings: Problem):
         """
         Test correct writing of the mdpa file (mesh) for the default model and solver settings in 2D.
 
@@ -626,20 +604,14 @@ class TestKratosModelIO:
 
         model.project_parameters = create_default_solver_settings
 
-        actual_text = kratos_io._KratosIO__write_mesh_to_mdpa(
-            model=model,
-            mesh_file_name="mdpa_file_with_random_field_2d.mdpa"
-        )
+        actual_text = kratos_io._KratosIO__write_mesh_to_mdpa(model=model,
+                                                              mesh_file_name="mdpa_file_with_random_field_2d.mdpa")
         with open('tests/test_data/expected_mdpa_file_with_random_field_2d.mdpa', 'r') as openfile:
             expected_text = openfile.readlines()
 
         npt.assert_equal(actual=actual_text, desired=expected_text)
 
-    def test_write_mdpa_file_3d(
-        self,
-        create_default_3d_model_and_mesh: Model,
-        create_default_solver_settings: Problem
-    ):
+    def test_write_mdpa_file_3d(self, create_default_3d_model_and_mesh: Model, create_default_solver_settings: Problem):
         """
         Test correct writing of the mdpa file (mesh) for the default model and solver settings in 3D.
 
@@ -655,10 +627,7 @@ class TestKratosModelIO:
 
         model.project_parameters = create_default_solver_settings
 
-        actual_text = kratos_io._KratosIO__write_mesh_to_mdpa(
-            model=model,
-            mesh_file_name="test_mdpa_file_3d.mdpa"
-        )
+        actual_text = kratos_io._KratosIO__write_mesh_to_mdpa(model=model, mesh_file_name="test_mdpa_file_3d.mdpa")
 
         if IS_LINUX:
             with open('tests/test_data/expected_mdpa_file_3d_linux.mdpa', 'r') as openfile:
@@ -685,10 +654,12 @@ class TestKratosModelIO:
         # define soil material
         soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
         constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
-        soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
+        soil_material = SoilMaterial(name="soil",
+                                     soil_formulation=soil_formulation,
+                                     constitutive_law=constitutive_law,
                                      retention_parameters=SaturatedBelowPhreaticLevelLaw())
         # define tables
-        time = np.arange(6)*0.5
+        time = np.arange(6) * 0.5
         values = np.array([0, 5, 10, 5, 0, 0])
         table1 = Table(times=time, values=values)
 
@@ -719,13 +690,11 @@ class TestKratosModelIO:
             IOUtils.create_value_and_table("load_top", line_load1)
 
         # create value and table from moving load raises an error
-        moving_load_parameters = MovingLoad(
-            origin=[0, 1, 0.5],
-            load=[0.0, -10.0, 0.0],
-            velocity=5.0,
-            offset=3.0,
-            direction=[1, 1, 1]
-        )
+        moving_load_parameters = MovingLoad(origin=[0, 1, 0.5],
+                                            load=[0.0, -10.0, 0.0],
+                                            velocity=5.0,
+                                            offset=3.0,
+                                            direction=[1, 1, 1])
         msg = "Attribute `value` does not exist in class: MovingLoad."
         with pytest.raises(ValueError, match=msg):
 
@@ -738,12 +707,8 @@ class TestKratosModelIO:
 
             IOUtils.create_value_and_table(model.process_model_parts[0].name, model.process_model_parts[0].parameters)
 
-    def test_write_input_files_for_kratos(
-        self,
-        create_default_2d_model: Model,
-        create_default_solver_settings: Problem,
-        create_default_outputs: List[Output]
-    ):
+    def test_write_input_files_for_kratos(self, create_default_2d_model: Model, create_default_solver_settings: Problem,
+                                          create_default_outputs: List[Output]):
         """
         Test correct writing of the mdpa file (mesh) for the default model and solver settings.
 
@@ -769,10 +734,7 @@ class TestKratosModelIO:
 
         kratos_io = KratosIO(ndim=model.ndim)
 
-        kratos_io.write_input_files_for_kratos(
-            model=model,
-            mesh_file_name="test_mdpa_file.mdpa"
-        )
+        kratos_io.write_input_files_for_kratos(model=model, mesh_file_name="test_mdpa_file.mdpa")
 
         # test mdpa
         with open('./test_mdpa_file.mdpa', 'r') as openfile:
@@ -791,7 +753,7 @@ class TestKratosModelIO:
         expected_dict = json.load(open('tests/test_data/expected_ProjectParameters.json', 'r'))
         TestUtils.assert_dictionary_almost_equal(expected=expected_dict, actual=actual_dict)
 
-    def test_create_submodelpart_text(self, create_default_2d_model:Model):
+    def test_create_submodelpart_text(self, create_default_2d_model: Model):
         """
         Test the creation of the mdpa text of a model part
 
@@ -814,54 +776,25 @@ class TestKratosModelIO:
         kratos_io.initialise_model_ids(model)
 
         # generate text block body model part: soil1
-        actual_text_body = kratos_io.write_submodelpart_body_model_part(
-            body_model_part=body_model_part_to_write
-        )
+        actual_text_body = kratos_io.write_submodelpart_body_model_part(body_model_part=body_model_part_to_write)
         # define expected block text
         expected_text_body = [
-            "",
-            "Begin SubModelPart soil1",
-            "  Begin SubModelPartTables",
-            "  End SubModelPartTables",
-            "  Begin SubModelPartNodes",
-            "  1",
-            "  2",
-            "  3",
-            "  4",
-            "  5",
-            "  End SubModelPartNodes",
-            "  Begin SubModelPartElements",
-            "  5",
-            "  6",
-            "  7",
-            "  8",
-            "  End SubModelPartElements",
-            "End SubModelPart",
-            ""
+            "", "Begin SubModelPart soil1", "  Begin SubModelPartTables", "  End SubModelPartTables",
+            "  Begin SubModelPartNodes", "  1", "  2", "  3", "  4", "  5", "  End SubModelPartNodes",
+            "  Begin SubModelPartElements", "  5", "  6", "  7", "  8", "  End SubModelPartElements",
+            "End SubModelPart", ""
         ]
         # assert the objects to be equal
         npt.assert_equal(actual=actual_text_body, desired=expected_text_body)
 
         # generate text block body model part: soil1
         actual_text_load = kratos_io.write_submodelpart_process_model_part(
-            process_model_part=process_model_part_to_write
-        )
+            process_model_part=process_model_part_to_write)
         # define expected block text
         expected_text_load = [
-            "",
-            "Begin SubModelPart load_top",
-            "  Begin SubModelPartTables",
-            "  1",
-            "  End SubModelPartTables",
-            "  Begin SubModelPartNodes",
-            "  3",
-            "  4",
-            "  End SubModelPartNodes",
-            "  Begin SubModelPartConditions",
-            "  1",
-            "  End SubModelPartConditions",
-            "End SubModelPart",
-            ""
+            "", "Begin SubModelPart load_top", "  Begin SubModelPartTables", "  1", "  End SubModelPartTables",
+            "  Begin SubModelPartNodes", "  3", "  4", "  End SubModelPartNodes", "  Begin SubModelPartConditions",
+            "  1", "  End SubModelPartConditions", "End SubModelPart", ""
         ]
 
         # assert the objects to be equal
@@ -917,7 +850,9 @@ class TestKratosModelIO:
         # define soil material
         soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
         constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
-        soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
+        soil_material = SoilMaterial(name="soil",
+                                     soil_formulation=soil_formulation,
+                                     constitutive_law=constitutive_law,
                                      retention_parameters=SaturatedBelowPhreaticLevelLaw())
 
         # define load properties
@@ -953,9 +888,8 @@ class TestKratosModelIO:
         # check if mdpa data is as expected
         npt.assert_equal(actual=actual_mdpa_text, desired=expected_mdpa_text)
 
-    def test_write_mdpa_with_spring_damper_element(
-            self, create_default_outputs: List[Output], create_default_solver_settings: Problem
-    ):
+    def test_write_mdpa_with_spring_damper_element(self, create_default_outputs: List[Output],
+                                                   create_default_solver_settings: Problem):
         """
         Test correct writing of the mdpa file for the default model with 4 spring dampers of which two are in series.
 
@@ -971,11 +905,10 @@ class TestKratosModelIO:
         model.output_settings = create_default_outputs
 
         # add elastic spring damper element
-        spring_damper = ElasticSpringDamper(
-            NODAL_DISPLACEMENT_STIFFNESS=[1, 1, 1],
-            NODAL_ROTATIONAL_STIFFNESS=[1, 1, 2],
-            NODAL_DAMPING_COEFFICIENT=[1, 1, 3],
-            NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[1, 1, 4])
+        spring_damper = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[1, 1, 1],
+                                            NODAL_ROTATIONAL_STIFFNESS=[1, 1, 2],
+                                            NODAL_DAMPING_COEFFICIENT=[1, 1, 3],
+                                            NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[1, 1, 4])
 
         # create model part
         # 3 lines, one broken with a mid-point, which should result in 4 springs
@@ -994,8 +927,10 @@ class TestKratosModelIO:
         top_point_ids = model.gmsh_io.make_points(top_coordinates)
         bot_point_ids = model.gmsh_io.make_points(bottom_coordinates)
 
-        spring_line_ids = [model.gmsh_io.create_line([top_point_id, bot_point_id])
-                           for top_point_id, bot_point_id in zip(top_point_ids, bot_point_ids)]
+        spring_line_ids = [
+            model.gmsh_io.create_line([top_point_id, bot_point_id])
+            for top_point_id, bot_point_id in zip(top_point_ids, bot_point_ids)
+        ]
 
         model.gmsh_io.add_physical_group("spring_damper", 1, spring_line_ids)
         # assign spring damper to geometry
@@ -1005,11 +940,9 @@ class TestKratosModelIO:
 
         # add concentrated masses on same and different points
         # add nodal concentrated element
-        nodal_concentrated = NodalConcentrated(
-            NODAL_MASS=1,
-            NODAL_DAMPING_COEFFICIENT=[1, 1, 1],
-            NODAL_DISPLACEMENT_STIFFNESS=[1, 1, 1]
-        )
+        nodal_concentrated = NodalConcentrated(NODAL_MASS=1,
+                                               NODAL_DAMPING_COEFFICIENT=[1, 1, 1],
+                                               NODAL_DISPLACEMENT_STIFFNESS=[1, 1, 1])
 
         # create model part
         nodal_concentrated_model_part = BodyModelPart("nodal_concentrated")
@@ -1040,8 +973,7 @@ class TestKratosModelIO:
         # check if mdpa data is as expected
         npt.assert_equal(actual=actual_mdpa_text, desired=expected_mdpa_text)
 
-    def test_write_project_parameters_with_spring_damper_and_mass_element(self,
-                                                                          create_default_2d_model: Model,
+    def test_write_project_parameters_with_spring_damper_and_mass_element(self, create_default_2d_model: Model,
                                                                           create_default_outputs: List[Output],
                                                                           create_default_solver_settings: Problem):
         """
@@ -1062,11 +994,10 @@ class TestKratosModelIO:
         kratos_io.project_folder = "dummy"
 
         # add elastic spring damper element
-        spring_damper = ElasticSpringDamper(
-            NODAL_DISPLACEMENT_STIFFNESS=[1, 1, 1],
-            NODAL_ROTATIONAL_STIFFNESS=[1, 1, 2],
-            NODAL_DAMPING_COEFFICIENT=[1, 1, 3],
-            NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[1, 1, 4])
+        spring_damper = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[1, 1, 1],
+                                            NODAL_ROTATIONAL_STIFFNESS=[1, 1, 2],
+                                            NODAL_DAMPING_COEFFICIENT=[1, 1, 3],
+                                            NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[1, 1, 4])
 
         # create model part
         spring_damper_model_part = BodyModelPart("spring_damper")
@@ -1077,11 +1008,9 @@ class TestKratosModelIO:
         spring_damper_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, "spring_damper")
 
         # add nodal concentrated element
-        nodal_concentrated = NodalConcentrated(
-            NODAL_MASS=1,
-            NODAL_DAMPING_COEFFICIENT=[1, 1, 1],
-            NODAL_DISPLACEMENT_STIFFNESS=[1, 1, 1]
-        )
+        nodal_concentrated = NodalConcentrated(NODAL_MASS=1,
+                                               NODAL_DAMPING_COEFFICIENT=[1, 1, 1],
+                                               NODAL_DISPLACEMENT_STIFFNESS=[1, 1, 1])
 
         # create model part
         nodal_concentrated_model_part = BodyModelPart("nodal_concentrated")
@@ -1096,7 +1025,8 @@ class TestKratosModelIO:
         model.body_model_parts.append(nodal_concentrated_model_part)
 
         # write project parameters
-        actual_dict = kratos_io._KratosIO__write_project_parameters_json(model=model, mesh_file_name="dummy.mdpa",
+        actual_dict = kratos_io._KratosIO__write_project_parameters_json(model=model,
+                                                                         mesh_file_name="dummy.mdpa",
                                                                          materials_file_name="dummy.json")
 
         # load expected project parameters
@@ -1123,7 +1053,8 @@ class TestKratosModelIO:
         with pytest.raises(ValueError, match=f"Body model part empty_body_model_part has no material assigned."):
             kratos_io._KratosIO__create_auxiliary_process_list_dictionary(model=model)
 
-        nodal_concentrated = NodalConcentrated(NODAL_MASS=1, NODAL_DAMPING_COEFFICIENT=[1, 1, 1],
+        nodal_concentrated = NodalConcentrated(NODAL_MASS=1,
+                                               NODAL_DAMPING_COEFFICIENT=[1, 1, 1],
                                                NODAL_DISPLACEMENT_STIFFNESS=[1, 1, 1])
         empty_body_model_part.material = StructuralMaterial("empty_body_model_part", nodal_concentrated)
 
@@ -1140,9 +1071,9 @@ class TestKratosModelIO:
         # check relative directory creation
         kratos_io = KratosIO(ndim=2)
         kratos_io.project_folder = "json_test_project_folder"
-        output_settings = [Output(output_parameters=JsonOutputParameters(
-            output_interval=1),output_dir="json_test_output"
-        )]
+        output_settings = [
+            Output(output_parameters=JsonOutputParameters(output_interval=1), output_dir="json_test_output")
+        ]
 
         kratos_io._KratosIO__create_folder_for_json_output(output_settings)
 

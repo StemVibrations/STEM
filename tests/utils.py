@@ -6,6 +6,7 @@ from stem.soil_material import SoilMaterial, OnePhaseSoil, LinearElasticSoil, Sa
 from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
                          StressInitialisationType, SolverSettings, Problem)
 
+
 class TestUtils:
 
     @staticmethod
@@ -22,7 +23,9 @@ class TestUtils:
         """
         soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
         constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
-        soil_material = SoilMaterial(name="soil", soil_formulation=soil_formulation, constitutive_law=constitutive_law,
+        soil_material = SoilMaterial(name="soil",
+                                     soil_formulation=soil_formulation,
+                                     constitutive_law=constitutive_law,
                                      retention_parameters=SaturatedBelowPhreaticLevelLaw())
 
         return soil_material
@@ -43,15 +46,21 @@ class TestUtils:
 
         stress_initialisation_type = StressInitialisationType.NONE
 
-        time_integration = TimeIntegration(start_time=0.0, end_time=1.0, delta_time=0.1, reduction_factor=0.5,
-                                           increase_factor=2.0, max_delta_time_factor=500)
+        time_integration = TimeIntegration(start_time=0.0,
+                                           end_time=1.0,
+                                           delta_time=0.1,
+                                           reduction_factor=0.5,
+                                           increase_factor=2.0,
+                                           max_delta_time_factor=500)
 
         convergence_criteria = DisplacementConvergenceCriteria()
 
-        solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
+        solver_settings = SolverSettings(analysis_type=analysis_type,
+                                         solution_type=solution_type,
                                          stress_initialisation_type=stress_initialisation_type,
                                          time_integration=time_integration,
-                                         is_stiffness_matrix_constant=False, are_mass_and_damping_constant=False,
+                                         is_stiffness_matrix_constant=False,
+                                         are_mass_and_damping_constant=False,
                                          convergence_criteria=convergence_criteria)
 
         # set up problem data
@@ -93,7 +102,7 @@ class TestUtils:
                     npt.assert_allclose(v, actual[k])
 
     @staticmethod
-    def assert_almost_equal_geometries(expected_geometry: Geometry, actual_geometry:Geometry):
+    def assert_almost_equal_geometries(expected_geometry: Geometry, actual_geometry: Geometry):
         """
         Checks whether two Geometries are (almost) equal.
 

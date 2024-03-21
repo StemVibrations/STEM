@@ -32,7 +32,6 @@ def uvec(json_string: str) -> str:
     # initialise the train system
     (M, C, K, F_train), train = initialise(time_index, parameters, state)
 
-
     # calculate norm of u vector, gravity is downwards
     gravity_axis = parameters["gravity_axis"]
 
@@ -51,8 +50,8 @@ def uvec(json_string: str) -> str:
     state["a"] = np.array(state["a"])
 
     # calculate contact forces
-    F_contact = calculate_contact_forces(u_vertical, train.calculate_static_contact_force(),
-                                         state, parameters, train, time_index)
+    F_contact = calculate_contact_forces(u_vertical, train.calculate_static_contact_force(), state, parameters, train,
+                                         time_index)
 
     # calculate force vector
     F = F_train
@@ -88,7 +87,6 @@ def initialise(time_index: int, parameters: dict, state: dict) -> \
         - Tuple[Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray], TrainModel]: tuple containing the global matrices (M, C, K, F) and the train model
     """
 
-
     train = TrainModel()
 
     train.n_carts = parameters["n_carts"]
@@ -112,12 +110,11 @@ def initialise(time_index: int, parameters: dict, state: dict) -> \
     # set global matrices
     K, C, M, F = train.generate_global_matrices()
 
-
     return (M, C, K, F), train
 
 
-def calculate_contact_forces(u: np.ndarray, F_static: np.ndarray, state: dict, parameters: dict,
-                             train: TrainModel, time_index: int) -> np.ndarray:
+def calculate_contact_forces(u: np.ndarray, F_static: np.ndarray, state: dict, parameters: dict, train: TrainModel,
+                             time_index: int) -> np.ndarray:
     """
     Calculate the contact forces
 

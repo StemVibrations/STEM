@@ -1,4 +1,4 @@
-from typing import List, Sequence, Dict, Any, Optional, Union, Tuple
+from typing import List, Sequence, Dict, Any, Optional, Union
 
 import numpy as np
 import numpy.typing as npty
@@ -17,10 +17,9 @@ from stem.additional_processes import ParameterFieldParameters
 from stem.load import *
 from stem.water_processes import WaterProcessParametersABC, UniformWaterPressure
 from stem.solver import Problem, StressInitialisationType
-from stem.output import Output
 from stem.utils import Utils
 from stem.plot_utils import PlotUtils
-from stem.globals import ELEMENT_DATA, VERTICAL_AXIS, GRAVITY_VALUE,  OUT_OF_PLANE_AXIS_2D
+from stem.globals import ELEMENT_DATA, VERTICAL_AXIS, GRAVITY_VALUE, OUT_OF_PLANE_AXIS_2D
 
 NUMBER_TYPES = (int, float, np.int64, np.float64)
 
@@ -40,6 +39,7 @@ class Model:
         - groups (Dict[str, Any]): A dictionary containing shared information among sets of model parts.
 
     """
+
     def __init__(self, ndim: int):
         """
         Constructor of the Model class.
@@ -127,8 +127,10 @@ class Model:
         sleeper_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, sleeper_name)
 
         # create rail pad geometries
-        rail_pad_line_ids_aux = [self.gmsh_io.make_geometry_1d((top_coordinates, bot_coordinates))
-                                 for top_coordinates, bot_coordinates in zip(rail_global_coords, sleeper_global_coords)]
+        rail_pad_line_ids_aux = [
+            self.gmsh_io.make_geometry_1d((top_coordinates, bot_coordinates))
+            for top_coordinates, bot_coordinates in zip(rail_global_coords, sleeper_global_coords)
+        ]
 
         rail_pad_line_ids = [ids[0] for ids in rail_pad_line_ids_aux]
 
@@ -154,7 +156,8 @@ class Model:
 
         # add displacement_constraint in the non-vertical directions
         constraint_model_part.parameters = DisplacementConstraint(active=[True, True, True],
-                                                                  is_fixed=[True, True, True], value=[0, 0, 0])
+                                                                  is_fixed=[True, True, True],
+                                                                  value=[0, 0, 0])
         constraint_model_part.parameters.is_fixed[VERTICAL_AXIS] = False
 
         self.body_model_parts.append(rail_model_part)
@@ -211,7 +214,6 @@ class Model:
             else:
                 self.process_model_parts.append(model_part)
 
-
     def add_group_for_extrusion(self, group_name: str, reference_depth: float, extrusion_length: float):
         """
         Adds a group for extrusion which consists of a starting coordinate in the out of plane direction a name and the
@@ -231,18 +233,17 @@ class Model:
         direction_vector: List[float] = [0, 0, 0]
         direction_vector[OUT_OF_PLANE_AXIS_2D] = 1
 
-        reference_coordinate: List[float]  = [0, 0, 0]
+        reference_coordinate: List[float] = [0, 0, 0]
         reference_coordinate[OUT_OF_PLANE_AXIS_2D] = reference_depth
 
         self.groups[group_name] = {
             "model_part_names": [],
-            "extrusion_parameters":{
+            "extrusion_parameters": {
                 "reference_coordinate": reference_coordinate,
                 "length": extrusion_length,
                 "direction_vector": direction_vector
             }
         }
-
 
     def add_model_part_to_group(self, group_name: str, part_name: str):
         """
@@ -264,10 +265,11 @@ class Model:
 
         self.groups[group_name]["model_part_names"].append(part_name)
 
-    def add_soil_layer_by_coordinates(
-            self, coordinates: Sequence[Sequence[float]],
-            material_parameters: Union[SoilMaterial, StructuralMaterial],
-            name: str, group_name:Optional[str]=None):
+    def add_soil_layer_by_coordinates(self,
+                                      coordinates: Sequence[Sequence[float]],
+                                      material_parameters: Union[SoilMaterial, StructuralMaterial],
+                                      name: str,
+                                      group_name: Optional[str] = None):
         """
         Adds a soil layer to the model by giving a sequence of 3D coordinates.
         The coordinates have to belong to the same plane.
@@ -294,7 +296,7 @@ class Model:
             coordinates = coordinates[::-1]
 
         if not Utils.is_polygon_planar(coordinates):
-            raise ValueError(f"Polygon for the soil layer are not on the same plane.")
+            raise ValueError("Polygon for the soil layer are not on the same plane.")
 
         # validation of group_name
         if group_name is not None and group_name not in self.groups.keys():
@@ -322,8 +324,8 @@ class Model:
                 reference_point_group = extrusion_parameters["reference_coordinate"]
 
                 if not Utils.is_point_coplanar_to_polygon(reference_point_group, coordinates):
-                    raise ValueError(f"The reference coordinate of group: {group_name}, does not lay on the same plane as soil layer: {name}")
-
+                    raise ValueError(f"The reference coordinate of group: {group_name}, "
+                                     f"does not lay on the same plane as soil layer: {name}")
 
             elif self.extrusion_length is not None:
 
@@ -374,8 +376,7 @@ class Model:
             ndim_load = 2
         else:
             raise NotImplementedError(
-                f"Load parameter provided is not supported: `{load_parameters.__class__.__name__}`."
-            )
+                f"Load parameter provided is not supported: `{load_parameters.__class__.__name__}`.")
         # add physical group to gmsh
         self.gmsh_io.add_physical_group(name, ndim_load, geometry_ids)
 
@@ -551,7 +552,7 @@ class Model:
             coordinates = np.array(coordinates, dtype=np.float64)
 
         if len(coordinates.shape) != 2:
-            raise ValueError(f"Coordinates are not a sequence of a sequence or a 2D array.")
+            raise ValueError("Coordinates are not a sequence of a sequence or a 2D array.")
 
         if coordinates.shape[1] != 3:
             raise ValueError(f"Coordinates should be 3D but {coordinates.shape[1]} coordinates were given.")
@@ -585,13 +586,13 @@ class Model:
         # iterate over each line constituting the trajectory
         for ix in range(len(coordinates) - 1):
             # check origin is collinear to the edges of the line
-            collinear_check = Utils.is_collinear(
-                point=load_parameters.origin, start_point=coordinates[ix], end_point=coordinates[ix + 1]
-            )
+            collinear_check = Utils.is_collinear(point=load_parameters.origin,
+                                                 start_point=coordinates[ix],
+                                                 end_point=coordinates[ix + 1])
             # check origin is between the edges of the line (edges included)
-            is_between_check = Utils.is_point_between_points(
-                point=load_parameters.origin, start_point=coordinates[ix], end_point=coordinates[ix + 1]
-            )
+            is_between_check = Utils.is_point_between_points(point=load_parameters.origin,
+                                                             start_point=coordinates[ix],
+                                                             end_point=coordinates[ix + 1])
             # check if point complies
             is_on_line = collinear_check and is_between_check
             # exit at the first success of the test (point in the line)
@@ -599,7 +600,7 @@ class Model:
                 return
 
         # none of the lines contain the origin, then raise an error
-        raise ValueError(f"Origin is not in the trajectory of the moving load.")
+        raise ValueError("Origin is not in the trajectory of the moving load.")
 
     def add_boundary_condition_by_geometry_ids(self, ndim_boundary: int, geometry_ids: Sequence[int],
                                                boundary_parameters: BoundaryParametersABC, name: str):
@@ -628,9 +629,11 @@ class Model:
 
         self.process_model_parts.append(model_part)
 
-    def add_output_settings(self, output_parameters: OutputParametersABC, part_name: Optional[str] = None,
-                            output_dir: str = "./", output_name: Optional[str] = None):
-
+    def add_output_settings(self,
+                            output_parameters: OutputParametersABC,
+                            part_name: Optional[str] = None,
+                            output_dir: str = "./",
+                            output_name: Optional[str] = None):
         """
         Adds an output to the model, including the output folder, the name of the output file (if applicable) and the
         part of interest to output.
@@ -664,20 +667,22 @@ class Model:
         """
 
         # check if the model part exists (if None, all model is output)
-        if (part_name is not None and part_name != "porous_computational_model_part" and
-                self.__get_model_part_by_name(part_name=part_name) is None):
+        if (part_name is not None and part_name != "porous_computational_model_part"
+                and self.__get_model_part_by_name(part_name=part_name) is None):
             raise ValueError("Model part for which output needs to be requested doesn't exist.")
 
         self.output_settings.append(
             Output(output_parameters=output_parameters,
                    part_name=part_name,
                    output_dir=output_dir,
-                   output_name=output_name)
-        )
+                   output_name=output_name))
 
-    def add_output_settings_by_coordinates(self, coordinates: Sequence[Sequence[float]],
-                                           output_parameters: OutputParametersABC, part_name: str,
-                                           output_dir: str = "./", output_name: Optional[str] = None):
+    def add_output_settings_by_coordinates(self,
+                                           coordinates: Sequence[Sequence[float]],
+                                           output_parameters: OutputParametersABC,
+                                           part_name: str,
+                                           output_dir: str = "./",
+                                           output_name: Optional[str] = None):
         """
         Sets coordinates where the output is to be defined.
         The coordinates have to be laying on an existing geometry surface.
@@ -733,8 +738,10 @@ class Model:
         self.process_model_parts.append(model_part)
 
         # add output to the output list
-        self.add_output_settings(output_parameters=output_parameters, part_name=part_name,
-                                 output_dir=output_dir, output_name=output_name)
+        self.add_output_settings(output_parameters=output_parameters,
+                                 part_name=part_name,
+                                 output_dir=output_dir,
+                                 output_name=output_name)
 
     @staticmethod
     def __exclude_non_output_nodes(process_model_part: ModelPart, eps: float = 1e-06) -> Mesh:
@@ -770,16 +777,16 @@ class Model:
             raise ValueError("process model part has not been meshed yet!")
 
         # retrieve the node ids close to the geometry points (smaller than eps meters)
-        filtered_node_ids = Utils.find_node_ids_close_to_geometry_nodes(
-            mesh=process_model_part.mesh, geometry=process_model_part.geometry, eps=eps
-        )
+        filtered_node_ids = Utils.find_node_ids_close_to_geometry_nodes(mesh=process_model_part.mesh,
+                                                                        geometry=process_model_part.geometry,
+                                                                        eps=eps)
 
         new_mesh = Mesh(ndim=process_model_part.mesh.ndim)
         new_mesh.nodes = {node_id: process_model_part.mesh.nodes[node_id] for node_id in filtered_node_ids}
         new_mesh.elements = {}
         return new_mesh
 
-    def add_field(self, part_name: str,  field_parameters: ParameterFieldParameters):
+    def add_field(self, part_name: str, field_parameters: ParameterFieldParameters):
         """
         Add a parameter field to a given model part (specified by the part_name input). if the `mean_value` attribute
         of the field generator is None, the corresponding material property is used as mean.
@@ -805,7 +812,7 @@ class Model:
 
         # Check that the body model part has a material
         if target_part.material is None:
-            raise ValueError(f"No material assigned to the body model part!")
+            raise ValueError("No material assigned to the body model part!")
 
         # define the name of the new model part to generate the random field
         new_part_name = part_name + "_" + field_parameters.property_name.lower() + "_field"
@@ -873,7 +880,10 @@ class Model:
         """
         self.mesh_settings.element_size = element_size
 
-    def generate_mesh(self, save_file: bool = False, mesh_output_dir: str = "./", mesh_name: str = "mesh_file",
+    def generate_mesh(self,
+                      save_file: bool = False,
+                      mesh_output_dir: str = "./",
+                      mesh_name: str = "mesh_file",
                       open_gmsh_gui: bool = False):
         """
         Generate the mesh for the whole model.
@@ -887,11 +897,13 @@ class Model:
         """
 
         # generate mesh
-        self.gmsh_io.generate_mesh(
-            self.ndim,
-            element_size=self.mesh_settings.element_size, order=self.mesh_settings.element_order,
-            save_file=save_file, mesh_output_dir=mesh_output_dir, mesh_name=mesh_name, open_gmsh_gui=open_gmsh_gui
-        )
+        self.gmsh_io.generate_mesh(self.ndim,
+                                   element_size=self.mesh_settings.element_size,
+                                   order=self.mesh_settings.element_order,
+                                   save_file=save_file,
+                                   mesh_output_dir=mesh_output_dir,
+                                   mesh_name=mesh_name,
+                                   open_gmsh_gui=open_gmsh_gui)
 
         # collect all model parts
         all_model_parts: List[Union[BodyModelPart, ModelPart]] = []
@@ -986,7 +998,6 @@ class Model:
 
                 # loop over each spring-damper sequence
                 for (start_node_id, end_node_id) in spring_node_ids:
-
                     # add the existing nodes to the new mesh
                     new_mesh.nodes[start_node_id] = mp.mesh.nodes[start_node_id]
                     new_mesh.nodes[end_node_id] = mp.mesh.nodes[end_node_id]
@@ -1051,9 +1062,9 @@ class Model:
         # find end nodes
         end_nodes = self.__find_end_nodes_of_line_strings(model_part.mesh)
         # find the node ids corresponding to the geometry points
-        node_ids_at_geometry_points = Utils.find_node_ids_close_to_geometry_nodes(
-            mesh=model_part.mesh, geometry=model_part.geometry, eps=1e-06
-        )
+        node_ids_at_geometry_points = Utils.find_node_ids_close_to_geometry_nodes(mesh=model_part.mesh,
+                                                                                  geometry=model_part.geometry,
+                                                                                  eps=1e-06)
 
         element_ids_search_space = list(model_part.mesh.elements.keys())
         node_ids_search_space = list(model_part.mesh.nodes.keys())
@@ -1114,9 +1125,9 @@ class Model:
         # find which elements are connected to each node
         node_to_elements = {}
         for node_id, node in mesh.nodes.items():
-
-            elements_connected = [element_id
-                                  for element_id, element in mesh.elements.items() if node_id in element.node_ids]
+            elements_connected = [
+                element_id for element_id, element in mesh.elements.items() if node_id in element.node_ids
+            ]
             node_to_elements[node_id] = elements_connected
 
         return node_to_elements
@@ -1269,13 +1280,14 @@ class Model:
             matched_element_id_process_to_body = {}
             matched_indices_process_element = []
             # for each process element, check if there is a match with the current body part elements
-            for ix, (process_element_id, process_element_connectivities) in (
-                    enumerate(zip(pmp_element_ids, unmatched_connectivities_pmp))):
+            for ix, (process_element_id,
+                     process_element_connectivities) in (enumerate(zip(pmp_element_ids, unmatched_connectivities_pmp))):
                 # find the indices of the element in the body model parts that contains the node ids of the current
                 # process model part. An element is considered a match if all the nodes of the process element are also
                 # in the body element
-                found_indices = np.where(np.sum(np.isin(bmp_connectivities, process_element_connectivities), axis=1) ==
-                                         len(process_element_connectivities))[0]
+                found_indices = np.where(
+                    np.sum(np.isin(bmp_connectivities, process_element_connectivities), axis=1) == len(
+                        process_element_connectivities))[0]
 
                 # from the first match, retrieve the element id of the body model part and the element id of the process
                 # model part
@@ -1351,17 +1363,15 @@ class Model:
             elif body_el_info["ndim"] == 3 and process_el_info["ndim"] == 2:
 
                 # check if the normal of the condition element is defined outwards of the body element
-                flip_node_order[process_element.id] = Utils.is_volume_edge_defined_outwards(process_element,
-                                                                                            body_element,
-                                                                                            self.gmsh_io.mesh_data[
-                                                                                                "nodes"])
+                flip_node_order[process_element.id] = Utils.is_volume_edge_defined_outwards(
+                    process_element, body_element, self.gmsh_io.mesh_data["nodes"])
 
         # flip condition elements if required
         if any(list(flip_node_order.values())):
-
             # get the elements to be flipped
-            elements = [process_model_part.mesh.elements[el_id] for el_id in flip_node_order.keys() if
-                        flip_node_order[el_id]]
+            elements = [
+                process_model_part.mesh.elements[el_id] for el_id in flip_node_order.keys() if flip_node_order[el_id]
+            ]
 
             # flip elements, it is required that all elements in the array are of the same type
             Utils.flip_node_order(elements)
@@ -1482,11 +1492,11 @@ class Model:
         body_model_part_names = [body_model_part.name for body_model_part in self.body_model_parts]
 
         # get geometry ids and ndim for each body model part
-        model_parts_geometry_ids = np.array([self.gmsh_io.geo_data["physical_groups"][name]["geometry_ids"] for name in
-                                    body_model_part_names])
+        model_parts_geometry_ids = np.array(
+            [self.gmsh_io.geo_data["physical_groups"][name]["geometry_ids"] for name in body_model_part_names])
 
-        model_parts_ndim = np.array([self.gmsh_io.geo_data["physical_groups"][name]["ndim"]
-                                     for name in body_model_part_names]).ravel()
+        model_parts_ndim = np.array(
+            [self.gmsh_io.geo_data["physical_groups"][name]["ndim"] for name in body_model_part_names]).ravel()
 
         # add gravity load as physical group per dimension
         body_geometries_1d = model_parts_geometry_ids[model_parts_ndim == 1].ravel()
@@ -1546,8 +1556,13 @@ class Model:
 
         self.__validate_model_part_names()
 
-    def show_geometry(self, show_volume_ids: bool = False, show_surface_ids: bool = False, show_line_ids: bool = False,
-                      show_point_ids: bool = False, file_name: str = "tmp_geometry_file.html", auto_open: bool = True):
+    def show_geometry(self,
+                      show_volume_ids: bool = False,
+                      show_surface_ids: bool = False,
+                      show_line_ids: bool = False,
+                      show_point_ids: bool = False,
+                      file_name: str = "tmp_geometry_file.html",
+                      auto_open: bool = True):
         """
         Show the 2D or 3D geometry in a plot.
 
@@ -1568,8 +1583,8 @@ class Model:
         if self.geometry is None:
             raise ValueError("Geometry must be set before showing the geometry")
 
-        fig = PlotUtils.create_geometry_figure(self.ndim, self.geometry, show_volume_ids, show_surface_ids, show_line_ids,
-                                               show_point_ids)
+        fig = PlotUtils.create_geometry_figure(self.ndim, self.geometry, show_volume_ids, show_surface_ids,
+                                               show_line_ids, show_point_ids)
 
         fig.write_html(file_name, auto_open=auto_open)
 
@@ -1586,8 +1601,9 @@ class Model:
             raise ValueError("Project parameters must be set before setting up the stress initialisation")
 
         # add gravity load if K0 procedure or gravity loading is used
-        if (self.project_parameters.settings.stress_initialisation_type == StressInitialisationType.K0_PROCEDURE) or (
-            self.project_parameters.settings.stress_initialisation_type == StressInitialisationType.GRAVITY_LOADING):
+        if (self.project_parameters.settings.stress_initialisation_type == StressInitialisationType.K0_PROCEDURE
+                or self.project_parameters.settings.stress_initialisation_type
+                == StressInitialisationType.GRAVITY_LOADING):
             self.__add_gravity_load()
 
     def __add_water_condition_if_not_provided(self):

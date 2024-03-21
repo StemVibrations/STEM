@@ -22,9 +22,7 @@ class KratosAdditionalProcessesIO:
         """
         self.domain = domain
 
-    def __create_excavation_dict(
-        self, part_name: str, parameters: Excavation
-    ) -> Dict[str, Any]:
+    def __create_excavation_dict(self, part_name: str, parameters: Excavation) -> Dict[str, Any]:
         """
         Creates a dictionary containing the parameters for the excavation process
 
@@ -40,7 +38,7 @@ class KratosAdditionalProcessesIO:
         process_dict: Dict[str, Any] = {
             "python_module": "apply_excavation_process",
             "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
-            "process_name":  "ApplyExcavationProcess",
+            "process_name": "ApplyExcavationProcess",
             "Parameters": {},
         }
 
@@ -50,15 +48,14 @@ class KratosAdditionalProcessesIO:
 
         return process_dict
 
-    def __create_parameter_field_dict(
-        self, part_name: str, parameters: ParameterFieldParameters
-    ) -> Dict[str, Any]:
+    def __create_parameter_field_dict(self, part_name: str, parameters: ParameterFieldParameters) -> Dict[str, Any]:
         """
         Creates a dictionary containing the parameters for the parameter field process
 
         Args:
             - part_name (str): part name where the parameter field is applied
-            - parameters (:class:`stem.additional_processes.ParameterFieldParameters`): parameter field parameters object
+            - parameters (:class:`stem.additional_processes.ParameterFieldParameters`): parameter field parameters \
+                object
 
         Returns:
             - Dict[str, Any]: dictionary containing the additional process parameters
@@ -68,7 +65,7 @@ class KratosAdditionalProcessesIO:
         process_dict: Dict[str, Any] = {
             "python_module": "set_parameter_field_process",
             "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
-            "process_name":  "SetParameterFieldProcess",
+            "process_name": "SetParameterFieldProcess",
             "Parameters": {},
         }
 
@@ -90,9 +87,8 @@ class KratosAdditionalProcessesIO:
 
         return process_dict
 
-    def create_additional_processes_dict(
-        self, part_name: str, parameters: AdditionalProcessesParametersABC
-    ) -> Union[Dict[str, Any], None]:
+    def create_additional_processes_dict(self, part_name: str,
+                                         parameters: AdditionalProcessesParametersABC) -> Union[Dict[str, Any], None]:
         """
         Creates a dictionary containing the boundary parameters
 

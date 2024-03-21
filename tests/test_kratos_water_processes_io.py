@@ -30,12 +30,14 @@ class TestWaterProcessesIO:
             "python_module": "apply_scalar_constraint_table_process",
             "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
             "process_name": "ApplyScalarConstraintTableProcess",
-            "Parameters": {"model_part_name": "PorousDomain.test_water_boundary",
-                           "variable_name": "WATER_PRESSURE",
-                           "table": 0,
-                           "value": 2.0,
-                           "is_fixed": False,
-                           "fluid_pressure_type": "Uniform"}
+            "Parameters": {
+                "model_part_name": "PorousDomain.test_water_boundary",
+                "variable_name": "WATER_PRESSURE",
+                "table": 0,
+                "value": 2.0,
+                "is_fixed": False,
+                "fluid_pressure_type": "Uniform"
+            }
         }
 
         # compare dictionaries
@@ -48,5 +50,3 @@ class TestWaterProcessesIO:
         with pytest.raises(NotImplementedError, match="Water boundary type: PointLoad not implemented."):
             non_water_boundary_dict = kratos_water_boundary_io.create_water_process_dict(
                 "test_non_water_boundary", non_water_boundary)
-
-

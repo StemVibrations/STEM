@@ -1,4 +1,3 @@
-
 def test_import_kratos():
     """
     Test if KratosMultiphysics and GeoMechanicsApplication can be imported.
@@ -9,4 +8,3 @@ def test_import_kratos():
 
     assert KratosMultiphysics is not None
     assert GeoMechanicsAnalysis is not None
-

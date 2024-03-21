@@ -83,7 +83,7 @@ class TwoDofVehicle:
 
         :param n: n mode
         """
-        self.eig = n ** 2 * np.pi ** 2 * np.sqrt(self.EI / (self.mass * self.length ** 4))
+        self.eig = n**2 * np.pi**2 * np.sqrt(self.EI / (self.mass * self.length**4))
         return
 
     def compute(self):
@@ -111,7 +111,7 @@ class TwoDofVehicle:
         delta_t = self.time[1] - self.time[0]
 
         # constants for newmark
-        a1 = 1 / (self.beta * delta_t ** 2)
+        a1 = 1 / (self.beta * delta_t**2)
         a2 = 1 / (self.beta * delta_t)
         a3 = 1 / (2 * self.beta) - 1
         a4 = self.gamma / (self.beta * delta_t)
@@ -124,13 +124,15 @@ class TwoDofVehicle:
             sin = np.sin(np.pi * self.speed * self.time[idx] / self.length)
 
             # stiffness matrix
-            k11 = a1 * (self.mass * self.length / 2 + self.mw * sin ** 2) + self.mass * self.length / 2 * self.eig ** 2 + self.k_vehicle * sin ** 2
-            k12 = - self.k_vehicle * sin
-            k21 = - self.k_vehicle * sin - self.c_vehicle * a4 * sin
+            k11 = a1 * (self.mass * self.length / 2 +
+                        self.mw * sin**2) + self.mass * self.length / 2 * self.eig**2 + self.k_vehicle * sin**2
+            k12 = -self.k_vehicle * sin
+            k21 = -self.k_vehicle * sin - self.c_vehicle * a4 * sin
             k22 = a1 * self.mv + self.k_vehicle + self.c_vehicle * a4
             kappa = np.array([[k11, k12], [k21, k22]])
 
-            f1 = (self.mv + self.mw) * self.g * sin + (a1 * res[idx - 1, 0] + a2 * vel[0] + a3 * acc[0]) * (self.mass * self.length / 2 + self.mw * sin ** 2)
+            f1 = (self.mv + self.mw) * self.g * sin + (a1 * res[idx - 1, 0] + a2 * vel[0] +
+                                                       a3 * acc[0]) * (self.mass * self.length / 2 + self.mw * sin**2)
             f2 = -self.mv * (-a1 * res[idx - 1, 1] - a2 * vel[1] - a3 * acc[1]) - \
                  self.c_vehicle * (-a4 * res[idx - 1, 1] + a5 * vel[1] + a6 * acc[1] - (-a4 * res[idx - 1, 0] + a5 * vel[0] + a6 * acc[0]) * sin)
             force = np.array([f1, f2])

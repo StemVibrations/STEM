@@ -25,19 +25,19 @@ class TestModelPart:
         point_load_part = ModelPart("point_load_part")
         point_load_part.parameters = point_load
 
-        assert (point_load_part.get_element_name(2, 1, AnalysisType.MECHANICAL) ==
-                f"PointLoadCondition2D1N")
-        assert (point_load_part.get_element_name(3, 1, AnalysisType.MECHANICAL) ==
-                f"PointLoadCondition3D1N")
+        assert (point_load_part.get_element_name(2, 1, AnalysisType.MECHANICAL) == f"PointLoadCondition2D1N")
+        assert (point_load_part.get_element_name(3, 1, AnalysisType.MECHANICAL) == f"PointLoadCondition3D1N")
 
         # wrong point input
-        with pytest.raises(ValueError, match= "Point load can only be applied in mechanical or mechanical groundwater "
-                                              "flow analysis"):
+        with pytest.raises(ValueError,
+                           match="Point load can only be applied in mechanical or mechanical groundwater "
+                           "flow analysis"):
             point_load_part.get_element_name(2, 1, AnalysisType.GROUNDWATER_FLOW)
 
         # wrong ndim nnodes combination
-        with pytest.raises(ValueError, match=re.escape(r'In 2 dimensions, only [1] noded Point load elements are supported. '
-                                              r'2 nodes were provided.')):
+        with pytest.raises(ValueError,
+                           match=re.escape(r'In 2 dimensions, only [1] noded Point load elements are supported. '
+                                           r'2 nodes were provided.')):
             point_load_part.get_element_name(2, 2, AnalysisType.MECHANICAL)
 
         # check line load names
@@ -51,8 +51,9 @@ class TestModelPart:
         assert line_load_part.get_element_name(3, 3, AnalysisType.MECHANICAL) == "LineLoadCondition3D3N"
 
         # wrong line_load input
-        with pytest.raises(ValueError, match= "Line load can only be applied in mechanical or mechanical groundwater "
-                                              "flow analysis"):
+        with pytest.raises(ValueError,
+                           match="Line load can only be applied in mechanical or mechanical groundwater "
+                           "flow analysis"):
             line_load_part.get_element_name(2, 2, AnalysisType.GROUNDWATER_FLOW)
 
         # wrong ndim nnodes combination
@@ -72,8 +73,9 @@ class TestModelPart:
         assert surface_load_part.get_element_name(3, 8, AnalysisType.MECHANICAL) == "SurfaceLoadDiffOrderCondition3D8N"
 
         # wrong surface_load input
-        with pytest.raises(ValueError, match= "Surface load can only be applied in mechanical or mechanical groundwater "
-                                              "flow analysis"):
+        with pytest.raises(ValueError,
+                           match="Surface load can only be applied in mechanical or mechanical groundwater "
+                           "flow analysis"):
             surface_load_part.get_element_name(3, 3, AnalysisType.GROUNDWATER_FLOW)
 
         # wrong ndim nnodes combination
@@ -93,8 +95,9 @@ class TestModelPart:
         assert moving_load_part.get_element_name(3, 3, AnalysisType.MECHANICAL) == "MovingLoadCondition3D3N"
 
         # wrong moving_load input
-        with pytest.raises(ValueError, match= "Moving load can only be applied in mechanical or mechanical groundwater "
-                                              "flow analysis"):
+        with pytest.raises(ValueError,
+                           match="Moving load can only be applied in mechanical or mechanical groundwater "
+                           "flow analysis"):
             moving_load_part.get_element_name(2, 2, AnalysisType.GROUNDWATER_FLOW)
 
         # wrong ndim nnodes combination
@@ -105,7 +108,7 @@ class TestModelPart:
 
         # check uvec load names
         uvec_parameters = {"load_wheel_1": -10.0, "load_wheel_2": -20.0}
-        uvec_load = UvecLoad([10, 10, 10], 5, [0,0,0], [0, 2], r"sample_uvec.py", "uvec_test", uvec_parameters)
+        uvec_load = UvecLoad([10, 10, 10], 5, [0, 0, 0], [0, 2], r"sample_uvec.py", "uvec_test", uvec_parameters)
 
         uvec_part = ModelPart("uvec_load_part")
         uvec_part.parameters = uvec_load
@@ -116,8 +119,9 @@ class TestModelPart:
         assert uvec_part.get_element_name(3, 3, AnalysisType.MECHANICAL) == "MovingLoadCondition3D3N"
 
         # wrong uvec_load input
-        with pytest.raises(ValueError, match="UVEC load can only be applied in mechanical or mechanical groundwater "
-                                             "flow analysis"):
+        with pytest.raises(ValueError,
+                           match="UVEC load can only be applied in mechanical or mechanical groundwater "
+                           "flow analysis"):
             uvec_part.get_element_name(2, 2, AnalysisType.GROUNDWATER_FLOW)
 
         # wrong ndim nnodes combination
@@ -142,15 +146,16 @@ class TestModelPart:
         """
 
         # displacement constraint does not have element names
-        displacement_constraint = DisplacementConstraint([True, True, True],[True, True, True], [0, 0, 0])
+        displacement_constraint = DisplacementConstraint([True, True, True], [True, True, True], [0, 0, 0])
         displacement_constraint_part = ModelPart("displacement_constraint_part")
         displacement_constraint_part.parameters = displacement_constraint
 
         assert displacement_constraint_part.get_element_name(2, 2, AnalysisType.MECHANICAL) is None
 
         # wrong displacement_constraint input
-        with pytest.raises(ValueError, match= "Displacement constraint can only be applied in mechanical or mechanical "
-                                              "groundwater flow analysis"):
+        with pytest.raises(ValueError,
+                           match="Displacement constraint can only be applied in mechanical or mechanical "
+                           "groundwater flow analysis"):
             displacement_constraint_part.get_element_name(2, 2, AnalysisType.GROUNDWATER_FLOW)
 
         # wrong ndim nnodes combination
@@ -160,15 +165,16 @@ class TestModelPart:
             displacement_constraint_part.get_element_name(1, 4, AnalysisType.MECHANICAL)
 
         # rotation constraint does not have element names
-        rotation_constraint = RotationConstraint([True, True, True],[True, True, True], [0, 0, 0])
+        rotation_constraint = RotationConstraint([True, True, True], [True, True, True], [0, 0, 0])
         rotation_constraint_part = ModelPart("rotation_constraint_part")
         rotation_constraint_part.parameters = rotation_constraint
 
         assert rotation_constraint_part.get_element_name(2, 2, AnalysisType.MECHANICAL) is None
 
         # wrong rotation_constraint input
-        with pytest.raises(ValueError, match= "Rotation constraint can only be applied in mechanical or mechanical "
-                                              "groundwater flow analysis"):
+        with pytest.raises(ValueError,
+                           match="Rotation constraint can only be applied in mechanical or mechanical "
+                           "groundwater flow analysis"):
             rotation_constraint_part.get_element_name(2, 2, AnalysisType.GROUNDWATER_FLOW)
 
         # wrong ndim nnodes combination
@@ -182,18 +188,19 @@ class TestModelPart:
         absorbing_boundary_part = ModelPart("absorbing_boundary_part")
         absorbing_boundary_part.parameters = absorbing_boundary
 
-        assert (absorbing_boundary_part.get_element_name(2, 2, AnalysisType.MECHANICAL)
-                == "UPwLysmerAbsorbingCondition2D2N")
-        assert (absorbing_boundary_part.get_element_name(2, 3, AnalysisType.MECHANICAL)
-                == "UPwLysmerAbsorbingCondition2D3N")
-        assert (absorbing_boundary_part.get_element_name(3, 3, AnalysisType.MECHANICAL)
-                == "UPwLysmerAbsorbingCondition3D3N")
-        assert (absorbing_boundary_part.get_element_name(3, 4, AnalysisType.MECHANICAL)
-                == "UPwLysmerAbsorbingCondition3D4N")
+        assert (absorbing_boundary_part.get_element_name(2, 2,
+                                                         AnalysisType.MECHANICAL) == "UPwLysmerAbsorbingCondition2D2N")
+        assert (absorbing_boundary_part.get_element_name(2, 3,
+                                                         AnalysisType.MECHANICAL) == "UPwLysmerAbsorbingCondition2D3N")
+        assert (absorbing_boundary_part.get_element_name(3, 3,
+                                                         AnalysisType.MECHANICAL) == "UPwLysmerAbsorbingCondition3D3N")
+        assert (absorbing_boundary_part.get_element_name(3, 4,
+                                                         AnalysisType.MECHANICAL) == "UPwLysmerAbsorbingCondition3D4N")
 
         # wrong absorbing_boundary input
-        with pytest.raises(ValueError, match= "Absorbing boundary conditions can only be applied in mechanical or "
-                                              "mechanical groundwater flow analysis"):
+        with pytest.raises(ValueError,
+                           match="Absorbing boundary conditions can only be applied in mechanical or "
+                           "mechanical groundwater flow analysis"):
             absorbing_boundary_part.get_element_name(2, 2, AnalysisType.GROUNDWATER_FLOW)
 
         # wrong ndim nnodes combination
@@ -223,8 +230,9 @@ class TestModelPart:
         assert soil_part.get_element_name(3, 20, AnalysisType.MECHANICAL) == "SmallStrainUPwDiffOrderElement3D20N"
 
         # wrong soil input
-        with pytest.raises(ValueError, match= 'Analysis type AnalysisType.GROUNDWATER_FLOW is not implemented yet for '
-                                              'soil material.'):
+        with pytest.raises(ValueError,
+                           match='Analysis type AnalysisType.GROUNDWATER_FLOW is not implemented yet for '
+                           'soil material.'):
             soil_part.get_element_name(2, 3, AnalysisType.GROUNDWATER_FLOW)
 
         # wrong ndim nnodes combination
@@ -242,8 +250,9 @@ class TestModelPart:
         assert beam_part.get_element_name(3, 2, AnalysisType.MECHANICAL) == "CrLinearBeamElement3D2N"
 
         # wrong beam input
-        with pytest.raises(ValueError, match= 'Analysis type AnalysisType.GROUNDWATER_FLOW is not implemented '
-                                              'for euler beams.'):
+        with pytest.raises(ValueError,
+                           match='Analysis type AnalysisType.GROUNDWATER_FLOW is not implemented '
+                           'for euler beams.'):
             beam_part.get_element_name(2, 2, AnalysisType.GROUNDWATER_FLOW)
 
         # wrong ndim nnodes combination
@@ -253,16 +262,17 @@ class TestModelPart:
             beam_part.get_element_name(3, 6, AnalysisType.MECHANICAL)
 
         # check ElasticSpringDamper Element names
-        spring = StructuralMaterial(name="spring", material_parameters=ElasticSpringDamper([0, 0, 0], [0, 0, 0],
-                                                                                           [0, 0, 0], [0, 0, 0]))
+        spring = StructuralMaterial(name="spring",
+                                    material_parameters=ElasticSpringDamper([0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]))
         spring_part = BodyModelPart("spring")
         spring_part.material = spring
 
         assert spring_part.get_element_name(2, 2, AnalysisType.MECHANICAL) == "SpringDamperElement2D"
         assert spring_part.get_element_name(3, 2, AnalysisType.MECHANICAL) == "SpringDamperElement3D"
 
-        with pytest.raises(ValueError, match= 'Analysis type AnalysisType.GROUNDWATER_FLOW is not implemented '
-                                              'for elastic spring dampers.'):
+        with pytest.raises(ValueError,
+                           match='Analysis type AnalysisType.GROUNDWATER_FLOW is not implemented '
+                           'for elastic spring dampers.'):
             spring_part.get_element_name(2, 2, AnalysisType.GROUNDWATER_FLOW)
 
         # wrong ndim nnodes combination
@@ -280,8 +290,9 @@ class TestModelPart:
         assert nodal_concentrated_part.get_element_name(2, 1, AnalysisType.MECHANICAL) == "NodalConcentratedElement2D1N"
         assert nodal_concentrated_part.get_element_name(3, 1, AnalysisType.MECHANICAL) == "NodalConcentratedElement3D1N"
 
-        with pytest.raises(ValueError, match= 'Analysis type AnalysisType.GROUNDWATER_FLOW is not implemented for nodal '
-                                              'concentrated elements.'):
+        with pytest.raises(ValueError,
+                           match='Analysis type AnalysisType.GROUNDWATER_FLOW is not implemented for nodal '
+                           'concentrated elements.'):
             nodal_concentrated_part.get_element_name(2, 1, AnalysisType.GROUNDWATER_FLOW)
 
         # wrong ndim nnodes combination

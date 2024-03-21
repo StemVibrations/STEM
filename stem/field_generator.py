@@ -72,7 +72,8 @@ class RandomFieldGenerator(FieldGeneratorABC):
 
     """
 
-    def __init__(self, model_name: str,
+    def __init__(self,
+                 model_name: str,
                  n_dim: int,
                  cov: float,
                  v_scale_fluctuation: float,
@@ -168,17 +169,17 @@ class RandomFieldGenerator(FieldGeneratorABC):
         if self.mean_value is None:
             raise ValueError("The mean value of the random field is not set yet. Error.")
 
-        variance = (self.cov * self.mean_value) ** 2
+        variance = (self.cov * self.mean_value)**2
 
-        rf_generator = RandomFields(
-            n_dim=self.n_dim, mean=self.mean_value, variance=variance,
-            model_name=ModelName[self.model_name],
-            v_scale_fluctuation=self.v_scale_fluctuation,
-            anisotropy=self.anisotropy,
-            angle=self.angle,
-            seed=self.seed,
-            v_dim=VERTICAL_AXIS
-        )
+        rf_generator = RandomFields(n_dim=self.n_dim,
+                                    mean=self.mean_value,
+                                    variance=variance,
+                                    model_name=ModelName[self.model_name],
+                                    v_scale_fluctuation=self.v_scale_fluctuation,
+                                    anisotropy=self.anisotropy,
+                                    angle=self.angle,
+                                    seed=self.seed,
+                                    v_dim=VERTICAL_AXIS)
         coordinates_for_rf = np.array(coordinates)
         rf_generator.generate(coordinates_for_rf)
         self.__generated_field = list(rf_generator.random_field)[0].tolist()

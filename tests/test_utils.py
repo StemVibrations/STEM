@@ -22,20 +22,19 @@ class TestUtilsStem:
         """
 
         # successful checks
-        Utils.check_ndim_nnodes_combinations(2,2, {2: [2]}, "test")
+        Utils.check_ndim_nnodes_combinations(2, 2, {2: [2]}, "test")
 
         # non valid n_dim
-        with pytest.raises(ValueError, match=re.escape(f"Number of dimensions 3 is not supported for failed_test "
-                                                       f"elements. Supported dimensions are [2].")):
-            Utils.check_ndim_nnodes_combinations(3,2, {2: [2]},
-                                                 "failed_test")
+        with pytest.raises(ValueError,
+                           match=re.escape(f"Number of dimensions 3 is not supported for failed_test "
+                                           f"elements. Supported dimensions are [2].")):
+            Utils.check_ndim_nnodes_combinations(3, 2, {2: [2]}, "failed_test")
 
         # non valid n_nodes for dim
-        with pytest.raises(ValueError, match=re.escape(f"In 2 dimensions, only [3, 4, 5] noded failed_test_2 elements "
-                                                       f"are supported. 2 nodes were provided.")):
-            Utils.check_ndim_nnodes_combinations(2,2, {2: [3,4,5]},
-                                                 "failed_test_2")
-
+        with pytest.raises(ValueError,
+                           match=re.escape(f"In 2 dimensions, only [3, 4, 5] noded failed_test_2 elements "
+                                           f"are supported. 2 nodes were provided.")):
+            Utils.check_ndim_nnodes_combinations(2, 2, {2: [3, 4, 5]}, "failed_test_2")
 
     def test_is_clockwise(self):
         """
@@ -96,12 +95,8 @@ class TestUtilsStem:
         p_test_1 = np.array([2, 2])
         p_test_2 = np.array([-1, -1])
 
-        assert not Utils.is_point_between_points(
-            point=p_test_1, start_point=p1, end_point=p2
-        )
-        assert Utils.is_point_between_points(
-            point=p_test_2, start_point=p1, end_point=p2
-        )
+        assert not Utils.is_point_between_points(point=p_test_1, start_point=p1, end_point=p2)
+        assert Utils.is_point_between_points(point=p_test_2, start_point=p1, end_point=p2)
 
     def test_is_in_between_3d(self):
         """
@@ -114,12 +109,8 @@ class TestUtilsStem:
         p_test_1 = np.array([2, 2, -2])
         p_test_2 = np.array([-1, -1, 1])
 
-        assert not Utils.is_point_between_points(
-            point=p_test_1, start_point=p1, end_point=p2
-        )
-        assert Utils.is_point_between_points(
-            point=p_test_2, start_point=p1, end_point=p2
-        )
+        assert not Utils.is_point_between_points(point=p_test_1, start_point=p1, end_point=p2)
+        assert Utils.is_point_between_points(point=p_test_2, start_point=p1, end_point=p2)
 
     def test_check_sequence_non_string(self):
         """
@@ -169,9 +160,8 @@ class TestUtilsStem:
         dict2b = {1: {"a": [5, 6]}, 2: {"b": "D"}, 3: {"d": "D"}}
 
         # expect it raises an error
-        with pytest.raises(
-                ValueError, match="Conflict of merging keys at 2->b. Two non sequence values have been found."
-        ):
+        with pytest.raises(ValueError,
+                           match="Conflict of merging keys at 2->b. Two non sequence values have been found."):
             Utils.merge(dict2a, dict2b)
 
         # test 3: conflicts in arguments, merge common keys argument into a list
@@ -182,9 +172,15 @@ class TestUtilsStem:
 
         actual_dict_3 = Utils.merge(dict3a, dict3b)
         expected_dict_3 = {
-            1: {"a": [[1, 2, 3], 5, 6]},
-            2: {"b": ["B", 1, 2, 3]},
-            3: {"d": "D"},
+            1: {
+                "a": [[1, 2, 3], 5, 6]
+            },
+            2: {
+                "b": ["B", 1, 2, 3]
+            },
+            3: {
+                "d": "D"
+            },
         }
 
         TestUtils.assert_dictionary_almost_equal(expected_dict_3, actual_dict_3)
@@ -198,15 +194,37 @@ class TestUtilsStem:
 
         mesh_data = {
             "ndim": 2,
-            "nodes": {1: [0, 0, 0], 2: [1.0, 0, 0], 3: [1, 1.0, 0], 4: [0, 1.0, 0],
-                      5: [0.5, 0.0, 0], 6: [1, 0.5, 0], 7: [0.5, 1, 0], 8: [0, 0.5, 0],
-                      9: [0.5, 0.5, 0]},
-            "elements": {"QUADRANGLE_4N": {1: [1, 2, 3, 4]},
-                         "QUADRANGLE_8N": {2: [1, 2, 3, 4, 5, 6, 7, 8]},
-                         "TRIANGLE_3N": {3: [1, 2, 3]},
-                         "TRIANGLE_6N": {4: [1, 2, 3, 5, 6, 9]},
-                         "LINE_2N": {5: [1, 2]},
-                         "LINE_3N": {6: [1, 2, 5]}},
+            "nodes": {
+                1: [0, 0, 0],
+                2: [1.0, 0, 0],
+                3: [1, 1.0, 0],
+                4: [0, 1.0, 0],
+                5: [0.5, 0.0, 0],
+                6: [1, 0.5, 0],
+                7: [0.5, 1, 0],
+                8: [0, 0.5, 0],
+                9: [0.5, 0.5, 0]
+            },
+            "elements": {
+                "QUADRANGLE_4N": {
+                    1: [1, 2, 3, 4]
+                },
+                "QUADRANGLE_8N": {
+                    2: [1, 2, 3, 4, 5, 6, 7, 8]
+                },
+                "TRIANGLE_3N": {
+                    3: [1, 2, 3]
+                },
+                "TRIANGLE_6N": {
+                    4: [1, 2, 3, 5, 6, 9]
+                },
+                "LINE_2N": {
+                    5: [1, 2]
+                },
+                "LINE_3N": {
+                    6: [1, 2, 5]
+                }
+            },
             "physical_groups": {
                 "quad_linear": {
                     "ndim": 2,
@@ -242,7 +260,8 @@ class TestUtilsStem:
                     "ndim": 2,
                     "element_ids": [6],
                     "node_ids": [1, 2, 5],
-                    "element_type": "LINE_3N"}
+                    "element_type": "LINE_3N"
+                }
             },
         }
 
@@ -275,8 +294,7 @@ class TestUtilsStem:
         """
 
         with pytest.raises(ValueError, match="All elements should be of the same type."):
-            Utils.flip_node_order([Element(1, "LINE_2N", [1, 2]),
-                                   Element(2, "LINE_3N", [2, 3, 4])])
+            Utils.flip_node_order([Element(1, "LINE_2N", [1, 2]), Element(2, "LINE_3N", [2, 3, 4])])
 
     def test_is_tetrahedron_4n_edge_defined_outwards(self):
         """
@@ -313,11 +331,21 @@ class TestUtilsStem:
         body_element = Element(2, "TETRAHEDRON_10N", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
         body_element_mirrored = Element(2, "TETRAHEDRON_10N", [1, 2, 3, 11, 5, 6, 7, 12, 9, 13])
 
-        nodes = {1: [0, 0, 0], 2: [1.0, 0, 0], 3: [0.0, 1.0, 0], 4: [0, 0.0, 1.0],# vertices
-                 5: [0.5, 0.0, 0.0], 6: [0.5, 0.5, 0.0], 7: [0.0, 5.0, 0.0], # x-y plane midpoints
-                 8: [0.0, 0.0, 0.5], 9: [0.0, 0.5, 0.5],  # new x-z plane midpoints
-                 10: [0.5, 0.0, 0.5], # new y-z plane midpoint
-                 11: [0.0, 0.0, -1.0], 12: [0.0, 0.0, -0.5], 13: [0.5, 0.0, -0.5]} # mirrored y-z plane points
+        nodes = {
+            1: [0, 0, 0],
+            2: [1.0, 0, 0],
+            3: [0.0, 1.0, 0],
+            4: [0, 0.0, 1.0],  # vertices
+            5: [0.5, 0.0, 0.0],
+            6: [0.5, 0.5, 0.0],
+            7: [0.0, 5.0, 0.0],  # x-y plane midpoints
+            8: [0.0, 0.0, 0.5],
+            9: [0.0, 0.5, 0.5],  # new x-z plane midpoints
+            10: [0.5, 0.0, 0.5],  # new y-z plane midpoint
+            11: [0.0, 0.0, -1.0],
+            12: [0.0, 0.0, -0.5],
+            13: [0.5, 0.0, -0.5]
+        }  # mirrored y-z plane points
 
         # check if edge is defined outwards in both node orders of edge element
         assert not Utils.is_volume_edge_defined_outwards(edge_element, body_element, nodes)
@@ -340,9 +368,20 @@ class TestUtilsStem:
         body_element = Element(2, "HEXAHEDRON_8N", [1, 2, 3, 4, 5, 6, 7, 8])
         body_element_mirrored = Element(2, "HEXAHEDRON_8N", [1, 2, 3, 4, 9, 10, 11, 12])
 
-        nodes = {1: [0, 0, 0], 2: [1.0, 0, 0], 3: [1, 1.0, 0], 4: [0, 1.0, 0],
-                 5: [0, 0, 1.0], 6: [1, 0, 1.0], 7: [1, 1, 1], 8: [0, 1, 1],
-                 9: [0.0, 0.0, -1], 10: [1.0, 0.0, -1], 11: [1, 1, -1], 12: [0.0, 1, -1]}
+        nodes = {
+            1: [0, 0, 0],
+            2: [1.0, 0, 0],
+            3: [1, 1.0, 0],
+            4: [0, 1.0, 0],
+            5: [0, 0, 1.0],
+            6: [1, 0, 1.0],
+            7: [1, 1, 1],
+            8: [0, 1, 1],
+            9: [0.0, 0.0, -1],
+            10: [1.0, 0.0, -1],
+            11: [1, 1, -1],
+            12: [0.0, 1, -1]
+        }
 
         # check if edge is defined outwards in both node orders of edge element
         assert not Utils.is_volume_edge_defined_outwards(edge_element, body_element, nodes)
@@ -363,26 +402,46 @@ class TestUtilsStem:
         edge_element_1 = Element(1, "QUADRANGLE_8N", [1, 2, 3, 4, 9, 12, 14, 10])
         edge_element_1_reversed = Element(1, "QUADRANGLE_8N", [4, 3, 2, 1, 10, 14, 12, 9])
 
-        body_element = Element(2, "HEXAHEDRON_20N", [1, 2, 3, 4,
-                                                     5, 6, 7, 8,
-                                                     9, 10, 11, 12,
-                                                     13, 14, 15, 16,
-                                                     17, 18, 19, 20])
+        body_element = Element(2, "HEXAHEDRON_20N",
+                               [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
 
-        body_element_mirrored = Element(2, "HEXAHEDRON_20N", [1, 2, 3, 4,
-                                                              21, 22, 23, 24,
-                                                              9, 10, 25, 12,
-                                                              26, 14, 27, 28,
-                                                              29, 32, 30, 31])
+        body_element_mirrored = Element(2, "HEXAHEDRON_20N",
+                                        [1, 2, 3, 4, 21, 22, 23, 24, 9, 10, 25, 12, 26, 14, 27, 28, 29, 32, 30, 31])
 
-        nodes = {1: [0, 0, 0], 2: [1.0, 0, 0], 3: [1, 1.0, 0], 4: [0, 1.0, 0],
-                 5: [0, 0, 1.0], 6: [1, 0, 1.0], 7: [1, 1, 1], 8: [0, 1, 1],
-                 9: [0.5, 0.0, 0], 12: [1.0, 0.5, 0.0], 14: [0.5, 1, 0], 10: [0, 0.5, 0.0],
-                 11: [0, 0, 0.5], 13: [1, 0, 0.5], 15: [1, 1, 0.5], 16: [0, 1, 0.5],
-                 17: [0.5, 0.0, 1], 19: [1, 0.5, 1], 20: [0.5, 1, 1], 18: [0, 0.5, 1],
-                 21: [0, 0, -1.0], 22: [1, 0, -1.0], 23: [1, 1, -1], 24: [0, 1, -1], # mirrored vertices
-                 25: [0, 0, -0.5], 26: [1, 0, -0.5], 27: [1, 1, -0.5], 28: [0, 1, -0.5], # mirrored midpoints
-                 29: [0.5, 0.0, -1], 30: [1, 0.5, -1], 31: [0.5, 1, -1], 32: [0, 0.5, -1]} # mirrored midpoints
+        nodes = {
+            1: [0, 0, 0],
+            2: [1.0, 0, 0],
+            3: [1, 1.0, 0],
+            4: [0, 1.0, 0],
+            5: [0, 0, 1.0],
+            6: [1, 0, 1.0],
+            7: [1, 1, 1],
+            8: [0, 1, 1],
+            9: [0.5, 0.0, 0],
+            12: [1.0, 0.5, 0.0],
+            14: [0.5, 1, 0],
+            10: [0, 0.5, 0.0],
+            11: [0, 0, 0.5],
+            13: [1, 0, 0.5],
+            15: [1, 1, 0.5],
+            16: [0, 1, 0.5],
+            17: [0.5, 0.0, 1],
+            19: [1, 0.5, 1],
+            20: [0.5, 1, 1],
+            18: [0, 0.5, 1],
+            21: [0, 0, -1.0],
+            22: [1, 0, -1.0],
+            23: [1, 1, -1],
+            24: [0, 1, -1],  # mirrored vertices
+            25: [0, 0, -0.5],
+            26: [1, 0, -0.5],
+            27: [1, 1, -0.5],
+            28: [0, 1, -0.5],  # mirrored midpoints
+            29: [0.5, 0.0, -1],
+            30: [1, 0.5, -1],
+            31: [0.5, 1, -1],
+            32: [0, 0.5, -1]
+        }  # mirrored midpoints
 
         # check if edge is defined outwards in both node orders of edge element
         assert not Utils.is_volume_edge_defined_outwards(edge_element_1, body_element, nodes)
@@ -402,7 +461,6 @@ class TestUtilsStem:
         edge_element_2 = Element(2, "TRIANGLE_3N", [1, 2, 3])
         edge_element_3 = Element(3, "TRIANGLE_3N", [1, 2, 5])
 
-
         body_element_1 = Element(3, "TETRAHEDRON_4N", [1, 2, 3, 4])
         body_element_2 = Element(4, "TRIANGLE_3N", [1, 2, 3])
 
@@ -410,7 +468,7 @@ class TestUtilsStem:
 
         # expected raise as edge element is not a 2D element
         with pytest.raises(ValueError, match="Edge element should be a 2D element."):
-            Utils.is_volume_edge_defined_outwards(edge_element_1,body_element_1, nodes)
+            Utils.is_volume_edge_defined_outwards(edge_element_1, body_element_1, nodes)
 
         # expected raise as body element is not 3D
         with pytest.raises(ValueError, match="Body element should be a 3D element."):
@@ -450,11 +508,10 @@ class TestUtilsStem:
         half_eval = eval(python_half_func_str)
 
         # define expected functions
-        expected_half_eval = ((1 / (1 + np.exp(-6/dt_slope * (t - start_time))) - 0.5)
-                              * (final_value - initial_value) * 2 + initial_value)
-        expected_full_eval = ((1 / (1 + np.exp(-12/dt_slope
-                                              * (t - dt_slope/2 - start_time))))
-                              * (final_value - initial_value ) + initial_value)
+        expected_half_eval = ((1 / (1 + np.exp(-6 / dt_slope * (t - start_time))) - 0.5) *
+                              (final_value - initial_value) * 2 + initial_value)
+        expected_full_eval = ((1 / (1 + np.exp(-12 / dt_slope * (t - dt_slope / 2 - start_time)))) *
+                              (final_value - initial_value) + initial_value)
 
         # check if expected and actual results are almost equal
         np.testing.assert_almost_equal(full_eval, expected_full_eval)
@@ -544,11 +601,7 @@ class TestUtilsStem:
             4: Point.create([-1, 0, 0], 4)
         }
 
-        geo4.lines = {
-            1: Line.create([1, 2], 1),
-            2: Line.create([1, 3], 2),
-            3: Line.create([1, 4], 3)
-        }
+        geo4.lines = {1: Line.create([1, 2], 1), 2: Line.create([1, 3], 2), 3: Line.create([1, 4], 3)}
 
         # assert branching point is present (not a path)
         assert not Utils.check_lines_geometry_are_path(geo4)
@@ -558,9 +611,7 @@ class TestUtilsStem:
         Checks that any of the points is aligned with at least one of the points in a list of pairs of
         coordinates.
         """
-        point_coordinates = [[(0.0, 0, 0), (1, 0, 0)],
-                             [(1, 0, 0), (2, 0, 0)],
-                             [(2, 0, 0), (4, 0, 0)]]
+        point_coordinates = [[(0.0, 0, 0), (1, 0, 0)], [(1, 0, 0), (2, 0, 0)], [(2, 0, 0), (4, 0, 0)]]
 
         origin_correct = (0.5, 0, 0)
         origin_wrong = (3, 1, 0)
@@ -594,11 +645,7 @@ class TestUtilsStem:
 
         # define geometry
         geometry = Geometry()
-        geometry.points = {
-            1: Point.create([1, 0, 0], 1),
-            2: Point.create([3, 0, 0], 2),
-            3: Point.create([5, 0, 0], 3)
-        }
+        geometry.points = {1: Point.create([1, 0, 0], 1), 2: Point.create([3, 0, 0], 2), 3: Point.create([5, 0, 0], 3)}
 
         # define mesh
         mesh = Mesh(ndim=2)
@@ -634,7 +681,6 @@ class TestUtilsStem:
 
         # test that None is returned if points are collinear
         assert Utils.find_first_three_non_collinear_points(points=[(0, 0, 0), (0.5, 0.5, 0), (1, 1, 0)]) is None
-
 
     def test_is_polygon_planar(self):
         """
@@ -672,16 +718,11 @@ class TestUtilsStem:
         coplanar_point = (0.5, 0.5, 0)
         non_coplanar_point = (0.5, 0.5, 1)
 
-        assert Utils.is_point_coplanar_to_polygon(
-            polygon_points=polygon, point=coplanar_point
-        )
-        assert not Utils.is_point_coplanar_to_polygon(
-            polygon_points=polygon, point=non_coplanar_point
-        )
+        assert Utils.is_point_coplanar_to_polygon(polygon_points=polygon, point=coplanar_point)
+        assert not Utils.is_point_coplanar_to_polygon(polygon_points=polygon, point=non_coplanar_point)
 
         # error is raised if points in the polygon are collinear
         msg = "All the points in the polygon are collinear."
         with pytest.raises(ValueError, match=msg):
-            Utils.is_point_coplanar_to_polygon(
-                polygon_points=[(0, 0, 0), (0.5, 0, 0), (1, 0, 0)], point=non_coplanar_point
-            )
+            Utils.is_point_coplanar_to_polygon(polygon_points=[(0, 0, 0), (0.5, 0, 0), (1, 0, 0)],
+                                               point=non_coplanar_point)

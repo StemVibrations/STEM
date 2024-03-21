@@ -30,6 +30,7 @@ class ModelPart:
         - mesh (Optional[:class:`stem.mesh.Mesh`]): mesh of the model part
         - id (Optional[int]): the id of the model part
     """
+
     def __init__(self, name: str):
         """
         Initialize the model part
@@ -39,8 +40,8 @@ class ModelPart:
         """
         self.__name: str = name
         self.geometry: Optional[Geometry] = None
-        self.parameters: Optional[Union[LoadParametersABC, BoundaryParametersABC,AdditionalProcessesParametersABC,
-                         WaterProcessParametersABC, OutputParametersABC]] = None
+        self.parameters: Optional[Union[LoadParametersABC, BoundaryParametersABC, AdditionalProcessesParametersABC,
+                                        WaterProcessParametersABC, OutputParametersABC]] = None
         self.mesh: Optional[Mesh] = None
         self.id: Optional[int] = None
 
@@ -160,4 +161,3 @@ class BodyModelPart(ModelPart):
 
         """
         return f"BodyModelPart(name={self.name}, material={self.material.__class__.__name__})"
-
