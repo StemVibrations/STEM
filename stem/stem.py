@@ -189,9 +189,6 @@ class Stem:
         with open(parameters_file_name, "r") as parameter_file:
             kratos_parameters = KratosMultiphysics.Parameters(parameter_file.read())
 
-        # if stage_number > 1:
-        #     kratos_parameters["solver_settings"]["model_import_settings"]["input_type"].SetString("rest")
-
         # set uvec state
         if kratos_parameters["solver_settings"].Has("uvec"):
             kratos_parameters["solver_settings"]["uvec"]["uvec_data"]["state"] = self.__last_uvec_data["state"]
@@ -202,13 +199,10 @@ class Stem:
 
         # Initialize the simulation
         simulation.Initialize()
-        # make sure the time step number is set to the correct value
-        # simulation._GetSolver().GetComputingModelPart().ProcessInfo[KratosMultiphysics.STEP] = time_step_nr
         # run the simulation
         simulation.RunSolutionLoop()
         # finalize the simulation
         simulation.Finalize()
-        # simulation._GetSolver().GetComputingModelPart().ProcessInfo[KratosMultiphysics.IS_RESTARTED] = True
 
         if hasattr(simulation._GetSolver().solver, 'uvec_data'):
             self.__last_uvec_data = simulation._GetSolver().solver.uvec_data

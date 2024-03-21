@@ -1,4 +1,4 @@
-from typing import List, Sequence, Dict, Any, Optional, Union
+from typing import List, Sequence, Dict, Any, Optional, Union, Tuple
 
 import numpy as np
 import numpy.typing as npty
