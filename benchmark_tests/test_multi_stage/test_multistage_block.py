@@ -49,7 +49,8 @@ def test_stem():
     model_stage_1.add_load_by_coordinates(load_coordinates, line_load, "load")
 
     # Define boundary conditions
-    no_displacement_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True],
+    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+                                                        is_fixed=[True, True, True],
                                                         value=[0, 0, 0])
 
     sym_parameters = DisplacementConstraint(active=[True, False, True], is_fixed=[True, False, False], value=[0, 0, 0])
@@ -73,12 +74,17 @@ def test_stem():
     solution_type = SolutionType.QUASI_STATIC
 
     # Set up start and end time of calculation, time step and etc
-    time_integration = TimeIntegration(start_time=0.0, end_time=0.15, delta_time=0.05, reduction_factor=1.0,
-                                       increase_factor=1.0, max_delta_time_factor=1000)
+    time_integration = TimeIntegration(start_time=0.0,
+                                       end_time=0.15,
+                                       delta_time=0.05,
+                                       reduction_factor=1.0,
+                                       increase_factor=1.0,
+                                       max_delta_time_factor=1000)
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0E-12,
                                                             displacement_absolute_tolerance=1.0E-6)
     stress_initialisation_type = StressInitialisationType.NONE
-    solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
+    solver_settings = SolverSettings(analysis_type=analysis_type,
+                                     solution_type=solution_type,
                                      stress_initialisation_type=stress_initialisation_type,
                                      time_integration=time_integration,
                                      is_stiffness_matrix_constant=False,
@@ -96,15 +102,19 @@ def test_stem():
     nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY]
 
     # Define the output process
-    model_stage_1.add_output_settings(output_parameters=VtkOutputParameters(file_format="ascii", output_interval=1,
+    model_stage_1.add_output_settings(output_parameters=VtkOutputParameters(file_format="ascii",
+                                                                            output_interval=1,
                                                                             nodal_results=nodal_results,
                                                                             gauss_point_results=[],
                                                                             output_control_type="step"),
-                                      output_dir="output", output_name="vtk_output")
+                                      output_dir="output",
+                                      output_name="vtk_output")
 
-    model_stage_1.add_output_settings(output_parameters=GiDOutputParameters(output_interval=1, file_format="binary",
-                                                                            nodal_results=nodal_results),
-                                      output_dir="output", output_name="gid_output", )
+    model_stage_1.add_output_settings(
+        output_parameters=GiDOutputParameters(output_interval=1, file_format="binary", nodal_results=nodal_results),
+        output_dir="output",
+        output_name="gid_output",
+    )
 
     # define the STEM instance
     input_folder = "benchmark_tests/test_multi_stage/inputs_kratos"

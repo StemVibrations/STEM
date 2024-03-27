@@ -1317,15 +1317,15 @@ class Model:
 
         return matched_elements
 
-    def __check_ordering_process_model_part(self, matched_elements: Dict[Element, Element],
+    def __check_ordering_process_model_part(self, matched_elements: List[Tuple[Element, Element]],
                                             process_model_part: ModelPart):
         """
         Check if the node ordering of the process element matches the node ordering of the neighbouring body element.
         If not, flip the node ordering of the process element.
 
         Args:
-            - matched_elements (Dict[:class:`stem.mesh.Element`, :class:`stem.mesh.Element`]): Dictionary containing \
-                the matched condition and body element parts.
+            - matched_elements (List[Tuple[:class:`stem.mesh.Element`, :class:`stem.mesh.Element`]]): Dictionary \
+                containing the matched condition and body element parts.
             - process_model_part (:class:`stem.model_part.ModelPart`): model part from which element nodes needs to be \
                 extracted.
 

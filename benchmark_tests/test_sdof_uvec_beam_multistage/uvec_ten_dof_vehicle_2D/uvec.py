@@ -57,8 +57,8 @@ def uvec_static(json_string: str) -> str:
         print(f"Previous time: {state['previous_time']}, time step: {time_step}, time index: {time_index}")
 
     # calculate contact forces
-    F_contact = calculate_contact_forces(u_vertical, train.calculate_static_contact_force(),
-                                         state, parameters, train, time_index)
+    F_contact = calculate_contact_forces(u_vertical, train.calculate_static_contact_force(), state, parameters, train,
+                                         time_index)
 
     # calculate force vector
     F = F_train
@@ -79,7 +79,6 @@ def uvec_static(json_string: str) -> str:
     # u_static[train.contact_dofs] +=static_contact_u
     #
     # state["u"] = u_static.tolist()
-
 
     # calculate unit vector
     aux = {}
@@ -148,8 +147,8 @@ def uvec(json_string: str) -> str:
         print(f"Previous time: {state['previous_time']}, time step: {time_step}, time index: {time_index}")
 
     # calculate contact forces
-    F_contact = calculate_contact_forces(u_vertical, train.calculate_static_contact_force(),
-                                         state, parameters, train, time_index)
+    F_contact = calculate_contact_forces(u_vertical, train.calculate_static_contact_force(), state, parameters, train,
+                                         time_index)
 
     # calculate force vector
     F = F_train
@@ -220,8 +219,8 @@ def initialise(time_index: int, parameters: dict, state: dict) -> \
     return (M, C, K, F), train
 
 
-def calculate_contact_forces(u: np.ndarray, F_static: np.ndarray, state: dict, parameters: dict,
-                             train: TrainModel, time_index: int) -> np.ndarray:
+def calculate_contact_forces(u: np.ndarray, F_static: np.ndarray, state: dict, parameters: dict, train: TrainModel,
+                             time_index: int) -> np.ndarray:
     """
     Calculate the contact forces
 

@@ -52,29 +52,37 @@ def test_stem():
     model.body_model_parts.append(body_model_part)
 
     # Define UVEC load
-    uvec_parameters = {"n_carts": 1,
-                       "cart_inertia": 0,
-                       "cart_mass": 0,
-                       "cart_stiffness": 0,
-                       "cart_damping": 0,
-                       "bogie_distances": [0],
-                       "bogie_inertia": 0,
-                       "bogie_mass": 3000,
-                       "wheel_distances": [0],
-                       "wheel_mass": 5750,
-                       "wheel_stiffness": 1595e5,
-                       "wheel_damping": 1000,
-                       "contact_coefficient": 9.1e-7,
-                       "contact_power": 1,
-                       "gravity_axis": 1,
-                       "file_name": r"test.txt"}
+    uvec_parameters = {
+        "n_carts": 1,
+        "cart_inertia": 0,
+        "cart_mass": 0,
+        "cart_stiffness": 0,
+        "cart_damping": 0,
+        "bogie_distances": [0],
+        "bogie_inertia": 0,
+        "bogie_mass": 3000,
+        "wheel_distances": [0],
+        "wheel_mass": 5750,
+        "wheel_stiffness": 1595e5,
+        "wheel_damping": 1000,
+        "contact_coefficient": 9.1e-7,
+        "contact_power": 1,
+        "gravity_axis": 1,
+        "file_name": r"test.txt"
+    }
 
-    uvec_load = UvecLoad(direction=[1, 1, 0], velocity=0, origin=[12.5, 0, 0], wheel_configuration=[0.0],
-                         uvec_file=r"uvec_ten_dof_vehicle_2D/uvec.py", uvec_function_name="uvec_static", uvec_parameters=uvec_parameters)
+    uvec_load = UvecLoad(direction=[1, 1, 0],
+                         velocity=0,
+                         origin=[12.5, 0, 0],
+                         wheel_configuration=[0.0],
+                         uvec_file=r"uvec_ten_dof_vehicle_2D/uvec.py",
+                         uvec_function_name="uvec_static",
+                         uvec_parameters=uvec_parameters)
     model.add_load_by_geometry_ids([1], uvec_load, "uvec_load")
 
     # Define displacement conditions
-    displacementXYZ_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True],
+    displacementXYZ_parameters = DisplacementConstraint(active=[True, True, True],
+                                                        is_fixed=[True, True, True],
                                                         value=[0, 0, 0])
 
     model.add_boundary_condition_by_geometry_ids(0, [1, 2], displacementXYZ_parameters, "displacementXYZ")
@@ -94,15 +102,21 @@ def test_stem():
     analysis_type = AnalysisType.MECHANICAL
     solution_type = SolutionType.QUASI_STATIC
     # Set up start and end time of calculation, time step and etc
-    time_integration = TimeIntegration(start_time=-0.15, end_time=0.45, delta_time=0.15, reduction_factor=1.0,
-                                       increase_factor=1.0, max_delta_time_factor=1000)
+    time_integration = TimeIntegration(start_time=-0.15,
+                                       end_time=0.45,
+                                       delta_time=0.15,
+                                       reduction_factor=1.0,
+                                       increase_factor=1.0,
+                                       max_delta_time_factor=1000)
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-5,
                                                             displacement_absolute_tolerance=1.0e-12)
     stress_initialisation_type = StressInitialisationType.NONE
-    solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
+    solver_settings = SolverSettings(analysis_type=analysis_type,
+                                     solution_type=solution_type,
                                      stress_initialisation_type=stress_initialisation_type,
                                      time_integration=time_integration,
-                                     is_stiffness_matrix_constant=False, are_mass_and_damping_constant=False,
+                                     is_stiffness_matrix_constant=False,
+                                     are_mass_and_damping_constant=False,
                                      convergence_criteria=convergence_criterion,
                                      rayleigh_k=0.000,
                                      rayleigh_m=0.00)
@@ -117,17 +131,13 @@ def test_stem():
     gauss_point_results = []
 
     # Define the output process
-    vtk_output_process = Output(
-        output_name="vtk_output",
-        output_dir="output",
-        output_parameters=VtkOutputParameters(
-            file_format="ascii",
-            output_interval=1,
-            nodal_results=nodal_results,
-            gauss_point_results=gauss_point_results,
-            output_control_type="step"
-        )
-    )
+    vtk_output_process = Output(output_name="vtk_output",
+                                output_dir="output",
+                                output_parameters=VtkOutputParameters(file_format="ascii",
+                                                                      output_interval=1,
+                                                                      nodal_results=nodal_results,
+                                                                      gauss_point_results=gauss_point_results,
+                                                                      output_control_type="step"))
 
     model.output_settings = [vtk_output_process]
 
@@ -135,7 +145,8 @@ def test_stem():
     # copy uvec to input folder
     os.makedirs(input_folder, exist_ok=True)
     copytree(r"benchmark_tests/test_sdof_uvec_beam_multistage/uvec_ten_dof_vehicle_2D",
-             os.path.join(input_folder, "uvec_ten_dof_vehicle_2D"), dirs_exist_ok=True)
+             os.path.join(input_folder, "uvec_ten_dof_vehicle_2D"),
+             dirs_exist_ok=True)
 
     # Write KRATOS input files
     # --------------------------------

@@ -99,19 +99,23 @@ class Node:
         self.id: int = id
         self.coordinates: Sequence[float] = coordinates
 
-    def __eq__(self, other: 'Node'):
+    def __eq__(self, other: object) -> bool:
         """
         Check if two nodes are equal. Nodes are considered equal if their ids and coordinates are equal.
 
         Args:
-            - other ('Node'): The other node.
+            - other (object): The other node.
 
         Returns:
             - bool: True if the nodes are equal, False otherwise.
 
         """
+        # check if the other object is an instance of the Node class
+        if not isinstance(other, Node):
+            return False
 
-        return self.id == other.id and np.isclose(self.coordinates, other.coordinates).all()
+        # check if the id and coordinates are equal
+        return self.id == other.id and np.isclose(self.coordinates, other.coordinates).all().item()
 
 
 class Element:
@@ -138,18 +142,23 @@ class Element:
         self.element_type: str = element_type
         self.node_ids: List[int] = node_ids
 
-    def __eq__(self, other: 'Element'):
+    def __eq__(self, other: object) -> bool:
         """
         Check if two elements are equal. Elements are considered equal if their ids, element types and node ids are
         equal.
 
         Args:
-            - other (:class:`Element`):
+            - other (object): The other element.
 
         Returns:
             - bool: True if the elements are equal, False otherwise.
         """
 
+        # check if the other object is an instance of the Element class
+        if not isinstance(other, Element):
+            return False
+
+        # check if the id, element type and node ids are equal
         return self.id == other.id and self.element_type == other.element_type and self.node_ids == other.node_ids
 
 
@@ -197,17 +206,22 @@ class Mesh:
         else:
             return super().__getattribute__(item)
 
-    def __eq__(self, other: 'Mesh'):
+    def __eq__(self, other: object) -> bool:
         """
         Check if two meshes are equal. Two meshes are considered equal if their nodes and elements are equal.
 
         Args:
-            - other (:class:`Mesh`): The other mesh.
+            - other (object): The other mesh.
 
         Returns:
             - bool: True if the meshes are equal, False otherwise.
 
         """
+        # check if the other object is an instance of the Mesh class
+        if not isinstance(other, Mesh):
+            return False
+
+        # check if the number of dimensions, nodes and elements are equal
         return self.ndim == other.ndim and self.nodes == other.nodes and self.elements == other.elements
 
     @classmethod

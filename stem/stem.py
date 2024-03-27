@@ -7,7 +7,7 @@ from KratosMultiphysics.StemApplication.geomechanics_analysis import StemGeoMech
 
 from typing import List, Dict
 from stem.model import Model
-from stem.load import UvecLoad, MovingLoad
+# from stem.load import UvecLoad, MovingLoad
 from stem.output import VtkOutputParameters, GiDOutputParameters, JsonOutputParameters
 from stem.IO.kratos_io import KratosIO
 
@@ -75,17 +75,19 @@ class Stem:
             - :class:`stem.model.Model`: The new stage.
 
         """
-
         # create a new stage based on the last stage
         new_stage = deepcopy(self.__stages[-1])
+
+        # check if project parameters are set, both the last stage and the new stage have to be checked for mypy
+        if new_stage.project_parameters is None or self.__stages[-1].project_parameters is None:
+            raise Exception("Project parameters of the last stage are not set")
 
         # set the time integration settings of the new stage
         new_stage.project_parameters.settings.time_integration.start_time = (
             self.__stages[-1].project_parameters.settings.time_integration.end_time)
         new_stage.project_parameters.settings.time_integration.end_time = (
-                new_stage.project_parameters.settings.time_integration.start_time + stage_duration)
-        new_stage.project_parameters.settings.time_integration.delta_time = (
-            delta_time)
+            new_stage.project_parameters.settings.time_integration.start_time + stage_duration)
+        new_stage.project_parameters.settings.time_integration.delta_time = delta_time
 
         # set output directory and output name new stage
         self.__set_output_name_new_stage(new_stage, len(self.__stages) + 1)
@@ -115,7 +117,6 @@ class Stem:
         # check if the mesh is the same in the new stage
         self.validate_latest_stage()
         # self.__check_if_mesh_between_stages_is_the_same(self.__stages[-2], stage)
-
 
     def validate_latest_stage(self):
 
@@ -318,6 +319,7 @@ class Stem:
                 output_settings.output_name = f"{output_settings.output_name}_stage_{stage_nr}"
 
                 # todo check json output and gid output
+
     #
     # def __update_state_of_model_parts(self, new_stage: Model):
     #     duration_previous_stage = self.__stages[-1].project_parameters.settings.time_integration.end_time - \

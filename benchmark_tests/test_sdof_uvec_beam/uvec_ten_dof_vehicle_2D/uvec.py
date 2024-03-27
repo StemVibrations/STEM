@@ -46,8 +46,8 @@ def uvec_static(json_string: str) -> str:
     state["a"] = np.zeros_like(u_static)
 
     # calculate contact forces
-    F_contact = calculate_contact_forces(u_vertical, train.calculate_static_contact_force(),
-                                         state, parameters, train, time_index)
+    F_contact = calculate_contact_forces(u_vertical, train.calculate_static_contact_force(), state, parameters, train,
+                                         time_index)
 
     # calculate force vector
     F = F_train
