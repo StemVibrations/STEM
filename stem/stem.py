@@ -1,13 +1,12 @@
 import os
 from copy import deepcopy
 from pathlib import Path
+from typing import List, Dict
 
 import KratosMultiphysics
 from KratosMultiphysics.StemApplication.geomechanics_analysis import StemGeoMechanicsAnalysis
 
-from typing import List, Dict
 from stem.model import Model
-# from stem.load import UvecLoad, MovingLoad
 from stem.output import VtkOutputParameters, GiDOutputParameters, JsonOutputParameters
 from stem.IO.kratos_io import KratosIO
 
@@ -92,9 +91,6 @@ class Stem:
         # set output directory and output name new stage
         self.__set_output_name_new_stage(new_stage, len(self.__stages) + 1)
 
-        # # update the state of model parts
-        # self.__update_state_of_model_parts(new_stage)
-
         return new_stage
 
     def add_calculation_stage(self, stage: Model):
@@ -116,9 +112,17 @@ class Stem:
 
         # check if the mesh is the same in the new stage
         self.validate_latest_stage()
-        # self.__check_if_mesh_between_stages_is_the_same(self.__stages[-2], stage)
 
     def validate_latest_stage(self):
+        """
+        Validate the latest stage. The validation checks if the number of body and process model parts are the same
+        between the last two stages. And if the mesh is the same in the new stage.
+
+        Raises:
+            - Exception: If the number of body model parts are not the same between stages.
+            - Exception: If the body model part names are not the same between stages.
+
+        """
 
         # check if number of model parts is the same
         if len(self.__stages[-2].body_model_parts) != len(self.__stages[-1].body_model_parts):
@@ -130,22 +134,6 @@ class Stem:
 
         # check if the mesh is the same in the new stage
         self.__check_if_mesh_between_stages_is_the_same(self.__stages[-2], self.__stages[-1])
-
-        # # validate the stages
-        # self.validate_stages()
-
-    # def validate_stages(self):
-    #     """
-    #     Validate the stages of the calculation. Currently, stages are not validated, but this method is reserved for
-    #     when multi-stage calculations are implemented. In this case, the mesh in all stages should be the same.
-    #     Furthermore, time should be continuous between stages.
-    #
-    #     Raises:
-    #         - NotImplementedError: Validation of stages is not implemented yet.
-    #
-    #     """
-    #
-    #     NotImplementedError("Validation of stages is not implemented yet.")
 
     def write_all_input_files(self):
         """
@@ -195,15 +183,15 @@ class Stem:
         with open(parameters_file_name, "r") as parameter_file:
             kratos_parameters = KratosMultiphysics.Parameters(parameter_file.read())
 
-        # set uvec state
+        # set uvec state if it is present
         if kratos_parameters["solver_settings"].Has("uvec"):
             kratos_parameters["solver_settings"]["uvec"]["uvec_data"]["state"] = self.__last_uvec_data["state"]
-            # kratos_parameters["solver_settings"]["uvec"]["uvec_data"]["loads"] = self.__last_uvec_data["loads"]
 
         # run calculation
         simulation = StemGeoMechanicsAnalysis(self.kratos_model, kratos_parameters)
         simulation.Run()
 
+        # save the uvec data for the next stage if it is present
         if hasattr(simulation._GetSolver().solver, 'uvec_data'):
             self.__last_uvec_data = simulation._GetSolver().solver.uvec_data
 
@@ -311,7 +299,18 @@ class Stem:
                         if not os.listdir(stage_vtk_output_dir):
                             os.rmdir(stage_vtk_output_dir)
 
-    def __set_output_name_new_stage(self, new_stage, stage_nr):
+    @staticmethod
+    def __set_output_name_new_stage(new_stage: Model, stage_nr: int):
+        """
+        Set the output name of the new stage. The output name is set to the current output name with the
+        stage number appended.
+
+        Args:
+            - new_stage (:class:`stem.model.Model`): The new stage.
+            - stage_nr (int): The number of the stage.
+
+        """
+
         for output_settings in new_stage.output_settings:
             if isinstance(output_settings.output_parameters, VtkOutputParameters):
                 output_settings.output_dir = Path(str(output_settings.output_dir) + f"_stage_{stage_nr}")
@@ -319,25 +318,3 @@ class Stem:
                 output_settings.output_name = f"{output_settings.output_name}_stage_{stage_nr}"
 
                 # todo check json output and gid output
-
-    #
-    # def __update_state_of_model_parts(self, new_stage: Model):
-    #     duration_previous_stage = self.__stages[-1].project_parameters.settings.time_integration.end_time - \
-    #                               self.__stages[-1].project_parameters.settings.time_integration.start_time
-    #
-    #     # # update position of moving load and uvec load
-    #     # for model_part in new_stage.process_model_parts:
-    #     #     if isinstance(model_part.parameters, (UvecLoad, MovingLoad)):
-    #     #         distance_traveled = 0
-    #     #         if isinstance(model_part.parameters.velocity, float):
-    #     #             distance_traveled = duration_previous_stage * model_part.parameters.velocity
-    #     #         elif isinstance(model_part.parameters.velocity, str):
-    #     #             raise NotImplementedError("Velocity as a function of time is not supported for moving loads in"
-    #     #                                       "multi-stage calculations.")
-    #     #
-    #     #         if isinstance(model_part.parameters, UvecLoad):
-    #     #             model_part.parameters.wheel_configuration = [wheel_distance + distance_traveled
-    #     #                                                          for wheel_distance in
-    #     #                                                          model_part.parameters.wheel_configuration]
-    #     #         elif isinstance(model_part.parameters, MovingLoad):
-    #     #             model_part.parameters.offset += distance_traveled
