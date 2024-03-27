@@ -1,7 +1,6 @@
 import pytest
 from copy import deepcopy
 
-import numpy.testing as npt
 from stem.mesh import *
 
 
@@ -411,6 +410,7 @@ class TestMesh:
 
         # Check the equality of the mesh with the non-mesh object
         assert mesh1 != non_mesh_object
+
 
 class TestMeshSettings:
     """
