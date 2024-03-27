@@ -56,16 +56,16 @@ class ModelPart:
         """
         return self.__name
 
-    @name.setter
-    def name(self, name: str):
-        """
-        Set the name of the model part
-
-        Args:
-            - name (str): name of the model part
-
-        """
-        self.__name = name
+    # @name.setter
+    # def name(self, name: str):
+    #     """
+    #     Set the name of the model part
+    #
+    #     Args:
+    #         - name (str): name of the model part
+    #
+    #     """
+    #     self.__name = name
 
     def get_geometry_from_geo_data(self, geo_data: Dict[str, Any], name: str):
         """
