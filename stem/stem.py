@@ -37,7 +37,6 @@ class Stem:
         self.input_files_dir = input_files_dir
         self.kratos_io = KratosIO(initial_stage.ndim)
         self.kratos_model = KratosMultiphysics.Model()
-        self.kratos_stages = []
 
         self.__stages: List[Model] = [initial_stage]
         self.__stage_settings_file_names: Dict[int, str] = {}
@@ -91,8 +90,8 @@ class Stem:
         # set output directory and output name new stage
         self.__set_output_name_new_stage(new_stage, len(self.__stages) + 1)
 
-        # update the state of model parts
-        self.__update_state_of_model_parts(new_stage)
+        # # update the state of model parts
+        # self.__update_state_of_model_parts(new_stage)
 
         return new_stage
 
@@ -106,15 +105,6 @@ class Stem:
         """
         self.__stages.append(stage)
 
-        # # get uvec model part
-        # for part in stage.process_model_parts:
-        #     if isinstance(part.parameters, UvecLoad):
-        #         uvec_model_part = part
-        #         old_name = uvec_model_part.name
-        #         new_uvec_name = f"{old_name}_stage_{len(self.__stages)}"
-        #         uvec_model_part.name = new_uvec_name
-        #         stage.gmsh_io.geo_data["physical_groups"][new_uvec_name] = stage.gmsh_io.geo_data["physical_groups"].pop(old_name)
-
         # add the geo data to gmsh
         stage.gmsh_io.generate_geo_from_geo_data()
 
@@ -123,20 +113,38 @@ class Stem:
         stage.generate_mesh()
 
         # check if the mesh is the same in the new stage
-        self.__check_if_mesh_between_stages_is_the_same(self.__stages[-2], stage)
+        self.validate_latest_stage()
+        # self.__check_if_mesh_between_stages_is_the_same(self.__stages[-2], stage)
 
-    def validate_stages(self):
-        """
-        Validate the stages of the calculation. Currently, stages are not validated, but this method is reserved for
-        when multi-stage calculations are implemented. In this case, the mesh in all stages should be the same.
-        Furthermore, time should be continuous between stages.
 
-        Raises:
-            - NotImplementedError: Validation of stages is not implemented yet.
+    def validate_latest_stage(self):
 
-        """
+        # check if number of model parts is the same
+        if len(self.__stages[-2].body_model_parts) != len(self.__stages[-1].body_model_parts):
+            raise Exception("Number of body model parts are not the same between stages")
 
-        NotImplementedError("Validation of stages is not implemented yet.")
+        # todo update kratos such that process model parts can be added
+        if len(self.__stages[-2].process_model_parts) != len(self.__stages[-1].process_model_parts):
+            raise Exception("Number of process model parts are not the same between stages")
+
+        # check if the mesh is the same in the new stage
+        self.__check_if_mesh_between_stages_is_the_same(self.__stages[-2], self.__stages[-1])
+
+        # # validate the stages
+        # self.validate_stages()
+
+    # def validate_stages(self):
+    #     """
+    #     Validate the stages of the calculation. Currently, stages are not validated, but this method is reserved for
+    #     when multi-stage calculations are implemented. In this case, the mesh in all stages should be the same.
+    #     Furthermore, time should be continuous between stages.
+    #
+    #     Raises:
+    #         - NotImplementedError: Validation of stages is not implemented yet.
+    #
+    #     """
+    #
+    #     NotImplementedError("Validation of stages is not implemented yet.")
 
     def write_all_input_files(self):
         """
@@ -161,16 +169,13 @@ class Stem:
 
                 self.__stage_settings_file_names[stage_nr + 1] = project_settings_file_name
 
-    def run_stage(self, stage_number: int, time_step_nr: int):
+    def run_stage(self, stage_number: int):
         """
         Runs a single stage of the calculation.
 
         Args:
             - stage_number (int): The number of the stage to be run.
             - time_step_nr (int): The time step number to start the stage from.
-
-        Returns:
-            - int: The new time step number.
 
         """
 
@@ -196,29 +201,19 @@ class Stem:
 
         # run calculation
         simulation = StemGeoMechanicsAnalysis(self.kratos_model, kratos_parameters)
-
-        # Initialize the simulation
-        simulation.Initialize()
-        # run the simulation
-        simulation.RunSolutionLoop()
-        # finalize the simulation
-        simulation.Finalize()
+        simulation.Run()
 
         if hasattr(simulation._GetSolver().solver, 'uvec_data'):
             self.__last_uvec_data = simulation._GetSolver().solver.uvec_data
 
-        # get the new time step number
-        time_step_nr = simulation._GetSolver().GetComputingModelPart().ProcessInfo[KratosMultiphysics.STEP]
+        # make sure the simulation is deleted, else bad memory allocation may occur when serializing the kratos model
+        del simulation
 
         # update last ran stage number
         self.__last_ran_stage_number = stage_number
 
-        self.kratos_stages.append(simulation)
-
         # change working directory back to original working directory
         os.chdir(cwd)
-
-        return time_step_nr
 
     def finalise(self):
         """
@@ -235,12 +230,10 @@ class Stem:
         Run the full calculation.
 
         """
-        # start from time step 0
-        timestep = 0
 
         # run all stages
         for stage_nr, stage in enumerate(self.stages):
-            timestep = self.run_stage(stage_nr + 1, timestep)
+            self.run_stage(stage_nr + 1)
 
         # finalise the calculation
         self.finalise()
@@ -325,24 +318,24 @@ class Stem:
                 output_settings.output_name = f"{output_settings.output_name}_stage_{stage_nr}"
 
                 # todo check json output and gid output
-
-    def __update_state_of_model_parts(self, new_stage: Model):
-        duration_previous_stage = self.__stages[-1].project_parameters.settings.time_integration.end_time - \
-                                  self.__stages[-1].project_parameters.settings.time_integration.start_time
-
-        # # update position of moving load and uvec load
-        # for model_part in new_stage.process_model_parts:
-        #     if isinstance(model_part.parameters, (UvecLoad, MovingLoad)):
-        #         distance_traveled = 0
-        #         if isinstance(model_part.parameters.velocity, float):
-        #             distance_traveled = duration_previous_stage * model_part.parameters.velocity
-        #         elif isinstance(model_part.parameters.velocity, str):
-        #             raise NotImplementedError("Velocity as a function of time is not supported for moving loads in"
-        #                                       "multi-stage calculations.")
-        #
-        #         if isinstance(model_part.parameters, UvecLoad):
-        #             model_part.parameters.wheel_configuration = [wheel_distance + distance_traveled
-        #                                                          for wheel_distance in
-        #                                                          model_part.parameters.wheel_configuration]
-        #         elif isinstance(model_part.parameters, MovingLoad):
-        #             model_part.parameters.offset += distance_traveled
+    #
+    # def __update_state_of_model_parts(self, new_stage: Model):
+    #     duration_previous_stage = self.__stages[-1].project_parameters.settings.time_integration.end_time - \
+    #                               self.__stages[-1].project_parameters.settings.time_integration.start_time
+    #
+    #     # # update position of moving load and uvec load
+    #     # for model_part in new_stage.process_model_parts:
+    #     #     if isinstance(model_part.parameters, (UvecLoad, MovingLoad)):
+    #     #         distance_traveled = 0
+    #     #         if isinstance(model_part.parameters.velocity, float):
+    #     #             distance_traveled = duration_previous_stage * model_part.parameters.velocity
+    #     #         elif isinstance(model_part.parameters.velocity, str):
+    #     #             raise NotImplementedError("Velocity as a function of time is not supported for moving loads in"
+    #     #                                       "multi-stage calculations.")
+    #     #
+    #     #         if isinstance(model_part.parameters, UvecLoad):
+    #     #             model_part.parameters.wheel_configuration = [wheel_distance + distance_traveled
+    #     #                                                          for wheel_distance in
+    #     #                                                          model_part.parameters.wheel_configuration]
+    #     #         elif isinstance(model_part.parameters, MovingLoad):
+    #     #             model_part.parameters.offset += distance_traveled
