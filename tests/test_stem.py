@@ -378,5 +378,47 @@ class TestStem:
 
 
 
+    def test_transfer_vtk_files_to_main_output_directories_single_stage(self, create_default_model):
+        stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
+        stem._Stem__transfer_vtk_files_to_main_output_directories()
+        # No exception should be raised as there is only one stage
+
+    def test_transfer_vtk_files_to_main_output_directories_multiple_stages(self, create_default_model):
+
+        input_dir = "tests/test_data/generated_input/test_transfer_vtk_files"
+        stem = Stem(initial_stage=create_default_model, input_files_dir=input_dir)
+        stage2 = deepcopy(create_default_model)
+
+        # create stage_2 output directory
+        Path(input_dir).joinpath("output/output_vtk_full_model_stage_2").mkdir(parents=True, exist_ok=True)
+
+        stage2.output_settings[0].output_dir = "output/output_vtk_full_model_stage_2"
+        stage2.output_settings[0].part_name = None
+
+        # add the stage to the stem object
+        stem.add_calculation_stage(stage2)
+
+        # Create a dummy vtk file in the second stage output directory
+        dummy_vtk_file = input_dir / Path("output/output_vtk_full_model_stage_2") / "dummy.vtk"
+        dummy_vtk_file.touch()
+
+        # generate main output directory
+        main_output_dir = Path(input_dir).joinpath("output/output_vtk_full_model")
+        main_output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Run the method
+        stem._Stem__transfer_vtk_files_to_main_output_directories()
+
+        # Check if the vtk file of stage 2 is moved to the main output directory
+        assert (main_output_dir/"dummy.vtk").is_file()
+
+        # Check if the second stage output directory is removed
+        assert not (input_dir / Path("output/output_vtk_full_model_stage_2")).is_dir()
+
+        # Cleanup
+        TestUtils.clean_test_directory(Path(input_dir))
+
+
+
 
 
