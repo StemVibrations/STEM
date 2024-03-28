@@ -286,6 +286,95 @@ class TestStem:
             stem.run_stage(2)
 
 
+    def test_finalise_one_stage(self, create_default_model):
+
+        # Test if the transfer vtk files method is not called when there is only one stage
+        stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
+
+        # mock the method
+        stem._Stem__transfer_vtk_files_to_main_output_directories = MagicMock()
+
+        # run the finalise method
+        stem.finalise()
+
+        # check if the method is not called
+        stem._Stem__transfer_vtk_files_to_main_output_directories.assert_not_called()
+
+    def test_finalise_multiple_stages(self, create_default_model):
+
+        # Test if the transfer vtk files method is called when there are multiple stages
+        stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
+
+        # create and add second stage
+        stage2 = deepcopy(create_default_model)
+        stem.add_calculation_stage(stage2)
+
+        # mock the method
+        stem._Stem__transfer_vtk_files_to_main_output_directories = MagicMock()
+
+        # run the finalise method
+        stem.finalise()
+
+        # check if the method is called
+        stem._Stem__transfer_vtk_files_to_main_output_directories.assert_called_once()
+
+    def test_run_calculation_with_valid_stages(self, create_default_model):
+        stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
+        stage2 = deepcopy(create_default_model)
+        stem.add_calculation_stage(stage2)
+
+        # mock the methods
+        stem.run_stage = MagicMock()
+        stem.finalise = MagicMock()
+
+        # run the calculation
+        stem.run_calculation()
+
+        # check if the run_stage method is called twice
+        assert stem.run_stage.call_count == 2
+
+        # check if correct arguments are passed to the run_stage method
+        assert stem.run_stage.call_args_list[0][0][0] == 1
+        assert stem.run_stage.call_args_list[1][0][0] == 2
+
+        # check if finalise is called
+        stem.finalise.assert_called_once()
+
+    def test_check_mesh_between_stages_same(self, create_default_model):
+        stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
+        stage2 = deepcopy(create_default_model)
+        stem.add_calculation_stage(stage2)
+
+        # No exception should be raised as the body model parts are the same
+        stem._Stem__check_if_mesh_between_stages_is_the_same(stem.stages[0], stem.stages[1])
+
+
+        stage2 = deepcopy(create_default_model)
+        stage2.body_model_parts.append("new_part")
+        stem.stages[1] = stage2
+
+        with pytest.raises(Exception, match="Number of body model parts are not the same between stages"):
+            stem._Stem__check_if_mesh_between_stages_is_the_same(stem.stages[0], stem.stages[1])
+
+        stage2 = deepcopy(create_default_model)
+        stage2.body_model_parts[0]._ModelPart__name = "new_name"
+        stem.stages[1] = stage2
+
+        with pytest.raises(Exception, match="Body model part names are not the same between stages"):
+            stem._Stem__check_if_mesh_between_stages_is_the_same(stem.stages[0], stem.stages[1])
+
+
+
+        # add a new stage with a different mesh
+        stage2 = deepcopy(create_default_model)
+        stage2.body_model_parts[0].mesh = "new_mesh"
+        stem.stages[1] = stage2
+
+        # check if exception is raised correctly
+        with pytest.raises(Exception,
+                           match="Meshes between stages in body model part: "
+                                 "soil_column are not the same between stages"):
+            stem._Stem__check_if_mesh_between_stages_is_the_same(stem.stages[0], stem.stages[1])
 
 
 
