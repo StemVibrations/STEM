@@ -1,4 +1,5 @@
 from typing import Dict, Any
+from pathlib import Path
 
 import numpy.testing as npt
 from stem.geometry import Geometry
@@ -140,3 +141,20 @@ class TestUtils:
             assert generated_volume_id == expected_volume_id
             assert generated_volume.id == expected_volume.id
             npt.assert_equal(generated_volume.surface_ids, expected_volume.surface_ids)
+
+    @staticmethod
+    def clean_test_directory(test_dir: Path):
+        """
+        Clean the test directory.
+
+        Args:
+            - test_dir (str): The test directory.
+
+        """
+        for file in test_dir.iterdir():
+            if file.is_file():
+                file.unlink()
+            else:
+                TestUtils.clean_test_directory(file)
+        test_dir.rmdir()
+

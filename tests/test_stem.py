@@ -17,6 +17,8 @@ from stem.solver import (AnalysisType, SolutionType, TimeIntegration, Displaceme
 from stem.output import NodalOutput, VtkOutputParameters
 from stem.IO.kratos_io import KratosIO
 
+from tests.utils import TestUtils
+
 class TestStem:
 
 
@@ -253,21 +255,37 @@ class TestStem:
             file.unlink()
         Path(input_folder).rmdir()
 
-    # def test_run_stage_in_order(self, create_default_model):
-    #
-    #     stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
-    #     stage2 = deepcopy(create_default_model)
-    #     stem.add_calculation_stage(stage2)
-    #
-    #     stem.run_stage(1)
-    #     stem.run_stage(2)
-    #
-    # def test_run_stage_out_of_order(self,create_default_model):
-    #     stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
-    #     stage2 = deepcopy(create_default_model)
-    #     stem.add_calculation_stage(stage2)
-    #     with pytest.raises(Exception, match="Stages should be run in order"):
-    #         stem.run_stage(2)
+    def test_run_stage(self, create_default_model):
+        """
+        Test the run_stage method of the Stem class
+
+        Args:
+            create_default_model:
+
+        Returns:
+
+        """
+
+        input_folder = "tests/test_data/generated_input/test_run_stage"
+        stem = Stem(initial_stage=create_default_model, input_files_dir=input_folder)
+        stem.write_all_input_files()
+
+        stem.run_stage(1)
+
+        # check if output is generated
+        assert Path(input_folder).joinpath("output/output_vtk_full_model").is_dir()
+
+        # Cleanup
+        TestUtils.clean_test_directory(Path(input_folder))
+
+    def test_run_stage_out_of_order(self,create_default_model):
+        stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
+        stage2 = deepcopy(create_default_model)
+        stem.add_calculation_stage(stage2)
+        with pytest.raises(Exception, match="Stages should be run in order"):
+            stem.run_stage(2)
+
+
 
 
 
