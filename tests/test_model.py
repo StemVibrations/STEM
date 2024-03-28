@@ -1742,10 +1742,10 @@ class TestModel:
             model.process_model_parts[1])
 
         actual_element_ids_process_1 = [(process_element.id, body_element.id)
-                                        for process_element, body_element in mapper_process_model_part_1.items()]
+                                        for process_element, body_element in mapper_process_model_part_1]
 
         actual_element_ids_process_2 = [(process_element.id, body_element.id)
-                                        for process_element, body_element in mapper_process_model_part_2.items()]
+                                        for process_element, body_element in mapper_process_model_part_2]
 
         expected_ids = [(1, 85), (2, 116), (3, 125), (4, 95), (5, 96), (6, 124), (7, 98), (8, 100), (9, 83)]
 
@@ -2813,7 +2813,7 @@ class TestModel:
         body_element = Element(2, "TRIANGLE_3N", [1, 2, 3])
 
         # check ordering of process model part connectivities
-        mapper = {process_element: body_element}
+        mapper = [(process_element, body_element)]
         model._Model__check_ordering_process_model_part(mapper, process_model_part)
 
         # check if the node ids of the process model part are in the correct order
@@ -2846,7 +2846,7 @@ class TestModel:
         body_element = Element(2, "TRIANGLE_3N", [1, 2, 3])
 
         # check ordering of process model part connectivities
-        mapper = {process_element1: body_element, process_element2: body_element}
+        mapper = [(process_element1, body_element), (process_element2, body_element)]
         model._Model__check_ordering_process_model_part(mapper, process_model_part)
 
         # check if the node ids of the process model part are in the correct order, i.e. the node order of only the
@@ -2861,7 +2861,7 @@ class TestModel:
         process_mesh.elements = {1: process_element1, 2: process_element2}
 
         # add process_element and body_element to mapper
-        mapper = {process_element2: body_element, process_element1: body_element}
+        mapper = [(process_element2, body_element), (process_element1, body_element)]
 
         # check ordering of process model part connectivities
         model._Model__check_ordering_process_model_part(mapper, process_model_part)
@@ -2897,7 +2897,7 @@ class TestModel:
         body_element = Element(2, "TETRAHEDRON_4N", [1, 2, 3, 4])
 
         # check ordering of process model part connectivities
-        mapper = {process_element: body_element}
+        mapper = [(process_element, body_element)]
         model._Model__check_ordering_process_model_part(mapper, process_model_part)
 
         # check if the node ids of the process model part are in the correct order, i.e. the node order should be
@@ -2937,7 +2937,7 @@ class TestModel:
         body_element = Element(2, "TETRAHEDRON_4N", [1, 2, 3, 4])
 
         # add process_element and body_element to mapper
-        mapper = {process_element1: body_element, process_element2: body_element}
+        mapper = [(process_element1, body_element), (process_element2, body_element)]
 
         # check ordering of process model part connectivities
         model._Model__check_ordering_process_model_part(mapper, process_model_part)
@@ -2954,7 +2954,7 @@ class TestModel:
         process_mesh.elements = {1: process_element1, 2: process_element2}
 
         # add process_element and body_element to mapper
-        mapper = {process_element2: body_element, process_element1: body_element}
+        mapper = [(process_element2, body_element), (process_element1, body_element)]
 
         # check ordering of process model part connectivities
         model._Model__check_ordering_process_model_part(mapper, process_model_part)

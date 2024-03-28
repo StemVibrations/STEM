@@ -1,7 +1,6 @@
 ignore:
   - "tests"
   - "benchmark_tests"
-  - "stem/stem.py"
 
 coverage:
   status:

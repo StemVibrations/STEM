@@ -1,4 +1,4 @@
-from typing import List, Sequence, Dict, Any, Optional, Union
+from typing import List, Sequence, Dict, Any, Optional, Union, Tuple
 
 import numpy as np
 import numpy.typing as npty
@@ -1232,7 +1232,7 @@ class Model:
             return np.array([])
 
     def __find_matching_body_elements_for_process_model_part(self, process_model_part: ModelPart) \
-            -> Dict[Element, Element]:
+            -> List[Tuple[Element, Element]]:
         """
         For a process model part, tries finds the matching body elements on which the condition elements are applied.
 
@@ -1244,7 +1244,7 @@ class Model:
             - ValueError: if condition elements don't have a corresponding body element.
 
         Returns:
-            - matched_elements (Dict[:class:`stem.mesh.Element`, :class:`stem.mesh.Element`]): Dictionary containing
+            - List[Tuple[:class:`stem.mesh.Element`, :class:`stem.mesh.Element`]]: List containing
                 the matched condition and body element parts.
 
         """
@@ -1257,8 +1257,8 @@ class Model:
         unmatched_connectivities_pmp = self.__get_model_part_element_connectivities(process_model_part)
         pmp_element_ids = np.array(list(process_model_part.mesh.elements.keys()))
 
-        # initialise matching dictionary: process_element --> body_element
-        matched_elements: Dict[Element, Element] = {}
+        # initialise matching list: process_element --> body_element
+        matched_elements = []
 
         # loop over the body model parts (bmp) to match the elements of the process model part
         for body_model_part in self.body_model_parts:
@@ -1295,14 +1295,14 @@ class Model:
                     matched_element_id_process_to_body[process_element_id] = bmp_element_ids[found_indices.tolist()[0]]
                     matched_indices_process_element.append(ix)
 
-            # if there is match, couple the element objects together in the matched_elements dictionary
+            # if there is match, couple the element objects together in the matched_elements list
             # then remove the matched process model part elements from the unmatched_connectivities_pmp array
             # and the pmp_element_ids array in order to avoid matching the same elements twice
             if len(matched_element_id_process_to_body) > 0:
 
                 for process_element_id, body_element_id in matched_element_id_process_to_body.items():
-                    matched_elements[process_model_part.mesh.elements[process_element_id]] = (
-                        body_model_part.mesh.elements)[body_element_id]
+                    matched_elements.append((process_model_part.mesh.elements[process_element_id],
+                                             body_model_part.mesh.elements[body_element_id]))
 
                 # remove the matched elements from the unmatched_elements_pmp and pmp_element_ids arrays, in order
                 # to avoid matching the same elements twice
@@ -1317,15 +1317,15 @@ class Model:
 
         return matched_elements
 
-    def __check_ordering_process_model_part(self, matched_elements: Dict[Element, Element],
+    def __check_ordering_process_model_part(self, matched_elements: List[Tuple[Element, Element]],
                                             process_model_part: ModelPart):
         """
         Check if the node ordering of the process element matches the node ordering of the neighbouring body element.
         If not, flip the node ordering of the process element.
 
         Args:
-            - matched_elements (Dict[:class:`stem.mesh.Element`, :class:`stem.mesh.Element`]): Dictionary containing \
-                the matched condition and body element parts.
+            - matched_elements (List[Tuple[:class:`stem.mesh.Element`, :class:`stem.mesh.Element`]]): Dictionary \
+                containing the matched condition and body element parts.
             - process_model_part (:class:`stem.model_part.ModelPart`): model part from which element nodes needs to be \
                 extracted.
 
@@ -1341,7 +1341,7 @@ class Model:
         # loop over the matched elements
         flip_node_order: Dict[int, bool] = {}
 
-        for i, (process_element, body_element) in enumerate(matched_elements.items()):
+        for i, (process_element, body_element) in enumerate(matched_elements):
 
             # element info such as order, number of edges, element types etc.
             process_el_info = ELEMENT_DATA[process_element.element_type]
