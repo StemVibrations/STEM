@@ -21,6 +21,9 @@ extensions = ['sphinx.ext.autodoc', 'sphinx_rtd_theme', 'sphinx.ext.intersphinx'
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
+# to add __init__ documentation to the build
+autoclass_content = 'both'
+
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
