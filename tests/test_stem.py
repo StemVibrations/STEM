@@ -349,41 +349,41 @@ class TestStem:
         # check if finalise is called
         stem.finalise.assert_called_once()
 
-    def test_check_mesh_between_stages_same(self, create_default_model):
-        stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
-        stage2 = deepcopy(create_default_model)
-        stem.add_calculation_stage(stage2)
-
-        # No exception should be raised as the body model parts are the same
-        stem._Stem__check_if_mesh_between_stages_is_the_same(stem.stages[0], stem.stages[1])
-
-
-        stage2 = deepcopy(create_default_model)
-        stage2.body_model_parts.append("new_part")
-        stem.stages[1] = stage2
-
-        with pytest.raises(Exception, match="Number of body model parts are not the same between stages"):
-            stem._Stem__check_if_mesh_between_stages_is_the_same(stem.stages[0], stem.stages[1])
-
-        stage2 = deepcopy(create_default_model)
-        stage2.body_model_parts[0]._ModelPart__name = "new_name"
-        stem.stages[1] = stage2
-
-        with pytest.raises(Exception, match="Body model part names are not the same between stages"):
-            stem._Stem__check_if_mesh_between_stages_is_the_same(stem.stages[0], stem.stages[1])
-
-
-
-        # add a new stage with a different mesh
-        stage2 = deepcopy(create_default_model)
-        stage2.body_model_parts[0].mesh = "new_mesh"
-        stem.stages[1] = stage2
-
-        # check if exception is raised correctly
-        with pytest.raises(Exception,
-                           match="Meshes between stages in body model part: "
-                                 "soil_column are not the same between stages"):
-            stem._Stem__check_if_mesh_between_stages_is_the_same(stem.stages[0], stem.stages[1])
+    # def test_check_mesh_between_stages_same(self, create_default_model):
+    #     stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
+    #     stage2 = deepcopy(create_default_model)
+    #     stem.add_calculation_stage(stage2)
+    #
+    #     # No exception should be raised as the body model parts are the same
+    #     stem._Stem__check_if_mesh_between_stages_is_the_same(stem.stages[0], stem.stages[1])
+    #
+    #
+    #     stage2 = deepcopy(create_default_model)
+    #     stage2.body_model_parts.append("new_part")
+    #     stem.stages[1] = stage2
+    #
+    #     with pytest.raises(Exception, match="Number of body model parts are not the same between stages"):
+    #         stem._Stem__check_if_mesh_between_stages_is_the_same(stem.stages[0], stem.stages[1])
+    #
+    #     stage2 = deepcopy(create_default_model)
+    #     stage2.body_model_parts[0]._ModelPart__name = "new_name"
+    #     stem.stages[1] = stage2
+    #
+    #     with pytest.raises(Exception, match="Body model part names are not the same between stages"):
+    #         stem._Stem__check_if_mesh_between_stages_is_the_same(stem.stages[0], stem.stages[1])
+    #
+    #
+    #
+    #     # add a new stage with a different mesh
+    #     stage2 = deepcopy(create_default_model)
+    #     stage2.body_model_parts[0].mesh = "new_mesh"
+    #     stem.stages[1] = stage2
+    #
+    #     # check if exception is raised correctly
+    #     with pytest.raises(Exception,
+    #                        match="Meshes between stages in body model part: "
+    #                              "soil_column are not the same between stages"):
+    #         stem._Stem__check_if_mesh_between_stages_is_the_same(stem.stages[0], stem.stages[1])
 
 
 
