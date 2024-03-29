@@ -2,8 +2,10 @@ import os
 from pathlib import Path
 from unittest.mock import MagicMock
 from copy import deepcopy
+import threading
 
 import KratosMultiphysics
+from gmsh_utils import gmsh_IO
 
 import pytest
 
@@ -14,97 +16,106 @@ from stem.load import LineLoad
 from stem.boundary import DisplacementConstraint
 from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
                          StressInitialisationType, SolverSettings, Problem)
-from stem.output import NodalOutput, VtkOutputParameters
+from stem.output import NodalOutput, VtkOutputParameters, GiDOutputParameters, JsonOutputParameters
 from stem.IO.kratos_io import KratosIO
 
 from tests.utils import TestUtils
 
 class TestStem:
 
+    # Lock to prevent multiple threads from running the same fixture
+    lock = threading.Lock()
 
-    @pytest.fixture()
+    @pytest.fixture(scope="function")
     def create_default_model(self):
-        ndim = 2
-        model = Model(ndim)
 
-        DENSITY_SOLID = 2700
-        POROSITY = 0.3
-        YOUNG_MODULUS = 50e6
-        POISSON_RATIO = 0.3
-        soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
-        constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=YOUNG_MODULUS, POISSON_RATIO=POISSON_RATIO)
-        retention_parameters1 = SaturatedBelowPhreaticLevelLaw()
-        material1 = SoilMaterial("soil", soil_formulation1, constitutive_law1, retention_parameters1)
+        # Create a model with a soil column and a line load
+        with self.lock:
+            ndim = 2
+            model = Model(ndim)
 
-        # Specify the coordinates for the column: x:1m x y:10m
-        layer1_coordinates = [(0, 0, 0), (1, 0, 0), (1, 10, 0), (0, 10, 0)]
+            DENSITY_SOLID = 2700
+            POROSITY = 0.3
+            YOUNG_MODULUS = 50e6
+            POISSON_RATIO = 0.3
+            soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
+            constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=YOUNG_MODULUS, POISSON_RATIO=POISSON_RATIO)
+            retention_parameters1 = SaturatedBelowPhreaticLevelLaw()
+            material1 = SoilMaterial("soil", soil_formulation1, constitutive_law1, retention_parameters1)
 
-        # Create the soil layer
-        model.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil_column")
+            # Specify the coordinates for the column: x:1m x y:10m
+            layer1_coordinates = [(0, 0, 0), (1, 0, 0), (1, 10, 0), (0, 10, 0)]
 
-        # Boundary conditions and Loads
-        load_coordinates = [(0.0, 10.0, 0), (1.0, 10.0, 0)]
+            # Create the soil layer
+            model.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil_column")
 
-        # Add line load
-        line_load = LineLoad(active=[False, True, False], value=[0, -1000, 0])
-        model.add_load_by_coordinates(load_coordinates, line_load, "load")
+            # Boundary conditions and Loads
+            load_coordinates = [(0.0, 10.0, 0), (1.0, 10.0, 0)]
 
-        # Define boundary conditions
-        no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                            is_fixed=[True, True, True],
-                                                            value=[0, 0, 0])
+            # Add line load
+            line_load = LineLoad(active=[False, True, False], value=[0, -1000, 0])
+            model.add_load_by_coordinates(load_coordinates, line_load, "load")
 
-        # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
-        model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "base_fixed")
+            # Define boundary conditions
+            no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+                                                                is_fixed=[True, True, True],
+                                                                value=[0, 0, 0])
 
-        # Set mesh size
-        # --------------------------------
-        model.set_mesh_size(element_size=1)
+            # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
+            model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "base_fixed")
 
-        # Define project parameters
-        # --------------------------------
+            # Set mesh size
+            # --------------------------------
+            model.set_mesh_size(element_size=1)
 
-        # Set up solver settings
-        analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
-        solution_type = SolutionType.DYNAMIC
-        # Set up start and end time of calculation, time step and etc
-        time_integration = TimeIntegration(start_time=0.0,
-                                           end_time=0.15,
-                                           delta_time=0.0025,
-                                           reduction_factor=1.0,
-                                           increase_factor=1.0,
-                                           max_delta_time_factor=1000)
-        convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0E-12,
-                                                                displacement_absolute_tolerance=1.0E-6)
-        stress_initialisation_type = StressInitialisationType.NONE
-        solver_settings = SolverSettings(analysis_type=analysis_type,
-                                         solution_type=solution_type,
-                                         stress_initialisation_type=stress_initialisation_type,
-                                         time_integration=time_integration,
-                                         is_stiffness_matrix_constant=True,
-                                         are_mass_and_damping_constant=True,
-                                         convergence_criteria=convergence_criterion,
-                                         rayleigh_k=6e-6,
-                                         rayleigh_m=0.02)
+            # Define project parameters
+            # --------------------------------
 
-        # Set up problem data
-        problem = Problem(problem_name="test_1d_wave_prop_drained_soil", number_of_threads=2, settings=solver_settings)
-        model.project_parameters = problem
+            # Set up solver settings
+            analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
+            solution_type = SolutionType.DYNAMIC
+            # Set up start and end time of calculation, time step and etc
+            time_integration = TimeIntegration(start_time=0.0,
+                                               end_time=0.15,
+                                               delta_time=0.0025,
+                                               reduction_factor=1.0,
+                                               increase_factor=1.0,
+                                               max_delta_time_factor=1000)
+            convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0E-12,
+                                                                    displacement_absolute_tolerance=1.0E-6)
+            stress_initialisation_type = StressInitialisationType.NONE
+            solver_settings = SolverSettings(analysis_type=analysis_type,
+                                             solution_type=solution_type,
+                                             stress_initialisation_type=stress_initialisation_type,
+                                             time_integration=time_integration,
+                                             is_stiffness_matrix_constant=True,
+                                             are_mass_and_damping_constant=True,
+                                             convergence_criteria=convergence_criterion,
+                                             rayleigh_k=6e-6,
+                                             rayleigh_m=0.02)
 
-        # Define the results to be written to the output file
-        # Nodal results
-        nodal_results = [NodalOutput.DISPLACEMENT]
+            # Set up problem data
+            problem = Problem(problem_name="test_1d_wave_prop_drained_soil", number_of_threads=2, settings=solver_settings)
+            model.project_parameters = problem
 
-        # Define the output process
-        model.add_output_settings(output_parameters=VtkOutputParameters(file_format="ascii",
-                                                                        output_interval=10,
-                                                                        nodal_results=nodal_results,
-                                                                        gauss_point_results=[],
-                                                                        output_control_type="step"),
-                                  output_dir="output",
-                                  output_name="vtk_output")
+            # Define the results to be written to the output file
+            # Nodal results
+            nodal_results = [NodalOutput.DISPLACEMENT]
 
-        return model
+            # Define the output process
+            model.add_output_settings(output_parameters=VtkOutputParameters(file_format="ascii",
+                                                                            output_interval=10,
+                                                                            nodal_results=nodal_results,
+                                                                            gauss_point_results=[],
+                                                                            output_control_type="step"),
+                                      output_dir="output",
+                                      output_name="vtk_output")
+
+            # return the model
+            yield model
+
+            # make sure gmsh is finalized after each test
+            gmsh_IO.GmshIO().finalize_gmsh()
 
     def test_create_new_stage_with_valid_parameters(self, create_default_model):
 
@@ -251,9 +262,7 @@ class TestStem:
                                                          2: "ProjectParameters_stage_2.json"}
 
         # Cleanup
-        for file in Path(input_folder).iterdir():
-            file.unlink()
-        Path(input_folder).rmdir()
+        TestUtils.clean_test_directory(Path(input_folder))
 
     def test_run_stage(self, create_default_model):
         """
@@ -417,6 +426,30 @@ class TestStem:
 
         # Cleanup
         TestUtils.clean_test_directory(Path(input_dir))
+
+    def test_set_output_name_new_stage_with_vtk_output(self, create_default_model):
+        stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
+        new_stage = deepcopy(create_default_model)
+
+        stem.stages.append(new_stage)
+        stem._Stem__set_output_name_new_stage(new_stage, 5)
+        assert new_stage.output_settings[0].output_dir == Path("output/output_vtk_full_model_stage_5")
+
+    def test_set_output_name_new_stage_with_gid_output(self, create_default_model):
+        stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
+        new_stage = stem.create_new_stage(delta_time=0.1, stage_duration=1.0)
+        new_stage.output_settings[0].output_parameters = MagicMock(spec=GiDOutputParameters)
+        new_stage.output_settings[0].output_name = "gid_output"
+        stem._Stem__set_output_name_new_stage(new_stage, 4)
+        assert new_stage.output_settings[0].output_name == "gid_output_stage_4"
+
+    def set_output_name_new_stage_with_json_output(self, create_default_model):
+        stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
+        new_stage = stem.create_new_stage(delta_time=0.1, stage_duration=1.0)
+        new_stage.output_settings[0].output_parameters = MagicMock(spec=JsonOutputParameters)
+        new_stage.output_settings[0].output_name = "json_output"
+        stem._Stem__set_output_name_new_stage(new_stage, 3)
+        assert new_stage.output_settings[0].output_name == "json_output_stage_3"
 
 
 
