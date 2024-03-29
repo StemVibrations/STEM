@@ -6,6 +6,7 @@ random_fields @ git+https://github.com/StemVibrations/RandomFields
 StemKratos @ git+https://github.com/StemVibrations/StemKratos@stages
 pytest==7.4.2
 pytest-cov==4.0.0
+pytest-xdist==3.5.0
 tox==4.4.11
 mypy==1.1.1
 pre-commit==3.6.2

@@ -21,6 +21,8 @@ from stem.IO.kratos_io import KratosIO
 
 from tests.utils import TestUtils
 
+
+@pytest.mark.serial
 class TestStem:
 
     # Lock to prevent multiple threads from running the same fixture
@@ -95,7 +97,9 @@ class TestStem:
                                              rayleigh_m=0.02)
 
             # Set up problem data
-            problem = Problem(problem_name="test_1d_wave_prop_drained_soil", number_of_threads=2, settings=solver_settings)
+            problem = Problem(problem_name="test_1d_wave_prop_drained_soil",
+                              number_of_threads=2,
+                              settings=solver_settings)
             model.project_parameters = problem
 
             # Define the results to be written to the output file
@@ -189,8 +193,9 @@ class TestStem:
         # change the coordinates of the body model part such that a different mesh is generated
         stage3.gmsh_io.geo_data["points"][2] = [10, 10, 0]
         # Check if ValueError is raised
-        with pytest.raises(Exception, match="Meshes between stages in body model part: "
-                                            "soil_column are not the same between stages"):
+        with pytest.raises(Exception,
+                           match="Meshes between stages in body model part: "
+                           "soil_column are not the same between stages"):
             stem.add_calculation_stage(stage3)
 
     def test_validate_latest_stage(self, create_default_model):
@@ -258,8 +263,10 @@ class TestStem:
         assert Path(input_folder).joinpath("test_1d_wave_prop_drained_soil_stage_2.mdpa").is_file()
 
         # check if filenames are correctly stored
-        assert stem._Stem__stage_settings_file_names == {1: "ProjectParameters_stage_1.json",
-                                                         2: "ProjectParameters_stage_2.json"}
+        assert stem._Stem__stage_settings_file_names == {
+            1: "ProjectParameters_stage_1.json",
+            2: "ProjectParameters_stage_2.json"
+        }
 
         # Cleanup
         TestUtils.clean_test_directory(Path(input_folder))
@@ -287,13 +294,12 @@ class TestStem:
         # Cleanup
         TestUtils.clean_test_directory(Path(input_folder))
 
-    def test_run_stage_out_of_order(self,create_default_model):
+    def test_run_stage_out_of_order(self, create_default_model):
         stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
         stage2 = deepcopy(create_default_model)
         stem.add_calculation_stage(stage2)
         with pytest.raises(Exception, match="Stages should be run in order"):
             stem.run_stage(2)
-
 
     def test_finalise_one_stage(self, create_default_model):
 
@@ -349,43 +355,38 @@ class TestStem:
         # check if finalise is called
         stem.finalise.assert_called_once()
 
-    # def test_check_mesh_between_stages_same(self, create_default_model):
-    #     stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
-    #     stage2 = deepcopy(create_default_model)
-    #     stem.add_calculation_stage(stage2)
-    #
-    #     # No exception should be raised as the body model parts are the same
-    #     stem._Stem__check_if_mesh_between_stages_is_the_same(stem.stages[0], stem.stages[1])
-    #
-    #
-    #     stage2 = deepcopy(create_default_model)
-    #     stage2.body_model_parts.append("new_part")
-    #     stem.stages[1] = stage2
-    #
-    #     with pytest.raises(Exception, match="Number of body model parts are not the same between stages"):
-    #         stem._Stem__check_if_mesh_between_stages_is_the_same(stem.stages[0], stem.stages[1])
-    #
-    #     stage2 = deepcopy(create_default_model)
-    #     stage2.body_model_parts[0]._ModelPart__name = "new_name"
-    #     stem.stages[1] = stage2
-    #
-    #     with pytest.raises(Exception, match="Body model part names are not the same between stages"):
-    #         stem._Stem__check_if_mesh_between_stages_is_the_same(stem.stages[0], stem.stages[1])
-    #
-    #
-    #
-    #     # add a new stage with a different mesh
-    #     stage2 = deepcopy(create_default_model)
-    #     stage2.body_model_parts[0].mesh = "new_mesh"
-    #     stem.stages[1] = stage2
-    #
-    #     # check if exception is raised correctly
-    #     with pytest.raises(Exception,
-    #                        match="Meshes between stages in body model part: "
-    #                              "soil_column are not the same between stages"):
-    #         stem._Stem__check_if_mesh_between_stages_is_the_same(stem.stages[0], stem.stages[1])
+    def test_check_mesh_between_stages_same(self, create_default_model):
+        stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
+        stage2 = deepcopy(create_default_model)
+        stem.add_calculation_stage(stage2)
 
+        # No exception should be raised as the body model parts are the same
+        stem._Stem__check_if_mesh_between_stages_is_the_same(stem.stages[0], stem.stages[1])
 
+        stage2 = deepcopy(create_default_model)
+        stage2.body_model_parts.append("new_part")
+        stem.stages[1] = stage2
+
+        with pytest.raises(Exception, match="Number of body model parts are not the same between stages"):
+            stem._Stem__check_if_mesh_between_stages_is_the_same(stem.stages[0], stem.stages[1])
+
+        stage2 = deepcopy(create_default_model)
+        stage2.body_model_parts[0]._ModelPart__name = "new_name"
+        stem.stages[1] = stage2
+
+        with pytest.raises(Exception, match="Body model part names are not the same between stages"):
+            stem._Stem__check_if_mesh_between_stages_is_the_same(stem.stages[0], stem.stages[1])
+
+        # add a new stage with a different mesh
+        stage2 = deepcopy(create_default_model)
+        stage2.body_model_parts[0].mesh = "new_mesh"
+        stem.stages[1] = stage2
+
+        # check if exception is raised correctly
+        with pytest.raises(Exception,
+                           match="Meshes between stages in body model part: "
+                           "soil_column are not the same between stages"):
+            stem._Stem__check_if_mesh_between_stages_is_the_same(stem.stages[0], stem.stages[1])
 
     def test_transfer_vtk_files_to_main_output_directories_single_stage(self, create_default_model):
         stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
@@ -419,7 +420,7 @@ class TestStem:
         stem._Stem__transfer_vtk_files_to_main_output_directories()
 
         # Check if the vtk file of stage 2 is moved to the main output directory
-        assert (main_output_dir/"dummy.vtk").is_file()
+        assert (main_output_dir / "dummy.vtk").is_file()
 
         # Check if the second stage output directory is removed
         assert not (input_dir / Path("output/output_vtk_full_model_stage_2")).is_dir()
@@ -450,8 +451,3 @@ class TestStem:
         new_stage.output_settings[0].output_name = "json_output"
         stem._Stem__set_output_name_new_stage(new_stage, 3)
         assert new_stage.output_settings[0].output_name == "json_output_stage_3"
-
-
-
-
-
