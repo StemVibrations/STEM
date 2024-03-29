@@ -157,4 +157,3 @@ class TestUtils:
             else:
                 TestUtils.clean_test_directory(file)
         test_dir.rmdir()
-
