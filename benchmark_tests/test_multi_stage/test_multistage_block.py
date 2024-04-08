@@ -4,8 +4,9 @@ from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, Sa
 from stem.load import LineLoad
 from stem.table import Table
 from stem.boundary import DisplacementConstraint
-from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, StressInitialisationType, SolverSettings, Problem, BackwardEulerScheme, NewmarkScheme
-from stem.output import NodalOutput, VtkOutputParameters, Output, GiDOutputParameters
+from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
+                         StressInitialisationType, SolverSettings, Problem)
+from stem.output import NodalOutput, VtkOutputParameters
 from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
 from shutil import rmtree
@@ -110,18 +111,12 @@ def test_stem():
                                       output_dir="output",
                                       output_name="vtk_output")
 
-    model_stage_1.add_output_settings(
-        output_parameters=GiDOutputParameters(output_interval=1, file_format="binary", nodal_results=nodal_results),
-        output_dir="output",
-        output_name="gid_output",
-    )
-
     # define the STEM instance
     input_folder = "benchmark_tests/test_multi_stage/inputs_kratos"
     stem = Stem(model_stage_1, input_folder)
 
     # create new stage
-    model_stage_2 = stem.create_new_stage(0.0025, 0.15)
+    model_stage_2 = stem.create_new_stage(0.0025, 0.05)
 
     # Set up solver settings for the new stage
     model_stage_2.project_parameters.settings.solution_type = SolutionType.DYNAMIC
@@ -129,7 +124,6 @@ def test_stem():
     model_stage_2.project_parameters.settings.rayleigh_m = 0.02
 
     model_stage_2.process_model_parts[0].parameters.value = [0, -1050, 0]
-    # model_stage_2.output_settings[0].output_dir = "vtk_output_stage_2"
     model_stage_2.output_settings[0].output_parameters.nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY]
 
     # add the new stage to the calculation
@@ -142,8 +136,8 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
-    # result = assert_files_equal("benchmark_tests/test_1d_wave_prop_drained_soil/output_/output_vtk_full_model",
-    #                             os.path.join(input_folder, "output/output_vtk_full_model"))
+    result = assert_files_equal("benchmark_tests/test_multi_stage/output_/output_vtk_full_model",
+                                os.path.join(input_folder, "output/output_vtk_full_model"))
 
-    # assert result is True
-    # rmtree(input_folder)
+    assert result is True
+    rmtree(input_folder)
