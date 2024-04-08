@@ -26,7 +26,6 @@ from tests.utils import TestUtils
 
 class TestStem:
 
-
     @pytest.fixture(scope="function", autouse=True)
     def create_default_model(self):
 
@@ -96,9 +95,7 @@ class TestStem:
                                          rayleigh_m=0.02)
 
         # Set up problem data
-        problem = Problem(problem_name="test_1d_wave_prop_drained_soil",
-                          number_of_threads=2,
-                          settings=solver_settings)
+        problem = Problem(problem_name="test_1d_wave_prop_drained_soil", number_of_threads=2, settings=solver_settings)
         model.project_parameters = problem
 
         # Define the results to be written to the output file
