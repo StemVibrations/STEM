@@ -154,28 +154,26 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
-    # read test.txt file
-    with open(os.path.join(input_folder, "test.txt"), "r") as f:
-        test_data = f.read().splitlines()
-    test_data = np.array([list(map(float, t.split(";"))) for t in test_data])
-
-    # get the last values at the time
-
-    # Extract unique time values and corresponding displacements
-    unique_time_values = np.unique(test_data[:, 0])
-
-    displacement_top = []
-    displacement_bottom = []
-    time = []
-    for time_value in unique_time_values:
-        # Find the corresponding displacement for each unique time value
-        index = np.where(test_data[:, 0] == time_value)[0][-1]
-        displacement_top.append(np.array(test_data)[index, 2])
-        displacement_bottom.append(np.array(test_data)[index, 3])
-        time.append(np.array(test_data)[index, 0])
-
     if PLOT_RESULTS:
         import matplotlib.pyplot as plt
+
+        # read results file
+        with open(os.path.join(input_folder, "calculated_results.txt"), "r") as f:
+            test_data = f.read().splitlines()
+        test_data = np.array([list(map(float, t.split(";"))) for t in test_data])
+
+        # Extract unique time values and corresponding displacements
+        unique_time_values = np.unique(test_data[:, 0])
+
+        displacement_top = []
+        displacement_bottom = []
+        time = []
+        for time_value in unique_time_values:
+            # Find the corresponding displacement for each unique time value
+            index = np.where(test_data[:, 0] == time_value)[0][-1]
+            displacement_top.append(np.array(test_data)[index, 2])
+            displacement_bottom.append(np.array(test_data)[index, 3])
+            time.append(np.array(test_data)[index, 0])
 
         fig, ax = plt.subplots(2, 1, sharex=True)
         ax[0].plot(time, displacement_top, label="kraton body", color='b')
