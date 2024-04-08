@@ -12,7 +12,7 @@ from stem.stem import Stem
 from shutil import rmtree, copytree
 
 from benchmark_tests.analytical_solutions.moving_vehicle import TwoDofVehicle
-from benchmark_tests.utils import assert_floats_in_files_almost_equal
+from benchmark_tests.utils import assert_floats_in_directories_almost_equal
 
 PLOT_RESULTS = False
 
@@ -200,8 +200,8 @@ def test_stem():
         plt.show()
 
     # test output
-    assert_floats_in_files_almost_equal("benchmark_tests/test_sdof_uvec_beam/output_/output_vtk_full_model",
-                                        os.path.join(input_folder, "output/output_vtk_full_model"),
-                                        decimal=3)
+    assert_floats_in_directories_almost_equal("benchmark_tests/test_sdof_uvec_beam/output_/output_vtk_full_model",
+                                              os.path.join(input_folder, "output/output_vtk_full_model"),
+                                              decimal=3)
 
     rmtree(input_folder)

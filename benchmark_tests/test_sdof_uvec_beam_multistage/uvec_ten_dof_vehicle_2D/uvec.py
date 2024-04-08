@@ -19,7 +19,6 @@ def uvec_static(json_string: str) -> str:
 
     # Get the uvec data
     uvec_data = json.loads(json_string)
-    print(json_string)
 
     # load the data
     u = uvec_data["u"]
@@ -54,7 +53,6 @@ def uvec_static(json_string: str) -> str:
 
     if time_index > state["previous_time_index"]:
         state["previous_time"] += time_step
-        print(f"Previous time: {state['previous_time']}, time step: {time_step}, time index: {time_index}")
 
     # calculate contact forces
     F_contact = calculate_contact_forces(u_vertical, train.calculate_static_contact_force(), state, parameters, train,
@@ -63,31 +61,12 @@ def uvec_static(json_string: str) -> str:
     # calculate force vector
     F = F_train
     F[train.contact_dofs] = F[train.contact_dofs] + F_contact
-    #
-    # contact_method = HertzianContact()
-    # contact_method.contact_coeff = parameters["contact_coefficient"]
-    # contact_method.contact_power = parameters["contact_power"]
-    #
-    # u_wheel = np.array(state["u"])[train.contact_dofs]
-    #
-    # static_contact_u = contact_method.calculate_contact_deformation(train.calculate_static_contact_force())
-    #
-    # # du = u_wheel + static_contact_u - u
-    #
-    # print(f"u_static = {u_static}, static_contact_u = {static_contact_u}")
-    #
-    # u_static[train.contact_dofs] +=static_contact_u
-    #
-    # state["u"] = u_static.tolist()
 
     # calculate unit vector
     aux = {}
     for i, val in enumerate(F_contact):
         aux[i + 1] = [0., (-val).tolist(), 0.]
     uvec_data["loads"] = aux
-
-    print(uvec_data["loads"])
-    print(uvec_data)
 
     # write to file to compare the results
     file_name = uvec_data["parameters"]["file_name"]
@@ -144,7 +123,6 @@ def uvec(json_string: str) -> str:
 
     if time_index > state["previous_time_index"]:
         state["previous_time"] += time_step
-        print(f"Previous time: {state['previous_time']}, time step: {time_step}, time index: {time_index}")
 
     # calculate contact forces
     F_contact = calculate_contact_forces(u_vertical, train.calculate_static_contact_force(), state, parameters, train,
@@ -166,8 +144,6 @@ def uvec(json_string: str) -> str:
     for i, val in enumerate(F_contact):
         aux[i + 1] = [0., (-val).tolist(), 0.]
     uvec_data["loads"] = aux
-
-    print(uvec_data)
 
     # write to file to compare the results
     file_name = uvec_data["parameters"]["file_name"]
