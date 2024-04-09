@@ -367,6 +367,16 @@ class Output:
                 new_output_dir = new_output_dir.joinpath("output_vtk_full_model")
             else:
                 new_output_dir = new_output_dir.joinpath("output_vtk_" + part_name)
+        elif isinstance(output_parameters, JsonOutputParameters):
+            if part_name is None:
+                part_name = "output_full_model"
+            if output_name is None or output_name == "":
+                output_name = f"{part_name}" + ".json"
+        elif isinstance(output_parameters, GiDOutputParameters):
+            if part_name is None:
+                part_name = "output_full_model"
+            if output_name is None or output_name == "":
+                output_name = f"{part_name}"
 
         self.output_parameters = output_parameters
         self.part_name = part_name

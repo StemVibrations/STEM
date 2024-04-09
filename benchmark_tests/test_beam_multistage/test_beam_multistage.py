@@ -1,17 +1,16 @@
-import os
-import numpy as np
-import pytest
+import json
+from shutil import rmtree
+
 from stem.model import Model
 from stem.model_part import BodyModelPart
 from stem.structural_material import EulerBeam, StructuralMaterial
 from stem.load import MovingLoad
 from stem.boundary import DisplacementConstraint
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, StressInitialisationType, SolverSettings, Problem
-from stem.output import NodalOutput, VtkOutputParameters, Output, JsonOutputParameters
+from stem.output import NodalOutput, JsonOutputParameters
 from stem.stem import Stem
-from shutil import rmtree, copytree
 
-from benchmark_tests.utils import assert_floats_in_directories_almost_equal
+from tests.utils import TestUtils
 
 PLOT_RESULTS = True
 
@@ -51,10 +50,11 @@ def test_stem():
     model.body_model_parts.append(body_model_part)
 
     moving_load = MovingLoad(load=[0, -80000, 0], velocity=velocity, origin=[0, 0, 0], direction=[1, 0, 0])
-    model.add_load_on_line_model_part("beam", moving_load, "point_load")
+    model.add_load_on_line_model_part("beam", moving_load, "moving_load")
 
     # Define displacement conditions
-    displacementXYZ_parameters = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True],
+    displacementXYZ_parameters = DisplacementConstraint(active=[True, True, True],
+                                                        is_fixed=[True, True, True],
                                                         value=[0, 0, 0])
 
     model.add_boundary_condition_by_geometry_ids(0, [1, 2], displacementXYZ_parameters, "displacementXYZ")
@@ -74,15 +74,21 @@ def test_stem():
     analysis_type = AnalysisType.MECHANICAL
     solution_type = SolutionType.QUASI_STATIC
     # Set up start and end time of calculation, time step and etc
-    time_integration = TimeIntegration(start_time=0.0, end_time=0.45, delta_time=0.05, reduction_factor=1.0,
-                                       increase_factor=1.0, max_delta_time_factor=1000)
+    time_integration = TimeIntegration(start_time=0.0,
+                                       end_time=0.45,
+                                       delta_time=0.05,
+                                       reduction_factor=1.0,
+                                       increase_factor=1.0,
+                                       max_delta_time_factor=1000)
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
                                                             displacement_absolute_tolerance=1.0e-12)
     stress_initialisation_type = StressInitialisationType.NONE
-    solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
+    solver_settings = SolverSettings(analysis_type=analysis_type,
+                                     solution_type=solution_type,
                                      stress_initialisation_type=stress_initialisation_type,
                                      time_integration=time_integration,
-                                     is_stiffness_matrix_constant=True, are_mass_and_damping_constant=False,
+                                     is_stiffness_matrix_constant=True,
+                                     are_mass_and_damping_constant=False,
                                      convergence_criteria=convergence_criterion,
                                      rayleigh_k=0.000,
                                      rayleigh_m=0.00)
@@ -91,31 +97,11 @@ def test_stem():
     problem = Problem(problem_name="point_load_on_beam", number_of_threads=1, settings=solver_settings)
     model.project_parameters = problem
 
-    # Nodal results
-    nodal_results = [NodalOutput.DISPLACEMENT]
-    # Gauss point results
-    gauss_point_results = []
-
     # Define the output process
-    vtk_output_process = Output(
-        output_name="vtk_output",
-        output_dir="output",
-        output_parameters=VtkOutputParameters(
-            file_format="ascii",
-            output_interval=1,
-            nodal_results=nodal_results,
-            gauss_point_results=gauss_point_results,
-            output_control_type="step"
-        )
-    )
+    json_output = JsonOutputParameters(0.049, nodal_results=[NodalOutput.DISPLACEMENT_Y])
+    model.add_output_settings(json_output, "moving_load")
 
-    json_output = JsonOutputParameters(0.049, nodal_results = [NodalOutput.DISPLACEMENT_Y])
-
-    model.add_output_settings(json_output, "point_load" )
-    # model.output_settings = [vtk_output_process]
-    #
     input_folder = r"benchmark_tests/test_beam_multistage/input_kratos"
-
 
     # Write KRATOS input files
     # --------------------------------
@@ -129,12 +115,17 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
+    # Compare results
+    expected_output_files = ["expected_output_moving_load.json", "expected_output_moving_load_stage_2.json"]
+    calculated_output_files = ["moving_load.json", "moving_load_stage_2.json"]
 
+    for expected_output_file, calculated_output_file in zip(expected_output_files, calculated_output_files):
+        with open(f"benchmark_tests/test_beam_multistage/output_/{expected_output_file}", "r") as fi:
+            expected_data = json.load(fi)
 
-    # # # test output
-    # assert_floats_in_files_almost_equal("benchmark_tests/test_sdof_uvec_beam/output_/output_vtk_full_model",
-    #                                     os.path.join(input_folder, "output/output_vtk_full_model"), decimal=3)
-    #
-    # rmtree(input_folder)
+        with open(f"{input_folder}/{calculated_output_file}", "r") as f:
+            calculated_data = json.load(f)
 
-    # assert_files_equal("benchmark_tests/test_sdof_uvec_beam/output_/output_vtk_full_model",
+        TestUtils.assert_dictionary_almost_equal(expected_data, calculated_data)
+
+    rmtree(input_folder)

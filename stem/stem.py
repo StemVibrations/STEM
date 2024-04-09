@@ -314,7 +314,12 @@ class Stem:
         for output_settings in new_stage.output_settings:
             if isinstance(output_settings.output_parameters, VtkOutputParameters):
                 output_settings.output_dir = Path(str(output_settings.output_dir) + f"_stage_{stage_nr}")
-            elif isinstance(output_settings.output_parameters, (GiDOutputParameters, JsonOutputParameters)):
+            elif isinstance(output_settings.output_parameters, GiDOutputParameters):
                 output_settings.output_name = f"{output_settings.output_name}_stage_{stage_nr}"
 
-                # todo check json output and gid output
+            elif isinstance(output_settings.output_parameters, JsonOutputParameters):
+                if output_settings.output_name is not None:
+                    stage_identifier = f"_stage_{stage_nr}"
+
+                    base_path = Path(output_settings.output_name).parent / Path(output_settings.output_name).stem
+                    output_settings.output_name = str(base_path) + stage_identifier + ".json"
