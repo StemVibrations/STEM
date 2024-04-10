@@ -326,8 +326,6 @@ class Stem:
                 if output_settings.output_name is not None:
                     stage_identifier = f"_stage_{stage_nr}"
                     suffix = Path(output_settings.output_name).suffix
-                    if suffix != "":
-                        suffix = f".{suffix}"
 
                     base_path = Path(output_settings.output_name).parent / Path(output_settings.output_name).stem
                     output_settings.output_name = str(base_path) + stage_identifier + suffix
