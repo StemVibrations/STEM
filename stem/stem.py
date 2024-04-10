@@ -164,7 +164,6 @@ class Stem:
 
         Args:
             - stage_number (int): The number of the stage to be run.
-            - time_step_nr (int): The time step number to start the stage from.
 
         """
 
@@ -285,6 +284,7 @@ class Stem:
                         else:
                             main_vtk_output_dirs[part_name] = Path(self.input_files_dir) / output_settings.output_dir
                     else:
+                        # if the current stage is not the main stage, move the vtk files to the main output directory
                         if os.path.isabs(output_settings.output_dir):
                             stage_vtk_output_dir = Path(output_settings.output_dir)
                         else:
@@ -312,14 +312,22 @@ class Stem:
         """
 
         for output_settings in new_stage.output_settings:
+
+            # set output directory for vtk output
             if isinstance(output_settings.output_parameters, VtkOutputParameters):
                 output_settings.output_dir = Path(str(output_settings.output_dir) + f"_stage_{stage_nr}")
+
+            # set output name for gid output
             elif isinstance(output_settings.output_parameters, GiDOutputParameters):
                 output_settings.output_name = f"{output_settings.output_name}_stage_{stage_nr}"
 
+            # set output name for json output
             elif isinstance(output_settings.output_parameters, JsonOutputParameters):
                 if output_settings.output_name is not None:
                     stage_identifier = f"_stage_{stage_nr}"
+                    suffix = Path(output_settings.output_name).suffix
+                    if suffix != "":
+                        suffix = f".{suffix}"
 
                     base_path = Path(output_settings.output_name).parent / Path(output_settings.output_name).stem
-                    output_settings.output_name = str(base_path) + stage_identifier + ".json"
+                    output_settings.output_name = str(base_path) + stage_identifier + suffix

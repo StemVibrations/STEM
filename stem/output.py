@@ -362,11 +362,14 @@ class Output:
 
         new_output_dir = Path(output_dir)
 
+        # if output parameters are VTK, set the name of the output directory
         if isinstance(output_parameters, VtkOutputParameters):
             if part_name is None:
                 new_output_dir = new_output_dir.joinpath("output_vtk_full_model")
             else:
                 new_output_dir = new_output_dir.joinpath("output_vtk_" + part_name)
+
+        # if the output parameters are JSON or GiD, set the output name
         elif isinstance(output_parameters, JsonOutputParameters):
             if part_name is None:
                 part_name = "output_full_model"

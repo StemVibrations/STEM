@@ -1,10 +1,6 @@
-import os
-import sys
-import time
 from pathlib import Path
 from unittest.mock import MagicMock
 from copy import deepcopy
-import threading
 
 import KratosMultiphysics
 from gmsh_utils import gmsh_IO
@@ -25,9 +21,18 @@ from tests.utils import TestUtils
 
 
 class TestStem:
+    """
+    Test the Stem class
+    """
 
     @pytest.fixture(scope="function", autouse=True)
-    def create_default_model(self):
+    def create_default_model(self) -> Model:
+        """
+        Create a default model for the tests
+
+        Yields:
+            - :class:`stem.model.Model`: The default model
+        """
 
         # Create a model with a soil column and a line load
 
@@ -117,7 +122,15 @@ class TestStem:
         # make sure gmsh is finalized after each test
         gmsh_IO.GmshIO().finalize_gmsh()
 
-    def test_create_new_stage_with_valid_parameters(self, create_default_model):
+    def test_create_new_stage_with_valid_parameters(self, create_default_model: Model):
+        """
+        Test the create_new_stage method of the Stem class with valid parameters. It checks if the new stage is created
+        with valid time integration parameters and output settings.
+
+        Args:
+            - create_default_model (:class:`stem.model.Model`): The default model
+
+        """
 
         input_folder = "tests/test_data/generated_input/inputs_kratos"
         stem = Stem(initial_stage=create_default_model, input_files_dir=input_folder)
@@ -128,7 +141,15 @@ class TestStem:
 
         assert new_stage.output_settings[0].output_dir == Path("output/output_vtk_full_model_stage_2")
 
-    def test_create_new_stage_with_no_project_parameters(self, create_default_model):
+    def test_create_new_stage_with_no_project_parameters(self, create_default_model: Model):
+        """
+        Test the create_new_stage method of the Stem class with no project parameters set in the last stage. It checks
+        if ValueError is raised when the project parameters of the last stage are not set.
+
+        Args:
+            - create_default_model (:class:`stem.model.Model`): The default model
+
+        """
 
         # create the stem object
         input_folder = "tests/test_data/generated_input/inputs_kratos"
@@ -162,9 +183,20 @@ class TestStem:
         initial_stage.post_setup.assert_called_once()
         initial_stage.generate_mesh.assert_called_once()
 
-    def test_add_calculation_stage_with_valid_model(self, create_default_model):
+    def test_add_calculation_stage(self, create_default_model: Model):
+        """
+        Test the add_calculation_stage method of the Stem class. It checks if the stage is added to the stem object and
+        if the expected methods are called. Also a check is done to check if the mesh is correctly validated between the
+        stages.
+
+        Args:
+            - create_default_model (:class:`stem.model.Model`): The default model
+
+        """
+
         stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
 
+        # create the second stage
         stage2 = deepcopy(create_default_model)
 
         # Mock the methods of the stage object
@@ -183,7 +215,7 @@ class TestStem:
         stage2.post_setup.assert_called_once()
         stage2.generate_mesh.assert_called_once()
 
-        # create an invalid stage with extra body model parts
+        # create an invalid stage with a different mesh
         stage3 = deepcopy(create_default_model)
 
         # change the coordinates of the body model part such that a different mesh is generated
@@ -194,10 +226,18 @@ class TestStem:
                            "soil_column are not the same between stages"):
             stem.add_calculation_stage(stage3)
 
-    def test_validate_latest_stage(self, create_default_model):
+    def test_validate_latest_stage(self, create_default_model: Model):
+        """
+        Test the validate_latest_stage method of the Stem class. It checks if the mesh between the stages is the same
+        and if the number of body and process model parts are the same between the stages.
+
+        Args:
+            - create_default_model (:class:`stem.model.Model`): The default model
+
+        """
+
         stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
         stage2 = deepcopy(create_default_model)
-        # stage2.gmsh_io.reset_gmsh_instance()
 
         # Mock the method of the stem object
         stem._Stem__check_if_mesh_between_stages_is_the_same = MagicMock()
@@ -236,7 +276,15 @@ class TestStem:
         with pytest.raises(Exception, match="Number of process model parts are not the same between stages"):
             stem.validate_latest_stage()
 
-    def test_write_all_input_files(self, create_default_model):
+    def test_write_all_input_files(self, create_default_model: Model):
+        """
+        Test the write_all_input_files method of the Stem class. It checks if the correct methods are called and if the
+        settings are validated.
+
+        Args:
+            - create_default_model (:class:`stem.model.Model`): The default model
+
+        """
         input_folder = "tests/test_data/generated_input/test_generate_write_all_input_files"
         stem = Stem(initial_stage=create_default_model, input_files_dir=input_folder)
         stage2 = deepcopy(create_default_model)
@@ -252,14 +300,12 @@ class TestStem:
         create_default_model.project_parameters.settings.validate_settings.assert_called_once()
         stage2.project_parameters.settings.validate_settings.assert_called_once()
 
-    def test_run_stage(self, create_default_model):
+    def test_run_stage(self, create_default_model: Model):
         """
         Test the run_stage method of the Stem class
 
         Args:
-            create_default_model:
-
-        Returns:
+            - create_default_model (:class:`stem.model.Model`): The default model
 
         """
 
@@ -275,14 +321,35 @@ class TestStem:
         # Cleanup
         TestUtils.clean_test_directory(Path(input_folder))
 
-    def test_run_stage_out_of_order(self, create_default_model):
+    def test_run_stage_out_of_order(self, create_default_model: Model):
+        """
+        Test the run_stage method of the Stem class when the stages are run out of order. It checks if an exception is
+        raised when the stages are run out of order.
+
+        Args:
+            - create_default_model (:class:`stem.model.Model`): The default model
+
+        """
+
         stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
+
+        # create and add second stage
         stage2 = deepcopy(create_default_model)
         stem.add_calculation_stage(stage2)
+
+        # check if an exception is raised when the stages are run out of order
         with pytest.raises(Exception, match="Stages should be run in order"):
             stem.run_stage(2)
 
-    def test_finalise_one_stage(self, create_default_model):
+    def test_finalise_one_stage(self, create_default_model: Model):
+        """
+        Test the finalise method of the Stem class when there is only one stage. It checks if the transfer vtk files
+        method is not called when there is only one stage.
+
+        Args:
+            - create_default_model (:class:`stem.model.Model`): The default model
+
+        """
 
         # Test if the transfer vtk files method is not called when there is only one stage
         stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
@@ -296,7 +363,15 @@ class TestStem:
         # check if the method is not called
         stem._Stem__transfer_vtk_files_to_main_output_directories.assert_not_called()
 
-    def test_finalise_multiple_stages(self, create_default_model):
+    def test_finalise_multiple_stages(self, create_default_model: Model):
+        """
+        Test the finalise method of the Stem class when there are multiple stages. It checks if the transfer vtk files
+        method is called when there are multiple stages.
+
+        Args:
+            - create_default_model (:class:`stem.model.Model`): The default model
+
+        """
 
         # Test if the transfer vtk files method is called when there are multiple stages
         stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
@@ -314,7 +389,16 @@ class TestStem:
         # check if the method is called
         stem._Stem__transfer_vtk_files_to_main_output_directories.assert_called_once()
 
-    def test_run_calculation_with_valid_stages(self, create_default_model):
+    def test_run_calculation_with_valid_stages(self, create_default_model: Model):
+        """
+        Test the run_calculation method of the Stem class with valid stages. It checks if the run_stage method is called
+        for each stage and if the finalise method is called at the end.
+
+        Args:
+            - create_default_model (:class:`stem.model.Model`): The default model
+
+        """
+
         stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
         stage2 = deepcopy(create_default_model)
         stem.add_calculation_stage(stage2)
@@ -336,7 +420,17 @@ class TestStem:
         # check if finalise is called
         stem.finalise.assert_called_once()
 
-    def test_check_mesh_between_stages_same(self, create_default_model):
+    def test_check_mesh_between_stages_same(self, create_default_model: Model):
+        """
+        Test the __check_if_mesh_between_stages_is_the_same method of the Stem class. It checks if the method does not
+        raise an exception when the mesh is the same between the stages. It also checks if the method raises an
+        exception when the number of body model parts, names or meshes are different between the stages.
+
+        Args:
+            - create_default_model (:class:`stem.model.Model`): The default model
+
+        """
+
         stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
         stage2 = deepcopy(create_default_model)
         stem.add_calculation_stage(stage2)
@@ -344,6 +438,7 @@ class TestStem:
         # No exception should be raised as the body model parts are the same
         stem._Stem__check_if_mesh_between_stages_is_the_same(stem.stages[0], stem.stages[1])
 
+        # create a stage with a different number of body model parts and check if an exception is raised
         stage2 = deepcopy(create_default_model)
         stage2.body_model_parts.append("new_part")
         stem.stages[1] = stage2
@@ -351,6 +446,7 @@ class TestStem:
         with pytest.raises(Exception, match="Number of body model parts are not the same between stages"):
             stem._Stem__check_if_mesh_between_stages_is_the_same(stem.stages[0], stem.stages[1])
 
+        # create a stage with a different name of the body model part and check if an exception is raised
         stage2 = deepcopy(create_default_model)
         stage2.body_model_parts[0]._ModelPart__name = "new_name"
         stem.stages[1] = stage2
@@ -358,7 +454,7 @@ class TestStem:
         with pytest.raises(Exception, match="Body model part names are not the same between stages"):
             stem._Stem__check_if_mesh_between_stages_is_the_same(stem.stages[0], stem.stages[1])
 
-        # add a new stage with a different mesh
+        # create a stage with a different mesh of the body model part and check if an exception is raised
         stage2 = deepcopy(create_default_model)
         stage2.body_model_parts[0].mesh = "new_mesh"
         stem.stages[1] = stage2
@@ -369,12 +465,26 @@ class TestStem:
                            "soil_column are not the same between stages"):
             stem._Stem__check_if_mesh_between_stages_is_the_same(stem.stages[0], stem.stages[1])
 
-    def test_transfer_vtk_files_to_main_output_directories_single_stage(self, create_default_model):
+    def test_transfer_vtk_files_to_main_output_directories_single_stage(self, create_default_model: Model):
+        """
+        Test the __transfer_vtk_files_to_main_output_directories method of the Stem class when there is only one stage.
+        No vtk files should be transferred as there is only one stage.
+
+        """
+
         stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
         stem._Stem__transfer_vtk_files_to_main_output_directories()
         # No exception should be raised as there is only one stage
 
-    def test_transfer_vtk_files_to_main_output_directories_multiple_stages(self, create_default_model):
+    def test_transfer_vtk_files_to_main_output_directories_multiple_stages(self, create_default_model: Model):
+        """
+        Test the __transfer_vtk_files_to_main_output_directories method of the Stem class when there are multiple
+        stages. It checks if the vtk files of the second stage are transferred to the main output directory.
+
+        Args:
+            - create_default_model (:class:`stem.model.Model`): The default model
+
+        """
 
         input_dir = "tests/test_data/generated_input/test_transfer_vtk_files"
         stem = Stem(initial_stage=create_default_model, input_files_dir=input_dir)
@@ -409,26 +519,69 @@ class TestStem:
         # Cleanup
         TestUtils.clean_test_directory(Path(input_dir))
 
-    def test_set_output_name_new_stage_with_vtk_output(self, create_default_model):
+    def test_set_output_name_new_stage_with_vtk_output(self, create_default_model: Model):
+        """
+        Test the __set_output_name_new_stage method of the Stem class with VtkOutputParameters. It checks if the output
+        directory is set correctly for the new stage.
+
+        Args:
+            - create_default_model (:class:`stem.model.Model`): The default model
+        """
+
         stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
         new_stage = deepcopy(create_default_model)
 
+        # set the output parameters of the new stage
         stem.stages.append(new_stage)
         stem._Stem__set_output_name_new_stage(new_stage, 5)
+
+        # check if the output directory is set correctly
         assert new_stage.output_settings[0].output_dir == Path("output/output_vtk_full_model_stage_5")
 
-    def test_set_output_name_new_stage_with_gid_output(self, create_default_model):
+    def test_set_output_name_new_stage_with_gid_output(self, create_default_model: Model):
+        """
+        Test the __set_output_name_new_stage method of the Stem class with GiDOutputParameters. It checks if the output
+        name is set correctly for the new stage.
+
+        Args:
+            - create_default_model (:class:`stem.model.Model`): The default model
+
+        """
+
+        # initialize the stem object
         stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
+
+        # create a new stage
         new_stage = stem.create_new_stage(delta_time=0.1, stage_duration=1.0)
+
+        # set the output parameters of the new stage
         new_stage.output_settings[0].output_parameters = MagicMock(spec=GiDOutputParameters)
         new_stage.output_settings[0].output_name = "gid_output"
         stem._Stem__set_output_name_new_stage(new_stage, 4)
+
+        # check if the output name is set correctly
         assert new_stage.output_settings[0].output_name == "gid_output_stage_4"
 
-    def set_output_name_new_stage_with_json_output(self, create_default_model):
+    def test_set_output_name_new_stage_with_json_output(self, create_default_model: Model):
+        """
+        Test the __set_output_name_new_stage method of the Stem class with JsonOutputParameters. It checks if the output
+        name is set correctly for the new stage.
+
+        Args:
+            - create_default_model (:class:`stem.model.Model`): The default model
+
+        """
+
+        # initialize the stem object
         stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
+
+        # create a new stage
         new_stage = stem.create_new_stage(delta_time=0.1, stage_duration=1.0)
+
+        # set the output parameters of the new stage
         new_stage.output_settings[0].output_parameters = MagicMock(spec=JsonOutputParameters)
         new_stage.output_settings[0].output_name = "json_output"
         stem._Stem__set_output_name_new_stage(new_stage, 3)
+
+        # check if the output name is set correctly
         assert new_stage.output_settings[0].output_name == "json_output_stage_3"
