@@ -20,6 +20,7 @@ class Lamb:
     In this way the solution only depends on Poisson ratio.
     The results for different radius and E are found as post-processing.
     """
+
     def __init__(self, nb_steps=1000, tol=0.005, tau_max=4, step_int=1000, pulse_samples=2):
         """
         Lamb wave solution for vertical displacement
@@ -55,7 +56,6 @@ class Lamb:
         self.u = []  # displacement
         self.u_bar = []  # normalised displacement
 
-
     def material_properties(self, nu: float, rho: float, young: float):
         r"""
         Material properties
@@ -68,7 +68,6 @@ class Lamb:
         self.poisson = nu
         self.rho = rho
         self.young = young
-
 
     def loading(self, p: float, load_type: LoadType):
         r"""
@@ -133,14 +132,15 @@ class Lamb:
                 # G1 integral
                 integral = []
                 for t in theta:
-                    y = np.sqrt(self.eta ** 2 + (ta ** 2 - self.eta ** 2) * np.sin(t) ** 2)
-                    integral.append((1 - 2 * y ** 2)**2 * np.sin(t) ** 2 / (1 - 8 * y ** 2 + 8 * (3 - 2 * self.eta ** 2) * y ** 4 - 16 * (1 - self.eta ** 2) * y ** 6))
+                    y = np.sqrt(self.eta**2 + (ta**2 - self.eta**2) * np.sin(t)**2)
+                    integral.append((1 - 2 * y**2)**2 * np.sin(t)**2 /
+                                    (1 - 8 * y**2 + 8 * (3 - 2 * self.eta**2) * y**4 - 16 * (1 - self.eta**2) * y**6))
 
                 # perform integration
                 integral = trapezoid(np.array(integral), theta)
 
                 # compute C1
-                G1 = (ta ** 2 - self.eta ** 2) * integral
+                G1 = (ta**2 - self.eta**2) * integral
 
                 # normalised displacement
                 self.u_bar[idx] = -G1 / np.pi**2
@@ -161,22 +161,23 @@ class Lamb:
                 integral_1 = []
                 integral_2 = []
                 for t in theta:
-                    y = np.sqrt(self.eta ** 2 + (ta ** 2 - self.eta ** 2) * np.sin(t) ** 2)
-                    integral_1.append((1 - 2 * y ** 2)**2 * np.sin(t) ** 2 / (1 - 8 * y ** 2 + 8 * (3 - 2 * self.eta ** 2) * y ** 4 - 16 * (1 - self.eta ** 2) * y ** 6))
-                    y = np.sqrt(1 + (ta ** 2 - 1) * np.sin(t) ** 2)
-                    integral_2.append(y ** 2 * (y ** 2 - self.eta ** 2) * np.sin(t) ** 2 / (1 - 8 * y ** 2 + 8 * (3 - 2 * self.eta ** 2) * y ** 4 - 16 * (1 - self.eta ** 2) * y ** 6))
+                    y = np.sqrt(self.eta**2 + (ta**2 - self.eta**2) * np.sin(t)**2)
+                    integral_1.append((1 - 2 * y**2)**2 * np.sin(t)**2 /
+                                      (1 - 8 * y**2 + 8 * (3 - 2 * self.eta**2) * y**4 - 16 * (1 - self.eta**2) * y**6))
+                    y = np.sqrt(1 + (ta**2 - 1) * np.sin(t)**2)
+                    integral_2.append(y**2 * (y**2 - self.eta**2) * np.sin(t)**2 /
+                                      (1 - 8 * y**2 + 8 * (3 - 2 * self.eta**2) * y**4 - 16 * (1 - self.eta**2) * y**6))
 
                 # perform integration
                 integral_1 = trapezoid(np.array(integral_1), theta)
                 integral_2 = trapezoid(np.array(integral_2), theta)
 
                 # compute G1 & G2
-                G1 = (ta ** 2 - self.eta ** 2) * integral_1
-                G2 = 4 * (ta ** 2 - 1) * integral_2
+                G1 = (ta**2 - self.eta**2) * integral_1
+                G2 = 4 * (ta**2 - 1) * integral_2
 
                 # normalised displacement
                 self.u_bar[idx] = -(G1 + G2) / np.pi**2
-
 
     def displacement_after_rayleigh(self):
         r"""
@@ -194,24 +195,32 @@ class Lamb:
                 integral_2_2 = []
 
                 # limits for integration
-                theta_r1 = np.arcsin(np.sqrt((self.cr ** 2 - self.eta**2) / (ta**2 - self.eta**2)))
+                theta_r1 = np.arcsin(np.sqrt((self.cr**2 - self.eta**2) / (ta**2 - self.eta**2)))
                 theta_r1_low = np.linspace(0, theta_r1 - self.tol, self.steps_int)
                 theta_r1_hig = np.linspace(theta_r1 + self.tol, np.pi / 2, self.steps_int)
 
-                theta_r2 = np.arcsin(np.sqrt((self.cr ** 2 - 1) / (ta**2 - 1)))
+                theta_r2 = np.arcsin(np.sqrt((self.cr**2 - 1) / (ta**2 - 1)))
                 theta_r2_low = np.linspace(0, theta_r2 - self.tol, self.steps_int)
                 theta_r2_hig = np.linspace(theta_r2 + self.tol, np.pi / 2, self.steps_int)
 
                 for t in range(self.steps_int):
-                    y = np.sqrt(self.eta ** 2 + (ta ** 2 - self.eta ** 2) * np.sin(theta_r1_low[t]) ** 2)
-                    integral_1_1.append((1 - 2 * y ** 2) ** 2 * np.sin(theta_r1_low[t]) ** 2 / (1 - 8 * y ** 2 + 8 * (3 - 2 * self.eta ** 2) * y ** 4 - 16 * (1 - self.eta ** 2) * y ** 6))
-                    y = np.sqrt(self.eta ** 2 + (ta ** 2 - self.eta ** 2) * np.sin(theta_r1_hig[t]) ** 2)
-                    integral_1_2.append((1 - 2 * y ** 2) ** 2 * np.sin(theta_r1_hig[t]) ** 2 / (1 - 8 * y ** 2 + 8 * (3 - 2 * self.eta ** 2) * y ** 4 - 16 * (1 - self.eta ** 2) * y ** 6))
+                    y = np.sqrt(self.eta**2 + (ta**2 - self.eta**2) * np.sin(theta_r1_low[t])**2)
+                    integral_1_1.append(
+                        (1 - 2 * y**2)**2 * np.sin(theta_r1_low[t])**2 /
+                        (1 - 8 * y**2 + 8 * (3 - 2 * self.eta**2) * y**4 - 16 * (1 - self.eta**2) * y**6))
+                    y = np.sqrt(self.eta**2 + (ta**2 - self.eta**2) * np.sin(theta_r1_hig[t])**2)
+                    integral_1_2.append(
+                        (1 - 2 * y**2)**2 * np.sin(theta_r1_hig[t])**2 /
+                        (1 - 8 * y**2 + 8 * (3 - 2 * self.eta**2) * y**4 - 16 * (1 - self.eta**2) * y**6))
 
-                    y = np.sqrt(1 + (ta ** 2 - 1) * np.sin(theta_r2_low[t]) ** 2)
-                    integral_2_1.append(y ** 2 * (y ** 2 - self.eta ** 2) * np.sin(theta_r2_low[t]) ** 2 / (1 - 8 * y ** 2 + 8 * (3 - 2 * self.eta**2) * y ** 4 - 16 * (1 - self.eta ** 2) * y ** 6))
-                    y = np.sqrt(1 + (ta ** 2 - 1) * np.sin(theta_r2_hig[t]) ** 2)
-                    integral_2_2.append(y ** 2 * (y ** 2 - self.eta ** 2) * np.sin(theta_r2_hig[t]) ** 2 / (1 - 8 * y ** 2 + 8 * (3 - 2 * self.eta**2) * y ** 4 - 16 * (1 - self.eta ** 2) * y ** 6))
+                    y = np.sqrt(1 + (ta**2 - 1) * np.sin(theta_r2_low[t])**2)
+                    integral_2_1.append(y**2 * (y**2 - self.eta**2) * np.sin(theta_r2_low[t])**2 /
+                                        (1 - 8 * y**2 + 8 * (3 - 2 * self.eta**2) * y**4 - 16 *
+                                         (1 - self.eta**2) * y**6))
+                    y = np.sqrt(1 + (ta**2 - 1) * np.sin(theta_r2_hig[t])**2)
+                    integral_2_2.append(y**2 * (y**2 - self.eta**2) * np.sin(theta_r2_hig[t])**2 /
+                                        (1 - 8 * y**2 + 8 * (3 - 2 * self.eta**2) * y**4 - 16 *
+                                         (1 - self.eta**2) * y**6))
 
                 # perform integration
                 integral_1_1 = trapezoid(np.array(integral_1_1), theta_r1_low)
@@ -220,12 +229,11 @@ class Lamb:
                 integral_2_2 = trapezoid(np.array(integral_2_2), theta_r2_hig)
 
                 # compute G1 & G2
-                G1 = (ta ** 2 - self.eta ** 2) * (integral_1_1 + integral_1_2)
-                G2 = 4 * (ta ** 2 - 1) * (integral_2_1 + integral_2_2)
+                G1 = (ta**2 - self.eta**2) * (integral_1_1 + integral_1_2)
+                G2 = 4 * (ta**2 - 1) * (integral_2_1 + integral_2_2)
 
                 # normalised displacement
                 self.u_bar[idx] = -(G1 + G2) / np.pi**2
-
 
     def elastic_props(self):
         r"""
