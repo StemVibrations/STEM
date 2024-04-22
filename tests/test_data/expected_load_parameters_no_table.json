@@ -37,7 +37,7 @@
                 }
             },  {
             "python_module": "set_moving_load_process",
-            "kratos_module": "StructuralMechanicsApplication",
+            "kratos_module": "StemApplication",
             "process_name": "SetMovingLoadProcess",
             "Parameters": {
                 "model_part_name": "PorousDomain.test_moving_load",
@@ -46,7 +46,9 @@
                 "direction": [1.0, 0.0, -1.0],
                 "velocity": 5.0,
                 "origin": [1.0, 0.1, 0.0],
-                "offset": 3.0
+                "offset": 3.0,
+                "clear_at_finalize": false,
+                "serialize": true
                 }
             },{
            "python_module": "set_multiple_moving_loads_process",

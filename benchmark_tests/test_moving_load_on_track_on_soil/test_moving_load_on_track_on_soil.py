@@ -14,7 +14,7 @@ from stem.solver import AnalysisType, SolutionType, TimeIntegration, Displacemen
     NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
 from stem.output import NodalOutput, Output, VtkOutputParameters
 from stem.stem import Stem
-from benchmark_tests.utils import assert_floats_in_files_almost_equal
+from benchmark_tests.utils import assert_floats_in_directories_almost_equal
 
 
 def test_moving_load_on_track_on_soil():
@@ -156,8 +156,7 @@ def test_moving_load_on_track_on_soil():
     else:
         raise Exception("Unknown platform")
 
-    assert_floats_in_files_almost_equal(expected_output_dir,
-                                        os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"),
-                                        4)
+    assert_floats_in_directories_almost_equal(
+        expected_output_dir, os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"), 4)
 
     rmtree(input_folder)

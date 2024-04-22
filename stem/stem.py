@@ -1,10 +1,13 @@
 import os
+from copy import deepcopy
+from pathlib import Path
+from typing import List, Dict
 
 import KratosMultiphysics
 from KratosMultiphysics.StemApplication.geomechanics_analysis import StemGeoMechanicsAnalysis
 
-from typing import List, Dict
 from stem.model import Model
+from stem.output import VtkOutputParameters, GiDOutputParameters, JsonOutputParameters
 from stem.IO.kratos_io import KratosIO
 
 
@@ -15,10 +18,11 @@ class Stem:
     Attributes:
         - input_files_dir (str): The directory where the input files are to be written.
         - kratos_io (:class:`stem.IO.kratos_io.KratosIO`): The Kratos IO object.
-        - kratos_model (:class:`KratosMultiphysics.Model`): The Kratos model.
+        - kratos_model (KratosMultiphysics.Model): The Kratos model.
         - __stages (List[:class:`stem.model.Model`]): The calculation stages.
         - __stage_settings_file_names (Dict[int, str]): The file names of the project parameters files for each stage.
         - __last_ran_stage_number (int): The number of the last ran stage.
+        - __last_uvec_data (KratosMultiphysics.Parameters): The uvec data from the last ran stage
 
     """
 
@@ -38,6 +42,11 @@ class Stem:
         self.__stage_settings_file_names: Dict[int, str] = {}
         self.__last_ran_stage_number: int = 0
 
+        self.__last_uvec_data = KratosMultiphysics.Parameters("""{"u": {},
+                                                               "theta": {},
+                                                               "loads": {},
+                                                               "state": {}}""")
+
         # perform initial stage setup and mesh generation in this order
         initial_stage.post_setup()
         initial_stage.generate_mesh()
@@ -53,33 +62,79 @@ class Stem:
         """
         return self.__stages
 
+    def create_new_stage(self, delta_time: float, stage_duration: float) -> Model:
+        """
+        Create a new stage based on the last stage in the calculation. Note that the stage is not added to the
+        calculation.
+
+        Args:
+            - delta_time (float): The time step of the new stage.
+            - stage_duration (float): The duration of the new stage.
+
+        Returns:
+            - :class:`stem.model.Model`: The new stage.
+
+        """
+        # create a new stage based on the last stage
+        new_stage = deepcopy(self.__stages[-1])
+
+        # check if project parameters are set, both the last stage and the new stage have to be checked for mypy
+        if new_stage.project_parameters is None or self.__stages[-1].project_parameters is None:
+            raise Exception("Project parameters of the last stage are not set")
+
+        # set the time integration settings of the new stage
+        new_stage.project_parameters.settings.time_integration.start_time = (
+            self.__stages[-1].project_parameters.settings.time_integration.end_time)
+        new_stage.project_parameters.settings.time_integration.end_time = (
+            new_stage.project_parameters.settings.time_integration.start_time + stage_duration)
+        new_stage.project_parameters.settings.time_integration.delta_time = delta_time
+
+        # set output directory and output name new stage
+        self.__set_output_name_new_stage(new_stage, len(self.__stages) + 1)
+
+        return new_stage
+
     def add_calculation_stage(self, stage: Model):
         """
-        Add a calculation stage to the calculation. Currently only one stage is supported. This method is reserved for
-        when multi-stage calculations are implemented. In this case, when adding a stage, a deepcopy of the model is to
-        be made, where the nodes and elements is not to be written again.
+        Add a calculation stage to the calculation. The geometry and the mesh of the new stage are regenerated.
 
         Args:
             - stage (:class:`stem.model.Model`): The model of the stage to be added.
 
+        """
+        self.__stages.append(stage)
+
+        # add the geo data to gmsh
+        stage.gmsh_io.generate_geo_from_geo_data()
+
+        # post setup and generate mesh
+        stage.post_setup()
+        stage.generate_mesh()
+
+        # check if the mesh is the same in the new stage
+        self.validate_latest_stage()
+
+    def validate_latest_stage(self):
+        """
+        Validate the latest stage. The validation checks if the number of body and process model parts are the same
+        between the last two stages. And if the mesh is the same in the new stage.
+
         Raises:
-            - NotImplementedError: Adding calculation stages is not implemented yet.
-
-        """
-        NotImplementedError("Adding calculation stages is not implemented yet. Currently only one stage is supported.")
-
-    def validate_stages(self):
-        """
-        Validate the stages of the calculation. Currently stages are not validated, but this method is reserved for
-        when multi-stage calculations are implemented. In this case, the mesh in all stages should be the same.
-        Furthermore, time should be continuous between stages.
-
-        Raises:
-            - NotImplementedError: Validation of stages is not implemented yet.
+            - Exception: If the number of body model parts are not the same between stages.
+            - Exception: If the body model part names are not the same between stages.
 
         """
 
-        NotImplementedError("Validation of stages is not implemented yet.")
+        # check if number of model parts is the same
+        if len(self.__stages[-2].body_model_parts) != len(self.__stages[-1].body_model_parts):
+            raise Exception("Number of body model parts are not the same between stages")
+
+        # todo update kratos such that process model parts can be added
+        if len(self.__stages[-2].process_model_parts) != len(self.__stages[-1].process_model_parts):
+            raise Exception("Number of process model parts are not the same between stages")
+
+        # check if the mesh is the same in the new stage
+        self.__check_if_mesh_between_stages_is_the_same(self.__stages[-2], self.__stages[-1])
 
     def write_all_input_files(self):
         """
@@ -128,9 +183,20 @@ class Stem:
         with open(parameters_file_name, "r") as parameter_file:
             kratos_parameters = KratosMultiphysics.Parameters(parameter_file.read())
 
+        # set uvec state if it is present
+        if kratos_parameters["solver_settings"].Has("uvec"):
+            kratos_parameters["solver_settings"]["uvec"]["uvec_data"]["state"] = self.__last_uvec_data["state"]
+
         # run calculation
         simulation = StemGeoMechanicsAnalysis(self.kratos_model, kratos_parameters)
         simulation.Run()
+
+        # save the uvec data for the next stage if it is present
+        if hasattr(simulation._GetSolver().solver, 'uvec_data'):
+            self.__last_uvec_data = simulation._GetSolver().solver.uvec_data
+
+        # make sure the simulation is deleted, else bad memory allocation may occur when serializing the kratos model
+        del simulation
 
         # update last ran stage number
         self.__last_ran_stage_number = stage_number
@@ -138,11 +204,129 @@ class Stem:
         # change working directory back to original working directory
         os.chdir(cwd)
 
+    def finalise(self):
+        """
+        Finalise the calculation.
+
+        """
+
+        # if more than 1 stage is run, transfer all vtk results to a shared output directory
+        if len(self.stages) > 1:
+            self.__transfer_vtk_files_to_main_output_directories()
+
     def run_calculation(self):
         """
         Run the full calculation.
 
         """
 
+        # run all stages
         for stage_nr, stage in enumerate(self.stages):
             self.run_stage(stage_nr + 1)
+
+        # finalise the calculation
+        self.finalise()
+
+    @staticmethod
+    def __check_if_mesh_between_stages_is_the_same(reference_stage: Model, target_stage: Model):
+        """
+        Check if the mesh between stages is the same. The mesh is checked by checking if the mesh in each body model
+        part is the same.
+
+        Args:
+            - reference_stage (:class:`stem.model.Model`): The reference stage.
+            - target_stage (:class:`stem.model.Model`): The target stage.
+
+        Raises:
+            - Exception: If the number of body model parts are not the same between stages.
+            - Exception: If the body model part names are not the same between stages.
+            - Exception: If the mesh is not the same between stages in a body model part.
+
+        """
+
+        if len(reference_stage.body_model_parts) != len(target_stage.body_model_parts):
+            raise Exception("Number of body model parts are not the same between stages")
+
+        # check each body model part
+        for ref_body, target_body in zip(reference_stage.body_model_parts, target_stage.body_model_parts):
+
+            # check if the body model part names are the same
+            if ref_body.name != target_body.name:
+                raise Exception("Body model part names are not the same between stages")
+
+            # check if the mesh is the same
+            if ref_body.mesh != target_body.mesh:
+                raise Exception(f"Meshes between stages in body model part: {ref_body.name} "
+                                f"are not the same between stages")
+
+    def __transfer_vtk_files_to_main_output_directories(self):
+        """
+        Transfer vtk files from the stage output directory to the main output directory. This is required as vtk files
+        are always written to a new directory, in order to avoid overwriting directories from previous stages.
+
+        """
+
+        # initialise dictionary to store main vtk output directories
+        main_vtk_output_dirs = {}
+        for i, stage in enumerate(self.stages):
+
+            for output_settings in stage.output_settings:
+                # only transfer vtk files
+                if isinstance(output_settings.output_parameters, VtkOutputParameters):
+                    if output_settings.part_name is None:
+                        part_name = "full_model"
+                    else:
+                        part_name = output_settings.part_name
+
+                    # The main output directory is the directory where the first stage writes its output
+                    if i == 0:
+                        if os.path.isabs(output_settings.output_dir):
+                            main_vtk_output_dirs[part_name] = Path(output_settings.output_dir)
+                        else:
+                            main_vtk_output_dirs[part_name] = Path(self.input_files_dir) / output_settings.output_dir
+                    else:
+                        # if the current stage is not the main stage, move the vtk files to the main output directory
+                        if os.path.isabs(output_settings.output_dir):
+                            stage_vtk_output_dir = Path(output_settings.output_dir)
+                        else:
+                            stage_vtk_output_dir = Path(self.input_files_dir) / output_settings.output_dir
+
+                        # move all vtk files in stage vtk output dir to main vtk output dir
+                        for file in os.listdir(stage_vtk_output_dir):
+                            if file.endswith(".vtk"):
+                                os.rename(stage_vtk_output_dir / file, main_vtk_output_dirs[part_name] / file)
+
+                        # remove the stage vtk output dir if it is empty
+                        if not os.listdir(stage_vtk_output_dir):
+                            os.rmdir(stage_vtk_output_dir)
+
+    @staticmethod
+    def __set_output_name_new_stage(new_stage: Model, stage_nr: int):
+        """
+        Set the output name of the new stage. The output name is set to the current output name with the
+        stage number appended.
+
+        Args:
+            - new_stage (:class:`stem.model.Model`): The new stage.
+            - stage_nr (int): The number of the stage.
+
+        """
+
+        for output_settings in new_stage.output_settings:
+
+            # set output directory for vtk output
+            if isinstance(output_settings.output_parameters, VtkOutputParameters):
+                output_settings.output_dir = Path(str(output_settings.output_dir) + f"_stage_{stage_nr}")
+
+            # set output name for gid output
+            elif isinstance(output_settings.output_parameters, GiDOutputParameters):
+                output_settings.output_name = f"{output_settings.output_name}_stage_{stage_nr}"
+
+            # set output name for json output
+            elif isinstance(output_settings.output_parameters, JsonOutputParameters):
+                if output_settings.output_name is not None:
+                    stage_identifier = f"_stage_{stage_nr}"
+                    suffix = Path(output_settings.output_name).suffix
+
+                    base_path = Path(output_settings.output_name).parent / Path(output_settings.output_name).stem
+                    output_settings.output_name = str(base_path) + stage_identifier + suffix

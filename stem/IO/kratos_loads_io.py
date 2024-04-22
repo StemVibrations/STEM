@@ -36,13 +36,15 @@ class KratosLoadsIO:
         # initialize load dictionary
         load_dict: Dict[str, Any] = {
             "python_module": "set_moving_load_process",
-            "kratos_module": "StructuralMechanicsApplication",
+            "kratos_module": "StemApplication",
             "process_name": "SetMovingLoadProcess",
             "Parameters": deepcopy(parameters.__dict__),
         }
 
         load_dict["Parameters"]["model_part_name"] = f"{self.domain}.{part_name}"
         load_dict["Parameters"]["variable_name"] = "POINT_LOAD"
+        load_dict["Parameters"]["serialize"] = True
+        load_dict["Parameters"]["clear_at_finalize"] = False
 
         return load_dict
 

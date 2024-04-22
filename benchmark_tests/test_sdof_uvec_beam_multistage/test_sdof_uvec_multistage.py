@@ -5,14 +5,13 @@ from stem.model import Model
 from stem.model_part import BodyModelPart
 from stem.structural_material import EulerBeam, StructuralMaterial
 from stem.load import UvecLoad
-from stem.boundary import DisplacementConstraint, RotationConstraint
-from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, StressInitialisationType, SolverSettings, Problem
-from stem.output import NodalOutput, VtkOutputParameters, Output
+from stem.boundary import DisplacementConstraint
+from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
+                         StressInitialisationType, SolverSettings, Problem)
 from stem.stem import Stem
 from shutil import rmtree, copytree
 
-from benchmark_tests.analytical_solutions.moving_vehicle import TwoDofVehicle
-from benchmark_tests.utils import assert_floats_in_directories_almost_equal
+from benchmark_tests.utils import assert_floats_in_files_almost_equal
 
 PLOT_RESULTS = False
 
@@ -65,18 +64,18 @@ def test_stem():
         "wheel_mass": 5750,
         "wheel_stiffness": 1595e5,
         "wheel_damping": 1000,
-        "contact_coefficient": 9.1e-8,
+        "contact_coefficient": 9.1e-7,
         "contact_power": 1,
         "gravity_axis": 1,
-        "file_name": r"test.txt"
+        "file_name": r"calculated_results.txt"
     }
 
     uvec_load = UvecLoad(direction=[1, 1, 0],
-                         velocity=velocity,
-                         origin=[0.0, 0, 0],
+                         velocity=0,
+                         origin=[12.5, 0, 0],
                          wheel_configuration=[0.0],
                          uvec_file=r"uvec_ten_dof_vehicle_2D/uvec.py",
-                         uvec_function_name="uvec",
+                         uvec_function_name="uvec_static",
                          uvec_parameters=uvec_parameters)
     model.add_load_by_geometry_ids([1], uvec_load, "uvec_load")
 
@@ -100,57 +99,55 @@ def test_stem():
 
     # Set up solver settings
     analysis_type = AnalysisType.MECHANICAL
-    solution_type = SolutionType.DYNAMIC
+    solution_type = SolutionType.QUASI_STATIC
     # Set up start and end time of calculation, time step and etc
-    time_integration = TimeIntegration(start_time=0.0,
-                                       end_time=0.9,
-                                       delta_time=0.002,
+    time_integration = TimeIntegration(start_time=-0.15,
+                                       end_time=0.45,
+                                       delta_time=0.15,
                                        reduction_factor=1.0,
                                        increase_factor=1.0,
                                        max_delta_time_factor=1000)
-    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-3,
-                                                            displacement_absolute_tolerance=1.0e-8)
+    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-5,
+                                                            displacement_absolute_tolerance=1.0e-12)
     stress_initialisation_type = StressInitialisationType.NONE
     solver_settings = SolverSettings(analysis_type=analysis_type,
                                      solution_type=solution_type,
                                      stress_initialisation_type=stress_initialisation_type,
                                      time_integration=time_integration,
-                                     is_stiffness_matrix_constant=True,
+                                     is_stiffness_matrix_constant=False,
                                      are_mass_and_damping_constant=False,
                                      convergence_criteria=convergence_criterion,
-                                     rayleigh_k=0.001,
-                                     rayleigh_m=0.01)
+                                     rayleigh_k=0.000,
+                                     rayleigh_m=0.00)
 
     # Set up problem data
     problem = Problem(problem_name="uvec_sdof", number_of_threads=1, settings=solver_settings)
     model.project_parameters = problem
 
-    # Nodal results
-    nodal_results = [NodalOutput.DISPLACEMENT]
-    # Gauss point results
-    gauss_point_results = []
-
-    # Define the output process
-    vtk_output_process = Output(output_name="vtk_output",
-                                output_dir="output",
-                                output_parameters=VtkOutputParameters(file_format="ascii",
-                                                                      output_interval=40,
-                                                                      nodal_results=nodal_results,
-                                                                      gauss_point_results=gauss_point_results,
-                                                                      output_control_type="step"))
-
-    model.output_settings = [vtk_output_process]
-
-    input_folder = r"benchmark_tests/test_sdof_uvec_beam/input_kratos"
+    input_folder = r"benchmark_tests/test_sdof_uvec_beam_multistage/input_kratos"
     # copy uvec to input folder
     os.makedirs(input_folder, exist_ok=True)
-    copytree(r"benchmark_tests/test_sdof_uvec_beam/uvec_ten_dof_vehicle_2D",
+    copytree(r"benchmark_tests/test_sdof_uvec_beam_multistage/uvec_ten_dof_vehicle_2D",
              os.path.join(input_folder, "uvec_ten_dof_vehicle_2D"),
              dirs_exist_ok=True)
+
+    # make sure the uvec output is cleared as results are appended to the file at each iteration
+    if os.path.exists(os.path.join(input_folder, uvec_parameters["file_name"])):
+        os.remove(os.path.join(input_folder, uvec_parameters["file_name"]))
 
     # Write KRATOS input files
     # --------------------------------
     stem = Stem(model, input_folder)
+    model_stage_2 = stem.create_new_stage(0.0005, 0.45)
+    model_stage_2.project_parameters.settings.solution_type = SolutionType.DYNAMIC
+    model_stage_2.project_parameters.settings.rayleigh_k = 1e-6
+    model_stage_2.project_parameters.settings.rayleigh_m = 0.02
+
+    model_stage_2.process_model_parts[0].parameters.uvec_function_name = "uvec"
+    model_stage_2.process_model_parts[0].parameters.velocity = velocity
+
+    stem.add_calculation_stage(model_stage_2)
+
     stem.write_all_input_files()
 
     # Run Kratos calculation
@@ -160,8 +157,8 @@ def test_stem():
     if PLOT_RESULTS:
         import matplotlib.pyplot as plt
 
-        # read test.txt file with the numerical solution
-        with open(os.path.join(input_folder, "test.txt"), "r") as f:
+        # read results file
+        with open(os.path.join(input_folder, "calculated_results.txt"), "r") as f:
             test_data = f.read().splitlines()
         test_data = np.array([list(map(float, t.split(";"))) for t in test_data])
 
@@ -178,19 +175,9 @@ def test_stem():
             displacement_bottom.append(np.array(test_data)[index, 3])
             time.append(np.array(test_data)[index, 0])
 
-        # calculate analytical solution
-        ss = TwoDofVehicle()
-        ss.vehicle(uvec_parameters["bogie_mass"], uvec_parameters["wheel_mass"], velocity,
-                   uvec_parameters["wheel_stiffness"], uvec_parameters["wheel_damping"])
-        ss.beam(YOUNG_MODULUS, I22, DENSITY, CROSS_AREA, 25)
-        ss.compute()
-
-        # plot numerical and analytical solution
         fig, ax = plt.subplots(2, 1, sharex=True)
         ax[0].plot(time, displacement_top, label="kraton body", color='b')
         ax[1].plot(time, displacement_bottom, label="kraton wheel", color='r')
-        ax[0].plot(ss.time, -ss.displacement[:, 0], color='b', linestyle="--", label="analytical")
-        ax[1].plot(ss.time, -ss.displacement[:, 1], color='r', linestyle="--", label="analytical")
         ax[0].set_ylabel("Displacement beam [m]")
         ax[1].set_ylabel("Displacement bogie [m]")
         ax[1].set_xlabel("Time [s]")
@@ -200,8 +187,8 @@ def test_stem():
         plt.show()
 
     # test output
-    assert_floats_in_directories_almost_equal("benchmark_tests/test_sdof_uvec_beam/output_/output_vtk_full_model",
-                                              os.path.join(input_folder, "output/output_vtk_full_model"),
-                                              decimal=3)
+    assert_floats_in_files_almost_equal("benchmark_tests/test_sdof_uvec_beam_multistage/output_/expected_results.txt",
+                                        os.path.join(input_folder, uvec_parameters["file_name"]),
+                                        decimal=3)
 
     rmtree(input_folder)
