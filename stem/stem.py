@@ -18,10 +18,11 @@ class Stem:
     Attributes:
         - input_files_dir (str): The directory where the input files are to be written.
         - kratos_io (:class:`stem.IO.kratos_io.KratosIO`): The Kratos IO object.
-        - kratos_model (:class:`KratosMultiphysics.Model`): The Kratos model.
+        - kratos_model (KratosMultiphysics.Model): The Kratos model.
         - __stages (List[:class:`stem.model.Model`]): The calculation stages.
         - __stage_settings_file_names (Dict[int, str]): The file names of the project parameters files for each stage.
         - __last_ran_stage_number (int): The number of the last ran stage.
+        - __last_uvec_data (KratosMultiphysics.Parameters): The uvec data from the last ran stage
 
     """
 

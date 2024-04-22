@@ -374,7 +374,7 @@ class Output:
             if part_name is None:
                 part_name = "output_full_model"
             if output_name is None or output_name == "":
-                output_name = f"{part_name}" + ".json"
+                output_name = f"{part_name}.json"
         elif isinstance(output_parameters, GiDOutputParameters):
             if part_name is None:
                 part_name = "output_full_model"

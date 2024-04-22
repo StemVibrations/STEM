@@ -13,6 +13,10 @@ from shutil import rmtree
 
 
 def test_stem():
+    """
+    Test STEM: 2D block with distributed loading with multistage
+    """
+
     # Define geometry, conditions and material parameters
     # --------------------------------
 

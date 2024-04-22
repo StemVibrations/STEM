@@ -59,8 +59,6 @@ def uvec_static(json_string: str) -> str:
         aux[i + 1] = [0., (-val).tolist(), 0.]
     uvec_data["loads"] = aux
 
-    print(uvec_data["loads"])
-
     return json.dumps(uvec_data)
 
 
