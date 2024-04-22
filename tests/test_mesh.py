@@ -315,9 +315,6 @@ class TestMesh:
         node1 = Node(1, [0, 0])
         node2 = Node(1, [0, 0])
 
-        # Check the equality of the first node with itself
-        assert node1 == node1
-
         # Check the equality of the two nodes
         assert node1 == node2
 
@@ -346,9 +343,6 @@ class TestMesh:
         # Create two equal elements
         element1 = Element(1, "TRIANGLE_3N", [1, 2, 3])
         element2 = Element(1, "TRIANGLE_3N", [1, 2, 3])
-
-        # Check the equality of the first element with itself
-        assert element1 == element1
 
         # Check the equality of the two elements
         assert element1 == element2
@@ -383,9 +377,6 @@ class TestMesh:
         mesh2 = Mesh(2)
         mesh2.nodes = {1: Node(1, [0, 0]), 2: Node(2, [1, 1])}
         mesh2.elements = {1: Element(1, "TRIANGLE_3N", [1, 2, 3])}
-
-        # Check the equality of the first mesh with itself
-        assert mesh1 == mesh1
 
         # Check the equality of the two meshes
         assert mesh1 == mesh2

@@ -500,7 +500,7 @@ class TestStem:
         stem.add_calculation_stage(stage2)
 
         # Create a dummy vtk file in the second stage output directory
-        dummy_vtk_file = input_dir / Path("output/output_vtk_full_model_stage_2") / "dummy.vtk"
+        dummy_vtk_file = Path(input_dir, "output", "output_vtk_full_model_stage_2", "dummy.vtk")
         dummy_vtk_file.touch()
 
         # generate main output directory

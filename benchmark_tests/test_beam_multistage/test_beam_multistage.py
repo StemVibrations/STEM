@@ -12,10 +12,14 @@ from stem.stem import Stem
 
 from tests.utils import TestUtils
 
-PLOT_RESULTS = True
+PLOT_RESULTS = False
 
 
 def test_stem():
+    """
+    Test STEM: moving load in 2D, with multistage
+    """
+
     # Define geometry, conditions and material parameters
     # --------------------------------
 
