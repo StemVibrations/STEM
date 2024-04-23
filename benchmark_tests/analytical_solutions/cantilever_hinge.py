@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 def cantilever_hinge(x: np.ndarray, L: float, E: float, I: float, k: float, V: float) -> np.ndarray:
@@ -43,6 +42,7 @@ if __name__ == "__main__":
     V = 20
     x = np.linspace(0, L, 100)
     disp = cantilever_hinge(x, L, E, I, k, V)
+    import matplotlib.pyplot as plt
     plt.plot(x, disp)
     plt.show()
 
