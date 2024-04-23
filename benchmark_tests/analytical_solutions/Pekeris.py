@@ -1,5 +1,4 @@
 import os
-import sys
 import numpy as np
 from scipy.optimize import root
 from scipy.integrate import trapezoid
@@ -7,11 +6,14 @@ import matplotlib.pylab as plt
 
 
 class LoadType:
+    """
+    Load types: Heaviside or Pulse
+    """
     Heaviside = "heaviside"
     Pulse = "pulse"
 
 
-class Lamb:
+class Pekeris:
     r"""
     Based on Verruijt: An Introduction to Soil Dynamics (Chapter 13: Section 13.2).
 
@@ -320,13 +322,13 @@ class Lamb:
 
 
 if __name__ == "__main__":
-    lmb = Lamb()
+    lmb = Pekeris()
     lmb.material_properties(0.2, 2000, 100e3)
     lmb.loading(-1000, LoadType.Pulse)
     lmb.solution([3, 4, 5, 6])
     lmb.results(output_folder="Results", file_name="Pulse")
 
-    lmb = Lamb()
+    lmb = Pekeris()
     lmb.material_properties(0.2, 2000, 100e3)
     lmb.loading(-1000, LoadType.Heaviside)
     lmb.solution([3, 4, 5, 6])
