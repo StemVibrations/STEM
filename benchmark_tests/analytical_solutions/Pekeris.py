@@ -1,4 +1,5 @@
 import os
+from typing import List
 import numpy as np
 from scipy.optimize import root
 from scipy.integrate import trapezoid
@@ -17,22 +18,51 @@ class Pekeris:
     r"""
     Based on Verruijt: An Introduction to Soil Dynamics (Chapter 13: Section 13.2).
 
-    The solution is found for normalised variables: tau = (c_s * t / r)  and u_bar = P / (2 * pi * G * r).
+    The solution is found for normalised variables: tau = (c_s * t / r)  and u_bar = P / (2 * pi * G * r),
+    where:
+        - tau: normalised time
+        - u_bar: normalised displacement
+        - c_s: shear wave velocity
+        - t: time
+        - r: radius
+        - P: load
+        - G: shear modulus
+
     Only vertical displacement is computed.
     In this way the solution only depends on Poisson ratio.
     The results for different radius and E are found as post-processing.
+
+    Attributes:
+        - u (np.ndarray): vertical displacement
+        - poisson (float): Poisson ratio
+        - young (float): Young modulus
+        - rho (float): density
+        - time (np.ndarray): time
+        - load (float): load amplitude
+        - load_type (LoadType): type of load
+        - radius (List): list of radius
+        - shear_modulus (float): shear modulus
+        - cs (float): shear wave velocity
+        - cr (float): Rayleigh wave velocity
+        - eta (float): ratio shear wave / compression wave velocity
+        - tau (np.ndarray): normalised time
+        - nb_steps (int): number of steps for tau
+        - steps_int (int): number of steps for numerical integration
+        - tol (float): tolerance number for the integration
+        - pulse_samples (int): number of samples for pulse load
+        - u_bar (np.ndarray): normalised displacement
     """
 
-    def __init__(self, nb_steps=1000, tol=0.005, tau_max=4, step_int=1000, pulse_samples=2):
+    def __init__(self, nb_steps: int=1000, tol: float=0.005, tau_max: float=4, step_int: int=1000, pulse_samples: int=2):
         """
         Lamb wave solution for vertical displacement
 
         Args:
-            nb_steps: number of steps for tau
-            tol: small number for the integration
-            tau_max: maximum value of tau
-            step_int: number of steps for numerical integration
-            pulse_samples: number of samples for pulse load
+            - nb_steps (int): number of steps for time discretisation (default = 1000)
+            - tol (float): tolerance number for the integration (default = 0.005)
+            - tau_max (float): maximum value of tau (default = 4)
+            - step_int (int): number of steps for numerical integration (default = 1000)
+            - pulse_samples (int): number of samples for pulse load (default = 2)
         """
 
         self.u = []
@@ -47,8 +77,6 @@ class Pekeris:
         self.cs = []  # shear wave velocity
         self.cr = []  # Rayleigh wave velocity
         self.eta = []  # ratio shear wave / compression wave velocity
-        self.tau = []
-        self.y = []
         self.nb_steps = int(nb_steps)  # for the discretisation of tau
         self.steps_int = int(step_int)  # number of steps for numerical integration
         self.tol = tol  # small number for the integration
@@ -63,9 +91,9 @@ class Pekeris:
         Material properties
 
         Args:
-            nu: Poisson ratio
-            rho: density
-            young: Young modulus
+            - nu (float): Poisson ratio
+            - rho (float): density
+            - young (float): Young modulus
         """
         self.poisson = nu
         self.rho = rho
@@ -76,18 +104,18 @@ class Pekeris:
         Load properties
 
         Args:
-            p: load
-            load_type: type of load (pulse or heaviside)
+            - p (float): load amplitude
+            - load_type (LoadType): type of load
         """
         self.load = p
         self.load_type = load_type
 
-    def solution(self, radius: list):
+    def solution(self, radius: List[float]):
         r"""
-        Compute the solution
+        Compute the solution for the given radius
 
         Args:
-            radius: list of radius
+            - radius (List[float]): list of radius
         """
         self.radius = radius
         self.u = np.zeros((len(self.tau), len(radius)))
@@ -124,28 +152,28 @@ class Pekeris:
         Compute displacement before arrival of shear wave
         """
         # limits for integration
-        theta = np.linspace(0, np.pi / 2, self.steps_int)
+        theta_array = np.linspace(0, np.pi / 2, self.steps_int)
 
         # for each tau
-        for idx, ta in enumerate(self.tau):
+        for idx, tau in enumerate(self.tau):
             # if tau within these limits: evaluate integral
-            if (ta > self.eta) & (ta <= 1):
+            if (tau > self.eta) & (tau <= 1):
 
                 # G1 integral
                 integral = []
-                for t in theta:
-                    y = np.sqrt(self.eta**2 + (ta**2 - self.eta**2) * np.sin(t)**2)
-                    integral.append((1 - 2 * y**2)**2 * np.sin(t)**2 /
+                for theta in theta_array:
+                    y = np.sqrt(self.eta**2 + (tau**2 - self.eta**2) * np.sin(theta)**2)
+                    integral.append((1 - 2 * y**2)**2 * np.sin(theta)**2 /
                                     (1 - 8 * y**2 + 8 * (3 - 2 * self.eta**2) * y**4 - 16 * (1 - self.eta**2) * y**6))
 
                 # perform integration
                 integral = trapezoid(np.array(integral), theta)
 
-                # compute C1
-                G1 = (ta**2 - self.eta**2) * integral
+                # compute G1 integral
+                G1_integral = (tau**2 - self.eta**2) * integral
 
                 # normalised displacement
-                self.u_bar[idx] = -G1 / np.pi**2
+                self.u_bar[idx] = -G1_integral / np.pi**2
 
     def displacement_before_rayleigh(self):
         r"""
@@ -156,17 +184,17 @@ class Pekeris:
         theta = np.linspace(0, np.pi / 2, self.steps_int)
 
         # for each tau
-        for idx, ta in enumerate(self.tau):
+        for idx, tau in enumerate(self.tau):
             # if tau within these limits: evaluate integral
-            if (ta > 1) & (ta <= self.cr):
+            if (tau > 1) & (tau <= self.cr):
                 # G1 and G2 integrals
                 integral_1 = []
                 integral_2 = []
                 for t in theta:
-                    y = np.sqrt(self.eta**2 + (ta**2 - self.eta**2) * np.sin(t)**2)
+                    y = np.sqrt(self.eta**2 + (tau**2 - self.eta**2) * np.sin(t)**2)
                     integral_1.append((1 - 2 * y**2)**2 * np.sin(t)**2 /
                                       (1 - 8 * y**2 + 8 * (3 - 2 * self.eta**2) * y**4 - 16 * (1 - self.eta**2) * y**6))
-                    y = np.sqrt(1 + (ta**2 - 1) * np.sin(t)**2)
+                    y = np.sqrt(1 + (tau**2 - 1) * np.sin(t)**2)
                     integral_2.append(y**2 * (y**2 - self.eta**2) * np.sin(t)**2 /
                                       (1 - 8 * y**2 + 8 * (3 - 2 * self.eta**2) * y**4 - 16 * (1 - self.eta**2) * y**6))
 
@@ -174,12 +202,12 @@ class Pekeris:
                 integral_1 = trapezoid(np.array(integral_1), theta)
                 integral_2 = trapezoid(np.array(integral_2), theta)
 
-                # compute G1 & G2
-                G1 = (ta**2 - self.eta**2) * integral_1
-                G2 = 4 * (ta**2 - 1) * integral_2
+                # compute G1 & G2 integrals
+                G1_integral = (tau**2 - self.eta**2) * integral_1
+                G2_integral = 4 * (tau**2 - 1) * integral_2
 
                 # normalised displacement
-                self.u_bar[idx] = -(G1 + G2) / np.pi**2
+                self.u_bar[idx] = -(G1_integral + G2_integral) / np.pi**2
 
     def displacement_after_rayleigh(self):
         r"""
@@ -187,9 +215,9 @@ class Pekeris:
         """
 
         # for each tau
-        for idx, ta in enumerate(self.tau):
+        for idx, tau in enumerate(self.tau):
             # if tau within these limits: evaluate integral
-            if ta > self.cr:
+            if tau > self.cr:
                 # G1 and G2 integrals
                 integral_1_1 = []
                 integral_1_2 = []
@@ -197,45 +225,45 @@ class Pekeris:
                 integral_2_2 = []
 
                 # limits for integration
-                theta_r1 = np.arcsin(np.sqrt((self.cr**2 - self.eta**2) / (ta**2 - self.eta**2)))
+                theta_r1 = np.arcsin(np.sqrt((self.cr**2 - self.eta**2) / (tau**2 - self.eta**2)))
                 theta_r1_low = np.linspace(0, theta_r1 - self.tol, self.steps_int)
-                theta_r1_hig = np.linspace(theta_r1 + self.tol, np.pi / 2, self.steps_int)
+                theta_r1_high = np.linspace(theta_r1 + self.tol, np.pi / 2, self.steps_int)
 
-                theta_r2 = np.arcsin(np.sqrt((self.cr**2 - 1) / (ta**2 - 1)))
+                theta_r2 = np.arcsin(np.sqrt((self.cr**2 - 1) / (tau**2 - 1)))
                 theta_r2_low = np.linspace(0, theta_r2 - self.tol, self.steps_int)
-                theta_r2_hig = np.linspace(theta_r2 + self.tol, np.pi / 2, self.steps_int)
+                theta_r2_high = np.linspace(theta_r2 + self.tol, np.pi / 2, self.steps_int)
 
                 for t in range(self.steps_int):
-                    y = np.sqrt(self.eta**2 + (ta**2 - self.eta**2) * np.sin(theta_r1_low[t])**2)
+                    y = np.sqrt(self.eta**2 + (tau**2 - self.eta**2) * np.sin(theta_r1_low[t])**2)
                     integral_1_1.append(
                         (1 - 2 * y**2)**2 * np.sin(theta_r1_low[t])**2 /
                         (1 - 8 * y**2 + 8 * (3 - 2 * self.eta**2) * y**4 - 16 * (1 - self.eta**2) * y**6))
-                    y = np.sqrt(self.eta**2 + (ta**2 - self.eta**2) * np.sin(theta_r1_hig[t])**2)
+                    y = np.sqrt(self.eta**2 + (tau**2 - self.eta**2) * np.sin(theta_r1_high[t])**2)
                     integral_1_2.append(
-                        (1 - 2 * y**2)**2 * np.sin(theta_r1_hig[t])**2 /
+                        (1 - 2 * y**2)**2 * np.sin(theta_r1_high[t])**2 /
                         (1 - 8 * y**2 + 8 * (3 - 2 * self.eta**2) * y**4 - 16 * (1 - self.eta**2) * y**6))
 
-                    y = np.sqrt(1 + (ta**2 - 1) * np.sin(theta_r2_low[t])**2)
+                    y = np.sqrt(1 + (tau**2 - 1) * np.sin(theta_r2_low[t])**2)
                     integral_2_1.append(y**2 * (y**2 - self.eta**2) * np.sin(theta_r2_low[t])**2 /
                                         (1 - 8 * y**2 + 8 * (3 - 2 * self.eta**2) * y**4 - 16 *
                                          (1 - self.eta**2) * y**6))
-                    y = np.sqrt(1 + (ta**2 - 1) * np.sin(theta_r2_hig[t])**2)
-                    integral_2_2.append(y**2 * (y**2 - self.eta**2) * np.sin(theta_r2_hig[t])**2 /
+                    y = np.sqrt(1 + (tau**2 - 1) * np.sin(theta_r2_high[t])**2)
+                    integral_2_2.append(y**2 * (y**2 - self.eta**2) * np.sin(theta_r2_high[t])**2 /
                                         (1 - 8 * y**2 + 8 * (3 - 2 * self.eta**2) * y**4 - 16 *
                                          (1 - self.eta**2) * y**6))
 
                 # perform integration
                 integral_1_1 = trapezoid(np.array(integral_1_1), theta_r1_low)
-                integral_1_2 = trapezoid(np.array(integral_1_2), theta_r1_hig)
+                integral_1_2 = trapezoid(np.array(integral_1_2), theta_r1_high)
                 integral_2_1 = trapezoid(np.array(integral_2_1), theta_r2_low)
-                integral_2_2 = trapezoid(np.array(integral_2_2), theta_r2_hig)
+                integral_2_2 = trapezoid(np.array(integral_2_2), theta_r2_high)
 
                 # compute G1 & G2
-                G1 = (ta**2 - self.eta**2) * (integral_1_1 + integral_1_2)
-                G2 = 4 * (ta**2 - 1) * (integral_2_1 + integral_2_2)
+                G1_integral = (tau**2 - self.eta**2) * (integral_1_1 + integral_1_2)
+                G2_integral = 4 * (tau**2 - 1) * (integral_2_1 + integral_2_2)
 
                 # normalised displacement
-                self.u_bar[idx] = -(G1 + G2) / np.pi**2
+                self.u_bar[idx] = -(G1_integral + G2_integral) / np.pi**2
 
     def elastic_props(self):
         r"""
@@ -248,20 +276,19 @@ class Pekeris:
         self.cs = np.sqrt(self.shear_modulus / self.rho)
         # ratio of wave velocities
         self.eta = np.sqrt((1 - 2 * self.poisson) / (2 * (1 - self.poisson)))
-        # determine Rayleigh wave speed
-        # root finder of Rayleigh wave
+        # determine Rayleigh wave speed: root finder of Rayleigh wave
         dd = root(self.d_function, (1 - self.poisson) / 8, tol=1e-12)
         d = dd.x[0]
         self.cr = np.sqrt(1 + d)
 
-    def results(self, plots=True, output_folder="./", file_name="results"):
+    def results(self, plots: bool=True, output_folder: str="./", file_name: str="results"):
         r"""
         Post-processing of the results
 
         Args:
-            plots: if plots
-            output_folder: output folder
-            file_name: file name
+            - plots (bool): checks if make plots (default = True)
+            - output_folder (str): folder to save the results (default = "./")
+            - file_name (str): name of the file (default = "results")
         """
 
         # if load type pulse:
@@ -312,11 +339,16 @@ class Pekeris:
             plt.savefig(os.path.join(output_folder, f"{file_name}_displacement.png"))
             plt.close()
 
-        return
 
-    def d_function(self, d):
+    def d_function(self, d: float) -> float:
         r"""
-        Function to find Rayleigh wave speed
+        Function to compute the residual of the Rayleigh wave speed
+
+        Args:
+            - d (float): parameter to compute the residual of the Rayleigh speed
+
+        Returns:
+            - float: residual of the Rayleigh speed
         """
         return d - ((1 - self.poisson) / 8) / ((1 + d) * (d + self.poisson))
 
