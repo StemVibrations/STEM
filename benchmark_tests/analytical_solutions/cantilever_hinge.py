@@ -1,10 +1,11 @@
 import numpy as np
+import numpy.typing as npt
 
 
-def cantilever_hinge(x: np.ndarray, L: float, E: float, I: float, k: float, V: float) -> np.ndarray:
+def cantilever_hinge(x: npt.NDArray[np.float64], L: float, E: float, I: float, k: float, V: float) -> npt.NDArray[np.float64]:
     r"""
     Calculate the displacement of a cantilever beam with a hinge at the end, following the deflection curve.
-
+    All units are SI units.
 
     /|                   ! V
     /|-------------------o
@@ -13,17 +14,15 @@ def cantilever_hinge(x: np.ndarray, L: float, E: float, I: float, k: float, V: f
      |--> x
 
     Args:
-        - x: np.ndarray: The discretisation of the beam
-        - L: float: The length of the beam
-        - E: float: The Young's modulus
-        - I: float: The moment of inertia
-        - k: float: The stiffness of the hinge
-        - V: float: The vertical force applied at the hinge
-
+        - x (npt.NDArray): The discretisation of the beam [m]
+        - L (float): The length of the beam [m]
+        - E (float): The Young's modulus [Pa]
+        - I (float): The second moment of inertia [m^4]
+        - k (float): The spring constant [N/m]
+        - V (float): The applied force [N]
     Returns:
         - np.ndarray: The displacement at each x value
     """
-
 
     # Calculate the constants
     B=-((V * k * L**2) / (4 * E * I * k * L +4 * E * I**2)) - (2 * E * I * V * L)/(4 * E * I * k * L + 4 * E * I**2)
