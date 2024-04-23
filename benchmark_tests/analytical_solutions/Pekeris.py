@@ -1,6 +1,7 @@
 import os
-from typing import List
+from typing import List, Optional
 import numpy as np
+import numpy.typing as npt
 from scipy.optimize import root
 from scipy.integrate import trapezoid
 import matplotlib.pylab as plt
@@ -33,24 +34,24 @@ class Pekeris:
     The results for different radius and E are found as post-processing.
 
     Attributes:
-        - u (np.ndarray): vertical displacement
-        - poisson (float): Poisson ratio
-        - young (float): Young modulus
-        - rho (float): density
-        - time (np.ndarray): time
         - load (float): load amplitude
-        - load_type (LoadType): type of load
-        - radius (List): list of radius
+        - load_type (Optional[str]): type of load
+        - radius (List[float]): list of radius
         - shear_modulus (float): shear modulus
+        - young (float): Young modulus
+        - poisson (float): Poisson ratio
+        - rho (float): density
         - cs (float): shear wave velocity
         - cr (float): Rayleigh wave velocity
         - eta (float): ratio shear wave / compression wave velocity
-        - tau (np.ndarray): normalised time
-        - nb_steps (int): number of steps for tau
+        - nb_steps (int): number of steps for time discretisation
         - steps_int (int): number of steps for numerical integration
-        - tol (float): tolerance number for the integration
+        - tol (float): small number for the integration
+        - tau (npt.NDArray[np.float64]): normalised time
+        - time (npt.NDArray[np.float64]): time
         - pulse_samples (int): number of samples for pulse load
-        - u_bar (np.ndarray): normalised displacement
+        - u (npt.NDArray[np.float64]): displacement
+        - u_bar (npt.NDArray[np.float64]): normalised displacement
     """
 
     def __init__(self, nb_steps: int=1000, tol: float=0.005, tau_max: float=4, step_int: int=1000, pulse_samples: int=2):
@@ -64,48 +65,45 @@ class Pekeris:
             - step_int (int): number of steps for numerical integration (default = 1000)
             - pulse_samples (int): number of samples for pulse load (default = 2)
         """
-
-        self.u = []
-        self.poisson = []
-        self.young = []
-        self.rho = []
-        self.time = []
-        self.load = []
-        self.load_type = []
-        self.radius = []
-        self.shear_modulus = []  # shear modulus
-        self.cs = []  # shear wave velocity
-        self.cr = []  # Rayleigh wave velocity
-        self.eta = []  # ratio shear wave / compression wave velocity
-        self.nb_steps = int(nb_steps)  # for the discretisation of tau
-        self.steps_int = int(step_int)  # number of steps for numerical integration
-        self.tol = tol  # small number for the integration
-        self.tau = np.linspace(0, tau_max, self.nb_steps)  # normalised time
-        self.pulse_samples = pulse_samples  # number of samples for pulse load
-
-        self.u = []  # displacement
-        self.u_bar = []  # normalised displacement
+        self.load: float = np.nan
+        self.load_type: Optional[str] = None
+        self.radius: List[float] = []
+        self.shear_modulus: float = np.nan  # shear modulus
+        self.young: float = np.nan  # Young modulus
+        self.poisson: float = np.nan  # Poisson ratio
+        self.rho: float = np.nan  # density
+        self.cs: float = np.nan  # shear wave velocity
+        self.cr: float = np.nan  # Rayleigh wave velocity
+        self.eta: float = np.nan  # ratio shear wave / compression wave velocity
+        self.nb_steps: int = int(nb_steps)  # for the discretisation of tau
+        self.steps_int: int = int(step_int)  # number of steps for numerical integration
+        self.tol: float = tol  # small number for the integration
+        self.tau: npt.NDArray[np.float64] = np.linspace(0, tau_max, self.nb_steps)  # normalised time
+        self.time: npt.NDArray[np.float64] = np.zeros(shape=(0, 0))  # time
+        self.pulse_samples: int = pulse_samples  # number of samples for pulse load
+        self.u: npt.NDArray[np.float64] = np.empty(shape=(0, 0))  # displacement
+        self.u_bar: npt.NDArray[np.float64] = np.zeros(self.tau.shape[0])  # normalised displacement
 
     def material_properties(self, nu: float, rho: float, young: float):
         r"""
         Material properties
 
         Args:
-            - nu (float): Poisson ratio
-            - rho (float): density
-            - young (float): Young modulus
+            - nu (float): Poisson ratio [-]
+            - rho (float): density [kgm^-3]
+            - young (float): Young modulus [Pa]
         """
         self.poisson = nu
         self.rho = rho
         self.young = young
 
-    def loading(self, p: float, load_type: LoadType):
+    def loading(self, p: float, load_type: str):
         r"""
         Load properties
 
         Args:
             - p (float): load amplitude
-            - load_type (LoadType): type of load
+            - load_type (str): type of load
         """
         self.load = p
         self.load_type = load_type
@@ -120,7 +118,6 @@ class Pekeris:
         self.radius = radius
         self.u = np.zeros((len(self.tau), len(radius)))
         self.time = np.zeros((len(self.tau), len(radius)))
-        self.u_bar = np.zeros(len(self.tau))
 
         # compute wave speed
         self.elastic_props()
