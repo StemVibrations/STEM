@@ -54,7 +54,12 @@ class Pekeris:
         - u_bar (npt.NDArray[np.float64]): normalised displacement
     """
 
-    def __init__(self, nb_steps: int=1000, tol: float=0.005, tau_max: float=4, step_int: int=1000, pulse_samples: int=2):
+    def __init__(self,
+                 nb_steps: int = 1000,
+                 tol: float = 0.005,
+                 tau_max: float = 4,
+                 step_int: int = 1000,
+                 pulse_samples: int = 2):
         """
         Lamb wave solution for vertical displacement
 
@@ -278,7 +283,7 @@ class Pekeris:
         d = dd.x[0]
         self.cr = np.sqrt(1 + d)
 
-    def results(self, plots: bool=True, output_folder: str="./", file_name: str="results"):
+    def results(self, plots: bool = True, output_folder: str = "./", file_name: str = "results"):
         r"""
         Post-processing of the results
 
@@ -335,7 +340,6 @@ class Pekeris:
             ax.legend(loc="upper right")
             plt.savefig(os.path.join(output_folder, f"{file_name}_displacement.png"))
             plt.close()
-
 
     def d_function(self, d: float) -> float:
         r"""

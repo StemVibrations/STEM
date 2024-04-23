@@ -2,7 +2,8 @@ import numpy as np
 import numpy.typing as npt
 
 
-def cantilever_hinge(x: npt.NDArray[np.float64], L: float, E: float, I: float, k: float, V: float) -> npt.NDArray[np.float64]:
+def cantilever_hinge(x: npt.NDArray[np.float64], L: float, E: float, I: float, k: float,
+                     V: float) -> npt.NDArray[np.float64]:
     r"""
     Calculate the displacement of a cantilever beam with a hinge at the end, following the deflection curve.
     All units are SI units.
@@ -25,7 +26,8 @@ def cantilever_hinge(x: npt.NDArray[np.float64], L: float, E: float, I: float, k
     """
 
     # Calculate the constants
-    B=-((V * k * L**2) / (4 * E * I * k * L +4 * E * I**2)) - (2 * E * I * V * L)/(4 * E * I * k * L + 4 * E * I**2)
+    B = -((V * k * L**2) /
+          (4 * E * I * k * L + 4 * E * I**2)) - (2 * E * I * V * L) / (4 * E * I * k * L + 4 * E * I**2)
     A = V / (6 * E * I)
 
     # displacement
@@ -44,5 +46,3 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     plt.plot(x, disp)
     plt.show()
-
-
