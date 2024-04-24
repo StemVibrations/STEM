@@ -19,7 +19,7 @@ def cantilever_hinge(x: npt.NDArray[np.float64], L: float, E: float, I: float, k
         - L (float): The length of the beam [m]
         - E (float): The Young's modulus [Pa]
         - I (float): The second moment of inertia [m^4]
-        - k (float): The spring constant [N/m]
+        - k (float): The spring constant [Nm/rad]
         - V (float): The applied force [N]
     Returns:
         - np.ndarray: The displacement at each x value
