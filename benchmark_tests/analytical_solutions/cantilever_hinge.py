@@ -27,7 +27,7 @@ def cantilever_hinge(x: npt.NDArray[np.float64], L: float, E: float, I: float, k
 
     # Calculate the constants
     B = -((V * k * L**2) /
-          (4 * E * I * k * L + 4 * E * I**2)) - (2 * E * I * V * L) / (4 * E * I * k * L + 4 * E * I**2)
+          (4 * E * I * k * L + 4 * (E * I)**2)) - (2 * E * I * V * L) / (4 * E * I * k * L + 4 * (E * I)**2)
     A = V / (6 * E * I)
 
     # displacement
@@ -39,10 +39,16 @@ if __name__ == "__main__":
     L = 20
     E = 200
     I = 1
-    k = 20000
+    k = 0
     V = 20
     x = np.linspace(0, L, 100)
     disp = cantilever_hinge(x, L, E, I, k, V)
     import matplotlib.pyplot as plt
-    plt.plot(x, disp)
+    y_free = -V * x**2 / (6 * E * I) * (3 * L - x)
+    plt.plot(x, y_free, marker="o", color="r", markevery=10, label="Free cantilever", linewidth=1)
+    plt.plot(x, disp, color="b", label="Cantilever with hinge k=0", linewidth=0.5)
+    plt.xlabel("x [m]")
+    plt.ylabel("u(x) [m]")
+    plt.legend()
+    plt.grid()
     plt.show()
