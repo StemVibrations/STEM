@@ -84,10 +84,10 @@ class Pekeris:
         self.steps_int: int = int(step_int)  # number of steps for numerical integration
         self.tol: float = tol  # small number for the integration
         self.tau: npt.NDArray[np.float64] = np.linspace(0, tau_max, self.nb_steps)  # normalised time
-        self.time: npt.NDArray[np.float64] = np.zeros(shape=(0, 0))  # time
+        self.time: npt.NDArray[np.float64] = np.empty(shape=(0, 0))  # time
         self.pulse_samples: int = pulse_samples  # number of samples for pulse load
         self.u: npt.NDArray[np.float64] = np.empty(shape=(0, 0))  # displacement
-        self.u_bar: npt.NDArray[np.float64] = np.zeros(self.tau.shape[0])  # normalised displacement
+        self.u_bar: npt.NDArray[np.float64] = np.empty(self.tau.shape[0])  # normalised displacement
 
     def material_properties(self, nu: float, rho: float, young: float):
         r"""

@@ -26,8 +26,8 @@ def cantilever_hinge(x: npt.NDArray[np.float64], L: float, E: float, I: float, k
     """
 
     # Calculate the constants
-    B = -((V * k * L**2) /
-          (4 * E * I * k * L + 4 * (E * I)**2)) - (2 * E * I * V * L) / (4 * E * I * k * L + 4 * (E * I)**2)
+    B = -((V * k * L**2) / (4 * E * I * k * L + 4 * (E * I)**2)) - (2 * E * I * V * L) / (4 * E * I * k * L + 4 *
+                                                                                          (E * I)**2)
     A = V / (6 * E * I)
 
     # displacement
