@@ -22,7 +22,7 @@ def cantilever_hinge(x: npt.NDArray[np.float64], L: float, E: float, I: float, k
         - k (float): The spring constant [Nm/rad]
         - V (float): The applied force [N]
     Returns:
-        - np.ndarray: The displacement at each x value
+        - npt.NDArray[np.float64]: The displacement at each x value
     """
 
     # Calculate the constants
