@@ -46,7 +46,7 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     y_free = -V * x**2 / (6 * E * I) * (3 * L - x)
     plt.plot(x, y_free, marker="o", color="r", markevery=10, label="Free cantilever", linewidth=1)
-    plt.plot(x, disp, color="b", label="Cantilever with hinge k=0", linewidth=0.5)
+    plt.plot(x, disp, color="b", label=f"Cantilever with hinge k={k}", linewidth=0.5)
     plt.xlabel("x [m]")
     plt.ylabel("u(x) [m]")
     plt.legend()

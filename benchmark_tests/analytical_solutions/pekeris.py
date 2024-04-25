@@ -61,7 +61,7 @@ class Pekeris:
                  step_int: int = 1000,
                  pulse_samples: int = 2):
         """
-        Lamb wave solution for vertical displacement
+        Pekeris wave solution for vertical displacement
 
         Args:
             - nb_steps (int): number of steps for time discretisation (default = 1000)
@@ -169,7 +169,7 @@ class Pekeris:
                                     (1 - 8 * y**2 + 8 * (3 - 2 * self.eta**2) * y**4 - 16 * (1 - self.eta**2) * y**6))
 
                 # perform integration
-                integral = trapezoid(np.array(integral), theta)
+                integral = trapezoid(np.array(integral), theta_array)
 
                 # compute G1 integral
                 G1_integral = (tau**2 - self.eta**2) * integral
