@@ -384,7 +384,7 @@ class Utils:
                              base_value: float,
                              variable: str = "x") -> str:
         """
-        Creates a tiny expression with for a box function. For more information on tiny expressions,
+        Creates a tiny expression for a box function. For more information on tiny expressions,
         see: https://github.com/codeplea/tinyexpr
 
         Args:
