@@ -517,6 +517,38 @@ class TestUtilsStem:
         np.testing.assert_almost_equal(full_eval, expected_full_eval)
         np.testing.assert_almost_equal(half_eval, expected_half_eval)
 
+    def test_create_box_tiny_expr(self):
+        """
+        Test the creation of the box function tiny expr, which can be evaluated in c++
+
+        """
+
+        transition_parameter = 1e10
+        start_peak = 1
+        end_peak = 5
+        peak_value = 1e7
+        base_value = 1e5
+
+        # call function
+        tiny_expr = Utils.create_box_tiny_expr(transition_parameter, start_peak, end_peak, peak_value, base_value)
+
+        # replace tanh with np.tanh, such that python can evaluate the string
+        python_func_str = tiny_expr.replace("tanh", "np.tanh")
+
+        # evaluate string
+        x_values = np.linspace(0, 10, 1000)
+        calculated_values = [eval(python_func_str.replace("x", str(x))) for x in x_values]
+
+        # define expected values
+        expected_values = [peak_value if start_peak <= x <= end_peak else base_value for x in x_values]
+
+        # check if expected and actual results are almost equal
+        npt.assert_almost_equal(calculated_values, expected_values)
+
+        # check if error is raised when start peak is larger than end peak
+        with pytest.raises(ValueError, match="Start peak should be smaller than end peak."):
+            Utils.create_box_tiny_expr(transition_parameter, end_peak, start_peak, peak_value, base_value)
+
     def test_check_lines_geometry_are_path(self):
         """
         Tests that the lines in a geometry are connected and aligned along one path (no branching)
