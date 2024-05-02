@@ -377,6 +377,47 @@ class Utils:
                     f"+ {initial_value}")
 
     @staticmethod
+    def create_box_tiny_expr(transition_parameter: float,
+                             start_peak: float,
+                             end_peak: float,
+                             peak_value: float,
+                             base_value: float,
+                             variable: str = "x") -> str:
+        """
+        Creates a tiny expression with for a box function. For more information on tiny expressions,
+        see: https://github.com/codeplea/tinyexpr
+
+        Args:
+            - transition_parameter (float): parameter to control the transition of the box function, |
+              the higher the value, the steeper the transition
+            - start_peak (float): start of the peak of the box function
+            - end_peak (float): end of the peak of the box function
+            - peak_value (float): value of the peak of the box function
+            - base_value (float): value of the base of the box function
+            - variable (str): variable within the box function tinyexpr, default is "x", other options are "y", "z", "t"
+
+        Raises:
+            - ValueError: when start peak is larger or equal to end peak
+
+        Returns:
+            - str: tiny expression of the box function
+
+        """
+
+        if start_peak >= end_peak:
+            raise ValueError("Start peak should be smaller than end peak.")
+
+        length_peak = end_peak - start_peak
+        centre_peak = (start_peak + end_peak) / 2
+
+        tiny_expr = (
+            f"(1 / 2 + 1 / 2 * tanh({transition_parameter} * ({variable} - ({centre_peak - length_peak / 2}) ))"
+            f" - (1 / 2 + 1 / 2 * tanh({transition_parameter} * ({variable} - ({centre_peak + length_peak / 2}) ))))"
+            f" * ({peak_value - base_value}) + {base_value}")
+
+        return tiny_expr
+
+    @staticmethod
     def check_lines_geometry_are_path(geometry: Optional['Geometry']) -> bool:
         """
         Checks if lines are connected forming a path without:
