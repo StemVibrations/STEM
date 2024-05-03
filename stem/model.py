@@ -1713,31 +1713,25 @@ class Model:
 
         if isinstance(from_model_part, BodyModelPart) and isinstance(new_parameters, get_args(Material)):
 
-            # define material type
-            material: Material = new_parameters
-
             # check if the new parameters are of the same type as the existing material
-            if not isinstance(material, from_model_part.material.__class__):
+            if not isinstance(new_parameters, from_model_part.material.__class__):
                 raise ValueError("New parameters must have the same material type as in the original"
                                  "body model part.")
 
             # create a new body model part
             new_model_part = BodyModelPart(name=to_model_part_name)
-            new_model_part.material = material
+            new_model_part.material = new_parameters  # type: ignore
 
             self.body_model_parts.append(new_model_part)
         elif isinstance(from_model_part, ModelPart) and isinstance(new_parameters, get_args(ProcessParameters)):
 
-            # define process parameters type
-            process_parameters: ProcessParameters = new_parameters
-
             # check if the new parameters are of the same type as the existing process parameters
-            if not isinstance(process_parameters, from_model_part.parameters.__class__):
+            if not isinstance(new_parameters, from_model_part.parameters.__class__):
                 raise ValueError("New parameters must have the same process parameter type as in the original"
                                  "process model part.")
 
             new_model_part = ModelPart(name=to_model_part_name)
-            new_model_part.parameters = process_parameters
+            new_model_part.parameters = new_parameters  # type: ignore
             self.process_model_parts.append(new_model_part)
         else:
             raise ValueError("Model part type and new parameters type must match.")
