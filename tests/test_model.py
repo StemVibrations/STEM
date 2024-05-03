@@ -3402,3 +3402,37 @@ class TestModel:
 
         with pytest.raises(ValueError, match=f"Group name `non_existing_group` not found."):
             model.set_element_size_of_group(1, "non_existing_group")
+
+    def test_split_model_part_3D(self, expected_geometry_two_layers_3D_extruded, create_default_3d_soil_material):
+
+        ndim = 3
+
+        layer1_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+        layer2_coordinates = [(1, 1, 0), (0, 1, 0), (0, 2, 0), (1, 2, 0)]
+
+        # define soil materials
+        soil_material1 = create_default_3d_soil_material
+        soil_material1.name = "soil1"
+
+        # create model
+        model = Model(ndim)
+        model.extrusion_length = 1
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
+        model.add_soil_layer_by_coordinates(layer2_coordinates, soil_material1, "layer2")
+
+        model.gmsh_io.geo_data["physical_groups"]["layer1"]["geometry_ids"] = [1, 2]
+        model.gmsh_io.geo_data["physical_groups"].pop("layer2")
+
+        model.body_model_parts[0].geometry = Geometry.create_geometry_from_gmsh_group(model.gmsh_io.geo_data, "layer1")
+        model.body_model_parts.pop(1)
+
+        model.split_model_part("layer1", "split_layer1", [1], soil_material1)
+        model.synchronise_geometry()
+
+        # check geometry of the split model part
+        TestUtils.assert_almost_equal_geometries(expected_geometry_two_layers_3D_extruded[0],
+                                                 model.body_model_parts[1].geometry)
+        TestUtils.assert_almost_equal_geometries(expected_geometry_two_layers_3D_extruded[1],
+                                                 model.body_model_parts[0].geometry)
