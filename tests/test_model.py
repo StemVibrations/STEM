@@ -3448,8 +3448,9 @@ class TestModel:
                                                  model.body_model_parts[0].geometry)
 
         # split body model part expected error
-        with pytest.raises(ValueError, match="New parameters must have the same material type as in the original "
-                                             "body model part."):
+        with pytest.raises(ValueError,
+                           match="New parameters must have the same material type as in the original "
+                           "body model part."):
             model.split_model_part("layer1", "second_split", [2],
                                    StructuralMaterial("beam", EulerBeam(3, 1, 1, 1, 1, 1, 1, 1)))
 
@@ -3487,7 +3488,7 @@ class TestModel:
 
         # split process model part
         model.split_model_part("gravity_load_2d", "gravity_layer_2", [2],
-                               GravityLoad(value=[20,20,20], active=[True, True, True]))
+                               GravityLoad(value=[20, 20, 20], active=[True, True, True]))
 
         # check geometry and parameters of the original and split model part
         assert model.process_model_parts[0].name == "gravity_load_2d"
@@ -3501,8 +3502,9 @@ class TestModel:
                                                  model.process_model_parts[1].geometry)
 
         # split process model part expected error
-        with pytest.raises(ValueError, match="New parameters must have the same process parameter type as in the "
-                                             "original process model part."):
+        with pytest.raises(ValueError,
+                           match="New parameters must have the same process parameter type as in the "
+                           "original process model part."):
             model.split_model_part("gravity_load_2d", "gravity_layer_3", [1],
                                    LineLoad(value=[20, 20, 20], active=[True, True, True]))
 
@@ -3529,13 +3531,16 @@ class TestModel:
             model.split_model_part("process_2d", "split_group", [1], create_default_2d_soil_material)
 
         model.process_model_parts[0].geometry = Geometry(surfaces={1: Surface.create([1, 2, 3], 1)},
-                                                         lines={1: Line.create([1, 2], 1),
-                                                                2: Line.create([2, 3], 2),
-                                                                3: Line.create([3, 1], 3)},
-                                                         points={1: Point.create([0, 0, 0], 1),
-                                                                 2: Point.create([1, 0, 0], 2),
-                                                                 3: Point.create([1, 1, 0], 3)}
-                                                         )
+                                                         lines={
+                                                             1: Line.create([1, 2], 1),
+                                                             2: Line.create([2, 3], 2),
+                                                             3: Line.create([3, 1], 3)
+                                                         },
+                                                         points={
+                                                             1: Point.create([0, 0, 0], 1),
+                                                             2: Point.create([1, 0, 0], 2),
+                                                             3: Point.create([1, 1, 0], 3)
+                                                         })
 
         with pytest.raises(ValueError, match=f"Model part type and new parameters type must match."):
             model.split_model_part("process_2d", "split_group", [1], create_default_2d_soil_material)
