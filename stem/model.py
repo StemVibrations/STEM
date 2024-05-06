@@ -1711,6 +1711,7 @@ class Model:
         # define type of new model part
         new_model_part: Union[BodyModelPart, ModelPart]
 
+        # create new body model part if from_model_part is a body model part
         if isinstance(from_model_part, BodyModelPart) and isinstance(new_parameters, get_args(Material)):
 
             # check if the new parameters are of the same type as the existing material
@@ -1723,6 +1724,8 @@ class Model:
             new_model_part.material = new_parameters  # type: ignore
 
             self.body_model_parts.append(new_model_part)
+
+        # create new process model part if from_model_part is a process model part
         elif isinstance(from_model_part, ModelPart) and isinstance(new_parameters, get_args(ProcessParameters)):
 
             # check if the new parameters are of the same type as the existing process parameters
@@ -1736,7 +1739,7 @@ class Model:
         else:
             raise ValueError("Model part type and new parameters type must match.")
 
-        # ndim, top_entity_ids = from_model_part.geometry.get_top_entity_ids()
+        # get the geometry from the from-model part
         ndim = self.gmsh_io.geo_data["physical_groups"][from_model_part_name]["ndim"]
         existing_geometry_ids = self.gmsh_io.geo_data["physical_groups"][from_model_part_name]["geometry_ids"]
 
