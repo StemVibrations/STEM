@@ -1703,10 +1703,10 @@ class Model:
         """
 
         from_model_part = self.__get_model_part_by_name(from_model_part_name)
-        if from_model_part is None is None:
-            raise ValueError("Model part not found.")
+        if from_model_part is None:
+            raise ValueError(f"Model part: {from_model_part_name} not found.")
         if from_model_part.geometry is None:
-            raise ValueError("Geometry is not defined in the model part.")
+            raise ValueError(f"Geometry is not defined in the model part: {from_model_part_name}.")
 
         # define type of new model part
         new_model_part: Union[BodyModelPart, ModelPart]
@@ -1715,7 +1715,7 @@ class Model:
 
             # check if the new parameters are of the same type as the existing material
             if not isinstance(new_parameters, from_model_part.material.__class__):
-                raise ValueError("New parameters must have the same material type as in the original"
+                raise ValueError("New parameters must have the same material type as in the original "
                                  "body model part.")
 
             # create a new body model part
@@ -1727,7 +1727,7 @@ class Model:
 
             # check if the new parameters are of the same type as the existing process parameters
             if not isinstance(new_parameters, from_model_part.parameters.__class__):
-                raise ValueError("New parameters must have the same process parameter type as in the original"
+                raise ValueError("New parameters must have the same process parameter type as in the original "
                                  "process model part.")
 
             new_model_part = ModelPart(name=to_model_part_name)
@@ -1765,3 +1765,4 @@ class Model:
 
         # generate the geometry within gmsh
         self.gmsh_io.generate_geo_from_geo_data()
+        self.synchronise_geometry()
