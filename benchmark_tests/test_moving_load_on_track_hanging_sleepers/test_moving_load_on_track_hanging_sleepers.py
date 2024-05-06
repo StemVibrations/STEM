@@ -22,7 +22,6 @@ def test_moving_load_on_track_on_soil():
     model = Model(ndim)
     model.extrusion_length = 10
 
-
     # add the track
     rail_parameters = EulerBeam(ndim=ndim,
                                 YOUNG_MODULUS=30e9,
@@ -56,9 +55,7 @@ def test_moving_load_on_track_on_soil():
 
     # define which geometry ids are to be redefined
     damaged_material = StructuralMaterial(name="damaged_rail_pads", material_parameters=damaged_rail_pads)
-    model.split_model_part("rail_pads_rail_track_1",
-                           "rail_pads_rail_track_1_hanging",
-                           [50, 51], damaged_material)
+    model.split_model_part("rail_pads_rail_track_1", "rail_pads_rail_track_1_hanging", [50, 51], damaged_material)
 
     moving_load = MovingLoad(load=[0.0, -10000.0, 0.0],
                              direction=[1, 1, 1],
@@ -103,7 +100,9 @@ def test_moving_load_on_track_on_soil():
                                      rayleigh_m=0.0001)
 
     # Set up problem data
-    problem = Problem(problem_name="test_moving_load_on_track_hanging_sleepers", number_of_threads=4, settings=solver_settings)
+    problem = Problem(problem_name="test_moving_load_on_track_hanging_sleepers",
+                      number_of_threads=4,
+                      settings=solver_settings)
     model.project_parameters = problem
 
     # Define the results to be written to the output file
