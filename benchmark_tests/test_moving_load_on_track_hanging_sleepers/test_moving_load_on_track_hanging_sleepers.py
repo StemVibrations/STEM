@@ -1,17 +1,14 @@
 import os
-import sys
 from shutil import rmtree
 
 import numpy as np
-import pytest
 
 from stem.model import Model
-from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
 from stem.structural_material import EulerBeam, ElasticSpringDamper, NodalConcentrated, StructuralMaterial
 from stem.boundary import DisplacementConstraint
 from stem.load import MovingLoad
-from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, \
-    NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
+from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
+                         StressInitialisationType, SolverSettings, Problem)
 from stem.output import NodalOutput, Output, VtkOutputParameters
 from stem.stem import Stem
 from benchmark_tests.utils import assert_floats_in_directories_almost_equal
