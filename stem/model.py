@@ -1,4 +1,4 @@
-from typing import List, Sequence, Dict, Any, Optional, Union, Tuple
+from typing import List, Sequence, Dict, Any, Optional, Union, Tuple, get_args
 
 import numpy as np
 import numpy.typing as npty
@@ -6,7 +6,7 @@ import numpy.typing as npty
 from gmsh_utils import gmsh_IO
 
 from stem.field_generator import RandomFieldGenerator
-from stem.model_part import ModelPart, BodyModelPart
+from stem.model_part import ModelPart, BodyModelPart, Material, ProcessParameters
 from stem.soil_material import *
 from stem.structural_material import *
 from stem.boundary import *
@@ -1682,3 +1682,90 @@ class Model:
             raise ValueError(f"Group name `{group_name}` not found.")
 
         self.gmsh_io.geo_data["physical_groups"][group_name]["element_size"] = element_size
+
+    def split_model_part(self, from_model_part_name: str, to_model_part_name: str, geometry_ids: List[int],
+                         new_parameters: Union[Material, ProcessParameters]):
+        """
+        Move the geometry from one model part to another.
+
+        Args:
+            - from_model_part_name (str): The name of the model part from which the geometry needs to be moved.
+            - to_model_part_name (str): The name of the model part to which the geometry needs to be moved.
+            - geometry_ids (List[int]): The geometry ids to be moved.
+            - new_parameters (Union[:class:`stem.model_part.Material`, :class:`stem.model_part.ProcessParameters`]): \
+                The new material or process parameters for the model part.
+
+        Raises:
+            - ValueError: If the model part name is not found.
+            - ValueError: If the geometry is not defined in the model part.
+            - ValueError: If the new parameters are not of the same type as the existing material or process parameters.
+            - ValueError: If the geometry is empty in the model part.
+        """
+
+        from_model_part = self.__get_model_part_by_name(from_model_part_name)
+        if from_model_part is None:
+            raise ValueError(f"Model part: {from_model_part_name} not found.")
+        if from_model_part.geometry is None:
+            raise ValueError(f"Geometry is not defined in the model part: {from_model_part_name}.")
+
+        # define type of new model part
+        new_model_part: Union[BodyModelPart, ModelPart]
+
+        # create new body model part if from_model_part is a body model part
+        if isinstance(from_model_part, BodyModelPart) and isinstance(new_parameters, get_args(Material)):
+
+            # check if the new parameters are of the same type as the existing material
+            if not isinstance(new_parameters, from_model_part.material.__class__):
+                raise ValueError("New parameters must have the same material type as in the original "
+                                 "body model part.")
+
+            # create a new body model part
+            new_model_part = BodyModelPart(name=to_model_part_name)
+            new_model_part.material = new_parameters  # type: ignore
+
+            self.body_model_parts.append(new_model_part)
+
+        # create new process model part if from_model_part is a process model part
+        elif isinstance(from_model_part, ModelPart) and isinstance(new_parameters, get_args(ProcessParameters)):
+
+            # check if the new parameters are of the same type as the existing process parameters
+            if not isinstance(new_parameters, from_model_part.parameters.__class__):
+                raise ValueError("New parameters must have the same process parameter type as in the original "
+                                 "process model part.")
+
+            new_model_part = ModelPart(name=to_model_part_name)
+            new_model_part.parameters = new_parameters  # type: ignore
+            self.process_model_parts.append(new_model_part)
+        else:
+            raise ValueError("Model part type and new parameters type must match.")
+
+        # get the geometry from the from-model part
+        ndim = self.gmsh_io.geo_data["physical_groups"][from_model_part_name]["ndim"]
+        existing_geometry_ids = self.gmsh_io.geo_data["physical_groups"][from_model_part_name]["geometry_ids"]
+
+        # remove the geometry from gmsh physical groups
+        self.gmsh_io.geo_data["physical_groups"][from_model_part_name]["geometry_ids"] = \
+            [id for id in existing_geometry_ids if id not in geometry_ids]
+
+        # update the geometry in the from-model part
+        updated_from_geometry = Geometry.create_geometry_from_gmsh_group(self.gmsh_io.geo_data, from_model_part_name)
+        from_model_part.geometry = updated_from_geometry
+
+        # get current max physical group id in gmsh
+        max_existing_group_id = max(self.gmsh_io.geo_data["physical_groups"][name]["id"]
+                                    for name in self.gmsh_io.geo_data["physical_groups"])
+
+        # add the geometry ids to the new gmsh physical group
+        self.gmsh_io.geo_data["physical_groups"][to_model_part_name] = {
+            "geometry_ids": geometry_ids,
+            "ndim": ndim,
+            "id": max_existing_group_id + 1
+        }
+
+        # create new geometry and add to new model part
+        new_geometry = Geometry.create_geometry_from_gmsh_group(self.gmsh_io.geo_data, to_model_part_name)
+        new_model_part.geometry = new_geometry
+
+        # generate the geometry within gmsh
+        self.gmsh_io.generate_geo_from_geo_data()
+        self.synchronise_geometry()
