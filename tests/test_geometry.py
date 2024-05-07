@@ -1,6 +1,7 @@
 import pytest
 from gmsh_utils.gmsh_IO import GmshIO
 import numpy.testing as npt
+import numpy as np
 
 from stem.geometry import *
 
@@ -249,3 +250,184 @@ class TestGeometry:
         for volume_id, volume in geometry.volumes.items():
             assert volume_id == volume.id
             npt.assert_equal(volume.surface_ids, expected_geo_data_3D["volumes"][volume.id])
+
+    def test_get_ordered_points_from_surface(self):
+        """
+        Test the function that returns the ordered points of a surface.
+
+        """
+
+        # Define the coordinates of the surface
+        points = {
+            1: Point.create([0, 5, 0], 1),
+            2: Point.create([2, 5, 0], 2),
+            3: Point.create([1, 7, -2], 3),
+            4: Point.create([2, 6, -1], 4),
+            5: Point.create([0, 6, -1], 5)
+        }
+        lines = {
+            1: Line.create([1, 2], 1),
+            2: Line.create([2, 4], 2),
+            3: Line.create([4, 3], 3),
+            4: Line.create([3, 5], 4),
+            5: Line.create([5, 1], 5)
+        }
+        surfaces = {1: Surface.create([1, 2, 3, 4, 5], 1)}
+
+        geometry = Geometry(points, lines, surfaces)
+        ordered_points = geometry.get_ordered_points_from_surface(1)
+
+        # Assert that the points are ordered correctly
+        assert ordered_points == [points[1], points[2], points[4], points[3], points[5]]
+
+    def test_length_line(self):
+        """
+        Test the calculation of the length of a line.
+
+        """
+
+        # Define the coordinates of the line
+        points = {1: Point.create([0, 2, 2], 1), 2: Point.create([3, 5, -6], 2)}
+        lines = {1: Line.create([2, 1], 1)}
+
+        geometry = Geometry(points, lines)
+
+        # calculate the length of the line
+        calculated_length = geometry.calculate_length_line(1)
+
+        # Assert that the length is calculated correctly
+        assert calculated_length == pytest.approx(np.sqrt(3**2 + 3**2 + 8**2))
+
+    def test_calculate_centroid_of_line(self):
+        """
+        Test the calculation of the centroid of a line.
+
+        """
+
+        # Define the coordinates of the line
+        points = {1: Point.create([0, 2, 2], 1), 2: Point.create([3, 5, -6], 2)}
+        lines = {1: Line.create([2, 1], 1)}
+
+        geometry = Geometry(points, lines)
+        centroid = geometry.calculate_centroid_of_line(1)
+
+        # Assert that the centroid is calculated correctly
+        npt.assert_array_almost_equal(centroid, np.array([1.5, 3.5, -2]))
+
+    def test_calcualte_centroid_of_surface(self):
+        """
+        Test the calculation of the centroid of a surface.
+
+        """
+
+        # Define the coordinates of the surface
+
+        points = {
+            1: Point.create([0, 5, 0], 1),
+            2: Point.create([2, 5, 0], 2),
+            3: Point.create([2, 6, -1], 3),
+            4: Point.create([1, 7, -2], 4),
+            5: Point.create([0, 6, -1], 5)
+        }
+        lines = {
+            1: Line.create([1, 2], 1),
+            2: Line.create([2, 3], 2),
+            3: Line.create([3, 4], 3),
+            4: Line.create([4, 5], 4),
+            5: Line.create([5, 1], 5)
+        }
+        surfaces = {1: Surface.create([1, 2, 3, 4, 5], 1)}
+
+        geometry = Geometry(points, lines, surfaces)
+        centroid = geometry.calculate_centroid_of_surface(1)
+
+        # Assert that the centroid is calculated correctly
+        npt.assert_array_almost_equal(centroid, np.array([1, 5.8, -0.8]))
+
+    def test_calculate_centre_of_mass_surface(self):
+
+        # Define the coordinates of the surface
+
+        points = {
+            1: Point.create([0, 5, 0], 1),
+            2: Point.create([2, 5, 0], 2),
+            3: Point.create([2, 6, -1], 3),
+            4: Point.create([1.5, 6, -1], 4),
+            5: Point.create([0.5, 6, -1], 5),
+            6: Point.create([0, 6, -1], 6)
+        }
+        lines = {
+            1: Line.create([1, 2], 1),
+            2: Line.create([2, 3], 2),
+            3: Line.create([3, 4], 3),
+            4: Line.create([4, 5], 4),
+            5: Line.create([5, 6], 5),
+            6: Line.create([6, 1], 6)
+        }
+        surfaces = {1: Surface.create([1, 2, 3, 4, 5, 6], 1)}
+
+        geometry = Geometry(points, lines, surfaces)
+        centre_of_mass = geometry.calculate_centre_of_mass_surface(1)
+
+        # Assert that the centre of mass is calculated correctly
+        npt.assert_array_almost_equal(centre_of_mass, np.array([1, 5.5, -0.5]))
+
+    def test_calculate_area_convex_surface(self):
+        """
+        Test the calculation of the area of a surface.
+
+        """
+
+        # Define the coordinates of the surface
+
+        points = {
+            1: Point.create([0, 5, 0], 1),
+            2: Point.create([2, 5, 0], 2),
+            3: Point.create([2, 6, -1], 3),
+            4: Point.create([1, 7, -2], 4),
+            5: Point.create([0, 6, -1], 5)
+        }
+        lines = {
+            1: Line.create([1, 2], 1),
+            2: Line.create([2, 3], 2),
+            3: Line.create([3, 4], 3),
+            4: Line.create([4, 5], 4),
+            5: Line.create([5, 1], 5)
+        }
+        surfaces = {1: Surface.create([1, 2, 3, 4, 5], 1)}
+
+        geometry = Geometry(points, lines, surfaces)
+        calculated_area = geometry.calculate_area_surface(1)
+
+        # Assert that the area is calculated correctly
+        assert calculated_area == np.sqrt(2) * 2 * 1.5
+
+    def test_calculate_area_non_convex_surface(self):
+        """
+        Test the calculation of the area of a surface.
+
+        """
+
+        # Define the coordinates of the surface
+
+        points = {
+            1: Point.create([0, 5, 0], 1),
+            2: Point.create([2, 5, 0], 2),
+            3: Point.create([2, 6, -1], 3),
+            4: Point.create([1, 5, 0], 4),
+            5: Point.create([0, 6, -1], 5)
+        }
+        lines = {
+            1: Line.create([1, 2], 1),
+            2: Line.create([2, 3], 2),
+            3: Line.create([3, 4], 3),
+            4: Line.create([4, 5], 4),
+            5: Line.create([5, 1], 5)
+        }
+        surfaces = {1: Surface.create([1, 2, 3, 4, 5], 1)}
+
+        geometry = Geometry(points, lines, surfaces)
+        calculated_area = geometry.calculate_area_surface(1)
+
+        # Assert that the area is calculated correctly
+        assert calculated_area == np.sqrt(2)
