@@ -11,8 +11,68 @@ from stem.geometry import Geometry, Volume, Surface
 class PlotUtils:
 
     @staticmethod
-    def __add_2d_surface_to_plot(geometry: 'Geometry', surface: 'Surface', show_surface_ids: bool, show_line_ids: bool,
-                                 show_point_ids: bool, fig: 'go.Figure') -> npt.NDArray[np.float64]:
+    def __add_2d_lines_to_plot(geometry: 'Geometry', show_line_ids: bool, show_point_ids: bool, fig: 'go.Figure'):
+        """
+        Adds lines to a 2D plotly graph object figure.
+
+        Args:
+            - geometry (:class:`stem.geometry.Geometry`): Geometry object.
+            - fig (plotly.graph_objects.Figure): graph object figure to which the lines are added.
+
+        """
+
+        text_array = []
+        line_centroids = []
+
+        for line_id, line in geometry.lines.items():
+            point1 = geometry.points[line.point_ids[0]].coordinates
+            point2 = geometry.points[line.point_ids[1]].coordinates
+
+            fig.add_trace(
+                go.Scatter(x=[point1[0], point2[0]],
+                           y=[point1[1], point2[1]],
+                           mode='lines+markers',
+                           line={
+                               "color": 'black',
+                               "width": 1
+                           },
+                           marker={
+                               "color": 'red',
+                               "size": 5
+                           }))
+
+            # show line ids
+            if show_line_ids:
+
+                line_centroids.append(np.mean([point1, point2], axis=0))
+                text_array.append(f"<b>l_{abs(line_id)}</b>")
+
+        if show_line_ids:
+            fig.add_trace(
+                go.Scatter(x=np.array(line_centroids)[:, 0],
+                           y=np.array(line_centroids)[:, 1],
+                           mode='text',
+                           text=text_array,
+                           textfont={"size": 14},
+                           textposition="top right"))
+
+        # show point ids
+        if show_point_ids:
+
+            text_array = [f"<b>p_{point_id}</b>" for point_id in geometry.points.keys()]
+            point_coordinates = np.array([point.coordinates for point in geometry.points.values()])
+
+            fig.add_trace(
+                go.Scatter(x=point_coordinates[:, 0],
+                           y=point_coordinates[:, 1],
+                           mode='text',
+                           text=text_array,
+                           textfont={"size": 14},
+                           textposition="top right"))
+
+    @staticmethod
+    def __add_2d_surface_to_plot(geometry: 'Geometry', surface: 'Surface', show_surface_ids: bool,
+                                 fig: 'go.Figure') -> npt.NDArray[np.float64]:
         """
         Adds a 2D surface to a plotly graph object figure
 
@@ -28,43 +88,8 @@ class PlotUtils:
             - NDArray[float]: surface centroid
 
         """
-        # initialize list of surface point ids
-        surface_point_ids: List[int] = []
-
-        # calculate centroids of lines to show line ids
-        line_centroids = np.zeros((len(surface.line_ids), 3))
-        for i, line_k in enumerate(surface.line_ids):
-
-            # get current line
-            line = geometry.lines[abs(line_k)]
-
-            # copy line point ids as line_connectivities can be reversed
-            line_connectivities = np.copy(line.point_ids)
-
-            # reverse line connectivity if line is defined in opposite direction
-            if line_k < 0:
-                line_connectivities = line_connectivities[::-1]
-
-            # calculate line centroid
-            line_centroids[i, :] = np.mean(
-                [
-                    geometry.points[line_connectivities[0]].coordinates,
-                    geometry.points[line_connectivities[1]].coordinates
-                ],
-                axis=0,
-            )
-
-            surface_point_ids.extend(line_connectivities)
-
-        # get unique points within surface
-        unique_points = []
-        for point_id in surface_point_ids:
-
-            if point_id not in unique_points:
-                unique_points.append(point_id)
-
-        # get coordinates of surface points
-        surface_point_coordinates = np.array([geometry.points[point_id].coordinates for point_id in unique_points])
+        surface_points = geometry.get_ordered_points_from_surface(surface.id)
+        surface_point_coordinates = np.array([point.coordinates for point in surface_points])
 
         # add surface to plot
         closed_loop_coordinates = np.vstack((surface_point_coordinates, surface_point_coordinates[0, :]))
@@ -89,18 +114,55 @@ class PlotUtils:
                            textfont={"size": 14},
                            textposition="middle center"))
 
-        # show line ids
-        if show_line_ids:
+        return surface_centroid
 
-            text_array = [f"<b>l_{abs(line_k)}</b>" for line_k in surface.line_ids]
+    @staticmethod
+    def __add_3d_lines_to_plot(geometry: 'Geometry', show_line_ids: bool, show_point_ids: bool, fig: 'go.Figure'):
+        """
+        Adds lines to a 3D plotly graph object figure.
+
+        Args:
+            - geometry (:class:`stem.geometry.Geometry`): Geometry object.
+            - fig (plotly.graph_objects.Figure): graph object figure to which the lines are added.
+
+        """
+
+        text_array = []
+        line_centroids = []
+
+        for line_id, line in geometry.lines.items():
+            point1 = geometry.points[line.point_ids[0]].coordinates
+            point2 = geometry.points[line.point_ids[1]].coordinates
 
             fig.add_trace(
-                go.Scatter(x=line_centroids[:, 0],
-                           y=line_centroids[:, 1],
-                           mode='text',
-                           text=text_array,
-                           textfont={"size": 14},
-                           textposition="top right"))
+                go.Scatter3d(x=[point1[0], point2[0]],
+                             y=[point1[1], point2[1]],
+                             z=[point1[2], point2[2]],
+                             mode='lines+markers',
+                             line={
+                                 "color": 'black',
+                                 "width": 1
+                             },
+                             marker={
+                                 "color": 'red',
+                                 "size": 5
+                             }))
+
+            # show line ids
+            if show_line_ids:
+
+                line_centroids.append(np.mean([point1, point2], axis=0))
+                text_array.append(f"<b>l_{abs(line_id)}</b>")
+
+        if show_line_ids:
+            fig.add_trace(
+                go.Scatter3d(x=np.array(line_centroids)[:, 0],
+                             y=np.array(line_centroids)[:, 1],
+                             z=np.array(line_centroids)[:, 2],
+                             mode='text',
+                             text=text_array,
+                             textfont={"size": 14},
+                             textposition="top center"))
 
         # show point ids
         if show_point_ids:
@@ -109,18 +171,17 @@ class PlotUtils:
             point_coordinates = np.array([point.coordinates for point in geometry.points.values()])
 
             fig.add_trace(
-                go.Scatter(x=point_coordinates[:, 0],
-                           y=point_coordinates[:, 1],
-                           mode='text',
-                           text=text_array,
-                           textfont={"size": 14},
-                           textposition="top right"))
-
-        return surface_centroid
+                go.Scatter3d(x=point_coordinates[:, 0],
+                             y=point_coordinates[:, 1],
+                             z=point_coordinates[:, 2],
+                             mode='text',
+                             text=text_array,
+                             textfont={"size": 14},
+                             textposition="top right"))
 
     @staticmethod
-    def __add_3d_surface_to_plot(geometry: 'Geometry', surface: 'Surface', show_surface_ids: bool, show_line_ids: bool,
-                                 show_point_ids: bool, fig: 'go.Figure') -> npt.NDArray[np.float64]:
+    def __add_3d_surface_to_plot(geometry: 'Geometry', surface: 'Surface', show_surface_ids: bool,
+                                 fig: 'go.Figure') -> npt.NDArray[np.float64]:
         """
         Adds a 3D surface to a plotly graph object figure.
 
@@ -136,43 +197,9 @@ class PlotUtils:
             - NDArray[float]: surface centroid
 
         """
-        # initialize list of surface point ids
-        surface_point_ids: List[int] = []
 
-        # calculate centroids of lines to show line ids
-        line_centroids = np.zeros((len(surface.line_ids), 3))
-        for i, line_k in enumerate(surface.line_ids):
-
-            # get current line
-            line = geometry.lines[abs(line_k)]
-
-            # copy line point ids as line_connectivities can be reversed
-            line_connectivities = np.copy(line.point_ids)
-
-            # reverse line connectivity if line is defined in opposite direction
-            if line_k < 0:
-                line_connectivities = line_connectivities[::-1]
-
-            # calculate line centroid
-            line_centroids[i, :] = np.mean(
-                [
-                    geometry.points[line_connectivities[0]].coordinates,
-                    geometry.points[line_connectivities[1]].coordinates
-                ],
-                axis=0,
-            )
-
-            surface_point_ids.extend(line_connectivities)
-
-        # get unique points within surface
-        unique_points = []
-        for point_id in surface_point_ids:
-
-            if point_id not in unique_points:
-                unique_points.append(point_id)
-
-        # get coordinates of surface points
-        surface_point_coordinates = np.array([geometry.points[point_id].coordinates for point_id in unique_points])
+        surface_points = geometry.get_ordered_points_from_surface(surface.id)
+        surface_point_coordinates = np.array([point.coordinates for point in surface_points])
 
         # check which delaunay axis to use for the meshing
         delaunayaxis = 'z'
@@ -191,16 +218,6 @@ class PlotUtils:
                       delaunayaxis=delaunayaxis,
                       color='blue'))
 
-        # add surface edges to plot
-        closed_loop_coordinates = np.vstack((surface_point_coordinates, surface_point_coordinates[0, :]))
-
-        # yapf: disable
-        fig.add_trace(go.Scatter3d(x=closed_loop_coordinates[:, 0], y=closed_loop_coordinates[:, 1],
-                                   z=closed_loop_coordinates[:, 2], mode='lines+markers', line={"color": 'black',
-                                                                                                "width": 2},
-                                   marker={"color": 'red', "size": 2}))
-        # yapf: enable
-
         # calculate surface centroid and add to list of all surface centroids which are required to calculate
         # the volume centroid
         surface_centroid: npt.NDArray[np.float64] = np.mean(surface_point_coordinates, axis=0, dtype=np.float64)
@@ -213,35 +230,6 @@ class PlotUtils:
                              z=[surface_centroid[2]],
                              mode='text',
                              text=f"<b>s_{abs(surface.id)}</b>",
-                             textfont={"size": 14},
-                             textposition="middle center"))
-
-        # show line ids
-        if show_line_ids:
-
-            text_array = [f"<b>l_{abs(line_k)}</b>" for line_k in surface.line_ids]
-
-            fig.add_trace(
-                go.Scatter3d(x=line_centroids[:, 0],
-                             y=line_centroids[:, 1],
-                             z=line_centroids[:, 2],
-                             mode='text',
-                             text=text_array,
-                             textfont={"size": 14},
-                             textposition="middle center"))
-
-        # show point ids
-        if show_point_ids:
-
-            text_array = [f"<b>p_{point_id}</b>" for point_id in geometry.points.keys()]
-            point_coordinates = np.array([point.coordinates for point in geometry.points.values()])
-
-            fig.add_trace(
-                go.Scatter3d(x=point_coordinates[:, 0],
-                             y=point_coordinates[:, 1],
-                             z=point_coordinates[:, 2],
-                             mode='text',
-                             text=text_array,
                              textfont={"size": 14},
                              textposition="middle center"))
 
@@ -272,8 +260,7 @@ class PlotUtils:
             # get current surface
             surface = geometry.surfaces[abs(surface_k)]
 
-            surface_centroid = PlotUtils.__add_3d_surface_to_plot(geometry, surface, show_surface_ids, show_line_ids,
-                                                                  show_point_ids, fig)
+            surface_centroid = PlotUtils.__add_3d_surface_to_plot(geometry, surface, show_surface_ids, fig)
             all_surface_centroids.append(surface_centroid)
 
         # show volume ids
@@ -315,13 +302,15 @@ class PlotUtils:
         fig = go.Figure()
 
         if ndim == 2:
+            PlotUtils.__add_2d_lines_to_plot(geometry, show_line_ids, show_point_ids, fig)
+
             for surface in geometry.surfaces.values():
 
-                PlotUtils.__add_2d_surface_to_plot(geometry, surface, show_surface_ids, show_line_ids, show_point_ids,
-                                                   fig)
+                PlotUtils.__add_2d_surface_to_plot(geometry, surface, show_surface_ids, fig)
 
         elif ndim == 3:
 
+            PlotUtils.__add_3d_lines_to_plot(geometry, show_line_ids, show_point_ids, fig)
             # loop over all volumes
             for volume_data in geometry.volumes.values():
 
