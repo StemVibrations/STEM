@@ -314,7 +314,7 @@ class TestGeometry:
         # Assert that the centroid is calculated correctly
         npt.assert_array_almost_equal(centroid, np.array([1.5, 3.5, -2]))
 
-    def test_calcualte_centroid_of_surface(self):
+    def test_calculate_centroid_of_surface(self):
         """
         Test the calculation of the centroid of a surface.
 
@@ -345,6 +345,10 @@ class TestGeometry:
         npt.assert_array_almost_equal(centroid, np.array([1, 5.8, -0.8]))
 
     def test_calculate_centre_of_mass_surface(self):
+        """
+        Test the calculation of the centre of mass of a surface.
+
+        """
 
         # Define the coordinates of the surface
 
@@ -374,7 +378,7 @@ class TestGeometry:
 
     def test_calculate_area_convex_surface(self):
         """
-        Test the calculation of the area of a surface.
+        Test the calculation of the area of a convex surface.
 
         """
 
@@ -404,7 +408,7 @@ class TestGeometry:
 
     def test_calculate_area_non_convex_surface(self):
         """
-        Test the calculation of the area of a surface.
+        Test the calculation of the area of a concave surface.
 
         """
 
@@ -431,3 +435,108 @@ class TestGeometry:
 
         # Assert that the area is calculated correctly
         assert calculated_area == np.sqrt(2)
+
+    def test_calculate_area_surface_with_collinear_points(self):
+        """
+        Test the calculation of the area of a surface, where the first 3 points are collinear.
+
+        """
+
+        # Define the coordinates of the surface
+
+        points = {
+            1: Point.create([0, 5, 0], 1),
+            2: Point.create([1, 5, 0], 2),
+            3: Point.create([2, 5, 0], 3),
+            4: Point.create([2, 6, -1], 4),
+            5: Point.create([0, 6, -1], 5)
+        }
+        lines = {
+            1: Line.create([1, 2], 1),
+            2: Line.create([2, 3], 2),
+            3: Line.create([3, 4], 3),
+            4: Line.create([4, 5], 4),
+            5: Line.create([5, 1], 5)
+        }
+        surfaces = {1: Surface.create([1, 2, 3, 4, 5], 1)}
+
+        geometry = Geometry(points, lines, surfaces)
+        calculated_area = geometry.calculate_area_surface(1)
+
+        # Assert that the area is calculated correctly
+        assert calculated_area == 2 * np.sqrt(2)
+
+    def test_calculate_area_surface_with_three_points(self):
+        """
+        Test the calculation of the area of a minimum surface.
+
+        """
+
+        # Define the coordinates of the surface
+        points = {1: Point.create([0, 5, 0], 1), 2: Point.create([1, 5, 0], 2), 3: Point.create([0.5, 6, 1], 3)}
+        lines = {1: Line.create([1, 2], 1), 2: Line.create([2, 3], 2), 3: Line.create([3, 1], 3)}
+        surfaces = {1: Surface.create([1, 2, 3], 1)}
+
+        geometry = Geometry(points, lines, surfaces)
+
+        # calculate the area of the surface
+        calculated_area = geometry.calculate_area_surface(1)
+
+        # Assert that the area is calculated correctly
+        assert calculated_area == np.sqrt(2) / 2
+
+    def test_centre_of_mass_volume(self):
+        """
+        Test the calculation of the centre of mass of a cube with extra points.
+
+        """
+        # define a cube volume with extra points
+        points = {
+            1: Point.create([0, 0, 0], 1),
+            2: Point.create([0, 1, 0], 2),
+            3: Point.create([1, 1, 0], 3),
+            4: Point.create([1, 0, 0], 4),
+            5: Point.create([0, 0, 1], 5),
+            6: Point.create([0, 1, 1], 6),
+            7: Point.create([1, 1, 1], 7),
+            8: Point.create([1, 0, 1], 8),
+            9: Point.create([0.5, 0, 0], 9),
+            10: Point.create([0.5, 0, 1], 10)
+        }
+        lines = {
+            1: Line.create([1, 2], 1),
+            2: Line.create([2, 3], 2),
+            3: Line.create([3, 4], 3),
+            # 4: Line.create([4, 1], 4), # -> 16,17
+            5: Line.create([1, 5], 5),
+            6: Line.create([2, 6], 6),
+            7: Line.create([3, 7], 7),
+            8: Line.create([4, 8], 8),
+            9: Line.create([5, 6], 9),
+            10: Line.create([6, 7], 10),
+            11: Line.create([7, 8], 11),
+            # 12: Line.create([8, 5], 12), # -> 14,15
+            13: Line.create([9, 10], 13),
+            14: Line.create([8, 10], 14),
+            15: Line.create([10, 5], 15),
+            16: Line.create([4, 9], 16),
+            17: Line.create([9, 1], 17),
+        }
+        surfaces = {
+            1: Surface.create([1, 2, 3, 16, 17], 1),
+            2: Surface.create([5, 9, 6, 1], 2),
+            3: Surface.create([6, 10, 7, 2], 3),
+            4: Surface.create([7, 11, 8, 3], 4),
+            5: Surface.create([8, 14, 13, 16], 5),
+            6: Surface.create([5, 15, 13, 17], 6),
+            7: Surface.create([14, 15, 9, 10, 11], 7)
+        }
+        volumes = {1: Volume.create([1, 2, 3, 4, 5, 6, 7], 1)}
+
+        geometry = Geometry(points, lines, surfaces, volumes)
+
+        # calculate the centre of mass of the volume
+        centre_of_mass = geometry.calculate_centre_of_mass_volume(1)
+
+        # Assert that the centre of mass is calculated correctly
+        npt.assert_array_almost_equal(centre_of_mass, np.array([0.5, 0.5, 0.5]))

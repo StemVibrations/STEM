@@ -516,7 +516,7 @@ class Geometry:
         Returns:
             - List[:class:`Point`]: A sequence of points that make up the surface in the correct order.
         """
-        surface = self.surfaces[surface_id]
+        surface = self.surfaces[abs(surface_id)]
 
         # initialize list of surface point ids
         surface_point_ids: List[int] = []
@@ -545,7 +545,8 @@ class Geometry:
         Returns:
             - float: The length of the line.
         """
-        point_coordinates = np.array([self.points[point_id].coordinates for point_id in self.lines[line_id].point_ids])
+        point_coordinates = np.array(
+            [self.points[point_id].coordinates for point_id in self.lines[abs(line_id)].point_ids])
 
         length_line = np.linalg.norm(point_coordinates[0, :] - point_coordinates[1, :])
         return float(length_line)
@@ -560,8 +561,8 @@ class Geometry:
         Returns:
             - npty.NDArray[np.float64]: The coordinates of the centroid of the line.
         """
-        point_coordinates = np.array([self.points[point_id].coordinates for point_id in self.lines[line_id].point_ids],
-                                     dtype=np.float64)
+        point_coordinates = np.array(
+            [self.points[point_id].coordinates for point_id in self.lines[abs(line_id)].point_ids], dtype=np.float64)
 
         centroid: npty.NDArray[np.float64] = np.mean(point_coordinates, axis=0)
         return centroid
@@ -597,7 +598,7 @@ class Geometry:
         circumference = 0.0
 
         # calculate the centre of mass of the surface
-        for line_k in self.surfaces[surface_id].line_ids:
+        for line_k in self.surfaces[abs(surface_id)].line_ids:
 
             # calculate length current line
             weight = self.calculate_length_line(line_k)
@@ -614,7 +615,7 @@ class Geometry:
 
     def calculate_area_surface(self, surface_id: int) -> float:
         """
-        Calculate the area of a surface.
+        Calculate the area of a convex or concave surface in a 3D space using the shoelace algorithm.
 
         Args:
             - surface_id (int): The id of the surface.
@@ -626,24 +627,61 @@ class Geometry:
         points = self.get_ordered_points_from_surface(surface_id)
         coordinates = np.array([point.coordinates for point in points])
 
-        # initialize area
-        area = 0.0
-
         # set the origin point as the first point of the first line
         origin_point = coordinates[0]
-        normal_vector = np.cross(coordinates[1] - coordinates[0], coordinates[2] - coordinates[0])
+
+        # calculate the cross product of the vectors formed by the origin point and the other points
+        cross_products = np.cross(coordinates[1:-1] - origin_point, coordinates[2:] - origin_point)
+
+        # calculate the norms of the cross products
+        norms = np.linalg.norm(cross_products, axis=1)
+
+        # get first non-collinear points
+        non_zero_norm_index = (norms != 0).argmax()
+        non_collinear_points = [
+            origin_point, coordinates[non_zero_norm_index + 1], coordinates[non_zero_norm_index + 2]
+        ]
+
+        # calculate the normal vector of the surface
+        normal_vector = np.cross(non_collinear_points[1] - non_collinear_points[0],
+                                 non_collinear_points[2] - non_collinear_points[0])
+
+        # calculate the dot product of the cross products and the normal vector in order to determine the sign of the
+        # area increment
+        cross_dot_normal = np.dot(cross_products, normal_vector)
 
         # calculate the signed area of the surface
-        n_vertices = coordinates.shape[0]
-
-        for i in range(1, n_vertices - 1):
-            cross_product = np.cross(coordinates[i] - origin_point, coordinates[i + 1] - origin_point)
-            cross_dot_normal = np.dot(cross_product, normal_vector)
-
-            # calculate the signed area of triangle formed by the line and the origin
-            area += np.linalg.norm(cross_product) * np.sign(cross_dot_normal)
+        area: float = norms.dot(np.sign(cross_dot_normal)) * 0.5
 
         # return the absolute value of the area
-        area = abs(area) * 0.5
+        return abs(area)
 
-        return area
+    def calculate_centre_of_mass_volume(self, volume_id: int) -> npty.NDArray[np.float64]:
+        """
+        Calculate the centre of mass of a volume.
+
+        Args:
+            - volume_id (int): The id of the volume.
+
+        Returns:
+            - npty.NDArray[np.float64]: The coordinates of the centre of mass of the volume.
+        """
+        # initialize centre of mass and volume
+        centre_of_mass = np.zeros(3, dtype=np.float64)
+        surface_area = 0.0
+
+        # calculate the centre of mass of the volume
+        for surface_id in self.volumes[abs(volume_id)].surface_ids:
+
+            # calculate area current surface
+            weight = self.calculate_area_surface(surface_id)
+            # calculate centroid of current surface
+            surface_centroid = self.calculate_centre_of_mass_surface(surface_id)
+
+            # add weighted centroid to centre of mass
+            centre_of_mass += weight * surface_centroid
+            surface_area += weight
+
+        centre_of_mass = centre_of_mass / surface_area
+
+        return centre_of_mass
