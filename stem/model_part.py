@@ -12,6 +12,24 @@ from stem.geometry import Geometry
 from stem.mesh import Mesh
 from stem.solver import AnalysisType
 
+# define type aliases
+ProcessParameters = Union[LoadParametersABC, BoundaryParametersABC, AdditionalProcessesParametersABC,
+                          WaterProcessParametersABC, OutputParametersABC]
+"""
+TypeAlias:
+    - ProcessParameters: Union[:class:`stem.load.LoadParametersABC`, \
+        :class:`stem.boundary.BoundaryParametersABC`, \
+        :class:`stem.additional_processes.AdditionalProcessesParametersABC`, \
+        :class:`stem.water_boundaries.WaterBoundaryParametersABC`, \
+        :class:`stem.output.OutputParametersABC`]
+"""
+
+Material = Union[SoilMaterial, StructuralMaterial]
+"""
+TypeAlias:
+    - Material: Union[:class:`stem.soil_material.SoilMaterial`, :class:`stem.structural_material.StructuralMaterial`]
+"""
+
 
 class ModelPart:
     """
@@ -21,11 +39,7 @@ class ModelPart:
     Attributes:
         - __name (str): name of the model part
         - geometry (Optional[:class:`stem.geometry.Geometry`]): geometry of the model part
-        - parameters (Optional[Union[:class:`stem.load.LoadParametersABC`, \
-            :class:`stem.boundary.BoundaryParametersABC`, \
-            :class:`stem.additional_processes.AdditionalProcessesParametersABC`, \
-            :class:`stem.water_boundaries.WaterBoundaryParametersABC`, \
-            :class:`stem.output.OutputParametersABC`]]): process parameters containing the \
+        - parameters (Optional[:class:`ProcessParameters`]): process parameters containing the \
             model part parameters.
         - mesh (Optional[:class:`stem.mesh.Mesh`]): mesh of the model part
         - id (Optional[int]): the id of the model part
@@ -40,8 +54,7 @@ class ModelPart:
         """
         self.__name: str = name
         self.geometry: Optional[Geometry] = None
-        self.parameters: Optional[Union[LoadParametersABC, BoundaryParametersABC, AdditionalProcessesParametersABC,
-                                        WaterProcessParametersABC, OutputParametersABC]] = None
+        self.parameters: Optional[ProcessParameters] = None
         self.mesh: Optional[Mesh] = None
         self.id: Optional[int] = None
 
@@ -108,8 +121,7 @@ class BodyModelPart(ModelPart):
         - geometry (Optional[:class:`stem.geometry.Geometry`]): geometry of the model part
         - mesh (Optional[:class:`stem.mesh.Mesh`]): mesh of the model part
         - parameters (Dict[str, Any]): dictionary containing the model part parameters
-        - material (Union[:class:`stem.soil_material.SoilMaterial`, \
-            :class:`stem.structural_material.StructuralMaterial`]): material of the model part
+        - material (:class:`Material`): material of the model part
     """
 
     def __init__(self, name: str):
@@ -121,7 +133,7 @@ class BodyModelPart(ModelPart):
         """
         super().__init__(name)
 
-        self.material: Optional[Union[SoilMaterial, StructuralMaterial]] = None
+        self.material: Optional[Material] = None
 
     def get_element_name(self, n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
         """

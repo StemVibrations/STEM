@@ -407,7 +407,7 @@ class TestModel:
         return output_process
 
     @pytest.fixture
-    def expected_geometry_two_layers_3D_extruded(self):
+    def expected_geometry_two_layers_3D_extruded(self) -> Tuple[Geometry, Geometry]:
         """
         Expected geometry data for a 3D geometry create from 2D extrusion. The geometry is 2 stacked blocks, where the
         top and bottom blocks are in different groups.
@@ -3402,3 +3402,145 @@ class TestModel:
 
         with pytest.raises(ValueError, match=f"Group name `non_existing_group` not found."):
             model.set_element_size_of_group(1, "non_existing_group")
+
+    def test_split_body_model_part_3D(self, expected_geometry_two_layers_3D_extruded: Tuple[Geometry, Geometry],
+                                      create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if a body model part is split correctly in a 3D case. A model is created with two soil layers. The model is
+        split in two parts and the geometry of the split model parts is checked.
+
+        Args:
+            - expected_geometry_two_layers_3D_extruded (Tuple[:class:`stem.geometry.Geometry`, \
+                :class:`stem.geometry.Geometry`]): expected geometry of the model
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+
+        """
+
+        ndim = 3
+
+        layer1_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+        layer2_coordinates = [(1, 1, 0), (0, 1, 0), (0, 2, 0), (1, 2, 0)]
+
+        # define soil materials
+        soil_material1 = create_default_3d_soil_material
+        soil_material1.name = "soil1"
+
+        # create model
+        model = Model(ndim)
+        model.extrusion_length = 1
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
+        model.add_soil_layer_by_coordinates(layer2_coordinates, soil_material1, "layer2")
+
+        model.gmsh_io.geo_data["physical_groups"]["layer1"]["geometry_ids"] = [1, 2]
+        model.gmsh_io.geo_data["physical_groups"].pop("layer2")
+
+        model.body_model_parts[0].geometry = Geometry.create_geometry_from_gmsh_group(model.gmsh_io.geo_data, "layer1")
+        model.body_model_parts.pop(1)
+
+        model.split_model_part("layer1", "split_layer1", [1], soil_material1)
+
+        # check geometry of the split model part
+        TestUtils.assert_almost_equal_geometries(expected_geometry_two_layers_3D_extruded[0],
+                                                 model.body_model_parts[1].geometry)
+        TestUtils.assert_almost_equal_geometries(expected_geometry_two_layers_3D_extruded[1],
+                                                 model.body_model_parts[0].geometry)
+
+        # split body model part expected error
+        with pytest.raises(ValueError,
+                           match="New parameters must have the same material type as in the original "
+                           "body model part."):
+            model.split_model_part("layer1", "second_split", [2],
+                                   StructuralMaterial("beam", EulerBeam(3, 1, 1, 1, 1, 1, 1, 1)))
+
+    def test_split_process_model_part_2D(self, expected_geometry_two_layers_2D: Tuple[Geometry, Geometry, Geometry],
+                                         create_default_2d_soil_material: SoilMaterial):
+        """
+        Test if a process model part is split correctly in a 2D case. A model is created with two soil layers. The model
+        is split in two parts and the geometry of the split model parts is checked.
+
+        Args:
+            - expected_geometry_two_layers_2D (Tuple[:class:`stem.geometry.Geometry`, \
+                :class:`stem.geometry.Geometry`, :class:`stem.geometry.Geometry`]): expected geometry of the model
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+
+        """
+
+        ndim = 2
+
+        layer1_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+        layer2_coordinates = [(1, 1, 0), (0, 1, 0), (0, 2, 0), (1, 2, 0)]
+
+        # define soil materials
+        soil_material1 = create_default_2d_soil_material
+        soil_material1.name = "soil1"
+
+        # create model
+        model = Model(ndim)
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
+        model.add_soil_layer_by_coordinates(layer2_coordinates, soil_material1, "layer2")
+
+        # add process model part on the whole geometry
+        model._Model__add_gravity_load()
+
+        # split process model part
+        model.split_model_part("gravity_load_2d", "gravity_layer_2", [2],
+                               GravityLoad(value=[20, 20, 20], active=[True, True, True]))
+
+        # check geometry and parameters of the original and split model part
+        assert model.process_model_parts[0].name == "gravity_load_2d"
+        assert model.process_model_parts[0].parameters.value == [0, -9.81, 0]
+        TestUtils.assert_almost_equal_geometries(expected_geometry_two_layers_2D[0],
+                                                 model.process_model_parts[0].geometry)
+
+        assert model.process_model_parts[1].name == "gravity_layer_2"
+        assert model.process_model_parts[1].parameters.value == [20, 20, 20]
+        TestUtils.assert_almost_equal_geometries(expected_geometry_two_layers_2D[1],
+                                                 model.process_model_parts[1].geometry)
+
+        # split process model part expected error
+        with pytest.raises(ValueError,
+                           match="New parameters must have the same process parameter type as in the "
+                           "original process model part."):
+            model.split_model_part("gravity_load_2d", "gravity_layer_3", [1],
+                                   LineLoad(value=[20, 20, 20], active=[True, True, True]))
+
+    def test_split_model_part_expected_raise(self, create_default_2d_soil_material: SoilMaterial):
+        """
+        Test if a ValueErrors are raised when:
+        - the group name is not found while splitting a model part |
+        - the geometry is not defined in the model part |
+        - the model part type and new parameters type do not match
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+
+        model = Model(2)
+
+        model.process_model_parts.append(ModelPart("process_2d"))
+
+        with pytest.raises(ValueError, match=f"Model part: non_existing_group not found."):
+            model.split_model_part("non_existing_group", "split_group", [1], create_default_2d_soil_material)
+
+        with pytest.raises(ValueError, match=f"Geometry is not defined in the model part: process_2d."):
+            model.split_model_part("process_2d", "split_group", [1], create_default_2d_soil_material)
+
+        model.process_model_parts[0].geometry = Geometry(surfaces={1: Surface.create([1, 2, 3], 1)},
+                                                         lines={
+                                                             1: Line.create([1, 2], 1),
+                                                             2: Line.create([2, 3], 2),
+                                                             3: Line.create([3, 1], 3)
+                                                         },
+                                                         points={
+                                                             1: Point.create([0, 0, 0], 1),
+                                                             2: Point.create([1, 0, 0], 2),
+                                                             3: Point.create([1, 1, 0], 3)
+                                                         })
+
+        with pytest.raises(ValueError, match=f"Model part type and new parameters type must match."):
+            model.split_model_part("process_2d", "split_group", [1], create_default_2d_soil_material)
