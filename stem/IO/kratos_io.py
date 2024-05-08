@@ -614,7 +614,7 @@ class KratosIO:
             - block_text (List[str]): list of strings for the mdpa file. Each element is a line in the mdpa file.
         """
         # get the unique ids in material and conditions
-        ids_to_write = list(set([mp.id for mp in model.get_all_model_parts() if mp.id is not None]))
+        ids_to_write = list(set([mp.id for mp in model.all_model_parts if mp.id is not None]))
 
         # get the unique ids and write properties
         block_text = []
@@ -839,7 +839,7 @@ class KratosIO:
             model.project_parameters,
             Path(mesh_file_name).stem,
             materials_file_name,
-            model.get_all_model_parts(),
+            model.all_model_parts,
         )
 
     def __create_folder_for_json_output(self, output_settings: Optional[List[Output]] = None):

@@ -11,6 +11,8 @@ if TYPE_CHECKING:
     from stem.mesh import Element, Mesh
     from stem.geometry import Geometry
 
+NUMBER_TYPES = (int, float, np.int64, np.float64)
+
 
 class Utils:
     """
@@ -718,3 +720,35 @@ class Utils:
 
         # If the dot product is 0, the point is on the plane
         return True
+
+    @staticmethod
+    def validate_coordinates(coordinates: Union[Sequence[Sequence[float]], npty.NDArray[np.float64]]):
+        """
+        Validates the coordinates in input.
+
+        Args:
+            - coordinates (Sequence[Sequence[float]]): The coordinates of the load.
+
+        Raises:
+            - ValueError: if coordinates is not a sequence real numbers.
+            - ValueError: if coordinates is not convertible to a 2D array (i.e. a sequence of sequences)
+            - ValueError: if the number of elements (number of coordinates) is not 3.
+
+        """
+
+        # if is not an array, make it array!
+        if not isinstance(coordinates, np.ndarray):
+            coordinates = np.array(coordinates, dtype=np.float64)
+
+        if len(coordinates.shape) != 2:
+            raise ValueError("Coordinates are not a sequence of a sequence or a 2D array.")
+
+        if coordinates.shape[1] != 3:
+            raise ValueError(f"Coordinates should be 3D but {coordinates.shape[1]} coordinates were given.")
+
+        # check if coordinates are real numbers
+        for coordinate in coordinates:
+            for i in coordinate:
+                if not isinstance(i, NUMBER_TYPES) or np.isnan(i) or np.isinf(i):
+                    raise ValueError(f"Coordinates should be a sequence of sequence of real numbers, "
+                                     f"but {i} was given.")

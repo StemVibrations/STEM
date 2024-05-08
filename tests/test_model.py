@@ -1311,7 +1311,8 @@ class TestModel:
         # create model
         model = Model(ndim)
 
-        with pytest.raises(ValueError, match="Origin is not in the trajectory of the moving load."):
+        with pytest.raises(ValueError,
+                           match="None of the lines are aligned with the origin of the moving load. Error."):
             model.add_load_by_coordinates(point_coordinates, load_parameters, "moving_load_1")
 
     def test_generate_mesh_with_only_a_body_model_part_2d(self, create_default_2d_soil_material: SoilMaterial):

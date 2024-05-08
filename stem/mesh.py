@@ -2,6 +2,7 @@ from typing import Dict, List, Sequence, Any
 from enum import Enum
 
 import numpy as np
+import numpy.typing as npty
 
 from stem.globals import ELEMENT_DATA
 from stem.utils import Utils
@@ -285,3 +286,50 @@ class Mesh:
         mesh.elements = elements
 
         return mesh
+
+    def get_all_connectivities_array(self) -> npty.NDArray[np.int64]:
+        """
+        Get all node ids per element
+
+        Returns:
+            - npty.NDArray[np.int64]: all node ids
+        """
+
+        connectivities = np.array([el.node_ids for el in self.elements.values()])
+
+        return connectivities
+
+    def calculate_centroids(self) -> npty.NDArray[np.float64]:
+        """
+        Calculate the centroids of all elements
+
+        Returns:
+            - npty.NDArray[np.float64]: centroids of all elements
+        """
+
+        centroids: npty.NDArray[np.float64] = np.mean([[self.nodes[nid].coordinates for nid in el.node_ids]
+                                                       for el in self.elements.values()],
+                                                      axis=1)
+
+        return centroids
+
+    def find_elements_connected_to_nodes(self) -> Dict[int, List[int]]:
+        """
+        Creates a dictionary of node ids as keys and a list of element ids which are connected to the node as values.
+
+
+        Returns:
+            - Dict[int, List[int]]: dictionary containing node ids as keys and  a list of element ids which are
+            connected to the node as values.
+
+        """
+
+        # find which elements are connected to each node
+        node_to_elements = {}
+        for node_id in self.nodes.keys():
+            elements_connected = [
+                element_id for element_id, element in self.elements.items() if node_id in element.node_ids
+            ]
+            node_to_elements[node_id] = elements_connected
+
+        return node_to_elements
