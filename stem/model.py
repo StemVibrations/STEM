@@ -257,7 +257,7 @@ class Model:
         if group_name not in self.groups.keys():
             raise ValueError(f"The group specified `{group_name}` does not exist.")
 
-        if self.__get_model_part_by_name(part_name) is None:
+        if self.get_model_part_by_name(part_name) is None:
             raise ValueError(f"The model part specified `{part_name}` does not exist.")
 
         self.groups[group_name]["model_part_names"].append(part_name)
@@ -548,7 +548,7 @@ class Model:
 
         # check if the model part exists (if None, all model is output)
         if (part_name is not None and part_name != "porous_computational_model_part"
-                and self.__get_model_part_by_name(part_name=part_name) is None):
+                and self.get_model_part_by_name(part_name=part_name) is None):
             raise ValueError("Model part for which output needs to be requested doesn't exist.")
 
         self.output_settings.append(
@@ -684,7 +684,7 @@ class Model:
         """
 
         # Check if the model part exists and retrieve the part
-        target_part = self.__get_model_part_by_name(part_name=part_name)
+        target_part = self.get_model_part_by_name(part_name=part_name)
 
         # Check if the model part is a body model part
         if not isinstance(target_part, BodyModelPart):
@@ -1248,7 +1248,7 @@ class Model:
         # add gravity load to process model parts
         self.process_model_parts.append(model_part)
 
-    def __get_model_part_by_name(self, part_name: str) -> Optional[ModelPart]:
+    def get_model_part_by_name(self, part_name: str) -> Optional[ModelPart]:
         """
         Find the model part matching the given part_name
 
@@ -1477,7 +1477,7 @@ class Model:
             - ValueError: If the geometry is empty in the model part.
         """
 
-        from_model_part = self.__get_model_part_by_name(from_model_part_name)
+        from_model_part = self.get_model_part_by_name(from_model_part_name)
         if from_model_part is None:
             raise ValueError(f"Model part: {from_model_part_name} not found.")
         if from_model_part.geometry is None:
