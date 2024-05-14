@@ -287,18 +287,6 @@ class Mesh:
 
         return mesh
 
-    def get_all_connectivities_array(self) -> npty.NDArray[np.int64]:
-        """
-        Get all node ids per element
-
-        Returns:
-            - npty.NDArray[np.int64]: all node ids
-        """
-
-        connectivities = np.array([el.node_ids for el in self.elements.values()])
-
-        return connectivities
-
     def calculate_centroids(self) -> npty.NDArray[np.float64]:
         """
         Calculate the centroids of all elements
@@ -325,11 +313,10 @@ class Mesh:
         """
 
         # find which elements are connected to each node
-        node_to_elements = {}
-        for node_id in self.nodes.keys():
-            elements_connected = [
-                element_id for element_id, element in self.elements.items() if node_id in element.node_ids
-            ]
-            node_to_elements[node_id] = elements_connected
+        node_to_elements = {node_id: [] for node_id in self.nodes.keys()}
+
+        for element_id, element in self.elements.items():
+            for node_id in element.node_ids:
+                node_to_elements[node_id].append(element_id)
 
         return node_to_elements

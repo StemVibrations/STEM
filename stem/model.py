@@ -1080,13 +1080,9 @@ class Model:
         if process_model_part.mesh is None:
             raise ValueError(f"Mesh of process model part: {process_model_part.name} is not yet initialised.")
 
-        # get all the node ids for all the elements in the process model (pmp) part and the indices of each element in
-        # the array
-        unmatched_connectivities_pmp = process_model_part.mesh.get_all_connectivities_array()
-        pmp_element_ids = np.array(list(process_model_part.mesh.elements.keys()))
-
-        # initialise matching list: process_element --> body_element
-        matched_elements = []
+        # initialise body element dictionaries
+        nodes_to_elements_body = {}
+        all_body_elements = {}
 
         # loop over the body model parts (bmp) to match the elements of the process model part
         for body_model_part in self.body_model_parts:
@@ -1095,53 +1091,40 @@ class Model:
             if body_model_part.mesh is None:
                 raise ValueError(f"Mesh of body model part: {body_model_part.name} is not yet initialised.")
 
-            # if there is nothing to match, break the loop
-            if len(unmatched_connectivities_pmp) == 0:
-                # finished matching elements
+            # find which nodes within the body model part are connected to which elements
+            nodes_to_elements_body.update(body_model_part.mesh.find_elements_connected_to_nodes())
+            all_body_elements.update(body_model_part.mesh.elements)
+
+        # for each process element, check if there is a match with the current body part elements
+        process_elements = process_model_part.mesh.elements
+        matched_elements = []
+        for process_element_id in process_elements:
+
+            # check if all nodes of the process element are present in the body elements
+            if not all(node_id in nodes_to_elements_body for node_id in process_elements[process_element_id].node_ids):
                 break
 
-            # get the node ids for the elements in the current body model part and their ids
-            bmp_connectivities = body_model_part.mesh.get_all_connectivities_array()
-            bmp_element_ids = np.array(list(body_model_part.mesh.elements.keys()))
+            # get the connected body elements for each node of the process element
+            connected_elements = [set(nodes_to_elements_body[node_id])
+                                  for node_id in process_elements[process_element_id].node_ids]
 
-            # initialised matched ids and indices for the element of the process model part
-            matched_element_id_process_to_body = {}
-            matched_indices_process_element = []
-            # for each process element, check if there is a match with the current body part elements
-            for ix, (process_element_id,
-                     process_element_connectivities) in (enumerate(zip(pmp_element_ids, unmatched_connectivities_pmp))):
-                # find the indices of the element in the body model parts that contains the node ids of the current
-                # process model part. An element is considered a match if all the nodes of the process element are also
-                # in the body element
-                found_indices = np.where(
-                    np.sum(np.isin(bmp_connectivities, process_element_connectivities), axis=1) == len(
-                        process_element_connectivities))[0]
+            # find which body elements are connected to all nodes of the process element
+            common_elements = list(set.intersection(*connected_elements))
 
-                # from the first match, retrieve the element id of the body model part and the element id of the process
-                # model part
-                if len(found_indices) > 0:
-                    matched_element_id_process_to_body[process_element_id] = bmp_element_ids[found_indices.tolist()[0]]
-                    matched_indices_process_element.append(ix)
+            # if there are common elements, add the process element and the first connected body element to the
+            # matched_elements list
+            if len(common_elements) > 0:
+                matched_elements.append((process_model_part.mesh.elements[process_element_id],
+                                         all_body_elements[common_elements[0]]))
 
-            # if there is match, couple the element objects together in the matched_elements list
-            # then remove the matched process model part elements from the unmatched_connectivities_pmp array
-            # and the pmp_element_ids array in order to avoid matching the same elements twice
-            if len(matched_element_id_process_to_body) > 0:
+        # if not all process elements are matched, raise an error
+        if len(matched_elements) < len(process_elements):
+            # find which process elements are not matched
+            matched_process_elements = set(pe.id for pe, _ in matched_elements)
+            unmatched_process_elements = set(process_model_part.mesh.elements.keys()) - matched_process_elements
 
-                for process_element_id, body_element_id in matched_element_id_process_to_body.items():
-                    matched_elements.append((process_model_part.mesh.elements[process_element_id],
-                                             body_model_part.mesh.elements[body_element_id]))
-
-                # remove the matched elements from the unmatched_elements_pmp and pmp_element_ids arrays, in order
-                # to avoid matching the same elements twice
-                process_elements_idxs = np.array(list(matched_indices_process_element))
-                unmatched_connectivities_pmp = np.delete(unmatched_connectivities_pmp, process_elements_idxs, axis=0)
-                pmp_element_ids = np.delete(pmp_element_ids, process_elements_idxs)
-
-        # if there are still process elements which do not share the nodes of body elements, raise an error
-        if len(unmatched_connectivities_pmp) != 0:
-            raise ValueError(f"In process model part: {process_model_part.name}, the node ids: "
-                             f"{list(unmatched_connectivities_pmp)}, are not present in a body model part.")
+            raise ValueError(f"Condition elements: {list(unmatched_process_elements)} do not have a corresponding "
+                             f"body element.")
 
         return matched_elements
 
@@ -1159,7 +1142,6 @@ class Model:
 
         Raises:
             - ValueError: if mesh is not initialised yet.
-            - ValueError: if the integration order of the process element is different from the body element.
 
         """
 
@@ -1167,9 +1149,9 @@ class Model:
             raise ValueError(f"Mesh of process model part: {process_model_part.name} is not yet initialised.")
 
         # loop over the matched elements
-        flip_node_order: Dict[int, bool] = {}
+        elements_to_flip = []
 
-        for i, (process_element, body_element) in enumerate(matched_elements):
+        for (process_element, body_element) in matched_elements:
 
             # element info such as order, number of edges, element types etc.
             process_el_info = ELEMENT_DATA[process_element.element_type]
@@ -1177,32 +1159,24 @@ class Model:
 
             if process_el_info["ndim"] == 1:
 
-                # initialise flip node order to False
-                flip_node_order[process_element.id] = False
-
                 # get all line edges of the body element and check if the process element is defined on one of them
                 # if the nodes are equal, but the node order isn't, flip the node order of the process element
                 body_line_edges = Utils.get_element_edges(body_element)
                 for edge in body_line_edges:
-                    if set(edge) == set(process_element.node_ids):
-                        if list(edge) != process_element.node_ids:
-                            flip_node_order[process_element.id] = True
+                    if set(edge) == set(process_element.node_ids) and list(edge) != process_element.node_ids:
+                        elements_to_flip.append(process_element)
 
             elif body_el_info["ndim"] == 3 and process_el_info["ndim"] == 2:
 
                 # check if the normal of the condition element is defined outwards of the body element
-                flip_node_order[process_element.id] = Utils.is_volume_edge_defined_outwards(
-                    process_element, body_element, self.gmsh_io.mesh_data["nodes"])
+                if Utils.is_volume_edge_defined_outwards(process_element, body_element, self.gmsh_io.mesh_data["nodes"]):
+                    elements_to_flip.append(process_element)
 
         # flip condition elements if required
-        if any(list(flip_node_order.values())):
-            # get the elements to be flipped
-            elements = [
-                process_model_part.mesh.elements[el_id] for el_id in flip_node_order.keys() if flip_node_order[el_id]
-            ]
+        if len(elements_to_flip) > 0:
 
             # flip elements, it is required that all elements in the array are of the same type
-            Utils.flip_node_order(elements)
+            Utils.flip_node_order(elements_to_flip)
 
     def __validate_model_part_names(self):
         """
