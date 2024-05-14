@@ -1092,7 +1092,12 @@ class Model:
                 raise ValueError(f"Mesh of body model part: {body_model_part.name} is not yet initialised.")
 
             # find which nodes within the body model part are connected to which elements
-            nodes_to_elements_body.update(body_model_part.mesh.find_elements_connected_to_nodes())
+            for node_id, element_ids in body_model_part.mesh.find_elements_connected_to_nodes().items():
+                if node_id in nodes_to_elements_body:
+                    nodes_to_elements_body[node_id].extend(element_ids)
+                else:
+                    nodes_to_elements_body[node_id] = element_ids
+
             all_body_elements.update(body_model_part.mesh.elements)
 
         # for each process element, check if there is a match with the current body part elements
