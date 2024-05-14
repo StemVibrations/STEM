@@ -1105,8 +1105,9 @@ class Model:
                 break
 
             # get the connected body elements for each node of the process element
-            connected_elements = [set(nodes_to_elements_body[node_id])
-                                  for node_id in process_elements[process_element_id].node_ids]
+            connected_elements = [
+                set(nodes_to_elements_body[node_id]) for node_id in process_elements[process_element_id].node_ids
+            ]
 
             # find which body elements are connected to all nodes of the process element
             common_elements = list(set.intersection(*connected_elements))
@@ -1114,8 +1115,8 @@ class Model:
             # if there are common elements, add the process element and the first connected body element to the
             # matched_elements list
             if len(common_elements) > 0:
-                matched_elements.append((process_model_part.mesh.elements[process_element_id],
-                                         all_body_elements[common_elements[0]]))
+                matched_elements.append(
+                    (process_model_part.mesh.elements[process_element_id], all_body_elements[common_elements[0]]))
 
         # if not all process elements are matched, raise an error
         if len(matched_elements) < len(process_elements):
@@ -1169,7 +1170,8 @@ class Model:
             elif body_el_info["ndim"] == 3 and process_el_info["ndim"] == 2:
 
                 # check if the normal of the condition element is defined outwards of the body element
-                if Utils.is_volume_edge_defined_outwards(process_element, body_element, self.gmsh_io.mesh_data["nodes"]):
+                if Utils.is_volume_edge_defined_outwards(process_element, body_element,
+                                                         self.gmsh_io.mesh_data["nodes"]):
                     elements_to_flip.append(process_element)
 
         # flip condition elements if required

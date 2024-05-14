@@ -313,7 +313,7 @@ class Mesh:
         """
 
         # find which elements are connected to each node
-        node_to_elements = {node_id: [] for node_id in self.nodes.keys()}
+        node_to_elements: Dict[int, List[int]] = {node_id: [] for node_id in self.nodes.keys()}
 
         for element_id, element in self.elements.items():
             for node_id in element.node_ids:
