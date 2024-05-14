@@ -452,32 +452,21 @@ class Utils:
         # if 2 or more lines check for branching points/loops and discontinuities
         if len(geometry.lines) > 1:
 
-            # get the line ids and points in the line
-            lines = {_id: line.point_ids for _id, line in geometry.lines.items()}
+            # find which lines are connected to which point
+            lines_to_point = {point_id: [] for point_id in geometry.points.keys()}
+            for line_id, line in geometry.lines.items():
+                for point_id in line.point_ids:
+                    lines_to_point[point_id].append(line_id)
 
-            # get the unique points in the line
-            unique_points = list(set([n for v in lines.values() for n in v]))
+            # check if the lines are connected without branches
+            for line_ids in lines_to_point.values():
 
-            # loop over the points and find the lines connected to the point
-            for p in unique_points:
-
-                # initialise list of lines connected to the point
-                line_to_point = []
-
-                # find which lines contain the point
-                for line_id, points_line in lines.items():
-
-                    if p in points_line:
-                        line_to_point.append(line_id)
-
-                # when more than 2 lines are connected to the point a branching point or loop
-                # is found, so the geometry is not a path. Return False.
-                if len(line_to_point) > 2:
-                    # "Branching point was found for node {p} connected to lines {line_to_point}
+                # if more than 2 lines are connected to the point a branching point or loop is found
+                if len(line_ids) > 2:
                     return False
 
             # if no branching point are found than the check of connectivity holds when
-            if len(unique_points) != (len(lines) + 1):
+            if len(lines_to_point) != (len(geometry.lines) + 1):
                 # lines are not connected.
                 return False
 
@@ -568,8 +557,9 @@ class Utils:
         tree = cKDTree(coordinates)
 
         # find the ids of the nodes in the model that are close to the specified coordinates.
-        close_indices = tree.query_ball_point(output_coordinates, np.ones(output_coordinates.shape[0]) * eps, p=2.)
-        return np.array(node_ids)[np.hstack(close_indices, dtype=np.int64)]
+        _, close_indices = tree.query(output_coordinates, k=1, distance_upper_bound=eps)
+
+        return np.array(node_ids)[close_indices]
 
     @staticmethod
     def find_first_three_non_collinear_points(points: Sequence[Sequence[float]],
