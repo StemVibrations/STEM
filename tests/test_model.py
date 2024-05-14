@@ -1882,10 +1882,10 @@ class TestModel:
         model = Model(ndim=2)
 
         # create remaining element ids in random order
-        remaining_element_ids = [4, 5, 3, 2, 1]
+        remaining_element_ids = {4, 5, 3, 2, 1}
 
         # create remaining node ids in random order
-        remaining_node_ids = [2, 6, 4, 3, 5]
+        remaining_node_ids = {2, 6, 4, 3, 5}
 
         # fill in which elements are connected to which nodes
         node_to_elements = {1: [1], 2: [2, 3], 3: [1, 2], 4: [3, 4], 5: [4, 5], 6: [5]}
@@ -1928,15 +1928,15 @@ class TestModel:
         # create a fork
         line_elements[6] = Element(6, "LINE_2N", [3, 7])
         target_node_ids = np.array([3])
-        remaining_node_ids = [2, 6, 4, 3, 5, 7]
-        remaining_element_ids = [1, 2, 6]
+        remaining_node_ids = {2, 6, 4, 3, 5, 7}
+        remaining_element_ids = {1, 2, 6}
         node_to_elements[3] = [1, 2, 6]
         node_to_elements[7] = [6]
 
         # check if fork is detected and error is raised
         first_node = 3
         with pytest.raises(ValueError,
-                           match=re.escape("There is a fork in the mesh at elements: [1, 2, 6], "
+                           match=re.escape("There is a fork in the mesh at elements: {1, 2, 6}, "
                                            "the next node along the line cannot be found.")):
             _ = model._Model__find_next_node_along_line_elements(first_node, remaining_element_ids, remaining_node_ids,
                                                                  node_to_elements, line_elements, target_node_ids)

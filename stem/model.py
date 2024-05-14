@@ -1,7 +1,6 @@
-from typing import List, Sequence, Dict, Any, Optional, Union, Tuple, get_args
+from typing import List, Sequence, Dict, Any, Optional, Union, Tuple, get_args, Set
 
 import numpy as np
-import numpy.typing as npty
 
 from gmsh_utils import gmsh_IO
 
@@ -931,14 +930,13 @@ class Model:
             raise ValueError(f"Mesh of model part `{model_part.name}` not yet initialised.")
 
         # find end nodes
-        end_nodes = self.__find_end_nodes_of_line_strings(model_part.mesh)
+        end_nodes = set(self.__find_end_nodes_of_line_strings(model_part.mesh))
         # find the node ids corresponding to the geometry points
-        node_ids_at_geometry_points = Utils.find_node_ids_close_to_geometry_nodes(mesh=model_part.mesh,
-                                                                                  geometry=model_part.geometry,
-                                                                                  eps=1e-06)
+        node_ids_at_geometry_points = set(
+            Utils.find_node_ids_close_to_geometry_nodes(mesh=model_part.mesh, geometry=model_part.geometry, eps=1e-06))
 
-        element_ids_search_space = list(model_part.mesh.elements.keys())
-        node_ids_search_space = list(model_part.mesh.nodes.keys())
+        element_ids_search_space = set(model_part.mesh.elements.keys())
+        node_ids_search_space = set(model_part.mesh.nodes.keys())
 
         # retrieve the connectivity
         # node -> elements
@@ -946,8 +944,8 @@ class Model:
 
         # initialise output list
         line_node_ids = []
-        # initialise a list for end-point we have already encountered in the clustering algorithm
-        completed_points = []
+        # initialise a set for end-point we have already encountered in the clustering algorithm
+        completed_points = set()
         for end_node in end_nodes:
 
             # only consider the end nodes that are not already in the completed_points list
@@ -976,10 +974,11 @@ class Model:
                     first_node_id = second_node_id
 
                 # add the end point to the completed_points in order to reduce the search space
-                completed_points.append(first_node_id)
+                completed_points.add(first_node_id)
         return line_node_ids
 
-    def __find_end_nodes_of_line_strings(self, mesh: Mesh) -> List[int]:
+    @staticmethod
+    def __find_end_nodes_of_line_strings(mesh: Mesh) -> List[int]:
         """
         Finds the nodes at the end of linestrings.
 
@@ -995,21 +994,20 @@ class Model:
         return end_nodes
 
     @staticmethod
-    def __find_next_node_along_line_elements(start_node_id: int, remaining_element_ids: List[int],
-                                             remaining_node_ids: List[int], node_to_elements: Dict[int, List[int]],
-                                             line_elements: Dict[int, Element],
-                                             target_node_ids: npty.NDArray[np.int64]) -> int:
+    def __find_next_node_along_line_elements(start_node_id: int, remaining_element_ids: Set[int],
+                                             remaining_node_ids: Set[int], node_to_elements: Dict[int, List[int]],
+                                             line_elements: Dict[int, Element], target_node_ids: Set[int]) -> int:
         """
         Finds the next node along line element. The remaining_element_ids and remaining_node_ids keeps track of
         the direction of the previous searches and orients the search on a unique direction.
 
         Args:
             - start_node_id (int): the node id to start searching the next node along the elements.
-            - remaining_element_ids (List[int]): the element ids that have not been followed yet.
-            - remaining_node_ids (List[int]): the node ids that have not been crossed yet.
+            - remaining_element_ids (Set[int]): the element ids that have not been followed yet.
+            - remaining_node_ids (Set[int]): the node ids that have not been crossed yet.
             - node_to_elements (Dict[int, List[int]]): mapping of node_ids to the element_ids which is connected to.
             - line_elements (Dict[int, :class:`stem.mesh.Element`]): dictionary of line elements.
-            - target_node_ids (npty.NDArray[np.int64]): array of nodes to be searched for.
+            - target_node_ids (Set[int]): set of nodes to be searched for.
 
         Raises:
             - ValueError: if not all elements are line elements.
@@ -1034,14 +1032,14 @@ class Model:
         for _ in range(max_iterations):
 
             # find the element(s) connected to the node that have not yet been searched for.
-            elements_connected = [el for el in node_to_elements[next_node] if el in remaining_element_ids]
+            elements_connected = set(node_to_elements[next_node]) & remaining_element_ids
 
             # check if there is a fork in the mesh, which is not allowed
             if len(elements_connected) > 1:
                 raise ValueError(f"There is a fork in the mesh at elements: {elements_connected}, the next node along "
                                  f"the line cannot be found.")
 
-            next_element_id = elements_connected[0]
+            next_element_id = elements_connected.pop()
 
             # reduce search space for next iteration
             remaining_element_ids.remove(next_element_id)
@@ -1081,7 +1079,7 @@ class Model:
             raise ValueError(f"Mesh of process model part: {process_model_part.name} is not yet initialised.")
 
         # initialise body element dictionaries
-        nodes_to_elements_body = {}
+        nodes_to_elements_body: Dict[int, List[int]] = {}
         all_body_elements = {}
 
         # loop over the body model parts (bmp) to match the elements of the process model part
