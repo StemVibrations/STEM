@@ -11,6 +11,8 @@ if TYPE_CHECKING:
     from stem.mesh import Element, Mesh
     from stem.geometry import Geometry
 
+NUMBER_TYPES = (int, float, np.int64, np.float64)
+
 
 class Utils:
     """
@@ -450,32 +452,21 @@ class Utils:
         # if 2 or more lines check for branching points/loops and discontinuities
         if len(geometry.lines) > 1:
 
-            # get the line ids and points in the line
-            lines = {_id: line.point_ids for _id, line in geometry.lines.items()}
+            # find which lines are connected to which point
+            lines_to_point: Dict[int, List[int]] = {point_id: [] for point_id in geometry.points.keys()}
+            for line_id, line in geometry.lines.items():
+                for point_id in line.point_ids:
+                    lines_to_point[point_id].append(line_id)
 
-            # get the unique points in the line
-            unique_points = list(set([n for v in lines.values() for n in v]))
+            # check if the lines are connected without branches
+            for line_ids in lines_to_point.values():
 
-            # loop over the points and find the lines connected to the point
-            for p in unique_points:
-
-                # initialise list of lines connected to the point
-                line_to_point = []
-
-                # find which lines contain the point
-                for line_id, points_line in lines.items():
-
-                    if p in points_line:
-                        line_to_point.append(line_id)
-
-                # when more than 2 lines are connected to the point a branching point or loop
-                # is found, so the geometry is not a path. Return False.
-                if len(line_to_point) > 2:
-                    # "Branching point was found for node {p} connected to lines {line_to_point}
+                # if more than 2 lines are connected to the point a branching point or loop is found
+                if len(line_ids) > 2:
                     return False
 
             # if no branching point are found than the check of connectivity holds when
-            if len(unique_points) != (len(lines) + 1):
+            if len(lines_to_point) != (len(geometry.lines) + 1):
                 # lines are not connected.
                 return False
 
@@ -541,7 +532,7 @@ class Utils:
 
     @staticmethod
     def find_node_ids_close_to_geometry_nodes(mesh: 'Mesh', geometry: 'Geometry', eps: float = 1e-6) \
-            -> npty.NDArray[np.int64]:
+            -> npty.NDArray[np.uint64]:
         """
         Searches the nodes in the mesh close to the point of a given geometry.
 
@@ -551,7 +542,7 @@ class Utils:
             - eps (float): tolerance for searching close nodes.
 
         Returns:
-            - npty.NDArray[np.int64]: list of ids of the nodes close to the geometry points
+            - npty.NDArray[np.uint64]: list of ids of the nodes close to the geometry points
 
         """
         # retrieve ids and coordinates of the nodes
@@ -566,8 +557,11 @@ class Utils:
         tree = cKDTree(coordinates)
 
         # find the ids of the nodes in the model that are close to the specified coordinates.
-        close_indices = tree.query_ball_point(output_coordinates, np.ones(output_coordinates.shape[0]) * eps, p=2.)
-        return np.array(node_ids)[np.hstack(close_indices, dtype=np.int64)]
+        _, close_indices = tree.query(output_coordinates, k=1, distance_upper_bound=eps)
+
+        close_node_ids: npty.NDArray[np.uint64] = np.array(node_ids, dtype=np.uint64)[close_indices]
+
+        return close_node_ids
 
     @staticmethod
     def find_first_three_non_collinear_points(points: Sequence[Sequence[float]],
@@ -718,3 +712,35 @@ class Utils:
 
         # If the dot product is 0, the point is on the plane
         return True
+
+    @staticmethod
+    def validate_coordinates(coordinates: Union[Sequence[Sequence[float]], npty.NDArray[np.float64]]):
+        """
+        Validates the coordinates in input.
+
+        Args:
+            - coordinates (Sequence[Sequence[float]]): The coordinates of the load.
+
+        Raises:
+            - ValueError: if coordinates is not a sequence real numbers.
+            - ValueError: if coordinates is not convertible to a 2D array (i.e. a sequence of sequences)
+            - ValueError: if the number of elements (number of coordinates) is not 3.
+
+        """
+
+        # if is not an array, make it array!
+        if not isinstance(coordinates, np.ndarray):
+            coordinates = np.array(coordinates, dtype=np.float64)
+
+        if len(coordinates.shape) != 2:
+            raise ValueError("Coordinates are not a sequence of a sequence or a 2D array.")
+
+        if coordinates.shape[1] != 3:
+            raise ValueError(f"Coordinates should be 3D but {coordinates.shape[1]} coordinates were given.")
+
+        # check if coordinates are real numbers
+        for coordinate in coordinates:
+            for i in coordinate:
+                if not isinstance(i, NUMBER_TYPES) or np.isnan(i) or np.isinf(i):
+                    raise ValueError(f"Coordinates should be a sequence of sequence of real numbers, "
+                                     f"but {i} was given.")

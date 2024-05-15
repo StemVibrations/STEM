@@ -758,3 +758,54 @@ class TestUtilsStem:
         with pytest.raises(ValueError, match=msg):
             Utils.is_point_coplanar_to_polygon(polygon_points=[(0, 0, 0), (0.5, 0, 0), (1, 0, 0)],
                                                point=non_coplanar_point)
+
+    def test_validation_coordinates(self):
+        """
+        Test that validation raises and error if the points are not correctly specified.
+
+        """
+
+        # test inputs for numpy arrays:
+        # test for 2D-array, correct number of coordinates (shape 3,2)
+        Utils.validate_coordinates(np.zeros((2, 3)))
+
+        # test for incorrect number of coordinates in array (shape 3,2)
+        with pytest.raises(ValueError, match=f"Coordinates should be 3D but 2 coordinates were given."):
+            Utils.validate_coordinates(np.zeros((3, 2)))
+
+        # test for incorrect number of dimension in array (1-D array)
+        with pytest.raises(ValueError, match=f"Coordinates are not a sequence of a sequence or a 2D array."):
+            Utils.validate_coordinates(np.arange(3))
+
+        # test inputs for sequence of floats:
+        # test for incorrect number of coordinates
+        with pytest.raises(ValueError, match=f"Coordinates should be 3D but 4 coordinates were given."):
+            Utils.validate_coordinates([(0.0, 0.0, 0.0, 4.0)])
+
+        # test for incorrect type (Sequence of float instead of Sequence[Sequence[float]])
+        with pytest.raises(ValueError, match="Coordinates are not a sequence of a sequence or a 2D array."):
+            Utils.validate_coordinates([0.0, 0.0, 0.0])
+            Utils.validate_coordinates([0.0, 0.0, 0.0])
+
+        # test for nan numbers
+        with pytest.raises(ValueError,
+                           match=f"Coordinates should be a sequence of sequence of real numbers, "
+                           f"but nan was given."):
+            Utils.validate_coordinates([(0.0, 0.0, 0.0), (0.0, np.NAN, 0.0)])
+
+        # test for inf numbers
+        with pytest.raises(ValueError,
+                           match=f"Coordinates should be a sequence of sequence of real numbers, "
+                           f"but inf was given."):
+            Utils.validate_coordinates([(0.0, 0.0, 0.0), (0.0, np.inf, 0.0)])
+
+        # test for complex numbers, different error messages for different python versions and operating systems
+        message_option_1 = f"can't convert complex to float"
+        message_option_2 = f"float() argument must be a string or a real number, not 'complex'"
+
+        with pytest.raises(TypeError, match=f"{message_option_1}|{re.escape(message_option_2)}"):
+            Utils.validate_coordinates([(0.0, 0.0, 0.0), (0.0, 1j, 0.0)])
+
+        # test for strings
+        with pytest.raises(ValueError, match=f"could not convert string to float: 'test'"):
+            Utils.validate_coordinates([(0.0, 0.0, 0.0), (0.0, "test", 0.0)])
