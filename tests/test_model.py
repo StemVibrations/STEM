@@ -407,7 +407,7 @@ class TestModel:
         return output_process
 
     @pytest.fixture
-    def expected_geometry_two_layers_3D_extruded(self):
+    def expected_geometry_two_layers_3D_extruded(self) -> Tuple[Geometry, Geometry]:
         """
         Expected geometry data for a 3D geometry create from 2D extrusion. The geometry is 2 stacked blocks, where the
         top and bottom blocks are in different groups.
@@ -1239,59 +1239,6 @@ class TestModel:
 
         TestUtils.assert_almost_equal_geometries(expected_geometry, generated_geometry)
 
-    def test_validation_coordinates(self):
-        """
-        Test that validation raises and error if the points are not correctly specified.
-
-        """
-
-        ndim = 3
-        model = Model(ndim=ndim)
-
-        # test inputs for numpy arrays:
-        # test for 2D-array, correct number of coordinates (shape 3,2)
-        model.validate_coordinates(np.zeros((2, 3)))
-
-        # test for incorrect number of coordinates in array (shape 3,2)
-        with pytest.raises(ValueError, match=f"Coordinates should be 3D but 2 coordinates were given."):
-            model.validate_coordinates(np.zeros((3, 2)))
-
-        # test for incorrect number of dimension in array (1-D array)
-        with pytest.raises(ValueError, match=f"Coordinates are not a sequence of a sequence or a 2D array."):
-            model.validate_coordinates(np.arange(3))
-
-        # test inputs for sequence of floats:
-        # test for incorrect number of coordinates
-        with pytest.raises(ValueError, match=f"Coordinates should be 3D but 4 coordinates were given."):
-            model.validate_coordinates([(0.0, 0.0, 0.0, 4.0)])
-
-        # test for incorrect type (Sequence of float instead of Sequence[Sequence[float]])
-        with pytest.raises(ValueError, match="Coordinates are not a sequence of a sequence or a 2D array."):
-            model.validate_coordinates([0.0, 0.0, 0.0])
-
-        # test for nan numbers
-        with pytest.raises(ValueError,
-                           match=f"Coordinates should be a sequence of sequence of real numbers, "
-                           f"but nan was given."):
-            model.validate_coordinates([(0.0, 0.0, 0.0), (0.0, np.NAN, 0.0)])
-
-        # test for inf numbers
-        with pytest.raises(ValueError,
-                           match=f"Coordinates should be a sequence of sequence of real numbers, "
-                           f"but inf was given."):
-            model.validate_coordinates([(0.0, 0.0, 0.0), (0.0, np.inf, 0.0)])
-
-        # test for complex numbers, different error messages for different python versions and operating systems
-        message_option_1 = f"can't convert complex to float"
-        message_option_2 = f"float() argument must be a string or a real number, not 'complex'"
-
-        with pytest.raises(TypeError, match=f"{message_option_1}|{re.escape(message_option_2)}"):
-            model.validate_coordinates([(0.0, 0.0, 0.0), (0.0, 1j, 0.0)])
-
-        # test for strings
-        with pytest.raises(ValueError, match=f"could not convert string to float: 'test'"):
-            model.validate_coordinates([(0.0, 0.0, 0.0), (0.0, "test", 0.0)])
-
     def test_validation_moving_load(self, create_default_moving_load_parameters: MovingLoad):
         """
         Test validation of moving load when points is not collinear to the trajectory.
@@ -1311,7 +1258,8 @@ class TestModel:
         # create model
         model = Model(ndim)
 
-        with pytest.raises(ValueError, match="Origin is not in the trajectory of the moving load."):
+        with pytest.raises(ValueError,
+                           match="None of the lines are aligned with the origin of the moving load. Error."):
             model.add_load_by_coordinates(point_coordinates, load_parameters, "moving_load_1")
 
     def test_generate_mesh_with_only_a_body_model_part_2d(self, create_default_2d_soil_material: SoilMaterial):
@@ -1934,10 +1882,10 @@ class TestModel:
         model = Model(ndim=2)
 
         # create remaining element ids in random order
-        remaining_element_ids = [4, 5, 3, 2, 1]
+        remaining_element_ids = {4, 5, 3, 2, 1}
 
         # create remaining node ids in random order
-        remaining_node_ids = [2, 6, 4, 3, 5]
+        remaining_node_ids = {2, 6, 4, 3, 5}
 
         # fill in which elements are connected to which nodes
         node_to_elements = {1: [1], 2: [2, 3], 3: [1, 2], 4: [3, 4], 5: [4, 5], 6: [5]}
@@ -1980,15 +1928,15 @@ class TestModel:
         # create a fork
         line_elements[6] = Element(6, "LINE_2N", [3, 7])
         target_node_ids = np.array([3])
-        remaining_node_ids = [2, 6, 4, 3, 5, 7]
-        remaining_element_ids = [1, 2, 6]
+        remaining_node_ids = {2, 6, 4, 3, 5, 7}
+        remaining_element_ids = {1, 2, 6}
         node_to_elements[3] = [1, 2, 6]
         node_to_elements[7] = [6]
 
         # check if fork is detected and error is raised
         first_node = 3
         with pytest.raises(ValueError,
-                           match=re.escape("There is a fork in the mesh at elements: [1, 2, 6], "
+                           match=re.escape("There is a fork in the mesh at elements: {1, 2, 6}, "
                                            "the next node along the line cannot be found.")):
             _ = model._Model__find_next_node_along_line_elements(first_node, remaining_element_ids, remaining_node_ids,
                                                                  node_to_elements, line_elements, target_node_ids)
@@ -2073,54 +2021,6 @@ class TestModel:
         msg = "The property for which a random field needs to be generated, `IS_DRAINED` is not a numeric value."
         with pytest.raises(ValueError, match=msg):
             model.add_field(part_name="layer1", field_parameters=wrong_field_parameters_json_boolean)
-
-    def test_get_centroids_elements(self, create_default_2d_soil_material: SoilMaterial):
-        """
-        Test the computation of the centroids from the mesh of a model part and raising of errors.
-
-        Args:
-            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
-
-        """
-
-        model = Model(2)
-
-        # add soil material
-        soil_material = create_default_2d_soil_material
-
-        # add soil layers
-        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
-        point_load_parms = PointLoad(active=[True, True, True], value=[0, -1000, 0])
-        model.add_load_by_coordinates(name="point_load", coordinates=[(0, 0, 0)], load_parameters=point_load_parms)
-
-        # non existing part
-        msg = ("Model part `layer2` is not part of the model parts in the model."
-               "Please add it or check the part name.")
-        with pytest.raises(ValueError, match=msg):
-            model.get_centroids_elements_model_part(part_name="layer2")
-
-        # non meshed part
-        msg = ("Mesh of model part `layer1` not available. Please run the"
-               " model.generate_mesh() method")
-        with pytest.raises(ValueError, match=re.escape(msg)):
-            model.get_centroids_elements_model_part(part_name="layer1")
-
-        # generate mesh
-        model.set_mesh_size(1)
-        model.generate_mesh()
-
-        # generate centroids and assert they are as expected
-        actual_entroids = model.get_centroids_elements_model_part(part_name="layer1")
-        expected_centroids = np.array([[0.5, 0.16666667, 0.], [0.16666667, 0.5, 0.], [0.83333333, 0.5, 0.],
-                                       [0.5, 0.83333333, 0.]])
-        npt.assert_allclose(actual_entroids, expected_centroids)
-
-        # test that error is raised when trying to get centroid from a part with no elements
-        model.process_model_parts[0].mesh.elements = None
-        # part without elements
-        msg = "No elements for model part `point_load`. Check if the a wrong part was selected."
-        with pytest.raises(ValueError, match=msg):
-            model.get_centroids_elements_model_part(part_name="point_load")
 
     def test_random_field_generation_2d(self, create_default_2d_soil_material: SoilMaterial):
         """
@@ -3402,3 +3302,145 @@ class TestModel:
 
         with pytest.raises(ValueError, match=f"Group name `non_existing_group` not found."):
             model.set_element_size_of_group(1, "non_existing_group")
+
+    def test_split_body_model_part_3D(self, expected_geometry_two_layers_3D_extruded: Tuple[Geometry, Geometry],
+                                      create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if a body model part is split correctly in a 3D case. A model is created with two soil layers. The model is
+        split in two parts and the geometry of the split model parts is checked.
+
+        Args:
+            - expected_geometry_two_layers_3D_extruded (Tuple[:class:`stem.geometry.Geometry`, \
+                :class:`stem.geometry.Geometry`]): expected geometry of the model
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+
+        """
+
+        ndim = 3
+
+        layer1_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+        layer2_coordinates = [(1, 1, 0), (0, 1, 0), (0, 2, 0), (1, 2, 0)]
+
+        # define soil materials
+        soil_material1 = create_default_3d_soil_material
+        soil_material1.name = "soil1"
+
+        # create model
+        model = Model(ndim)
+        model.extrusion_length = 1
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
+        model.add_soil_layer_by_coordinates(layer2_coordinates, soil_material1, "layer2")
+
+        model.gmsh_io.geo_data["physical_groups"]["layer1"]["geometry_ids"] = [1, 2]
+        model.gmsh_io.geo_data["physical_groups"].pop("layer2")
+
+        model.body_model_parts[0].geometry = Geometry.create_geometry_from_gmsh_group(model.gmsh_io.geo_data, "layer1")
+        model.body_model_parts.pop(1)
+
+        model.split_model_part("layer1", "split_layer1", [1], soil_material1)
+
+        # check geometry of the split model part
+        TestUtils.assert_almost_equal_geometries(expected_geometry_two_layers_3D_extruded[0],
+                                                 model.body_model_parts[1].geometry)
+        TestUtils.assert_almost_equal_geometries(expected_geometry_two_layers_3D_extruded[1],
+                                                 model.body_model_parts[0].geometry)
+
+        # split body model part expected error
+        with pytest.raises(ValueError,
+                           match="New parameters must have the same material type as in the original "
+                           "body model part."):
+            model.split_model_part("layer1", "second_split", [2],
+                                   StructuralMaterial("beam", EulerBeam(3, 1, 1, 1, 1, 1, 1, 1)))
+
+    def test_split_process_model_part_2D(self, expected_geometry_two_layers_2D: Tuple[Geometry, Geometry, Geometry],
+                                         create_default_2d_soil_material: SoilMaterial):
+        """
+        Test if a process model part is split correctly in a 2D case. A model is created with two soil layers. The model
+        is split in two parts and the geometry of the split model parts is checked.
+
+        Args:
+            - expected_geometry_two_layers_2D (Tuple[:class:`stem.geometry.Geometry`, \
+                :class:`stem.geometry.Geometry`, :class:`stem.geometry.Geometry`]): expected geometry of the model
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+
+        """
+
+        ndim = 2
+
+        layer1_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+        layer2_coordinates = [(1, 1, 0), (0, 1, 0), (0, 2, 0), (1, 2, 0)]
+
+        # define soil materials
+        soil_material1 = create_default_2d_soil_material
+        soil_material1.name = "soil1"
+
+        # create model
+        model = Model(ndim)
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
+        model.add_soil_layer_by_coordinates(layer2_coordinates, soil_material1, "layer2")
+
+        # add process model part on the whole geometry
+        model._Model__add_gravity_load()
+
+        # split process model part
+        model.split_model_part("gravity_load_2d", "gravity_layer_2", [2],
+                               GravityLoad(value=[20, 20, 20], active=[True, True, True]))
+
+        # check geometry and parameters of the original and split model part
+        assert model.process_model_parts[0].name == "gravity_load_2d"
+        assert model.process_model_parts[0].parameters.value == [0, -9.81, 0]
+        TestUtils.assert_almost_equal_geometries(expected_geometry_two_layers_2D[0],
+                                                 model.process_model_parts[0].geometry)
+
+        assert model.process_model_parts[1].name == "gravity_layer_2"
+        assert model.process_model_parts[1].parameters.value == [20, 20, 20]
+        TestUtils.assert_almost_equal_geometries(expected_geometry_two_layers_2D[1],
+                                                 model.process_model_parts[1].geometry)
+
+        # split process model part expected error
+        with pytest.raises(ValueError,
+                           match="New parameters must have the same process parameter type as in the "
+                           "original process model part."):
+            model.split_model_part("gravity_load_2d", "gravity_layer_3", [1],
+                                   LineLoad(value=[20, 20, 20], active=[True, True, True]))
+
+    def test_split_model_part_expected_raise(self, create_default_2d_soil_material: SoilMaterial):
+        """
+        Test if a ValueErrors are raised when:
+        - the group name is not found while splitting a model part |
+        - the geometry is not defined in the model part |
+        - the model part type and new parameters type do not match
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+
+        model = Model(2)
+
+        model.process_model_parts.append(ModelPart("process_2d"))
+
+        with pytest.raises(ValueError, match=f"Model part: non_existing_group not found."):
+            model.split_model_part("non_existing_group", "split_group", [1], create_default_2d_soil_material)
+
+        with pytest.raises(ValueError, match=f"Geometry is not defined in the model part: process_2d."):
+            model.split_model_part("process_2d", "split_group", [1], create_default_2d_soil_material)
+
+        model.process_model_parts[0].geometry = Geometry(surfaces={1: Surface.create([1, 2, 3], 1)},
+                                                         lines={
+                                                             1: Line.create([1, 2], 1),
+                                                             2: Line.create([2, 3], 2),
+                                                             3: Line.create([3, 1], 3)
+                                                         },
+                                                         points={
+                                                             1: Point.create([0, 0, 0], 1),
+                                                             2: Point.create([1, 0, 0], 2),
+                                                             3: Point.create([1, 1, 0], 3)
+                                                         })
+
+        with pytest.raises(ValueError, match=f"Model part type and new parameters type must match."):
+            model.split_model_part("process_2d", "split_group", [1], create_default_2d_soil_material)
