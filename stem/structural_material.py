@@ -47,6 +47,8 @@ class EulerBeam(StructuralParametersABC):
         - I33 (float): The second moment of area around the z-axis [m4].
         - I22 (float): The second moment of area around the y-axis [m4].
         - TORSIONAL_INERTIA (float): The torsional inertia [m4].
+        - RAYLEIGH_M (Optional[float]): Mass proportional rayleigh damping parameter [-].
+        - RAYLEIGH_K (Optional[float]): Stiffness proportional rayleigh damping parameter [-].
     """
     ndim: int
     YOUNG_MODULUS: float
@@ -58,6 +60,9 @@ class EulerBeam(StructuralParametersABC):
     # Euler beam parameters for 3D
     I22: Optional[float] = None
     TORSIONAL_INERTIA: Optional[float] = None
+
+    RAYLEIGH_M: Optional[float] = None
+    RAYLEIGH_K: Optional[float] = None
 
     def __post_init__(self):
         """
