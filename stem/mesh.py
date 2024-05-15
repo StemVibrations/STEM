@@ -2,6 +2,7 @@ from typing import Dict, List, Sequence, Any
 from enum import Enum
 
 import numpy as np
+import numpy.typing as npty
 
 from stem.globals import ELEMENT_DATA
 from stem.utils import Utils
@@ -285,3 +286,37 @@ class Mesh:
         mesh.elements = elements
 
         return mesh
+
+    def calculate_centroids(self) -> npty.NDArray[np.float64]:
+        """
+        Calculate the centroids of all elements
+
+        Returns:
+            - npty.NDArray[np.float64]: centroids of all elements
+        """
+
+        centroids: npty.NDArray[np.float64] = np.mean([[self.nodes[nid].coordinates for nid in el.node_ids]
+                                                       for el in self.elements.values()],
+                                                      axis=1)
+
+        return centroids
+
+    def find_elements_connected_to_nodes(self) -> Dict[int, List[int]]:
+        """
+        Creates a dictionary of node ids as keys and a list of element ids which are connected to the node as values.
+
+
+        Returns:
+            - Dict[int, List[int]]: dictionary containing node ids as keys and  a list of element ids which are
+            connected to the node as values.
+
+        """
+
+        # find which elements are connected to each node
+        node_to_elements: Dict[int, List[int]] = {node_id: [] for node_id in self.nodes.keys()}
+
+        for element_id, element in self.elements.items():
+            for node_id in element.node_ids:
+                node_to_elements[node_id].append(element_id)
+
+        return node_to_elements

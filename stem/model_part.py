@@ -3,7 +3,7 @@ from typing import Optional, Union, Dict, Any
 from stem.additional_processes import AdditionalProcessesParametersABC
 from stem.boundary import BoundaryParametersABC
 from stem.water_processes import WaterProcessParametersABC
-from stem.load import LoadParametersABC
+from stem.load import LoadParametersABC, MovingLoad, UvecLoad
 from stem.output import OutputParametersABC
 from stem.soil_material import SoilMaterial
 from stem.structural_material import StructuralMaterial
@@ -11,6 +11,7 @@ from stem.structural_material import StructuralMaterial
 from stem.geometry import Geometry
 from stem.mesh import Mesh
 from stem.solver import AnalysisType
+from stem.utils import Utils
 
 # define type aliases
 ProcessParameters = Union[LoadParametersABC, BoundaryParametersABC, AdditionalProcessesParametersABC,
@@ -58,6 +59,15 @@ class ModelPart:
         self.mesh: Optional[Mesh] = None
         self.id: Optional[int] = None
 
+    def __repr__(self):
+        """Repr method to provide a human-readable version of the ModelPart object
+
+        Returns:
+            - str: string representing the ModelPart object and it's parameters.
+
+        """
+        return f"ModelPart(name={self.name}, parameters={self.parameters.__class__.__name__})"
+
     @property
     def name(self) -> str:
         """
@@ -99,14 +109,35 @@ class ModelPart:
         else:
             return None
 
-    def __repr__(self):
-        """Repr method to provide a human-readable version of the ModelPart object
+    def validate_input(self):
+        """
+        Validate the input of the model part
 
-        Returns:
-            - str: string representing the ModelPart object and it's parameters.
+        Raises:
+            - ValueError: if the model part is not correctly defined
 
         """
-        return f"ModelPart(name={self.name}, parameters={self.parameters.__class__.__name__})"
+        if self.geometry is None:
+            raise ValueError(f"Geometry of model part {self.name} is not defined.")
+
+        if self.parameters is None:
+            raise ValueError(f"Parameters of model part {self.name} is not defined.")
+
+        if isinstance(self.parameters, (MovingLoad, UvecLoad)):
+            # retrieve the coordinates of the points in the path of the load
+            coordinates = []
+            for line in self.geometry.lines.values():
+                line_coords = [self.geometry.points[k].coordinates for k in line.point_ids]
+                coordinates.append(line_coords)
+
+            # check origin of moving load is in the path
+            if not Utils.is_point_aligned_and_between_any_of_points(coordinates, self.parameters.origin):
+                raise ValueError("None of the lines are aligned with the origin of the moving load. Error.")
+            # check that the path provided by geometry is correct (no loops, no branching out
+            # and no discontinuities in the path)
+            if not Utils.check_lines_geometry_are_path(self.geometry):
+                raise ValueError("The lines defined for the moving load are not aligned on a path."
+                                 "Discontinuities or loops/branching points are found.")
 
 
 class BodyModelPart(ModelPart):
