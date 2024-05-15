@@ -453,7 +453,7 @@ class Utils:
         if len(geometry.lines) > 1:
 
             # find which lines are connected to which point
-            lines_to_point = {point_id: [] for point_id in geometry.points.keys()}
+            lines_to_point: Dict[int, List[int]] = {point_id: [] for point_id in geometry.points.keys()}
             for line_id, line in geometry.lines.items():
                 for point_id in line.point_ids:
                     lines_to_point[point_id].append(line_id)
@@ -532,7 +532,7 @@ class Utils:
 
     @staticmethod
     def find_node_ids_close_to_geometry_nodes(mesh: 'Mesh', geometry: 'Geometry', eps: float = 1e-6) \
-            -> npty.NDArray[np.int64]:
+            -> npty.NDArray[np.uint64]:
         """
         Searches the nodes in the mesh close to the point of a given geometry.
 
@@ -542,7 +542,7 @@ class Utils:
             - eps (float): tolerance for searching close nodes.
 
         Returns:
-            - npty.NDArray[np.int64]: list of ids of the nodes close to the geometry points
+            - npty.NDArray[np.uint64]: list of ids of the nodes close to the geometry points
 
         """
         # retrieve ids and coordinates of the nodes
@@ -559,7 +559,9 @@ class Utils:
         # find the ids of the nodes in the model that are close to the specified coordinates.
         _, close_indices = tree.query(output_coordinates, k=1, distance_upper_bound=eps)
 
-        return np.array(node_ids)[close_indices]
+        close_node_ids: npty.NDArray[np.uint64] = np.array(node_ids, dtype=np.uint64)[close_indices]
+
+        return close_node_ids
 
     @staticmethod
     def find_first_three_non_collinear_points(points: Sequence[Sequence[float]],
