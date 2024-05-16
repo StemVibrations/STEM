@@ -1,6 +1,3 @@
-# import required typing classes
-from typing import List
-
 import numpy as np
 import numpy.typing as npt
 import plotly.graph_objects as go
@@ -28,23 +25,19 @@ class PlotUtils:
             point1 = geometry.points[line.point_ids[0]].coordinates
             point2 = geometry.points[line.point_ids[1]].coordinates
 
+            # yapf: disable
             fig.add_trace(
                 go.Scatter(x=[point1[0], point2[0]],
                            y=[point1[1], point2[1]],
                            mode='lines+markers',
-                           line={
-                               "color": 'black',
-                               "width": 1
-                           },
-                           marker={
-                               "color": 'red',
-                               "size": 5
-                           }))
+                           line={"color": 'black', "width": 1},
+                           marker={"color": 'red', "size": 5}))
+            # yapf: enable
 
             # show line ids
             if show_line_ids:
 
-                line_centroids.append(np.mean([point1, point2], axis=0))
+                line_centroids.append(geometry.calculate_centroid_of_line(line_id))
                 text_array.append(f"<b>l_{abs(line_id)}</b>")
 
         if show_line_ids:
@@ -71,8 +64,7 @@ class PlotUtils:
                            textposition="top right"))
 
     @staticmethod
-    def __add_2d_surface_to_plot(geometry: 'Geometry', surface: 'Surface', show_surface_ids: bool,
-                                 fig: 'go.Figure') -> npt.NDArray[np.float64]:
+    def __add_2d_surface_to_plot(geometry: 'Geometry', surface: 'Surface', show_surface_ids: bool, fig: 'go.Figure'):
         """
         Adds a 2D surface to a plotly graph object figure
 
@@ -80,12 +72,8 @@ class PlotUtils:
             - geometry (stem.geometry.Geometry): geometry object
             - surface (stem.geometry.Surface): surface object
             - show_surface_ids (bool): flag to show surface ids
-            - show_line_ids (bool): flag to show line ids
-            - show_point_ids (bool): flag to show point ids
             - fig (plotly.graph_objects.Figure): graph object figure to which the surface is added
 
-        Returns:
-            - NDArray[float]: surface centroid
 
         """
         surface_points = geometry.get_ordered_points_from_surface(surface.id)
@@ -100,21 +88,18 @@ class PlotUtils:
                                  fill='toself', fillcolor="#ADD8E6"))
         # yapf: enable
 
-        # calculate surface centroid and add to list of all surface centroids which are required to calculate
-        # the volume centroid
-        surface_centroid: npt.NDArray[np.float64] = np.mean(surface_point_coordinates, axis=0, dtype=np.float64)
-
         # show surface ids
         if show_surface_ids:
+            # calculate surface centre of mass  and add surface id in centre
+            surface_centre: npt.NDArray[np.float64] = geometry.calculate_centre_of_mass_surface(surface.id)
+
             fig.add_trace(
-                go.Scatter(x=[surface_centroid[0]],
-                           y=[surface_centroid[1]],
+                go.Scatter(x=[surface_centre[0]],
+                           y=[surface_centre[1]],
                            mode='text',
                            text=f"<b>s_{abs(surface.id)}</b>",
                            textfont={"size": 14},
                            textposition="middle center"))
-
-        return surface_centroid
 
     @staticmethod
     def __add_3d_lines_to_plot(geometry: 'Geometry', show_line_ids: bool, show_point_ids: bool, fig: 'go.Figure'):
@@ -134,24 +119,20 @@ class PlotUtils:
             point1 = geometry.points[line.point_ids[0]].coordinates
             point2 = geometry.points[line.point_ids[1]].coordinates
 
+            # yapf: disable
             fig.add_trace(
                 go.Scatter3d(x=[point1[0], point2[0]],
                              y=[point1[1], point2[1]],
                              z=[point1[2], point2[2]],
                              mode='lines+markers',
-                             line={
-                                 "color": 'black',
-                                 "width": 1
-                             },
-                             marker={
-                                 "color": 'red',
-                                 "size": 5
-                             }))
+                             line={"color": 'black', "width": 1},
+                             marker={"color": 'red', "size": 5}))
+            # yapf: enable
 
             # show line ids
             if show_line_ids:
 
-                line_centroids.append(np.mean([point1, point2], axis=0))
+                line_centroids.append(geometry.calculate_centroid_of_line(line_id))
                 text_array.append(f"<b>l_{abs(line_id)}</b>")
 
         if show_line_ids:
@@ -180,8 +161,7 @@ class PlotUtils:
                              textposition="top right"))
 
     @staticmethod
-    def __add_3d_surface_to_plot(geometry: 'Geometry', surface: 'Surface', show_surface_ids: bool,
-                                 fig: 'go.Figure') -> npt.NDArray[np.float64]:
+    def __add_3d_surface_to_plot(geometry: 'Geometry', surface: 'Surface', show_surface_ids: bool, fig: 'go.Figure'):
         """
         Adds a 3D surface to a plotly graph object figure.
 
@@ -189,12 +169,7 @@ class PlotUtils:
             - geometry (:class:'stem.geometry.Geometry'): geometry object
             - surface (:class:'stem.geometry.Surface'): surface object
             - show_surface_ids (bool): flag to show surface ids
-            - show_line_ids (bool): flag to show line ids
-            - show_point_ids (bool): flag to show point ids
             - fig (plotly.graph_objects.Figure): graph object figure to which the surface is added
-
-        Returns:
-            - NDArray[float]: surface centroid
 
         """
 
@@ -218,27 +193,23 @@ class PlotUtils:
                       delaunayaxis=delaunayaxis,
                       color='blue'))
 
-        # calculate surface centroid and add to list of all surface centroids which are required to calculate
-        # the volume centroid
-        surface_centroid: npt.NDArray[np.float64] = np.mean(surface_point_coordinates, axis=0, dtype=np.float64)
-
         # show surface ids
         if show_surface_ids:
+            # calculate surface centre of mass
+            surface_centre: npt.NDArray[np.float64] = geometry.calculate_centre_of_mass_surface(surface.id)
+
             fig.add_trace(
-                go.Scatter3d(x=[surface_centroid[0]],
-                             y=[surface_centroid[1]],
-                             z=[surface_centroid[2]],
+                go.Scatter3d(x=[surface_centre[0]],
+                             y=[surface_centre[1]],
+                             z=[surface_centre[2]],
                              mode='text',
                              text=f"<b>s_{abs(surface.id)}</b>",
                              textfont={"size": 14},
                              textposition="middle center"))
 
-        # return data, surface
-        return surface_centroid
-
     @staticmethod
     def __add_3d_volume_to_plot(geometry: 'Geometry', volume: 'Volume', show_volume_ids: bool, show_surface_ids: bool,
-                                show_line_ids: bool, show_point_ids: bool, fig: 'go.Figure'):
+                                fig: 'go.Figure'):
         """
         Adds a 3D volume to a plotly graph object figure.
 
@@ -247,29 +218,24 @@ class PlotUtils:
             - volume (:class:`stem.geometry.Volume`): Volume object
             - show_volume_ids (bool): Show volume ids
             - show_surface_ids (bool): Show surface ids
-            - show_line_ids (bool): Show line ids
-            - show_point_ids (bool): Show point ids
             - fig (plotly.graph_objects.Figure): graph object figure to which the surface is added
 
         """
-        # initialize list of surface centroids which are required to plot the surface ids
-        all_surface_centroids = []
 
         # loop over all surfaces within the volume
         for surface_k in volume.surface_ids:
             # get current surface
             surface = geometry.surfaces[abs(surface_k)]
 
-            surface_centroid = PlotUtils.__add_3d_surface_to_plot(geometry, surface, show_surface_ids, fig)
-            all_surface_centroids.append(surface_centroid)
+            PlotUtils.__add_3d_surface_to_plot(geometry, surface, show_surface_ids, fig)
 
         # show volume ids
         if show_volume_ids:
-            volume_centroid = np.mean(all_surface_centroids, axis=0)
+            volume_centre = geometry.calculate_centre_of_mass_volume(volume.id)
             fig.add_trace(
-                go.Scatter3d(x=[volume_centroid[0]],
-                             y=[volume_centroid[1]],
-                             z=[volume_centroid[2]],
+                go.Scatter3d(x=[volume_centre[0]],
+                             y=[volume_centre[1]],
+                             z=[volume_centre[2]],
                              mode='text',
                              text=f"<b>v_{volume.id}</b>",
                              textfont={"size": 18},
@@ -304,8 +270,8 @@ class PlotUtils:
         if ndim == 2:
             PlotUtils.__add_2d_lines_to_plot(geometry, show_line_ids, show_point_ids, fig)
 
+            # loop over all surfaces
             for surface in geometry.surfaces.values():
-
                 PlotUtils.__add_2d_surface_to_plot(geometry, surface, show_surface_ids, fig)
 
         elif ndim == 3:
@@ -314,8 +280,7 @@ class PlotUtils:
             # loop over all volumes
             for volume_data in geometry.volumes.values():
 
-                PlotUtils.__add_3d_volume_to_plot(geometry, volume_data, show_volume_ids, show_surface_ids,
-                                                  show_line_ids, show_point_ids, fig)
+                PlotUtils.__add_3d_volume_to_plot(geometry, volume_data, show_volume_ids, show_surface_ids, fig)
 
         else:
             raise ValueError("Number of dimensions should be 2 or 3")
