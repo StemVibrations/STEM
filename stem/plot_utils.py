@@ -6,6 +6,9 @@ from stem.geometry import Geometry, Volume, Surface
 
 
 class PlotUtils:
+    """
+    Utility class for plotting geometry.
+    """
 
     @staticmethod
     def __add_2d_lines_to_plot(geometry: 'Geometry', show_line_ids: bool, show_point_ids: bool, fig: 'go.Figure'):
@@ -14,6 +17,8 @@ class PlotUtils:
 
         Args:
             - geometry (:class:`stem.geometry.Geometry`): Geometry object.
+            - show_line_ids (bool): If True, the line ids are shown in the plot.
+            - show_point_ids (bool): If True, the point ids are shown in the plot.
             - fig (plotly.graph_objects.Figure): graph object figure to which the lines are added.
 
         """
@@ -74,7 +79,6 @@ class PlotUtils:
             - show_surface_ids (bool): flag to show surface ids
             - fig (plotly.graph_objects.Figure): graph object figure to which the surface is added
 
-
         """
         surface_points = geometry.get_ordered_points_from_surface(surface.id)
         surface_point_coordinates = np.array([point.coordinates for point in surface_points])
@@ -108,6 +112,8 @@ class PlotUtils:
 
         Args:
             - geometry (:class:`stem.geometry.Geometry`): Geometry object.
+            - show_line_ids (bool): If True, the line ids are shown in the plot.
+            - show_point_ids (bool): If True, the point ids are shown in the plot.
             - fig (plotly.graph_objects.Figure): graph object figure to which the lines are added.
 
         """
