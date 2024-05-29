@@ -130,7 +130,8 @@ uvec_parameters = {"n_carts": 1, # number of carts [-]
                    "initialisation_steps": 1, # number of time steps on which the gravity on the UVEC is
                                                 # gradually increased [-],
                    "wheel_configuration": [0.0, 2.5, 19.9, 22.4], # configuration of the wheels [m],
-                   "velocity": 40 # velocity of the UVEC [m/s]
+                   "velocity": 40, # velocity of the UVEC [m/s]
+                   "irr_parameters": {}
                    }
 
 # define the UVEC load
@@ -172,7 +173,7 @@ model.add_boundary_condition_by_geometry_ids(2, [2, 5, 6, 7, 11, 12,  17, 18], a
 model.set_mesh_size(element_size=1.0)
 
 end_time = 0.5
-delta_time = 1e-03
+delta_time = 5e-04
 analysis_type = AnalysisType.MECHANICAL
 solution_type = SolutionType.DYNAMIC
 
