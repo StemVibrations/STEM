@@ -25,7 +25,7 @@ model = Model(ndim)
 # add groups for extrusions
 model.add_group_for_extrusion("Group 1", reference_depth=0, extrusion_length=25)
 model.add_group_for_extrusion("Group 2", reference_depth=25, extrusion_length=10)
-model.add_group_for_extrusion("Group 3", reference_depth=35, extrusion_length=25)
+model.add_group_for_extrusion("Group 3", reference_depth=35, extrusion_length=5)
 model.add_group_for_extrusion("pillar_group", reference_depth=29.6, extrusion_length=0.6)
 
 # Specify material model
@@ -37,6 +37,17 @@ soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_dens
 constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=young_modulus, POISSON_RATIO=poisson_ratio)
 retention_parameters1 = SaturatedBelowPhreaticLevelLaw()
 material_soil = SoilMaterial("soil1", soil_formulation1, constitutive_law1, retention_parameters1)
+
+# Specify material model
+solid_density = 2650
+porosity = 0.3
+young_modulus = 100e6
+poisson_ratio = 0.2
+soil_formulation_embankment = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density, POROSITY=porosity)
+constitutive_law2 = LinearElasticSoil(YOUNG_MODULUS=young_modulus, POISSON_RATIO=poisson_ratio)
+# retention_parameters1 = SaturatedBelowPhreaticLevelLaw()
+material_embankment = SoilMaterial("embankment", soil_formulation_embankment, constitutive_law2, retention_parameters1)
+
 
 # material for the bridging section
 bridge_density = 7450
@@ -83,13 +94,13 @@ soil2_coordinates_2 = [(0.0, 1.0, 35.0), (10.0, 1.0, 35.0), (10.0, 2.0, 35.0), (
 pillar_coordinates = [(0.6, 0.0, 29.6), (1, 0.0, 29.6), (1, 2.5, 29.6), (0.6, 2.5, 29.6)]
 
 # Create the soil layer
-model.add_soil_layer_by_coordinates(embankment_coordinates_1, material_soil, "embankment1", "Group 1")
+model.add_soil_layer_by_coordinates(embankment_coordinates_1, material_embankment, "embankment1", "Group 1")
 model.add_soil_layer_by_coordinates(soil1_coordinates, material_soil, "soil1_group1", "Group 1")
 model.add_soil_layer_by_coordinates(soil2_coordinates, material_soil, "soil2_group1", "Group 1")
 
 model.add_soil_layer_by_coordinates(bridge_coordinates, material_bridge, "bridge", "Group 2")
 
-model.add_soil_layer_by_coordinates(embankment_coordinates_2, material_soil, "embankment2", "Group 3")
+model.add_soil_layer_by_coordinates(embankment_coordinates_2, material_embankment, "embankment2", "Group 3")
 model.add_soil_layer_by_coordinates(soil1_coordinates_2, material_soil, "soil1_group2", "Group 3")
 model.add_soil_layer_by_coordinates(soil2_coordinates_2, material_soil, "soil2_group2", "Group 3")
 
@@ -116,7 +127,7 @@ origin_point = np.array([0.75, 3.0, 0.0])
 direction_vector = np.array([0, 0, 1])
 rail_pad_thickness = 0.025
 
-model.generate_straight_track(0.5,121, rail_parameters, sleeper_parameters, rail_pad_parameters, rail_pad_thickness,
+model.generate_straight_track(0.5,81, rail_parameters, sleeper_parameters, rail_pad_parameters, rail_pad_thickness,
                                 origin_point, direction_vector, "track")
 
 # model.show_geometry(show_surface_ids=True)
@@ -145,7 +156,7 @@ model.add_load_on_line_model_part("track", moving_load2, "moving_load2")
 
 output_coordinates = [(3.0, 2.0, 20), (6.5, 2.0, 20), (10, 2.0, 20)]
 
-delta_time = 0.0005
+delta_time = 0.005
 model.add_output_settings_by_coordinates(output_coordinates,JsonOutputParameters(output_interval=delta_time-1e-7, nodal_results=[NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY, NodalOutput.ACCELERATION]),"output_line")
 
 
@@ -175,14 +186,14 @@ model.set_element_size_of_group(0.5,"embankment1")
 model.set_element_size_of_group(0.5,"bridge")
 # model.set_element_size_of_group(0.5,"embankment2")
 # model.set_element_size_of_group(0.5,"soil1_group1")
-# model.set_element_size_of_group(1,"soil1_group2")
+model.set_element_size_of_group(0.5,"soil1_group2")
 model.set_element_size_of_group(0.2,"moving_load")
 model.set_element_size_of_group(0.2,"output_line")
 model.set_element_size_of_group(1,"pillar")
 
 # Set mesh size
 # --------------------------------
-model.set_mesh_size(element_size=3)
+model.set_mesh_size(element_size=1)
 
 # Define project parameters
 # --------------------------------
@@ -224,7 +235,7 @@ nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY]
 gauss_point_results = []
 
 # Define the output process
-model.add_output_settings(output_parameters=VtkOutputParameters(file_format="ascii",
+model.add_output_settings(output_parameters=VtkOutputParameters(file_format="binary",
                                                                 output_interval=1,
                                                                 nodal_results=nodal_results,
                                                                 gauss_point_results=gauss_point_results,
@@ -239,12 +250,12 @@ input_folder = "moving_load_on_bridge"
 # --------------------------------
 stem = Stem(model, input_folder)
 
-stage2 = stem.create_new_stage(delta_time, 2.0)
+stage2 = stem.create_new_stage(delta_time, 1.16)
 
 
 stage2.project_parameters.settings.solution_type = SolutionType.DYNAMIC
-stage2.project_parameters.settings.rayleigh_k = 0.001
-stage2.project_parameters.settings.rayleigh_m = 0.01
+stage2.project_parameters.settings.rayleigh_k = 0.004
+stage2.project_parameters.settings.rayleigh_m = 0.003
 
 stage2.output_settings[0].output_parameters.output_interval = 1
 
