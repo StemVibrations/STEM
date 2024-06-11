@@ -11,6 +11,7 @@ from stem.geometry import *
 from stem.model import *
 from stem.output import NodalOutput, GiDOutputParameters, JsonOutputParameters
 from stem.solver import *
+from stem.boundary import RotationConstraint
 from tests.utils import TestUtils
 
 IS_LINUX = sys.platform == "linux"
@@ -3224,6 +3225,23 @@ class TestModel:
 
         TestUtils.assert_almost_equal_geometries(expected_rail_pad_geometry, calculated_rail_pad_geometry)
         TestUtils.assert_dictionary_almost_equal(rail_pad_parameters.__dict__, calculated_rail_pad_parameters.__dict__)
+
+        # check rotation constrain model part
+        rotation_constrain_model_part = model.process_model_parts[1]
+        calculated_rotation_constrain_geometry = rotation_constrain_model_part.geometry
+        calculated_rotation_constrain_parameters = rotation_constrain_model_part.parameters
+
+        expected_rotation_constrain_points = {4: Point.create([2.0, 3.02, 1.0], 4)}
+        expected_rotation_constrain_geometry = Geometry(expected_rotation_constrain_points)
+
+        expected_rotation_constraint_parameters = RotationConstraint(value=[0, 0, 0],
+                                                                     is_fixed=[True, True, True],
+                                                                     active=[True, True, True])
+
+        TestUtils.assert_almost_equal_geometries(expected_rotation_constrain_geometry,
+                                                 calculated_rotation_constrain_geometry)
+        TestUtils.assert_dictionary_almost_equal(expected_rotation_constraint_parameters.__dict__,
+                                                 calculated_rotation_constrain_parameters.__dict__)
 
     def test_set_element_size_of_group(self, create_default_2d_soil_material: SoilMaterial):
         """

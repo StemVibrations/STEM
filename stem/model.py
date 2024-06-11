@@ -178,15 +178,16 @@ class Model:
             rotation_constraint_name = f"rotation_constraint_{rail_name}"
 
             no_rotation_model_part = ModelPart(rotation_constraint_name)
-            no_rotation_constraint = RotationConstraint(active=[True, True, True], is_fixed=[True, True, True],
+            no_rotation_constraint = RotationConstraint(active=[True, True, True],
+                                                        is_fixed=[True, True, True],
                                                         value=[0, 0, 0])
             no_rotation_model_part.parameters = no_rotation_constraint
 
             # add contraint geometry to 1 edge of the rail
-            no_rotation_geo_settings = {rotation_constraint_name: {"coordinates": rail_global_coords[0], "ndim": 0}}
+            no_rotation_geo_settings = {rotation_constraint_name: {"coordinates": [rail_global_coords[0]], "ndim": 0}}
             self.gmsh_io.generate_geometry(no_rotation_geo_settings, "")
 
-            no_rotation_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_constraint_name)
+            no_rotation_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rotation_constraint_name)
 
             self.process_model_parts.append(no_rotation_model_part)
 
