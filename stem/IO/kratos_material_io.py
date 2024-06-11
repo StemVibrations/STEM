@@ -237,6 +237,9 @@ class KratosMaterialIO:
         soil_parameters_dict["PERMEABILITY_YZ"] = 0
         soil_parameters_dict["PERMEABILITY_ZX"] = 0
 
+        soil_parameters_dict["RAYLEIGH_ALPHA"] = soil_parameters_dict.pop("RAYLEIGH_M")
+        soil_parameters_dict["RAYLEIGH_BETA"] = soil_parameters_dict.pop("RAYLEIGH_K")
+
         # Create a new dictionary without None values
         soil_parameters_dict = {k: v for k, v in soil_parameters_dict.items() if v is not None}
 
@@ -258,6 +261,9 @@ class KratosMaterialIO:
 
         two_phase_soil_parameters_dict = deepcopy(two_phase_soil_parameters.__dict__)
         two_phase_soil_parameters_dict["IGNORE_UNDRAINED"] = False
+
+        two_phase_soil_parameters_dict["RAYLEIGH_ALPHA"] = two_phase_soil_parameters_dict.pop("RAYLEIGH_M")
+        two_phase_soil_parameters_dict["RAYLEIGH_BETA"] = two_phase_soil_parameters_dict.pop("RAYLEIGH_K")
 
         # Create a new dictionary without None values
         two_phase_soil_parameters_dict = {k: v for k, v in two_phase_soil_parameters_dict.items() if v is not None}
@@ -318,6 +324,9 @@ class KratosMaterialIO:
         """
 
         material_parameters_dict = deepcopy(material_parameters.__dict__)
+
+        material_parameters_dict["RAYLEIGH_ALPHA"] = material_parameters_dict.pop("RAYLEIGH_M")
+        material_parameters_dict["RAYLEIGH_BETA"] = material_parameters_dict.pop("RAYLEIGH_K")
 
         # Create a new dictionary without None values
         material_parameters_dict = {k: v for k, v in material_parameters_dict.items() if v is not None}
