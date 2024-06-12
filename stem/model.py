@@ -741,6 +741,8 @@ class Model:
 
         model_part.parameters = field_parameters
 
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, new_part_name)
+
         # add the field_parameter part to process model parts
         self.process_model_parts.append(model_part)
 
@@ -1242,6 +1244,8 @@ class Model:
 
         model_part.parameters = gravity_load
 
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, model_part_name)
+
         # add gravity load to process model parts
         self.process_model_parts.append(model_part)
 
@@ -1454,6 +1458,8 @@ class Model:
             raise ValueError(f"Group name `{group_name}` not found.")
 
         self.gmsh_io.geo_data["physical_groups"][group_name]["element_size"] = element_size
+
+        self.gmsh_io.generate_geo_from_geo_data()
 
     def split_model_part(self, from_model_part_name: str, to_model_part_name: str, geometry_ids: List[int],
                          new_parameters: Union[Material, ProcessParameters]):
