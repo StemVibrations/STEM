@@ -1,12 +1,13 @@
 import os
 import sys
+from shutil import copytree
 from shutil import rmtree
 
 import pytest
 import numpy as np
 
 from stem.boundary import DisplacementConstraint, AbsorbingBoundary
-from stem.load import MovingLoad
+from stem.load import MovingLoad, UvecLoad
 from stem.model import Model
 from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
@@ -16,6 +17,8 @@ from stem.solver import AnalysisType, SolutionType, TimeIntegration, Displacemen
 from stem.stem import Stem
 
 
+uvec_module_path = r"run_stem"
+sys.path.append(uvec_module_path)
 # Define geometry, conditions and material parameters
 # --------------------------------
 
@@ -23,10 +26,10 @@ from stem.stem import Stem
 ndim = 3
 model = Model(ndim)
 # add groups for extrusions
-model.add_group_for_extrusion("Group 1", reference_depth=0, extrusion_length=25)
-model.add_group_for_extrusion("Group 2", reference_depth=25, extrusion_length=10)
-model.add_group_for_extrusion("Group 3", reference_depth=35, extrusion_length=5)
-model.add_group_for_extrusion("pillar_group", reference_depth=29.6, extrusion_length=0.6)
+model.add_group_for_extrusion("Group 1", reference_depth=0, extrusion_length=35)
+model.add_group_for_extrusion("Group 2", reference_depth=35, extrusion_length=10)
+model.add_group_for_extrusion("Group 3", reference_depth=45, extrusion_length=5)
+model.add_group_for_extrusion("pillar_group", reference_depth=39.6, extrusion_length=0.6)
 
 # Specify material model
 solid_density = 2650
@@ -85,13 +88,13 @@ embankment_coordinates_1 = [(0.0, 2.0, 0.0), (3.0, 2.0, 0.0), (1.5, 3.0, 0.0), (
 soil1_coordinates = [(0.0, 0.0, 0.0), (10.0, 0.0, 0.0), (10.0, 1.0, 0.0), (0.0, 1.0, 0.0)]
 soil2_coordinates = [(0.0, 1.0, 0.0), (10.0, 1.0, 0.0), (10.0, 2.0, 0.0), (0.0, 2.0, 0.0)]
 
-bridge_coordinates = [(0.0, 2.5, 25.0),(1.0, 2.5, 25.0), (1.5, 2.5, 25.0), (1.5, 3.0, 25.0), (0., 3.0, 25.0)]
+bridge_coordinates = [(0.0, 2.5, 35.0),(1.0, 2.5, 35.0), (1.5, 2.5, 35.0), (1.5, 3.0, 35.0), (0., 3.0, 35.0)]
 
-embankment_coordinates_2 = [(0.0, 2.0, 35.0), (3.0, 2.0, 35.0), (1.5, 3.0, 35.0), (0.75, 3.0, 35.0), (0, 3.0, 35.0)]
-soil1_coordinates_2 = [(0.0, 0.0, 35.0), (10.0, 0.0, 35.0), (10.0, 1.0, 35.0), (0.0, 1.0, 35.0)]
-soil2_coordinates_2 = [(0.0, 1.0, 35.0), (10.0, 1.0, 35.0), (10.0, 2.0, 35.0), (0.0, 2.0, 35.0)]
+embankment_coordinates_2 = [(0.0, 2.0, 45.0), (3.0, 2.0, 45.0), (1.5, 3.0, 45.0), (0.75, 3.0, 45.0), (0, 3.0, 45.0)]
+soil1_coordinates_2 = [(0.0, 0.0, 45.0), (10.0, 0.0, 45.0), (10.0, 1.0, 45.0), (0.0, 1.0, 45.0)]
+soil2_coordinates_2 = [(0.0, 1.0,45.0), (10.0, 1.0, 45.0), (10.0, 2.0, 45.0), (0.0, 2.0, 45.0)]
 
-pillar_coordinates = [(0.6, 0.0, 29.6), (1, 0.0, 29.6), (1, 2.5, 29.6), (0.6, 2.5, 29.6)]
+pillar_coordinates = [(0.6, 0.0, 39.6), (1, 0.0, 39.6), (1, 2.5, 39.6), (0.6, 2.5, 39.6)]
 
 # Create the soil layer
 model.add_soil_layer_by_coordinates(embankment_coordinates_1, material_embankment, "embankment1", "Group 1")
@@ -127,7 +130,7 @@ origin_point = np.array([0.75, 3.0, 0.0])
 direction_vector = np.array([0, 0, 1])
 rail_pad_thickness = 0.025
 
-model.generate_straight_track(0.5,81, rail_parameters, sleeper_parameters, rail_pad_parameters, rail_pad_thickness,
+model.generate_straight_track(0.5,101, rail_parameters, sleeper_parameters, rail_pad_parameters, rail_pad_thickness,
                                 origin_point, direction_vector, "track")
 
 # model.show_geometry(show_surface_ids=True)
@@ -135,28 +138,90 @@ model.generate_straight_track(0.5,81, rail_parameters, sleeper_parameters, rail_
 # Define moving load
 # load_coordinates = [(0.75, 3.0, 0.0), (0.75, 3.0, 60.0)]
 
-moving_load = MovingLoad(load=[0.0, -10.0e3, 0.0],
-                         direction=[1, 1, 1],
-                         velocity=0,
-                         origin=[0.75, 3.0 + rail_pad_thickness, 0.0],
-                         offset=5.0)
+# # Define UVEC load
+# uvec_parameters = {
+#     "n_carts": 1,
+#     "cart_inertia": 0,
+#     "cart_mass": 0,
+#     "cart_stiffness": 0,
+#     "cart_damping": 0,
+#     "bogie_distances": [0],
+#     "bogie_inertia": 0,
+#     "bogie_mass": 3000,
+#     "wheel_distances": [0],
+#     "wheel_mass": 5750,
+#     "wheel_stiffness": 1595e5,
+#     "wheel_damping": 1000,
+#     "contact_coefficient": 9.1e-7,
+#     "contact_power": 1,
+#     "gravity_axis": 1,
+#     "file_name": r"calculated_results.txt"
+# }
+#
+# uvec_load = UvecLoad(direction=[1, 1, 1],
+#                      velocity=0,
+#                      origin=[12.5, 3.0 + rail_pad_thickness, 0],
+#                      wheel_configuration=[0.0],
+#                      uvec_file=r"uvec_ten_dof_vehicle_2D/uvec.py",
+#                      uvec_function_name="uvec_static",
+#                      uvec_parameters=uvec_parameters)
 
-model.add_load_on_line_model_part("track", moving_load, "moving_load")
+# define uvec parameters
+uvec_parameters = {"n_carts": 1,  # number of carts [-]
+                   "cart_inertia": (1128.8e3) / 2,  # inertia of the cart [kgm2]
+                   "cart_mass": (50e3) / 2,  # mass of the cart [kg]
+                   "cart_stiffness": 2708e3,  # stiffness between the cart and bogies [N/m]
+                   "cart_damping": 64e3,  # damping coefficient between the cart and bogies [Ns/m]
+                   "bogie_distances": [-9.95, 9.95],  # distances of the bogies from the centre of the cart [m]
+                   "bogie_inertia": (0.31e3) / 2,  # inertia of the bogie [kgm2]
+                   "bogie_mass": (6e3) / 2,  # mass of the bogie [kg]
+                   "wheel_distances": [-1.25, 1.25],  # distances of the wheels from the centre of the bogie [m]
+                   "wheel_mass": 1.5e3,  # mass of the wheel [kg]
+                   "wheel_stiffness": 4800e3,  # stiffness between the wheel and the bogie [N/m]
+                   "wheel_damping": 0.25e3,  # damping coefficient between the wheel and the bogie [Ns/m]
+                   "gravity_axis": 1,  # axis on which gravity works [x =0, y = 1, z = 2]
+                   "contact_coefficient": 9.1e-7,  # Hertzian contact coefficient between the wheel and the rail [N/m]
+                   "contact_power": 1.0,  # Hertzian contact power between the wheel and the rail [-]
+                   "initialisation_steps": 1,  # number of time steps on which the gravity on the UVEC is
+                   # gradually increased [-]
+                   "wheel_configuration": [0.0, 2.5, 19.9, 22.4],  # initial configuration of the wheels [m]
+                   "irr_parameters": {},
+                   "velocity": 0,  # velocity of the UVEC [m/s]
+                   }
+
+# define the UVEC load
+uvec_load = UvecLoad(direction=[1, 1, 1], velocity=0, origin=[0.75, 3 + rail_pad_thickness, 5],
+                     wheel_configuration=[0.0, 2.5, 19.9, 22.4],
+                     uvec_file=r"uvec_ten_dof_vehicle_2D/uvec.py", uvec_function_name="uvec_static",
+                     uvec_parameters=uvec_parameters)
+
+
+# model.add_load_by_geometry_ids([1], uvec_load, "uvec_load")
+
+#
+# uvec_load = UvecLoad(direction=[1, 1, 1],velocity=0,origin=[0.75, 3.0 + rail_pad_thickness, 0.0], wheel_configuration=
+# moving_load = MovingLoad(load=[0.0, -10.0e3, 0.0],
+#                          direction=[1, 1, 1],
+#                          velocity=0,
+#                          origin=[0.75, 3.0 + rail_pad_thickness, 0.0],
+#                          offset=5.0)
+
+model.add_load_on_line_model_part("track", uvec_load, "uvec_load")
 # model.add_load_by_coordinates(load_coordinates, moving_load, "moving_load")
 
-moving_load2 = MovingLoad(load=[0.0, -10.0e3, 0.0],
-                         direction=[1, 1, 1],
-                         velocity=0,
-                         origin=[0.75, 3.0 + rail_pad_thickness, 0.0],
-                         offset=7.0)
-
-model.add_load_on_line_model_part("track", moving_load2, "moving_load2")
+# moving_load2 = MovingLoad(load=[0.0, -10.0e3, 0.0],
+#                          direction=[1, 1, 1],
+#                          velocity=0,
+#                          origin=[0.75, 3.0 + rail_pad_thickness, 0.0],
+#                          offset=7.0)
+#
+# model.add_load_on_line_model_part("track", moving_load2, "moving_load2")
 # model.add_load_by_coordinates(load_coordinates, moving_load2, "moving_load2")
 
 
-output_coordinates = [(3.0, 2.0, 20), (6.5, 2.0, 20), (10, 2.0, 20)]
+output_coordinates = [(3.0, 2.0, 30), (6.5, 2.0, 30), (10, 2.0, 30)]
 
-delta_time = 0.005
+delta_time = 0.0025
 model.add_output_settings_by_coordinates(output_coordinates,JsonOutputParameters(output_interval=delta_time-1e-7, nodal_results=[NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY, NodalOutput.ACCELERATION]),"output_line")
 
 
@@ -182,12 +247,12 @@ model.add_boundary_condition_by_geometry_ids(2, [44, 49, 38, 40, 45, 9, 14, 12, 
 # Synchronize geometry
 model.synchronise_geometry()
 
-model.set_element_size_of_group(0.5,"embankment1")
+model.set_element_size_of_group(0.2,"embankment1")
 model.set_element_size_of_group(0.5,"bridge")
 # model.set_element_size_of_group(0.5,"embankment2")
-# model.set_element_size_of_group(0.5,"soil1_group1")
-model.set_element_size_of_group(0.5,"soil1_group2")
-model.set_element_size_of_group(0.2,"moving_load")
+model.set_element_size_of_group(0.3,"soil1_group1")
+# model.set_element_size_of_group(0.5,"soil1_group2")
+model.set_element_size_of_group(0.2,"uvec_load")
 model.set_element_size_of_group(0.2,"output_line")
 model.set_element_size_of_group(1,"pillar")
 
@@ -204,7 +269,7 @@ solution_type = SolutionType.QUASI_STATIC
 # Set up start and end time of calculation, time step and etc
 time_integration = TimeIntegration(start_time=0.0,
                                    end_time=0.1,
-                                   delta_time=delta_time,
+                                   delta_time=0.05,
                                    reduction_factor=1.0,
                                    increase_factor=1.0,
                                    max_delta_time_factor=1000)
@@ -246,11 +311,20 @@ model.add_output_settings(output_parameters=VtkOutputParameters(file_format="bin
 
 input_folder = "moving_load_on_bridge"
 
+
+# the name of the uvec module
+uvec_folder = os.path.join(uvec_module_path, "uvec_ten_dof_vehicle_2D")
+# create input files directory, since it might not have been created yet
+os.makedirs(input_folder, exist_ok=True)
+# copy uvec module to input files directory
+copytree(uvec_folder, os.path.join(input_folder, "uvec_ten_dof_vehicle_2D"), dirs_exist_ok=True)
+
+
 # Write KRATOS input files
 # --------------------------------
 stem = Stem(model, input_folder)
 
-stage2 = stem.create_new_stage(delta_time, 1.16)
+stage2 = stem.create_new_stage(delta_time, 0.6)
 
 
 stage2.project_parameters.settings.solution_type = SolutionType.DYNAMIC
@@ -259,8 +333,12 @@ stage2.project_parameters.settings.rayleigh_m = 0.003
 
 stage2.output_settings[0].output_parameters.output_interval = 1
 
-stage2.get_model_part_by_name("moving_load").parameters.velocity = 30
-stage2.get_model_part_by_name("moving_load2").parameters.velocity = 30
+uvec_model_part = stage2.get_model_part_by_name("uvec_load")
+uvec_model_part.parameters.velocity = 30
+uvec_model_part.parameters.uvec_function_name = "uvec"
+uvec_model_part.parameters.uvec_parameters["velocity"] = 30
+
+
 
 stem.add_calculation_stage(stage2)
 
