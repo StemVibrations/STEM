@@ -97,8 +97,8 @@ def test_stem():
                                      is_stiffness_matrix_constant=False,
                                      are_mass_and_damping_constant=False,
                                      convergence_criteria=convergence_criterion,
-                                     rayleigh_k = 1.5e-3,
-                                     rayleigh_m = 0.02)
+                                     rayleigh_k=1.5e-3,
+                                     rayleigh_m=0.02)
 
     # Set up problem data
     problem = Problem(problem_name="test_multi_stage_dynamic_to_static", number_of_threads=2, settings=solver_settings)

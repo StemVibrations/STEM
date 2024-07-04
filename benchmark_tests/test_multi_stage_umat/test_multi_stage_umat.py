@@ -52,18 +52,18 @@ def test_stem():
 
     # Boundary conditions and Loads
     # a sinus load at 20Hz (load period T=0.05s)
-    load_frequency = 20 # Hz
-    delta_time = 0.005 # s = 10 points per cycle
-    total_simulation_time = 0.5 # s =  10 cycles
-    load_pulse = load_frequency * (2*np.pi) # rad/s
+    load_frequency = 20  # Hz
+    delta_time = 0.005  # s = 10 points per cycle
+    total_simulation_time = 0.5  # s =  10 cycles
+    load_pulse = load_frequency * (2 * np.pi)  # rad/s
 
-    t = np.arange(0, 0.5+delta_time, delta_time) # s
-    values =  - 1000 * np.sin(load_pulse*t) # N
+    t = np.arange(0, 0.5 + delta_time, delta_time)  # s
+    values = -1000 * np.sin(load_pulse * t)  # N
 
     LOAD_Y = Table(times=t, values=values)
-     # Add line load
+    # Add line load
     load_coordinates = [(0.0, 0.5, 0.0), (1.0, 0.5, 0.0)]
-    load = LineLoad(value=[0, LOAD_Y,0], active=[False, True, False])
+    load = LineLoad(value=[0, LOAD_Y, 0], active=[False, True, False])
     model_stage_1.add_load_by_coordinates(load_coordinates, load, "point_load")
 
     # Define boundary conditions
@@ -93,7 +93,7 @@ def test_stem():
 
     # Set up start and end time of calculation, time step and etc
     time_integration = TimeIntegration(start_time=0.0,
-                                       end_time=total_simulation_time/2,
+                                       end_time=total_simulation_time / 2,
                                        delta_time=delta_time,
                                        reduction_factor=1.0,
                                        increase_factor=1.0,
@@ -120,15 +120,12 @@ def test_stem():
     nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY]
 
     # Define the output process
-    model_stage_1.add_output_settings(
-        output_parameters=VtkOutputParameters(
-        file_format="ascii",
-        output_interval=1,
-        nodal_results=nodal_results,
-        gauss_point_results=[]),
-        output_dir="output",
-        output_name="vtk_output"
-    )
+    model_stage_1.add_output_settings(output_parameters=VtkOutputParameters(file_format="ascii",
+                                                                            output_interval=1,
+                                                                            nodal_results=nodal_results,
+                                                                            gauss_point_results=[]),
+                                      output_dir="output",
+                                      output_name="vtk_output")
 
     # define the STEM instance
     input_folder = "benchmark_tests/test_multi_stage_umat/inputs_kratos"
@@ -136,7 +133,7 @@ def test_stem():
 
     # create new stage:
     # the new material parameters have a Young's modulus half of the stage 1 material
-    model_stage_2 = stem.create_new_stage(delta_time, total_simulation_time/2)
+    model_stage_2 = stem.create_new_stage(delta_time, total_simulation_time / 2)
 
     YOUNG_MODULUS_2 = YOUNG_MODULUS / 2
     SHEAR_MODULUS = YOUNG_MODULUS_2 / (2 * (1 + POISSON_RATIO))
@@ -156,12 +153,13 @@ def test_stem():
 
     soil_formulation_stage_2 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
     constitutive_law_stage_2 = SmallStrainUmatLaw(UMAT_NAME="../linear_elastic.dll",
-                                           IS_FORTRAN_UMAT=True,
-                                           UMAT_PARAMETERS=[SHEAR_MODULUS, POISSON_RATIO],
-                                           STATE_VARIABLES=[0.0])
+                                                  IS_FORTRAN_UMAT=True,
+                                                  UMAT_PARAMETERS=[SHEAR_MODULUS, POISSON_RATIO],
+                                                  STATE_VARIABLES=[0.0])
 
     retention_parameters_stage_2 = SaturatedBelowPhreaticLevelLaw()
-    material_stage_2 = SoilMaterial("soil2", soil_formulation_stage_2, constitutive_law_stage_2, retention_parameters_stage_2)
+    material_stage_2 = SoilMaterial("soil2", soil_formulation_stage_2, constitutive_law_stage_2,
+                                    retention_parameters_stage_2)
 
     model_stage_2.body_model_parts[0].material = material_stage_2
 
