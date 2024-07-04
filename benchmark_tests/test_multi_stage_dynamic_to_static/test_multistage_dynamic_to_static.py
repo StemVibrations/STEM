@@ -14,7 +14,8 @@ from shutil import rmtree
 
 def test_stem():
     """
-    Test STEM: 2D block with distributed loading with multistage
+    Test STEM: 2D block with distributed loading with multistage and change from dynamic -> quasi-static analysis type.
+    A pulse is applied and the soil block is oscillating until oscillations are damped, then is changed to static condition.
     """
 
     # Define geometry, conditions and material parameters
@@ -43,6 +44,7 @@ def test_stem():
     model_stage_1.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil_block")
 
     # Boundary conditions and Loads
+    # A pulse is applied and the soil block is oscillating until oscillations are damped, than is changed to static condition
     load_coordinates = [(0.0, 1.0, 0), (1.0, 1.0, 0)]
     t = (0.0, 0.0075, 1)
     values = (0.0, -1000.0, -1000.0)
@@ -140,8 +142,8 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
-    # result = assert_files_equal("benchmark_tests/test_multi_stage_dynamic_to_static/output_/output_vtk_full_model",
-    #                             os.path.join(input_folder, "output/output_vtk_full_model"))
-    #
-    # assert result is True
-    # rmtree(input_folder)
+    result = assert_files_equal("benchmark_tests/test_multi_stage_dynamic_to_static/output_/output_vtk_full_model",
+                                os.path.join(input_folder, "output/output_vtk_full_model"))
+
+    assert result is True
+    rmtree(input_folder)

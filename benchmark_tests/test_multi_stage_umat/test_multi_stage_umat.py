@@ -20,6 +20,9 @@ def test_stem():
     """
     Test STEM: 2D block with distributed loading with multistage for the umat using umat and changing the stiffness
     of the material in the second stage (halved).
+
+    It still needs to be checked for the different formulation type of the elements in 2D (incremental, required
+    for K_0 stress initialisation) and 3D (non-incremental).
     """
 
     # Define geometry, conditions and material parameters
@@ -48,10 +51,10 @@ def test_stem():
     model_stage_1.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil_block")
 
     # Boundary conditions and Loads
-    # a sinus load at 20Hz (T=0.05s)
-    delta_time = 0.005 # s
-    total_simulation_time = 0.5 # s
+    # a sinus load at 20Hz (load period T=0.05s)
     load_frequency = 20 # Hz
+    delta_time = 0.005 # s = 10 points per cycle
+    total_simulation_time = 0.5 # s =  10 cycles
     load_pulse = load_frequency * (2*np.pi) # rad/s
 
     t = np.arange(0, 0.5+delta_time, delta_time) # s
