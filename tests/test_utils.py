@@ -791,7 +791,7 @@ class TestUtilsStem:
         with pytest.raises(ValueError,
                            match=f"Coordinates should be a sequence of sequence of real numbers, "
                            f"but nan was given."):
-            Utils.validate_coordinates([(0.0, 0.0, 0.0), (0.0, np.NAN, 0.0)])
+            Utils.validate_coordinates([(0.0, 0.0, 0.0), (0.0, np.nan, 0.0)])
 
         # test for inf numbers
         with pytest.raises(ValueError,
