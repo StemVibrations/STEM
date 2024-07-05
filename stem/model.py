@@ -1,24 +1,27 @@
-from typing import List, Sequence, Dict, Any, Optional, Union, Tuple, get_args, Set
-
-import numpy as np
+import json
+import os
+from pathlib import Path
+from typing import Sequence, Tuple, get_args, Set, Optional, List, Dict, Any, Union
 
 from gmsh_utils import gmsh_IO
 
-from stem.field_generator import RandomFieldGenerator
-from stem.model_part import ModelPart, BodyModelPart, Material, ProcessParameters
-from stem.soil_material import *
-from stem.structural_material import *
-from stem.boundary import *
-from stem.geometry import Geometry
-from stem.mesh import Mesh, MeshSettings, Node, Element
-from stem.output import Output, OutputParametersABC
 from stem.additional_processes import ParameterFieldParameters
+from stem.boundary import *
+from stem.field_generator import RandomFieldGenerator
+from stem.geometry import Geometry
+from stem.globals import ELEMENT_DATA, OUT_OF_PLANE_AXIS_2D, VERTICAL_AXIS, GRAVITY_VALUE
 from stem.load import *
-from stem.water_processes import WaterProcessParametersABC, UniformWaterPressure
-from stem.solver import Problem, StressInitialisationType
-from stem.utils import Utils
+from stem.mesh import Mesh, MeshSettings, Node, Element
+from stem.model_part import ModelPart, BodyModelPart, Material, ProcessParameters
+from stem.output import Output, OutputParametersABC, JsonOutputParameters
 from stem.plot_utils import PlotUtils
-from stem.globals import ELEMENT_DATA, VERTICAL_AXIS, GRAVITY_VALUE, OUT_OF_PLANE_AXIS_2D
+from stem.soil_material import *
+from stem.solver import Problem, StressInitialisationType
+from stem.structural_material import *
+from stem.utils import Utils
+from stem.water_processes import WaterProcessParametersABC, UniformWaterPressure
+
+import numpy as np
 
 
 class Model:
@@ -680,8 +683,7 @@ class Model:
                 new_mesh.elements = {}
                 model_part.mesh = new_mesh
 
-                self.gmsh_io.mesh_data["physical_groups"][model_part.name]["node_ids"] = (sorted(
-                    list(new_mesh.nodes.keys())))
+                self.gmsh_io.mesh_data["physical_groups"][model_part.name]["node_ids"] = (list(new_mesh.nodes.keys()))
 
     def add_field(self, part_name: str, field_parameters: ParameterFieldParameters):
         """
@@ -1547,3 +1549,75 @@ class Model:
         # generate the geometry within gmsh
         self.gmsh_io.generate_geo_from_geo_data()
         self.synchronise_geometry()
+
+    def finalise(self, working_folder: str):
+        """
+        Finalise the model run:
+        * adjust json output for nodal output coordinates so the order matches the desired one.
+
+        Args:
+            - working_folder (str): working folder of the STEM for the inputs and relative folder for the outputs.
+
+        Raises:
+            - ValueError: if the parameters of the model part are None.
+            - ValueError: if the model part has no geometry.
+            - ValueError: if the model part is not yet meshed.
+            - IOError: if no JSON output file is not found for the specified working folder meaning either the working \
+                folder is incorrect or the simulation was not run yet.
+        """
+
+        # reorder json file nodes based on the order of the desired output
+        for output_settings in self.output_settings:
+
+            # output settings contain info on the output directory
+            if isinstance(output_settings.output_parameters, JsonOutputParameters):
+
+                if output_settings.part_name is None:
+                    raise ValueError("The output model part has no part name specified.")
+
+                if output_settings.output_name is None:
+                    raise ValueError("No name is specified for the json file.")
+
+                part_name = output_settings.part_name
+                # get corresponding model part (info on the geometry and mesh)
+                output_model_part = self.get_model_part_by_name(part_name)
+
+                if output_model_part is None:
+                    raise ValueError("No model part matches the part name specified in the output settings.")
+
+                if output_model_part.parameters is None:
+                    raise ValueError("The model part doesn't have parameters.")
+
+                if output_model_part.mesh is None:
+                    raise ValueError("process model part has not been meshed yet!")
+
+                if os.path.isabs(output_settings.output_dir):
+                    json_file_dir = Path(output_settings.output_dir)
+                else:
+                    json_file_dir = Path(working_folder) / output_settings.output_dir
+
+                # retrieve the filepath of the json file
+                json_file_path = json_file_dir / (output_settings.output_name + ".json")
+
+                if not os.path.exists(json_file_path):
+                    raise IOError(f"No JSON file is found in the output directory for path: {json_file_path}."
+                                  f"Either the working folder is incorrectly specified or no simulation has been"
+                                  f" performed yet.")
+
+                with open(json_file_path, "r") as infile:
+                    json_file_tmp = json.load(infile)
+
+                # remove old file
+                os.remove(json_file_path)
+
+                # copy the dictionary except for nodal outputs
+                new_json = {key: value for key, value in json_file_tmp.items() if "NODE" not in key}
+
+                # adjust the nodal outputs in the right order
+                for node_id in output_model_part.mesh.nodes.keys():
+                    node_key = f"NODE_{node_id}"
+                    new_json[node_key] = json_file_tmp[node_key]
+
+                # write back the json file
+                with open(json_file_path, "w") as outfile:
+                    json.dump(new_json, outfile, indent=2)

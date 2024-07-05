@@ -210,6 +210,9 @@ class Stem:
 
         """
 
+        for stage in self.stages:
+            stage.finalise(working_folder=self.input_files_dir)
+
         # if more than 1 stage is run, transfer all vtk results to a shared output directory
         if len(self.stages) > 1:
             self.__transfer_vtk_files_to_main_output_directories()

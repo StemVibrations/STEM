@@ -1388,7 +1388,6 @@ class TestModel:
                                                  output_dir="dir_test",
                                                  output_parameters=JsonOutputParameters(output_interval=100,
                                                                                         nodal_results=nodal_results))
-
         model.synchronise_geometry()
         model.generate_mesh()
 
@@ -1424,9 +1423,13 @@ class TestModel:
         # check if nodes are generated correctly, number of nodes are equal to the one requested in output,
         # no elements generated, unique node ids, and correct number of coordinates per node
         assert len(part.mesh.nodes) == len(output_coordinates)
-        for node_id, node in part.mesh.nodes.items():
+
+        for (node_id, node), actual_output_coordinates in zip(part.mesh.nodes.items(), output_coordinates):
             assert node_id not in unique_node_ids
             assert len(node.coordinates) == 3
+            # assert that the order of the nodes in the new model part is the same as the one in input
+            # meaning, the coordinate of the output nodes has to match one-by-one with the requested output nodes
+            npt.assert_almost_equal(actual_output_coordinates, node.coordinates)
             unique_node_ids.append(node.id)
 
         assert part.mesh.elements == {}
@@ -1472,6 +1475,7 @@ class TestModel:
                                                  output_parameters=JsonOutputParameters(output_interval=100,
                                                                                         nodal_results=nodal_results))
 
+        model.set_mesh_size(1)
         model.synchronise_geometry()
 
         model.generate_mesh()
@@ -1484,7 +1488,7 @@ class TestModel:
 
         # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
         # correct and if the element ids are unique and if the number of nodes per element is correct
-        assert len(body_model_part.mesh.elements) == 686
+        assert len(body_model_part.mesh.elements) == 187
 
         for element_id, element in body_model_part.mesh.elements.items():
             assert element.element_type == "TETRAHEDRON_4N"
@@ -1494,7 +1498,7 @@ class TestModel:
 
         # check if nodes are generated correctly, i.e. if there are nodes in the mesh and if the node ids are unique
         # and if the number of coordinates per node is correct
-        assert len(body_model_part.mesh.nodes) == 237
+        assert len(body_model_part.mesh.nodes) == 77
         for node_id, node in body_model_part.mesh.nodes.items():
             assert node_id not in unique_node_ids
             assert len(node.coordinates) == 3
@@ -1508,9 +1512,12 @@ class TestModel:
         # check if nodes are generated correctly, number of nodes are equal to the one requested in output,
         # no elements generated, unique node ids, and correct number of coordinates per node
         assert len(output_model_part.mesh.nodes) == len(output_coordinates)
-        for node_id, node in output_model_part.mesh.nodes.items():
+        for (node_id, node), actual_output_coordinates in zip(output_model_part.mesh.nodes.items(), output_coordinates):
             assert node_id not in unique_node_ids
             assert len(node.coordinates) == 3
+            # assert that the order of the nodes in the new model part is the same as the one in input
+            # meaning, the coordinate of the output nodes has to match one-by-one with the requested output nodes
+            npt.assert_almost_equal(actual_output_coordinates, node.coordinates)
             unique_node_ids.append(node.id)
 
         # No element outputs, so the element attribute of the mesh must be an empty dictionary
