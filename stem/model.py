@@ -1585,9 +1585,6 @@ class Model:
                 if output_model_part is None:
                     raise ValueError("No model part matches the part name specified in the output settings.")
 
-                if output_model_part.parameters is None:
-                    raise ValueError("The model part doesn't have parameters.")
-
                 if output_model_part.mesh is None:
                     raise ValueError("process model part has not been meshed yet!")
 
