@@ -1,21 +1,24 @@
 import os
-
-import numpy as np
-
-from stem.model import Model
-from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw, \
-    SmallStrainUmatLaw
-from stem.load import LineLoad, MovingLoad, PointLoad
-from stem.table import Table
-from stem.boundary import DisplacementConstraint
-from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
-                         StressInitialisationType, SolverSettings, Problem)
-from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters
-from stem.stem import Stem
-from benchmark_tests.utils import assert_files_equal
+import sys
 from shutil import rmtree
 
+import numpy as np
+import pytest
 
+from benchmark_tests.utils import assert_files_equal
+from stem.boundary import DisplacementConstraint
+from stem.load import LineLoad
+from stem.model import Model
+from stem.output import NodalOutput, VtkOutputParameters
+from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw, \
+    SmallStrainUmatLaw
+from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
+                         StressInitialisationType, SolverSettings, Problem)
+from stem.stem import Stem
+from stem.table import Table
+
+
+@pytest.mark.skipif(sys.platform == "linux", reason="linear elastic umat is currently not available for linux")
 def test_stem():
     """
     Test STEM: 2D block with distributed loading with multistage for the umat using umat and changing the stiffness
