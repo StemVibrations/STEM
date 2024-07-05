@@ -1594,7 +1594,8 @@ class Model:
                     json_file_dir = Path(working_folder) / output_settings.output_dir
 
                 # retrieve the filepath of the json file
-                json_file_path = json_file_dir / (output_settings.output_name + ".json")
+                json_file_path = json_file_dir / output_settings.output_name
+                json_file_path = json_file_path.with_suffix(".json")
 
                 if not os.path.exists(json_file_path):
                     raise IOError(f"No JSON file is found in the output directory for path: {json_file_path}."
