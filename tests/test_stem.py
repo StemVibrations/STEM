@@ -117,6 +117,18 @@ class TestStem:
                                   output_dir="output",
                                   output_name="vtk_output")
 
+        nodal_results = [NodalOutput.ACCELERATION]
+        # Define output coordinates
+        output_coordinates = [(0, 5, 0), (0.5, 5, 0), (1, 5, 0)]
+
+        # add output settings
+        model.add_output_settings_by_coordinates(output_coordinates,
+                                                 part_name="nodal_accelerations",
+                                                 output_name="json_nodal_accelerations",
+                                                 output_dir="dir_test",
+                                                 output_parameters=JsonOutputParameters(output_interval=0.1,
+                                                                                        nodal_results=nodal_results))
+
         # return the model
         yield model
 
