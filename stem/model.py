@@ -1570,7 +1570,7 @@ class Model:
         for output_settings in self.output_settings:
 
             # output settings contain info on the output directory
-            if isinstance(output_settings.output_parameters, JsonOutputParameters):
+            if isinstance(output_settings.output_parameters, JsonOutputParameters) and output_settings is not None:
 
                 if output_settings.part_name is None:
                     raise ValueError("The output model part has no part name specified.")
@@ -1598,7 +1598,7 @@ class Model:
                 json_file_path = json_file_path.with_suffix(".json")
 
                 if not os.path.exists(json_file_path):
-                    raise IOError(f"No JSON file is found in the output directory for path: {json_file_path}."
+                    raise IOError(f"No JSON file is found in the output directory for path: {json_file_path}. "
                                   f"Either the working folder is incorrectly specified or no simulation has been"
                                   f" performed yet.")
 
