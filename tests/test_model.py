@@ -3519,7 +3519,7 @@ class TestModel:
             model_copy.finalise(working_folder="input_files")
 
         # set json filename to a wrong one
-        model_copy = deepcopy(model_copy)
+        model_copy = deepcopy(model)
         model_copy.output_settings[-1].output_name = "json_nodal_displacements"
 
         expected_path = Path(
@@ -3531,15 +3531,22 @@ class TestModel:
             model_copy.finalise(working_folder="input_dir")
 
         # set part name of the output settings to None
-        model_copy = deepcopy(model_copy)
+        model_copy = deepcopy(model)
         model_copy.output_settings[-1].part_name = None
         msg = "The output model part has no part name specified."
         with pytest.raises(ValueError, match=msg):
             model_copy.finalise(working_folder="input_files")
 
         # set part name of the output settings to non-existing part
-        model_copy = deepcopy(model_copy)
+        model_copy = deepcopy(model)
         model_copy.output_settings[-1].part_name = "part 404"
         msg = "No model part matches the part name specified in the output settings."
+        with pytest.raises(ValueError, match=msg):
+            model_copy.finalise(working_folder="input_files")
+
+        # set part name of the output settings to non-existing part
+        model_copy = deepcopy(model)
+        model_copy.process_model_parts[-1].mesh = None
+        msg = "process model part has not been meshed yet!"
         with pytest.raises(ValueError, match=msg):
             model_copy.finalise(working_folder="input_files")
