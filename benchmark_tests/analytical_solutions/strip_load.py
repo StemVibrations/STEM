@@ -24,7 +24,11 @@ class StripLoad:
 
     """
 
-    def __init__(self, youngs_modulus: float, poisson_ratio: float, density: float, load: float,
+    def __init__(self,
+                 youngs_modulus: float,
+                 poisson_ratio: float,
+                 density: float,
+                 load: float,
                  integral_stepsize: float = 0.001):
         """
         Constructor for the strip load class
@@ -47,7 +51,7 @@ class StripLoad:
 
         # calculate derived elastic properties
         self.shear_modulus = self.young / (2 * (1 + self.poisson))
-        self.p_wave_modulus = self.young * (1-self.poisson)/((1+self.poisson) * (1-2*self.poisson))
+        self.p_wave_modulus = self.young * (1 - self.poisson) / ((1 + self.poisson) * (1 - 2 * self.poisson))
         self.cs = math.sqrt(self.shear_modulus / self.density)  # shear wave velocity
         self.cp = math.sqrt(self.p_wave_modulus / self.density)  # compression wave velocity
 
@@ -56,7 +60,7 @@ class StripLoad:
         # epsilon to avoid division by zero
         self.epsilon = self.integral_stepsize**2
 
-    def k1(self, x_norm: float, z_norm: float, kappa: float) -> float:
+    def __k1(self, x_norm: float, z_norm: float, kappa: float) -> float:
         """
         Imaginary part of the imaginary factor for first integral
 
@@ -77,7 +81,7 @@ class StripLoad:
         else:
 
             # dimensionless complex variables following from laplace and fourier transforms
-            a = complex(kappa * math.sqrt(kappa_r), self.eta ** 2 * x_norm * z_norm)
+            a = complex(kappa * math.sqrt(kappa_r), self.eta**2 * x_norm * z_norm)
             beta_p = complex(kappa * x_norm / radius**2, (z_norm / radius**2) * math.sqrt(kappa_r))
             b1 = 1 - 2 * beta_p**2
             gp = cmath.sqrt(self.eta**2 - beta_p**2)
@@ -91,7 +95,7 @@ class StripLoad:
 
         return k1
 
-    def f1(self, x_norm: float, z_norm: float, kappa: float) -> float:
+    def __f1(self, x_norm: float, z_norm: float, kappa: float) -> float:
         """
         Calculates the first integral
 
@@ -109,21 +113,21 @@ class StripLoad:
         if abs(x_norm) < self.epsilon:
             x_norm = self.epsilon if x_norm >= 0 else -self.epsilon
 
-        radius = math.sqrt(x_norm**2+z_norm**2)
+        radius = math.sqrt(x_norm**2 + z_norm**2)
 
         # dimensionless time parameter
         time_parameter = self.eta * radius + self.epsilon
 
-        k1_ini = self.k1(x_norm, z_norm, time_parameter)
+        k1_ini = self.__k1(x_norm, z_norm, time_parameter)
 
-        x_new = max(math.sqrt(radius**2 - z_norm**2), self.epsilon )
+        x_new = max(math.sqrt(radius**2 - z_norm**2), self.epsilon)
 
         # solve first integral with simpson's rule
         if kappa**2 <= time_parameter**2:
             first_integral = 0
         else:
-            first_integral = ((k1_ini / (self.eta**2 * z_norm * x_new)) *
-                              math.atan((z_norm * math.sqrt(kappa**2 - self.eta**2 * radius**2)) / (kappa * x_new)))
+            first_integral = ((k1_ini / (self.eta**2 * z_norm * x_new)) * math.atan(
+                (z_norm * math.sqrt(kappa**2 - self.eta**2 * radius**2)) / (kappa * x_new)))
             h1_1 = 0
 
             # solve first integral with simpson's rule
@@ -133,14 +137,14 @@ class StripLoad:
                 pz = time_parameter**2 - self.eta**2 * z_norm**2
                 pr = time_parameter**2 - self.eta**2 * radius**2
 
-                h1_2 = (self.k1(x_norm, z_norm, time_parameter) - k1_ini) / (pz * math.sqrt(pr))
+                h1_2 = (self.__k1(x_norm, z_norm, time_parameter) - k1_ini) / (pz * math.sqrt(pr))
 
                 time_parameter += self.integral_stepsize
 
-                pz = time_parameter ** 2 - self.eta ** 2 * z_norm ** 2
-                pr = time_parameter ** 2 - self.eta ** 2 * radius ** 2
+                pz = time_parameter**2 - self.eta**2 * z_norm**2
+                pr = time_parameter**2 - self.eta**2 * radius**2
 
-                h1_3 = (self.k1(x_norm, z_norm, time_parameter) - k1_ini) / (pz * math.sqrt(pr))
+                h1_3 = (self.__k1(x_norm, z_norm, time_parameter) - k1_ini) / (pz * math.sqrt(pr))
 
                 first_integral += (h1_1 + 4 * h1_2 + h1_3) * self.integral_stepsize / 3
                 h1_1 = h1_3
@@ -150,7 +154,7 @@ class StripLoad:
 
         return first_integral
 
-    def k2(self, x_norm: float, z_norm: float, kappa: float) -> float:
+    def __k2(self, x_norm: float, z_norm: float, kappa: float) -> float:
         """
         Real part of the imaginary factor for the second integral
 
@@ -179,7 +183,7 @@ class StripLoad:
 
         return k2
 
-    def h2(self, x_norm: float, z_norm: float, time_parameter: float, radius: float, k2_0: float) -> float:
+    def __h2(self, x_norm: float, z_norm: float, time_parameter: float, radius: float, k2_0: float) -> float:
         """
         Imaginary factor for the second integral
 
@@ -191,10 +195,10 @@ class StripLoad:
             - k2_0 (float): initial imaginary factor for the second integral [-]
         """
 
-        pr = time_parameter ** 2 - radius ** 2
-        return (self.k2(x_norm, z_norm, time_parameter) - k2_0) / math.sqrt(pr)
+        pr = time_parameter**2 - radius**2
+        return (self.__k2(x_norm, z_norm, time_parameter) - k2_0) / math.sqrt(pr)
 
-    def f2(self, x_norm: float, z_norm: float, kappa: float) -> float:
+    def __f2(self, x_norm: float, z_norm: float, kappa: float) -> float:
         """
         Calculates the second integral
 
@@ -207,8 +211,8 @@ class StripLoad:
             - float: second integral solution [-]
         """
 
-        if abs(x_norm) < self.epsilon :
-            x_norm = self.epsilon  if x_norm >= 0 else -self.epsilon
+        if abs(x_norm) < self.epsilon:
+            x_norm = self.epsilon if x_norm >= 0 else -self.epsilon
 
         radius = math.sqrt(x_norm**2 + z_norm**2)
 
@@ -216,7 +220,7 @@ class StripLoad:
 
         time_parameter = radius + self.epsilon
 
-        k2 = self.k2(x_norm, z_norm, time_parameter)
+        k2 = self.__k2(x_norm, z_norm, time_parameter)
 
         if kappa**2 <= time_parameter**2:
             second_integral = 0
@@ -228,17 +232,17 @@ class StripLoad:
             while time_parameter**2 < kappa**2:
 
                 time_parameter += self.integral_stepsize
-                h2_2 = self.h2(x_norm, z_norm, time_parameter, radius, k2)
+                h2_2 = self.__h2(x_norm, z_norm, time_parameter, radius, k2)
 
                 time_parameter += self.integral_stepsize
-                h2_3 = self.h2(x_norm, z_norm, time_parameter, radius, k2)
+                h2_3 = self.__h2(x_norm, z_norm, time_parameter, radius, k2)
 
                 second_integral += (h2_1 + 4 * h2_2 + h2_3) * self.integral_stepsize / 3
                 h2_1 = h2_3
 
         return second_integral
 
-    def k3(self, x_norm: float, z_norm: float, kappa: float) -> float:
+    def __k3(self, x_norm: float, z_norm: float, kappa: float) -> float:
         """
         Factor for the third integral
 
@@ -261,7 +265,7 @@ class StripLoad:
         else:
             beta_q = x_norm * kappa / radius**2 - (z_norm / radius**2) * math.sqrt(radius**2 - kappa**2)
 
-            b2 = (1 - 2 * beta_q**2) **2
+            b2 = (1 - 2 * beta_q**2)**2
             numerator = 4 * beta_q * (1 - beta_q**2) * b2 * math.sqrt(beta_q**2 - self.eta**2)
 
             denominator = b2**2 + 16 * beta_q**4 * (1 - beta_q**2) * (beta_q**2 - self.eta**2)
@@ -270,7 +274,7 @@ class StripLoad:
 
         return k3
 
-    def f3(self, x_norm: float, z_norm: float, kappa: float) -> float:
+    def __f3(self, x_norm: float, z_norm: float, kappa: float) -> float:
         """
         Calculates the third integral
 
@@ -304,7 +308,7 @@ class StripLoad:
 
             # solve third integral
             while time_parameter < kappa_s:
-                third_integral += self.k3(x_norm, z_norm, time_parameter) * stepsize
+                third_integral += self.__k3(x_norm, z_norm, time_parameter) * stepsize
                 time_parameter += stepsize
 
         return third_integral
@@ -322,9 +326,9 @@ class StripLoad:
             - float: normalised vertical stress [-]
 
         """
-        normalised_vertical_stress = self.f1(x_norm + 1, z_norm, kappa) - self.f1(x_norm - 1, z_norm, kappa) + \
-            self.f2(x_norm + 1, z_norm, kappa) - self.f2(x_norm - 1, z_norm, kappa) + \
-            self.f3(x_norm + 1, z_norm, kappa) - self.f3(x_norm - 1, z_norm, kappa)
+        normalised_vertical_stress = self.__f1(x_norm + 1, z_norm, kappa) - self.__f1(x_norm - 1, z_norm, kappa) + \
+            self.__f2(x_norm + 1, z_norm, kappa) - self.__f2(x_norm - 1, z_norm, kappa) + \
+            self.__f3(x_norm + 1, z_norm, kappa) - self.__f3(x_norm - 1, z_norm, kappa)
         return normalised_vertical_stress
 
     def calculate_vertical_stress(self, x: float, z: float, t: float, load_length: float, load_value: float) -> float:
@@ -360,7 +364,7 @@ if __name__ == '__main__':
     line_load_length = 1
     load_value = -1000
 
-    strip_load = StripLoad(2.55e3 * 36, 0.25, (1-porosity) * density_solid, load_value)
+    strip_load = StripLoad(2.55e3 * 36, 0.25, (1 - porosity) * density_solid, load_value)
 
     cs = strip_load.cs
 
@@ -370,8 +374,8 @@ if __name__ == '__main__':
     end_time = 1
 
     # dimensionless x coordinate
-    start_x=0
-    end_x=10
+    start_x = 0
+    end_x = 10
 
     n_steps = 300
 
@@ -387,7 +391,6 @@ if __name__ == '__main__':
 
     all_sigma_zz = []
 
-
     for x in xs:
 
         xi = x / line_load_length
@@ -399,7 +402,6 @@ if __name__ == '__main__':
         all_sigma_zz.append(sigma_zz)
 
         print(x)
-
 
     #
     # for t in kappas:
@@ -413,9 +415,6 @@ if __name__ == '__main__':
     #     all_sigma_zz.append(sigma_zz)
     #
     #     print(t)
-
-
-
 
     plt.plot(xs, all_sigma_zz)
     # plt.plot(ts, all_sigma_zz )
