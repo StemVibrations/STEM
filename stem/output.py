@@ -35,6 +35,8 @@ class NodalOutput(Enum):
 class GaussPointOutput(Enum):
     """
     Enum class for variables at the Gauss Point
+
+    2d plain strain vector indices: 0: xx, 1: yy, 3: zz, 4: xy
     """
     VON_MISES_STRESS = auto()
     FLUID_FLUX_VECTOR = auto()

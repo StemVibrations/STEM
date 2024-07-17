@@ -397,7 +397,7 @@ class KratosIO:
         space = " " * INDENTATION
         # assemble format for table string at line j
         #   time value
-        _fmt = f"{space}{FORMAT_FLOAT_SHORT}{space}{FORMAT_FLOAT_SHORT}"
+        _fmt = f"{space}{FORMAT_FLOAT_LONG}{space}{FORMAT_FLOAT_LONG}"
         return _fmt.format(time, value)
 
     def __write_table_block(self, table: Table) -> List[str]:
