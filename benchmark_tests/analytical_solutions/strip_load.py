@@ -397,7 +397,7 @@ if __name__ == '__main__':
         zeta = z / line_load_length
 
         sigma_zz_normalised = strip_load.calculate_normalised_vertical_stress(xi, zeta, kappa)
-        sigma_zz = sigma_zz_normalised * strip_load.load
+        sigma_zz = sigma_zz_normalised * strip_load.load * -1
 
         all_sigma_zz.append(sigma_zz)
 
@@ -422,4 +422,5 @@ if __name__ == '__main__':
     # plt.ylim(-5, 5)
     # plt.xlim(0,0.4)
     # plt.ylim(-5e-3,5e-3)
+    plt.grid()
     plt.show()
