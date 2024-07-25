@@ -14,8 +14,8 @@ def install_external_dependency():
     if not check_package_version('random_fields', '1.0'):
         subprocess.run(['pip', 'install', "git+https://github.com/StemVibrations/RandomFields@v1.0"])
     # check if RandFields is installed and it is version 1.0
-    if not check_package_version('StemKratos', '1.0'):
-        subprocess.run(['pip', 'install', "git+https://github.com/StemVibrations/StemKratos@v1.0"])
+    if not check_package_version('StemKratos', '1.1'):
+        subprocess.run(['pip', 'install', "git+https://github.com/StemVibrations/StemKratos@v1.1"])
 
 
 def check_package_version(package_name: str, target_version: str) -> bool:
