@@ -2,6 +2,7 @@
 .idea
 __pycache__
 venv/*
+.venv/*
 pytest_cache/*
 build/*
 dist/*
