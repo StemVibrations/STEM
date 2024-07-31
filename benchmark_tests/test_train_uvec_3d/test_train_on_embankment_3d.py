@@ -107,7 +107,7 @@ def test_stem():
                                     rayleigh_m=0.01)
 
     # Set up problem data
-    problem = Problem(problem_name="uvec_3d", number_of_threads=8, settings=solver_settings)
+    problem = Problem(problem_name="uvec_3d", number_of_threads=4, settings=solver_settings)
     model.project_parameters = problem
 
     # Define the results to be written to the output file
