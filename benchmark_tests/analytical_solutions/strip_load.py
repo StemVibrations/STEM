@@ -313,7 +313,7 @@ class StripLoad:
 
         return third_integral
 
-    def calculate_normalised_vertical_stress(self, x_norm: float, z_norm: float, kappa: float):
+    def calculate_normalised_vertical_stress(self, x_norm: float, z_norm: float, kappa: float) -> float:
         """
         Calculate the normalised vertical stress
 
@@ -382,8 +382,9 @@ if __name__ == '__main__':
     depth = 1 * line_load_length
 
     # calculate vertical stress at different x coordinates
-    all_sigma_zz = [strip_load.calculate_vertical_stress(x, depth, end_time, line_load_length, load_value)
-                    for x in x_coordinates]
+    all_sigma_zz = [
+        strip_load.calculate_vertical_stress(x, depth, end_time, line_load_length, load_value) for x in x_coordinates
+    ]
 
     # plot vertical stress
     plt.plot(x_coordinates, all_sigma_zz)
