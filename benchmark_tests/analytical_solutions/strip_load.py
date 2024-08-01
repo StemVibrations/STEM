@@ -358,69 +358,34 @@ class StripLoad:
 if __name__ == '__main__':
 
     import matplotlib.pyplot as plt
+    youngs_modulus = 2.55e3 * 36
+    poisson_ratio = 0.25
     porosity = 0.0
     density_solid = 1020
 
     line_load_length = 1
     load_value = -1000
 
-    strip_load = StripLoad(2.55e3 * 36, 0.25, (1 - porosity) * density_solid, load_value)
+    # initialise strip load
+    strip_load = StripLoad(youngs_modulus, poisson_ratio, (1 - porosity) * density_solid, load_value)
 
-    cs = strip_load.cs
-
-    # dimensionless time parameter
-
-    # end_time = 10 * line_load_length / cs
+    # time to calculate the vertical stress at
     end_time = 1
 
-    # dimensionless x coordinate
+    # x coordinates
     start_x = 0
     end_x = 10
-
     n_steps = 300
+    x_coordinates = [start_x + (end_x - start_x) * i / n_steps for i in range(n_steps)]
 
-    ts = [end_time * i / n_steps for i in range(n_steps)]
-    kappas = [cs * t / line_load_length for t in ts]
-    kappa = cs * end_time / line_load_length
+    # depth coordinate
+    depth = 1 * line_load_length
 
-    xs = [start_x + (end_x - start_x) * i / n_steps for i in range(n_steps)]
+    # calculate vertical stress at different x coordinates
+    all_sigma_zz = [strip_load.calculate_vertical_stress(x, depth, end_time, line_load_length, load_value)
+                    for x in x_coordinates]
 
-    # z coordinate
-    x = 5 * line_load_length
-    z = 1 * line_load_length
-
-    all_sigma_zz = []
-
-    for x in xs:
-
-        xi = x / line_load_length
-        zeta = z / line_load_length
-
-        sigma_zz_normalised = strip_load.calculate_normalised_vertical_stress(xi, zeta, kappa)
-        sigma_zz = sigma_zz_normalised * strip_load.load * -1
-
-        all_sigma_zz.append(sigma_zz)
-
-        print(x)
-
-    #
-    # for t in kappas:
-    #
-    #     xi = x/line_load_length
-    #     zeta = z/line_load_length
-    #
-    #     sigma_zz_normalised = strip_load.calculate_normalised_vertical_stress(xi, zeta, t)
-    #     sigma_zz = sigma_zz_normalised * strip_load.load
-    #
-    #     all_sigma_zz.append(sigma_zz)
-    #
-    #     print(t)
-
-    plt.plot(xs, all_sigma_zz)
-    # plt.plot(ts, all_sigma_zz )
-
-    # plt.ylim(-5, 5)
-    # plt.xlim(0,0.4)
-    # plt.ylim(-5e-3,5e-3)
+    # plot vertical stress
+    plt.plot(x_coordinates, all_sigma_zz)
     plt.grid()
     plt.show()
