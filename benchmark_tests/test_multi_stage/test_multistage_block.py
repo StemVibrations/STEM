@@ -108,7 +108,7 @@ def test_stem():
 
     # Define the output process
     model_stage_1.add_output_settings(output_parameters=VtkOutputParameters(file_format="ascii",
-                                                                            output_interval=5,
+                                                                            output_interval=1,
                                                                             nodal_results=nodal_results,
                                                                             gauss_point_results=[],
                                                                             output_control_type="step"),
@@ -139,7 +139,6 @@ def test_stem():
     # Run Kratos calculation
     # --------------------------------
     stem.run_calculation()
-    # wait for 2 seconds to ensure that the calculation is finished
 
     result = assert_files_equal("benchmark_tests/test_multi_stage/output_/output_vtk_full_model",
                                 os.path.join(input_folder, "output/output_vtk_full_model"))
