@@ -286,12 +286,13 @@ class Stem:
                             main_vtk_output_dirs[part_name] = Path(self.input_files_dir) / output_settings.output_dir
                     else:
                         # create main output directory if it does not exist
-                        if not(os.path.isdir(main_vtk_output_dirs[part_name])):
-                            if not(os.path.isdir(Path(self.input_files_dir) / output_settings.output_dir)):
-                                raise Exception(f"No output vtk files were written for part {part_name} in stage {i}. "
-                                                f"The output interval "
-                                                f"({output_settings.output_parameters.output_interval}) might be larger "
-                                                f"than than the amount of time steps available in the stage.")
+                        if not (os.path.isdir(main_vtk_output_dirs[part_name])):
+                            if not (os.path.isdir(Path(self.input_files_dir) / output_settings.output_dir)):
+                                raise Exception(
+                                    f"No output vtk files were written for part {part_name} in stage {i}. "
+                                    f"The output interval "
+                                    f"({output_settings.output_parameters.output_interval}) might be larger "
+                                    f"than than the amount of time steps available in the stage.")
                             os.makedirs(main_vtk_output_dirs[part_name], exist_ok=True)
                         # if the current stage is not the main stage, move the vtk files to the main output directory
                         if os.path.isabs(output_settings.output_dir):

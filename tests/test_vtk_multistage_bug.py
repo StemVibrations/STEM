@@ -188,8 +188,9 @@ class TestVtkMultistageBug:
         delta_time_stage_2 = 0.0025
         output_interval = 24
         # set up and run the model
-        error_message = ("No output vtk files were written for part full_model in stage 1. The output interval (24) might be "
-                         "larger than than the amount of time steps available in the stage.")
+        error_message = (
+            "No output vtk files were written for part full_model in stage 1. The output interval (24) might be "
+            "larger than than the amount of time steps available in the stage.")
         with pytest.raises(Exception) as e:
             create_inputs_and_run_model(delta_time_stage_1, delta_time_stage_2, output_interval)
         assert str(e.value) == error_message
