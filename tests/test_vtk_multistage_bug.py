@@ -8,19 +8,11 @@ from stem.solver import (AnalysisType, SolutionType, TimeIntegration, Displaceme
                          StressInitialisationType, SolverSettings, Problem)
 from stem.output import NodalOutput, VtkOutputParameters
 from stem.stem import Stem
-from benchmark_tests.utils import assert_files_equal
 from shutil import rmtree
+import pytest
 
 
-def test_stem():
-    """
-    Test STEM: 2D block with distributed loading with multistage
-    """
-
-    # Define geometry, conditions and material parameters
-    # --------------------------------
-
-    # Specify dimension and initiate the model
+def create_inputs_and_run_model(delta_time_stage_1, delta_time_stage_2, output_interval):
     ndim = 2
     model_stage_1 = Model(ndim)
 
@@ -81,7 +73,7 @@ def test_stem():
     # Set up start and end time of calculation, time step and etc
     time_integration = TimeIntegration(start_time=0.0,
                                        end_time=0.15,
-                                       delta_time=0.05,
+                                       delta_time=delta_time_stage_1,
                                        reduction_factor=1.0,
                                        increase_factor=1.0,
                                        max_delta_time_factor=1000)
@@ -108,7 +100,7 @@ def test_stem():
 
     # Define the output process
     model_stage_1.add_output_settings(output_parameters=VtkOutputParameters(file_format="ascii",
-                                                                            output_interval=5,
+                                                                            output_interval=output_interval,
                                                                             nodal_results=nodal_results,
                                                                             gauss_point_results=[],
                                                                             output_control_type="step"),
@@ -116,11 +108,11 @@ def test_stem():
                                       output_name="vtk_output")
 
     # define the STEM instance
-    input_folder = "benchmark_tests/test_multi_stage/inputs_kratos"
+    input_folder = "tests/inputs_kratos"
     stem = Stem(model_stage_1, input_folder)
 
     # create new stage
-    model_stage_2 = stem.create_new_stage(0.0025, 0.05)
+    model_stage_2 = stem.create_new_stage(delta_time_stage_2, 0.05)
 
     # Set up solver settings for the new stage
     model_stage_2.project_parameters.settings.solution_type = SolutionType.DYNAMIC
@@ -139,10 +131,67 @@ def test_stem():
     # Run Kratos calculation
     # --------------------------------
     stem.run_calculation()
-    # wait for 2 seconds to ensure that the calculation is finished
 
-    result = assert_files_equal("benchmark_tests/test_multi_stage/output_/output_vtk_full_model",
-                                os.path.join(input_folder, "output/output_vtk_full_model"))
 
-    assert result is True
-    rmtree(input_folder)
+class TestVtkMultistageBug:
+
+    @pytest.mark.parametrize("output_interval", [1, 2, 3, 4, 9, 10, 15, 20])
+    def test_vtk_multistage_bug(self, output_interval):
+        """
+         This test checks the bug in moving vtk files for multistage analysis in STEM.
+         (https://github.com/StemVibrations/STEM/issues/218)
+         When the output interval is greater than the amount of time steps of the first stage in a multistage analysis.
+         The output vtk files are not written, thus the ouput directory is not created. When trying to move vtk files from
+         stage 2 to stage 1, it results in an error since the stage 1 dir is not there.
+
+        """
+        start_time_stage_1 = 0.0
+        end_time_stage_1 = 0.15
+        start_time_stage_2 = end_time_stage_1
+        end_time_stage_2 = 0.2
+        delta_time_stage_1 = 0.05
+        delta_time_stage_2 = 0.0025
+        stage_1_no_files = round((end_time_stage_1 - start_time_stage_1) / delta_time_stage_1) // output_interval
+        stage_2_no_files = round((end_time_stage_2 - start_time_stage_2) / delta_time_stage_2) // output_interval
+        # set up and run the model
+        create_inputs_and_run_model(delta_time_stage_1, delta_time_stage_2, output_interval)
+        # check if the output files are written
+        output_dir = "tests/inputs_kratos/output/output_vtk_full_model"
+        assert os.path.exists(output_dir)
+        assert len(os.listdir(output_dir)) == stage_1_no_files + stage_2_no_files
+        # remove the input folder
+        rmtree("tests/inputs_kratos")
+
+    def test_vtk_multistage_bug_one_file(self):
+        """
+         In this test the output interval is set to 21, which is bigger for all stages so we expect that the calculation
+         will run with producing 1 file.
+        """
+        delta_time_stage_1 = 0.05
+        delta_time_stage_2 = 0.0025
+        output_interval = 22
+        # set up and run the model
+        create_inputs_and_run_model(delta_time_stage_1, delta_time_stage_2, output_interval)
+        # check if the output files are written
+        output_dir = "tests/inputs_kratos/output/output_vtk_full_model"
+        assert os.path.exists(output_dir)
+        assert len(os.listdir(output_dir)) == 1
+        # remove the input folder
+        rmtree("tests/inputs_kratos")
+
+    def test_vtk_multistage_bug_no_files(self):
+        """
+         In this test the output interval is set to 21, which is bigger for all stages so we expect that the calculation
+         will run with producing 1 file.
+        """
+        delta_time_stage_1 = 0.05
+        delta_time_stage_2 = 0.0025
+        output_interval = 24
+        # set up and run the model
+        error_message = ("No output vtk files were written for part full_model in stage 1. The output interval (24) might be "
+                         "larger than than the amount of time steps available in the stage.")
+        with pytest.raises(Exception) as e:
+            create_inputs_and_run_model(delta_time_stage_1, delta_time_stage_2, output_interval)
+        assert str(e.value) == error_message
+        # remove the input folder
+        rmtree("tests/inputs_kratos")
