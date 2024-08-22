@@ -32,7 +32,7 @@ SHOW_RESULTS = True
 def test_stem():
     """
     Test STEM: 2D block with distributed loading with multistage and change from dynamic -> quasi-static analysis type.
-    A pulse is applied and the soil block is oscillating until oscillations are damped, then is changed to static condition.
+    A heaviside load is applied to the soil block. When the oscillations have damped out, the solution type is switched to QUASI_STATIC. 
     """
 
     # Define geometry, conditions and material parameters
@@ -54,22 +54,20 @@ def test_stem():
     retention_parameters1 = SaturatedBelowPhreaticLevelLaw()
     material1 = SoilMaterial("soil", soil_formulation1, constitutive_law1, retention_parameters1)
 
-    # Specify the coordinates for the column: x:1m x y:10m
+    # Specify the coordinates for the block: x:1m x y:1m
     layer1_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
     output_coordinates = [(0.5, 0.5, 0.0), (0.5, 0.0, 0.0)]
     # Create the soil layer
     model_stage_1.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil_block")
 
     # Boundary conditions and Loads
-    # A pulse is applied and the soil block is oscillating until oscillations are damped, than is changed to static condition
+    # A heaviside load is applied to the soil block
     load_coordinates = [(0.0, 1.0, 0), (1.0, 1.0, 0)]
     t = (0.0, 0.0075, 1)
     values = (0.0, -1000.0, -1000.0)
     LINE_LOAD_Y = Table(times=t, values=values)
     # Add line load
     line_load = LineLoad(active=[False, True, False], value=[0, LINE_LOAD_Y, 0])
-    # Add line load
-    # line_load = LineLoad(active=[False, True, False], value=[0, -10000, 0])
     model_stage_1.add_load_by_coordinates(load_coordinates, line_load, "load")
 
     # Define boundary conditions
