@@ -526,6 +526,21 @@ class Model:
 
         self.process_model_parts.append(model_part)
 
+    def add_boundary_condition_on_plane(self, coordinates: Sequence[Sequence[float]],
+                                        boundary_parameters: BoundaryParametersABC, name: str):
+        """
+        Adds a boundary condition to the model by giving a sequence of 3D coordinates.
+
+        Args:
+            - coordinates (Sequence[Sequence[float]]): The coordinates of the boundary condition.
+            - boundary_parameters (:class:`stem.boundary.BoundaryParametersABC`): The parameters of the boundary condition.
+            - name (str): The name of the boundary condition.
+
+        """
+
+        # get surface ids on the plane
+        pass
+
     def add_output_settings(self,
                             output_parameters: OutputParametersABC,
                             part_name: Optional[str] = None,
