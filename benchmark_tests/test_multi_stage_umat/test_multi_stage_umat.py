@@ -24,8 +24,7 @@ def test_stem():
     Test STEM: 2D block with distributed loading with multistage for the umat using umat and changing the stiffness
     of the material in the second stage (halved).
 
-    It still needs to be checked for the different formulation type of the elements in 2D (incremental, required
-    for K_0 stress initialisation) and 3D (non-incremental).
+    Note that currently, 2D elements are written with the incremental formulation, and 3D with the full formulation. Different results in multistage analyses are expected
     """
 
     # Define geometry, conditions and material parameters
