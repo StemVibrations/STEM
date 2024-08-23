@@ -3462,3 +3462,35 @@ class TestModel:
 
         with pytest.raises(ValueError, match=f"Model part type and new parameters type must match."):
             model.split_model_part("process_2d", "split_group", [1], create_default_2d_soil_material)
+
+    def test_get_bounding_box_soil(self, create_default_3d_soil_material: SoilMaterial):
+        ndim = 3
+
+        layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 2, 3), (0, 2, 3)]
+
+        # define soil material
+        soil_material = create_default_3d_soil_material
+
+        # create model
+        model = Model(ndim)
+        model.extrusion_length = 1
+
+        model.project_parameters = TestUtils.create_default_solver_settings()
+
+        # add soil layer
+        model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
+
+        # check if layer is added correctly
+        assert len(model.body_model_parts) == 1
+        assert model.body_model_parts[0].name == "soil1"
+        assert model.body_model_parts[0].material == soil_material
+
+        # run the tests
+        min_coords, max_coords = model.get_bounding_box_soil()
+
+        assert min_coords[0] == 0
+        assert min_coords[1] == 0
+        assert min_coords[2] == 0
+        assert max_coords[0] == 1
+        assert max_coords[1] == 2
+        assert max_coords[2] == 4
