@@ -3647,6 +3647,36 @@ class TestModel:
         assert coordinates[1] == [1., 0., 5.]
         assert coordinates[2] == [1., 0., 6.]
 
+    def test_get_points_outside_soil_volume_error(self, create_default_3d_soil_material: SoilMaterial):
+        ndim = 3
+
+        layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 2, 3), (0, 2, 3)]
+
+        # define soil material
+        soil_material = create_default_3d_soil_material
+
+        # create model
+        model = Model(ndim)
+        model.extrusion_length = 1
+
+        model.project_parameters = TestUtils.create_default_solver_settings()
+
+        # add soil layer
+        model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
+
+        # check if layer is added correctly
+        assert len(model.body_model_parts) == 1
+        assert model.body_model_parts[0].name == "soil1"
+        assert model.body_model_parts[0].material == soil_material
+
+        points_outside_test = [(1, 0, -1), (1, 0, 0), (0, 0, 0), (1, 0, 0), (1, 0, 5), (1, 0, 6)]
+        outside_name = f"fake_name"
+        with pytest.raises(
+                ValueError,
+                match="Model part fake_name not found."
+        ):
+            model.get_points_outside_soil_volume(outside_name)
+
     def test_generate_extended_straight_track_2d(self, create_default_2d_soil_material: SoilMaterial):
         """
         Test if a straight track is generated correctly in a 2d space. A straight track is generated and added to the
