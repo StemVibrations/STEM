@@ -72,28 +72,10 @@ class Model:
         """
         return self.body_model_parts + self.process_model_parts
 
-    def generate_straight_track(self, sleeper_distance: float, n_sleepers: int, rail_parameters: EulerBeam,
+    def __define_straight_track(self, sleeper_distance: float, n_sleepers: int, rail_parameters: EulerBeam,
                                 sleeper_parameters: NodalConcentrated, rail_pad_parameters: ElasticSpringDamper,
                                 rail_pad_thickness: float, origin_point: Sequence[float],
                                 direction_vector: Sequence[float], name: str):
-        """
-        Generates a track geometry. With rail, rail-pads and sleepers as mass elements. Sleepers are placed at the
-        bottom of the track with a distance of sleeper_distance between them. The sleepers are connected to the rail
-        with rail-pads with a thickness of rail_pad_thickness. The track is generated in the direction of the
-        direction_vector starting from the origin_point. The track can only move in the vertical direction.
-
-        Args:
-            - sleeper_distance (float): distance between sleepers
-            - n_sleepers (int): number of sleepers
-            - rail_parameters (:class:`stem.structural_material.EulerBeam`): rail parameters
-            - sleeper_parameters (:class:`stem.structural_material.NodalConcentrated`): sleeper parameters
-            - rail_pad_parameters (:class:`stem.structural_material.ElasticSpringDamper`): rail pad parameters
-            - rail_pad_thickness (float): thickness of the rail pad
-            - origin_point (Sequence[float]): origin point of the track
-            - direction_vector (Sequence[float]): direction vector of the track
-            - name (str): name of the track
-        """
-
         rail_name = f"{name}"
 
         sleeper_name = f"sleeper_{name}"
@@ -176,7 +158,6 @@ class Model:
         # add no rotation constraint to prevent torsion in 3D
         if self.ndim == 3:
             rotation_constraint_name = f"rotation_constraint_{rail_name}"
-
             no_rotation_model_part = ModelPart(rotation_constraint_name)
             no_rotation_constraint = RotationConstraint(active=[True, True, True],
                                                         is_fixed=[True, True, True],
@@ -190,6 +171,178 @@ class Model:
             no_rotation_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rotation_constraint_name)
 
             self.process_model_parts.append(no_rotation_model_part)
+
+    def generate_straight_track(self, sleeper_distance: float, n_sleepers: int, rail_parameters: EulerBeam,
+                                sleeper_parameters: NodalConcentrated, rail_pad_parameters: ElasticSpringDamper,
+                                rail_pad_thickness: float, origin_point: Sequence[float],
+                                direction_vector: Sequence[float], name: str):
+        """
+        Generates a track geometry. With rail, rail-pads and sleepers as mass elements. Sleepers are placed at the
+        bottom of the track with a distance of sleeper_distance between them. The sleepers are connected to the rail
+        with rail-pads with a thickness of rail_pad_thickness. The track is generated in the direction of the
+        direction_vector starting from the origin_point. The track can only move in the vertical direction.
+
+        Args:
+            - sleeper_distance (float): distance between sleepers
+            - n_sleepers (int): number of sleepers
+            - rail_parameters (:class:`stem.structural_material.EulerBeam`): rail parameters
+            - sleeper_parameters (:class:`stem.structural_material.NodalConcentrated`): sleeper parameters
+            - rail_pad_parameters (:class:`stem.structural_material.ElasticSpringDamper`): rail pad parameters
+            - rail_pad_thickness (float): thickness of the rail pad
+            - origin_point (Sequence[float]): origin point of the track
+            - direction_vector (Sequence[float]): direction vector of the track
+            - name (str): name of the track
+        """
+        self.__define_straight_track(sleeper_distance, n_sleepers, rail_parameters, sleeper_parameters,
+                                     rail_pad_parameters, rail_pad_thickness, origin_point, direction_vector, name)
+
+    def generate_extended_straight_track(self, sleeper_distance: float, n_sleepers: int, rail_parameters: EulerBeam,
+                                         sleeper_parameters: NodalConcentrated,
+                                         rail_pad_parameters: ElasticSpringDamper, rail_pad_thickness: float,
+                                         origin_point: Sequence[float], extended_soil_parameters: ElasticSpringDamper,
+                                         length_extended_soil: float,
+                                         direction_vector: Sequence[float], name: str):
+        """
+        Generates a track geometry. With rail, rail-pads and sleepers as mass elements. Sleepers are placed at the
+        bottom of the track with a distance of sleeper_distance between them. The sleepers are connected to the rail
+        with rail-pads with a thickness of rail_pad_thickness. The track is generated in the direction of the
+        direction_vector starting from the origin_point. The track can only move in the vertical direction.
+
+        Args:
+            - sleeper_distance (float): distance between sleepers
+            - n_sleepers (int): number of sleepers
+            - rail_parameters (:class:`stem.structural_material.EulerBeam`): rail parameters
+            - sleeper_parameters (:class:`stem.structural_material.NodalConcentrated`): sleeper parameters
+            - rail_pad_parameters (:class:`stem.structural_material.ElasticSpringDamper`): rail pad parameters
+            - rail_pad_thickness (float): thickness of the rail pad
+            - origin_point (Sequence[float]): origin point of the track
+            - direction_vector (Sequence[float]): direction vector of the track
+            - extended_soil_parameters: (:class:`stem.structural_material.ElasticSpringDamper`): soil equivalent parameters
+            - length_extended_soil (float): length of the 1D soil equivalent
+            - name (str): name of the track
+        """
+        self.__define_straight_track(sleeper_distance, n_sleepers, rail_parameters, sleeper_parameters,
+                                     rail_pad_parameters, rail_pad_thickness, origin_point, direction_vector, name)
+        self.__generate_extended_rail_part(extended_soil_parameters, name, length_extended_soil)
+
+    def __generate_extended_rail_part(self, extended_soil_parameters: ElasticSpringDamper, name: str,
+                                      length_extended_soil: float):
+        """
+        Generates the soil equivalent of the rail part. The soil equivalent is a mass element that represents the
+        soil below the rail. The soil equivalent is connected to the rail with rail-pads. The bottom of the soil
+        equivalent is fixed in all directions. While the soil equivelent can only move in the vertical direction.
+
+        Args:
+            - extended_soil_parameters: (:class:`stem.structural_material.ElasticSpringDamper`): soil equivalent parameters
+            - name (str): name of the track
+            - length_extended_soil (float): length of the 1D soil equivalent
+        """
+
+        soil_equivalent_name = f"soil_equivalent_{name}"
+        sleeper_name = f"sleeper_{name}"
+        soil_equivalent_bottom_length = length_extended_soil
+
+        # check the points of the sleepers that are not in the volume of the rail
+        points_outside_volume_ids, points_outside_volume = self.get_points_outside_soil_volume(sleeper_name)
+        # create bottom points for the soil equivalent
+        # set global rail geometry
+        soil_equivalent_bottom = np.copy(points_outside_volume)
+        soil_equivalent_bottom[:, VERTICAL_AXIS] -= soil_equivalent_bottom_length
+
+        # create rail pad geometries
+        soil_equivalent_lines = [
+            self.gmsh_io.make_geometry_1d((top_coordinates, bot_coordinates))
+            for top_coordinates, bot_coordinates in zip(points_outside_volume, soil_equivalent_bottom)
+        ]
+
+        soil_equivalent_line_ids = [ids[0] for ids in soil_equivalent_lines]
+
+        self.gmsh_io.add_physical_group(soil_equivalent_name, 1, soil_equivalent_line_ids)
+        soil_equivalent_parameters = extended_soil_parameters
+
+        soil_equivalent_part = BodyModelPart(soil_equivalent_name)
+        soil_equivalent_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, soil_equivalent_name)
+        soil_equivalent_part.material = StructuralMaterial(name=soil_equivalent_name,
+                                                           material_parameters=soil_equivalent_parameters)
+        # can only move in the vertical direction
+        constrain_list = [True, True, True]
+        constrain_list[VERTICAL_AXIS] = False
+        soil_equivalent_part.parameters = DisplacementConstraint(active=constrain_list,
+                                                                 is_fixed=constrain_list,
+                                                                 value=[0, 0, 0])
+        self.body_model_parts.append(soil_equivalent_part)
+        # add bottom points fixed
+        constraint_model_soil_equivalent_name = f"constraint_{soil_equivalent_name}"
+        constraint_model_soil_equivalent_part = ModelPart(f"constraint_{soil_equivalent_name}")
+        constraint_model_soil_equivalent = DisplacementConstraint(active=[True, True, True],
+                                                                  is_fixed=[True, True, True],
+                                                                  value=[0, 0, 0])
+        constraint_model_soil_equivalent_part.parameters = constraint_model_soil_equivalent
+        constraint_model_soil_equivalent_part_settings = {
+            constraint_model_soil_equivalent_name: {
+                "coordinates": soil_equivalent_bottom,
+                "ndim": 0
+            }
+        }
+        self.gmsh_io.generate_geometry(constraint_model_soil_equivalent_part_settings, "")
+
+        constraint_model_soil_equivalent_part.get_geometry_from_geo_data(self.gmsh_io.geo_data,
+                                                                         constraint_model_soil_equivalent_name)
+
+        self.process_model_parts.append(constraint_model_soil_equivalent_part)
+
+    def get_points_outside_soil_volume(self, model_part_name) -> List[int]:
+        """
+        Get the points of the model part that are outside the volume of the model part.
+
+        Args:
+            - model_part_name (str): The name of the model part to check the points
+
+        Returns:
+            - List[int]: The ids of the points that are outside the volume of the model part.
+            - List[List[float]]: The coordinates of the points that are outside the volume of the model part.
+
+        """
+        #get bbox of the soil model parts
+        min_coords, max_coords = self.get_bounding_box_soil()
+
+        model_part = self.get_model_part_by_name(model_part_name)
+
+        if model_part is None:
+            raise ValueError(f"Model part {model_part_name} not found.")
+
+        points_outside_volume = []
+        coordinates = []
+
+        for point_id, point in model_part.geometry.points.items():
+            # dimensions except the out of plane direction
+            #dimensions = [i for i in range(self.ndim) if i != OUT_OF_PLANE_AXIS_2D]
+            x_is_in = min_coords[0] <= point.coordinates[0] <= max_coords[0]
+            y_is_in = min_coords[2] <= point.coordinates[2] <= max_coords[2]
+            # the z coordinate is the out of plane direction so it is not checked
+            if not x_is_in or not y_is_in:
+                points_outside_volume.append(point_id)
+                coordinates.append(point.coordinates)
+        return points_outside_volume, coordinates
+
+    def get_bounding_box_soil(self) -> Tuple[List[float], List[float]]:
+        """
+        Get the bounding box of the soil model parts.
+
+        Returns:
+            - Tuple[List[float], List[float]]: The minimum and maximum coordinates of the bounding box.
+        """
+        min_coords = [np.inf, np.inf, np.inf]
+        max_coords = [-np.inf, -np.inf, -np.inf]
+
+        for model_part in self.all_model_parts:
+            if isinstance(model_part, BodyModelPart) and isinstance(model_part.material, SoilMaterial):
+                for point in model_part.geometry.points.values():
+                    for i in range(3):
+                        min_coords[i] = min(min_coords[i], point.coordinates[i])
+                        max_coords[i] = max(max_coords[i], point.coordinates[i])
+
+        return min_coords, max_coords
 
     def add_all_layers_from_geo_file(self, geo_file_name: str, body_names: Sequence[str]):
         """
