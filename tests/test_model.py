@@ -3485,9 +3485,11 @@ class TestModel:
 
         model.synchronise_geometry()
 
-        no_displacement_boundary = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True], value=[0, 0, 0])
+        no_displacement_boundary = DisplacementConstraint(active=[True, True, True],
+                                                          is_fixed=[True, True, True],
+                                                          value=[0, 0, 0])
 
-        plane_coordinates = [(0,0,0), (0,0,1), (0,1,1)]
+        plane_coordinates = [(0, 0, 0), (0, 0, 1), (0, 1, 1)]
         model.add_boundary_condition_on_plane(plane_coordinates, no_displacement_boundary, "left_side_boundary")
 
         # check if the boundary condition is added to the model
@@ -3518,7 +3520,6 @@ class TestModel:
             assert generated_point.id == expected_point.id
             npt.assert_allclose(generated_point.coordinates, expected_point.coordinates)
 
-
     def test_add_boundary_condition_on_polygon(self, create_default_3d_soil_material: SoilMaterial):
         """
         Test if a boundary condition is added correctly on a polygon. A model is created with two soil layers. A boundary
@@ -3540,7 +3541,9 @@ class TestModel:
 
         model.synchronise_geometry()
 
-        no_displacement_boundary = DisplacementConstraint(active=[True, True, True], is_fixed=[True, True, True], value=[0, 0, 0])
+        no_displacement_boundary = DisplacementConstraint(active=[True, True, True],
+                                                          is_fixed=[True, True, True],
+                                                          value=[0, 0, 0])
 
         polygon_coordinates = [(0, 0, 0), (0, 0, 1), (0, 1, 1), (0, 1, 0)]
         model.add_boundary_condition_on_polygon(polygon_coordinates, no_displacement_boundary, "left_bottom_boundary")
@@ -3569,7 +3572,3 @@ class TestModel:
             assert generated_point_id == expected_point_id
             assert generated_point.id == expected_point.id
             npt.assert_allclose(generated_point.coordinates, expected_point.coordinates)
-
-
-
-

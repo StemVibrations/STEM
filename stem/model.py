@@ -534,7 +534,8 @@ class Model:
 
         Args:
             - plane_vertices (Sequence[Sequence[float]]): Minimum 3 vertices of the plane.
-            - boundary_parameters (:class:`stem.boundary.BoundaryParametersABC`): The parameters of the boundary condition.
+            - boundary_parameters (:class:`stem.boundary.BoundaryParametersABC`): The parameters of the boundary
+                condition.
             - name (str): The name of the boundary condition.
 
         """
@@ -559,9 +560,8 @@ class Model:
 
         self.process_model_parts.append(model_part)
 
-
     def add_boundary_condition_on_polygon(self, polygon_coordinates: Sequence[Sequence[float]],
-                                            boundary_parameters: BoundaryParametersABC, name: str):
+                                          boundary_parameters: BoundaryParametersABC, name: str):
         """
         Adds a boundary condition to the model by giving a sequence of 3D coordinates. The boundary condition is added
         to all the surfaces which fall within the polygon. A surface is considered to be within the polygon if all its
@@ -569,7 +569,8 @@ class Model:
 
         Args:
             - polygon_coordinates (Sequence[Sequence[float]]): The coordinates of the polygon.
-            - boundary_parameters (:class:`stem.boundary.BoundaryParametersABC`): The parameters of the boundary condition.
+            - boundary_parameters (:class:`stem.boundary.BoundaryParametersABC`): The parameters of the boundary
+                condition.
             - name (str): The name of the boundary condition.
 
         """
@@ -592,7 +593,6 @@ class Model:
         model_part.validate_input()
 
         self.process_model_parts.append(model_part)
-
 
     def add_output_settings(self,
                             output_parameters: OutputParametersABC,
