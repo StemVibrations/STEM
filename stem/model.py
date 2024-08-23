@@ -526,20 +526,73 @@ class Model:
 
         self.process_model_parts.append(model_part)
 
-    def add_boundary_condition_on_plane(self, coordinates: Sequence[Sequence[float]],
+    def add_boundary_condition_on_plane(self, plane_vertices: Sequence[Sequence[float]],
                                         boundary_parameters: BoundaryParametersABC, name: str):
         """
-        Adds a boundary condition to the model by giving a sequence of 3D coordinates.
+        Adds a boundary condition to the model by giving a sequence of 3D coordinates. The boundary condition is added
+        to all the surfaces which fall within the plane.
 
         Args:
-            - coordinates (Sequence[Sequence[float]]): The coordinates of the boundary condition.
+            - plane_vertices (Sequence[Sequence[float]]): Minimum 3 vertices of the plane.
             - boundary_parameters (:class:`stem.boundary.BoundaryParametersABC`): The parameters of the boundary condition.
             - name (str): The name of the boundary condition.
 
         """
 
         # get surface ids on the plane
-        pass
+
+        surface_ids = self.gmsh_io.get_surface_ids_at_plane(plane_vertices)
+
+        # add physical group to gmsh
+        self.gmsh_io.add_physical_group(name, 2, surface_ids)
+
+        # create model part
+        model_part = ModelPart(name)
+
+        # retrieve geometry from gmsh and add to model part
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
+
+        # add boundary parameters to model part
+        model_part.parameters = boundary_parameters
+
+        model_part.validate_input()
+
+        self.process_model_parts.append(model_part)
+
+
+    def add_boundary_condition_on_polygon(self, polygon_coordinates: Sequence[Sequence[float]],
+                                            boundary_parameters: BoundaryParametersABC, name: str):
+        """
+        Adds a boundary condition to the model by giving a sequence of 3D coordinates. The boundary condition is added
+        to all the surfaces which fall within the polygon. A surface is considered to be within the polygon if all its
+        points are within the polygon.
+
+        Args:
+            - polygon_coordinates (Sequence[Sequence[float]]): The coordinates of the polygon.
+            - boundary_parameters (:class:`stem.boundary.BoundaryParametersABC`): The parameters of the boundary condition.
+            - name (str): The name of the boundary condition.
+
+        """
+
+        # get surface ids within the polygon
+        surface_ids = self.gmsh_io.get_surface_ids_at_polygon(polygon_coordinates)
+
+        # add physical group to gmsh
+        self.gmsh_io.add_physical_group(name, 2, surface_ids)
+
+        # create model part
+        model_part = ModelPart(name)
+
+        # retrieve geometry from gmsh and add to model part
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
+
+        # add boundary parameters to model part
+        model_part.parameters = boundary_parameters
+
+        model_part.validate_input()
+
+        self.process_model_parts.append(model_part)
+
 
     def add_output_settings(self,
                             output_parameters: OutputParametersABC,
