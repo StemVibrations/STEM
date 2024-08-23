@@ -3494,3 +3494,51 @@ class TestModel:
         assert max_coords[0] == 1
         assert max_coords[1] == 2
         assert max_coords[2] == 4
+
+    def test_get_points_outside_soil_volume(self, create_default_3d_soil_material: SoilMaterial):
+        ndim = 3
+
+        layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 2, 3), (0, 2, 3)]
+
+        # define soil material
+        soil_material = create_default_3d_soil_material
+
+        # create model
+        model = Model(ndim)
+        model.extrusion_length = 1
+
+        model.project_parameters = TestUtils.create_default_solver_settings()
+
+        # add soil layer
+        model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
+
+        # check if layer is added correctly
+        assert len(model.body_model_parts) == 1
+        assert model.body_model_parts[0].name == "soil1"
+        assert model.body_model_parts[0].material == soil_material
+
+        points_outside_test = [
+            (1, 0, -1), (1, 0, 0), (0, 0, 0), (1, 0, 0), (1, 0, 5) , (1, 0, 6)
+        ]
+        outside_name = f"points_outside"
+        points_outside_settings = {outside_name: {"coordinates": points_outside_test, "ndim": 0}}
+        model.gmsh_io.generate_geometry(points_outside_settings, "")
+        points_outside_part = BodyModelPart(outside_name)
+        points_outside_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, outside_name)
+        rail_pad_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[1, 750e6, 1],
+                                                  NODAL_ROTATIONAL_STIFFNESS=[0, 0, 0],
+                                                  NODAL_DAMPING_COEFFICIENT=[1, 750e3, 1],
+                                                  NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0])
+        points_outside_part.material = StructuralMaterial(name=outside_name, material_parameters=rail_pad_parameters)
+        model.body_model_parts.append(points_outside_part)
+        # run the test
+        points_outside_volume, coordinates = model.get_points_outside_soil_volume(outside_name)
+        # check if the points are outside the soil volume
+        assert len(points_outside_volume) == 3
+        assert coordinates[0] == [1., 0., -1.]
+        assert coordinates[1] == [1., 0., 5.]
+        assert coordinates[2] == [1., 0., 6.]
+
+
+
+
