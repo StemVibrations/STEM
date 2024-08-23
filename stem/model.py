@@ -316,9 +316,12 @@ class Model:
 
         for point_id, point in model_part.geometry.points.items():
             # dimensions except the out of plane direction
-            #dimensions = [i for i in range(self.ndim) if i != OUT_OF_PLANE_AXIS_2D]
-            x_is_in = min_coords[0] <= point.coordinates[0] <= max_coords[0]
-            y_is_in = min_coords[2] <= point.coordinates[2] <= max_coords[2]
+            if self.ndim == 2:
+                x_is_in = min_coords[0] <= point.coordinates[0] <= max_coords[0]
+                y_is_in = min_coords[1] <= point.coordinates[1] <= max_coords[1]
+            elif self.ndim == 3:
+                x_is_in = min_coords[0] <= point.coordinates[0] <= max_coords[0]
+                y_is_in = min_coords[2] <= point.coordinates[2] <= max_coords[2]
             # the z coordinate is the out of plane direction so it is not checked
             if not x_is_in or not y_is_in:
                 points_outside_volume.append(point_id)
