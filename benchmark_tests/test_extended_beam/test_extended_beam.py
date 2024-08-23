@@ -18,7 +18,6 @@ from stem.stem import Stem
 from benchmark_tests.utils import assert_floats_in_directories_almost_equal
 
 
-
 def test_extended_beam():
     ndim = 3
     model = Model(ndim)
@@ -56,9 +55,9 @@ def test_extended_beam():
                                               NODAL_DAMPING_COEFFICIENT=[1, 750e3, 1],
                                               NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0])
     soil_equivalent_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[1, 3e6, 1],
-                                                        NODAL_ROTATIONAL_STIFFNESS=[0, 0, 0],
-                                                        NODAL_DAMPING_COEFFICIENT=[1, 3e3, 1],
-                                                        NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0])
+                                                     NODAL_ROTATIONAL_STIFFNESS=[0, 0, 0],
+                                                     NODAL_DAMPING_COEFFICIENT=[1, 3e3, 1],
+                                                     NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0])
 
     sleeper_parameters = NodalConcentrated(NODAL_DISPLACEMENT_STIFFNESS=[0, 0, 0],
                                            NODAL_MASS=140,
@@ -69,10 +68,9 @@ def test_extended_beam():
     rail_pad_thickness = 0.025
 
     # create a straight track with rails, sleepers and rail pads
-    model.generate_extended_straight_track(0.5, 40, rail_parameters,
-                                           sleeper_parameters, rail_pad_parameters, rail_pad_thickness,
-                                           origin_point, soil_equivalent_parameters, 5, direction_vector,
-                                           "rail_track_1")
+    model.generate_extended_straight_track(0.5, 40, rail_parameters, sleeper_parameters, rail_pad_parameters,
+                                           rail_pad_thickness, origin_point, soil_equivalent_parameters, 5,
+                                           direction_vector, "rail_track_1")
 
     moving_load = MovingLoad(load=[0.0, -10000.0, 0.0],
                              direction=[1, 1, 1],
@@ -126,8 +124,10 @@ def test_extended_beam():
     # Define the results to be written to the output file
 
     # Nodal results
-    nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.TOTAL_DISPLACEMENT, NodalOutput.DISPLACEMENT_X,
-                     NodalOutput.DISPLACEMENT_Y, NodalOutput.DISPLACEMENT_Z]
+    nodal_results = [
+        NodalOutput.DISPLACEMENT, NodalOutput.TOTAL_DISPLACEMENT, NodalOutput.DISPLACEMENT_X,
+        NodalOutput.DISPLACEMENT_Y, NodalOutput.DISPLACEMENT_Z
+    ]
     # Gauss point results
     gauss_point_results = []
 
@@ -143,7 +143,9 @@ def test_extended_beam():
                                                                       output_control_type="step"))
     model.output_settings = [vtk_output_process]
     # define json output parameters so that we can test that the fixities work
-    json_output_parameters = JsonOutputParameters(output_interval=0.5, nodal_results=nodal_results, gauss_point_results=gauss_point_results)
+    json_output_parameters = JsonOutputParameters(output_interval=0.5,
+                                                  nodal_results=nodal_results,
+                                                  gauss_point_results=gauss_point_results)
     model.add_output_settings(json_output_parameters, f"soil_equivalent_rail_track_1", "output")
     model.add_output_settings(json_output_parameters, f"constraint_soil_equivalent_rail_track_1", "output")
 
@@ -161,7 +163,6 @@ def test_extended_beam():
     # Run Kratos calculation
     # --------------------------------
     stem.run_calculation()
-
 
     expected_output_dir_temp = "benchmark_tests/test_extended_beam/inputs_kratos/output"
     # check that the output is as expected (only the nodal displacements are checked)

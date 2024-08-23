@@ -3627,9 +3627,7 @@ class TestModel:
         assert model.body_model_parts[0].name == "soil1"
         assert model.body_model_parts[0].material == soil_material
 
-        points_outside_test = [
-            (1, 0, -1), (1, 0, 0), (0, 0, 0), (1, 0, 0), (1, 0, 5) , (1, 0, 6)
-        ]
+        points_outside_test = [(1, 0, -1), (1, 0, 0), (0, 0, 0), (1, 0, 0), (1, 0, 5), (1, 0, 6)]
         outside_name = f"points_outside"
         points_outside_settings = {outside_name: {"coordinates": points_outside_test, "ndim": 0}}
         model.gmsh_io.generate_geometry(points_outside_settings, "")
@@ -3672,18 +3670,8 @@ class TestModel:
         direction_vector = np.array([1, 0, 0])
 
         # create a straight track with rails, sleepers and rail pads
-        model.generate_extended_straight_track(0.6,
-                                               8,
-                                               rail_parameters,
-                                               sleeper_parameters,
-                                               rail_pad_parameters,
-                                               0.02,
-                                               origin_point,
-                                               extended_soil_parameters,
-                                               5,
-                                               direction_vector,
-                                               "track_1"
-                                               )
+        model.generate_extended_straight_track(0.6, 8, rail_parameters, sleeper_parameters, rail_pad_parameters, 0.02,
+                                               origin_point, extended_soil_parameters, 5, direction_vector, "track_1")
 
         # check geometry and material of the rail
         expected_rail_points = {
@@ -3696,14 +3684,15 @@ class TestModel:
             19: Point.create([4.6, 3.02, -1.0], 19),
             20: Point.create([5.2, 3.02, -1.0], 20)
         }
-        expected_rail_lines = {12: Line.create([13, 14], 12),
-                               13: Line.create([14, 15], 13),
-                               14: Line.create([15, 16], 14),
-                               15: Line.create([16, 17], 15),
-                               16: Line.create([17, 18], 16),
-                               17: Line.create([18, 19], 17),
-                               18: Line.create([19, 20], 18),
-                               }
+        expected_rail_lines = {
+            12: Line.create([13, 14], 12),
+            13: Line.create([14, 15], 13),
+            14: Line.create([15, 16], 14),
+            15: Line.create([16, 17], 15),
+            16: Line.create([17, 18], 16),
+            17: Line.create([18, 19], 17),
+            18: Line.create([19, 20], 18),
+        }
 
         expected_rail_geometry = Geometry(expected_rail_points, expected_rail_lines)
 
@@ -3759,16 +3748,16 @@ class TestModel:
             12: Point.create([5.2, 3.0, -1.0], 12),
         }
 
-        expected_rail_pad_lines = {19: Line.create([13, 5], 19),
-                                   20: Line.create([14, 6], 20),
-                                   21: Line.create([15, 7], 21),
-                                   22: Line.create([16, 8], 22),
-                                   23: Line.create([17, 9], 23),
-                                   24: Line.create([18, 10], 24),
-                                   25: Line.create([19, 11], 25),
-                                   26: Line.create([20, 12], 26),
-
-                                }
+        expected_rail_pad_lines = {
+            19: Line.create([13, 5], 19),
+            20: Line.create([14, 6], 20),
+            21: Line.create([15, 7], 21),
+            22: Line.create([16, 8], 22),
+            23: Line.create([17, 9], 23),
+            24: Line.create([18, 10], 24),
+            25: Line.create([19, 11], 25),
+            26: Line.create([20, 12], 26),
+        }
 
         expected_rail_pad_geometry = Geometry(expected_rail_pad_points, expected_rail_pad_lines)
 
@@ -3791,17 +3780,18 @@ class TestModel:
             24: Point.create([5.2, -2.0, -1.0], 24),
         }
 
-        expected_soil_equivalent_lines = {27: Line.create([5, 21], 27),
-                                   28: Line.create([6, 22], 28),
-                                   29: Line.create([11, 23], 29),
-                                   30: Line.create([12, 24], 30),
-
-                                }
+        expected_soil_equivalent_lines = {
+            27: Line.create([5, 21], 27),
+            28: Line.create([6, 22], 28),
+            29: Line.create([11, 23], 29),
+            30: Line.create([12, 24], 30),
+        }
 
         expected_soil_equivalent_geometry = Geometry(expected_soil_equivalent_points, expected_soil_equivalent_lines)
 
         TestUtils.assert_almost_equal_geometries(expected_soil_equivalent_geometry, calculated_soil_equivalent_geometry)
-        TestUtils.assert_dictionary_almost_equal(extended_soil_parameters.__dict__, calculated_soil_equivalent_parameters.__dict__)
+        TestUtils.assert_dictionary_almost_equal(extended_soil_parameters.__dict__,
+                                                 calculated_soil_equivalent_parameters.__dict__)
 
     def test_generate_extended_straight_track_3d(self, create_default_3d_soil_material: SoilMaterial):
         """
@@ -3827,18 +3817,8 @@ class TestModel:
 
         # create a straight track with rails, sleepers and rail pads
         # create a straight track with rails, sleepers and rail pads
-        model.generate_extended_straight_track(0.5,
-                                               5,
-                                               rail_parameters,
-                                               sleeper_parameters,
-                                               rail_pad_parameters,
-                                               0.02,
-                                               origin_point,
-                                               extended_soil_parameters,
-                                               5,
-                                               direction_vector,
-                                               "track_1"
-                                               )
+        model.generate_extended_straight_track(0.5, 5, rail_parameters, sleeper_parameters, rail_pad_parameters, 0.02,
+                                               origin_point, extended_soil_parameters, 5, direction_vector, "track_1")
 
         # check geometry and material of the rail
         expected_rail_points = {
@@ -3847,14 +3827,13 @@ class TestModel:
             16: Point.create([2.0, 3.02, 0.5], 16),
             17: Point.create([2.0, 3.02, 1.0], 17),
             18: Point.create([2.0, 3.02, 1.5], 18),
-
         }
-        expected_rail_lines = {21: Line.create([14, 15], 21),
-                               22: Line.create([15, 16], 22),
-                               23: Line.create([16, 17], 23),
-                               24: Line.create([17, 18], 24),
-
-                               }
+        expected_rail_lines = {
+            21: Line.create([14, 15], 21),
+            22: Line.create([15, 16], 22),
+            23: Line.create([16, 17], 23),
+            24: Line.create([17, 18], 24),
+        }
 
         expected_rail_geometry = Geometry(expected_rail_points, expected_rail_lines)
 
@@ -3868,11 +3847,10 @@ class TestModel:
 
         # check geometry and material of the sleepers
         expected_sleeper_points = {
-            9: Point.create( [2.0, 3.0, -0.5], 9),
+            9: Point.create([2.0, 3.0, -0.5], 9),
             10: Point.create([2.0, 3.0, 0.0], 10),
             11: Point.create([2.0, 3.0, 0.5], 11),
             12: Point.create([2.0, 3.0, 1.0], 12),
-
         }
 
         expected_sleeper_geometry = Geometry(expected_sleeper_points)
@@ -3902,13 +3880,13 @@ class TestModel:
             13: Point.create([2.0, 3.0, 1.5], 13),
         }
 
-        expected_rail_pad_lines = {25: Line.create([14, 9], 25),
-                                   26: Line.create([15, 10], 26),
-                                   27: Line.create([16, 11], 27),
-                                   28: Line.create([17, 12], 28),
-                                   29: Line.create([18, 13], 29),
-
-                                   }
+        expected_rail_pad_lines = {
+            25: Line.create([14, 9], 25),
+            26: Line.create([15, 10], 26),
+            27: Line.create([16, 11], 27),
+            28: Line.create([17, 12], 28),
+            29: Line.create([18, 13], 29),
+        }
 
         expected_rail_pad_geometry = Geometry(expected_rail_pad_points, expected_rail_pad_lines)
 
@@ -3944,12 +3922,13 @@ class TestModel:
             20: Point.create([2.0, -2.0, 1.5], 20),
         }
 
-        expected_soil_equivalent_lines = {30: Line.create([9, 19], 30),
-                                          31: Line.create([13, 20], 31),
-                                }
+        expected_soil_equivalent_lines = {
+            30: Line.create([9, 19], 30),
+            31: Line.create([13, 20], 31),
+        }
 
         expected_soil_equivalent_geometry = Geometry(expected_soil_equivalent_points, expected_soil_equivalent_lines)
 
         TestUtils.assert_almost_equal_geometries(expected_soil_equivalent_geometry, calculated_soil_equivalent_geometry)
-        TestUtils.assert_dictionary_almost_equal(extended_soil_parameters.__dict__, calculated_soil_equivalent_parameters.__dict__)
-
+        TestUtils.assert_dictionary_almost_equal(extended_soil_parameters.__dict__,
+                                                 calculated_soil_equivalent_parameters.__dict__)
