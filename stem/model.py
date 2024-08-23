@@ -541,7 +541,6 @@ class Model:
         """
 
         # get surface ids on the plane
-
         surface_ids = self.gmsh_io.get_surface_ids_at_plane(plane_vertices)
 
         # add physical group to gmsh
