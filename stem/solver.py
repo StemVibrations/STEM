@@ -395,7 +395,40 @@ class LinearSolverSettingsABC(ABC):
 @dataclass
 class Amgcl(LinearSolverSettingsABC):
     """
-    Class containing information about the amgcl linear solver settings
+    Class containing information about the Algebraic multigrid iterative linear solver settings
+
+    Inheritance:
+        - :class:`LinearSolverSettingsABC`
+
+    Attributes:
+        - scaling (bool): if true, the system matrix will be scaled before solving the linear system of equations.\
+            Default value is False.
+        - tolerance (float): tolerance for the linear solver convergence criteria. Default value is 1e-6.
+        - max_iteration (int): maximum number of iterations for the linear solver. Default value is 1000.
+        - krylov_type (str): type of the Krylov solver. Default value is "cg", other options are "gmres" and "bicgstab".
+
+    """
+    scaling: bool = False
+    tolerance: float = 1e-6
+    max_iteration: int = 1000
+    krylov_type: str = "cg"
+
+    @property
+    def solver_type(self):
+        """
+        Property that returns the solver type name of the amgcl iterative linear solver settings
+
+        Returns:
+            - str: solver type name
+
+        """
+        return "amgcl"
+
+
+@dataclass
+class Cg(LinearSolverSettingsABC):
+    """
+    Class containing information about the conjugate gradient iterative linear solver settings
 
     Inheritance:
         - :class:`LinearSolverSettingsABC`
@@ -414,13 +447,41 @@ class Amgcl(LinearSolverSettingsABC):
     @property
     def solver_type(self):
         """
-        Property for returns the solver type name of the amgcl linear solver settings
+        Property that returns the solver type name of the conjugate gradient iterative linear solver settings
 
         Returns:
             - str: solver type name
 
         """
-        return "amgcl"
+        return "cg"
+
+
+@dataclass
+class Lu(LinearSolverSettingsABC):
+    """
+    Class containing information about the LU decomposition direct linear solver settings
+
+    Inheritance:
+        - :class:`LinearSolverSettingsABC`
+
+    Attributes:
+        - scaling (bool): if true, the system matrix will be scaled before solving the linear system of equations.\
+            Default value is False.
+
+    """
+    scaling: bool = False
+
+    @property
+    def solver_type(self):
+        """
+        Property that returns the solver type name of the LU decomposition direct linear solver settings
+
+        Returns:
+            - str: solver type name
+
+        """
+
+        return "LinearSolversApplication.sparse_lu"
 
 
 @dataclass
