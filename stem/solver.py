@@ -547,10 +547,10 @@ class SolverSettings:
             the gauss points. Default value is True.
         - strategy_type (:class:`StrategyTypeABC`): strategy type, :class:`NewtonRaphsonStrategy`, \
             :class:`LineSearchStrategy` or :class:`ArcLengthStrategy`. Default value is :class:`NewtonRaphsonStrategy`.
-        - scheme (:class:`SchemeABC`): scheme, :class:`NewmarkSceme` or :class:`BackwardEulerScheme`. Default value \
-            is :class:`NewmarkSceme`.
-        - linear_solver_settings (:class:`LinearSolverSettingsABC`): linear solver settings, currently only \
-            :class:`Amgcl` is supported
+        - scheme (:class:`SchemeABC`): scheme, :class:`NewmarkScheme` or :class:`BackwardEulerScheme`. Default value \
+            is :class:`NewmarkScheme`.
+        - linear_solver_settings (:class:`LinearSolverSettingsABC`): linear solver settings, :class:`Amgcl` \
+            :class:`Cg`, :class:`Lu`. Default value is :class:`Amgcl`.
         - rayleigh_m (Optional[float]): mass proportional damping parameter
         - rayleigh_k (Optional[float]): stiffness proportional damping parameter
         - echo_level (int): echo level. Default value is 1. If 0, only time information is printed. If 1, time \
