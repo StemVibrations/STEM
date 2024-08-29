@@ -3574,6 +3574,13 @@ class TestModel:
             npt.assert_allclose(generated_point.coordinates, expected_point.coordinates)
 
     def test_get_bounding_box_soil(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if the bounding box of all soil volumes is correctly calculated. A model is created with a soil layer and
+        the bounding box of the soil volume is checked.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+        """
         ndim = 3
 
         layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 2, 3), (0, 2, 3)]
@@ -3606,6 +3613,14 @@ class TestModel:
         assert max_coords[2] == 4
 
     def test_get_bounding_box_soil_error(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if an error is raised when the model part has no geometry. A model is created with a soil layer and the
+        bounding box of the soil volume is checked. The geometry of the model part is set to None and an error is
+        expected.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+        """
         ndim = 3
 
         layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 2, 3), (0, 2, 3)]
@@ -3632,6 +3647,14 @@ class TestModel:
             model.get_bounding_box_soil()
 
     def test_get_points_outside_soil_volume(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if the points outside the soil volume are correctly found. A model is created with a soil layer and
+        points outside the soil volume are checked. Some points are outside the soil volume and some are inside.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+
+        """
         ndim = 3
 
         layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 2, 3), (0, 2, 3)]
@@ -3674,6 +3697,13 @@ class TestModel:
         assert coordinates[2] == [1., 0., 6.]
 
     def test_get_points_outside_soil_volume_error(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if an error is raised when the model part is not found. A model is created with a soil layer and points
+        outside the soil volume are checked. The model part is not found and an error is expected.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+        """
         ndim = 3
 
         layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 2, 3), (0, 2, 3)]
@@ -3701,6 +3731,13 @@ class TestModel:
             model.get_points_outside_soil_volume(outside_name)
 
     def test_get_points_outside_soil_volume_error_geometry(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if an error is raised when the model part has no geometry. A model is created with a soil layer and points
+        outside the soil volume are checked. The geometry of the model part is set to None and an error is expected.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+        """
         ndim = 3
 
         # create model
@@ -3727,6 +3764,9 @@ class TestModel:
         """
         Test if a straight track is generated correctly in a 2d space. A straight track is generated and added to the
         model. The geometry and material of the rails, sleepers and rail pads are checked.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
         """
 
         # initialise model
@@ -3873,6 +3913,9 @@ class TestModel:
         """
         Tests if a straight track is generated correctly in a 3d space. A straight track is generated and added to the
         model. The geometry and material of the rails, sleepers and rail pads are checked.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
         """
 
         model = Model(3)
