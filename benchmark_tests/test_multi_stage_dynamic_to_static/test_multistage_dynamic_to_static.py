@@ -131,7 +131,7 @@ def test_stem():
 
     # Define the results to be written to the output file
     # Nodal results
-    nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY]
+    nodal_results = [NodalOutput.DISPLACEMENT_Y, NodalOutput.VELOCITY_Y]
 
     # Uncomment this block if you want to see the outputs in PARAVIEW
     #
@@ -211,35 +211,23 @@ def test_stem():
     if SHOW_RESULTS:
         import matplotlib.pyplot as plt
 
-        fig, ax = plt.subplots(2, 1, figsize=(8, 6), sharex="all")
-        ax[0].set_title("Displacements X")
-        ax[0].set_ylabel("displacement_x [m]")
-        ax[0].plot(
-            merged_expected_data["TIME"],
-            merged_expected_data["NODE_5"]["DISPLACEMENT_X"],
-            label="Expected",
-        )
-        ax[0].plot(
-            merged_calculated_data["TIME"],
-            merged_calculated_data["NODE_5"]["DISPLACEMENT_X"],
-            label="Calculated",
-        )
+        fig, ax = plt.subplots(1, 1, figsize=(8, 6), sharex="all")
 
-        ax[1].set_title("Displacements Y")
-        ax[0].set_ylabel("displacement_y [m]")
-        ax[1].set_xlabel("time [s]")
-        ax[1].plot(
+        ax.set_title("Displacements Y")
+        ax.set_ylabel("displacement_y [m]")
+        ax.set_xlabel("time [s]")
+        ax.plot(
             merged_expected_data["TIME"],
             merged_expected_data["NODE_5"]["DISPLACEMENT_Y"],
             label="Expected",
         )
-        ax[1].plot(
+        ax.plot(
             merged_calculated_data["TIME"],
             merged_calculated_data["NODE_5"]["DISPLACEMENT_Y"],
             label="Calculated",
         )
-        ax[0].legend()
-        ax[1].legend()
+        ax.legend()
+        ax.legend()
         plt.tight_layout()
         plt.show()
 
