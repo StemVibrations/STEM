@@ -216,7 +216,8 @@ class Model:
             - rail_pad_thickness (float): thickness of the rail pad
             - origin_point (Sequence[float]): origin point of the track
             - direction_vector (Sequence[float]): direction vector of the track
-            - extended_soil_parameters: (:class:`stem.structural_material.ElasticSpringDamper`): soil equivalent parameters
+            - extended_soil_parameters: (:class:`stem.structural_material.ElasticSpringDamper`): soil equivalent
+            parameters
             - length_extended_soil (float): length of the 1D soil equivalent
             - name (str): name of the track
         """
@@ -232,7 +233,8 @@ class Model:
         equivalent is fixed in all directions. While the soil equivelent can only move in the vertical direction.
 
         Args:
-            - extended_soil_parameters: (:class:`stem.structural_material.ElasticSpringDamper`): soil equivalent parameters
+            - extended_soil_parameters: (:class:`stem.structural_material.ElasticSpringDamper`): soil equivalent
+            parameters
             - name (str): name of the track
             - length_extended_soil (float): length of the 1D soil equivalent
         """
@@ -290,7 +292,8 @@ class Model:
 
         self.process_model_parts.append(constraint_model_soil_equivalent_part)
 
-    def get_points_outside_soil_volume(self, model_part_name) -> List[int]:
+    def get_points_outside_soil_volume(
+            self, model_part_name) -> Tuple[List[Union[int, Any]], List[Union[Sequence[float], Any]]]:
         """
         Get the points of the model part that are outside the volume of the model part.
 
@@ -302,30 +305,31 @@ class Model:
             - List[List[float]]: The coordinates of the points that are outside the volume of the model part.
 
         """
-        #get bbox of the soil model parts
+        # get bbox of the soil model parts
         min_coords, max_coords = self.get_bounding_box_soil()
 
         model_part = self.get_model_part_by_name(model_part_name)
 
         if model_part is None:
             raise ValueError(f"Model part {model_part_name} not found.")
-
-        points_outside_volume = []
-        coordinates = []
-
-        for point_id, point in model_part.geometry.points.items():
-            # dimensions except the out of plane direction
-            if self.ndim == 2:
-                x_is_in = min_coords[0] <= point.coordinates[0] <= max_coords[0]
-                y_is_in = min_coords[1] <= point.coordinates[1] <= max_coords[1]
-            elif self.ndim == 3:
-                x_is_in = min_coords[0] <= point.coordinates[0] <= max_coords[0]
-                y_is_in = min_coords[2] <= point.coordinates[2] <= max_coords[2]
-            # the z coordinate is the out of plane direction so it is not checked
-            if not x_is_in or not y_is_in:
-                points_outside_volume.append(point_id)
-                coordinates.append(point.coordinates)
-        return points_outside_volume, coordinates
+        else:
+            points_outside_volume = []
+            coordinates = []
+            if model_part.geometry is None:
+                raise ValueError(f"Model part {model_part_name} has no geometry.")
+            for point_id, point in model_part.geometry.points.items():
+                # dimensions except the out of plane direction
+                if self.ndim == 2:
+                    x_is_in = min_coords[0] <= point.coordinates[0] <= max_coords[0]
+                    y_is_in = min_coords[1] <= point.coordinates[1] <= max_coords[1]
+                elif self.ndim == 3:
+                    x_is_in = min_coords[0] <= point.coordinates[0] <= max_coords[0]
+                    y_is_in = min_coords[2] <= point.coordinates[2] <= max_coords[2]
+                # the z coordinate is the out of plane direction so it is not checked
+                if not x_is_in or not y_is_in:
+                    points_outside_volume.append(point_id)
+                    coordinates.append(point.coordinates)
+            return points_outside_volume, coordinates
 
     def get_bounding_box_soil(self) -> Tuple[List[float], List[float]]:
         """
@@ -339,6 +343,8 @@ class Model:
 
         for model_part in self.all_model_parts:
             if isinstance(model_part, BodyModelPart) and isinstance(model_part.material, SoilMaterial):
+                if model_part.geometry is None:
+                    raise ValueError("Model part has no geometry.")
                 for point in model_part.geometry.points.values():
                     for i in range(3):
                         min_coords[i] = min(min_coords[i], point.coordinates[i])
