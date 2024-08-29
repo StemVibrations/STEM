@@ -1550,10 +1550,9 @@ class Model:
         self.gmsh_io.generate_geo_from_geo_data()
         self.synchronise_geometry()
 
-    def finalise(self, input_folder: str):
+    def __finalise_json_output(self, input_folder: str):
         """
-        Finalise the model run:
-        * adjust json output for nodal output coordinates so the order matches the desired one.
+        Adjust json output for nodal output coordinates so the order matches the desired one.
 
         Args:
             - input_folder (str): input folder for the written files.
@@ -1591,7 +1590,7 @@ class Model:
                 if os.path.isabs(output_settings.output_dir):
                     json_file_dir = Path(output_settings.output_dir)
                 else:
-                    json_file_dir = Path(working_folder) / output_settings.output_dir
+                    json_file_dir = Path(input_folder) / output_settings.output_dir
 
                 # retrieve the filepath of the json file
                 json_file_path = json_file_dir / output_settings.output_name
@@ -1609,13 +1608,26 @@ class Model:
                 os.remove(json_file_path)
 
                 # copy the dictionary except for nodal outputs
-                new_json = {key: value for key, value in json_file_tmp.items() if "NODE" not in key}
+                new_json = {key: value for key, value in json_data_tmp.items() if "NODE" not in key}
 
                 # adjust the nodal outputs in the right order
                 for node_id in output_model_part.mesh.nodes.keys():
                     node_key = f"NODE_{node_id}"
-                    new_json_data[node_key] = json_data_tmp[node_key]
+                    new_json[node_key] = json_data_tmp[node_key]
 
                 # write back the json file
                 with open(json_file_path, "w") as outfile:
                     json.dump(new_json, outfile, indent=2)
+
+    def finalise(self, input_folder: str):
+        """
+        Finalise the model run:
+        * adjust json output for nodal output coordinates so the order matches the desired one.
+
+        Args:
+            - input_folder (str): input folder for the written files.
+        """
+
+        # Adjust the order of the json output so it matches the cordinates as the order of the
+        # required coordinates
+        self.__finalise_json_output(input_folder=input_folder)

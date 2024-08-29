@@ -3473,7 +3473,7 @@ class TestModel:
 
     def test_finalise(self, create_default_2d_soil_material: SoilMaterial):
         """
-        Test if output nodes are correctly accounted for when meshing a surface.
+        Test that finalisation raises error correctly.
 
         Args:
             - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
@@ -3516,7 +3516,7 @@ class TestModel:
         model_copy.output_settings[-1].output_name = None
         msg = "No name is specified for the json file."
         with pytest.raises(ValueError, match=msg):
-            model_copy.finalise(working_folder="input_files")
+            model_copy.finalise(input_folder="input_files")
 
         # set json filename to a wrong one
         model_copy = deepcopy(model)
@@ -3528,25 +3528,25 @@ class TestModel:
         msg = (f"No JSON file is found in the output directory for path: {expected_path}. "
                "Either the working folder is incorrectly specified or no simulation has been performed yet.")
         with pytest.raises(OSError, match=re.escape(msg)):
-            model_copy.finalise(working_folder="input_dir")
+            model_copy.finalise(input_folder="input_dir")
 
         # set part name of the output settings to None
         model_copy = deepcopy(model)
         model_copy.output_settings[-1].part_name = None
         msg = "The output model part has no part name specified."
         with pytest.raises(ValueError, match=msg):
-            model_copy.finalise(working_folder="input_files")
+            model_copy.finalise(input_folder="input_files")
 
         # set part name of the output settings to non-existing part
         model_copy = deepcopy(model)
         model_copy.output_settings[-1].part_name = "part 404"
         msg = "No model part matches the part name specified in the output settings."
         with pytest.raises(ValueError, match=msg):
-            model_copy.finalise(working_folder="input_files")
+            model_copy.finalise(input_folder="input_files")
 
         # set part name of the output settings to non-existing part
         model_copy = deepcopy(model)
         model_copy.process_model_parts[-1].mesh = None
         msg = "process model part has not been meshed yet!"
         with pytest.raises(ValueError, match=msg):
-            model_copy.finalise(working_folder="input_files")
+            model_copy.finalise(input_folder="input_files")
