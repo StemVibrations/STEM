@@ -1550,20 +1550,19 @@ class Model:
         self.gmsh_io.generate_geo_from_geo_data()
         self.synchronise_geometry()
 
-    def finalise(self, working_folder: str):
+    def finalise(self, input_folder: str):
         """
         Finalise the model run:
         * adjust json output for nodal output coordinates so the order matches the desired one.
 
         Args:
-            - working_folder (str): working folder of the STEM for the inputs and relative folder for the outputs.
+            - input_folder (str): input folder for the written files.
 
         Raises:
             - ValueError: if the parameters of the model part are None.
             - ValueError: if the model part has no geometry.
             - ValueError: if the model part is not yet meshed.
-            - IOError: if no JSON output file is not found for the specified working folder meaning either the working \
-                folder is incorrect or the simulation was not run yet.
+            - IOError: if no JSON output file is found in the specified input folder.
         """
 
         # reorder json file nodes based on the order of the desired output
@@ -1588,6 +1587,7 @@ class Model:
                 if output_model_part.mesh is None:
                     raise ValueError("process model part has not been meshed yet!")
 
+                # get absolute or relative directory of the json file
                 if os.path.isabs(output_settings.output_dir):
                     json_file_dir = Path(output_settings.output_dir)
                 else:
@@ -1603,7 +1603,7 @@ class Model:
                                   f" performed yet.")
 
                 with open(json_file_path, "r") as infile:
-                    json_file_tmp = json.load(infile)
+                    json_data_tmp = json.load(infile)
 
                 # remove old file
                 os.remove(json_file_path)
@@ -1614,7 +1614,7 @@ class Model:
                 # adjust the nodal outputs in the right order
                 for node_id in output_model_part.mesh.nodes.keys():
                     node_key = f"NODE_{node_id}"
-                    new_json[node_key] = json_file_tmp[node_key]
+                    new_json_data[node_key] = json_data_tmp[node_key]
 
                 # write back the json file
                 with open(json_file_path, "w") as outfile:

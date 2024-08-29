@@ -3471,7 +3471,7 @@ class TestModel:
         with pytest.raises(ValueError, match=f"Model part type and new parameters type must match."):
             model.split_model_part("process_2d", "split_group", [1], create_default_2d_soil_material)
 
-    def test_model_finalisation_post_simulation(self, create_default_2d_soil_material: SoilMaterial):
+    def test_finalise(self, create_default_2d_soil_material: SoilMaterial):
         """
         Test if output nodes are correctly accounted for when meshing a surface.
 

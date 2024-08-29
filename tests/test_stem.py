@@ -422,7 +422,7 @@ class TestStem:
         # check if finalise is called
         stem.finalise.assert_called_once()
 
-    def test_validation_finalisation_stages(self, create_default_model: Model):
+    def test_finalise_stages(self, create_default_model: Model):
         """
         Test the run_calculation method of the Stem class with valid stages. It checks if the run_stage method is called
         for each stage and if the finalise method is called at the end.
