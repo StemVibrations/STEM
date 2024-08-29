@@ -5,7 +5,7 @@ from shutil import rmtree
 from stem.boundary import DisplacementConstraint
 from stem.load import LineLoad
 from stem.model import Model
-from stem.output import JsonOutputParameters, NodalOutput, VtkOutputParameters
+from stem.output import JsonOutputParameters, NodalOutput
 from stem.soil_material import (
     LinearElasticSoil,
     OnePhaseSoil,
@@ -32,7 +32,8 @@ SHOW_RESULTS = False
 def test_stem():
     """
     Test STEM: 2D block with distributed loading with multistage and change from dynamic -> quasi-static analysis type.
-    A heaviside load is applied to the soil block. When the oscillations have damped out, the solution type is switched to QUASI_STATIC. 
+    A heaviside load is applied to the soil block. After one oscillation, the solution type is switched to QUASI_STATIC.
+    The quasi-static displacement should match with the dynamic one if the oscillations are damped out.
     """
 
     # Define geometry, conditions and material parameters
@@ -132,7 +133,8 @@ def test_stem():
     # Nodal results
     nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY]
 
-    # Define the output process
+    # Uncomment this block if you want to see the outputs in PARAVIEW
+    #
     # model_stage_1.add_output_settings(
     #     output_parameters=VtkOutputParameters(
     #         file_format="ascii",
@@ -170,8 +172,7 @@ def test_stem():
     model_stage_2.project_parameters.settings.rayleigh_k = 0.0
     model_stage_2.project_parameters.settings.rayleigh_m = 0.0
 
-    # model_stage_2.process_model_parts[0].parameters.value = [0, -1050, 0]
-    model_stage_2.output_settings[-1].output_parameters.output_interval = delta_time_stage_2 - 1e-08
+    model_stage_2.output_settings[-1].output_parameters.output_interval = (delta_time_stage_2 - 1e-08)
 
     # add the new stage to the calculation
     stem.add_calculation_stage(model_stage_2)
@@ -212,7 +213,7 @@ def test_stem():
 
         fig, ax = plt.subplots(2, 1, figsize=(8, 6), sharex="all")
         ax[0].set_title("Displacements X")
-        ax[0].set_ylabel("d_x [m]")
+        ax[0].set_ylabel("displacement_x [m]")
         ax[0].plot(
             merged_expected_data["TIME"],
             merged_expected_data["NODE_5"]["DISPLACEMENT_X"],
@@ -225,7 +226,7 @@ def test_stem():
         )
 
         ax[1].set_title("Displacements Y")
-        ax[0].set_ylabel("d_x [m]")
+        ax[0].set_ylabel("displacement_y [m]")
         ax[1].set_xlabel("time [s]")
         ax[1].plot(
             merged_expected_data["TIME"],

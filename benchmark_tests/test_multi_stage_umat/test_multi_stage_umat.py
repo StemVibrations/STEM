@@ -1,7 +1,7 @@
 import json
 import os
 import sys
-from shutil import rmtree
+from shutil import rmtree, copyfile
 
 import numpy as np
 import pytest
@@ -145,7 +145,6 @@ def test_stem():
     # Nodal results
     nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY]
 
-    # Define the output process
     # Uncomment this bock if you need to check the results in PARAVIEW
 
     # model_stage_1.add_output_settings(
@@ -206,6 +205,14 @@ def test_stem():
     # write the kratos input files
     stem.write_all_input_files()
 
+    path_umat_dll_local = r"benchmark_tests\test_multi_stage_umat\linear_elastic.dll"
+
+    # copy the linear elastic dll from another test
+    copyfile(
+        src=r"benchmark_tests\test_1d_wave_prop_drained_soil_umat\linear_elastic.dll",
+        dst=path_umat_dll_local,
+    )
+
     # Run Kratos calculation
     # --------------------------------
     stem.run_calculation()
@@ -239,7 +246,7 @@ def test_stem():
 
         fig, ax = plt.subplots(2, 1, figsize=(8, 6), sharex="all")
         ax[0].set_title("Displacements X")
-        ax[0].set_ylabel("d_x [m]")
+        ax[0].set_ylabel("displacement_x [m]")
         ax[0].plot(
             merged_expected_data["TIME"],
             merged_expected_data["NODE_5"]["DISPLACEMENT_X"],
@@ -252,7 +259,7 @@ def test_stem():
         )
 
         ax[1].set_title("Displacements Y")
-        ax[0].set_ylabel("d_x [m]")
+        ax[0].set_ylabel("displacement_y [m]")
         ax[1].set_xlabel("time [s]")
         ax[1].plot(
             merged_expected_data["TIME"],
@@ -269,5 +276,7 @@ def test_stem():
         plt.tight_layout()
         plt.show()
 
-    # assert result is True
     rmtree(input_folder)
+
+
+test_stem()
