@@ -277,6 +277,3 @@ def test_stem():
         plt.show()
 
     rmtree(input_folder)
-
-
-test_stem()
