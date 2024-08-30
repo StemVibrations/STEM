@@ -26,7 +26,7 @@ from stem.table import Table
 from stem.utils import Utils
 from tests.utils import TestUtils
 
-SHOW_RESULTS = False
+SHOW_RESULTS = True
 
 
 def test_stem():
@@ -131,7 +131,7 @@ def test_stem():
 
     # Define the results to be written to the output file
     # Nodal results
-    nodal_results = [NodalOutput.DISPLACEMENT_Y, NodalOutput.VELOCITY_Y]
+    nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY]
 
     # Uncomment this block if you want to see the outputs in PARAVIEW
     #
@@ -211,24 +211,41 @@ def test_stem():
     if SHOW_RESULTS:
         import matplotlib.pyplot as plt
 
-        fig, ax = plt.subplots(1, 1, figsize=(8, 6), sharex="all")
+        fig, ax = plt.subplots(2, 1, figsize=(8, 6), sharex="all")
 
-        ax.set_title("Displacements Y")
-        ax.set_ylabel("displacement_y [m]")
-        ax.set_xlabel("time [s]")
-        ax.plot(
+        ax[0].set_title("Displacements X")
+        ax[0].set_ylabel("displacement_x [m]")
+        ax[0].set_xlabel("time [s]")
+        ax[0].plot(
+            merged_expected_data["TIME"],
+            merged_expected_data["NODE_5"]["DISPLACEMENT_X"],
+            label="Expected",
+        )
+        ax[0].plot(
+            merged_calculated_data["TIME"],
+            merged_calculated_data["NODE_5"]["DISPLACEMENT_X"],
+            label="Calculated",
+        )
+        ax[0].legend()
+
+        ax[1].set_title("Displacements Y")
+        ax[1].set_ylabel("displacement_y [m]")
+        ax[1].set_xlabel("time [s]")
+        ax[1].plot(
             merged_expected_data["TIME"],
             merged_expected_data["NODE_5"]["DISPLACEMENT_Y"],
             label="Expected",
         )
-        ax.plot(
+        ax[1].plot(
             merged_calculated_data["TIME"],
             merged_calculated_data["NODE_5"]["DISPLACEMENT_Y"],
             label="Calculated",
         )
-        ax.legend()
-        ax.legend()
+        ax[1].legend()
         plt.tight_layout()
         plt.show()
 
     rmtree(input_folder)
+
+
+test_stem()
