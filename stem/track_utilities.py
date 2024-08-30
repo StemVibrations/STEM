@@ -1,6 +1,22 @@
 from stem.soil_material import SoilMaterial, OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
 
 
+
+class SolidSleeper:
+
+  def __init__(self):
+    self.density = 2500.0
+    self.length = 2.520
+    self.width = 0.3
+    self.height = 0.233
+    self.distance_rail_to_center = 1.435/2
+
+
+
+    self.material = None
+
+
+
 class TrackUtilities:
 
   def create_NS90_sleeper(self, use_symetry=True):

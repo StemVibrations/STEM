@@ -191,6 +191,59 @@ class Model:
 
             self.process_model_parts.append(no_rotation_model_part)
 
+    def __create_sleeper_solid_elements(self,
+                                        sleeper_name: str,
+                                        rail_connection_coordinates: np.ndarray,
+                                        origin_point: np.ndarray):
+        """
+        Create the sleeper solid elements.
+
+        Args:
+            - sleeper_name (str): name of the sleeper
+            - sleeper_global_coords (np.ndarray): global coordinates of the sleeper
+            - sleeper_local_coords (np.ndarray): local coordinates of the sleeper
+            - b (float): width of the sleeper
+            - h (float): height of the sleeper
+            - l (float): length of the sleeper
+
+        Returns:
+            - List[int]: list of element ids
+        """
+
+        normalized_direction_vector = np.array([0, 0, 1])
+
+        b, h, l = 0.3, 0.233, 2.520  #
+        distance_rails = 1.435  # m
+
+        half_length = l / 2
+        half_distance_rails = distance_rails / 2
+
+        sleeper_local_coords = np.copy(rail_connection_coordinates)
+        # todo calculate based on direction_vector
+        sleeper_cross_section_geometry = [(0, 0, -b / 2), (0, 0, b / 2), (0, h, b / 2), (0, h, 0), (0, h, -b / 2)]
+        extrusion_direction = [1, 0, 0]
+        extrusion_vector_in = np.array(extrusion_direction) * half_distance_rails
+        extrusion_vector_out = np.array(extrusion_direction) * (half_length - half_distance_rails)
+
+        sleeper_global_coords = sleeper_local_coords[:, None].dot(
+            normalized_direction_vector[None, :]) + origin_point + extrusion_vector_in
+
+        for coord in sleeper_global_coords:
+            sleeper_global_coord = np.array(sleeper_cross_section_geometry) + coord
+
+            sleeper_geo_settings_in = {sleeper_name: {"coordinates": sleeper_global_coord, "ndim": 3,
+                                                      "extrusion_length": -extrusion_vector_in}}
+
+            # add the sleepers to the track
+            self.gmsh_io.generate_geometry(sleeper_geo_settings_in, "")
+
+            sleeper_geo_settings_out = {sleeper_name: {"coordinates": sleeper_global_coord, "ndim": 3,
+                                                       "extrusion_length": extrusion_vector_out}}
+            # add the sleepers to the track
+            self.gmsh_io.generate_geometry(sleeper_geo_settings_out, "")
+
+            a=1+1
+
 
     def generate_straight_track2(self, sleeper_distance: float, n_sleepers: int, rail_parameters: EulerBeam,
                                 sleeper_parameters: NodalConcentrated, rail_pad_parameters: ElasticSpringDamper,
@@ -216,7 +269,9 @@ class Model:
 
         # set sleepers geometry
         b, h, l = 0.3, 0.233, 2.520  # m
+        distance_rails = 1.435  # m
         half_length = l / 2
+        half_distance_rails = distance_rails / 2
 
         rail_name = f"{name}"
 
@@ -227,44 +282,45 @@ class Model:
 
         # set local rail geometry
         rail_local_distance = np.linspace(0, sleeper_distance * (n_sleepers - 1), n_sleepers)
-        sleeper_local_coords = np.copy(rail_local_distance)
+
+        self.__create_sleeper_solid_elements(sleeper_name, rail_local_distance, origin_point)
+
+        # sleeper_local_coords = np.copy(rail_local_distance)
+        #
+        # # todo calculate based on direction_vector
+        # sleeper_local_geometry = [(0, 0, -b/2), (0, 0, b/2), (0, h, b/2),(0, h, 0), (0, h, -b/2)]
+        # extrusion_direction = [1,0,0]
+        # extrusion_vector_in = np.array(extrusion_direction) * half_distance_rails
+        # extrusion_vector_out = np.array(extrusion_direction)* (half_length -half_distance_rails)
+        #
+        # sleeper_global_coords = sleeper_local_coords[:, None].dot(normalized_direction_vector[None, :]) + origin_point + extrusion_vector_in
+        #
+        #
+        # for coord in sleeper_global_coords:
+        #     sleeper_global_coord = np.array(sleeper_local_geometry) + coord
+        #
+        #
+        # # # firstly create lines for the connection between the track and the foundation
+        # # connection_geo_settings = {"": {"coordinates": sleeper_global_coords, "ndim": 1}}
+        # # self.gmsh_io.generate_geometry(connection_geo_settings, "")
+        #
+        #     sleeper_geo_settings_in = {sleeper_name: {"coordinates": sleeper_global_coord, "ndim": 3,
+        #                                            "extrusion_length": -extrusion_vector_in}}
+        #
+        #     # add the sleepers to the track
+        #     self.gmsh_io.generate_geometry(sleeper_geo_settings_in, "")
+        #
+        #     sleeper_geo_settings_out = {sleeper_name: {"coordinates": sleeper_global_coord, "ndim": 3,
+        #                                                 "extrusion_length": extrusion_vector_out}}
+        #     # add the sleepers to the track
+        #     self.gmsh_io.generate_geometry(sleeper_geo_settings_out, "")
+
+
 
         # set global rail geometry
-        rail_global_coords = rail_local_distance[:, None].dot(normalized_direction_vector[None, :]) + origin_point
+        rail_global_coords = rail_local_distance[:, None].dot(normalized_direction_vector[None, :]) + origin_point + extrusion_vector_in
         rail_global_coords[:, VERTICAL_AXIS] += rail_pad_thickness + h
         rail_geo_settings = {rail_name: {"coordinates": rail_global_coords, "ndim": 1}}
-
-
-
-
-        # todo calculate based on direction_vector
-        sleeper_local_geometry = [(0, 0, -b/2), (0, 0, b/2), (0, h, b/2),(0, h, 0), (0, h, -b/2)]
-        extrusion_direction = [-1,0,0]
-        extrusion_vector = np.array(extrusion_direction) * half_length
-
-        sleeper_global_coords = sleeper_local_coords[:, None].dot(normalized_direction_vector[None, :]) + origin_point
-
-
-        for coord in sleeper_global_coords:
-            sleeper_global_coord = np.array(sleeper_local_geometry) + coord
-
-
-        # # firstly create lines for the connection between the track and the foundation
-        # connection_geo_settings = {"": {"coordinates": sleeper_global_coords, "ndim": 1}}
-        # self.gmsh_io.generate_geometry(connection_geo_settings, "")
-
-            sleeper_geo_settings = {sleeper_name: {"coordinates": sleeper_global_coord, "ndim": 3,
-                                                   "extrusion_length": extrusion_vector}}
-
-
-
-            # add the sleepers to the track
-            self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
-
-
-
-
-
 
         # add the rail geometry
         self.gmsh_io.generate_geometry(rail_geo_settings, "")
@@ -1767,3 +1823,4 @@ class Model:
         # generate the geometry within gmsh
         self.gmsh_io.generate_geo_from_geo_data()
         self.synchronise_geometry()
+
