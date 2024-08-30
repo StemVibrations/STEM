@@ -12,7 +12,7 @@ from stem.geometry import *
 from stem.model import *
 from stem.output import NodalOutput, GiDOutputParameters, JsonOutputParameters
 from stem.solver import *
-from stem.boundary import RotationConstraint
+from stem.boundary import RotationConstraint, DisplacementConstraint
 from tests.utils import TestUtils
 
 IS_LINUX = sys.platform == "linux"
@@ -3550,3 +3550,113 @@ class TestModel:
         msg = "process model part has not been meshed yet!"
         with pytest.raises(ValueError, match=msg):
             model_copy.finalise(input_folder="input_files")
+
+    def test_add_boundary_condition_on_plane(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if a boundary condition is added correctly on a plane. A model is created with two soil layers. A boundary
+        condition is added on a plane and the nodes of the boundary condition are checked.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+
+        """
+
+        model = Model(3)
+        model.extrusion_length = 1
+
+        # add soil material
+        soil_material = create_default_3d_soil_material
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
+        model.add_soil_layer_by_coordinates([(1, 1, 0), (0, 1, 0), (0, 2, 0), (1, 2, 0)], soil_material, "layer2")
+
+        model.synchronise_geometry()
+
+        no_displacement_boundary = DisplacementConstraint(active=[True, True, True],
+                                                          is_fixed=[True, True, True],
+                                                          value=[0, 0, 0])
+
+        plane_coordinates = [(0, 0, 0), (0, 0, 1), (0, 1, 1)]
+        model.add_boundary_condition_on_plane(plane_coordinates, no_displacement_boundary, "left_side_boundary")
+
+        # check if the boundary condition is added to the model
+        assert len(model.process_model_parts) == 1
+
+        # check if the boundary condition is added to the correct model part
+        assert model.process_model_parts[0].name == "left_side_boundary"
+        assert model.process_model_parts[0].parameters == no_displacement_boundary
+
+        # check if the boundary condition is added to the correct nodes
+        expected_points = {
+            7: Point.create([0, 1, 0], 7),
+            8: Point.create([0, 1, 1], 8),
+            2: Point.create([0, 0, 1], 2),
+            1: Point.create([0, 0, 0], 1),
+            11: Point.create([0, 2, 0], 11),
+            12: Point.create([0, 2, 1], 12),
+        }
+
+        # get the generated points
+        generated_points = model.process_model_parts[0].geometry.points
+
+        # check if points are the same, these should be the all the points on the plane, i.e. points which are part
+        # of layer 1 and layer 2
+        for (generated_point_id, generated_point), (expected_point_id, expected_point) in \
+                zip(generated_points.items(), expected_points.items()):
+            assert generated_point_id == expected_point_id
+            assert generated_point.id == expected_point.id
+            npt.assert_allclose(generated_point.coordinates, expected_point.coordinates)
+
+    def test_add_boundary_condition_on_polygon(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if a boundary condition is added correctly on a polygon. A model is created with two soil layers. A boundary
+        condition is added on a polygon and the nodes of the boundary condition are checked.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+        """
+
+        model = Model(3)
+        model.extrusion_length = 1
+
+        # add soil material
+        soil_material = create_default_3d_soil_material
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
+        model.add_soil_layer_by_coordinates([(1, 1, 0), (0, 1, 0), (0, 2, 0), (1, 2, 0)], soil_material, "layer2")
+
+        model.synchronise_geometry()
+
+        no_displacement_boundary = DisplacementConstraint(active=[True, True, True],
+                                                          is_fixed=[True, True, True],
+                                                          value=[0, 0, 0])
+
+        polygon_coordinates = [(0, 0, 0), (0, 0, 1), (0, 1, 1), (0, 1, 0)]
+        model.add_boundary_condition_on_polygon(polygon_coordinates, no_displacement_boundary, "left_bottom_boundary")
+
+        # check if the boundary condition is added to the model
+        assert len(model.process_model_parts) == 1
+
+        # check if the boundary condition is added to the correct model part
+        assert model.process_model_parts[0].name == "left_bottom_boundary"
+        assert model.process_model_parts[0].parameters == no_displacement_boundary
+
+        # check if the boundary condition is added to the correct nodes
+        expected_points = {
+            7: Point.create([0, 1, 0], 7),
+            8: Point.create([0, 1, 1], 8),
+            2: Point.create([0, 0, 1], 2),
+            1: Point.create([0, 0, 0], 1),
+        }
+
+        # Get the generated points
+        generated_points = model.process_model_parts[0].geometry.points
+
+        # check if points are the same, these should be only the points which are part of layer 1
+        for (generated_point_id, generated_point), (expected_point_id, expected_point) in \
+                zip(generated_points.items(), expected_points.items()):
+            assert generated_point_id == expected_point_id
+            assert generated_point.id == expected_point.id
+            npt.assert_allclose(generated_point.coordinates, expected_point.coordinates)
