@@ -26,7 +26,7 @@ from stem.table import Table
 from stem.utils import Utils
 from tests.utils import TestUtils
 
-SHOW_RESULTS = True
+SHOW_RESULTS = False
 
 
 def test_stem():
@@ -246,6 +246,3 @@ def test_stem():
         plt.show()
 
     rmtree(input_folder)
-
-
-test_stem()
