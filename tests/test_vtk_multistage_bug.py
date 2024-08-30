@@ -162,13 +162,13 @@ class TestVtkMultistageBug:
         # remove the input folder
         rmtree("tests/inputs_kratos")
 
-    def test_vtk_multistage_bug_one_file(self):
+    def test_vtk_multistage_bug_stage_1_no_file(self):
         """
          In this test the output interval is set to 21, which is bigger for all stages so we expect that the calculation
          will run with producing 1 file.
         """
         delta_time_stage_1 = 0.05
-        delta_time_stage_2 = 0.0025
+        delta_time_stage_2 = 0.0015
         output_interval = 22
         # set up and run the model
         create_inputs_and_run_model(delta_time_stage_1, delta_time_stage_2, output_interval)
@@ -179,18 +179,36 @@ class TestVtkMultistageBug:
         # remove the input folder
         rmtree("tests/inputs_kratos")
 
-    def test_vtk_multistage_bug_no_files(self):
+    def test_vtk_multistage_bug_stage_2_no_file(self):
         """
          In this test the output interval is set to 21, which is bigger for all stages so we expect that the calculation
          will run with producing 1 file.
         """
+        delta_time_stage_1 = 0.0015
+        delta_time_stage_2 = 0.05
+        output_interval = 22
+        # set up and run the model
+        create_inputs_and_run_model(delta_time_stage_1, delta_time_stage_2, output_interval)
+        # check if the output files are written
+        output_dir = "tests/inputs_kratos/output/output_vtk_full_model"
+        assert os.path.exists(output_dir)
+        assert len(os.listdir(output_dir)) == 4
+        # remove the input folder
+        rmtree("tests/inputs_kratos")
+
+
+    def test_vtk_multistage_bug_no_files(self):
+        """
+         In this test the output interval is set to 24, no vtk files are written in any stage, the output intervals are too large.
+         Error message is expected. and produced by the model.
+
+        """
         delta_time_stage_1 = 0.05
-        delta_time_stage_2 = 0.0025
+        delta_time_stage_2 = 0.05
         output_interval = 24
         # set up and run the model
         error_message = (
-            "No output vtk files were written for part full_model in stage 1. The output interval (24) might be "
-            "larger than than the amount of time steps available in the stage.")
+            "No vtk files are written in any stage, the output intervals ([24, 24]) are too large.")
         with pytest.raises(Exception) as e:
             create_inputs_and_run_model(delta_time_stage_1, delta_time_stage_2, output_interval)
         assert str(e.value) == error_message

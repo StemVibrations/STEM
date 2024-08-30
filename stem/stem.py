@@ -259,17 +259,53 @@ class Stem:
                 raise Exception(f"Meshes between stages in body model part: {ref_body.name} "
                                 f"are not the same between stages")
 
+    def __check_if_vtk_directories_are_created_per_stage(self) -> Dict[int, bool]:
+        """
+        Check if vtk directories are created per stage. This is required as vtk files are always written to a new
+        directory, in order to avoid overwriting directories from previous stages. If no vtk files are written in any
+        stage, an exception is raised.
+
+        Returns:
+            - (Dict[int, bool]): A dictionary containing the stage number as key and a boolean indicating if vtk
+                directories are created per stage as value.
+
+        """
+
+        vtk_dirs_per_stage = {}
+        output_intervals = []
+        for i, stage in enumerate(self.stages):
+            for output_settings in stage.output_settings:
+                if isinstance(output_settings.output_parameters, VtkOutputParameters):
+                    start_time = stage.project_parameters.settings.time_integration.start_time
+                    end_time = stage.project_parameters.settings.time_integration.end_time
+                    delta_time = stage.project_parameters.settings.time_integration.delta_time
+                    check = output_settings.output_parameters.output_interval <= (end_time - start_time) / delta_time
+                    if i not in vtk_dirs_per_stage:
+                        print(
+                            f"No output vtk files were written in stage {i}. "
+                            f"The output interval "
+                            f"({output_settings.output_parameters.output_interval}) is larger "
+                            f"than than the amount of time steps ({(end_time - start_time) / delta_time}) "
+                            f"available in the stage.")
+                    vtk_dirs_per_stage[i] = check
+                    output_intervals.append(output_settings.output_parameters.output_interval)
+        if not any(list(vtk_dirs_per_stage.values())):
+            raise Exception(f"No vtk files are written in any stage, the output intervals ({output_intervals}) are "
+                            f"too large.")
+        return vtk_dirs_per_stage
+
     def __transfer_vtk_files_to_main_output_directories(self):
         """
         Transfer vtk files from the stage output directory to the main output directory. This is required as vtk files
         are always written to a new directory, in order to avoid overwriting directories from previous stages.
 
         """
+        # determine if the vtk directories are created per stage
+        vtk_dirs_per_stage = self.__check_if_vtk_directories_are_created_per_stage()
 
         # initialise dictionary to store main vtk output directories
         main_vtk_output_dirs = {}
         for i, stage in enumerate(self.stages):
-
             for output_settings in stage.output_settings:
                 # only transfer vtk files
                 if isinstance(output_settings.output_parameters, VtkOutputParameters):
@@ -278,6 +314,7 @@ class Stem:
                     else:
                         part_name = output_settings.part_name
 
+                        continue
                     # The main output directory is the directory where the first stage writes its output
                     if i == 0:
                         if os.path.isabs(output_settings.output_dir):
@@ -287,27 +324,23 @@ class Stem:
                     else:
                         # create main output directory if it does not exist
                         if not (os.path.isdir(main_vtk_output_dirs[part_name])):
-                            if not (os.path.isdir(Path(self.input_files_dir) / output_settings.output_dir)):
-                                raise Exception(
-                                    f"No output vtk files were written for part {part_name} in stage {i}. "
-                                    f"The output interval "
-                                    f"({output_settings.output_parameters.output_interval}) might be larger "
-                                    f"than than the amount of time steps available in the stage.")
                             os.makedirs(main_vtk_output_dirs[part_name], exist_ok=True)
-                        # if the current stage is not the main stage, move the vtk files to the main output directory
-                        if os.path.isabs(output_settings.output_dir):
-                            stage_vtk_output_dir = Path(output_settings.output_dir)
-                        else:
-                            stage_vtk_output_dir = Path(self.input_files_dir) / output_settings.output_dir
+                        # check if vtk files are written in the stage
+                        if vtk_dirs_per_stage[i]:
+                            # if the current stage is not the main stage, move the vtk files to the main output directory
+                            if os.path.isabs(output_settings.output_dir):
+                                stage_vtk_output_dir = Path(output_settings.output_dir)
+                            else:
+                                stage_vtk_output_dir = Path(self.input_files_dir) / output_settings.output_dir
 
-                        # move all vtk files in stage vtk output dir to main vtk output dir
-                        for file in os.listdir(stage_vtk_output_dir):
-                            if file.endswith(".vtk"):
-                                os.rename(stage_vtk_output_dir / file, main_vtk_output_dirs[part_name] / file)
+                            # move all vtk files in stage vtk output dir to main vtk output dir
+                            for file in os.listdir(stage_vtk_output_dir):
+                                if file.endswith(".vtk"):
+                                    os.rename(stage_vtk_output_dir / file, main_vtk_output_dirs[part_name] / file)
 
-                        # remove the stage vtk output dir if it is empty
-                        if not os.listdir(stage_vtk_output_dir):
-                            os.rmdir(stage_vtk_output_dir)
+                            # remove the stage vtk output dir if it is empty
+                            if not os.listdir(stage_vtk_output_dir):
+                                os.rmdir(stage_vtk_output_dir)
 
     @staticmethod
     def __set_output_name_new_stage(new_stage: Model, stage_nr: int):
