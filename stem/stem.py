@@ -280,7 +280,8 @@ class Stem:
                         start_time = stage.project_parameters.settings.time_integration.start_time
                         end_time = stage.project_parameters.settings.time_integration.end_time
                         delta_time = stage.project_parameters.settings.time_integration.delta_time
-                        check = output_settings.output_parameters.output_interval <= (end_time - start_time) / delta_time
+                        check = output_settings.output_parameters.output_interval <= (end_time -
+                                                                                      start_time) / delta_time
                         if i not in vtk_dirs_per_stage:
                             print(f"No output vtk files were written in stage {i}. "
                                   f"The output interval "
