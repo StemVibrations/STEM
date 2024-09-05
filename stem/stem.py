@@ -309,8 +309,6 @@ class Stem:
                         part_name = "full_model"
                     else:
                         part_name = output_settings.part_name
-
-                        continue
                     # The main output directory is the directory where the first stage writes its output
                     if i == 0:
                         if os.path.isabs(output_settings.output_dir):
@@ -323,7 +321,8 @@ class Stem:
                             os.makedirs(main_vtk_output_dirs[part_name], exist_ok=True)
                         # check if vtk files are written in the stage
                         if vtk_dirs_per_stage[i]:
-                            # if the current stage is not the main stage, move the vtk files to the main output directory
+                            # if the current stage is not the main stage, move the vtk files to the main output
+                            # directory
                             if os.path.isabs(output_settings.output_dir):
                                 stage_vtk_output_dir = Path(output_settings.output_dir)
                             else:

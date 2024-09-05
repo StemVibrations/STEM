@@ -726,3 +726,39 @@ class TestStem:
         assert not vtk_dir_stage_2.is_dir()
         # cleanup
         TestUtils.clean_test_directory(Path("input_files"))
+
+    def test_transfer_vtk_files_to_main_part(self, create_default_model: Model):
+        """
+        In this test we simulate the case that the directories of the output of both stages do not exist. We create no
+        vtk files in the directories and check that the files are not moved to the main output directory.
+
+        Args:
+            - create_default_model (:class:`stem.model.Model`): The default model
+
+        """
+        # set stage 1
+        stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
+        # set stage 2
+        new_stage = deepcopy(create_default_model)
+        # set the output parameters of the new stage
+        stem.stages.append(new_stage)
+        stem._Stem__set_output_name_new_stage(new_stage, 2)
+        # get the absolute path of the output directories
+        stem.stages[0].output_settings[0].output_dir = (Path("input_files",
+                                                             stem.stages[0].output_settings[0].output_dir).resolve())
+        stem.stages[1].output_settings[0].output_dir = (Path("input_files",
+                                                             stem.stages[1].output_settings[0].output_dir).resolve())
+        # write all input files
+        stem.write_all_input_files()
+        vtk_dir_stage_1 = Path("input_files/output/output_vtk_full_model")
+        vtk_dir_stage_2 = Path("input_files/output/output_vtk_full_model_stage_2")
+        # create vtk files in the output directories
+        vtk_dir_stage_1.mkdir(parents=True, exist_ok=True)
+        vtk_dir_stage_2.mkdir(parents=True, exist_ok=True)
+        # run the method
+        stem._Stem__transfer_vtk_files_to_main_output_directories()
+        # check that 1 directory is removed and the other is not
+        assert vtk_dir_stage_1.is_dir()
+        assert not vtk_dir_stage_2.is_dir()
+        # cleanup
+        TestUtils.clean_test_directory(Path("input_files"))
