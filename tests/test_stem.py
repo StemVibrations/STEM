@@ -744,7 +744,7 @@ class TestStem:
         stem.stages.append(new_stage)
         stem._Stem__set_output_name_new_stage(new_stage, 2)
         # get the absolute path of the output directories
-        if "input_files" in stem.stages[0].output_settings[0].output_dir:
+        if "input_files" in str(stem.stages[0].output_settings[0].output_dir):
             stem.stages[0].output_settings[0].output_dir = (Path(
                 stem.stages[0].output_settings[0].output_dir).resolve())
             stem.stages[1].output_settings[0].output_dir = (Path(
