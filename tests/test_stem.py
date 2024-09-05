@@ -123,7 +123,6 @@ class TestStem:
         # make sure gmsh is finalized after each test
         gmsh_IO.GmshIO().finalize_gmsh()
 
-
     def test_create_new_stage_with_valid_parameters(self, create_default_model: Model):
         """
         Test the create_new_stage method of the Stem class with valid parameters. It checks if the new stage is created

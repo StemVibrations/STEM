@@ -281,12 +281,11 @@ class Stem:
                     delta_time = stage.project_parameters.settings.time_integration.delta_time
                     check = output_settings.output_parameters.output_interval <= (end_time - start_time) / delta_time
                     if i not in vtk_dirs_per_stage:
-                        print(
-                            f"No output vtk files were written in stage {i}. "
-                            f"The output interval "
-                            f"({output_settings.output_parameters.output_interval}) is larger "
-                            f"than than the amount of time steps ({(end_time - start_time) / delta_time}) "
-                            f"available in the stage.")
+                        print(f"No output vtk files were written in stage {i}. "
+                              f"The output interval "
+                              f"({output_settings.output_parameters.output_interval}) is larger "
+                              f"than than the amount of time steps ({(end_time - start_time) / delta_time}) "
+                              f"available in the stage.")
                     vtk_dirs_per_stage[i] = check
                     output_intervals.append(output_settings.output_parameters.output_interval)
         return vtk_dirs_per_stage
