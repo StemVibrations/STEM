@@ -289,9 +289,6 @@ class Stem:
                             f"available in the stage.")
                     vtk_dirs_per_stage[i] = check
                     output_intervals.append(output_settings.output_parameters.output_interval)
-        if not any(list(vtk_dirs_per_stage.values())):
-            raise Exception(f"No vtk files are written in any stage, the output intervals ({output_intervals}) are "
-                            f"too large.")
         return vtk_dirs_per_stage
 
     def __transfer_vtk_files_to_main_output_directories(self):
