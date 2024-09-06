@@ -277,9 +277,7 @@ class Model:
         soil_equivalent_part.parameters = DisplacementConstraint(active=constrain_list,
                                                                  is_fixed=constrain_list,
                                                                  value=[0, 0, 0])
-        self.add_boundary_condition_by_geometry_ids(1,
-                                                    soil_equivalent_line_ids,
-                                                    soil_equivalent_part.parameters,
+        self.add_boundary_condition_by_geometry_ids(1, soil_equivalent_line_ids, soil_equivalent_part.parameters,
                                                     constrain_only_vertical_soil_equivalent_name)
 
         # add bottom points fixed
