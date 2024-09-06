@@ -331,7 +331,6 @@ class Stem:
                                 stage_vtk_output_dir = Path(self.input_files_dir) / output_settings.output_dir
 
                             # move all vtk files in stage vtk output dir to main vtk output dir
-                            print(1)
                             for file in os.listdir(stage_vtk_output_dir):
                                 if file.endswith(".vtk"):
                                     os.rename(stage_vtk_output_dir / file, main_vtk_output_dirs[part_name] / file)

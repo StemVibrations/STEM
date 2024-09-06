@@ -747,15 +747,15 @@ class TestStem:
         # get the absolute path of the output directories
         if "input_files" in str(stem.stages[0].output_settings[0].output_dir):
             stem.stages[0].output_settings[0].output_dir = (Path(
-                stem.stages[0].output_settings[0].output_dir).resolve())
+                stem.stages[0].output_settings[0].output_dir).absolute())
         elif "input_files" in str(stem.stages[1].output_settings[0].output_dir):
             stem.stages[1].output_settings[0].output_dir = (Path(
-                stem.stages[1].output_settings[0].output_dir).resolve())
+                stem.stages[1].output_settings[0].output_dir).absolute())
         else:
             stem.stages[0].output_settings[0].output_dir = (Path(
-                "input_files", stem.stages[0].output_settings[0].output_dir).resolve())
+                "input_files", stem.stages[0].output_settings[0].output_dir).absolute())
             stem.stages[1].output_settings[0].output_dir = (Path(
-                "input_files", stem.stages[1].output_settings[0].output_dir).resolve())
+                "input_files", stem.stages[1].output_settings[0].output_dir).absolute())
         # write all input files
         stem.write_all_input_files()
         vtk_dir_stage_1 = Path("input_files/output/output_vtk_full_model")
