@@ -18,7 +18,7 @@ from stem.stem import Stem
 from benchmark_tests.utils import assert_floats_in_directories_almost_equal
 
 
-def test_extended_beam():
+def test_moving_load_on_extended_track():
     ndim = 3
     model = Model(ndim)
     model.extrusion_length = 10
@@ -71,12 +71,8 @@ def test_extended_beam():
     model.generate_extended_straight_track(0.5, 40, rail_parameters, sleeper_parameters, rail_pad_parameters,
                                            rail_pad_thickness, origin_point, soil_equivalent_parameters, 5,
                                            direction_vector, "rail_track_1")
-
-    moving_load = MovingLoad(load=[0.0, -10000.0, 0.0],
-                             direction=[1, 1, 1],
-                             velocity=10,
-                             origin=[origin_point[0], 3 + rail_pad_thickness, origin_point[-1]],
-                             offset=0.0)
+    origin = [float(origin_point[0]), float(origin_point[1] + rail_pad_thickness), float(origin_point[-1])]
+    moving_load = MovingLoad(load=[0.0, -10000.0, 0.0], direction=[1, 1, 1], velocity=10, origin=origin, offset=0.0)
 
     model.add_load_on_line_model_part("rail_track_1", moving_load, "moving_load")
 

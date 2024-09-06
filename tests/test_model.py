@@ -3583,14 +3583,14 @@ class TestModel:
         """
         ndim = 3
 
-        layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 2, 3), (0, 2, 3)]
+        layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 2, 0), (0, 2, 0)]
 
         # define soil material
         soil_material = create_default_3d_soil_material
 
         # create model
         model = Model(ndim)
-        model.extrusion_length = 1
+        model.extrusion_length = 4
 
         model.project_parameters = TestUtils.create_default_solver_settings()
 
@@ -3657,14 +3657,14 @@ class TestModel:
         """
         ndim = 3
 
-        layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 2, 3), (0, 2, 3)]
+        layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 2, 0), (0, 2, 0)]
 
         # define soil material
         soil_material = create_default_3d_soil_material
 
         # create model
         model = Model(ndim)
-        model.extrusion_length = 1
+        model.extrusion_length = 4
 
         model.project_parameters = TestUtils.create_default_solver_settings()
 
@@ -3689,12 +3689,12 @@ class TestModel:
         points_outside_part.material = StructuralMaterial(name=outside_name, material_parameters=rail_pad_parameters)
         model.body_model_parts.append(points_outside_part)
         # run the test
-        points_outside_volume, coordinates = model.get_points_outside_soil_volume(outside_name)
+        points_outside_volume = model.get_points_outside_soil(outside_name)
         # check if the points are outside the soil volume
         assert len(points_outside_volume) == 3
-        assert coordinates[0] == [1., 0., -1.]
-        assert coordinates[1] == [1., 0., 5.]
-        assert coordinates[2] == [1., 0., 6.]
+        assert points_outside_volume[0].coordinates == [1., 0., -1.]
+        assert points_outside_volume[1].coordinates == [1., 0., 5.]
+        assert points_outside_volume[2].coordinates == [1., 0., 6.]
 
     def test_get_points_outside_soil_volume_error(self, create_default_3d_soil_material: SoilMaterial):
         """
@@ -3706,14 +3706,14 @@ class TestModel:
         """
         ndim = 3
 
-        layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 2, 3), (0, 2, 3)]
+        layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 2, 0), (0, 2, 0)]
 
         # define soil material
         soil_material = create_default_3d_soil_material
 
         # create model
         model = Model(ndim)
-        model.extrusion_length = 1
+        model.extrusion_length = 4
 
         model.project_parameters = TestUtils.create_default_solver_settings()
 
@@ -3728,7 +3728,7 @@ class TestModel:
         points_outside_test = [(1, 0, -1), (1, 0, 0), (0, 0, 0), (1, 0, 0), (1, 0, 5), (1, 0, 6)]
         outside_name = f"fake_name"
         with pytest.raises(ValueError, match="Model part fake_name not found."):
-            model.get_points_outside_soil_volume(outside_name)
+            model.get_points_outside_soil(outside_name)
 
     def test_get_points_outside_soil_volume_error_geometry(self, create_default_3d_soil_material: SoilMaterial):
         """
@@ -3755,10 +3755,9 @@ class TestModel:
         assert len(model.body_model_parts) == 1
         assert model.body_model_parts[0].name == "soil1"
 
-        points_outside_test = [(1, 0, -1), (1, 0, 0), (0, 0, 0), (1, 0, 0), (1, 0, 5), (1, 0, 6)]
         outside_name = f"soil1"
         with pytest.raises(ValueError, match="Model part soil1 has no geometry."):
-            model.get_points_outside_soil_volume(outside_name)
+            model.get_points_outside_soil(outside_name)
 
     def test_generate_extended_straight_track_2d(self, create_default_2d_soil_material: SoilMaterial):
         """

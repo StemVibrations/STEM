@@ -9,7 +9,7 @@ from stem.model_part import ModelPart, BodyModelPart, Material, ProcessParameter
 from stem.soil_material import *
 from stem.structural_material import *
 from stem.boundary import *
-from stem.geometry import Geometry
+from stem.geometry import Geometry, Point
 from stem.mesh import Mesh, MeshSettings, Node, Element
 from stem.output import Output, OutputParametersABC
 from stem.additional_processes import ParameterFieldParameters
@@ -206,6 +206,9 @@ class Model:
         bottom of the track with a distance of sleeper_distance between them. The sleepers are connected to the rail
         with rail-pads with a thickness of rail_pad_thickness. The track is generated in the direction of the
         direction_vector starting from the origin_point. The track can only move in the vertical direction.
+        The track is extended by using a soil equivalent below the track. The soil equivalent is connected to the
+        track with rail-pads. The bottom of the soil equivalent is fixed in all directions. While the soil equivalent
+        can only move in the vertical direction.
 
         Args:
             - sleeper_distance (float): distance between sleepers
@@ -244,16 +247,17 @@ class Model:
         soil_equivalent_bottom_length = length_extended_soil
 
         # check the points of the sleepers that are not in the volume of the rail
-        points_outside_volume_ids, points_outside_volume = self.get_points_outside_soil_volume(sleeper_name)
+        points_outside_volume = self.get_points_outside_soil(sleeper_name)
+        points_outside_volume_coords = [point.coordinates for point in points_outside_volume]
         # create bottom points for the soil equivalent
         # set global rail geometry
-        soil_equivalent_bottom = np.copy(points_outside_volume)
+        soil_equivalent_bottom = np.copy(points_outside_volume_coords)
         soil_equivalent_bottom[:, VERTICAL_AXIS] -= soil_equivalent_bottom_length
 
-        # create rail pad geometries
+        # create geometries of the soil equivalent lines
         soil_equivalent_lines = [
             self.gmsh_io.make_geometry_1d((top_coordinates, bot_coordinates))
-            for top_coordinates, bot_coordinates in zip(points_outside_volume, soil_equivalent_bottom)
+            for top_coordinates, bot_coordinates in zip(points_outside_volume_coords, soil_equivalent_bottom)
         ]
 
         soil_equivalent_line_ids = [ids[0] for ids in soil_equivalent_lines]
@@ -265,13 +269,19 @@ class Model:
         soil_equivalent_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, soil_equivalent_name)
         soil_equivalent_part.material = StructuralMaterial(name=soil_equivalent_name,
                                                            material_parameters=soil_equivalent_parameters)
+        self.body_model_parts.append(soil_equivalent_part)
+        constrain_only_vertical_soil_equivalent_name = f"constraint_only_vertical_{soil_equivalent_name}"
         # can only move in the vertical direction
         constrain_list = [True, True, True]
         constrain_list[VERTICAL_AXIS] = False
         soil_equivalent_part.parameters = DisplacementConstraint(active=constrain_list,
                                                                  is_fixed=constrain_list,
                                                                  value=[0, 0, 0])
-        self.body_model_parts.append(soil_equivalent_part)
+        self.add_boundary_condition_by_geometry_ids(1,
+                                                    soil_equivalent_line_ids,
+                                                    soil_equivalent_part.parameters,
+                                                    constrain_only_vertical_soil_equivalent_name)
+
         # add bottom points fixed
         constraint_model_soil_equivalent_name = f"constraint_{soil_equivalent_name}"
         constraint_model_soil_equivalent_part = ModelPart(f"constraint_{soil_equivalent_name}")
@@ -292,10 +302,9 @@ class Model:
 
         self.process_model_parts.append(constraint_model_soil_equivalent_part)
 
-    def get_points_outside_soil_volume(
-            self, model_part_name) -> Tuple[List[Union[int, Any]], List[Union[Sequence[float], Any]]]:
+    def get_points_outside_soil(self, model_part_name: str) -> List[Point]:
         """
-        Get the points of the model part that are outside the volume of the model part.
+        Get the points of the model part that are outside the soil model parts.
 
         Args:
             - model_part_name (str): The name of the model part to check the points
@@ -313,8 +322,7 @@ class Model:
         if model_part is None:
             raise ValueError(f"Model part {model_part_name} not found.")
         else:
-            points_outside_volume = []
-            coordinates = []
+            points_outside_geometry = []
             if model_part.geometry is None:
                 raise ValueError(f"Model part {model_part_name} has no geometry.")
             for point_id, point in model_part.geometry.points.items():
@@ -327,9 +335,8 @@ class Model:
                     y_is_in = min_coords[2] <= point.coordinates[2] <= max_coords[2]
                 # the z coordinate is the out of plane direction so it is not checked
                 if not x_is_in or not y_is_in:
-                    points_outside_volume.append(point_id)
-                    coordinates.append(point.coordinates)
-            return points_outside_volume, coordinates
+                    points_outside_geometry.append(point)
+            return points_outside_geometry
 
     def get_bounding_box_soil(self) -> Tuple[List[float], List[float]]:
         """
@@ -345,10 +352,11 @@ class Model:
             if isinstance(model_part, BodyModelPart) and isinstance(model_part.material, SoilMaterial):
                 if model_part.geometry is None:
                     raise ValueError("Model part has no geometry.")
-                for point in model_part.geometry.points.values():
-                    for i in range(3):
-                        min_coords[i] = min(min_coords[i], point.coordinates[i])
-                        max_coords[i] = max(max_coords[i], point.coordinates[i])
+                # Extract all points' coordinates and convert them into a NumPy array
+                coordinates = np.array([point.coordinates for point in model_part.geometry.points.values()])
+                # Find the minimum and maximum for each axis (x, y, z) across all points
+                min_coords = np.min(coordinates, axis=0)
+                max_coords = np.max(coordinates, axis=0)
 
         return min_coords, max_coords
 
