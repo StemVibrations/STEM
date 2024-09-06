@@ -727,10 +727,11 @@ class TestStem:
         # cleanup
         TestUtils.clean_test_directory(Path("input_files"))
 
-    def test_transfer_vtk_files_to_main_part(self, create_default_model: Model):
+    def test_transfer_vtk_files_to_main_part_absolute_path(self, create_default_model: Model):
         """
-        In this test we simulate the case that the directories of the output of both stages do not exist. We create no
-        vtk files in the directories and check that the files are not moved to the main output directory.
+        In this test we simulate the case that the directories of the output of both stages do exist but they are
+        absolute paths. We create vtk files in the directories and check that the files are moved to the main output
+        directory.
 
         Args:
             - create_default_model (:class:`stem.model.Model`): The default model
