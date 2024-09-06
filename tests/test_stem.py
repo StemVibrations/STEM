@@ -747,6 +747,7 @@ class TestStem:
         if "input_files" in str(stem.stages[0].output_settings[0].output_dir):
             stem.stages[0].output_settings[0].output_dir = (Path(
                 stem.stages[0].output_settings[0].output_dir).resolve())
+        elif "input_files" in str(stem.stages[1].output_settings[0].output_dir):
             stem.stages[1].output_settings[0].output_dir = (Path(
                 stem.stages[1].output_settings[0].output_dir).resolve())
         else:
