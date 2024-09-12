@@ -3471,7 +3471,7 @@ class TestModel:
         with pytest.raises(ValueError, match=f"Model part type and new parameters type must match."):
             model.split_model_part("process_2d", "split_group", [1], create_default_2d_soil_material)
 
-    def test_finalise(self, create_default_2d_soil_material: SoilMaterial):
+    def test_finalise_json_output_raises_errors(self, create_default_2d_soil_material: SoilMaterial):
         """
         Test that finalisation raises error correctly.
 
