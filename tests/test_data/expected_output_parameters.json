@@ -83,6 +83,37 @@
                     "point_data_configuration":  []
                 }
             }
+        }, 
+        {
+            "Parameters": {
+                "model_part_name": "PorousDomain.porous_computational_model_part",
+                "output_name": "test_gid1",
+                "postprocess_parameters": {
+                    "point_data_configuration": [],
+                    "result_file_configuration": {
+                        "file_label": "step",
+                        "gauss_point_results": [
+                            "VON_MISES_STRESS",
+                            "FLUID_FLUX_VECTOR",
+                            "HYDRAULIC_HEAD"
+                        ],
+                        "gidpost_flags": {
+                            "GiDPostMode": "GiD_PostBinary",
+                            "MultiFileFlag": "SingleFile",
+                            "WriteConditionsFlag": "WriteElementsOnly",
+                            "WriteDeformedMeshFlag": "WriteUndeformed"},
+                        "nodal_results": [
+                            "DISPLACEMENT",
+                            "TOTAL_DISPLACEMENT"
+                        ],
+                        "output_control_type": "step",
+                        "output_interval": 100
+                    }
+                }
+            },
+            "kratos_module": "KratosMultiphysics",
+            "process_name": "GiDOutputProcess",
+            "python_module": "gid_output_process"
         }],
         "vtk_output": [{
             "python_module": "vtk_output_process",
@@ -120,7 +151,28 @@
                     "GREEN_LAGRANGE_STRAIN_VECTOR"
                 ]
             }
-        }]
+        }, 
+        {
+            "Parameters": 
+            {"file_format": "binary",
+                "gauss_point_variables_in_elements": [
+                    "VON_MISES_STRESS",
+                    "FLUID_FLUX_VECTOR",
+                    "HYDRAULIC_HEAD"
+                ],
+                "model_part_name": "PorousDomain",
+                "nodal_solution_step_data_variables": [
+                    "DISPLACEMENT",
+                    "TOTAL_DISPLACEMENT"
+                ],
+                "output_control_type": "step",
+                "output_interval": 100.0,
+                "output_path": "output_vtk_full_model",
+                "output_precision": 8},
+            "kratos_module": "KratosMultiphysics",
+            "process_name": "VtkOutputProcess", 
+            "python_module": "vtk_output_process"}
+        ]
     },
     "processes": {
         "json_output": [{
@@ -162,6 +214,23 @@
                 ],
                 "time_frequency": 0.002
             }
-        }]
+        },
+        {
+            "kratos_module": "KratosMultiphysics",
+            "process_name": "JsonOutputProcess",
+            "python_module": "json_output_process",
+            "Parameters": {
+                "gauss_points_output_variables": [
+                    "VON_MISES_STRESS",
+                    "FLUID_FLUX_VECTOR",
+                    "HYDRAULIC_HEAD"],
+                "model_part_name": "PorousDomain.porous_computational_model_part",
+                "output_file_name": "test_json_output1.json",
+                "output_variables": [
+                    "DISPLACEMENT",
+                    "TOTAL_DISPLACEMENT"
+                ],
+                "time_frequency": 0.002}}
+        ]
     }
 }
