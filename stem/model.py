@@ -801,7 +801,7 @@ class Model:
 
     def __post_mesh(self):
         """
-        Function to be called after the mesh is generated and finalised.
+        Function to be called after the mesh is generated and finalised. The following steps are performed:
             - initialise field parameters (e.g., random fields). |
             - exclude the nodes that are not output nodes. |
             - adjust the elements for the spring damper parts. |
