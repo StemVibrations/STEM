@@ -386,8 +386,8 @@ class Utils:
                              base_value: float,
                              variable: str = "x") -> str:
         """
-        Creates a tiny expression for a box function. For more information on tiny expressions,
-        see: https://github.com/codeplea/tinyexpr
+        Creates a tiny expression for a hyperbolic approximation of the box function. For more information on tiny
+        expressions, see: https://github.com/codeplea/tinyexpr
 
         Args:
             - transition_parameter (float): parameter to control the transition of the box function, |
@@ -400,6 +400,7 @@ class Utils:
 
         Raises:
             - ValueError: when start peak is larger or equal to end peak
+            - ValueError: when variable is not "x", "y", "z" or "t"
 
         Returns:
             - str: tiny expression of the box function
@@ -408,6 +409,9 @@ class Utils:
 
         if start_peak >= end_peak:
             raise ValueError("Start peak should be smaller than end peak.")
+
+        if variable not in ["x", "y", "z", "t"]:
+            raise ValueError("Variable should be either 'x', 'y', 'z' or 't'.")
 
         length_peak = end_peak - start_peak
         centre_peak = (start_peak + end_peak) / 2
