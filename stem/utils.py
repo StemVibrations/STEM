@@ -12,6 +12,10 @@ if TYPE_CHECKING:
     from stem.geometry import Geometry
 
 NUMBER_TYPES = (int, float, np.int64, np.float64)
+"""
+TypeAlias:
+    - NUMBER_TYPES: Tuple[int, float, np.int64, np.float64]
+"""
 
 
 class Utils:

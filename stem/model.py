@@ -930,7 +930,7 @@ class Model:
             raise ValueError(f"Mesh of model part `{model_part.name}` not yet initialised.")
 
         # find end nodes
-        end_nodes = set(self.__find_end_nodes_of_line_strings(model_part.mesh))
+        end_nodes = self.__find_end_nodes_of_line_strings(model_part.mesh)
         # find the node ids corresponding to the geometry points
         node_ids_at_geometry_points = set(
             Utils.find_node_ids_close_to_geometry_nodes(mesh=model_part.mesh, geometry=model_part.geometry, eps=1e-06))
@@ -978,7 +978,7 @@ class Model:
         return line_node_ids
 
     @staticmethod
-    def __find_end_nodes_of_line_strings(mesh: Mesh) -> List[int]:
+    def __find_end_nodes_of_line_strings(mesh: Mesh) -> Set[int]:
         """
         Finds the nodes at the end of linestrings.
 
@@ -986,11 +986,11 @@ class Model:
             - mesh (:class:`stem.mesh.Mesh`): mesh from which end nodes needs to be extracted.
 
         Returns:
-            - end_nodes (List[int]): End node ids of linestring clusters.
+            - end_nodes (Set[int]): End node ids of linestring clusters.
 
         """
         nodes_to_elements = mesh.find_elements_connected_to_nodes()
-        end_nodes = [node_id for node_id, elements in nodes_to_elements.items() if len(elements) == 1]
+        end_nodes = set(node_id for node_id, elements in nodes_to_elements.items() if len(elements) == 1)
         return end_nodes
 
     @staticmethod
@@ -1060,7 +1060,7 @@ class Model:
     def __find_matching_body_elements_for_process_model_part(self, process_model_part: ModelPart) \
             -> List[Tuple[Element, Element]]:
         """
-        For a process model part, tries finds the matching body elements on which the condition elements are applied.
+        For a process model part, finds the matching body elements on which the condition elements are applied.
 
         Args:
             - process_model_part (:class:`stem.model_part.ModelPart`): model part from which element nodes needs to be \
@@ -1091,10 +1091,7 @@ class Model:
 
             # find which nodes within the body model part are connected to which elements
             for node_id, element_ids in body_model_part.mesh.find_elements_connected_to_nodes().items():
-                if node_id in nodes_to_elements_body:
-                    nodes_to_elements_body[node_id].extend(element_ids)
-                else:
-                    nodes_to_elements_body[node_id] = element_ids
+                nodes_to_elements_body.setdefault(node_id, element_ids).extend(element_ids)
 
             all_body_elements.update(body_model_part.mesh.elements)
 

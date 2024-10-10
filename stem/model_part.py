@@ -31,6 +31,12 @@ TypeAlias:
     - Material: Union[:class:`stem.soil_material.SoilMaterial`, :class:`stem.structural_material.StructuralMaterial`]
 """
 
+MovingLoadTypes = (MovingLoad, UvecLoad)
+"""
+TypeAlias:
+    - MovingLoadTypes: Tuple[:class:`stem.load.MovingLoad`, :class:`stem.load.UvecLoad`]
+"""
+
 
 class ModelPart:
     """
@@ -114,7 +120,11 @@ class ModelPart:
         Validate the input of the model part
 
         Raises:
-            - ValueError: if the model part is not correctly defined
+            - ValueError: if the geometry of the model part is not defined
+            - ValueError: if the parameters of the model part is not defined
+            - ValueError: if the origin of the moving load is not aligned with the lines of the geometry
+            - ValueError: if the lines of the geometry are not aligned on a path, i.e. |
+            there are loops or branching points
 
         """
         if self.geometry is None:
@@ -123,7 +133,7 @@ class ModelPart:
         if self.parameters is None:
             raise ValueError(f"Parameters of model part {self.name} is not defined.")
 
-        if isinstance(self.parameters, (MovingLoad, UvecLoad)):
+        if isinstance(self.parameters, MovingLoadTypes):
             # retrieve the coordinates of the points in the path of the load
             coordinates = []
             for line in self.geometry.lines.values():

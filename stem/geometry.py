@@ -508,7 +508,8 @@ class Geometry:
 
     def get_ordered_points_from_surface(self, surface_id: int) -> List[Point]:
         """
-        Returns the points that make up the surface in the correct order.
+        Returns the points that make up the surface in the correct order, i.e. the order in which the points are
+        connected by the lines that make up the surface.
 
         Args:
             - surface_id (int): The id of the surface.
@@ -585,7 +586,14 @@ class Geometry:
 
     def calculate_centre_of_mass_surface(self, surface_id: int) -> npty.NDArray[np.float64]:
         """
-        Calculate the centre of mass of a surface.
+        Calculate the centre of mass of a surface. Where mass is given to the length of the lines that make up the
+        surface. The centre of mass is then given by the 'O' in the following diagram:
+
+        x---x---x---x---x
+        |               |
+        x       O       x
+        |               |
+        x---------------x
 
         Args:
             - surface_id (int): The id of the surface.
@@ -650,15 +658,15 @@ class Geometry:
         # area increment
         cross_dot_normal = np.dot(cross_products, normal_vector)
 
-        # calculate the signed area of the surface
-        area: float = norms.dot(np.sign(cross_dot_normal)) * 0.5
+        # calculate the absolute value of the area of the surface
+        area: float = abs(norms.dot(np.sign(cross_dot_normal)) * 0.5)
 
-        # return the absolute value of the area
-        return abs(area)
+        return area
 
     def calculate_centre_of_mass_volume(self, volume_id: int) -> npty.NDArray[np.float64]:
         """
-        Calculate the centre of mass of a volume.
+        Calculate the centre of mass of a volume. Where mass is given to the area of the surfaces that make up the
+        volume.
 
         Args:
             - volume_id (int): The id of the volume.
