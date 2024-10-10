@@ -123,7 +123,7 @@ class ModelPart:
             - ValueError: if the geometry of the model part is not defined
             - ValueError: if the parameters of the model part is not defined
             - ValueError: if the origin of the moving load is not aligned with the lines of the geometry
-            - ValueError: if the lines of the geometry are not aligned on a path, i.e. |
+            - ValueError: if the lines of the geometry are not aligned on a path, i.e. \
             there are loops or branching points
 
         """

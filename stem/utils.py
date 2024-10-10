@@ -394,7 +394,7 @@ class Utils:
         expressions, see: https://github.com/codeplea/tinyexpr
 
         Args:
-            - transition_parameter (float): parameter to control the transition of the box function, |
+            - transition_parameter (float): parameter to control the transition of the box function, \
               the higher the value, the steeper the transition
             - start_peak (float): start of the peak of the box function
             - end_peak (float): end of the peak of the box function
@@ -430,14 +430,22 @@ class Utils:
     @staticmethod
     def check_lines_geometry_are_path(geometry: Optional['Geometry']) -> bool:
         """
-        Checks if lines are connected forming a path without:
 
-            a) disconnected lines,   b) branching out paths
-                o---o       o---o              o
-                |                              |
-                o                         o----o----o
-                                               |
-                                               o
+        Checks if lines are connected forming a path without:
+          a) disconnected lines,
+          b) branching out paths::
+
+              a) Disconnected lines:
+                  o---o
+                  |
+                  o
+
+              b) Branching out paths:
+                  o---o
+                       |
+                  o----o----o
+                       |
+                       o
 
         Args:
             - geometry (:class:`stem.geometry.Geometry`): geometry to be checked.
