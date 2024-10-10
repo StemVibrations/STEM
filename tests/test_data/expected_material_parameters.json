@@ -79,8 +79,47 @@
             "Tables": {}
         },
         {
-            "model_part_name": "PorousDomain.test_two_phase_material_2D",
+            "model_part_name": "PorousDomain.test_one_phase_rayleigh_material",
             "properties_id": 3,
+            "Material": {
+                "constitutive_law": {
+                    "name": "SmallStrainUMAT3DLaw"
+                },
+                "Variables": {
+                    "DENSITY_SOLID": 2650,
+                    "DENSITY_WATER": 1000,
+                    "POROSITY": 0.3,
+                    "BULK_MODULUS_SOLID": 1e+16,
+                    "BULK_MODULUS_FLUID": 2e9,
+                    "PERMEABILITY_XX": 1e-30,
+                    "PERMEABILITY_YY": 1e-30,
+                    "PERMEABILITY_ZZ": 1e-30,
+                    "PERMEABILITY_XY": 0,
+                    "PERMEABILITY_YZ": 0,
+                    "PERMEABILITY_ZX": 0,
+                    "DYNAMIC_VISCOSITY": 0.0013,
+                    "IGNORE_UNDRAINED": true,
+                    "UMAT_PARAMETERS": [
+                        1,
+                        5.6,
+                        false
+                    ],
+                    "STATE_VARIABLES": [],
+                    "UDSM_NAME": "test_name",
+                    "IS_FORTRAN_UDSM": false,
+                    "NUMBER_OF_UMAT_PARAMETERS": 3,
+                    "RETENTION_LAW": "SaturatedBelowPhreaticLevelLaw",
+                    "SATURATED_SATURATION": 1.0,
+                    "RESIDUAL_SATURATION": 1e-10,
+                    "RAYLEIGH_ALPHA": 1,
+                    "RAYLEIGH_BETA": 2
+                }
+            },
+            "Tables": {}
+        },
+        {
+            "model_part_name": "PorousDomain.test_two_phase_material_2D",
+            "properties_id": 4,
             "Material": {
                 "constitutive_law": {
                     "name": "LinearElastic3DLaw"
@@ -107,7 +146,7 @@
         },
         {
             "model_part_name": "PorousDomain.test_two_phase_material_3D",
-            "properties_id": 4,
+            "properties_id": 5,
             "Material": {
                 "constitutive_law": {
                     "name": "LinearElastic3DLaw"
@@ -131,6 +170,38 @@
                     "DYNAMIC_VISCOSITY": 0.0013,
                     "BULK_MODULUS_FLUID": 2000000000.0,
                     "DENSITY_WATER": 1000
+                }
+            },
+            "Tables": {}
+        },
+         {
+            "model_part_name": "PorousDomain.test_two_phase_rayleigh_material",
+            "properties_id": 6,
+            "Material": {
+                "constitutive_law": {
+                    "name": "LinearElastic3DLaw"
+                },
+                "Variables": {
+                    "YOUNG_MODULUS": 1000000000.0,
+                    "POISSON_RATIO": 0.3,
+                    "DENSITY_SOLID": 2650,
+                    "POROSITY": 0.3,
+                    "PERMEABILITY_XX": 1e-15,
+                    "PERMEABILITY_YY": 1e-15,
+                    "PERMEABILITY_XY": 1,
+                    "BULK_MODULUS_SOLID": 50000000000.0,
+                    "PERMEABILITY_YZ": 3,
+                    "PERMEABILITY_ZX": 2,
+                    "PERMEABILITY_ZZ": 1e-15,
+                    "IGNORE_UNDRAINED": false,
+                    "RETENTION_LAW": "SaturatedBelowPhreaticLevelLaw",
+                    "SATURATED_SATURATION": 1.0,
+                    "RESIDUAL_SATURATION": 1e-10,
+                    "DYNAMIC_VISCOSITY": 0.0013,
+                    "BULK_MODULUS_FLUID": 2000000000.0,
+                    "DENSITY_WATER": 1000,
+                    "RAYLEIGH_ALPHA": 1,
+                    "RAYLEIGH_BETA": 2
                 }
             },
             "Tables": {}

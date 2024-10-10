@@ -517,6 +517,42 @@ class TestUtilsStem:
         np.testing.assert_almost_equal(full_eval, expected_full_eval)
         np.testing.assert_almost_equal(half_eval, expected_half_eval)
 
+    def test_create_box_tiny_expr(self):
+        """
+        Test the creation of the box function tiny expr, which can be evaluated in c++
+
+        """
+
+        transition_parameter = 1e10
+        start_peak = 1
+        end_peak = 5
+        peak_value = 1e7
+        base_value = 1e5
+
+        # call function
+        tiny_expr = Utils.create_box_tiny_expr(transition_parameter, start_peak, end_peak, peak_value, base_value)
+
+        # replace tanh with np.tanh, such that python can evaluate the string
+        python_func_str = tiny_expr.replace("tanh", "np.tanh")
+
+        # evaluate string
+        x_values = np.linspace(0, 10, 1000)
+        calculated_values = [eval(python_func_str.replace("x", str(x))) for x in x_values]
+
+        # define expected values
+        expected_values = [peak_value if start_peak <= x <= end_peak else base_value for x in x_values]
+
+        # check if expected and actual results are almost equal
+        npt.assert_almost_equal(calculated_values, expected_values)
+
+        # check if error is raised when start peak is larger than end peak
+        with pytest.raises(ValueError, match="Start peak should be smaller than end peak."):
+            Utils.create_box_tiny_expr(transition_parameter, end_peak, start_peak, peak_value, base_value)
+
+        # check if error is raised when variable name is not allowed
+        with pytest.raises(ValueError, match="Variable should be either 'x', 'y', 'z' or 't'."):
+            Utils.create_box_tiny_expr(transition_parameter, start_peak, end_peak, peak_value, base_value, "14")
+
     def test_check_lines_geometry_are_path(self):
         """
         Tests that the lines in a geometry are connected and aligned along one path (no branching)
@@ -726,3 +762,54 @@ class TestUtilsStem:
         with pytest.raises(ValueError, match=msg):
             Utils.is_point_coplanar_to_polygon(polygon_points=[(0, 0, 0), (0.5, 0, 0), (1, 0, 0)],
                                                point=non_coplanar_point)
+
+    def test_validation_coordinates(self):
+        """
+        Test that validation raises and error if the points are not correctly specified.
+
+        """
+
+        # test inputs for numpy arrays:
+        # test for 2D-array, correct number of coordinates (shape 3,2)
+        Utils.validate_coordinates(np.zeros((2, 3)))
+
+        # test for incorrect number of coordinates in array (shape 3,2)
+        with pytest.raises(ValueError, match=f"Coordinates should be 3D but 2 coordinates were given."):
+            Utils.validate_coordinates(np.zeros((3, 2)))
+
+        # test for incorrect number of dimension in array (1-D array)
+        with pytest.raises(ValueError, match=f"Coordinates are not a sequence of a sequence or a 2D array."):
+            Utils.validate_coordinates(np.arange(3))
+
+        # test inputs for sequence of floats:
+        # test for incorrect number of coordinates
+        with pytest.raises(ValueError, match=f"Coordinates should be 3D but 4 coordinates were given."):
+            Utils.validate_coordinates([(0.0, 0.0, 0.0, 4.0)])
+
+        # test for incorrect type (Sequence of float instead of Sequence[Sequence[float]])
+        with pytest.raises(ValueError, match="Coordinates are not a sequence of a sequence or a 2D array."):
+            Utils.validate_coordinates([0.0, 0.0, 0.0])
+            Utils.validate_coordinates([0.0, 0.0, 0.0])
+
+        # test for nan numbers
+        with pytest.raises(ValueError,
+                           match=f"Coordinates should be a sequence of sequence of real numbers, "
+                           f"but nan was given."):
+            Utils.validate_coordinates([(0.0, 0.0, 0.0), (0.0, np.nan, 0.0)])
+
+        # test for inf numbers
+        with pytest.raises(ValueError,
+                           match=f"Coordinates should be a sequence of sequence of real numbers, "
+                           f"but inf was given."):
+            Utils.validate_coordinates([(0.0, 0.0, 0.0), (0.0, np.inf, 0.0)])
+
+        # test for complex numbers, different error messages for different python versions and operating systems
+        message_option_1 = f"can't convert complex to float"
+        message_option_2 = f"float() argument must be a string or a real number, not 'complex'"
+
+        with pytest.raises(TypeError, match=f"{message_option_1}|{re.escape(message_option_2)}"):
+            Utils.validate_coordinates([(0.0, 0.0, 0.0), (0.0, 1j, 0.0)])
+
+        # test for strings
+        with pytest.raises(ValueError, match=f"could not convert string to float: 'test'"):
+            Utils.validate_coordinates([(0.0, 0.0, 0.0), (0.0, "test", 0.0)])

@@ -3,7 +3,7 @@ from typing import Optional, Union, Dict, Any
 from stem.additional_processes import AdditionalProcessesParametersABC
 from stem.boundary import BoundaryParametersABC
 from stem.water_processes import WaterProcessParametersABC
-from stem.load import LoadParametersABC
+from stem.load import LoadParametersABC, MovingLoad, UvecLoad
 from stem.output import OutputParametersABC
 from stem.soil_material import SoilMaterial
 from stem.structural_material import StructuralMaterial
@@ -11,6 +11,31 @@ from stem.structural_material import StructuralMaterial
 from stem.geometry import Geometry
 from stem.mesh import Mesh
 from stem.solver import AnalysisType
+from stem.utils import Utils
+
+# define type aliases
+ProcessParameters = Union[LoadParametersABC, BoundaryParametersABC, AdditionalProcessesParametersABC,
+                          WaterProcessParametersABC, OutputParametersABC]
+"""
+TypeAlias:
+    - ProcessParameters: Union[:class:`stem.load.LoadParametersABC`, \
+        :class:`stem.boundary.BoundaryParametersABC`, \
+        :class:`stem.additional_processes.AdditionalProcessesParametersABC`, \
+        :class:`stem.water_boundaries.WaterBoundaryParametersABC`, \
+        :class:`stem.output.OutputParametersABC`]
+"""
+
+Material = Union[SoilMaterial, StructuralMaterial]
+"""
+TypeAlias:
+    - Material: Union[:class:`stem.soil_material.SoilMaterial`, :class:`stem.structural_material.StructuralMaterial`]
+"""
+
+MovingLoadTypes = (MovingLoad, UvecLoad)
+"""
+TypeAlias:
+    - MovingLoadTypes: Tuple[:class:`stem.load.MovingLoad`, :class:`stem.load.UvecLoad`]
+"""
 
 
 class ModelPart:
@@ -21,11 +46,7 @@ class ModelPart:
     Attributes:
         - __name (str): name of the model part
         - geometry (Optional[:class:`stem.geometry.Geometry`]): geometry of the model part
-        - parameters (Optional[Union[:class:`stem.load.LoadParametersABC`, \
-            :class:`stem.boundary.BoundaryParametersABC`, \
-            :class:`stem.additional_processes.AdditionalProcessesParametersABC`, \
-            :class:`stem.water_boundaries.WaterBoundaryParametersABC`, \
-            :class:`stem.output.OutputParametersABC`]]): process parameters containing the \
+        - parameters (Optional[:class:`ProcessParameters`]): process parameters containing the \
             model part parameters.
         - mesh (Optional[:class:`stem.mesh.Mesh`]): mesh of the model part
         - id (Optional[int]): the id of the model part
@@ -40,10 +61,18 @@ class ModelPart:
         """
         self.__name: str = name
         self.geometry: Optional[Geometry] = None
-        self.parameters: Optional[Union[LoadParametersABC, BoundaryParametersABC, AdditionalProcessesParametersABC,
-                                        WaterProcessParametersABC, OutputParametersABC]] = None
+        self.parameters: Optional[ProcessParameters] = None
         self.mesh: Optional[Mesh] = None
         self.id: Optional[int] = None
+
+    def __repr__(self):
+        """Repr method to provide a human-readable version of the ModelPart object
+
+        Returns:
+            - str: string representing the ModelPart object and it's parameters.
+
+        """
+        return f"ModelPart(name={self.name}, parameters={self.parameters.__class__.__name__})"
 
     @property
     def name(self) -> str:
@@ -86,14 +115,39 @@ class ModelPart:
         else:
             return None
 
-    def __repr__(self):
-        """Repr method to provide a human-readable version of the ModelPart object
+    def validate_input(self):
+        """
+        Validate the input of the model part
 
-        Returns:
-            - str: string representing the ModelPart object and it's parameters.
+        Raises:
+            - ValueError: if the geometry of the model part is not defined
+            - ValueError: if the parameters of the model part is not defined
+            - ValueError: if the origin of the moving load is not aligned with the lines of the geometry
+            - ValueError: if the lines of the geometry are not aligned on a path, i.e. \
+            there are loops or branching points
 
         """
-        return f"ModelPart(name={self.name}, parameters={self.parameters.__class__.__name__})"
+        if self.geometry is None:
+            raise ValueError(f"Geometry of model part {self.name} is not defined.")
+
+        if self.parameters is None:
+            raise ValueError(f"Parameters of model part {self.name} is not defined.")
+
+        if isinstance(self.parameters, MovingLoadTypes):
+            # retrieve the coordinates of the points in the path of the load
+            coordinates = []
+            for line in self.geometry.lines.values():
+                line_coords = [self.geometry.points[k].coordinates for k in line.point_ids]
+                coordinates.append(line_coords)
+
+            # check origin of moving load is in the path
+            if not Utils.is_point_aligned_and_between_any_of_points(coordinates, self.parameters.origin):
+                raise ValueError("None of the lines are aligned with the origin of the moving load. Error.")
+            # check that the path provided by geometry is correct (no loops, no branching out
+            # and no discontinuities in the path)
+            if not Utils.check_lines_geometry_are_path(self.geometry):
+                raise ValueError("The lines defined for the moving load are not aligned on a path."
+                                 "Discontinuities or loops/branching points are found.")
 
 
 class BodyModelPart(ModelPart):
@@ -108,8 +162,7 @@ class BodyModelPart(ModelPart):
         - geometry (Optional[:class:`stem.geometry.Geometry`]): geometry of the model part
         - mesh (Optional[:class:`stem.mesh.Mesh`]): mesh of the model part
         - parameters (Dict[str, Any]): dictionary containing the model part parameters
-        - material (Union[:class:`stem.soil_material.SoilMaterial`, \
-            :class:`stem.structural_material.StructuralMaterial`]): material of the model part
+        - material (:class:`Material`): material of the model part
     """
 
     def __init__(self, name: str):
@@ -121,7 +174,7 @@ class BodyModelPart(ModelPart):
         """
         super().__init__(name)
 
-        self.material: Optional[Union[SoilMaterial, StructuralMaterial]] = None
+        self.material: Optional[Material] = None
 
     def get_element_name(self, n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
         """

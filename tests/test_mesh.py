@@ -1,5 +1,8 @@
-import pytest
 from copy import deepcopy
+
+import pytest
+import numpy as np
+import numpy.testing as npt
 
 from stem.mesh import *
 
@@ -401,6 +404,54 @@ class TestMesh:
 
         # Check the equality of the mesh with the non-mesh object
         assert mesh1 != non_mesh_object
+
+    def test_calculate_centroids_multiple_elements(self):
+        """
+        Test the calculation of the centroids of multiple elements.
+
+        """
+
+        # Create a 2D mesh
+        mesh = Mesh(2)
+        mesh.nodes = {
+            1: Node(1, [0, 0, 0]),
+            2: Node(2, [1, 0, 0]),
+            3: Node(3, [0, 1, 0]),
+            4: Node(4, [1, 1, 0]),
+            5: Node(5, [0.5, 0.5, 0])
+        }
+        mesh.elements = {
+            1: Element(1, "TRIANGLE_3N", [1, 5, 2]),
+            2: Element(2, "TRIANGLE_3N", [1, 3, 5]),
+            3: Element(3, "TRIANGLE_3N", [3, 5, 4]),
+            4: Element(4, "TRIANGLE_3N", [2, 5, 4])
+        }
+
+        # Calculate the centroids
+        calculated_centroids = mesh.calculate_centroids()
+
+        expected_centroids = np.array([[0.5, 0.16666667, 0.], [0.16666667, 0.5, 0.], [0.5, 0.83333333, 0.],
+                                       [0.83333333, 0.5, 0.]])
+
+        npt.assert_array_almost_equal(calculated_centroids, expected_centroids)
+
+    def test_calculate_centroids_single_point_element(self):
+        """
+        Test the calculation of the centroids of a single point element.
+
+        """
+
+        # Create a 2D mesh
+        mesh = Mesh(2)
+        mesh.nodes = {1: Node(1, [1, 0, 1])}
+        mesh.elements = {1: Element(1, "POINT_1N", [1])}
+
+        # Calculate the centroids
+        calculated_centroids = mesh.calculate_centroids()
+
+        expected_centroids = np.array([[1, 0, 1]])
+
+        npt.assert_array_almost_equal(calculated_centroids, expected_centroids)
 
 
 class TestMeshSettings:
