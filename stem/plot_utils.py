@@ -74,8 +74,8 @@ class PlotUtils:
         Adds a 2D surface to a plotly graph object figure
 
         Args:
-            - geometry (stem.geometry.Geometry): geometry object
-            - surface (stem.geometry.Surface): surface object
+            - geometry (:class:`stem.geometry.Geometry`): geometry object
+            - surface (:class:`stem.geometry.Surface`): surface object
             - show_surface_ids (bool): flag to show surface ids
             - fig (plotly.graph_objects.Figure): graph object figure to which the surface is added
 
