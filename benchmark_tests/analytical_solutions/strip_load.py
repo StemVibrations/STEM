@@ -7,7 +7,7 @@ class StripLoad:
     Class for solving the strip load problem semi-analytically
 
     A line load is applied to the surface of an elastic half-space dynamically. The solution is based on
-    :cite:`Verruijt_2010`, Chapter 12.2, pg: 312-314
+    :cite:`Verruijt_2010`, Chapter 12.2.2, pg: 311-318
 
     Attributes:
         - young (float): Young's modulus [Pa]
