@@ -102,4 +102,4 @@ The :doc:`stem` documentation.
 
 References
 ==========
-:doc:`bibliography` in ROSE.
+:doc:`bibliography` in STEM.
