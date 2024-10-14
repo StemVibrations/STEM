@@ -99,3 +99,7 @@ Package documentation
 =====================
 
 The :doc:`stem` documentation.
+
+References
+==========
+:doc:`bibliography` in STEM.
