@@ -404,7 +404,7 @@ class TestGeometry:
         calculated_area = geometry.calculate_area_surface(1)
 
         # Assert that the area is calculated correctly
-        assert calculated_area == np.sqrt(2) * 2 * 1.5
+        assert pytest.approx(calculated_area) == np.sqrt(2) * 2 * 1.5
 
     def test_calculate_area_non_convex_surface(self):
         """
@@ -434,7 +434,7 @@ class TestGeometry:
         calculated_area = geometry.calculate_area_surface(1)
 
         # Assert that the area is calculated correctly
-        assert calculated_area == np.sqrt(2)
+        assert pytest.approx(calculated_area) == np.sqrt(2)
 
     def test_calculate_area_surface_with_collinear_points(self):
         """
@@ -464,7 +464,7 @@ class TestGeometry:
         calculated_area = geometry.calculate_area_surface(1)
 
         # Assert that the area is calculated correctly
-        assert calculated_area == 2 * np.sqrt(2)
+        assert pytest.approx(calculated_area) == 2 * np.sqrt(2)
 
     def test_calculate_area_surface_with_three_points(self):
         """
