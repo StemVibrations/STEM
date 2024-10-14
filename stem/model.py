@@ -183,7 +183,7 @@ class Model:
                                                     value=[0, 0, 0])
         no_rotation_model_part.parameters = no_rotation_constraint
 
-        # add contraint geometries to both edges of the rail
+        # add constraint geometries to both edges of the rail
         no_rotation_geo_settings = {rotation_constraint_name: {"coordinates": [rail_global_coords[0], rail_global_coords[-1]], "ndim": 0}}
         self.gmsh_io.generate_geometry(no_rotation_geo_settings, "")
 
