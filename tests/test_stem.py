@@ -82,28 +82,24 @@ class TestStem:
         analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
         solution_type = SolutionType.DYNAMIC
         # Set up start and end time of calculation, time step and etc
-        time_integration = TimeIntegration(
-            start_time=0.0,
-            end_time=0.15,
-            delta_time=0.0025,
-            reduction_factor=1.0,
-            increase_factor=1.0,
-            max_delta_time_factor=1000
-        )
+        time_integration = TimeIntegration(start_time=0.0,
+                                           end_time=0.15,
+                                           delta_time=0.0025,
+                                           reduction_factor=1.0,
+                                           increase_factor=1.0,
+                                           max_delta_time_factor=1000)
         convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-12,
                                                                 displacement_absolute_tolerance=1.0e-6)
         stress_initialisation_type = StressInitialisationType.NONE
-        solver_settings = SolverSettings(
-            analysis_type=analysis_type,
-            solution_type=solution_type,
-            stress_initialisation_type=stress_initialisation_type,
-            time_integration=time_integration,
-            is_stiffness_matrix_constant=True,
-            are_mass_and_damping_constant=True,
-            convergence_criteria=convergence_criterion,
-            rayleigh_k=6e-6,
-            rayleigh_m=0.02
-        )
+        solver_settings = SolverSettings(analysis_type=analysis_type,
+                                         solution_type=solution_type,
+                                         stress_initialisation_type=stress_initialisation_type,
+                                         time_integration=time_integration,
+                                         is_stiffness_matrix_constant=True,
+                                         are_mass_and_damping_constant=True,
+                                         convergence_criteria=convergence_criterion,
+                                         rayleigh_k=6e-6,
+                                         rayleigh_m=0.02)
 
         # Set up problem data
         problem = Problem(problem_name="test_1d_wave_prop_drained_soil", number_of_threads=2, settings=solver_settings)
@@ -114,17 +110,13 @@ class TestStem:
         nodal_results = [NodalOutput.DISPLACEMENT]
 
         # Define the output process
-        model.add_output_settings(
-            output_parameters=VtkOutputParameters(
-                file_format="ascii",
-                output_interval=10,
-                nodal_results=nodal_results,
-                gauss_point_results=[],
-                output_control_type="step"
-            ),
-            output_dir="output",
-            output_name="vtk_output"
-        )
+        model.add_output_settings(output_parameters=VtkOutputParameters(file_format="ascii",
+                                                                        output_interval=10,
+                                                                        nodal_results=nodal_results,
+                                                                        gauss_point_results=[],
+                                                                        output_control_type="step"),
+                                  output_dir="output",
+                                  output_name="vtk_output")
 
         # return the model
         yield model
@@ -706,13 +698,12 @@ class TestStem:
         output_coordinates = [(0, 5, 0), (0.5, 5, 0), (1, 5, 0)]
 
         # add output settings
-        model.add_output_settings_by_coordinates(
-            output_coordinates,
-            part_name="nodal_accelerations",
-            output_name="json_nodal_accelerations",
-            output_dir="output",
-            output_parameters=JsonOutputParameters(output_interval=0.0025 - 1e-10, nodal_results=nodal_results)
-        )
+        model.add_output_settings_by_coordinates(output_coordinates,
+                                                 part_name="nodal_accelerations",
+                                                 output_name="json_nodal_accelerations",
+                                                 output_dir="output",
+                                                 output_parameters=JsonOutputParameters(output_interval=0.0025 - 1e-10,
+                                                                                        nodal_results=nodal_results))
 
         # define the STEM instance
         input_folder = "dir_test/inputs_kratos"
