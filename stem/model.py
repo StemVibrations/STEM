@@ -173,6 +173,24 @@ class Model:
 
         self.process_model_parts.append(constraint_model_part)
 
+        # add no rotation constraint to prevent torsion in 3D
+        if self.ndim == 3:
+            rotation_constraint_name = f"rotation_constraint_{rail_name}"
+
+            no_rotation_model_part = ModelPart(rotation_constraint_name)
+            no_rotation_constraint = RotationConstraint(active=[True, True, True],
+                                                        is_fixed=[True, True, True],
+                                                        value=[0, 0, 0])
+            no_rotation_model_part.parameters = no_rotation_constraint
+
+            # add contraint geometry to 1 edge of the rail
+            no_rotation_geo_settings = {rotation_constraint_name: {"coordinates": [rail_global_coords[0]], "ndim": 0}}
+            self.gmsh_io.generate_geometry(no_rotation_geo_settings, "")
+
+            no_rotation_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rotation_constraint_name)
+
+            self.process_model_parts.append(no_rotation_model_part)
+
     def add_all_layers_from_geo_file(self, geo_file_name: str, body_names: Sequence[str]):
         """
         Add all physical groups from a geo file to the model. The physical groups with the names in body_names are
@@ -508,6 +526,73 @@ class Model:
 
         self.process_model_parts.append(model_part)
 
+    def add_boundary_condition_on_plane(self, plane_vertices: Sequence[Sequence[float]],
+                                        boundary_parameters: BoundaryParametersABC, name: str):
+        """
+        Adds a boundary condition to the model by giving a sequence of 3D coordinates. The boundary condition is added
+        to all the surfaces which fall within the plane.
+
+        Args:
+            - plane_vertices (Sequence[Sequence[float]]): Minimum 3 vertices of the plane.
+            - boundary_parameters (:class:`stem.boundary.BoundaryParametersABC`): The parameters of the boundary
+                condition.
+            - name (str): The name of the boundary condition.
+
+        """
+
+        # get surface ids on the plane
+        surface_ids = self.gmsh_io.get_surface_ids_at_plane(plane_vertices)
+
+        # add physical group to gmsh
+        self.gmsh_io.add_physical_group(name, 2, surface_ids)
+
+        # create model part
+        model_part = ModelPart(name)
+
+        # retrieve geometry from gmsh and add to model part
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
+
+        # add boundary parameters to model part
+        model_part.parameters = boundary_parameters
+
+        model_part.validate_input()
+
+        self.process_model_parts.append(model_part)
+
+    def add_boundary_condition_on_polygon(self, polygon_coordinates: Sequence[Sequence[float]],
+                                          boundary_parameters: BoundaryParametersABC, name: str):
+        """
+        Adds a boundary condition to the model by giving a sequence of 3D coordinates. The boundary condition is added
+        to all the surfaces which fall within the polygon. A surface is considered to be within the polygon if all its
+        points are within the polygon.
+
+        Args:
+            - polygon_coordinates (Sequence[Sequence[float]]): The coordinates of the polygon.
+            - boundary_parameters (:class:`stem.boundary.BoundaryParametersABC`): The parameters of the boundary
+                condition.
+            - name (str): The name of the boundary condition.
+
+        """
+
+        # get surface ids within the polygon
+        surface_ids = self.gmsh_io.get_surface_ids_at_polygon(polygon_coordinates)
+
+        # add physical group to gmsh
+        self.gmsh_io.add_physical_group(name, 2, surface_ids)
+
+        # create model part
+        model_part = ModelPart(name)
+
+        # retrieve geometry from gmsh and add to model part
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
+
+        # add boundary parameters to model part
+        model_part.parameters = boundary_parameters
+
+        model_part.validate_input()
+
+        self.process_model_parts.append(model_part)
+
     def add_output_settings(self,
                             output_parameters: OutputParametersABC,
                             part_name: Optional[str] = None,
@@ -722,6 +807,8 @@ class Model:
         model_part = ModelPart(new_part_name)
 
         model_part.parameters = field_parameters
+
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, new_part_name)
 
         # add the field_parameter part to process model parts
         self.process_model_parts.append(model_part)
@@ -1221,6 +1308,8 @@ class Model:
 
         model_part.parameters = gravity_load
 
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, model_part_name)
+
         # add gravity load to process model parts
         self.process_model_parts.append(model_part)
 
@@ -1433,6 +1522,8 @@ class Model:
             raise ValueError(f"Group name `{group_name}` not found.")
 
         self.gmsh_io.geo_data["physical_groups"][group_name]["element_size"] = element_size
+
+        self.gmsh_io.generate_geo_from_geo_data()
 
     def split_model_part(self, from_model_part_name: str, to_model_part_name: str, geometry_ids: List[int],
                          new_parameters: Union[Material, ProcessParameters]):

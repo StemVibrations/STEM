@@ -248,6 +248,26 @@ class PlotUtils:
                              textposition="middle center"))
 
     @staticmethod
+    def __move_labels_to_front(fig: 'go.Figure'):
+        """
+        Moves the text labels in a plotly graph object figure to the front.
+
+        Args:
+            - fig (plotly.graph_objects.Figure): graph object figure
+
+        """
+
+        label_data = []
+        plot_data = []
+        for data in fig.data:
+            if data.mode == 'text':
+                label_data.append(data)
+            else:
+                plot_data.append(data)
+
+        fig.data = tuple(plot_data + label_data)
+
+    @staticmethod
     def create_geometry_figure(ndim: int,
                                geometry: 'Geometry',
                                show_volume_ids: bool = False,
@@ -279,6 +299,9 @@ class PlotUtils:
             # loop over all surfaces
             for surface in geometry.surfaces.values():
                 PlotUtils.__add_2d_surface_to_plot(geometry, surface, show_surface_ids, fig)
+
+            # reorder data such that all text labels are shown
+            PlotUtils.__move_labels_to_front(fig)
 
         elif ndim == 3:
 
