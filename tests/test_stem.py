@@ -1,22 +1,41 @@
-from pathlib import Path
-from unittest.mock import MagicMock
+import json
+import os
 from copy import deepcopy
+from pathlib import Path
+from shutil import rmtree
+from unittest.mock import MagicMock
 
 import KratosMultiphysics
+import numpy.testing as npt
+import pytest
 from gmsh_utils import gmsh_IO
 
-import pytest
-
-from stem.stem import Stem
-from stem.model import Model
-from stem.soil_material import SoilMaterial, OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
-from stem.load import LineLoad
 from stem.boundary import DisplacementConstraint
-from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
-                         StressInitialisationType, SolverSettings, Problem)
-from stem.output import NodalOutput, VtkOutputParameters, GiDOutputParameters, JsonOutputParameters
 from stem.IO.kratos_io import KratosIO
-
+from stem.load import LineLoad
+from stem.model import Model
+from stem.output import (
+    GiDOutputParameters,
+    JsonOutputParameters,
+    NodalOutput,
+    VtkOutputParameters,
+)
+from stem.soil_material import (
+    LinearElasticSoil,
+    OnePhaseSoil,
+    SaturatedBelowPhreaticLevelLaw,
+    SoilMaterial,
+)
+from stem.solver import (
+    AnalysisType,
+    DisplacementConvergenceCriteria,
+    Problem,
+    SolutionType,
+    SolverSettings,
+    StressInitialisationType,
+    TimeIntegration,
+)
+from stem.stem import Stem
 from tests.utils import TestUtils
 
 
@@ -80,27 +99,37 @@ class TestStem:
         analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
         solution_type = SolutionType.DYNAMIC
         # Set up start and end time of calculation, time step and etc
-        time_integration = TimeIntegration(start_time=0.0,
-                                           end_time=0.15,
-                                           delta_time=0.0025,
-                                           reduction_factor=1.0,
-                                           increase_factor=1.0,
-                                           max_delta_time_factor=1000)
-        convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0E-12,
-                                                                displacement_absolute_tolerance=1.0E-6)
+        time_integration = TimeIntegration(
+            start_time=0.0,
+            end_time=0.15,
+            delta_time=0.0025,
+            reduction_factor=1.0,
+            increase_factor=1.0,
+            max_delta_time_factor=1000,
+        )
+        convergence_criterion = DisplacementConvergenceCriteria(
+            displacement_relative_tolerance=1.0e-12,
+            displacement_absolute_tolerance=1.0e-6,
+        )
         stress_initialisation_type = StressInitialisationType.NONE
-        solver_settings = SolverSettings(analysis_type=analysis_type,
-                                         solution_type=solution_type,
-                                         stress_initialisation_type=stress_initialisation_type,
-                                         time_integration=time_integration,
-                                         is_stiffness_matrix_constant=True,
-                                         are_mass_and_damping_constant=True,
-                                         convergence_criteria=convergence_criterion,
-                                         rayleigh_k=6e-6,
-                                         rayleigh_m=0.02)
+        solver_settings = SolverSettings(
+            analysis_type=analysis_type,
+            solution_type=solution_type,
+            stress_initialisation_type=stress_initialisation_type,
+            time_integration=time_integration,
+            is_stiffness_matrix_constant=True,
+            are_mass_and_damping_constant=True,
+            convergence_criteria=convergence_criterion,
+            rayleigh_k=6e-6,
+            rayleigh_m=0.02,
+        )
 
         # Set up problem data
-        problem = Problem(problem_name="test_1d_wave_prop_drained_soil", number_of_threads=2, settings=solver_settings)
+        problem = Problem(
+            problem_name="test_1d_wave_prop_drained_soil",
+            number_of_threads=2,
+            settings=solver_settings,
+        )
         model.project_parameters = problem
 
         # Define the results to be written to the output file
@@ -108,13 +137,17 @@ class TestStem:
         nodal_results = [NodalOutput.DISPLACEMENT]
 
         # Define the output process
-        model.add_output_settings(output_parameters=VtkOutputParameters(file_format="ascii",
-                                                                        output_interval=10,
-                                                                        nodal_results=nodal_results,
-                                                                        gauss_point_results=[],
-                                                                        output_control_type="step"),
-                                  output_dir="output",
-                                  output_name="vtk_output")
+        model.add_output_settings(
+            output_parameters=VtkOutputParameters(
+                file_format="ascii",
+                output_interval=10,
+                nodal_results=nodal_results,
+                gauss_point_results=[],
+                output_control_type="step",
+            ),
+            output_dir="output",
+            output_name="vtk_output",
+        )
 
         # return the model
         yield model
@@ -221,9 +254,11 @@ class TestStem:
         # change the coordinates of the body model part such that a different mesh is generated
         stage3.gmsh_io.geo_data["points"][2] = [10, 10, 0]
         # Check if ValueError is raised
-        with pytest.raises(Exception,
-                           match="Meshes between stages in body model part: "
-                           "soil_column are not the same between stages"):
+        with pytest.raises(
+                Exception,
+                match="Meshes between stages in body model part: "
+                "soil_column are not the same between stages",
+        ):
             stem.add_calculation_stage(stage3)
 
     def test_validate_latest_stage(self, create_default_model: Model):
@@ -260,7 +295,10 @@ class TestStem:
         stage3.body_model_parts.append("new_part")
 
         # check if ValueError is raised
-        with pytest.raises(Exception, match="Number of body model parts are not the same between stages"):
+        with pytest.raises(
+                Exception,
+                match="Number of body model parts are not the same between stages",
+        ):
             stem.validate_latest_stage()
 
         stage3 = deepcopy(create_default_model)
@@ -273,7 +311,10 @@ class TestStem:
         stage3.process_model_parts.append("new_part")
 
         # check if ValueError is raised
-        with pytest.raises(Exception, match="Number of process model parts are not the same between stages"):
+        with pytest.raises(
+                Exception,
+                match="Number of process model parts are not the same between stages",
+        ):
             stem.validate_latest_stage()
 
     def test_write_all_input_files(self, create_default_model: Model):
@@ -285,7 +326,7 @@ class TestStem:
             - create_default_model (:class:`stem.model.Model`): The default model
 
         """
-        input_folder = "tests/test_data/generated_input/test_generate_write_all_input_files"
+        input_folder = ("tests/test_data/generated_input/test_generate_write_all_input_files")
         stem = Stem(initial_stage=create_default_model, input_files_dir=input_folder)
         stage2 = deepcopy(create_default_model)
         stem.add_calculation_stage(stage2)
@@ -420,6 +461,37 @@ class TestStem:
         # check if finalise is called
         stem.finalise.assert_called_once()
 
+    def test_finalise_stages(self, create_default_model: Model):
+        """
+        Test the run_calculation method of the Stem class with valid stages. It checks if the run_stage method is called
+        for each stage and if the finalise method is called at the end.
+
+        Args:
+            - create_default_model (:class:`stem.model.Model`): The default model
+
+        """
+
+        stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
+        stage2 = deepcopy(create_default_model)
+        stem.add_calculation_stage(stage2)
+
+        # mock the methods
+        stem.run_stage = MagicMock()
+        stem.finalise = MagicMock()
+
+        # run the calculation
+        stem.run_calculation()
+
+        # check if the run_stage method is called twice
+        assert stem.run_stage.call_count == 2
+
+        # check if correct arguments are passed to the run_stage method
+        assert stem.run_stage.call_args_list[0][0][0] == 1
+        assert stem.run_stage.call_args_list[1][0][0] == 2
+
+        # check if finalise is called
+        stem.finalise.assert_called_once()
+
     def test_check_mesh_between_stages_same(self, create_default_model: Model):
         """
         Test the __check_if_mesh_between_stages_is_the_same method of the Stem class. It checks if the method does not
@@ -443,7 +515,10 @@ class TestStem:
         stage2.body_model_parts.append("new_part")
         stem.stages[1] = stage2
 
-        with pytest.raises(Exception, match="Number of body model parts are not the same between stages"):
+        with pytest.raises(
+                Exception,
+                match="Number of body model parts are not the same between stages",
+        ):
             stem._Stem__check_if_mesh_between_stages_is_the_same(stem.stages[0], stem.stages[1])
 
         # create a stage with a different name of the body model part and check if an exception is raised
@@ -460,9 +535,11 @@ class TestStem:
         stem.stages[1] = stage2
 
         # check if exception is raised correctly
-        with pytest.raises(Exception,
-                           match="Meshes between stages in body model part: "
-                           "soil_column are not the same between stages"):
+        with pytest.raises(
+                Exception,
+                match="Meshes between stages in body model part: "
+                "soil_column are not the same between stages",
+        ):
             stem._Stem__check_if_mesh_between_stages_is_the_same(stem.stages[0], stem.stages[1])
 
     def test_transfer_vtk_files_to_main_output_directories_single_stage(self, create_default_model: Model):
@@ -585,3 +662,121 @@ class TestStem:
 
         # check if the output name is set correctly
         assert new_stage.output_settings[0].output_name == "json_output_stage_3"
+
+    def test_finalise_stage_json_output(self):
+        """
+        Test the finalise method of the Stem class with JsonOutputParameters and checks the order of the keys in the dictioary.
+        """
+
+        ndim = 2
+        model = Model(ndim)
+
+        DENSITY_SOLID = 2700
+        POROSITY = 0.3
+        YOUNG_MODULUS = 50e6
+        POISSON_RATIO = 0.3
+        soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
+        constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=YOUNG_MODULUS, POISSON_RATIO=POISSON_RATIO)
+        retention_parameters1 = SaturatedBelowPhreaticLevelLaw()
+        material1 = SoilMaterial("soil", soil_formulation1, constitutive_law1, retention_parameters1)
+
+        # Specify the coordinates for the column: x:1m x y:10m
+        layer1_coordinates = [(0, 0, 0), (1, 0, 0), (1, 10, 0), (0, 10, 0)]
+
+        # Create the soil layer
+        model.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil_column")
+
+        # Boundary conditions and Loads
+        load_coordinates = [(0.0, 10.0, 0), (1.0, 10.0, 0)]
+
+        # Add line load
+        line_load = LineLoad(active=[False, True, False], value=[0, -1000, 0])
+        model.add_load_by_coordinates(load_coordinates, line_load, "load")
+
+        # Define boundary conditions
+        no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+                                                            is_fixed=[True, True, True],
+                                                            value=[0, 0, 0])
+
+        # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
+        model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "base_fixed")
+
+        # Set mesh size
+        # --------------------------------
+        model.set_mesh_size(element_size=1)
+
+        # Define project parameters
+        # --------------------------------
+
+        # Set up solver settings
+        analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
+        solution_type = SolutionType.DYNAMIC
+        # Set up start and end time of calculation, time step and etc
+        time_integration = TimeIntegration(
+            start_time=0.0,
+            end_time=0.005,
+            delta_time=0.0025,
+            reduction_factor=1.0,
+            increase_factor=1.0,
+            max_delta_time_factor=1000,
+        )
+        convergence_criterion = DisplacementConvergenceCriteria(
+            displacement_relative_tolerance=1.0e-12,
+            displacement_absolute_tolerance=1.0e-6,
+        )
+        stress_initialisation_type = StressInitialisationType.NONE
+        solver_settings = SolverSettings(
+            analysis_type=analysis_type,
+            solution_type=solution_type,
+            stress_initialisation_type=stress_initialisation_type,
+            time_integration=time_integration,
+            is_stiffness_matrix_constant=True,
+            are_mass_and_damping_constant=True,
+            convergence_criteria=convergence_criterion,
+            rayleigh_k=6e-6,
+            rayleigh_m=0.02,
+        )
+
+        # Set up problem data
+        problem = Problem(
+            problem_name="test_nodal_output_json",
+            number_of_threads=2,
+            settings=solver_settings,
+        )
+        model.project_parameters = problem
+
+        # Define the results to be written to the output file
+        # Nodal results
+        nodal_results = [NodalOutput.ACCELERATION]
+        # Define output coordinates
+        output_coordinates = [(0, 5, 0), (0.5, 5, 0), (1, 5, 0)]
+
+        # add output settings
+        model.add_output_settings_by_coordinates(
+            output_coordinates,
+            part_name="nodal_accelerations",
+            output_name="json_nodal_accelerations",
+            output_dir="output",
+            output_parameters=JsonOutputParameters(output_interval=0.0025 - 1e-10, nodal_results=nodal_results),
+        )
+
+        # define the STEM instance
+        input_folder = "dir_test/inputs_kratos"
+        stem = Stem(model, input_folder)
+
+        stem.write_all_input_files()
+
+        # Run Kratos calculation
+        # --------------------------------
+        stem.run_calculation()
+
+        # open produced dictionary
+        with open(os.path.join(input_folder, "output/json_nodal_accelerations.json"), "r") as inputfile:
+            data_output_json = json.load(inputfile)
+
+        # assert that the orders of the keys is as expected
+        actual_keys_json = list(data_output_json.keys())
+        expected_keys_json = ["TIME", "NODE_5", "NODE_6", "NODE_7"]
+        npt.assert_array_equal(actual_keys_json, expected_keys_json)
+
+        rmtree("dir_test")
