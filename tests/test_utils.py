@@ -549,6 +549,10 @@ class TestUtilsStem:
         with pytest.raises(ValueError, match="Start peak should be smaller than end peak."):
             Utils.create_box_tiny_expr(transition_parameter, end_peak, start_peak, peak_value, base_value)
 
+        # check if error is raised when variable name is not allowed
+        with pytest.raises(ValueError, match="Variable should be either 'x', 'y', 'z' or 't'."):
+            Utils.create_box_tiny_expr(transition_parameter, start_peak, end_peak, peak_value, base_value, "14")
+
     def test_check_lines_geometry_are_path(self):
         """
         Tests that the lines in a geometry are connected and aligned along one path (no branching)

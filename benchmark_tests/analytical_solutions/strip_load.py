@@ -6,8 +6,8 @@ class StripLoad:
     """
     Class for solving the strip load problem semi-analytically
 
-    A line load is applied to the surface of an elastic half-space dynamically. The solution is based on the following
-    publication: An Introduction to Soil Dynamics , Verruijt A., 2009, Delft University of Technology, Chapter 12.2
+    A line load is applied to the surface of an elastic half-space dynamically. The solution is based on
+    :cite:`Verruijt_2010`, Chapter 12.2.2, pg: 311-318
 
     Attributes:
         - young (float): Young's modulus [Pa]
@@ -358,10 +358,10 @@ class StripLoad:
 if __name__ == '__main__':
 
     import matplotlib.pyplot as plt
-    youngs_modulus = 2.55e3 * 36
-    poisson_ratio = 0.25
+    youngs_modulus = 4000
+    poisson_ratio = 0.0
     porosity = 0.0
-    density_solid = 1020
+    density_solid = 2000
 
     line_load_length = 1
     load_value = -1000
@@ -370,11 +370,11 @@ if __name__ == '__main__':
     strip_load = StripLoad(youngs_modulus, poisson_ratio, (1 - porosity) * density_solid, load_value)
 
     # time to calculate the vertical stress at
-    end_time = 1
+    end_time = 10
 
     # x coordinates
     start_x = 0
-    end_x = 10
+    end_x = 20
     n_steps = 300
     x_coordinates = [start_x + (end_x - start_x) * i / n_steps for i in range(n_steps)]
 
@@ -386,7 +386,11 @@ if __name__ == '__main__':
         strip_load.calculate_vertical_stress(x, depth, end_time, line_load_length, load_value) for x in x_coordinates
     ]
 
-    # plot vertical stress
-    plt.plot(x_coordinates, all_sigma_zz)
+    # plot vertical stress: Figure 12.14 in Verruijt
+    plt.plot([i / line_load_length for i in x_coordinates], [i / -load_value for i in all_sigma_zz])
+    plt.xlabel('Normalised distance [-]')
+    plt.ylabel('Normalised vertical stress [-]')
+    plt.ylim(-1, 1)
+    plt.xlim(0, 20)
     plt.grid()
     plt.show()

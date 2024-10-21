@@ -62,8 +62,8 @@ class OnePhaseSoil(SoilFormulationParametersABC):
         - POROSITY (float): The porosity of the soil [-].
         - BULK_MODULUS_SOLID (float): The bulk modulus of the solid material [Pa].
         - BIOT_COEFFICIENT (Optional[float]): The Biot coefficient [-].
-        - RAYLEIGH_M (Optional[float]): Mass proportional rayleigh damping parameter [-].
-        - RAYLEIGH_K (Optional[float]): Stiffness proportional rayleigh damping parameter [-].
+        - RAYLEIGH_M (Optional[float]): Mass proportional Rayleigh damping parameter [-].
+        - RAYLEIGH_K (Optional[float]): Stiffness proportional Rayleigh damping parameter [-].
     """
     IS_DRAINED: bool
     DENSITY_SOLID: float
