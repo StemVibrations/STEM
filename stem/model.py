@@ -173,6 +173,29 @@ class Model:
 
         self.process_model_parts.append(constraint_model_part)
 
+        # add no rotation constraint at the rail ends for a more realistic boundary in 2D and 3D and to prevent torsion
+        # in 3D
+        rotation_constraint_name = f"rotation_constraint_{rail_name}"
+
+        no_rotation_model_part = ModelPart(rotation_constraint_name)
+        no_rotation_constraint = RotationConstraint(active=[True, True, True],
+                                                    is_fixed=[True, True, True],
+                                                    value=[0, 0, 0])
+        no_rotation_model_part.parameters = no_rotation_constraint
+
+        # add constraint geometries to both edges of the rail
+        no_rotation_geo_settings = {
+            rotation_constraint_name: {
+                "coordinates": [rail_global_coords[0], rail_global_coords[-1]],
+                "ndim": 0
+            }
+        }
+        self.gmsh_io.generate_geometry(no_rotation_geo_settings, "")
+
+        no_rotation_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rotation_constraint_name)
+
+        self.process_model_parts.append(no_rotation_model_part)
+
     def add_all_layers_from_geo_file(self, geo_file_name: str, body_names: Sequence[str]):
         """
         Add all physical groups from a geo file to the model. The physical groups with the names in body_names are
@@ -723,6 +746,8 @@ class Model:
 
         model_part.parameters = field_parameters
 
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, new_part_name)
+
         # add the field_parameter part to process model parts
         self.process_model_parts.append(model_part)
 
@@ -1221,6 +1246,8 @@ class Model:
 
         model_part.parameters = gravity_load
 
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, model_part_name)
+
         # add gravity load to process model parts
         self.process_model_parts.append(model_part)
 
@@ -1433,6 +1460,8 @@ class Model:
             raise ValueError(f"Group name `{group_name}` not found.")
 
         self.gmsh_io.geo_data["physical_groups"][group_name]["element_size"] = element_size
+
+        self.gmsh_io.generate_geo_from_geo_data()
 
     def split_model_part(self, from_model_part_name: str, to_model_part_name: str, geometry_ids: List[int],
                          new_parameters: Union[Material, ProcessParameters]):
