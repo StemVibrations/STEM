@@ -1,0 +1,5 @@
+Layer;G;nu;rho;damping;thickness;radius;Direction
+Force;-;-;-;-;-;0.25;V
+Layer1;5000000.0;0.3;1855.0;0.05;1.5;-;-
+Layer2;10000000.0;0.25;1855.0;0.05;1;-;-
+halfspace;200000000.0;0.33;1602.0;0.05;inf;-;-
