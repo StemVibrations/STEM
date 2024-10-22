@@ -6,14 +6,9 @@ from typing import Sequence, Tuple, get_args, Set, Optional, List, Dict, Any, Un
 from gmsh_utils import gmsh_IO
 
 from stem.additional_processes import ParameterFieldParameters
-from stem.boundary import *
 from stem.field_generator import RandomFieldGenerator
-from stem.geometry import Geometry
 from stem.globals import ELEMENT_DATA, OUT_OF_PLANE_AXIS_2D, VERTICAL_AXIS, GRAVITY_VALUE
 from stem.load import *
-from stem.model_part import ModelPart, BodyModelPart, Material, ProcessParameters
-from stem.soil_material import *
-from stem.structural_material import *
 from stem.boundary import *
 from stem.geometry import Geometry, Point
 from stem.mesh import Mesh, MeshSettings, Node, Element
