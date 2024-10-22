@@ -15,7 +15,7 @@ from stem.solver import AnalysisType, SolutionType, TimeIntegration, Displacemen
     NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
 from stem.output import NodalOutput, Output, VtkOutputParameters, JsonOutputParameters
 from stem.stem import Stem
-from benchmark_tests.utils import assert_floats_in_directories_almost_equal
+from benchmark_tests.utils import assert_files_equal
 
 
 def test_moving_load_on_extended_track():
@@ -175,4 +175,8 @@ def test_moving_load_on_extended_track():
     assert np.any(np.array([node['DISPLACEMENT_Y'] for node in nodes]) != 0)
     assert np.all(np.array([node['DISPLACEMENT_Z'] for node in nodes]) == 0)
 
+    result = assert_files_equal("benchmark_tests/test_extended_beam/output_/output_vtk_porous_computational_model_part",
+                                os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
+
+    assert result is True
     rmtree(input_folder)
