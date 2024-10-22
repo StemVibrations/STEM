@@ -17,7 +17,13 @@ from stem.output import NodalOutput, Output, VtkOutputParameters, JsonOutputPara
 from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
 
+IS_LINUX = sys.platform == "linux"
 
+
+@pytest.mark.skipif(IS_LINUX,
+                    reason="The 3D random field samples different values for linux and windows, "
+                    "because the mesh is slightly different. See also the test for mdpa_file in "
+                    "3d in test_kratos_io.py.")
 def test_moving_load_on_extended_track():
     ndim = 3
     model = Model(ndim)
@@ -174,6 +180,7 @@ def test_moving_load_on_extended_track():
     assert np.all(np.array([node['DISPLACEMENT_X'] for node in nodes]) == 0)
     assert np.any(np.array([node['DISPLACEMENT_Y'] for node in nodes]) != 0)
     assert np.all(np.array([node['DISPLACEMENT_Z'] for node in nodes]) == 0)
+
 
     result = assert_files_equal("benchmark_tests/test_extended_beam/output_/output_vtk_porous_computational_model_part",
                                 os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
