@@ -7,7 +7,7 @@ from stem.load import SurfaceLoad
 from stem.boundary import AbsorbingBoundary
 from stem.boundary import DisplacementConstraint
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
-    NewtonRaphsonStrategy, StressInitialisationType, SolverSettings, Problem
+    NewtonRaphsonStrategy, StressInitialisationType, SolverSettings, Problem, Amgcl
 from stem.output import NodalOutput, GaussPointOutput, VtkOutputParameters, Output
 from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
@@ -86,10 +86,13 @@ def test_stem():
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
                                                             displacement_absolute_tolerance=1.0e-9)
     stress_initialisation_type = StressInitialisationType.NONE
+
+    linear_solver = Amgcl(krylov_type="gmres")
     solver_settings = SolverSettings(analysis_type=analysis_type,
                                      solution_type=solution_type,
                                      stress_initialisation_type=stress_initialisation_type,
                                      time_integration=time_integration,
+                                     linear_solver_settings=linear_solver,
                                      is_stiffness_matrix_constant=True,
                                      are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,

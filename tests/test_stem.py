@@ -1,22 +1,25 @@
+import json
+import os
+from copy import deepcopy
 from pathlib import Path
+from shutil import rmtree
 from unittest.mock import MagicMock
 from copy import deepcopy
 
 import KratosMultiphysics
+import numpy.testing as npt
+import pytest
 from gmsh_utils import gmsh_IO
 
-import pytest
-
-from stem.stem import Stem
-from stem.model import Model
-from stem.soil_material import SoilMaterial, OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
-from stem.load import LineLoad
 from stem.boundary import DisplacementConstraint
-from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
-                         StressInitialisationType, SolverSettings, Problem)
-from stem.output import NodalOutput, VtkOutputParameters, GiDOutputParameters, JsonOutputParameters
 from stem.IO.kratos_io import KratosIO
-
+from stem.load import LineLoad
+from stem.model import Model
+from stem.output import GiDOutputParameters, JsonOutputParameters, NodalOutput, VtkOutputParameters
+from stem.soil_material import LinearElasticSoil, OnePhaseSoil, SaturatedBelowPhreaticLevelLaw, SoilMaterial
+from stem.solver import (AnalysisType, DisplacementConvergenceCriteria, Problem, SolutionType, SolverSettings,
+                         StressInitialisationType, TimeIntegration)
+from stem.stem import Stem
 from tests.utils import TestUtils
 
 
@@ -86,8 +89,8 @@ class TestStem:
                                            reduction_factor=1.0,
                                            increase_factor=1.0,
                                            max_delta_time_factor=1000)
-        convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0E-12,
-                                                                displacement_absolute_tolerance=1.0E-6)
+        convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-12,
+                                                                displacement_absolute_tolerance=1.0e-6)
         stress_initialisation_type = StressInitialisationType.NONE
         solver_settings = SolverSettings(analysis_type=analysis_type,
                                          solution_type=solution_type,
@@ -420,6 +423,37 @@ class TestStem:
         # check if finalise is called
         stem.finalise.assert_called_once()
 
+    def test_finalise_stages(self, create_default_model: Model):
+        """
+        Test the run_calculation method of the Stem class with valid stages. It checks if the run_stage method is called
+        for each stage and if the finalise method is called at the end.
+
+        Args:
+            - create_default_model (:class:`stem.model.Model`): The default model
+
+        """
+
+        stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
+        stage2 = deepcopy(create_default_model)
+        stem.add_calculation_stage(stage2)
+
+        # mock the methods
+        stem.run_stage = MagicMock()
+        stem.finalise = MagicMock()
+
+        # run the calculation
+        stem.run_calculation()
+
+        # check if the run_stage method is called twice
+        assert stem.run_stage.call_count == 2
+
+        # check if correct arguments are passed to the run_stage method
+        assert stem.run_stage.call_args_list[0][0][0] == 1
+        assert stem.run_stage.call_args_list[1][0][0] == 2
+
+        # check if finalise is called
+        stem.finalise.assert_called_once()
+
     def test_check_mesh_between_stages_same(self, create_default_model: Model):
         """
         Test the __check_if_mesh_between_stages_is_the_same method of the Stem class. It checks if the method does not
@@ -585,3 +619,351 @@ class TestStem:
 
         # check if the output name is set correctly
         assert new_stage.output_settings[0].output_name == "json_output_stage_3"
+
+    def test_transfer_vtk_files_to_main_both_stages_exist(self, create_default_model: Model):
+        """
+        In this test we simulate the case that both directories of the output of the stages exist. We create vtk files
+        in both directories and check that the files are moved to the main output directory.
+
+        Args:
+            - create_default_model (:class:`stem.model.Model`): The default model
+        """
+        # set stage 1
+        stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
+        # set stage 2
+        new_stage = deepcopy(create_default_model)
+        # set the output parameters of the new stage
+        stem.stages.append(new_stage)
+        stem._Stem__set_output_name_new_stage(new_stage, 2)
+        # write all input files
+        stem.write_all_input_files()
+        vtk_dir_stage_1 = Path("input_files/output/output_vtk_full_model")
+        vtk_dir_stage_2 = Path("input_files/output/output_vtk_full_model_stage_2")
+        # create vtk files in the output directories
+        vtk_dir_stage_1.mkdir(parents=True, exist_ok=True)
+        vtk_dir_stage_2.mkdir(parents=True, exist_ok=True)
+        vtk_file_stage_1 = vtk_dir_stage_1 / "PorousDomain_1.vtk"
+        vtk_file_stage_2 = vtk_dir_stage_2 / "PorousDomain_2.vtk"
+        # create vtk files
+        vtk_file_stage_1.touch()
+        vtk_file_stage_2.touch()
+        # run the method
+        stem._Stem__transfer_vtk_files_to_main_output_directories()
+        # check that 1 directory is removed and the other is not
+        assert not vtk_dir_stage_2.is_dir()
+        assert vtk_dir_stage_1.is_dir()
+        # files are moved in the main directory
+        assert not vtk_file_stage_2.is_file()
+        assert vtk_file_stage_1.is_file()
+        assert (vtk_dir_stage_1 / "PorousDomain_2.vtk").is_file()
+        # cleanup
+        TestUtils.clean_test_directory(Path("input_files"))
+
+    def test_transfer_vtk_files_to_main_stage_1_missing(self, create_default_model: Model):
+        """
+        In this test we simulate the case that the directory of the output of the first stage does not exist. We create
+        no vtk files in the second directory and check that the files are not moved to the main output directory.
+
+        Args:
+            - create_default_model (:class:`stem.model.Model`): The default model
+        """
+        # set stage 1
+        stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
+        # set stage 2
+        new_stage = deepcopy(create_default_model)
+        # set the output parameters of the new stage
+        stem.stages.append(new_stage)
+        stem._Stem__set_output_name_new_stage(new_stage, 2)
+        # write all input files
+        stem.write_all_input_files()
+        # full path to the output directories
+        vtk_dir_stage_1 = Path("input_files/output/output_vtk_full_model")
+        vtk_dir_stage_2 = Path("input_files/output/output_vtk_full_model_stage_2")
+        # create vtk files in the output directories
+        vtk_dir_stage_2.mkdir(parents=True, exist_ok=True)
+        vtk_file_stage_2 = vtk_dir_stage_2 / "PorousDomain_2.vtk"
+        # create vtk files
+        vtk_file_stage_2.touch()
+        # run the method
+        stem._Stem__transfer_vtk_files_to_main_output_directories()
+        # check that 1 directory is removed and the other is not
+        assert not vtk_dir_stage_2.is_dir()
+        assert vtk_dir_stage_1.is_dir()
+        # files are moved in the main directory
+        assert not vtk_file_stage_2.is_file()
+        assert (vtk_dir_stage_1 / "PorousDomain_2.vtk").is_file()
+        # cleanup
+        TestUtils.clean_test_directory(Path("input_files"))
+
+    def test_transfer_vtk_files_to_main_stage_2_missing(self, create_default_model: Model):
+        """
+        In this test we simulate the case that the directory of the output of the second stage does not exist. We create
+        no vtk files in the first directory and check that the files are not moved to the main output directory.
+
+        Args:
+            - create_default_model (:class:`stem.model.Model`): The default model
+        """
+        # set stage 1
+        stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
+        # set stage 2
+        new_stage = deepcopy(create_default_model)
+        # set the output parameters of the new stage
+        stem.stages.append(new_stage)
+        stem._Stem__set_output_name_new_stage(new_stage, 2)
+        # write all input files
+        stem.write_all_input_files()
+        vtk_dir_stage_1 = Path("input_files/output/output_vtk_full_model")
+        vtk_dir_stage_2 = Path("input_files/output/output_vtk_full_model_stage_2")
+        # create vtk files in the output directories
+        vtk_dir_stage_1.mkdir(parents=True, exist_ok=True)
+        vtk_dir_stage_2.mkdir(parents=True, exist_ok=True)
+        vtk_file_stage_1 = vtk_dir_stage_1 / "PorousDomain_1.vtk"
+        # create vtk files
+        vtk_file_stage_1.touch()
+        # run the method
+        stem._Stem__transfer_vtk_files_to_main_output_directories()
+        # check that 1 directory is removed and the other is not
+        assert vtk_dir_stage_1.is_dir()
+        assert not vtk_dir_stage_2.is_dir()
+        assert vtk_file_stage_1.is_file()
+        # cleanup
+        TestUtils.clean_test_directory(Path("input_files"))
+
+    def test_transfer_vtk_files_to_main_all_missing(self, create_default_model: Model):
+        """
+        In this test we simulate the case that the directories of the output of both stages do not exist. We create no
+        vtk files in the directories and check that the files are not moved to the main output directory.
+
+        Args:
+            - create_default_model (:class:`stem.model.Model`): The default model
+
+        """
+        # set stage 1
+        stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
+        # set stage 2
+        new_stage = deepcopy(create_default_model)
+        # set the output parameters of the new stage
+        stem.stages.append(new_stage)
+        stem._Stem__set_output_name_new_stage(new_stage, 2)
+        # write all input files
+        stem.write_all_input_files()
+        vtk_dir_stage_1 = Path("input_files/output/output_vtk_full_model")
+        vtk_dir_stage_2 = Path("input_files/output/output_vtk_full_model_stage_2")
+        # create vtk files in the output directories
+        vtk_dir_stage_1.mkdir(parents=True, exist_ok=True)
+        vtk_dir_stage_2.mkdir(parents=True, exist_ok=True)
+        # run the method
+        stem._Stem__transfer_vtk_files_to_main_output_directories()
+        # check that 1 directory is removed and the other is not
+        assert vtk_dir_stage_1.is_dir()
+        assert not vtk_dir_stage_2.is_dir()
+        # cleanup
+        TestUtils.clean_test_directory(Path("input_files"))
+
+    def test_transfer_vtk_files_to_main_part_absolute_path(self, create_default_model: Model):
+        """
+        In this test we simulate the case that the directories of the output of both stages do exist but they are
+        absolute paths. We create vtk files in the directories and check that the files are moved to the main output
+        directory.
+
+        Args:
+            - create_default_model (:class:`stem.model.Model`): The default model
+
+        """
+        # set stage 1
+        stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
+        # set stage 2
+        new_stage = deepcopy(create_default_model)
+        # set the output parameters of the new stage
+        stem.stages.append(new_stage)
+        stem._Stem__set_output_name_new_stage(new_stage, 2)
+        # get the absolute path of the output directories
+        if "input_files" in str(stem.stages[0].output_settings[0].output_dir):
+            stem.stages[0].output_settings[0].output_dir = (Path(
+                stem.stages[0].output_settings[0].output_dir).absolute())
+        elif "input_files" in str(stem.stages[1].output_settings[0].output_dir):
+            stem.stages[1].output_settings[0].output_dir = (Path(
+                stem.stages[1].output_settings[0].output_dir).absolute())
+        else:
+            stem.stages[0].output_settings[0].output_dir = (Path(
+                "input_files", stem.stages[0].output_settings[0].output_dir).absolute())
+            stem.stages[1].output_settings[0].output_dir = (Path(
+                "input_files", stem.stages[1].output_settings[0].output_dir).absolute())
+        # write all input files
+        stem.write_all_input_files()
+        vtk_dir_stage_1 = Path("input_files/output/output_vtk_full_model")
+        vtk_dir_stage_2 = Path("input_files/output/output_vtk_full_model_stage_2")
+        # create vtk files in the output directories
+        vtk_dir_stage_1.mkdir(parents=True, exist_ok=True)
+        vtk_dir_stage_2.mkdir(parents=True, exist_ok=True)
+        # run the method
+        stem._Stem__transfer_vtk_files_to_main_output_directories()
+        # check that 1 directory is removed and the other is not
+        assert vtk_dir_stage_1.is_dir()
+        assert not vtk_dir_stage_2.is_dir()
+        # cleanup
+        TestUtils.clean_test_directory(Path("input_files"))
+
+    def test_transfer_vtk_files_to_main_both_stages_exist_timesteps(self, create_default_model: Model):
+        """
+        In this test we simulate the case that both directories of the output of the stages exist. We create vtk files
+        in both directories and check that the files are moved to the main output directory. In this case the vtk
+        output control type is set to timesteps.
+
+        Args:
+            - create_default_model (:class:`stem.model.Model`): The default model
+        """
+        # set stage 1
+        stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
+        # set stage 2
+        new_stage = deepcopy(create_default_model)
+        # set the output parameters of the new stage
+        stem.stages.append(new_stage)
+        stem._Stem__set_output_name_new_stage(new_stage, 2)
+        # change the control type to timesteps
+        stem.stages[0].output_settings[0].output_parameters.output_control_type = "time"
+        stem.stages[1].output_settings[0].output_parameters.output_control_type = "time"
+        stem.stages[0].output_settings[0].output_parameters.output_interval = 0.15
+        stem.stages[1].output_settings[0].output_parameters.output_interval = 0.15
+        # write all input files
+        stem.write_all_input_files()
+        vtk_dir_stage_1 = Path("input_files/output/output_vtk_full_model")
+        vtk_dir_stage_2 = Path("input_files/output/output_vtk_full_model_stage_2")
+        # create vtk files in the output directories
+        vtk_dir_stage_1.mkdir(parents=True, exist_ok=True)
+        vtk_dir_stage_2.mkdir(parents=True, exist_ok=True)
+        vtk_file_stage_1 = vtk_dir_stage_1 / "PorousDomain_1.vtk"
+        vtk_file_stage_2 = vtk_dir_stage_2 / "PorousDomain_2.vtk"
+        # create vtk files
+        vtk_file_stage_1.touch()
+        vtk_file_stage_2.touch()
+        # run the method
+        stem._Stem__transfer_vtk_files_to_main_output_directories()
+        # check that 1 directory is removed and the other is not
+        assert not vtk_dir_stage_2.is_dir()
+        assert vtk_dir_stage_1.is_dir()
+        # files are moved in the main directory
+        assert not vtk_file_stage_2.is_file()
+        assert vtk_file_stage_1.is_file()
+        assert (vtk_dir_stage_1 / "PorousDomain_2.vtk").is_file()
+        # cleanup
+        TestUtils.clean_test_directory(Path("input_files"))
+
+    def test_transfer_vtk_files_to_main_stage_1_missing_timesteps(self, create_default_model: Model):
+        """
+        In this test we simulate the case that the directory of the output of the first stage does not exist. We create
+        no vtk files in the second directory and check that the files are not moved to the main output directory.
+        In this case the vtk output control type is set to timesteps.
+
+        Args:
+            - create_default_model (:class:`stem.model.Model`): The default model
+        """
+        # set stage 1
+        stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
+        # set stage 2
+        new_stage = deepcopy(create_default_model)
+        # set the output parameters of the new stage
+        stem.stages.append(new_stage)
+        stem._Stem__set_output_name_new_stage(new_stage, 2)
+        # write all input files
+        stem.write_all_input_files()
+        # change the control type to timesteps
+        stem.stages[0].output_settings[0].output_parameters.output_control_type = "time"
+        stem.stages[1].output_settings[0].output_parameters.output_control_type = "time"
+        stem.stages[0].output_settings[0].output_parameters.output_interval = 0.50
+        stem.stages[1].output_settings[0].output_parameters.output_interval = 0.15
+        # full path to the output directories
+        vtk_dir_stage_1 = Path("input_files/output/output_vtk_full_model")
+        vtk_dir_stage_2 = Path("input_files/output/output_vtk_full_model_stage_2")
+        # create vtk files in the output directories
+        vtk_dir_stage_2.mkdir(parents=True, exist_ok=True)
+        vtk_file_stage_2 = vtk_dir_stage_2 / "PorousDomain_2.vtk"
+        # create vtk files
+        vtk_file_stage_2.touch()
+        # run the method
+        stem._Stem__transfer_vtk_files_to_main_output_directories()
+        # check that 1 directory is removed and the other is not
+        assert not vtk_dir_stage_2.is_dir()
+        assert vtk_dir_stage_1.is_dir()
+        # files are moved in the main directory
+        assert not vtk_file_stage_2.is_file()
+        assert (vtk_dir_stage_1 / "PorousDomain_2.vtk").is_file()
+        # cleanup
+        TestUtils.clean_test_directory(Path("input_files"))
+
+    def test_transfer_vtk_files_to_main_stage_2_missing_timesteps(self, create_default_model: Model):
+        """
+        In this test we simulate the case that the directory of the output of the second stage does not exist. We create
+        no vtk files in the first directory and check that the files are not moved to the main output directory.
+        In this case the vtk output control type is set to timesteps.
+
+        Args:
+            - create_default_model (:class:`stem.model.Model`): The default model
+        """
+        # set stage 1
+        stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
+        # set stage 2
+        new_stage = deepcopy(create_default_model)
+        # set the output parameters of the new stage
+        stem.stages.append(new_stage)
+        stem._Stem__set_output_name_new_stage(new_stage, 2)
+        # write all input files
+        stem.write_all_input_files()
+        # change the control type to timesteps
+        stem.stages[0].output_settings[0].output_parameters.output_control_type = "time"
+        stem.stages[1].output_settings[0].output_parameters.output_control_type = "time"
+        stem.stages[0].output_settings[0].output_parameters.output_interval = 0.15
+        stem.stages[1].output_settings[0].output_parameters.output_interval = 0.50
+        vtk_dir_stage_1 = Path("input_files/output/output_vtk_full_model")
+        vtk_dir_stage_2 = Path("input_files/output/output_vtk_full_model_stage_2")
+        # create vtk files in the output directories
+        vtk_dir_stage_1.mkdir(parents=True, exist_ok=True)
+        vtk_dir_stage_2.mkdir(parents=True, exist_ok=True)
+        vtk_file_stage_1 = vtk_dir_stage_1 / "PorousDomain_1.vtk"
+        # create vtk files
+        vtk_file_stage_1.touch()
+        # run the method
+        stem._Stem__transfer_vtk_files_to_main_output_directories()
+        # check that 1 directory is removed and the other is not
+        assert vtk_dir_stage_1.is_dir()
+        assert not vtk_dir_stage_2.is_dir()
+        assert vtk_file_stage_1.is_file()
+        # cleanup
+        TestUtils.clean_test_directory(Path("input_files"))
+
+    def test_transfer_vtk_files_to_main_all_missing(self, create_default_model: Model):
+        """
+        In this test we simulate the case that the directories of the output of both stages do not exist. We create no
+        vtk files in the directories and check that the files are not moved to the main output directory.
+        In this case the vtk output control type is set to timesteps.
+
+        Args:
+            - create_default_model (:class:`stem.model.Model`): The default model
+
+        """
+        # set stage 1
+        stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
+        # set stage 2
+        new_stage = deepcopy(create_default_model)
+        # set the output parameters of the new stage
+        stem.stages.append(new_stage)
+        stem._Stem__set_output_name_new_stage(new_stage, 2)
+        # change the control type to timesteps
+        stem.stages[0].output_settings[0].output_parameters.output_control_type = "time"
+        stem.stages[1].output_settings[0].output_parameters.output_control_type = "time"
+        stem.stages[0].output_settings[0].output_parameters.output_interval = 0.50
+        stem.stages[1].output_settings[0].output_parameters.output_interval = 0.50
+        # write all input files
+        stem.write_all_input_files()
+        vtk_dir_stage_1 = Path("input_files/output/output_vtk_full_model")
+        vtk_dir_stage_2 = Path("input_files/output/output_vtk_full_model_stage_2")
+        # create vtk files in the output directories
+        vtk_dir_stage_1.mkdir(parents=True, exist_ok=True)
+        vtk_dir_stage_2.mkdir(parents=True, exist_ok=True)
+        # run the method
+        stem._Stem__transfer_vtk_files_to_main_output_directories()
+        # check that 1 directory is removed and the other is not
+        assert vtk_dir_stage_1.is_dir()
+        assert not vtk_dir_stage_2.is_dir()
+        # cleanup
+        TestUtils.clean_test_directory(Path("input_files"))
