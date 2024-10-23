@@ -372,12 +372,12 @@ class Output:
         # if the output parameters are JSON or GiD, set the output name
         elif isinstance(output_parameters, JsonOutputParameters):
             if part_name is None:
-                part_name = "output_full_model"
+                part_name = "porous_computational_model_part"
             if output_name is None or output_name == "":
                 output_name = f"{part_name}.json"
         elif isinstance(output_parameters, GiDOutputParameters):
             if part_name is None:
-                part_name = "output_full_model"
+                part_name = "porous_computational_model_part"
             if output_name is None or output_name == "":
                 output_name = f"{part_name}"
 

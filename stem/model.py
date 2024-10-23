@@ -1,24 +1,27 @@
-from typing import List, Sequence, Dict, Any, Optional, Union, Tuple, get_args, Set
-
-import numpy as np
+import json
+import os
+from pathlib import Path
+from typing import Sequence, Tuple, get_args, Set, Optional, List, Dict, Any, Union
 
 from gmsh_utils import gmsh_IO
 
-from stem.field_generator import RandomFieldGenerator
-from stem.model_part import ModelPart, BodyModelPart, Material, ProcessParameters
-from stem.soil_material import *
-from stem.structural_material import *
-from stem.boundary import *
-from stem.geometry import Geometry
-from stem.mesh import Mesh, MeshSettings, Node, Element
-from stem.output import Output, OutputParametersABC
 from stem.additional_processes import ParameterFieldParameters
+from stem.boundary import *
+from stem.field_generator import RandomFieldGenerator
+from stem.geometry import Geometry
+from stem.globals import ELEMENT_DATA, OUT_OF_PLANE_AXIS_2D, VERTICAL_AXIS, GRAVITY_VALUE
 from stem.load import *
-from stem.water_processes import WaterProcessParametersABC, UniformWaterPressure
-from stem.solver import Problem, StressInitialisationType
-from stem.utils import Utils
+from stem.mesh import Mesh, MeshSettings, Node, Element
+from stem.model_part import ModelPart, BodyModelPart, Material, ProcessParameters
+from stem.output import Output, OutputParametersABC, JsonOutputParameters
 from stem.plot_utils import PlotUtils
-from stem.globals import ELEMENT_DATA, VERTICAL_AXIS, GRAVITY_VALUE, OUT_OF_PLANE_AXIS_2D
+from stem.soil_material import *
+from stem.solver import Problem, StressInitialisationType
+from stem.structural_material import *
+from stem.utils import Utils
+from stem.water_processes import WaterProcessParametersABC, UniformWaterPressure
+
+import numpy as np
 
 
 class Model:
@@ -173,23 +176,28 @@ class Model:
 
         self.process_model_parts.append(constraint_model_part)
 
-        # add no rotation constraint to prevent torsion in 3D
-        if self.ndim == 3:
-            rotation_constraint_name = f"rotation_constraint_{rail_name}"
+        # add no rotation constraint at the rail ends for a more realistic boundary in 2D and 3D and to prevent torsion
+        # in 3D
+        rotation_constraint_name = f"rotation_constraint_{rail_name}"
 
-            no_rotation_model_part = ModelPart(rotation_constraint_name)
-            no_rotation_constraint = RotationConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
-            no_rotation_model_part.parameters = no_rotation_constraint
+        no_rotation_model_part = ModelPart(rotation_constraint_name)
+        no_rotation_constraint = RotationConstraint(active=[True, True, True],
+                                                    is_fixed=[True, True, True],
+                                                    value=[0, 0, 0])
+        no_rotation_model_part.parameters = no_rotation_constraint
 
-            # add contraint geometry to 1 edge of the rail
-            no_rotation_geo_settings = {rotation_constraint_name: {"coordinates": [rail_global_coords[0]], "ndim": 0}}
-            self.gmsh_io.generate_geometry(no_rotation_geo_settings, "")
+        # add constraint geometries to both edges of the rail
+        no_rotation_geo_settings = {
+            rotation_constraint_name: {
+                "coordinates": [rail_global_coords[0], rail_global_coords[-1]],
+                "ndim": 0
+            }
+        }
+        self.gmsh_io.generate_geometry(no_rotation_geo_settings, "")
 
-            no_rotation_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rotation_constraint_name)
+        no_rotation_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rotation_constraint_name)
 
-            self.process_model_parts.append(no_rotation_model_part)
+        self.process_model_parts.append(no_rotation_model_part)
 
     def add_all_layers_from_geo_file(self, geo_file_name: str, body_names: Sequence[str]):
         """
@@ -526,6 +534,73 @@ class Model:
 
         self.process_model_parts.append(model_part)
 
+    def add_boundary_condition_on_plane(self, plane_vertices: Sequence[Sequence[float]],
+                                        boundary_parameters: BoundaryParametersABC, name: str):
+        """
+        Adds a boundary condition to the model by giving a sequence of 3D coordinates. The boundary condition is added
+        to all the surfaces which fall within the plane.
+
+        Args:
+            - plane_vertices (Sequence[Sequence[float]]): Minimum 3 vertices of the plane.
+            - boundary_parameters (:class:`stem.boundary.BoundaryParametersABC`): The parameters of the boundary
+                condition.
+            - name (str): The name of the boundary condition.
+
+        """
+
+        # get surface ids on the plane
+        surface_ids = self.gmsh_io.get_surface_ids_at_plane(plane_vertices)
+
+        # add physical group to gmsh
+        self.gmsh_io.add_physical_group(name, 2, surface_ids)
+
+        # create model part
+        model_part = ModelPart(name)
+
+        # retrieve geometry from gmsh and add to model part
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
+
+        # add boundary parameters to model part
+        model_part.parameters = boundary_parameters
+
+        model_part.validate_input()
+
+        self.process_model_parts.append(model_part)
+
+    def add_boundary_condition_on_polygon(self, polygon_coordinates: Sequence[Sequence[float]],
+                                          boundary_parameters: BoundaryParametersABC, name: str):
+        """
+        Adds a boundary condition to the model by giving a sequence of 3D coordinates. The boundary condition is added
+        to all the surfaces which fall within the polygon. A surface is considered to be within the polygon if all its
+        points are within the polygon.
+
+        Args:
+            - polygon_coordinates (Sequence[Sequence[float]]): The coordinates of the polygon.
+            - boundary_parameters (:class:`stem.boundary.BoundaryParametersABC`): The parameters of the boundary
+                condition.
+            - name (str): The name of the boundary condition.
+
+        """
+
+        # get surface ids within the polygon
+        surface_ids = self.gmsh_io.get_surface_ids_at_polygon(polygon_coordinates)
+
+        # add physical group to gmsh
+        self.gmsh_io.add_physical_group(name, 2, surface_ids)
+
+        # create model part
+        model_part = ModelPart(name)
+
+        # retrieve geometry from gmsh and add to model part
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
+
+        # add boundary parameters to model part
+        model_part.parameters = boundary_parameters
+
+        model_part.validate_input()
+
+        self.process_model_parts.append(model_part)
+
     def add_output_settings(self,
                             output_parameters: OutputParametersABC,
                             part_name: Optional[str] = None,
@@ -680,8 +755,7 @@ class Model:
                 new_mesh.elements = {}
                 model_part.mesh = new_mesh
 
-                self.gmsh_io.mesh_data["physical_groups"][model_part.name]["node_ids"] = (sorted(
-                    list(new_mesh.nodes.keys())))
+                self.gmsh_io.mesh_data["physical_groups"][model_part.name]["node_ids"] = (list(new_mesh.nodes.keys()))
 
     def add_field(self, part_name: str, field_parameters: ParameterFieldParameters):
         """
@@ -821,10 +895,10 @@ class Model:
 
     def __post_mesh(self):
         """
-        Function to be called after the mesh is generated and finalised.
-            - initialise field parameters (e.g., random fields). |
-            - exclude the nodes that are not output nodes. |
-            - adjust the elements for the spring damper parts. |
+        Function to be called after the mesh is generated and finalised. The following steps are performed:
+            - initialise field parameters (e.g., random fields).
+            - exclude the nodes that are not output nodes.
+            - adjust the elements for the spring damper parts.
 
         """
         self.__initialise_fields()
@@ -950,7 +1024,7 @@ class Model:
             raise ValueError(f"Mesh of model part `{model_part.name}` not yet initialised.")
 
         # find end nodes
-        end_nodes = set(self.__find_end_nodes_of_line_strings(model_part.mesh))
+        end_nodes = self.__find_end_nodes_of_line_strings(model_part.mesh)
         # find the node ids corresponding to the geometry points
         node_ids_at_geometry_points = set(
             Utils.find_node_ids_close_to_geometry_nodes(mesh=model_part.mesh, geometry=model_part.geometry, eps=1e-06))
@@ -998,7 +1072,7 @@ class Model:
         return line_node_ids
 
     @staticmethod
-    def __find_end_nodes_of_line_strings(mesh: Mesh) -> List[int]:
+    def __find_end_nodes_of_line_strings(mesh: Mesh) -> Set[int]:
         """
         Finds the nodes at the end of linestrings.
 
@@ -1006,11 +1080,11 @@ class Model:
             - mesh (:class:`stem.mesh.Mesh`): mesh from which end nodes needs to be extracted.
 
         Returns:
-            - end_nodes (List[int]): End node ids of linestring clusters.
+            - end_nodes (Set[int]): End node ids of linestring clusters.
 
         """
         nodes_to_elements = mesh.find_elements_connected_to_nodes()
-        end_nodes = [node_id for node_id, elements in nodes_to_elements.items() if len(elements) == 1]
+        end_nodes = set(node_id for node_id, elements in nodes_to_elements.items() if len(elements) == 1)
         return end_nodes
 
     @staticmethod
@@ -1080,7 +1154,7 @@ class Model:
     def __find_matching_body_elements_for_process_model_part(self, process_model_part: ModelPart) \
             -> List[Tuple[Element, Element]]:
         """
-        For a process model part, tries finds the matching body elements on which the condition elements are applied.
+        For a process model part, finds the matching body elements on which the condition elements are applied.
 
         Args:
             - process_model_part (:class:`stem.model_part.ModelPart`): model part from which element nodes needs to be \
@@ -1111,10 +1185,7 @@ class Model:
 
             # find which nodes within the body model part are connected to which elements
             for node_id, element_ids in body_model_part.mesh.find_elements_connected_to_nodes().items():
-                if node_id in nodes_to_elements_body:
-                    nodes_to_elements_body[node_id].extend(element_ids)
-                else:
-                    nodes_to_elements_body[node_id] = element_ids
+                nodes_to_elements_body.setdefault(node_id, element_ids).extend(element_ids)
 
             all_body_elements.update(body_model_part.mesh.elements)
 
@@ -1424,7 +1495,7 @@ class Model:
 
     def post_setup(self):
         """
-        Post setup of the model.
+        Post setup of the model:
             - Synchronise the geometry.
             - Generate the mesh.
             - Validate the model.
@@ -1547,3 +1618,85 @@ class Model:
         # generate the geometry within gmsh
         self.gmsh_io.generate_geo_from_geo_data()
         self.synchronise_geometry()
+
+    def __finalise_json_output(self, input_folder: str):
+        """
+        Adjust json output for nodal output coordinates so the order matches the desired one.
+
+        Args:
+            - input_folder (str): input folder for the written files.
+
+        Raises:
+            - ValueError: if the parameters of the model part are None.
+            - ValueError: if the model part has no geometry.
+            - ValueError: if the model part is not yet meshed.
+            - IOError: if no JSON output file is found in the specified input folder.
+        """
+
+        # reorder json file nodes based on the order of the desired output
+        for output_settings in self.output_settings:
+
+            # output settings contain info on the output directory
+            if isinstance(output_settings.output_parameters, JsonOutputParameters) and output_settings is not None:
+
+                if output_settings.part_name is None:
+                    raise ValueError("The output model part has no part name specified.")
+
+                if output_settings.output_name is None:
+                    raise ValueError("No name is specified for the json file.")
+
+                part_name = output_settings.part_name
+                # get corresponding model part (info on the geometry and mesh)
+                output_model_part = self.get_model_part_by_name(part_name)
+
+                if output_model_part is None:
+                    raise ValueError("No model part matches the part name specified in the output settings.")
+
+                if output_model_part.mesh is None:
+                    raise ValueError("process model part has not been meshed yet!")
+
+                # get absolute or relative directory of the json file
+                if os.path.isabs(output_settings.output_dir):
+                    json_file_dir = Path(output_settings.output_dir)
+                else:
+                    json_file_dir = Path(input_folder) / output_settings.output_dir
+
+                # retrieve the filepath of the json file
+                json_file_path = json_file_dir / output_settings.output_name
+                json_file_path = json_file_path.with_suffix(".json")
+
+                if not os.path.exists(json_file_path):
+                    raise IOError(f"No JSON file is found in the output directory for path: {json_file_path}. "
+                                  f"Either the working folder is incorrectly specified or no simulation has been"
+                                  f" performed yet.")
+
+                with open(json_file_path, "r") as infile:
+                    json_data_tmp = json.load(infile)
+
+                # remove old file
+                os.remove(json_file_path)
+
+                # copy the dictionary except for nodal outputs
+                new_json = {key: value for key, value in json_data_tmp.items() if "NODE" not in key}
+
+                # adjust the nodal outputs in the right order
+                for node_id in output_model_part.mesh.nodes.keys():
+                    node_key = f"NODE_{node_id}"
+                    new_json[node_key] = json_data_tmp[node_key]
+
+                # write back the json file
+                with open(json_file_path, "w") as outfile:
+                    json.dump(new_json, outfile, indent=2)
+
+    def finalise(self, input_folder: str):
+        """
+        Finalise the model run:
+        * adjust json output for nodal output coordinates so the order matches the desired one.
+
+        Args:
+            - input_folder (str): input folder for the written files.
+        """
+
+        # Adjust the order of the json output so it matches the cordinates as the order of the
+        # required coordinates
+        self.__finalise_json_output(input_folder=input_folder)

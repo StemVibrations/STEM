@@ -12,6 +12,10 @@ if TYPE_CHECKING:
     from stem.geometry import Geometry
 
 NUMBER_TYPES = (int, float, np.int64, np.float64)
+"""
+TypeAlias:
+    - NUMBER_TYPES: Tuple[int, float, np.int64, np.float64]
+"""
 
 
 class Utils:
@@ -386,11 +390,11 @@ class Utils:
                              base_value: float,
                              variable: str = "x") -> str:
         """
-        Creates a tiny expression for a box function. For more information on tiny expressions,
-        see: https://github.com/codeplea/tinyexpr
+        Creates a tiny expression for a hyperbolic approximation of the box function. For more information on tiny
+        expressions, see: https://github.com/codeplea/tinyexpr
 
         Args:
-            - transition_parameter (float): parameter to control the transition of the box function, |
+            - transition_parameter (float): parameter to control the transition of the box function, \
               the higher the value, the steeper the transition
             - start_peak (float): start of the peak of the box function
             - end_peak (float): end of the peak of the box function
@@ -400,6 +404,7 @@ class Utils:
 
         Raises:
             - ValueError: when start peak is larger or equal to end peak
+            - ValueError: when variable is not "x", "y", "z" or "t"
 
         Returns:
             - str: tiny expression of the box function
@@ -408,6 +413,9 @@ class Utils:
 
         if start_peak >= end_peak:
             raise ValueError("Start peak should be smaller than end peak.")
+
+        if variable not in ["x", "y", "z", "t"]:
+            raise ValueError("Variable should be either 'x', 'y', 'z' or 't'.")
 
         length_peak = end_peak - start_peak
         centre_peak = (start_peak + end_peak) / 2
@@ -422,14 +430,22 @@ class Utils:
     @staticmethod
     def check_lines_geometry_are_path(geometry: Optional['Geometry']) -> bool:
         """
-        Checks if lines are connected forming a path without:
 
-            a) disconnected lines,   b) branching out paths
-                o---o       o---o              o
-                |                              |
-                o                         o----o----o
-                                               |
-                                               o
+        Checks if lines are connected forming a path without:
+          a) disconnected lines,
+          b) branching out paths::
+
+              a) Disconnected lines:
+                  o---o
+                  |
+                  o
+
+              b) Branching out paths:
+                  o---o
+                       |
+                  o----o----o
+                       |
+                       o
 
         Args:
             - geometry (:class:`stem.geometry.Geometry`): geometry to be checked.

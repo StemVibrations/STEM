@@ -1,22 +1,25 @@
+import json
+import os
+from copy import deepcopy
 from pathlib import Path
+from shutil import rmtree
 from unittest.mock import MagicMock
 from copy import deepcopy
 
 import KratosMultiphysics
+import numpy.testing as npt
+import pytest
 from gmsh_utils import gmsh_IO
 
-import pytest
-
-from stem.stem import Stem
-from stem.model import Model
-from stem.soil_material import SoilMaterial, OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
-from stem.load import LineLoad
 from stem.boundary import DisplacementConstraint
-from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
-                         StressInitialisationType, SolverSettings, Problem)
-from stem.output import NodalOutput, VtkOutputParameters, GiDOutputParameters, JsonOutputParameters
 from stem.IO.kratos_io import KratosIO
-
+from stem.load import LineLoad
+from stem.model import Model
+from stem.output import GiDOutputParameters, JsonOutputParameters, NodalOutput, VtkOutputParameters
+from stem.soil_material import LinearElasticSoil, OnePhaseSoil, SaturatedBelowPhreaticLevelLaw, SoilMaterial
+from stem.solver import (AnalysisType, DisplacementConvergenceCriteria, Problem, SolutionType, SolverSettings,
+                         StressInitialisationType, TimeIntegration)
+from stem.stem import Stem
 from tests.utils import TestUtils
 
 
@@ -86,8 +89,8 @@ class TestStem:
                                            reduction_factor=1.0,
                                            increase_factor=1.0,
                                            max_delta_time_factor=1000)
-        convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0E-12,
-                                                                displacement_absolute_tolerance=1.0E-6)
+        convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-12,
+                                                                displacement_absolute_tolerance=1.0e-6)
         stress_initialisation_type = StressInitialisationType.NONE
         solver_settings = SolverSettings(analysis_type=analysis_type,
                                          solution_type=solution_type,
@@ -390,6 +393,37 @@ class TestStem:
         stem._Stem__transfer_vtk_files_to_main_output_directories.assert_called_once()
 
     def test_run_calculation_with_valid_stages(self, create_default_model: Model):
+        """
+        Test the run_calculation method of the Stem class with valid stages. It checks if the run_stage method is called
+        for each stage and if the finalise method is called at the end.
+
+        Args:
+            - create_default_model (:class:`stem.model.Model`): The default model
+
+        """
+
+        stem = Stem(initial_stage=create_default_model, input_files_dir="input_files")
+        stage2 = deepcopy(create_default_model)
+        stem.add_calculation_stage(stage2)
+
+        # mock the methods
+        stem.run_stage = MagicMock()
+        stem.finalise = MagicMock()
+
+        # run the calculation
+        stem.run_calculation()
+
+        # check if the run_stage method is called twice
+        assert stem.run_stage.call_count == 2
+
+        # check if correct arguments are passed to the run_stage method
+        assert stem.run_stage.call_args_list[0][0][0] == 1
+        assert stem.run_stage.call_args_list[1][0][0] == 2
+
+        # check if finalise is called
+        stem.finalise.assert_called_once()
+
+    def test_finalise_stages(self, create_default_model: Model):
         """
         Test the run_calculation method of the Stem class with valid stages. It checks if the run_stage method is called
         for each stage and if the finalise method is called at the end.
