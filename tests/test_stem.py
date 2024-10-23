@@ -770,7 +770,6 @@ class TestStem:
         # cleanup
         TestUtils.clean_test_directory(Path("input_files"))
 
-
     def test_transfer_vtk_files_to_main_both_stages_exist_timesteps(self, create_default_model: Model):
         """
         In this test we simulate the case that both directories of the output of the stages exist. We create vtk files
