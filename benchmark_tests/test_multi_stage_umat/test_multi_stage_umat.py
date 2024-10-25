@@ -10,22 +10,8 @@ from stem.boundary import DisplacementConstraint
 from stem.load import LineLoad
 from stem.model import Model
 from stem.output import JsonOutputParameters, NodalOutput, VtkOutputParameters
-from stem.soil_material import (
-    LinearElasticSoil,
-    OnePhaseSoil,
-    SaturatedBelowPhreaticLevelLaw,
-    SmallStrainUmatLaw,
-    SoilMaterial,
-)
-from stem.solver import (
-    AnalysisType,
-    DisplacementConvergenceCriteria,
-    Problem,
-    SolutionType,
-    SolverSettings,
-    StressInitialisationType,
-    TimeIntegration,
-)
+from stem.soil_material import LinearElasticSoil, OnePhaseSoil, SaturatedBelowPhreaticLevelLaw, SmallStrainUmatLaw, SoilMaterial
+from stem.solver import AnalysisType, DisplacementConvergenceCriteria, Problem, SolutionType, SolverSettings, StressInitialisationType, TimeIntegration
 from stem.stem import Stem
 from stem.table import Table
 from stem.utils import Utils
@@ -41,7 +27,8 @@ def test_stem():
     Test STEM: 2D block with distributed cyclic loading with multistage for the umat using umat and changing the
     stiffness of the material in the second stage (halved).
 
-    Note that currently, 2D elements are written with the incremental formulation, and 3D with the full formulation. Different results in multistage analyses are expected
+    Note that currently, 2D linear elastic plane strain law  is written with the incremental formulation, and the
+    linear elastic 3D with the full formulation. Different results in multistage analyses are expected
     """
 
     # Define geometry, conditions and material parameters
@@ -64,12 +51,7 @@ def test_stem():
     material1 = SoilMaterial("soil", soil_formulation1, constitutive_law1, retention_parameters1)
 
     # Specify the coordinates for the column: x:1m x y:0.5m
-    layer1_coordinates = [
-        (0.0, 0.0, 0.0),
-        (1.0, 0.0, 0.0),
-        (1.0, 0.5, 0.0),
-        (0.0, 0.5, 0.0),
-    ]
+    layer1_coordinates = [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 0.5, 0.0), (0.0, 0.5, 0.0)]
     output_coordinates = [(0.5, 0.5, 0.0), (0.5, 0.0, 0.0)]
     # Create the soil layer
     model_stage_1.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil_block")
@@ -125,17 +107,15 @@ def test_stem():
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0E-6,
                                                             displacement_absolute_tolerance=1.0E-12)
     stress_initialisation_type = StressInitialisationType.NONE
-    solver_settings = SolverSettings(
-        analysis_type=analysis_type,
-        solution_type=solution_type,
-        stress_initialisation_type=stress_initialisation_type,
-        time_integration=time_integration,
-        is_stiffness_matrix_constant=True,
-        are_mass_and_damping_constant=True,
-        convergence_criteria=convergence_criterion,
-        rayleigh_k=1e-03,
-        rayleigh_m=0.02,
-    )
+    solver_settings = SolverSettings(analysis_type=analysis_type,
+                                     solution_type=solution_type,
+                                     stress_initialisation_type=stress_initialisation_type,
+                                     time_integration=time_integration,
+                                     is_stiffness_matrix_constant=True,
+                                     are_mass_and_damping_constant=True,
+                                     convergence_criteria=convergence_criterion,
+                                     rayleigh_k=1e-03,
+                                     rayleigh_m=0.02)
 
     # Set up problem data
     problem = Problem(problem_name="test_multi_stage_umat", number_of_threads=2, settings=solver_settings)
@@ -158,17 +138,14 @@ def test_stem():
     #     output_name="vtk_output",
     # )
 
-    model_stage_1.add_output_settings_by_coordinates(
-        coordinates=output_coordinates,
-        part_name="midline_output",
-        output_parameters=JsonOutputParameters(
-            output_interval=delta_time - 1e-8,
-            nodal_results=nodal_results,
-            gauss_point_results=[],
-        ),
-        output_dir="output",
-        output_name="json_output",
-    )
+    model_stage_1.add_output_settings_by_coordinates(coordinates=output_coordinates,
+                                                     part_name="midline_output",
+                                                     output_parameters=JsonOutputParameters(output_interval=delta_time -
+                                                                                            1e-8,
+                                                                                            nodal_results=nodal_results,
+                                                                                            gauss_point_results=[]),
+                                                     output_dir="output",
+                                                     output_name="json_output")
 
     # define the STEM instance
     input_folder = "benchmark_tests/test_multi_stage_umat/inputs_kratos"
@@ -182,20 +159,14 @@ def test_stem():
     SHEAR_MODULUS = YOUNG_MODULUS_2 / (2 * (1 + POISSON_RATIO))
 
     soil_formulation_stage_2 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
-    constitutive_law_stage_2 = SmallStrainUmatLaw(
-        UMAT_NAME="../linear_elastic.dll",
-        IS_FORTRAN_UMAT=True,
-        UMAT_PARAMETERS=[SHEAR_MODULUS, POISSON_RATIO],
-        STATE_VARIABLES=[0.0],
-    )
+    constitutive_law_stage_2 = SmallStrainUmatLaw(UMAT_NAME="../linear_elastic.dll",
+                                                  IS_FORTRAN_UMAT=True,
+                                                  UMAT_PARAMETERS=[SHEAR_MODULUS, POISSON_RATIO],
+                                                  STATE_VARIABLES=[0.0])
 
     retention_parameters_stage_2 = SaturatedBelowPhreaticLevelLaw()
-    material_stage_2 = SoilMaterial(
-        "soil2",
-        soil_formulation_stage_2,
-        constitutive_law_stage_2,
-        retention_parameters_stage_2,
-    )
+    material_stage_2 = SoilMaterial("soil2", soil_formulation_stage_2, constitutive_law_stage_2,
+                                    retention_parameters_stage_2)
 
     model_stage_2.body_model_parts[0].material = material_stage_2
 
@@ -243,30 +214,18 @@ def test_stem():
         fig, ax = plt.subplots(2, 1, figsize=(8, 6), sharex="all")
         ax[0].set_title("Displacements X")
         ax[0].set_ylabel("displacement_x [m]")
-        ax[0].plot(
-            merged_expected_data["TIME"],
-            merged_expected_data["NODE_5"]["DISPLACEMENT_X"],
-            label="Expected",
-        )
-        ax[0].plot(
-            merged_calculated_data["TIME"],
-            merged_calculated_data["NODE_5"]["DISPLACEMENT_X"],
-            label="Calculated",
-        )
+        ax[0].plot(merged_expected_data["TIME"], merged_expected_data["NODE_5"]["DISPLACEMENT_X"], label="Expected")
+        ax[0].plot(merged_calculated_data["TIME"],
+                   merged_calculated_data["NODE_5"]["DISPLACEMENT_X"],
+                   label="Calculated")
 
         ax[1].set_title("Displacements Y")
         ax[0].set_ylabel("displacement_y [m]")
         ax[1].set_xlabel("time [s]")
-        ax[1].plot(
-            merged_expected_data["TIME"],
-            merged_expected_data["NODE_5"]["DISPLACEMENT_Y"],
-            label="Expected",
-        )
-        ax[1].plot(
-            merged_calculated_data["TIME"],
-            merged_calculated_data["NODE_5"]["DISPLACEMENT_Y"],
-            label="Calculated",
-        )
+        ax[1].plot(merged_expected_data["TIME"], merged_expected_data["NODE_5"]["DISPLACEMENT_Y"], label="Expected")
+        ax[1].plot(merged_calculated_data["TIME"],
+                   merged_calculated_data["NODE_5"]["DISPLACEMENT_Y"],
+                   label="Calculated")
         ax[0].legend()
         ax[1].legend()
         plt.tight_layout()
