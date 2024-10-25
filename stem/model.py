@@ -7,11 +7,11 @@ from gmsh_utils import gmsh_IO
 import numpy as np
 
 from stem.additional_processes import ParameterFieldParameters
-from stem.boundary import *
 from stem.field_generator import RandomFieldGenerator
-from stem.geometry import Geometry
 from stem.globals import ELEMENT_DATA, OUT_OF_PLANE_AXIS_2D, VERTICAL_AXIS, GRAVITY_VALUE
 from stem.load import *
+from stem.boundary import *
+from stem.geometry import Geometry, Point
 from stem.mesh import Mesh, MeshSettings, Node, Element
 from stem.model_part import ModelPart, BodyModelPart, Material, ProcessParameters
 from stem.output import Output, OutputParametersABC, JsonOutputParameters
@@ -197,6 +197,177 @@ class Model:
         no_rotation_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rotation_constraint_name)
 
         self.process_model_parts.append(no_rotation_model_part)
+
+    def generate_extended_straight_track(self, sleeper_distance: float, n_sleepers: int, rail_parameters: EulerBeam,
+                                         sleeper_parameters: NodalConcentrated,
+                                         rail_pad_parameters: ElasticSpringDamper, rail_pad_thickness: float,
+                                         origin_point: Sequence[float], soil_equivalent_parameters: ElasticSpringDamper,
+                                         length_soil_equivalent_element: float, direction_vector: Sequence[float],
+                                         name: str):
+        """
+        Generates a track geometry. With rail, rail-pads and sleepers as mass elements. Sleepers are placed at the
+        bottom of the track with a distance of sleeper_distance between them. The sleepers are connected to the rail
+        with rail-pads with a thickness of rail_pad_thickness. The track is generated in the direction of the
+        direction_vector starting from the origin_point. The track can only move in the vertical direction.
+        When part of the track is located outside the 2D or 3D soil domain, 1D elements are placed below the sleepers
+        which simulate the behaviour of the soil in vertical direction. The bottom of the 1D elements are fixed in all
+        directions.
+
+        Args:
+            - sleeper_distance (float): distance between sleepers
+            - n_sleepers (int): number of sleepers
+            - rail_parameters (:class:`stem.structural_material.EulerBeam`): rail parameters
+            - sleeper_parameters (:class:`stem.structural_material.NodalConcentrated`): sleeper parameters
+            - rail_pad_parameters (:class:`stem.structural_material.ElasticSpringDamper`): rail pad parameters
+            - rail_pad_thickness (float): thickness of the rail pad
+            - origin_point (Sequence[float]): origin point of the track
+            - soil_equivalent_parameters: (:class:`stem.structural_material.ElasticSpringDamper`): soil equivalent
+            parameters
+            - length_soil_equivalent_element (float): length of the 1D soil equivalent
+            - direction_vector (Sequence[float]): direction vector of the track
+            - name (str): name of the track
+        """
+        self.generate_straight_track(sleeper_distance, n_sleepers, rail_parameters, sleeper_parameters,
+                                     rail_pad_parameters, rail_pad_thickness, origin_point, direction_vector, name)
+        self.__generate_extended_rail_part(soil_equivalent_parameters, name, length_soil_equivalent_element)
+
+    def __generate_extended_rail_part(self, soil_equivalent_parameters: ElasticSpringDamper, name: str,
+                                      length_soil_equivalent_element: float):
+        """
+        Generates the soil equivalent elements outside the 2D or 3D soil domain. The soil equivalent elements are
+        spring-damper elements that represents the soil below the rail in vertical direction. The soil equivalent
+        elements are connected to the rail with rail-pads. The bottom of the soil equivalent elements are fixed in
+        all directions. While the soil equivalent elements can only move in the vertical direction.
+
+        Args:
+            - soil_equivalent_parameters: (:class:`stem.structural_material.ElasticSpringDamper`): soil equivalent
+            parameters
+            - name (str): name of the track
+            - length_soil_equivalent_element (float): length of the 1D soil equivalent elements
+        """
+
+        soil_equivalent_name = f"soil_equivalent_{name}"
+        sleeper_name = f"sleeper_{name}"
+
+        # check which sleepers are outside the soil domain
+        points_outside_soil_domain = self.get_points_outside_soil(sleeper_name)
+        points_outside_ids = [point.id for point in points_outside_soil_domain]
+        points_outside_coords = [point.coordinates for point in points_outside_soil_domain]
+        # create bottom points for the soil equivalent
+        # set global rail geometry
+        soil_equivalent_bottom = np.copy(points_outside_coords)
+        soil_equivalent_bottom[:, VERTICAL_AXIS] -= length_soil_equivalent_element
+
+        # create geometries of the soil equivalent lines
+        soil_equivalent_lines = [
+            self.gmsh_io.make_geometry_1d((top_coordinates, bot_coordinates))
+            for top_coordinates, bot_coordinates in zip(points_outside_coords, soil_equivalent_bottom)
+        ]
+
+        soil_equivalent_line_ids = [ids[0] for ids in soil_equivalent_lines]
+
+        self.gmsh_io.add_physical_group(soil_equivalent_name, 1, soil_equivalent_line_ids)
+
+        soil_equivalent_part = BodyModelPart(soil_equivalent_name)
+        soil_equivalent_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, soil_equivalent_name)
+        soil_equivalent_part.material = StructuralMaterial(name=soil_equivalent_name,
+                                                           material_parameters=soil_equivalent_parameters)
+        self.body_model_parts.append(soil_equivalent_part)
+        # add constraint to the soil equivalent as a new model part
+        constraint_horizontal_soil_equivalent_name = f"constraint_horizontal_{soil_equivalent_name}"
+        # can only move in the vertical direction
+        constraint_list = [True, True, True]
+        constraint_list[VERTICAL_AXIS] = False
+        constraint_parameters = DisplacementConstraint(active=constraint_list,
+                                                       is_fixed=constraint_list,
+                                                       value=[0, 0, 0])
+        self.add_boundary_condition_by_geometry_ids(0, points_outside_ids, constraint_parameters,
+                                                    constraint_horizontal_soil_equivalent_name)
+
+        # add bottom points fixed
+        constraint_model_soil_equivalent_name = f"constraint_{soil_equivalent_name}"
+        constraint_model_soil_equivalent_part = ModelPart(f"constraint_{soil_equivalent_name}")
+        constraint_model_soil_equivalent = DisplacementConstraint(active=[True, True, True],
+                                                                  is_fixed=[True, True, True],
+                                                                  value=[0, 0, 0])
+        constraint_model_soil_equivalent_part.parameters = constraint_model_soil_equivalent
+        constraint_model_soil_equivalent_part_settings = {
+            constraint_model_soil_equivalent_name: {
+                "coordinates": soil_equivalent_bottom,
+                "ndim": 0
+            }
+        }
+        self.gmsh_io.generate_geometry(constraint_model_soil_equivalent_part_settings, "")
+
+        constraint_model_soil_equivalent_part.get_geometry_from_geo_data(self.gmsh_io.geo_data,
+                                                                         constraint_model_soil_equivalent_name)
+
+        self.process_model_parts.append(constraint_model_soil_equivalent_part)
+
+    def get_points_outside_soil(self, model_part_name: str) -> List[Point]:
+        """
+        Get the points of the model part that are outside the soil model parts.
+
+        Args:
+            - model_part_name (str): The name of the model part to check the points
+
+        Raises:
+            - ValueError: if the model part is not found.
+            - ValueError: if the model part has no geometry.
+
+        Returns:
+            - List[int]: The ids of the points that are outside the volume of the model part.
+            - List[List[float]]: The coordinates of the points that are outside the volume of the model part.
+
+        """
+        # get bbox of the soil model parts
+        min_coords, max_coords = self.get_bounding_box_soil()
+
+        model_part = self.get_model_part_by_name(model_part_name)
+
+        if model_part is None:
+            raise ValueError(f"Model part {model_part_name} not found.")
+        else:
+            points_outside_geometry = []
+            if model_part.geometry is None:
+                raise ValueError(f"Model part {model_part_name} has no geometry.")
+            for point_id, point in model_part.geometry.points.items():
+
+                # check if point is within the bounding box of the soil model parts
+                x_is_in = min_coords[0] <= point.coordinates[0] <= max_coords[0]
+                y_is_in = min_coords[1] <= point.coordinates[1] <= max_coords[1]
+                is_inside = x_is_in and y_is_in
+                if self.ndim == 3:
+                    z_is_in = min_coords[2] <= point.coordinates[2] <= max_coords[2]
+                    is_inside = (is_inside and z_is_in)
+                if not is_inside:
+                    points_outside_geometry.append(point)
+            return points_outside_geometry
+
+    def get_bounding_box_soil(self) -> Tuple[List[float], List[float]]:
+        """
+        Get the bounding box of the soil model parts.
+
+        Raises:
+            - ValueError: if the model part has no geometry
+
+        Returns:
+            - Tuple[List[float], List[float]]: The minimum and maximum coordinates of the bounding box.
+        """
+        min_coords = [np.inf, np.inf, np.inf]
+        max_coords = [-np.inf, -np.inf, -np.inf]
+
+        for model_part in self.body_model_parts:
+            if isinstance(model_part.material, SoilMaterial):
+                if model_part.geometry is None:
+                    raise ValueError("Model part has no geometry.")
+                # Extract all points' coordinates and convert them into a NumPy array
+                coordinates = np.array([point.coordinates for point in model_part.geometry.points.values()])
+                # Find the minimum and maximum for each axis (x, y, z) across all points
+                min_coords = np.min(coordinates, axis=0)
+                max_coords = np.max(coordinates, axis=0)
+
+        return min_coords, max_coords
 
     def add_all_layers_from_geo_file(self, geo_file_name: str, body_names: Sequence[str]):
         """
@@ -1159,7 +1330,7 @@ class Model:
     def __find_matching_body_elements_for_process_model_part(self, process_model_part: ModelPart) \
             -> List[Tuple[Element, Element]]:
         """
-        For a process model part, finds the matching body elements on which the condition elements are applied.
+        For a process model part, tries finds the matching body elements on which the condition elements are applied.
 
         Args:
             - process_model_part (:class:`stem.model_part.ModelPart`): model part from which element nodes needs to be \
