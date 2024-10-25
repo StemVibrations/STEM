@@ -295,7 +295,8 @@ class Model:
         constraint_model_soil_equivalent_part_settings = {
             constraint_model_soil_equivalent_name: {
                 "coordinates": soil_equivalent_bottom,
-                "ndim": 0}
+                "ndim": 0
+            }
         }
         self.gmsh_io.generate_geometry(constraint_model_soil_equivalent_part_settings, "")
 
