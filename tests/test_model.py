@@ -1,4 +1,5 @@
 import pickle
+from copy import deepcopy
 from typing import Tuple
 import re
 import sys
@@ -11,7 +12,7 @@ from stem.geometry import *
 from stem.model import *
 from stem.output import NodalOutput, GiDOutputParameters, JsonOutputParameters
 from stem.solver import *
-from stem.boundary import RotationConstraint
+from stem.boundary import RotationConstraint, DisplacementConstraint
 from tests.utils import TestUtils
 
 IS_LINUX = sys.platform == "linux"
@@ -1388,7 +1389,6 @@ class TestModel:
                                                  output_dir="dir_test",
                                                  output_parameters=JsonOutputParameters(output_interval=100,
                                                                                         nodal_results=nodal_results))
-
         model.synchronise_geometry()
         model.generate_mesh()
 
@@ -1424,9 +1424,13 @@ class TestModel:
         # check if nodes are generated correctly, number of nodes are equal to the one requested in output,
         # no elements generated, unique node ids, and correct number of coordinates per node
         assert len(part.mesh.nodes) == len(output_coordinates)
-        for node_id, node in part.mesh.nodes.items():
+
+        for (node_id, node), actual_output_coordinates in zip(part.mesh.nodes.items(), output_coordinates):
             assert node_id not in unique_node_ids
             assert len(node.coordinates) == 3
+            # assert that the order of the nodes in the new model part is the same as the one in input
+            # meaning, the coordinate of the output nodes has to match one-by-one with the requested output nodes
+            npt.assert_almost_equal(actual_output_coordinates, node.coordinates)
             unique_node_ids.append(node.id)
 
         assert part.mesh.elements == {}
@@ -1472,6 +1476,7 @@ class TestModel:
                                                  output_parameters=JsonOutputParameters(output_interval=100,
                                                                                         nodal_results=nodal_results))
 
+        model.set_mesh_size(1)
         model.synchronise_geometry()
 
         model.generate_mesh()
@@ -1484,7 +1489,7 @@ class TestModel:
 
         # check if mesh is generated correctly, i.e. if the number of elements is correct and if the element type is
         # correct and if the element ids are unique and if the number of nodes per element is correct
-        assert len(body_model_part.mesh.elements) == 686
+        assert len(body_model_part.mesh.elements) == 187
 
         for element_id, element in body_model_part.mesh.elements.items():
             assert element.element_type == "TETRAHEDRON_4N"
@@ -1494,7 +1499,7 @@ class TestModel:
 
         # check if nodes are generated correctly, i.e. if there are nodes in the mesh and if the node ids are unique
         # and if the number of coordinates per node is correct
-        assert len(body_model_part.mesh.nodes) == 237
+        assert len(body_model_part.mesh.nodes) == 77
         for node_id, node in body_model_part.mesh.nodes.items():
             assert node_id not in unique_node_ids
             assert len(node.coordinates) == 3
@@ -1508,9 +1513,12 @@ class TestModel:
         # check if nodes are generated correctly, number of nodes are equal to the one requested in output,
         # no elements generated, unique node ids, and correct number of coordinates per node
         assert len(output_model_part.mesh.nodes) == len(output_coordinates)
-        for node_id, node in output_model_part.mesh.nodes.items():
+        for (node_id, node), actual_output_coordinates in zip(output_model_part.mesh.nodes.items(), output_coordinates):
             assert node_id not in unique_node_ids
             assert len(node.coordinates) == 3
+            # assert that the order of the nodes in the new model part is the same as the one in input
+            # meaning, the coordinate of the output nodes has to match one-by-one with the requested output nodes
+            npt.assert_almost_equal(actual_output_coordinates, node.coordinates)
             unique_node_ids.append(node.id)
 
         # No element outputs, so the element attribute of the mesh must be an empty dictionary
@@ -3462,3 +3470,197 @@ class TestModel:
 
         with pytest.raises(ValueError, match=f"Model part type and new parameters type must match."):
             model.split_model_part("process_2d", "split_group", [1], create_default_2d_soil_material)
+
+    def test_finalise_json_output_raises_errors(self, create_default_2d_soil_material: SoilMaterial):
+        """
+        Test that finalisation raises error correctly.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+
+        # define layer coordinates
+        ndim = 2
+        layer1_coordinates = [(0, 0, 0), (4, 0, 0), (4, 1, 0), (0, 1, 0)]
+
+        # define soil materials
+        soil_material1 = create_default_2d_soil_material
+        soil_material1.name = "soil1"
+
+        # create model
+        model = Model(ndim)
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
+
+        # synchronise geometry and recalculates the ids
+        model.synchronise_geometry()
+        # Define nodal results
+        nodal_results = [NodalOutput.ACCELERATION]
+        # Define output coordinates
+        output_coordinates = [(1.5, 1, 0), (1.5, 0.5, 0), (2.5, 0.5, 0), (2.5, 0, 0)]
+
+        # add output settings
+        model.add_output_settings_by_coordinates(output_coordinates,
+                                                 part_name="nodal_accelerations",
+                                                 output_name="json_nodal_accelerations",
+                                                 output_dir="dir_test",
+                                                 output_parameters=JsonOutputParameters(output_interval=100,
+                                                                                        nodal_results=nodal_results))
+        model.synchronise_geometry()
+        model.generate_mesh()
+
+        # set output name of json output to None
+        model_copy = deepcopy(model)
+        model_copy.output_settings[-1].output_name = None
+        msg = "No name is specified for the json file."
+        with pytest.raises(ValueError, match=msg):
+            model_copy.finalise(input_folder="input_files")
+
+        # set json filename to a wrong one
+        model_copy = deepcopy(model)
+        model_copy.output_settings[-1].output_name = "json_nodal_displacements"
+
+        expected_path = Path(
+            'input_dir') / model_copy.output_settings[-1].output_dir / model_copy.output_settings[-1].output_name
+        expected_path = str(expected_path.with_suffix('.json'))
+        msg = (f"No JSON file is found in the output directory for path: {expected_path}. "
+               "Either the working folder is incorrectly specified or no simulation has been performed yet.")
+        with pytest.raises(OSError, match=re.escape(msg)):
+            model_copy.finalise(input_folder="input_dir")
+
+        # set part name of the output settings to None
+        model_copy = deepcopy(model)
+        model_copy.output_settings[-1].part_name = None
+        msg = "The output model part has no part name specified."
+        with pytest.raises(ValueError, match=msg):
+            model_copy.finalise(input_folder="input_files")
+
+        # set part name of the output settings to non-existing part
+        model_copy = deepcopy(model)
+        model_copy.output_settings[-1].part_name = "part 404"
+        msg = "No model part matches the part name specified in the output settings."
+        with pytest.raises(ValueError, match=msg):
+            model_copy.finalise(input_folder="input_files")
+
+        # set part name of the output settings to non-existing part
+        model_copy = deepcopy(model)
+        model_copy.process_model_parts[-1].mesh = None
+        msg = "process model part has not been meshed yet!"
+        with pytest.raises(ValueError, match=msg):
+            model_copy.finalise(input_folder="input_files")
+
+    def test_add_boundary_condition_on_plane(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if a boundary condition is added correctly on a plane. A model is created with two soil layers. A boundary
+        condition is added on a plane and the nodes of the boundary condition are checked.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+
+        """
+
+        model = Model(3)
+        model.extrusion_length = 1
+
+        # add soil material
+        soil_material = create_default_3d_soil_material
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
+        model.add_soil_layer_by_coordinates([(1, 1, 0), (0, 1, 0), (0, 2, 0), (1, 2, 0)], soil_material, "layer2")
+
+        model.synchronise_geometry()
+
+        no_displacement_boundary = DisplacementConstraint(active=[True, True, True],
+                                                          is_fixed=[True, True, True],
+                                                          value=[0, 0, 0])
+
+        plane_coordinates = [(0, 0, 0), (0, 0, 1), (0, 1, 1)]
+        model.add_boundary_condition_on_plane(plane_coordinates, no_displacement_boundary, "left_side_boundary")
+
+        # check if the boundary condition is added to the model
+        assert len(model.process_model_parts) == 1
+
+        # check if the boundary condition is added to the correct model part
+        assert model.process_model_parts[0].name == "left_side_boundary"
+        assert model.process_model_parts[0].parameters == no_displacement_boundary
+
+        # check if the boundary condition is added to the correct nodes
+        expected_points = {
+            7: Point.create([0, 1, 0], 7),
+            8: Point.create([0, 1, 1], 8),
+            2: Point.create([0, 0, 1], 2),
+            1: Point.create([0, 0, 0], 1),
+            11: Point.create([0, 2, 0], 11),
+            12: Point.create([0, 2, 1], 12),
+        }
+
+        # get the generated points
+        generated_points = model.process_model_parts[0].geometry.points
+
+        # check if points are the same, these should be the all the points on the plane, i.e. points which are part
+        # of layer 1 and layer 2
+        for (generated_point_id, generated_point), (expected_point_id, expected_point) in \
+                zip(generated_points.items(), expected_points.items()):
+            assert generated_point_id == expected_point_id
+            assert generated_point.id == expected_point.id
+            npt.assert_allclose(generated_point.coordinates, expected_point.coordinates)
+
+        # expect it raises an error when the less than 3 points are given to define a plane
+        with pytest.raises(ValueError, match="At least 3 vertices are required to define a plane."):
+            model.add_boundary_condition_on_plane([(0, 0, 0), (0, 0, 1)], no_displacement_boundary, "wrong_plane")
+
+    def test_add_boundary_condition_on_polygon(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if a boundary condition is added correctly on a polygon. A model is created with two soil layers. A boundary
+        condition is added on a polygon and the nodes of the boundary condition are checked.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+        """
+
+        model = Model(3)
+        model.extrusion_length = 1
+
+        # add soil material
+        soil_material = create_default_3d_soil_material
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "layer1")
+        model.add_soil_layer_by_coordinates([(1, 1, 0), (0, 1, 0), (0, 2, 0), (1, 2, 0)], soil_material, "layer2")
+
+        model.synchronise_geometry()
+
+        no_displacement_boundary = DisplacementConstraint(active=[True, True, True],
+                                                          is_fixed=[True, True, True],
+                                                          value=[0, 0, 0])
+
+        polygon_coordinates = [(0, 0, 0), (0, 0, 1), (0, 1, 1), (0, 1, 0)]
+        model.add_boundary_condition_on_polygon(polygon_coordinates, no_displacement_boundary, "left_bottom_boundary")
+
+        # check if the boundary condition is added to the model
+        assert len(model.process_model_parts) == 1
+
+        # check if the boundary condition is added to the correct model part
+        assert model.process_model_parts[0].name == "left_bottom_boundary"
+        assert model.process_model_parts[0].parameters == no_displacement_boundary
+
+        # check if the boundary condition is added to the correct nodes
+        expected_points = {
+            7: Point.create([0, 1, 0], 7),
+            8: Point.create([0, 1, 1], 8),
+            2: Point.create([0, 0, 1], 2),
+            1: Point.create([0, 0, 0], 1),
+        }
+
+        # Get the generated points
+        generated_points = model.process_model_parts[0].geometry.points
+
+        # check if points are the same, these should be only the points which are part of layer 1
+        for (generated_point_id, generated_point), (expected_point_id, expected_point) in \
+                zip(generated_points.items(), expected_points.items()):
+            assert generated_point_id == expected_point_id
+            assert generated_point.id == expected_point.id
+            npt.assert_allclose(generated_point.coordinates, expected_point.coordinates)

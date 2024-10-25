@@ -67,3 +67,18 @@ class TestSolverSettings:
         with pytest.raises(ValueError,
                            match="Kratos Multiphysics does not support the K0-procedure for dynamic analysis"):
             solver_settings.validate_settings()
+
+    def test_solver_type(self):
+        """
+        Test that the solver type name is returned correctly.
+
+        """
+
+        amgcl_linear_solver = Amgcl()
+        assert amgcl_linear_solver.solver_type == "amgcl"
+
+        cg_linear_solver = Cg()
+        assert cg_linear_solver.solver_type == "cg"
+
+        lu_linear_solver = Lu()
+        assert lu_linear_solver.solver_type == "LinearSolversApplication.sparse_lu"

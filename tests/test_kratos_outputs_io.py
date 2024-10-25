@@ -236,9 +236,27 @@ class TestKratosOutputsIO:
             output_dir="dir_test",
             output_parameters=json_output_parameters2,
         )
+
+        # create output objects with None part specified
+        gid_output_process_none_part = Output(
+            part_name=None,
+            output_name=r"test_gid1",
+            output_parameters=gid_output_parameters1,
+        )
+        vtk_output_process_none_part = Output(
+            part_name=None,
+            output_parameters=vtk_output_parameters1,
+        )
+        json_output_process_none_part = Output(
+            part_name=None,
+            output_name="test_json_output1",
+            output_parameters=json_output_parameters1,
+        )
+
         all_outputs = [
             gid_output_process1, vtk_output_process1, json_output_process1, gid_output_process2, vtk_output_process2,
-            json_output_process2, gid_output_process3
+            json_output_process2, gid_output_process3, gid_output_process_none_part, vtk_output_process_none_part,
+            json_output_process_none_part
         ]
 
         # write dictionary for the output(s)
