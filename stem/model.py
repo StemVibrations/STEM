@@ -222,10 +222,10 @@ class Model:
             - rail_pad_parameters (:class:`stem.structural_material.ElasticSpringDamper`): rail pad parameters
             - rail_pad_thickness (float): thickness of the rail pad
             - origin_point (Sequence[float]): origin point of the track
-            - direction_vector (Sequence[float]): direction vector of the track
             - soil_equivalent_parameters: (:class:`stem.structural_material.ElasticSpringDamper`): soil equivalent
             parameters
             - length_soil_equivalent_element (float): length of the 1D soil equivalent
+            - direction_vector (Sequence[float]): direction vector of the track
             - name (str): name of the track
         """
         self.generate_straight_track(sleeper_distance, n_sleepers, rail_parameters, sleeper_parameters,
@@ -244,25 +244,25 @@ class Model:
             - soil_equivalent_parameters: (:class:`stem.structural_material.ElasticSpringDamper`): soil equivalent
             parameters
             - name (str): name of the track
-            - length_soil_equivalent_element (float): length of the 1D soil equivalent
+            - length_soil_equivalent_element (float): length of the 1D soil equivalent elements
         """
 
         soil_equivalent_name = f"soil_equivalent_{name}"
         sleeper_name = f"sleeper_{name}"
 
-        # check the points of the sleepers that are not in the volume of the rail
-        points_outside_volume = self.get_points_outside_soil(sleeper_name)
-        points_outside_volume_ids = [point.id for point in points_outside_volume]
-        points_outside_volume_coords = [point.coordinates for point in points_outside_volume]
+        # check which sleepers are outside the soil domain
+        points_outside_soil_domain = self.get_points_outside_soil(sleeper_name)
+        points_outside_ids = [point.id for point in points_outside_soil_domain]
+        points_outside_coords = [point.coordinates for point in points_outside_soil_domain]
         # create bottom points for the soil equivalent
         # set global rail geometry
-        soil_equivalent_bottom = np.copy(points_outside_volume_coords)
+        soil_equivalent_bottom = np.copy(points_outside_coords)
         soil_equivalent_bottom[:, VERTICAL_AXIS] -= length_soil_equivalent_element
 
         # create geometries of the soil equivalent lines
         soil_equivalent_lines = [
             self.gmsh_io.make_geometry_1d((top_coordinates, bot_coordinates))
-            for top_coordinates, bot_coordinates in zip(points_outside_volume_coords, soil_equivalent_bottom)
+            for top_coordinates, bot_coordinates in zip(points_outside_coords, soil_equivalent_bottom)
         ]
 
         soil_equivalent_line_ids = [ids[0] for ids in soil_equivalent_lines]
@@ -282,7 +282,7 @@ class Model:
         constraint_parameters = DisplacementConstraint(active=constraint_list,
                                                        is_fixed=constraint_list,
                                                        value=[0, 0, 0])
-        self.add_boundary_condition_by_geometry_ids(0, points_outside_volume_ids, constraint_parameters,
+        self.add_boundary_condition_by_geometry_ids(0, points_outside_ids, constraint_parameters,
                                                     constraint_horizontal_soil_equivalent_name)
 
         # add bottom points fixed
@@ -295,8 +295,7 @@ class Model:
         constraint_model_soil_equivalent_part_settings = {
             constraint_model_soil_equivalent_name: {
                 "coordinates": soil_equivalent_bottom,
-                "ndim": 0
-            }
+                "ndim": 0}
         }
         self.gmsh_io.generate_geometry(constraint_model_soil_equivalent_part_settings, "")
 
@@ -311,6 +310,10 @@ class Model:
 
         Args:
             - model_part_name (str): The name of the model part to check the points
+
+        Raises:
+            - ValueError: if the model part is not found.
+            - ValueError: if the model part has no geometry.
 
         Returns:
             - List[int]: The ids of the points that are outside the volume of the model part.
@@ -329,18 +332,14 @@ class Model:
             if model_part.geometry is None:
                 raise ValueError(f"Model part {model_part_name} has no geometry.")
             for point_id, point in model_part.geometry.points.items():
-                # dimensions except the out of plane direction
-                is_inside = False
-                if self.ndim == 2:
-                    x_is_in = min_coords[0] <= point.coordinates[0] <= max_coords[0]
-                    y_is_in = min_coords[1] <= point.coordinates[1] <= max_coords[1]
-                    is_inside = x_is_in and y_is_in
-                elif self.ndim == 3:
-                    x_is_in = min_coords[0] <= point.coordinates[0] <= max_coords[0]
-                    y_is_in = min_coords[1] <= point.coordinates[1] <= max_coords[1]
+
+                # check if point is within the bounding box of the soil model parts
+                x_is_in = min_coords[0] <= point.coordinates[0] <= max_coords[0]
+                y_is_in = min_coords[1] <= point.coordinates[1] <= max_coords[1]
+                is_inside = x_is_in and y_is_in
+                if self.ndim == 3:
                     z_is_in = min_coords[2] <= point.coordinates[2] <= max_coords[2]
-                    is_inside = (x_is_in and y_is_in and z_is_in)
-                # the z coordinate is the out of plane direction so it is not checked
+                    is_inside = (is_inside and z_is_in)
                 if not is_inside:
                     points_outside_geometry.append(point)
             return points_outside_geometry
@@ -348,6 +347,9 @@ class Model:
     def get_bounding_box_soil(self) -> Tuple[List[float], List[float]]:
         """
         Get the bounding box of the soil model parts.
+
+        Raises:
+            - ValueError: if the model part has no geometry
 
         Returns:
             - Tuple[List[float], List[float]]: The minimum and maximum coordinates of the bounding box.
