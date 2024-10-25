@@ -38,8 +38,8 @@ SHOW_RESULTS = False
 @pytest.mark.skipif(sys.platform == "linux", reason="linear elastic umat is currently not available for linux")
 def test_stem():
     """
-    Test STEM: 2D block with distributed loading with multistage for the umat using umat and changing the stiffness
-    of the material in the second stage (halved).
+    Test STEM: 2D block with distributed cyclic loading with multistage for the umat using umat and changing the
+    stiffness of the material in the second stage (halved).
 
     Note that currently, 2D elements are written with the incremental formulation, and 3D with the full formulation. Different results in multistage analyses are expected
     """
@@ -205,13 +205,9 @@ def test_stem():
     # write the kratos input files
     stem.write_all_input_files()
 
-    path_umat_dll_local = r"benchmark_tests\test_multi_stage_umat\linear_elastic.dll"
-
-    # copy the linear elastic dll from another test
-    copyfile(
-        src=r"benchmark_tests\test_1d_wave_prop_drained_soil_umat\linear_elastic.dll",
-        dst=path_umat_dll_local,
-    )
+    # copy the linear elastic dll to the input folder
+    copyfile(src=r"benchmark_tests\user_defined_models\linear_elastic.dll",
+             dst=r"benchmark_tests\test_multi_stage_umat\linear_elastic.dll")
 
     # Run Kratos calculation
     # --------------------------------

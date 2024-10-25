@@ -3608,6 +3608,10 @@ class TestModel:
             assert generated_point.id == expected_point.id
             npt.assert_allclose(generated_point.coordinates, expected_point.coordinates)
 
+        # expect it raises an error when the less than 3 points are given to define a plane
+        with pytest.raises(ValueError, match="At least 3 vertices are required to define a plane."):
+            model.add_boundary_condition_on_plane([(0, 0, 0), (0, 0, 1)], no_displacement_boundary, "wrong_plane")
+
     def test_add_boundary_condition_on_polygon(self, create_default_3d_soil_material: SoilMaterial):
         """
         Test if a boundary condition is added correctly on a polygon. A model is created with two soil layers. A boundary

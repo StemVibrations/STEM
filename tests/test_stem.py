@@ -621,7 +621,8 @@ class TestStem:
 
     def test_finalise_stage_json_output(self):
         """
-        Test the finalise method of the Stem class with JsonOutputParameters and checks the order of the keys in the dictioary.
+        Test the finalise method of the Stem class with JsonOutputParameters and checks the order of the keys in the
+        dictionary.
         """
 
         ndim = 2
