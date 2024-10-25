@@ -12,7 +12,7 @@ from stem.solver import AnalysisType, SolutionType, TimeIntegration, Displacemen
 from stem.output import NodalOutput, VtkOutputParameters
 from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
-from shutil import rmtree
+from shutil import rmtree, copyfile
 
 
 @pytest.mark.skipif(sys.platform == "linux", reason="linear elastic umat is currently not available for linux")
@@ -126,6 +126,10 @@ def test_stem():
     # --------------------------------
     stem = Stem(model, input_folder)
     stem.write_all_input_files()
+
+    # copy the linear elastic dll to the input folder
+    copyfile(src=r"benchmark_tests/user_defined_models/linear_elastic.dll",
+             dst=r"benchmark_tests/test_1d_wave_prop_drained_soil_umat/linear_elastic.dll")
 
     # Run Kratos calculation
     # --------------------------------

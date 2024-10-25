@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Sequence, Tuple, get_args, Set, Optional, List, Dict, Any, Union
 
 from gmsh_utils import gmsh_IO
+import numpy as np
 
 from stem.additional_processes import ParameterFieldParameters
 from stem.boundary import *
@@ -20,8 +21,6 @@ from stem.solver import Problem, StressInitialisationType
 from stem.structural_material import *
 from stem.utils import Utils
 from stem.water_processes import WaterProcessParametersABC, UniformWaterPressure
-
-import numpy as np
 
 
 class Model:
@@ -546,7 +545,13 @@ class Model:
                 condition.
             - name (str): The name of the boundary condition.
 
+        Raises:
+            - ValueError: if the plane has less than 3 vertices.
+
         """
+
+        if len(plane_vertices) < 3:
+            raise ValueError("At least 3 vertices are required to define a plane.")
 
         # get surface ids on the plane
         surface_ids = self.gmsh_io.get_surface_ids_at_plane(plane_vertices)
@@ -1627,7 +1632,8 @@ class Model:
             - input_folder (str): input folder for the written files.
 
         Raises:
-            - ValueError: if the parameters of the model part are None.
+            - ValueError: if the parameters of the output settings are None.
+            - ValueError: if the output settings has no output name specified.
             - ValueError: if the model part has no geometry.
             - ValueError: if the model part is not yet meshed.
             - IOError: if no JSON output file is found in the specified input folder.
