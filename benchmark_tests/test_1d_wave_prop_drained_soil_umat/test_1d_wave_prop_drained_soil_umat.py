@@ -131,6 +131,9 @@ def test_stem():
         extension = "so"
     elif sys.platform == "win32":
         extension = "dll"
+    else:
+        raise Exception("Unknown platform")
+
     copyfile(src=rf"benchmark_tests/user_defined_models/linear_elastic.{extension}",
              dst=rf"benchmark_tests/test_1d_wave_prop_drained_soil_umat/linear_elastic.{extension}")
     # Run Kratos calculation
