@@ -15,7 +15,6 @@ from benchmark_tests.utils import assert_files_equal
 from shutil import rmtree, copyfile
 
 
-@pytest.mark.skipif(sys.platform == "linux", reason="linear elastic umat is currently not available for linux")
 def test_stem():
     # Define geometry, conditions and material parameters
     # --------------------------------
@@ -127,10 +126,13 @@ def test_stem():
     stem = Stem(model, input_folder)
     stem.write_all_input_files()
 
-    # copy the linear elastic dll to the input folder
-    copyfile(src=r"benchmark_tests/user_defined_models/linear_elastic.dll",
-             dst=r"benchmark_tests/test_1d_wave_prop_drained_soil_umat/linear_elastic.dll")
-
+    # copy the linear elastic umat to the input folder
+    if sys.platform == "linux":
+        extension = "so"
+    elif sys.platform == "win32":
+        extension = "dll"
+    copyfile(src=rf"benchmark_tests/user_defined_models/linear_elastic.{extension}",
+             dst=rf"benchmark_tests/test_1d_wave_prop_drained_soil_umat/linear_elastic.{extension}")
     # Run Kratos calculation
     # --------------------------------
     stem.run_calculation()
