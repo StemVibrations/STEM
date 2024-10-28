@@ -5,7 +5,7 @@ from stem.load import LineLoad
 from stem.boundary import AbsorbingBoundary
 from stem.boundary import DisplacementConstraint
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, StressInitialisationType, SolverSettings, Problem
-from stem.output import NodalOutput, VtkOutputParameters, Output
+from stem.output import NodalOutput, VtkOutputParameters
 from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
 from shutil import rmtree
@@ -111,7 +111,7 @@ def test_stem():
 
     # Define the output process
     model.add_output_settings(output_parameters=VtkOutputParameters(file_format="ascii",
-                                                                    output_interval=10,
+                                                                    output_interval=5,
                                                                     nodal_results=nodal_results,
                                                                     gauss_point_results=gauss_point_results,
                                                                     output_control_type="step"),
