@@ -258,6 +258,37 @@ class StrategyTypeABC(ABC):
 
 
 @dataclass
+class LinearNewtonRaphsonStrategy(StrategyTypeABC):
+    """
+    Class containing information about the Newton-Raphson strategy for linear systems
+
+    Attributes:
+        - max_iterations (int): maximum number of iterations allowed, if this number is reached, the time step size is\
+            decreased and the algorithm is restarted. Default value is 15.
+        - min_iterations (int): minimum number of iterations, below this number, the time step size is increased.\
+            Default value is 6.
+        - number_cycles (int): number of allowed cycles of decreasing the time step size until the algorithm is \
+            stopped. Default value is 100.
+
+    Inheritance:
+        - :class:`StrategyTypeABC`
+    """
+    max_iterations: int = 15
+    min_iterations: int = 6
+    number_cycles: int = 100
+
+    @property
+    def strategy_type(self):
+        """
+        Returns the strategy type name of the Linear Newton-Raphson strategy
+
+        Returns:
+            - str: strategy type name
+        """
+        return "newton_raphson_linear_elastic"
+
+
+@dataclass
 class NewtonRaphsonStrategy(StrategyTypeABC):
     """
     Class containing information about the Newton-Raphson strategy
@@ -568,7 +599,7 @@ class SolverSettings:
     convergence_criteria: ConvergenceCriteriaABC
     reset_displacements: bool = False
     calculate_stresses_on_nodes: bool = True
-    strategy_type: StrategyTypeABC = field(default_factory=NewtonRaphsonStrategy)
+    strategy_type: StrategyTypeABC = field(default_factory=LinearNewtonRaphsonStrategy)
     scheme: SchemeABC = field(default_factory=NewmarkScheme)
     linear_solver_settings: LinearSolverSettingsABC = field(default_factory=Amgcl)
     rayleigh_m: Optional[float] = None
