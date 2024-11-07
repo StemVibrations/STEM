@@ -696,6 +696,9 @@ a unique name.
     model.add_soil_layer_by_coordinates(soil2_coordinates, material_soil_2, "soil_layer_2")
     model.add_soil_layer_by_coordinates(embankment_coordinates, material_embankment, "embankment_layer")
 
+Generating the train track
+--------------------------
+
 The tracks are added by specifying the origin point of the track and the direction for the extrusion that creates
 the rail as well as rail pads and sleepers. Important is that the origin point and the end of the track lie on
 geometry edges. In this tutorial, a straight track is generated parallel to the z-axis at 0.75 m distance from the x-axis,
@@ -717,6 +720,76 @@ are spaced 0.5m from each others which results in a 50m straight track, with par
                                   sleeper_parameters, rail_pad_parameters,
                                   rail_pad_thickness, origin_point,
                                   direction_vector, "rail_track_1")
+
+
+Soil equivalent part option with an extended track
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When applying the moving train load to the track, we are usually interested in the dynamic response of the track of a
+specific area. This implies that the geometry generated should be large enough so that when the initial train load is
+applied on the track, this has not yet reached and/or influenced the area of interest. Leading to a much larger geometry
+which in turn increases the computational cost.
+
+To reduce the computational cost, an alternative approach can be used with STEM. The area of interest is still modelled
+as seen above but it is extended with a soil equivalent part which simulates the 3D soil behavior but with using 1D
+elements. The equivalent geometry consists of the following parts:
+
+- The extended track outside the soil domain (this is the same as in the soil domain).
+- Soil equivalent 1s spring dampers.
+  With an extra boundary conditions that stipulates that these elements can only move horizontally.
+- Bottom fixity.
+
+
+.. image:: _static/soil_equivalent_concept.png
+
+
+The equivalent soil part is added to the model in the following way. Note that:
+
+- The origin point is moved 25m in the negative z-direction. So that the equivalent soil part can extend 25m in the
+  negative z-direction.
+- The number of sleepers is increased to 190, that is 90 sleepers are added to the equivalent soil part.
+- The length of the soil equivalent element is set to 3m. Which means that the equivalent soil part extends 3m in y-direction ( in depth).
+- The soil equivalent parameters are defined as ElasticSpringDamper. These should be defined by the user so that the
+  displacements on the extended track are comparable to the 3D part. The following parameters can be defined with the
+  stiffness being the most impactfull to the results:
+    - NODAL_DISPLACEMENT_STIFFNESS=[0, 8163265.143, 0]
+    - NODAL_ROTATIONAL_STIFFNESS=[0, 0, 0]
+    - NODAL_DAMPING_COEFFICIENT=[0, 1, 0]
+    - NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0]
+
+
+.. code-block:: python
+
+    origin_point = [0.75, 3.0, -25.0]
+    direction_vector = [0, 0, 1]
+    sleeper_spacing = 0.5
+    rail_pad_thickness = 0.025
+    number_of_sleepers = 190
+    length_soil_equivalent_element = 3
+
+    soil_equivalent_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[0, 8163265.143, 0],
+                                                     NODAL_ROTATIONAL_STIFFNESS=[0, 0, 0],
+                                                     NODAL_DAMPING_COEFFICIENT=[0, 1, 0],
+                                                     NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0])
+
+    # create a straight track with rails, sleepers and rail pads
+    model.generate_extended_straight_track(sleeper_distance=sleeper_spacing,
+                                           n_sleepers=number_of_sleepers,
+                                           rail_parameters=rail_parameters,
+                                           sleeper_parameters=sleeper_parameters,
+                                           rail_pad_parameters=rail_pad_parameters,
+                                           rail_pad_thickness=rail_pad_thickness,
+                                           origin_point=origin_point,
+                                           soil_equivalent_parameters=soil_equivalent_parameters,
+                                           length_soil_equivalent_element=length_soil_equivalent_element,
+                                           direction_vector=direction_vector,
+                                           name="rail_track_1")
+
+
+Visualising the geometry, the track and the equivalent soil part are shown in the figure below.
+
+.. image:: _static/embankment_extented.png
+
 
 The UVEC model is then defined using the UvecLoad class. The train moves in positive direction from the origin, this is
 defined in `direction=[1, 1, 1]`, values greater than 0 indicate positive direction, values smaller than 0 indicate
