@@ -3664,3 +3664,481 @@ class TestModel:
             assert generated_point_id == expected_point_id
             assert generated_point.id == expected_point.id
             npt.assert_allclose(generated_point.coordinates, expected_point.coordinates)
+
+    def test_get_bounding_box_soil(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if the bounding box of all soil volumes is correctly calculated. A model is created with a soil layer and
+        the bounding box of the soil volume is checked.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+        """
+        ndim = 3
+
+        layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 2, 0), (0, 2, 0)]
+
+        # define soil material
+        soil_material = create_default_3d_soil_material
+
+        # create model
+        model = Model(ndim)
+        model.extrusion_length = 4
+
+        model.project_parameters = TestUtils.create_default_solver_settings()
+
+        # add soil layer
+        model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
+
+        # check if layer is added correctly
+        assert len(model.body_model_parts) == 1
+        assert model.body_model_parts[0].name == "soil1"
+        assert model.body_model_parts[0].material == soil_material
+
+        # run the tests
+        min_coords, max_coords = model.get_bounding_box_soil()
+
+        assert min_coords[0] == 0
+        assert min_coords[1] == 0
+        assert min_coords[2] == 0
+        assert max_coords[0] == 1
+        assert max_coords[1] == 2
+        assert max_coords[2] == 4
+
+    def test_get_bounding_box_soil_error(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if an error is raised when the model part has no geometry. A model is created with a soil layer and the
+        bounding box of the soil volume is checked. The geometry of the model part is set to None and an error is
+        expected.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+        """
+        ndim = 3
+
+        layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 2, 3), (0, 2, 3)]
+
+        # define soil material
+        soil_material = create_default_3d_soil_material
+
+        # create model
+        model = Model(ndim)
+        model.extrusion_length = 1
+
+        model.project_parameters = TestUtils.create_default_solver_settings()
+
+        # add soil layer
+        model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
+
+        # check if layer is added correctly
+        assert len(model.body_model_parts) == 1
+        assert model.body_model_parts[0].name == "soil1"
+        assert model.body_model_parts[0].material == soil_material
+        model.body_model_parts[0].geometry = None
+
+        with pytest.raises(ValueError, match="Model part has no geometry."):
+            model.get_bounding_box_soil()
+
+    def test_get_points_outside_soil_volume(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if the points outside the soil volume are correctly found. A model is created with a soil layer and
+        points outside the soil volume are checked. Some points are outside the soil volume and some are inside.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+
+        """
+        ndim = 3
+
+        layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 2, 0), (0, 2, 0)]
+
+        # define soil material
+        soil_material = create_default_3d_soil_material
+
+        # create model
+        model = Model(ndim)
+        model.extrusion_length = 4
+
+        model.project_parameters = TestUtils.create_default_solver_settings()
+
+        # add soil layer
+        model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
+
+        # check if layer is added correctly
+        assert len(model.body_model_parts) == 1
+        assert model.body_model_parts[0].name == "soil1"
+        assert model.body_model_parts[0].material == soil_material
+
+        points_outside_test = [(1, 0, -1), (1, 0, 0), (0, 0, 0), (1, 0, 0), (1, 0, 5), (1, 0, 6)]
+        outside_name = f"points_outside"
+        points_outside_settings = {outside_name: {"coordinates": points_outside_test, "ndim": 0}}
+        model.gmsh_io.generate_geometry(points_outside_settings, "")
+        points_outside_part = BodyModelPart(outside_name)
+        points_outside_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, outside_name)
+        rail_pad_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[1, 750e6, 1],
+                                                  NODAL_ROTATIONAL_STIFFNESS=[0, 0, 0],
+                                                  NODAL_DAMPING_COEFFICIENT=[1, 750e3, 1],
+                                                  NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0])
+        points_outside_part.material = StructuralMaterial(name=outside_name, material_parameters=rail_pad_parameters)
+        model.body_model_parts.append(points_outside_part)
+        # run the test
+        points_outside_volume = model.get_points_outside_soil(outside_name)
+        # check if the points are outside the soil volume
+        assert len(points_outside_volume) == 3
+        assert points_outside_volume[0].coordinates == [1., 0., -1.]
+        assert points_outside_volume[1].coordinates == [1., 0., 5.]
+        assert points_outside_volume[2].coordinates == [1., 0., 6.]
+
+    def test_get_points_outside_soil_volume_error(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if an error is raised when the model part is not found. A model is created with a soil layer and points
+        outside the soil volume are checked. The model part is not found and an error is expected.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+        """
+        ndim = 3
+
+        layer_coordinates = [(0, 0, 0), (1, 0, 0), (1, 2, 0), (0, 2, 0)]
+
+        # define soil material
+        soil_material = create_default_3d_soil_material
+
+        # create model
+        model = Model(ndim)
+        model.extrusion_length = 4
+
+        model.project_parameters = TestUtils.create_default_solver_settings()
+
+        # add soil layer
+        model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
+
+        # check if layer is added correctly
+        assert len(model.body_model_parts) == 1
+        assert model.body_model_parts[0].name == "soil1"
+        assert model.body_model_parts[0].material == soil_material
+
+        points_outside_test = [(1, 0, -1), (1, 0, 0), (0, 0, 0), (1, 0, 0), (1, 0, 5), (1, 0, 6)]
+        outside_name = f"fake_name"
+        with pytest.raises(ValueError, match="Model part fake_name not found."):
+            model.get_points_outside_soil(outside_name)
+
+    def test_get_points_outside_soil_volume_error_geometry(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if an error is raised when the model part has no geometry. A model is created with a soil layer and points
+        outside the soil volume are checked. The geometry of the model part is set to None and an error is expected.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+        """
+        ndim = 3
+
+        # create model
+        model = Model(ndim)
+        model.extrusion_length = 1
+
+        model.project_parameters = TestUtils.create_default_solver_settings()
+
+        beam = StructuralMaterial(name="soil1", material_parameters=EulerBeam(2, 1, 1, 1, 1, 1))
+        beam_part = BodyModelPart("soil1")
+        beam_part.material = beam
+        model.body_model_parts.append(beam_part)
+
+        # check if layer is added correctly
+        assert len(model.body_model_parts) == 1
+        assert model.body_model_parts[0].name == "soil1"
+
+        outside_name = f"soil1"
+        with pytest.raises(ValueError, match="Model part soil1 has no geometry."):
+            model.get_points_outside_soil(outside_name)
+
+    def test_generate_extended_straight_track_2d(self, create_default_2d_soil_material: SoilMaterial):
+        """
+        Test if a straight track is generated correctly in a 2d space. A straight track is generated and added to the
+        model. The geometry and material of the rails, sleepers and rail pads are checked.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+        """
+
+        # initialise model
+        model = Model(2)
+        # add soil material 2d
+        soil_material = create_default_2d_soil_material
+        layer_coordinates = [(2, 3, 0), (4, 3, 0), (4, 1, 0), (2, 1, 0)]
+        # add soil layer
+        model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
+
+        rail_parameters = EulerBeam(2, 1, 1, 1, 1, 1)
+        extended_soil_parameters = ElasticSpringDamper([1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1])
+        rail_pad_parameters = ElasticSpringDamper([1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1])
+        sleeper_parameters = NodalConcentrated([1, 1, 1], 1, [1, 1, 1])
+
+        origin_point = np.array([1.0, 3.0, -1])
+        direction_vector = np.array([1, 0, 0])
+
+        # create a straight track with rails, sleepers and rail pads
+        model.generate_extended_straight_track(0.6, 8, rail_parameters, sleeper_parameters, rail_pad_parameters, 0.02,
+                                               origin_point, extended_soil_parameters, 5, direction_vector, "track_1")
+
+        # check geometry and material of the rail
+        expected_rail_points = {
+            13: Point.create([1.0, 3.02, -1.0], 13),
+            14: Point.create([1.6, 3.02, -1.0], 14),
+            15: Point.create([2.2, 3.02, -1.0], 15),
+            16: Point.create([2.8, 3.02, -1.0], 16),
+            17: Point.create([3.4, 3.02, -1.0], 17),
+            18: Point.create([4.0, 3.02, -1.0], 18),
+            19: Point.create([4.6, 3.02, -1.0], 19),
+            20: Point.create([5.2, 3.02, -1.0], 20)
+        }
+        expected_rail_lines = {
+            12: Line.create([13, 14], 12),
+            13: Line.create([14, 15], 13),
+            14: Line.create([15, 16], 14),
+            15: Line.create([16, 17], 15),
+            16: Line.create([17, 18], 16),
+            17: Line.create([18, 19], 17),
+            18: Line.create([19, 20], 18),
+        }
+
+        expected_rail_geometry = Geometry(expected_rail_points, expected_rail_lines)
+
+        # check rail model part
+        rail_model_part = model.body_model_parts[1]
+        calculated_rail_geometry = rail_model_part.geometry
+        calculated_rail_parameters = rail_model_part.material.material_parameters
+
+        TestUtils.assert_almost_equal_geometries(expected_rail_geometry, calculated_rail_geometry)
+        TestUtils.assert_dictionary_almost_equal(rail_parameters.__dict__, calculated_rail_parameters.__dict__)
+
+        # check geometry and material of the sleepers
+        expected_sleeper_points = {
+            5: Point.create([1.0, 3.00, -1.0], 5),
+            6: Point.create([1.6, 3.00, -1.0], 6),
+            7: Point.create([2.2, 3.00, -1.0], 7),
+            8: Point.create([2.8, 3.00, -1.0], 8),
+            9: Point.create([3.4, 3.00, -1.0], 9),
+            10: Point.create([4.0, 3.00, -1.0], 10),
+            11: Point.create([4.6, 3.00, -1.0], 11),
+            12: Point.create([5.2, 3.00, -1.0], 12)
+        }
+        expected_sleeper_geometry = Geometry(expected_sleeper_points)
+
+        sleeper_model_part = model.body_model_parts[2]
+        calculated_sleeper_geometry = sleeper_model_part.geometry
+        calculated_sleeper_parameters = sleeper_model_part.material.material_parameters
+
+        TestUtils.assert_almost_equal_geometries(expected_sleeper_geometry, calculated_sleeper_geometry)
+        TestUtils.assert_dictionary_almost_equal(sleeper_parameters.__dict__, calculated_sleeper_parameters.__dict__)
+
+        # check geometry and material of the rail pads
+        rail_pad_model_part = model.body_model_parts[3]
+        calculated_rail_pad_geometry = rail_pad_model_part.geometry
+        calculated_rail_pad_parameters = rail_pad_model_part.material.material_parameters
+
+        expected_rail_pad_points = {
+            13: Point.create([1.0, 3.02, -1.0], 13),
+            5: Point.create([1.0, 3.0, -1.0], 5),
+            14: Point.create([1.6, 3.02, -1.0], 14),
+            6: Point.create([1.6, 3.0, -1.0], 6),
+            15: Point.create([2.2, 3.02, -1.0], 15),
+            7: Point.create([2.2, 3.0, -1.0], 7),
+            16: Point.create([2.8, 3.02, -1.0], 16),
+            8: Point.create([2.8, 3.0, -1.0], 8),
+            17: Point.create([3.4, 3.02, -1.0], 17),
+            9: Point.create([3.4, 3.0, -1.0], 9),
+            18: Point.create([4.0, 3.02, -1.0], 18),
+            10: Point.create([4.0, 3.0, -1.0], 10),
+            19: Point.create([4.6, 3.02, -1.0], 19),
+            11: Point.create([4.6, 3.0, -1.0], 11),
+            20: Point.create([5.2, 3.02, -1.0], 20),
+            12: Point.create([5.2, 3.0, -1.0], 12),
+        }
+
+        expected_rail_pad_lines = {
+            19: Line.create([13, 5], 19),
+            20: Line.create([14, 6], 20),
+            21: Line.create([15, 7], 21),
+            22: Line.create([16, 8], 22),
+            23: Line.create([17, 9], 23),
+            24: Line.create([18, 10], 24),
+            25: Line.create([19, 11], 25),
+            26: Line.create([20, 12], 26),
+        }
+
+        expected_rail_pad_geometry = Geometry(expected_rail_pad_points, expected_rail_pad_lines)
+
+        TestUtils.assert_almost_equal_geometries(expected_rail_pad_geometry, calculated_rail_pad_geometry)
+        TestUtils.assert_dictionary_almost_equal(rail_pad_parameters.__dict__, calculated_rail_pad_parameters.__dict__)
+
+        # check geometry and material of soil equivalent
+        soil_equivalent_model_part = model.body_model_parts[4]
+        calculated_soil_equivalent_geometry = soil_equivalent_model_part.geometry
+        calculated_soil_equivalent_parameters = soil_equivalent_model_part.material.material_parameters
+
+        expected_soil_equivalent_points = {
+            5: Point.create([1.0, 3.0, -1.0], 5),
+            21: Point.create([1.0, -2.0, -1.0], 21),
+            6: Point.create([1.6, 3.0, -1.0], 6),
+            22: Point.create([1.6, -2.0, -1.0], 22),
+            11: Point.create([4.6, 3.0, -1.0], 11),
+            23: Point.create([4.6, -2.0, -1.0], 23),
+            12: Point.create([5.2, 3.0, -1.0], 12),
+            24: Point.create([5.2, -2.0, -1.0], 24),
+        }
+
+        expected_soil_equivalent_lines = {
+            27: Line.create([5, 21], 27),
+            28: Line.create([6, 22], 28),
+            29: Line.create([11, 23], 29),
+            30: Line.create([12, 24], 30),
+        }
+
+        expected_soil_equivalent_geometry = Geometry(expected_soil_equivalent_points, expected_soil_equivalent_lines)
+
+        TestUtils.assert_almost_equal_geometries(expected_soil_equivalent_geometry, calculated_soil_equivalent_geometry)
+        TestUtils.assert_dictionary_almost_equal(extended_soil_parameters.__dict__,
+                                                 calculated_soil_equivalent_parameters.__dict__)
+
+    def test_generate_extended_straight_track_3d(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Tests if a straight track is generated correctly in a 3d space. A straight track is generated and added to the
+        model. The geometry and material of the rails, sleepers and rail pads are checked.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+        """
+
+        model = Model(3)
+        model.extrusion_length = 1
+        # add soil material 2d
+        soil_material = create_default_3d_soil_material
+        layer_coordinates = [(0.0, 0.0, 0.0), (5.0, 0.0, 0.0), (5.0, 3.0, 0.0), (0.0, 3.0, 0.0)]
+        # add soil layer
+        model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
+
+        rail_parameters = EulerBeam(3, 1, 1, 1, 1, 1, 1, 1)
+        rail_pad_parameters = ElasticSpringDamper([1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1])
+        extended_soil_parameters = ElasticSpringDamper([1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1])
+        sleeper_parameters = NodalConcentrated([1, 1, 1], 1, [1, 1, 1])
+
+        origin_point = np.array([2.0, 3.0, -0.5])
+        direction_vector = np.array([0, 0, 1])
+
+        # create a straight track with rails, sleepers and rail pads
+        # create a straight track with rails, sleepers and rail pads
+        model.generate_extended_straight_track(0.5, 5, rail_parameters, sleeper_parameters, rail_pad_parameters, 0.02,
+                                               origin_point, extended_soil_parameters, 5, direction_vector, "track_1")
+
+        # check geometry and material of the rail
+        expected_rail_points = {
+            14: Point.create([2.0, 3.02, -0.5], 14),
+            15: Point.create([2.0, 3.02, 0.0], 15),
+            16: Point.create([2.0, 3.02, 0.5], 16),
+            17: Point.create([2.0, 3.02, 1.0], 17),
+            18: Point.create([2.0, 3.02, 1.5], 18),
+        }
+        expected_rail_lines = {
+            21: Line.create([14, 15], 21),
+            22: Line.create([15, 16], 22),
+            23: Line.create([16, 17], 23),
+            24: Line.create([17, 18], 24),
+        }
+
+        expected_rail_geometry = Geometry(expected_rail_points, expected_rail_lines)
+
+        # check rail model part
+        rail_model_part = model.body_model_parts[1]
+        calculated_rail_geometry = rail_model_part.geometry
+        calculated_rail_parameters = rail_model_part.material.material_parameters
+
+        TestUtils.assert_almost_equal_geometries(expected_rail_geometry, calculated_rail_geometry)
+        TestUtils.assert_dictionary_almost_equal(rail_parameters.__dict__, calculated_rail_parameters.__dict__)
+
+        # check geometry and material of the sleepers
+        expected_sleeper_points = {
+            9: Point.create([2.0, 3.0, -0.5], 9),
+            10: Point.create([2.0, 3.0, 0.0], 10),
+            11: Point.create([2.0, 3.0, 0.5], 11),
+            12: Point.create([2.0, 3.0, 1.0], 12),
+        }
+
+        expected_sleeper_geometry = Geometry(expected_sleeper_points)
+
+        sleeper_model_part = model.body_model_parts[2]
+        calculated_sleeper_geometry = sleeper_model_part.geometry
+        calculated_sleeper_parameters = sleeper_model_part.material.material_parameters
+
+        TestUtils.assert_almost_equal_geometries(expected_sleeper_geometry, calculated_sleeper_geometry)
+        TestUtils.assert_dictionary_almost_equal(sleeper_parameters.__dict__, calculated_sleeper_parameters.__dict__)
+
+        # check geometry and material of the rail pads
+        rail_pad_model_part = model.body_model_parts[3]
+        calculated_rail_pad_geometry = rail_pad_model_part.geometry
+        calculated_rail_pad_parameters = rail_pad_model_part.material.material_parameters
+
+        expected_rail_pad_points = {
+            14: Point.create([2.0, 3.02, -0.5], 14),
+            9: Point.create([2.0, 3.0, -0.5], 9),
+            15: Point.create([2.0, 3.02, 0.0], 15),
+            10: Point.create([2.0, 3.0, 0.0], 10),
+            16: Point.create([2.0, 3.02, 0.5], 16),
+            11: Point.create([2.0, 3.0, 0.5], 11),
+            17: Point.create([2.0, 3.02, 1.0], 17),
+            12: Point.create([2.0, 3.0, 1.0], 12),
+            18: Point.create([2.0, 3.02, 1.5], 18),
+            13: Point.create([2.0, 3.0, 1.5], 13),
+        }
+
+        expected_rail_pad_lines = {
+            25: Line.create([14, 9], 25),
+            26: Line.create([15, 10], 26),
+            27: Line.create([16, 11], 27),
+            28: Line.create([17, 12], 28),
+            29: Line.create([18, 13], 29),
+        }
+
+        expected_rail_pad_geometry = Geometry(expected_rail_pad_points, expected_rail_pad_lines)
+
+        TestUtils.assert_almost_equal_geometries(expected_rail_pad_geometry, calculated_rail_pad_geometry)
+        TestUtils.assert_dictionary_almost_equal(rail_pad_parameters.__dict__, calculated_rail_pad_parameters.__dict__)
+
+        # check rotation constrain model part
+        rotation_constrain_model_part = model.process_model_parts[1]
+        calculated_rotation_constrain_geometry = rotation_constrain_model_part.geometry
+        calculated_rotation_constrain_parameters = rotation_constrain_model_part.parameters
+
+        expected_rotation_constrain_points = {14: Point.create([2.0, 3.02, -0.5], 14)}
+        expected_rotation_constrain_geometry = Geometry(expected_rotation_constrain_points)
+
+        expected_rotation_constraint_parameters = RotationConstraint(value=[0, 0, 0],
+                                                                     is_fixed=[True, True, True],
+                                                                     active=[True, True, True])
+
+        TestUtils.assert_almost_equal_geometries(expected_rotation_constrain_geometry,
+                                                 calculated_rotation_constrain_geometry)
+        TestUtils.assert_dictionary_almost_equal(expected_rotation_constraint_parameters.__dict__,
+                                                 calculated_rotation_constrain_parameters.__dict__)
+
+        # check geometry and material of soil equivalent
+        soil_equivalent_model_part = model.body_model_parts[4]
+        calculated_soil_equivalent_geometry = soil_equivalent_model_part.geometry
+        calculated_soil_equivalent_parameters = soil_equivalent_model_part.material.material_parameters
+
+        expected_soil_equivalent_points = {
+            9: Point.create([2.0, 3.0, -0.5], 9),
+            19: Point.create([2.0, -2.0, -0.5], 19),
+            13: Point.create([2.0, 3.0, 1.5], 13),
+            20: Point.create([2.0, -2.0, 1.5], 20),
+        }
+
+        expected_soil_equivalent_lines = {
+            30: Line.create([9, 19], 30),
+            31: Line.create([13, 20], 31),
+        }
+
+        expected_soil_equivalent_geometry = Geometry(expected_soil_equivalent_points, expected_soil_equivalent_lines)
+
+        TestUtils.assert_almost_equal_geometries(expected_soil_equivalent_geometry, calculated_soil_equivalent_geometry)
+        TestUtils.assert_dictionary_almost_equal(extended_soil_parameters.__dict__,
+                                                 calculated_soil_equivalent_parameters.__dict__)
