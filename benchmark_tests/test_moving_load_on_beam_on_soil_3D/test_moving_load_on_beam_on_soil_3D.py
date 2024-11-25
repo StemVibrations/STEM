@@ -23,7 +23,7 @@ def test_stem():
     # Specify dimension and initiate the model
     ndim = 3
     model = Model(ndim)
-    model.extrusion_length = 2
+    model.extrusion_length = 5
 
     # Specify soil material model
     DENSITY_SOLID = 2650
@@ -81,9 +81,12 @@ def test_stem():
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(2, [1, 2, 3, 6], displacementXYZ_parameters, "displacementXYZ")
 
+    # import webbrowser
+    model.show_geometry(show_surface_ids=True, show_point_ids=True)
+
     # Set mesh size
     # --------------------------------
-    model.set_mesh_size(element_size=0.05)
+    model.set_mesh_size(element_size=0.1)
 
     # Define project parameters
     # --------------------------------
