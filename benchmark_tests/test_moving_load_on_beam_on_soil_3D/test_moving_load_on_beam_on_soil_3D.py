@@ -8,7 +8,8 @@ from stem.load import MovingLoad
 from stem.boundary import RotationConstraint
 from stem.boundary import DisplacementConstraint
 from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
-                         StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy, NewtonRaphsonStrategy)
+                         StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy,
+                         NewtonRaphsonStrategy)
 from stem.output import NodalOutput, VtkOutputParameters, Output
 from stem.stem import Stem
 
@@ -146,7 +147,8 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
-    assert assert_files_equal("benchmark_tests/test_moving_load_on_beam_on_soil_3D/inputs_kratos/output_/output_vtk_full_model",
-                              os.path.join(input_folder, "output/output_vtk_full_model"))
+    assert assert_files_equal(
+        "benchmark_tests/test_moving_load_on_beam_on_soil_3D/inputs_kratos/output_/output_vtk_full_model",
+        os.path.join(input_folder, "output/output_vtk_full_model"))
 
     rmtree(input_folder)

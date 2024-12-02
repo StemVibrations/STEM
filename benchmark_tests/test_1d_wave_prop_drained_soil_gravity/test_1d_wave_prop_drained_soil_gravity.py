@@ -37,8 +37,6 @@ def test_stem():
     # Create the soil layer
     model.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil_column")
 
-
-
     # create block which is loaded with gravity loading
     DENSITY_SOLID = 100
     POROSITY = 0.0
@@ -64,11 +62,10 @@ def test_stem():
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "base_fixed")
-    model.add_boundary_condition_by_geometry_ids(1, [2, 4,5,7], sym_parameters, "side_rollers")
+    model.add_boundary_condition_by_geometry_ids(1, [2, 4, 5, 7], sym_parameters, "side_rollers")
 
     # Synchronize geometry
     model.synchronise_geometry()
-
 
     # add gravity loading modelpart manually, since gravity should only be there in the block modelpart in this test
     # set gravity load at vertical axis
@@ -79,7 +76,6 @@ def test_stem():
     model._Model__add_gravity_model_part(gravity_load, 2, gravity_block_geometry_ids)
 
     model.synchronise_geometry()
-
 
     # Set mesh size
     # --------------------------------
@@ -113,12 +109,14 @@ def test_stem():
                                      rayleigh_m=0.02)
 
     # Set up problem data
-    problem = Problem(problem_name="test_1d_wave_prop_drained_soil_gravity", number_of_threads=2, settings=solver_settings)
+    problem = Problem(problem_name="test_1d_wave_prop_drained_soil_gravity",
+                      number_of_threads=2,
+                      settings=solver_settings)
     model.project_parameters = problem
 
     # Define the results to be written to the output file
     # Nodal results
-    nodal_results = [NodalOutput.DISPLACEMENT_Y,NodalOutput.VELOCITY_Y]
+    nodal_results = [NodalOutput.DISPLACEMENT_Y, NodalOutput.VELOCITY_Y]
 
     # Define the output process
     model.add_output_settings(output_parameters=VtkOutputParameters(file_format="ascii",
@@ -159,7 +157,7 @@ def test_stem():
 
     import matplotlib.pyplot as plt
 
-    plt.plot(calculated_data_stage1["TIME"],calculated_data_stage1["NODE_7"]["DISPLACEMENT_Y"])
+    plt.plot(calculated_data_stage1["TIME"], calculated_data_stage1["NODE_7"]["DISPLACEMENT_Y"])
     plt.plot(calculated_data_stage1["TIME"], calculated_data_stage2["NODE_7"]["DISPLACEMENT_Y"])
     plt.show()
 
