@@ -6,7 +6,7 @@ from stem.model_part import BodyModelPart
 from stem.structural_material import EulerBeam, StructuralMaterial
 from stem.load import MovingLoad
 from stem.boundary import DisplacementConstraint
-from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, StressInitialisationType, SolverSettings, Problem
+from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, StressInitialisationType, SolverSettings, Problem, NewtonRaphsonStrategy
 from stem.output import NodalOutput, JsonOutputParameters
 from stem.stem import Stem
 
@@ -77,6 +77,7 @@ def test_stem():
     # Set up solver settings
     analysis_type = AnalysisType.MECHANICAL
     solution_type = SolutionType.QUASI_STATIC
+    strategy = NewtonRaphsonStrategy()
     # Set up start and end time of calculation, time step and etc
     time_integration = TimeIntegration(start_time=0.0,
                                        end_time=0.45,
@@ -93,6 +94,7 @@ def test_stem():
                                      time_integration=time_integration,
                                      is_stiffness_matrix_constant=True,
                                      are_mass_and_damping_constant=False,
+                                     strategy_type=strategy,
                                      convergence_criteria=convergence_criterion,
                                      rayleigh_k=0.000,
                                      rayleigh_m=0.00)

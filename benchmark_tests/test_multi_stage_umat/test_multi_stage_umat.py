@@ -21,7 +21,6 @@ from tests.utils import TestUtils
 SHOW_RESULTS = False
 
 
-@pytest.mark.skipif(sys.platform == "linux", reason="linear elastic umat is currently not available for linux")
 def test_stem():
     """
     Test STEM: 2D block with distributed cyclic loading with multistage for the umat using umat and changing the
@@ -158,8 +157,16 @@ def test_stem():
     YOUNG_MODULUS_2 = YOUNG_MODULUS / 2
     SHEAR_MODULUS = YOUNG_MODULUS_2 / (2 * (1 + POISSON_RATIO))
 
+    # copy the linear elastic umat to the input folder
+    if sys.platform == "linux":
+        extension = "so"
+    elif sys.platform == "win32":
+        extension = "dll"
+    else:
+        raise Exception("Unknown platform")
+
     soil_formulation_stage_2 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
-    constitutive_law_stage_2 = SmallStrainUmatLaw(UMAT_NAME="../linear_elastic.dll",
+    constitutive_law_stage_2 = SmallStrainUmatLaw(UMAT_NAME=f"../linear_elastic.{extension}",
                                                   IS_FORTRAN_UMAT=True,
                                                   UMAT_PARAMETERS=[SHEAR_MODULUS, POISSON_RATIO],
                                                   STATE_VARIABLES=[0.0])
@@ -177,8 +184,8 @@ def test_stem():
     stem.write_all_input_files()
 
     # copy the linear elastic dll to the input folder
-    copyfile(src=r"benchmark_tests\user_defined_models\linear_elastic.dll",
-             dst=r"benchmark_tests\test_multi_stage_umat\linear_elastic.dll")
+    copyfile(src=rf"benchmark_tests/user_defined_models/linear_elastic.{extension}",
+             dst=rf"benchmark_tests/test_multi_stage_umat/linear_elastic.{extension}")
 
     # Run Kratos calculation
     # --------------------------------
