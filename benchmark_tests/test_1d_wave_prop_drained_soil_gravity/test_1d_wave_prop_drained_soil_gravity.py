@@ -1,15 +1,21 @@
 import os
+
+from benchmark_tests.test_mass_on_spring_damper.test_mass_on_spring_damper import SHOW_RESULTS
 from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
 from stem.load import GravityLoad
 from stem.table import Table
 from stem.boundary import DisplacementConstraint
-from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, StressInitialisationType, SolverSettings, Problem
+from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, \
+    StressInitialisationType, SolverSettings, Problem, NewtonRaphsonStrategy, LinearNewtonRaphsonStrategy
 from stem.output import NodalOutput, VtkOutputParameters, Output, JsonOutputParameters
 from stem.stem import Stem
-from benchmark_tests.utils import assert_files_equal
+from stem.utils import Utils
+from tests.utils import TestUtils
+
 from shutil import rmtree
 
+SHOW_RESULTS = False
 
 def test_stem():
     # Define geometry, conditions and material parameters
@@ -88,7 +94,7 @@ def test_stem():
     analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
     solution_type = SolutionType.DYNAMIC
     # Set up start and end time of calculation, time step and etc
-    delta_time = 0.0025
+    delta_time = 0.0015
     time_integration = TimeIntegration(start_time=0.0,
                                        end_time=0.15,
                                        delta_time=delta_time,
@@ -105,6 +111,7 @@ def test_stem():
                                      is_stiffness_matrix_constant=True,
                                      are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
+                                     strategy_type=LinearNewtonRaphsonStrategy(),
                                      rayleigh_k=6e-6,
                                      rayleigh_m=0.02)
 
@@ -155,14 +162,20 @@ def test_stem():
     with open(os.path.join(input_folder, "output/calculated_output_stage_2.json")) as f:
         calculated_data_stage2 = json.load(f)
 
-    import matplotlib.pyplot as plt
+    if SHOW_RESULTS:
+        import matplotlib.pyplot as plt
 
-    plt.plot(calculated_data_stage1["TIME"], calculated_data_stage1["NODE_7"]["DISPLACEMENT_Y"])
-    plt.plot(calculated_data_stage1["TIME"], calculated_data_stage2["NODE_7"]["DISPLACEMENT_Y"])
-    plt.show()
+        plt.plot(calculated_data_stage1["TIME"], calculated_data_stage1["NODE_7"]["VELOCITY_Y"])
+        plt.plot(calculated_data_stage2["TIME"], calculated_data_stage2["NODE_7"]["VELOCITY_Y"])
+        plt.show()
 
-    result = assert_files_equal("benchmark_tests/test_1d_wave_prop_drained_soil_gravity/output_/output_vtk_full_model",
-                                os.path.join(input_folder, "output/output_vtk_full_model"))
+    # open expected results
+    with open("benchmark_tests/test_1d_wave_prop_drained_soil_gravity/output_/expected_output.json") as f:
+        expected_results = json.load(f)
 
-    assert result is True
+    calculated_results = Utils.merge(calculated_data_stage1, calculated_data_stage2)
+
+    # Assert dictionaries
+    TestUtils.assert_dictionary_almost_equal(expected_results, calculated_results)
+
     rmtree(input_folder)
