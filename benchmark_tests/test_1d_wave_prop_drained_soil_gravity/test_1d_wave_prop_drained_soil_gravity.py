@@ -17,6 +17,7 @@ from shutil import rmtree
 
 SHOW_RESULTS = False
 
+
 def test_stem():
     # Define geometry, conditions and material parameters
     # --------------------------------

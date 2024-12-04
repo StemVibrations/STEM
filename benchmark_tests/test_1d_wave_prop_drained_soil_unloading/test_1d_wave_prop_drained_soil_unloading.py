@@ -13,6 +13,7 @@ from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
 from shutil import rmtree
 
+
 @pytest.skip("Linear elastic newmark solver cannot handle this case #264")
 def test_stem():
     # Define geometry, conditions and material parameters

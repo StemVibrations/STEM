@@ -12,8 +12,8 @@ from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
 from shutil import rmtree
 
-
 SHOW_RESULTS = False
+
 
 def test_stem():
     # Define geometry, conditions and material parameters
@@ -140,7 +140,6 @@ def test_stem():
 
         plt.plot(calculated_data_stage1["TIME"], calculated_data_stage1["NODE_5"]["VELOCITY_Y"])
         plt.show()
-
 
     result = assert_files_equal("benchmark_tests/test_1d_wave_prop_drained_soil/output_/output_vtk_full_model",
                                 os.path.join(input_folder, "output/output_vtk_full_model"))

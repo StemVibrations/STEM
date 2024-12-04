@@ -11,8 +11,8 @@ from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters
 from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
 
-
 SHOW_RESULTS = False
+
 
 def test_stem():
     # Define geometry, conditions and material parameters
@@ -97,7 +97,9 @@ def test_stem():
                                      rayleigh_m=0.02)
 
     # Set up problem data
-    problem = Problem(problem_name="test_1d_wave_prop_drained_soil_multi_stage", number_of_threads=2, settings=solver_settings)
+    problem = Problem(problem_name="test_1d_wave_prop_drained_soil_multi_stage",
+                      number_of_threads=2,
+                      settings=solver_settings)
     model.project_parameters = problem
 
     # Define the results to be written to the output file
@@ -130,7 +132,6 @@ def test_stem():
     stage2 = stem.create_new_stage(delta_time, 0.15)
     stem.add_calculation_stage(stage2)
     stem.write_all_input_files()
-
 
     # Run Kratos calculation
     # --------------------------------
