@@ -1,16 +1,15 @@
 import os
-import json
+from shutil import rmtree
 
 from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
 from stem.load import LineLoad
 from stem.table import Table
 from stem.boundary import DisplacementConstraint
-from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, StressInitialisationType, SolverSettings, Problem
-from stem.output import NodalOutput, VtkOutputParameters, Output, JsonOutputParameters
+from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy
+from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters
 from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
-from shutil import rmtree
 
 
 SHOW_RESULTS = False
@@ -78,7 +77,7 @@ def test_stem():
     # Set up start and end time of calculation, time step and etc
     delta_time = 0.0015
     time_integration = TimeIntegration(start_time=0.0,
-                                       end_time=0.30,
+                                       end_time=0.15,
                                        delta_time=delta_time,
                                        reduction_factor=1.0,
                                        increase_factor=1.0,
@@ -93,11 +92,12 @@ def test_stem():
                                      is_stiffness_matrix_constant=True,
                                      are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
+                                     strategy_type=LinearNewtonRaphsonStrategy(),
                                      rayleigh_k=6e-6,
                                      rayleigh_m=0.02)
 
     # Set up problem data
-    problem = Problem(problem_name="test_1d_wave_prop_drained_soil", number_of_threads=2, settings=solver_settings)
+    problem = Problem(problem_name="test_1d_wave_prop_drained_soil_multi_stage", number_of_threads=2, settings=solver_settings)
     model.project_parameters = problem
 
     # Define the results to be written to the output file
@@ -121,27 +121,35 @@ def test_stem():
                                              output_dir="output")
 
     # Define the kratos input folder
-    input_folder = "benchmark_tests/test_1d_wave_prop_drained_soil/inputs_kratos"
+    input_folder = "benchmark_tests/test_1d_wave_prop_drained_soil_multi_stage/inputs_kratos"
 
     # Write KRATOS input files
     # --------------------------------
     stem = Stem(model, input_folder)
+
+    stage2 = stem.create_new_stage(delta_time, 0.15)
+    stem.add_calculation_stage(stage2)
     stem.write_all_input_files()
+
 
     # Run Kratos calculation
     # --------------------------------
     stem.run_calculation()
 
     if SHOW_RESULTS:
+        import json
         with open(os.path.join(input_folder, "output/calculated_output.json")) as f:
             calculated_data_stage1 = json.load(f)
+        with open(os.path.join(input_folder, "output/calculated_output_stage_2.json")) as f:
+            calculated_data_stage2 = json.load(f)
 
         import matplotlib.pyplot as plt
 
         plt.plot(calculated_data_stage1["TIME"], calculated_data_stage1["NODE_5"]["VELOCITY_Y"])
+        plt.plot(calculated_data_stage2["TIME"], calculated_data_stage2["NODE_5"]["VELOCITY_Y"])
         plt.show()
 
-
+    # results should be the same as the single stage calculation
     result = assert_files_equal("benchmark_tests/test_1d_wave_prop_drained_soil/output_/output_vtk_full_model",
                                 os.path.join(input_folder, "output/output_vtk_full_model"))
 
