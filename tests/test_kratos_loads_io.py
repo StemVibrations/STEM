@@ -63,11 +63,11 @@ class TestKratosLoadsIO:
         kratos_loads_io = KratosLoadsIO(domain="PorousDomain")
 
         loads_processes = [
-            kratos_loads_io.create_load_dict("test_point_load", point_load_parameters),
-            kratos_loads_io.create_load_dict("test_line_load", line_load_parameters),
-            kratos_loads_io.create_load_dict("test_surface_load", surface_load_parameters),
-            kratos_loads_io.create_load_dict("test_moving_load", moving_point_load_parameters),
-            kratos_loads_io.create_load_dict("test_uvec_load", uvec_load)
+            kratos_loads_io.create_load_dict("test_point_load", point_load_parameters, 0.0),
+            kratos_loads_io.create_load_dict("test_line_load", line_load_parameters, 0.0),
+            kratos_loads_io.create_load_dict("test_surface_load", surface_load_parameters, 0.0),
+            kratos_loads_io.create_load_dict("test_moving_load", moving_point_load_parameters, 0.0),
+            kratos_loads_io.create_load_dict("test_uvec_load", uvec_load, 0.0)
         ]
 
         test_dictionary = {"loads_process_list": loads_processes, "constraints_process_list": []}
@@ -130,10 +130,10 @@ class TestKratosLoadsIO:
         kratos_loads_io = KratosLoadsIO(domain="PorousDomain")
 
         loads_processes = [
-            kratos_loads_io.create_load_dict("test_point_load", point_load_parameters),
-            kratos_loads_io.create_load_dict("test_line_load", line_load_parameters),
-            kratos_loads_io.create_load_dict("test_surface_load", surface_load_parameters),
-            kratos_loads_io.create_load_dict("test_moving_load", moving_point_load_parameters)
+            kratos_loads_io.create_load_dict("test_point_load", point_load_parameters, 0.0),
+            kratos_loads_io.create_load_dict("test_line_load", line_load_parameters, 0.0),
+            kratos_loads_io.create_load_dict("test_surface_load", surface_load_parameters, 0.0),
+            kratos_loads_io.create_load_dict("test_moving_load", moving_point_load_parameters, 0.0)
         ]
 
         test_dictionary = {"loads_process_list": loads_processes, "constraints_process_list": []}

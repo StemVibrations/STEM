@@ -48,14 +48,15 @@ class KratosBoundariesIO:
 
         return boundary_dict
 
-    def create_boundary_condition_dict(self, part_name: str,
-                                       parameters: BoundaryParametersABC) -> Union[Dict[str, Any], None]:
+    def create_boundary_condition_dict(self, part_name: str, parameters: BoundaryParametersABC,
+                                       current_time: float) -> Union[Dict[str, Any], None]:
         """
         Creates a dictionary containing the boundary parameters
 
         Args:
             - part_name (str): part name where the boundary condition is applied
             - parameters (:class:`stem.boundary.BoundaryParametersABC`): boundary parameters object
+            - current_time (float): current time of the analysis
 
         Returns:
             - Dict[str, Any]: dictionary containing the boundary parameters
@@ -65,9 +66,10 @@ class KratosBoundariesIO:
 
         if isinstance(parameters, DisplacementConstraint):
             return IOUtils.create_vector_constraint_table_process_dict(self.domain, part_name, parameters,
-                                                                       "DISPLACEMENT")
+                                                                       "DISPLACEMENT", current_time)
         elif isinstance(parameters, RotationConstraint):
-            return IOUtils.create_vector_constraint_table_process_dict(self.domain, part_name, parameters, "ROTATION")
+            return IOUtils.create_vector_constraint_table_process_dict(self.domain, part_name, parameters, "ROTATION",
+                                                                       current_time)
         elif isinstance(parameters, AbsorbingBoundary):
             return self.__create_absorbing_boundary_dict(part_name, parameters)
         else:
