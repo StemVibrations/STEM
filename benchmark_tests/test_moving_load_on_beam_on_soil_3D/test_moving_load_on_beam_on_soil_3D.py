@@ -148,7 +148,7 @@ def test_stem():
     stem.run_calculation()
 
     assert assert_files_equal(
-        "benchmark_tests/test_moving_load_on_beam_on_soil_3D/inputs_kratos/output_/output_vtk_full_model",
+        "benchmark_tests/test_moving_load_on_beam_on_soil_3D/output_/output_vtk_full_model",
         os.path.join(input_folder, "output/output_vtk_full_model"))
 
     rmtree(input_folder)
