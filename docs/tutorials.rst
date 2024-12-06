@@ -985,3 +985,60 @@ The calculation is then ran by calling the run_calculation function within the s
 .. code-block:: python
 
     stem.run_calculation()
+
+
+.. _tutorial4:
+
+CPT-based random field model with point load
+--------------------------------------------
+This tutorial shows how a subsurface model can be created directly from CPT data. First, the concept of the CPT-based random field generation for subsurface models is presented. Secon
+
+
+Theory
+......
+
+* CPT data is being read into a data set of point with coordinates (X,Y,Z)
+
+
+
+
+
+The modules required for the computational model are loaded, together with two additional classes: `stem.additional_processes.ParamaterFieldParameter` is used as the interface between the `STEM` package and the `random_fields` package; `random_fields.geostatistical_cpt_interpretation.ElasticityFieldsCpt` is used as a generator of conditioned random fields.
+
+
+.. code-block:: python
+
+    import os
+    from stem.model import Model
+    from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
+    from stem.load import PointLoad
+    from stem.boundary import DisplacementConstraint
+    from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
+         NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
+    from stem.output import NodalOutput, VtkOutputParameters, Output, GaussPoi    ntOutput
+    from stem.stem import Stem
+
+    from stem.additional_processes import ParameterFieldParameters
+    from geostatistical_cpt_interpretation import ElasticityFieldsFromCpt
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
