@@ -29,18 +29,19 @@ class IOUtils:
         json.dump(dictionary, open(output_path_file, "w"), indent=4)
 
     @staticmethod
-    def create_value_and_table(part_name: str, parameters: Union["LoadParametersABC", "BoundaryParametersABC"]) \
-            -> Tuple[List[float], List[int]]:
+    def create_value_and_table(part_name: str, parameters: Union["LoadParametersABC", "BoundaryParametersABC"],
+                               current_time: float) -> Tuple[List[float], List[int]]:
         """
         Assemble values and tables for the boundary condition from the `value` attribute of the boundary parameters.
         If the displacement or rotation is time-dependent, a `table` is required. If the displacement or rotation is
         constant, a `value` is required. Each direction (x,y,z), requires either a `table` or a `value`. When a `table`
-        is provided, the `value` is set to 0. If a `value` is provided, the `table` is set to 0.
+        is provided, the `value` is interpolated. If a `value` is provided, the `table` is set to 0.
 
         Args:
             - part_name (str): name of the model part on which the boundary is applied.
             - parameters (Union[:class:`stem.load.LoadParametersABC`, \
                                 :class:`stem.boundary.BoundaryParametersABC`]): boundary parameters object.
+            - current_time (float): current time of the analysis.
 
         Raises:
             - ValueError: if table ids are not initialised.
@@ -60,13 +61,13 @@ class IOUtils:
 
             # check the values per direction
             for vv in parameters.value:
-                # if a table is provided, the value is set to 0
+                # if a table is provided, the value is set to the interpolated value
                 if isinstance(vv, Table):
                     if vv.id is None:
                         raise ValueError(f"Table id is not initialised for values in {parameters.__class__.__name__}"
                                          f" in model part: {part_name}.")
                     _table.append(vv.id)
-                    _value.append(0.0)
+                    _value.append(vv.interpolate_value_at_time(current_time))
                 # if a value is provided, the table is set to 0
                 elif isinstance(vv, (int, float)):
                     _table.append(0)
@@ -84,7 +85,7 @@ class IOUtils:
     @staticmethod
     def create_vector_constraint_table_process_dict(global_domain: str, part_name: str,
                                                     parameters: Union[LoadParametersABC, BoundaryParametersABC],
-                                                    variable_name: str) -> Dict[str, Any]:
+                                                    variable_name: str, current_time: float) -> Dict[str, Any]:
         """
         Creates a dictionary containing the vector constraint table process parameters. The vector constraint table
         process is used for loads and boundary conditions. This process applies either a constant value or a
@@ -96,6 +97,7 @@ class IOUtils:
             - parameters (Union[:class:`stem.load.LoadParametersABC`, \
                                 :class:`stem.boundary.BoundaryParametersABC`]): boundary parameters object.
             - variable_name (str): name of the variable to which the boundary condition or load is applied
+            - current_time (float): current time of the analysis.
 
         Returns:
             - Dict[str, Any]: dictionary containing the load parameters
@@ -113,7 +115,7 @@ class IOUtils:
         load_dict["Parameters"]["variable_name"] = variable_name
 
         # get tables and values
-        _value, _table = IOUtils.create_value_and_table(part_name, parameters)
+        _value, _table = IOUtils.create_value_and_table(part_name, parameters, current_time)
         load_dict["Parameters"]["table"] = _table
         load_dict["Parameters"]["value"] = _value
 

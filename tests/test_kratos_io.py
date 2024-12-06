@@ -687,7 +687,7 @@ class TestKratosModelIO:
                "only a Table, float or integer are valid inputs.")
         with pytest.raises(ValueError, match=re.escape(msg)):
 
-            IOUtils.create_value_and_table("load_top", line_load1)
+            IOUtils.create_value_and_table("load_top", line_load1, 0.0)
 
         # create value and table from moving load raises an error
         moving_load_parameters = MovingLoad(origin=[0, 1, 0.5],
@@ -698,14 +698,15 @@ class TestKratosModelIO:
         msg = "Attribute `value` does not exist in class: MovingLoad."
         with pytest.raises(ValueError, match=msg):
 
-            IOUtils.create_value_and_table("moving_load", moving_load_parameters)
+            IOUtils.create_value_and_table("moving_load", moving_load_parameters, 0.0)
 
         # adjust table to the right parameter, but not initialised table. Raises ValueError.
         model.process_model_parts[0].parameters.value[0] = 0
         msg = "Table id is not initialised for values in LineLoad in model part: load_top."
         with pytest.raises(ValueError, match=msg):
 
-            IOUtils.create_value_and_table(model.process_model_parts[0].name, model.process_model_parts[0].parameters)
+            IOUtils.create_value_and_table(model.process_model_parts[0].name, model.process_model_parts[0].parameters,
+                                           0.0)
 
     def test_write_input_files_for_kratos(self, create_default_2d_model: Model, create_default_solver_settings: Problem,
                                           create_default_outputs: List[Output]):

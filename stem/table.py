@@ -57,3 +57,17 @@ class Table:
             raise ValueError(f"Dimension mismatch between times and values in table:\n"
                              f" - times: {len(self.times)}\n"
                              f" - values: {len(self.values)}\n")
+
+    def interpolate_value_at_time(self, time: float) -> float:
+        """
+        Interpolates the value at a given time. If the time is < times[0], the value at times[0] is returned.
+        If the time is > times[-1], the value at times[-1] is returned.
+
+        Args:
+            - time (float): time [s] at which the value is interpolated.
+
+        Returns:
+            - float: interpolated value at the given time.
+
+        """
+        return float(np.interp(time, self.times, self.values))

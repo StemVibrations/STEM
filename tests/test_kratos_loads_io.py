@@ -63,11 +63,11 @@ class TestKratosLoadsIO:
         kratos_loads_io = KratosLoadsIO(domain="PorousDomain")
 
         loads_processes = [
-            kratos_loads_io.create_load_dict("test_point_load", point_load_parameters),
-            kratos_loads_io.create_load_dict("test_line_load", line_load_parameters),
-            kratos_loads_io.create_load_dict("test_surface_load", surface_load_parameters),
-            kratos_loads_io.create_load_dict("test_moving_load", moving_point_load_parameters),
-            kratos_loads_io.create_load_dict("test_uvec_load", uvec_load)
+            kratos_loads_io.create_load_dict("test_point_load", point_load_parameters, 0.0),
+            kratos_loads_io.create_load_dict("test_line_load", line_load_parameters, 0.0),
+            kratos_loads_io.create_load_dict("test_surface_load", surface_load_parameters, 0.0),
+            kratos_loads_io.create_load_dict("test_moving_load", moving_point_load_parameters, 0.0),
+            kratos_loads_io.create_load_dict("test_uvec_load", uvec_load, 0.0)
         ]
 
         test_dictionary = {"loads_process_list": loads_processes, "constraints_process_list": []}
@@ -93,14 +93,14 @@ class TestKratosLoadsIO:
         surface_load_coords = [(0, 0, 1), (0, 1, 1), (1, 1, 1), (1, 0, 1)]
 
         # define tables
-        _time = np.array([0, 1, 2, 3, 4, 5])
+        time = np.array([0, 1, 2, 3, 4, 5])
 
-        _value1 = np.array([0, 5, 10, 5, 0, 0])
-        table1 = Table(times=_time, values=_value1)
+        value1 = np.array([0, 5, 10, 5, 0, 0])
+        table1 = Table(times=time, values=value1)
         table1.id = 1
 
-        _value2 = np.array([0, -5, 5, -5, 0, 0])
-        table2 = Table(times=_time, values=_value2)
+        value2 = np.array([0, -5, 5, -5, 0, 0])
+        table2 = Table(times=time, values=value2)
         table2.id = 2
 
         # define load(s) parameters
@@ -130,10 +130,10 @@ class TestKratosLoadsIO:
         kratos_loads_io = KratosLoadsIO(domain="PorousDomain")
 
         loads_processes = [
-            kratos_loads_io.create_load_dict("test_point_load", point_load_parameters),
-            kratos_loads_io.create_load_dict("test_line_load", line_load_parameters),
-            kratos_loads_io.create_load_dict("test_surface_load", surface_load_parameters),
-            kratos_loads_io.create_load_dict("test_moving_load", moving_point_load_parameters)
+            kratos_loads_io.create_load_dict("test_point_load", point_load_parameters, 0.0),
+            kratos_loads_io.create_load_dict("test_line_load", line_load_parameters, 0.5),
+            kratos_loads_io.create_load_dict("test_surface_load", surface_load_parameters, 0.0),
+            kratos_loads_io.create_load_dict("test_moving_load", moving_point_load_parameters, 0.0)
         ]
 
         test_dictionary = {"loads_process_list": loads_processes, "constraints_process_list": []}

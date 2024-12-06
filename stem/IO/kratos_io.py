@@ -892,11 +892,17 @@ class KratosIO:
         Args:
             - model (:class:`stem.model.Model`): The model object containing the process model parts.
 
+        Raises:
+            - ValueError: if project parameters are not initialised in the model.
+
         Returns:
             - Dict[str, Any]: dictionary containing the part of the project parameters dictionary related \
                 to loads, boundary conditions and additional processes.
 
         """
+        if model.project_parameters is None:
+            raise ValueError("Project parameters are not initialised in model.")
+
         processes_dict: Dict[str, Any] = {"processes": {"constraints_process_list": [], "loads_process_list": []}}
 
         # loop on the process model parts
@@ -904,12 +910,14 @@ class KratosIO:
 
             # add load
             if isinstance(mp.parameters, LoadParametersABC):
-                parameters = self.loads_io.create_load_dict(mp.name, mp.parameters)
+                parameters = self.loads_io.create_load_dict(
+                    mp.name, mp.parameters, model.project_parameters.settings.time_integration.start_time)
                 processes_dict["processes"]["loads_process_list"].append(parameters)
 
             # add boundary condition
             elif isinstance(mp.parameters, BoundaryParametersABC):
-                parameters = self.boundaries_io.create_boundary_condition_dict(mp.name, mp.parameters)
+                parameters = self.boundaries_io.create_boundary_condition_dict(
+                    mp.name, mp.parameters, model.project_parameters.settings.time_integration.start_time)
 
                 if mp.parameters.is_constraint:
                     _key = "constraints_process_list"

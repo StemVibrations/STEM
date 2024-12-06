@@ -21,7 +21,7 @@
                     "model_part_name": "PorousDomain.test_line_load",
                     "variable_name": "LINE_LOAD",
                     "active": [false, true, false],
-                    "value": [-10.0, 0.0, 30.0],
+                    "value": [-10.0, -2.5, 30.0],
                     "table": [0, 2, 0]
                 }
             },  {

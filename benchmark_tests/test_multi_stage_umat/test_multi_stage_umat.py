@@ -4,14 +4,13 @@ import sys
 from shutil import rmtree, copyfile
 
 import numpy as np
-import pytest
 
 from stem.boundary import DisplacementConstraint
 from stem.load import LineLoad
 from stem.model import Model
 from stem.output import JsonOutputParameters, NodalOutput, VtkOutputParameters
 from stem.soil_material import LinearElasticSoil, OnePhaseSoil, SaturatedBelowPhreaticLevelLaw, SmallStrainUmatLaw, SoilMaterial
-from stem.solver import AnalysisType, DisplacementConvergenceCriteria, Problem, SolutionType, SolverSettings, StressInitialisationType, TimeIntegration
+from stem.solver import AnalysisType, DisplacementConvergenceCriteria, Problem, SolutionType, SolverSettings, StressInitialisationType, TimeIntegration, NewtonRaphsonStrategy, LinearNewtonRaphsonStrategy
 from stem.stem import Stem
 from stem.table import Table
 from stem.utils import Utils
@@ -113,6 +112,7 @@ def test_stem():
                                      is_stiffness_matrix_constant=True,
                                      are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
+                                     strategy_type=LinearNewtonRaphsonStrategy(),
                                      rayleigh_k=1e-03,
                                      rayleigh_m=0.02)
 
@@ -235,6 +235,7 @@ def test_stem():
                    label="Calculated")
         ax[0].legend()
         ax[1].legend()
+        plt.grid()
         plt.tight_layout()
         plt.show()
 

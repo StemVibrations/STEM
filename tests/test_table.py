@@ -24,3 +24,24 @@ class TestTable:
 
         with pytest.raises(ValueError, match=msg1):
             Table(times=time, values=values)
+
+    def test_interpolate_value_at_time(self):
+        """
+        Tests that the correct value is interpolated at a given time
+        """
+        time = [1.0, 2.0, 3.0]
+        values = [1.0, 5.0, 12.0]
+
+        table = Table(times=time, values=values)
+
+        # test time before the first time
+        assert table.interpolate_value_at_time(0) == 1.0
+
+        # test for time which is part of the table
+        assert table.interpolate_value_at_time(1) == 1.0
+
+        # test interpolation
+        assert table.interpolate_value_at_time(2.5) == 8.5
+
+        # test for time after the last time
+        assert table.interpolate_value_at_time(5) == 12.0
