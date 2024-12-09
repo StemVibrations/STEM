@@ -1092,7 +1092,7 @@ class KratosIO:
 
         # loop on the process model parts
         for mp in model.process_model_parts:
-            if isinstance(mp.parameters, UvecLoad):
+            if isinstance(mp.parameters, UvecLoad) and (mp.parameters.uvec_model is not None):
                 # Copy UVEC to the input folder
                 mp.parameters.uvec_model.set_path_file(os.path.join(os.getcwd(), self.project_folder),
                                                        mp.parameters.uvec_model.UVEC_NAME)

@@ -10,6 +10,7 @@ from stem.solver import (AnalysisType, SolutionType, TimeIntegration, Displaceme
                          StressInitialisationType, SolverSettings, Problem, Amgcl)
 from stem.output import NodalOutput, VtkOutputParameters, Output
 from stem.stem import Stem
+import UVEC.uvec_ten_dof_vehicle_2D as uvec
 
 from benchmark_tests.utils import assert_files_equal
 
@@ -64,16 +65,17 @@ def test_stem():
         "gravity_axis": 1,
         "contact_coefficient": 9.1e-5,
         "contact_power": 1.5,
-        "initialisation_steps": 100,
+        "static_initialisation": False,
     }
 
     uvec_load = UvecLoad(direction=[1, 1, 1],
                          velocity=1000,
                          origin=[0.75, 3, 5],
                          wheel_configuration=[0.0, 2.5, 19.9, 22.4],
-                         uvec_file=r"uvec_ten_dof_vehicle_2D/uvec.py",
-                         uvec_function_name="uvec",
-                         uvec_parameters=uvec_parameters)
+                         uvec_parameters=uvec_parameters,
+                         uvec_model=uvec,
+                         )
+
     model.add_load_by_coordinates(load_coordinates, uvec_load, "train_load")
 
     # Define boundary conditions
