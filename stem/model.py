@@ -363,10 +363,9 @@ class Model:
                     raise ValueError("Model part has no geometry.")
                 # Extract all points' coordinates and convert them into a NumPy array
                 coordinates = np.array([point.coordinates for point in model_part.geometry.points.values()])
-                coordinates = np.vstack(coordinates)
                 # Find the minimum and maximum for each axis (x, y, z) across all points
-                min_coords = np.min(np.vstack((coordinates,min_coords)), axis=0)
-                max_coords = np.max(np.vstack((coordinates,max_coords)), axis=0)
+                min_coords = np.min(np.vstack((coordinates, min_coords)), axis=0)
+                max_coords = np.max(np.vstack((coordinates, max_coords)), axis=0)
 
         return min_coords, max_coords
 
@@ -744,10 +743,10 @@ class Model:
 
         model_part_exists = False
         for existing_part in self.process_model_parts:
-            if existing_part.name == name and  existing_part.parameters == model_part.parameters:
-               # extra geometry ids are added to the geometry of an existing model part
-               model_part_exists =True
-               existing_part.geometry = model_part.geometry
+            if existing_part.name == name and existing_part.parameters == model_part.parameters:
+                # extra geometry ids are added to the geometry of an existing model part
+                model_part_exists = True
+                existing_part.geometry = model_part.geometry
 
         if not model_part_exists:
             self.process_model_parts.append(model_part)

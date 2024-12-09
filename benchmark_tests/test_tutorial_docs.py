@@ -86,6 +86,7 @@ def test_tutorial_3():
     exec("\n".join(data))
     shutil.rmtree("uvec_train_model")
 
+
 def test_tutorial_4():
     """Test the code in tutorial 4"""
     name = "_tutorial4"

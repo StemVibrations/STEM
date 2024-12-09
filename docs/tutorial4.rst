@@ -197,23 +197,6 @@ an origin point at coordinates [0.75, 2.025, -3.0] (on top of the track, 2 meter
 
     # END CODE BLOCK
 
-The boundary conditions are defined on geometry ids, which are created by gmsh when making the geometry. Gmsh will
-assign an id to each of the points, lines, surfaces and volumes created.
-The geometry ids can be seen after using the show_geometry function.
-
-This function is only used for visualisation of the geometry ids after creation of the geometry, to be able to see the
-geometry ids issued by gmsh, and to know which ids belong to each boundary conditions.
-For visualisation of surface ids, "show_surface_ids" should be set to "True".
-Also for visualisation of line ids, "show_line_ids" and for visualisation of point ids, "show_point_ids"
-should be set to "True".
-
-.. code-block:: python
-
-    model.synchronise_geometry()
-
-    model.show_geometry(show_surface_ids=True)
-
-    # END CODE BLOCK
 
 Below the boundary conditions are defined. The base of the model is fixed in all directions with the name "base_fixed".
 The roller boundary condition is applied along the symmetry side of the domain with the name "sides_roller". On all other
