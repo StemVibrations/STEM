@@ -1,6 +1,8 @@
 from typing import List, Dict, Any, Union, Optional
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
+from enum import Enum
+from types import ModuleType
 
 import numpy as np
 
@@ -245,6 +247,22 @@ class MovingLoad(LoadParametersABC):
         return element_name
 
 
+class UvecSupportedModels(Enum):
+    """
+    Enum class containing the supported UVEC models.
+
+    Inheritance:
+        - :class:`Enum`
+
+    Attributes:
+        - TEN_DOF (str): 10 degrees of freedom UVEC model.
+        - TWO_DOF (str): 2 degrees of freedom UVEC model.
+
+    """
+    TEN_DOF = "UVEC.uvec_ten_dof_vehicle_2D"
+    TWO_DOF = "UVEC.uvec_two_dof_vehicle_2D"
+
+
 @dataclass
 class UvecLoad(LoadParametersABC):
     """
@@ -258,22 +276,32 @@ class UvecLoad(LoadParametersABC):
         - velocity (Union[float, str]): Velocity of the moving load [m/s].
         - origin (List[float]): Starting coordinates of the first wheel [m].
         - wheel_configuration (List[float]): Wheel configuration, i.e. distances from the origin of each wheel [m].
-        - uvec_file (str): Path to the UVEC file.
-        - uvec_function_name (str): Name of the UVEC function.
         - uvec_parameters (Dict[str, Any]): Parameters of the UVEC function.
         - uvec_state_variables (Dict[str, Any]): State variables of the UVEC function.
-
-
+        - uvec_model (ModuleType): UVEC model.
+        - uvec_file (str): Path to the UVEC file.
+        - uvec_function_name (str): Name of the UVEC function.
     """
 
     direction: List[float]
     velocity: Union[float, str]
     origin: List[float]
     wheel_configuration: List[float]
-    uvec_file: str
-    uvec_function_name: str
     uvec_parameters: Dict[str, Any] = field(default_factory=dict)
     uvec_state_variables: Dict[str, Any] = field(default_factory=dict)
+    uvec_model: Union[ModuleType, Any] = None
+    uvec_file: str = ""
+    uvec_function_name: str = ""
+
+    def __post_init__(self):
+        """
+        Check if the UVEC model is supported in STEM.
+        """
+        if self.uvec_model.__name__ not in (model.value for model in UvecSupportedModels):
+            raise ValueError(f"UVEC model {self.uvec_model} is not supported. Please use one of the following models: \
+                    {[model.value for model in UvecSupportedModels]}")
+        self.uvec_file = "/".join([self.uvec_model.__name__.split(".")[-1], "uvec.py"])
+        self.uvec_function_name = "uvec"
 
     @staticmethod
     def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
