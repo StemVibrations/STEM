@@ -697,7 +697,15 @@ a unique name.
     model.add_soil_layer_by_coordinates(embankment_coordinates, material_embankment, "embankment_layer")
 
 Generating the train track
---------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+STEM provides two options to generate a straight track:
+
+- A straight track with rails, sleepers and rail pads. This track placed on top of the 2D or 3D geometry.
+- A straight track with rails, sleepers, rail pads and an extension of the track outside the 2D or 3D geometry.
+  This extension is placed on 1D elements which simulate the 2D or 3D soil behaviour.
+
+**Option 1: Straight track with rails, sleepers and rail pads**
 
 The tracks are added by specifying the origin point of the track and the direction for the extrusion that creates
 the rail as well as rail pads and sleepers. Important is that the origin point and the end of the track lie on
@@ -722,21 +730,20 @@ are spaced 0.5m from each others which results in a 50m straight track, with par
                                   direction_vector, "rail_track_1")
 
 
-Soil equivalent part option with an extended track
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Option 2: Extended straight track with rails, sleepers, rail pads and 1D soil elements.**
 
-When applying the moving train load to the track, we are usually interested in the dynamic response of the track of a
-specific area. This implies that the geometry generated should be large enough so that when the initial train load is
-applied on the track, this has not yet reached and/or influenced the area of interest. Leading to a much larger geometry
-which in turn increases the computational cost.
+When applying a moving train load to the track, we are often interested in the dynamic response of a specific area of
+the track. This requires the generated geometry to be large enough to ensure that the initial train load has not yet
+reached or influenced the area of interest. However, this results in a significantly larger geometry, which, in turn,
+increases computational cost.
 
-To reduce the computational cost, an alternative approach can be used with STEM. The area of interest is still modelled
-as seen above but it is extended with a soil equivalent part which simulates the 3D soil behavior but with using 1D
-elements. The equivalent geometry consists of the following parts:
+To reduce the computational cost, an alternative approach can be used with STEM. The area of interest is still modeled
+as described above but is extended with a soil-equivalent section that simulates soil behavior using 1D elements.
+The equivalent geometry consists of the following parts:
 
-- The extended track outside the soil domain (this is the same as in the soil domain).
-- Soil equivalent 1s spring dampers.
-  With an extra boundary conditions that stipulates that these elements can only move horizontally.
+- The extended track outside the soil domain (this is the same as on the soil domain).
+- Soil equivalent 1D elements.
+  With extra boundary conditions that makes sure that these elements can only move vertically.
 - Bottom fixity.
 
 
@@ -745,20 +752,23 @@ elements. The equivalent geometry consists of the following parts:
 
 The equivalent soil part is added to the model in the following way. Note that:
 
-- The origin point is moved 25m in the negative z-direction. So that the equivalent soil part can extend 25m in the
-  negative z-direction.
-- The number of sleepers is increased to 190, that is 90 sleepers are added to the equivalent soil part.
+- The origin point is moved 25m in the negative z-direction. Such that the train starts moving on the extended part of
+   the track.
+- The number of sleepers is increased to 190, such that 90 sleepers are added outside the 3D domain.
 - The length of the soil equivalent element is set to 3m. Which means that the equivalent soil part extends 3m in y-direction ( in depth).
-- The soil equivalent parameters are defined as ElasticSpringDamper. These should be defined by the user so that the
-  displacements on the extended track are comparable to the 3D part. The following parameters can be defined with the
-  stiffness being the most impactfull to the results:
+- The soil equivalent parameters are defined as ElasticSpringDamper. These parameters should be defined by the user
+   to ensure that the displacements in the extended part of the track closely match those in the section of the track
+   located above the 3D domain. This minimises boundary effects when the train transitions from the extended part to the
+   3D domain.
+
+The following parameters can be defined in this tutorial:
     - NODAL_DISPLACEMENT_STIFFNESS=[0, 8163265.143, 0]
     - NODAL_ROTATIONAL_STIFFNESS=[0, 0, 0]
     - NODAL_DAMPING_COEFFICIENT=[0, 1, 0]
     - NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0]
 
 
-.. code-block:: python
+.. code-block:: python2
 
     origin_point = [0.75, 3.0, -25.0]
     direction_vector = [0, 0, 1]
@@ -772,7 +782,7 @@ The equivalent soil part is added to the model in the following way. Note that:
                                                      NODAL_DAMPING_COEFFICIENT=[0, 1, 0],
                                                      NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0])
 
-    # create a straight track with rails, sleepers and rail pads
+    # create a straight track with rails, sleepers, rail pads and a 1D soil extension
     model.generate_extended_straight_track(sleeper_distance=sleeper_spacing,
                                            n_sleepers=number_of_sleepers,
                                            rail_parameters=rail_parameters,
@@ -788,7 +798,7 @@ The equivalent soil part is added to the model in the following way. Note that:
 
 Visualising the geometry, the track and the equivalent soil part are shown in the figure below.
 
-.. image:: _static/embankment_extented.png
+.. image:: _static/embankment_extended.png
 
 
 The UVEC model is then defined using the UvecLoad class. The train moves in positive direction from the origin, this is
