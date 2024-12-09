@@ -122,7 +122,6 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
-
     if sys.platform == "win32":
         expected_output_dir = "benchmark_tests/test_random_field_3d/output_windows/output_vtk_porous_computational_model_part"
     elif sys.platform == "linux":

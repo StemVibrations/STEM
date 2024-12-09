@@ -119,7 +119,7 @@ def test_stem():
                                      is_stiffness_matrix_constant=True,
                                      are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
-                                    strategy_type=strategy,
+                                     strategy_type=strategy,
                                      rayleigh_k=0.0,
                                      rayleigh_m=0.0)
 

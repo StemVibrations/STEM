@@ -623,8 +623,10 @@ class SolverSettings:
                 raise ValueError("Kratos Multiphysics does not support the K0-procedure for dynamic analysis")
 
         elif self.solution_type == SolutionType.QUASI_STATIC:
-            Warning("In quasi-static analysis, the time integration scheme is set to Backward Euler")
+            Warning("In quasi-static analysis, the time integration scheme is set to Backward Euler. And the strategy "
+                    "type is set to Newton-Raphson")
             self.scheme = BackwardEulerScheme()
+            self.strategy_type = NewtonRaphsonStrategy()
 
             # todo remove this once updated in Kratos
             # mass and damping matrices are set to not constant, as they are not used in quasi static analysis. This

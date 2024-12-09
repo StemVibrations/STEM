@@ -107,8 +107,7 @@ def test_stem():
                                      convergence_criteria=convergence_criterion,
                                      strategy_type=strategy,
                                      rayleigh_k=1.5e-3,
-                                     rayleigh_m=0.02
-                                     )
+                                     rayleigh_m=0.02)
 
     # Set up problem data
     problem = Problem(
