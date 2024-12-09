@@ -1046,24 +1046,69 @@ The marginal transformation model can be generated and visualised:
     marginal_transformator.plot(x_label = '$u$ : standard-normal variable',y_label = '$v$ : shear wave velocity [m/s]')
 
 
-Next, the data for the calibration of the geostatistical model can be selected.   
+Next, the data for the calibration of the geostatistical model can be selected. To allow a faster calibration of the geostatistical model, only a selection of the data is used. This selection of 2000 pooints is made randomly. The data is transformed to standard-normal data using the transformator and only the `z` (horizontal) and `y` (vertical) coordinates are selected. Calibration is based on likelihood maximisation.   
+
+.. code-block:: python
+    
+    index_selection = np.random.choice(len(cpt_data.vs),size = 2000,replace = False)
+
+    coords = cpt_data.data_coords[index_selection]
+    z_data = marginal_transformator.x_to_z(x = cpt_data.vs[index_selection])
+    
+    geo_model = GeostatisticalModel(nb_dimensions=2,v_dim = 1)
+    geo_model.calibrate(coords = coords[:,[2,1]],values = z_data)
+
+Next, the random field properties are transferred to the random field generator. This generator needs to be initiated with the same spatial correlation model as used for the calibration (default = Gaussian). In addition, conditioning points are required to generate meaningful conditioned random fields. These points can, but don't need to be, the same points as used for the calibration. Also, conditional simulation can account for the noise in the calibration and conditioning data. Thios noise is not included in the field itself, but instead allows for a small deviation of the generated random fields from the conditioning points:
 
 .. code-block:: python
 
-    coords = cpt_data.data_coords[::5,[2,1]]
-    z_data = marginal_transformator.x_to_z(x = cpt_data.vs[::5])
+    random_field_generator = RandomFields(model_name = ModelName.Gaussian, 
+                                n_dim = 2, 
+                                mean = 0, 
+                                variance = 1,
+                                v_scale_fluctuation = geo_model.vertical_scale_fluctuation, 
+                                anisotropy = geo_model.anisotropy, 
+                                angle = [0], 
+                                seed = 13)
     
-    geo_model = GeostatisticalModel(nb_dimensions=2,v_dim = 1)
-    geo_model.calibrate(coords = coords,values = z_data)
-
-
-
-
-
-
-
+    I = np.random.choice(len(cpt_data.vs),size = 3000,replace = False)
     
+    coords = cpt_data.data_coords[I]
+    values = cpt_data.vs[I]
+    random_field_generator.set_conditioning_points(points = coords[:,[2,1]],
+                                values = marginal_transformator.x_to_z(x = values),
+                                noise_level = geo_model.noise_level)
 
+A conditioned random field is generated on a regular grid of coordinates:
+
+.. code-block:: python
+
+    # create grit of points on the domnain (-220,220) by (-24,-1) to generate a field for.
+    x = np.linspace(-220,220,250)
+    z = np.linspace(-24,-1,250)
+    X,Z = np.meshgrid(x,z)
+    
+    # generate a conditioned random field
+    sample_coords = np.array([X.ravel(),Z.ravel()]).T
+    random_field_generator.generate_conditioned(nodes = sample_coords)
+    
+The conditioned random field that is generated contains values at the prediction points (the regular grid) as well as on the conditioning point coordinates. In the generated array, the values generated at the conditioning point coordinates are at the end. They are generally not needed as part of the generated random field and can be left out. The generated standard-normal field needs to be transformed to the marginal distribution of the physical variable (in this case the shear wave velocity) by the marginal transformation   
+
+.. code-block:: python
+
+    # Transform the generated standard-normal field to the distribution of the shear wave velocity 
+    z_map = random_field_generator.conditioned_random_field
+    vs_map = marginal_transformator.z_to_x(z_map[:250*250].reshape([250,250]))
+
+    # visualisation usimg `matplotlib.pyplot as plt`
+    plt.contourf(X,Z,vs_map)
+    plt.scatter(cpt_data.data_coords[:,2],cpt_data.data_coords[:,1],c = cpt_data.vs)
+
+Finally, visualisation gives the following 2D cross-section along 400 meters of the Delft-Schiedam line
+
+
+
+.. image:: _static/2D_conditional_random_field_vs.png
 
 
 [INTRODUCE DIFFERENT CLASSES HERE]
