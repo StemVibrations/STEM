@@ -7,7 +7,8 @@ from stem.structural_material import EulerBeam, StructuralMaterial
 from stem.load import UvecLoad
 from stem.boundary import DisplacementConstraint
 from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
-                         StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy,NewtonRaphsonStrategy)
+                         StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy,
+                         NewtonRaphsonStrategy)
 from stem.output import VtkOutputParameters, Output, NodalOutput
 from stem.stem import Stem
 from shutil import rmtree, copytree
