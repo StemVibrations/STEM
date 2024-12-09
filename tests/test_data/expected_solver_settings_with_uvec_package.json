@@ -1,0 +1,91 @@
+{
+    "problem_data": {
+        "problem_name": "test",
+        "start_time": 0.0,
+        "end_time": 1.0,
+        "echo_level": 1,
+        "parallel_type": "OpenMP",
+        "number_of_threads": 2
+    },
+    "solver_settings": {
+        "solver_type": "U_Pw",
+        "model_part_name": "testDomain",
+        "domain_size": 3,
+        "model_import_settings": {
+            "input_type": "mdpa",
+            "input_filename": "mesh_test_name"
+        },
+        "material_import_settings": {
+            "materials_filename": "material_test_name.json"
+        },
+        "time_stepping": {
+            "time_step": 0.1,
+            "max_delta_time_factor": 500
+        },
+        "reduction_factor": 0.5,
+        "increase_factor": 2.0,
+        "buffer_size": 2,
+        "echo_level": 1,
+        "clear_storage": false,
+        "compute_reactions": false,
+        "move_mesh_flag": false,
+        "reform_dofs_at_each_step": false,
+        "nodal_smoothing": true,
+        "block_builder": true,
+        "rebuild_level": 0,
+        "prebuild_dynamics": true,
+        "solution_type": "dynamic",
+        "rayleigh_m": 0.001,
+        "rayleigh_k": 0.001,
+        "calculate_reactions": true,
+        "rotation_dofs": true,
+        "reset_displacements": false,
+        "scheme_type": "newmark",
+        "newmark_beta": 0.35,
+        "newmark_gamma": 0.4,
+        "newmark_theta": 0.6,
+        "strategy_type": "newton_raphson_with_uvec",
+        "max_iterations": 30,
+        "min_iterations": 5,
+        "number_cycles": 50,
+        "convergence_criterion": "displacement_criterion",
+        "displacement_relative_tolerance": 1e-05,
+        "displacement_absolute_tolerance": 1e-07,
+        "linear_solver_settings": {
+            "solver_type": "amgcl",
+            "scaling": true,
+            "tolerance": 1e-08,
+            "max_iteration": 500
+        },
+        "problem_domain_sub_model_part_list": [],
+        "processes_sub_model_part_list": [
+            "UvecModelPart"
+        ],
+        "body_domain_sub_model_part_list": [],
+        "uvec": {
+            "uvec_path": "uvec_ten_dof_vehicle_2D/uvec.py",
+            "uvec_method": "uvec",
+            "uvec_model_part": "UvecModelPart",
+            "uvec_data": {
+                "dt": 0.1,
+                "u": {},
+                "theta": {},
+                "loads": {},
+                "parameters": {
+                    "load_wheel_1": -10.0,
+                    "load_wheel_2": -20.0
+                },
+                "state": {
+                    "state_1": [
+                        0.0,
+                        1.0
+                    ],
+                    "state_2": [
+                        9,
+                        8
+                    ]
+                }
+            }
+        }
+    }
+}

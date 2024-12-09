@@ -1,6 +1,7 @@
 import json
 
 import pytest
+import UVEC.uvec_ten_dof_vehicle_2D as uvec
 
 from stem.IO.kratos_solver_io import KratosSolverIO
 from stem.model_part import ModelPart, BodyModelPart
@@ -158,6 +159,53 @@ class TestKratosSolverIO:
 
         # open expected settings dictionary
         with open("tests/test_data/expected_solver_settings_with_uvec.json") as f:
+            expected_solver_settings = json.load(f)
+
+        # assert that the settings dictionary is as expected
+        TestUtils.assert_dictionary_almost_equal(expected_solver_settings, test_dict)
+
+    def test_create_settings_dictionary_with_uvec_package(self, set_solver_settings: SolverSettings):
+        """
+        Test the creation of the problem data and solver settings dictionary including uvec data.
+        This test compares a created dictionary with a reference dictionary.
+
+        Args:
+            - set_solver_settings (SolverSettings): solver settings for testing
+
+        """
+
+        solver_settings = set_solver_settings
+
+        # set up uvec model part
+        uvec_model_part = ModelPart("UvecModelPart")
+
+        # set up uvec load
+        uvec_parameters = {"load_wheel_1": -10.0, "load_wheel_2": -20.0}
+        uvec_state_variables = {"state_1": [0.0, 1.0], "state_2": [9, 8]}
+        uvec_load = UvecLoad(direction=[1, 1, 0],
+                             velocity=5,
+                             origin=[0.0, 1.0, 0.0],
+                             wheel_configuration=[0.0, 2.0],
+                             uvec_model=uvec,
+                             uvec_parameters=uvec_parameters,
+                             uvec_state_variables=uvec_state_variables)
+
+        uvec_model_part.parameters = uvec_load
+
+        model_parts = [uvec_model_part]
+
+        # set up problem data
+        problem_data = Problem(problem_name="test", number_of_threads=2, settings=solver_settings)
+
+        # create solver IO
+        solver_io = KratosSolverIO(3, "testDomain")
+
+        # create settings dictionary
+        test_dict = solver_io.create_settings_dictionary(problem_data, "mesh_test_name", "material_test_name.json",
+                                                         model_parts)
+
+        # open expected settings dictionary
+        with open("tests/test_data/expected_solver_settings_with_uvec_package.json") as f:
             expected_solver_settings = json.load(f)
 
         # assert that the settings dictionary is as expected
