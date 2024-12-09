@@ -7,7 +7,7 @@ from stem.load import SurfaceLoad
 from stem.boundary import AbsorbingBoundary
 from stem.boundary import DisplacementConstraint
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
-    NewtonRaphsonStrategy, StressInitialisationType, SolverSettings, Problem, Amgcl
+    NewtonRaphsonStrategy, StressInitialisationType, SolverSettings, Problem, Amgcl, LinearNewtonRaphsonStrategy
 from stem.output import NodalOutput, GaussPointOutput, VtkOutputParameters, Output
 from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
@@ -95,6 +95,7 @@ def test_stem():
                                      is_stiffness_matrix_constant=True,
                                      are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
+                                     strategy_type=LinearNewtonRaphsonStrategy(),
                                      rayleigh_k=0.001,
                                      rayleigh_m=0.1)
 
