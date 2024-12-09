@@ -17,6 +17,7 @@ from stem.output import NodalOutput, Output, VtkOutputParameters, JsonOutputPara
 from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
 
+
 def test_moving_load_on_extended_track():
     ndim = 3
     model = Model(ndim)
