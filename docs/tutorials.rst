@@ -755,8 +755,8 @@ Generating the train track
 
 STEM provides two options to generate a straight track:
 
-- A straight track with rails, sleepers and rail pads. This track placed on top of the 2D or 3D geometry.
-- A straight track with rails, sleepers, rail pads and an extension of the track outside the 2D or 3D geometry.
+1. A straight track with rails, sleepers and rail pads. This track placed on top of the 2D or 3D geometry.
+1. A straight track with rails, sleepers, rail pads and an extension of the track outside the 2D or 3D geometry.
   This extension is placed on 1D elements which simulate the 2D or 3D soil behaviour.
 
 **Option 1: Straight track with rails, sleepers and rail pads**
@@ -791,7 +791,7 @@ the track. This requires the generated geometry to be large enough to ensure tha
 reached or influenced the area of interest. However, this results in a significantly larger geometry, which, in turn,
 increases computational cost.
 
-To reduce the computational cost, an alternative approach can be used with STEM. The area of interest is still modeled
+To reduce the computational cost, an alternative approach can be used with STEM. The area of interest is still modelled
 as described above but is extended with a soil-equivalent section that simulates soil behavior using 1D elements.
 The equivalent geometry consists of the following parts:
 
@@ -806,8 +806,7 @@ The equivalent geometry consists of the following parts:
 
 The equivalent soil part is added to the model in the following way. Note that:
 
-- The origin point is moved 25m in the negative z-direction. Such that the train starts moving on the extended part of
-   the track.
+- The origin point is moved 25m in the negative z-direction. Such that the track starts 25m away from the 3D domain.
 - The number of sleepers is increased to 190, such that 90 sleepers are added outside the 3D domain.
 - The length of the soil equivalent element is set to 3m. Which means that the equivalent soil part extends 3m in y-direction ( in depth).
 - The soil equivalent parameters are defined as ElasticSpringDamper. These parameters should be defined by the user

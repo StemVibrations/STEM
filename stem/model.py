@@ -1439,9 +1439,9 @@ class Model:
 
             elif body_el_info["ndim"] == 3 and process_el_info["ndim"] == 2:
 
-                # check if the normal of the condition element is defined outwards of the body element
-                if Utils.is_volume_edge_defined_outwards(process_element, body_element,
-                                                         self.gmsh_io.mesh_data["nodes"]):
+                # check if the normal of the condition element is not defined outwards of the body element
+                if not Utils.is_volume_edge_defined_outwards(process_element, body_element,
+                                                             self.gmsh_io.mesh_data["nodes"]):
                     elements_to_flip.append(process_element)
 
         # flip condition elements if required

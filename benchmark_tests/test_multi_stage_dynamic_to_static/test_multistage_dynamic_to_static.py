@@ -6,21 +6,9 @@ from stem.boundary import DisplacementConstraint
 from stem.load import LineLoad
 from stem.model import Model
 from stem.output import JsonOutputParameters, NodalOutput
-from stem.soil_material import (
-    LinearElasticSoil,
-    OnePhaseSoil,
-    SaturatedBelowPhreaticLevelLaw,
-    SoilMaterial,
-)
-from stem.solver import (
-    AnalysisType,
-    DisplacementConvergenceCriteria,
-    Problem,
-    SolutionType,
-    SolverSettings,
-    StressInitialisationType,
-    TimeIntegration,
-)
+from stem.soil_material import LinearElasticSoil, OnePhaseSoil, SaturatedBelowPhreaticLevelLaw, SoilMaterial
+from stem.solver import AnalysisType, DisplacementConvergenceCriteria, Problem, SolutionType, SolverSettings, \
+    StressInitialisationType, TimeIntegration, NewtonRaphsonStrategy
 from stem.stem import Stem
 from stem.table import Table
 from stem.utils import Utils
@@ -109,17 +97,17 @@ def test_stem():
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-6,
                                                             displacement_absolute_tolerance=1.0e-12)
     stress_initialisation_type = StressInitialisationType.NONE
-    solver_settings = SolverSettings(
-        analysis_type=analysis_type,
-        solution_type=solution_type,
-        stress_initialisation_type=stress_initialisation_type,
-        time_integration=time_integration,
-        is_stiffness_matrix_constant=True,
-        are_mass_and_damping_constant=True,
-        convergence_criteria=convergence_criterion,
-        rayleigh_k=1.5e-3,
-        rayleigh_m=0.02,
-    )
+    strategy = NewtonRaphsonStrategy()
+    solver_settings = SolverSettings(analysis_type=analysis_type,
+                                     solution_type=solution_type,
+                                     stress_initialisation_type=stress_initialisation_type,
+                                     time_integration=time_integration,
+                                     is_stiffness_matrix_constant=True,
+                                     are_mass_and_damping_constant=True,
+                                     convergence_criteria=convergence_criterion,
+                                     strategy_type=strategy,
+                                     rayleigh_k=1.5e-3,
+                                     rayleigh_m=0.02)
 
     # Set up problem data
     problem = Problem(
