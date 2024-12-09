@@ -7,7 +7,7 @@ from stem.load import SurfaceLoad
 from stem.boundary import AbsorbingBoundary
 from stem.boundary import DisplacementConstraint
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
-    NewtonRaphsonStrategy, StressInitialisationType, SolverSettings, Problem, Amgcl
+    NewtonRaphsonStrategy, StressInitialisationType, SolverSettings, Problem, Amgcl, LinearNewtonRaphsonStrategy
 from stem.output import NodalOutput, GaussPointOutput, VtkOutputParameters, Output
 from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
@@ -26,9 +26,9 @@ def test_stem():
     # Linear elastic drained soil with a Density of 2650, a Young's modulus of 10.0e7,
     # a Poisson ratio of 0.2 & a Porosity of 0.3 is specified.
     DENSITY_SOLID = 2650
-    POISSON_RATIO = 0.3
+    POROSITY = 0.3
     YOUNG_MODULUS = 10.0e7
-    POROSITY = 0.2
+    POISSON_RATIO = 0.2
     soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
     constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=YOUNG_MODULUS, POISSON_RATIO=POISSON_RATIO)
     retention_parameters1 = SaturatedBelowPhreaticLevelLaw()
@@ -52,7 +52,7 @@ def test_stem():
     model.add_load_by_coordinates(load_coordinates, surface_load, "load")
 
     # Define absorbing boundary condition
-    absorbing_boundaries_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=40.0)
+    absorbing_boundaries_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=1000.0)
 
     # Define displacement conditions
     displacement_parameters = DisplacementConstraint(active=[True, True, False],
@@ -86,7 +86,6 @@ def test_stem():
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
                                                             displacement_absolute_tolerance=1.0e-9)
     stress_initialisation_type = StressInitialisationType.NONE
-
     linear_solver = Amgcl(krylov_type="gmres")
     solver_settings = SolverSettings(analysis_type=analysis_type,
                                      solution_type=solution_type,
@@ -96,6 +95,7 @@ def test_stem():
                                      is_stiffness_matrix_constant=True,
                                      are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
+                                     strategy_type=LinearNewtonRaphsonStrategy(),
                                      rayleigh_k=0.001,
                                      rayleigh_m=0.1)
 

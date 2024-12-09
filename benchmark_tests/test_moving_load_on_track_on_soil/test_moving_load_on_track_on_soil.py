@@ -100,6 +100,7 @@ def test_moving_load_on_track_on_soil():
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
                                                             displacement_absolute_tolerance=1.0e-12)
     stress_initialisation_type = StressInitialisationType.NONE
+    strategy = NewtonRaphsonStrategy()
     solver_settings = SolverSettings(analysis_type=analysis_type,
                                      solution_type=solution_type,
                                      stress_initialisation_type=stress_initialisation_type,
@@ -107,6 +108,7 @@ def test_moving_load_on_track_on_soil():
                                      is_stiffness_matrix_constant=True,
                                      are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
+                                     strategy_type=strategy,
                                      rayleigh_k=0.01,
                                      rayleigh_m=0.0001)
 

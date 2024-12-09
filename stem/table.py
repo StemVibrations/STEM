@@ -14,12 +14,12 @@ class Table:
 
     Attributes:
         - values (Union[Sequence[float], npty.NDArray[np.float64]]): values of the load/constraint.
-        - times (Union[Sequence[Union[int,float]], npty.NDArray[Union[np.float64, np.int64]]]): time [s] \
+        - times (Union[Sequence[float], npty.NDArray[np.float64]]): time [s] \
             corresponding to the values specified.
         - __id (Optional[int]): unique identifier for the table.
     """
 
-    values: Union[Sequence[Union[int, float]], npty.NDArray[Union[np.float64, np.int_]]]
+    values: Union[Sequence[float], npty.NDArray[np.float64]]
     times: Union[Sequence[float], npty.NDArray[np.float64]]
     __id: Optional[int] = None
 
@@ -57,3 +57,17 @@ class Table:
             raise ValueError(f"Dimension mismatch between times and values in table:\n"
                              f" - times: {len(self.times)}\n"
                              f" - values: {len(self.values)}\n")
+
+    def interpolate_value_at_time(self, time: float) -> float:
+        """
+        Interpolates the value at a given time. If the time is < times[0], the value at times[0] is returned.
+        If the time is > times[-1], the value at times[-1] is returned.
+
+        Args:
+            - time (float): time [s] at which the value is interpolated.
+
+        Returns:
+            - float: interpolated value at the given time.
+
+        """
+        return float(np.interp(time, self.times, self.values))

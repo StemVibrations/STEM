@@ -12,15 +12,12 @@ from stem.structural_material import EulerBeam, ElasticSpringDamper, NodalConcen
 from stem.boundary import DisplacementConstraint
 from stem.load import MovingLoad
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, \
-    NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
+    NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy
 from stem.output import NodalOutput, Output, VtkOutputParameters, JsonOutputParameters
 from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
 
-IS_LINUX = sys.platform == "linux"
 
-
-@pytest.mark.skipif(IS_LINUX, reason="The test needs to be adapted for linux. As it generates different output.")
 def test_moving_load_on_extended_track():
     ndim = 3
     model = Model(ndim)
@@ -113,6 +110,7 @@ def test_moving_load_on_extended_track():
                                      is_stiffness_matrix_constant=True,
                                      are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
+                                     strategy_type=LinearNewtonRaphsonStrategy(),
                                      rayleigh_k=0.01,
                                      rayleigh_m=0.0001)
 
@@ -178,7 +176,14 @@ def test_moving_load_on_extended_track():
     assert np.any(np.array([node['DISPLACEMENT_Y'] for node in nodes]) != 0)
     assert np.all(np.array([node['DISPLACEMENT_Z'] for node in nodes]) == 0)
 
-    result = assert_files_equal("benchmark_tests/test_extended_beam/output_/output_vtk_porous_computational_model_part",
+    if sys.platform == "win32":
+        expected_output_dir = "benchmark_tests/test_extended_beam/output_windows/output_vtk_porous_computational_model_part"
+    elif sys.platform == "linux":
+        expected_output_dir = "benchmark_tests/test_extended_beam/output_linux/output_vtk_porous_computational_model_part"
+    else:
+        raise Exception("Unknown platform")
+
+    result = assert_files_equal(expected_output_dir,
                                 os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
 
     assert result is True
