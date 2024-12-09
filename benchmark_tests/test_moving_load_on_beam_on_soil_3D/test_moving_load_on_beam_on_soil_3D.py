@@ -82,8 +82,7 @@ def test_stem():
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(2, [1, 2, 3, 6], displacementXYZ_parameters, "displacementXYZ")
 
-    # import webbrowser
-    model.show_geometry(show_surface_ids=True, show_point_ids=True)
+    # model.show_geometry(show_surface_ids=True, show_point_ids=True)
 
     # Set mesh size
     # --------------------------------

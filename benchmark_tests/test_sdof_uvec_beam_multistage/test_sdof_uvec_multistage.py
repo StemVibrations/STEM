@@ -7,7 +7,8 @@ from stem.structural_material import EulerBeam, StructuralMaterial
 from stem.load import UvecLoad
 from stem.boundary import DisplacementConstraint
 from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
-                         StressInitialisationType, SolverSettings, Problem)
+                         StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy,NewtonRaphsonStrategy)
+from stem.output import VtkOutputParameters, Output, NodalOutput
 from stem.stem import Stem
 from shutil import rmtree, copytree
 
@@ -86,6 +87,17 @@ def test_stem():
 
     model.add_boundary_condition_by_geometry_ids(0, [1, 2], displacementXYZ_parameters, "displacementXYZ")
 
+    # uncomment to enable output in VTK format
+    # # Define the output process
+    # vtk_output_process = Output(part_name="porous_computational_model_part",
+    #                             output_name="vtk_output",
+    #                             output_dir="output",
+    #                             output_parameters=VtkOutputParameters(file_format="ascii",
+    #                                                                   output_interval=10,
+    #                                                                   nodal_results=[NodalOutput.DISPLACEMENT],
+    #                                                                   gauss_point_results=[],
+    #                                                                   output_control_type="step"))
+    # model.output_settings = [vtk_output_process]
     # Synchronize geometry
     model.synchronise_geometry()
     # model.show_geometry(show_line_ids=True, show_point_ids=True)
@@ -117,6 +129,7 @@ def test_stem():
                                      is_stiffness_matrix_constant=False,
                                      are_mass_and_damping_constant=False,
                                      convergence_criteria=convergence_criterion,
+                                     strategy_type=NewtonRaphsonStrategy(),
                                      rayleigh_k=0.000,
                                      rayleigh_m=0.00)
 
