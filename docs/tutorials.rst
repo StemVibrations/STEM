@@ -752,8 +752,7 @@ The equivalent geometry consists of the following parts:
 
 The equivalent soil part is added to the model in the following way. Note that:
 
-- The origin point is moved 25m in the negative z-direction. Such that the train starts moving on the extended part of
-   the track.
+- The origin point is moved 25m in the negative z-direction. Such that the track starts 25m away from the 3D domain.
 - The number of sleepers is increased to 190, such that 90 sleepers are added outside the 3D domain.
 - The length of the soil equivalent element is set to 3m. Which means that the equivalent soil part extends 3m in y-direction ( in depth).
 - The soil equivalent parameters are defined as ElasticSpringDamper. These parameters should be defined by the user
