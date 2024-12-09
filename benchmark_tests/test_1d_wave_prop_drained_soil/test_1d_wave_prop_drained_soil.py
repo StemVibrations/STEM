@@ -7,7 +7,7 @@ from stem.load import LineLoad
 from stem.table import Table
 from stem.boundary import DisplacementConstraint
 from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
-                          StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy)
+                         StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy)
 from stem.output import NodalOutput, VtkOutputParameters, Output, JsonOutputParameters
 from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
