@@ -14,12 +14,12 @@ class Table:
 
     Attributes:
         - values (Union[Sequence[float], npty.NDArray[np.float64]]): values of the load/constraint.
-        - times (Union[Sequence[Union[int,float]], npty.NDArray[Union[np.float64, np.int64]]]): time [s] \
+        - times (Union[Sequence[float], npty.NDArray[np.float64]]): time [s] \
             corresponding to the values specified.
         - __id (Optional[int]): unique identifier for the table.
     """
 
-    values: Union[Sequence[Union[int, float]], npty.NDArray[Union[np.float64, np.int_]]]
+    values: Union[Sequence[float], npty.NDArray[np.float64]]
     times: Union[Sequence[float], npty.NDArray[np.float64]]
     __id: Optional[int] = None
 
