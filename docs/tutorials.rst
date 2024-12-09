@@ -467,7 +467,7 @@ should be set to "True".
     model.show_geometry(show_surface_ids=True)
 
     # END CODE BLOCK
-    
+
 The geometry ids can be seen in the pictures below.
 
 .. image:: _static/geometry_ids.png
@@ -489,6 +489,8 @@ dimension, "2".
     model.add_boundary_condition_by_geometry_ids(2, [1], no_displacement_parameters, "base_fixed")
     model.add_boundary_condition_by_geometry_ids(2, [2, 4, 5, 6, 7, 10, 11, 12, 15, 16, 17],
                                                  roller_displacement_parameters, "sides_roller")
+    # END CODE BLOCK
+
 
 After which the mesh size can be set. The element size for the mesh can be defined as a single value, the mesh
 will be generated when the Stem class is initialised.
@@ -496,6 +498,9 @@ will be generated when the Stem class is initialised.
 .. code-block:: python
 
     model.set_mesh_size(element_size=1.0)
+
+    # END CODE BLOCK
+
 
 Now that the geometry is defined, the solver settings of the model has to be set.
 The analysis type is set to "MECHANICAL" and the solution type is set to "DYNAMIC".
@@ -531,6 +536,9 @@ assumed, with a damping coefficient of 0.12 for the stiffness matrix and 0.0001 
                                      linear_solver_settings=linear_solver_settings, rayleigh_k=0.12,
                                      rayleigh_m=0.0001)
 
+    # END CODE BLOCK
+
+
 Now the problem data should be set up. The problem should be given a name, in this case it is
 "calculate_moving_load_on_embankment_3d". Then the solver settings are added to the problem.
 
@@ -541,6 +549,9 @@ Now the problem data should be set up. The problem should be given a name, in th
                       settings=solver_settings)
     model.project_parameters = problem
 
+    # END CODE BLOCK
+
+
 Before starting the calculation, it is required to specify why output is desired. In this case, displacement,
 velocity and acceleration is given on the nodes and written to the output file. In this test case, gauss point results
 are left empty.
@@ -549,6 +560,8 @@ are left empty.
 
     nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY, NodalOutput.ACCELERATION]
     gauss_point_results = []
+
+    # END CODE BLOCK
 
 The output process is added to the model using the `Model.add_output_settings` method. The results will be then written to the output directory in vtk
 format. In this case, the output interval is set to 1 and the output control type is set to "step", meaning that the
@@ -568,6 +581,9 @@ results will be written every time step.
         )
     )
 
+    # END CODE BLOCK
+
+
 Now that the model is set up, the calculation is almost ready to be ran.
 
 Firstly the Stem class is initialised, with the model and the directory where the input files will be written to.
@@ -576,6 +592,8 @@ While initialising the Stem class, the mesh will be generated.
 .. code-block:: python
 
     stem = Stem(model, input_files_dir)
+
+    # END CODE BLOCK
 
 The Kratos input files are then written. The project settings and output definitions are written to
 ProjectParameters_stage_1.json file. The mesh is written to the .mdpa file and the material parameters are
@@ -586,11 +604,16 @@ All of the input files are then written to the input files directory.
 
     stem.write_all_input_files()
 
+    # END CODE BLOCK
+
+
 The calculation is then ran by calling the run_calculation function within the stem class.
 
 .. code-block:: python
 
     stem.run_calculation()
+
+    # END CODE BLOCK
 
 
 .. _tutorial3:
@@ -610,6 +633,8 @@ Again, note that it is important that this is done before importing the stem pac
     import sys
     uvec_module_path = r"benchmark_tests/test_train_uvec_3d"
     sys.path.append(uvec_module_path)
+
+    # END CODE BLOCK
 
 After the path of the UVEC module is added, the necessary packages are imported and paths are defined where the input
 input and output files will be located.
@@ -631,6 +656,9 @@ input and output files will be located.
          NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
     from stem.output import NodalOutput, VtkOutputParameters, Output, JsonOutputParameters
     from stem.stem import Stem
+
+    # END CODE BLOCK
+
 
 For setting up the model, Model class is imported from stem.model. And for setting up the soil material, OnePhaseSoil,
 LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw classes are imported.
@@ -655,6 +683,8 @@ Firstly the dimension of the model is indicated which in this case is 3. After w
     ndim = 3
     model = Model(ndim)
 
+    # END CODE BLOCK
+
 Specification of the soil material is defined afterwards.
 The bottom soil layer is defined as a material with the name "soil_1".
 It's a Linear elastic material model with the solid density (rho) of 2650 kg/m3,
@@ -673,6 +703,8 @@ The soil is a one-phase soil, meaning that the flow of water through the soil is
     retention_parameters_1 = SaturatedBelowPhreaticLevelLaw()
     material_soil_1 = SoilMaterial("soil_1", soil_formulation_1, constitutive_law_1, retention_parameters_1)
 
+    # END CODE BLOCK
+
 The second soil layer is defined as a material with the name "soil_2".
 It's a Linear elastic material model with the solid density (rho) of 2550 kg/m3,
 the Young's modulus is 30e6 Pa and the Poisson's ratio is 0.2.
@@ -689,6 +721,8 @@ The soil is a one-phase soil, meaning that the flow of water through the soil is
     constitutive_law_2 = LinearElasticSoil(YOUNG_MODULUS=young_modulus_2, POISSON_RATIO=poisson_ratio_2)
     retention_parameters_2 = SaturatedBelowPhreaticLevelLaw()
     material_soil_2 = SoilMaterial("soil_2", soil_formulation_2, constitutive_law_2, retention_parameters_2)
+
+    # END CODE BLOCK
 
 The embankment layer on top is defined as a material with the name "embankment".
 It's a Linear elastic material model with the solid density (rho) of 2650 kg/m3,
@@ -707,6 +741,8 @@ The soil is a one-phase soil, meaning that the flow of water through the soil is
     retention_parameters_3 = SaturatedBelowPhreaticLevelLaw()
     material_embankment = SoilMaterial("embankment", soil_formulation_3, constitutive_law_3, retention_parameters_3)
 
+    # END CODE BLOCK
+
 For the rails, default properties of a  54E1 rail profile are used.
 Other rail profiles for which default material properties are provided are: the 46E3 and 60E1 rail profiles.
 The rail pads are modelled by means of elastic spring dampers while the sleepers are modelled using nodal concentrated
@@ -723,6 +759,8 @@ masses.
                                            NODAL_MASS=140,
                                            NODAL_DAMPING_COEFFICIENT=[0, 0, 0])
 
+    # END CODE BLOCK
+
 The coordinates of the model are defined in the following way. Each of the layers are defined by a list of coordinates,
 defined in th x-y plane. For 3D models, the x-y plane can be extruded in the z-direction. In this case, the extrusion
 length is 50 m in the z-direction.
@@ -733,6 +771,8 @@ length is 50 m in the z-direction.
     soil2_coordinates = [(0.0, 1.0, 0.0), (5.0, 1.0, 0.0), (5.0, 2.0, 0.0), (0.0, 2.0, 0.0)]
     embankment_coordinates = [(0.0, 2.0, 0.0), (3.0, 2.0, 0.0), (1.5, 3.0, 0.0), (0.75, 3.0, 0.0), (0, 3.0, 0.0)]
     model.extrusion_length = 50
+
+    # END CODE BLOCK
 
 The geometry is shown in the figures below.
 
@@ -749,6 +789,8 @@ a unique name.
     model.add_soil_layer_by_coordinates(soil1_coordinates, material_soil_1, "soil_layer_1")
     model.add_soil_layer_by_coordinates(soil2_coordinates, material_soil_2, "soil_layer_2")
     model.add_soil_layer_by_coordinates(embankment_coordinates, material_embankment, "embankment_layer")
+
+    # END CODE BLOCK
 
 Generating the train track
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -783,6 +825,7 @@ are spaced 0.5m from each others which results in a 50m straight track, with par
                                   rail_pad_thickness, origin_point,
                                   direction_vector, "rail_track_1")
 
+    # END CODE BLOCK
 
 **Option 2: Extended straight track with rails, sleepers, rail pads and 1D soil elements.**
 
@@ -849,6 +892,7 @@ The following parameters can be defined in this tutorial:
                                            direction_vector=direction_vector,
                                            name="rail_track_1")
 
+    # END CODE BLOCK
 
 Visualising the geometry, the track and the equivalent soil part are shown in the figure below.
 
@@ -879,6 +923,8 @@ of the load is set to "train_load".
     os.makedirs(input_files_dir, exist_ok=True)
     # copy uvec module to input files directory
     copytree(uvec_folder, os.path.join(input_files_dir, "uvec_ten_dof_vehicle_2D"), dirs_exist_ok=True)
+
+    # END CODE BLOCK
 
 A schematisation of the UVEC model as defined in this tutorial, is shown below.
 
@@ -917,6 +963,8 @@ Below the uvec parameters are defined.
     # add the load on the tracks
     model.add_load_on_line_model_part("rail_track_1", uvec_load, "train_load")
 
+    # END CODE BLOCK
+
 Additionally, a random field can be generated for one of the defined model part. The random field is generated by
 means of the RandomFieldGenerator class. Firstly, the generator object is created. In this tutorial a
 Gaussian model is used with 10\% coefficient of variation (cov) and a scale of fluctuation of 1m in the vertical
@@ -945,6 +993,8 @@ The mean of the property is automatically obtained from the material property al
     # add the random field to the model
     model.add_field(part_name="soil_layer_2", field_parameters=field_parameters_json)
 
+    # END CODE BLOCK
+
 
 The boundary conditions are defined on geometry ids, which are created by gmsh when making the geometry. Gmsh will
 assign an id to each of the points, lines, surfaces and volumes created.
@@ -960,6 +1010,7 @@ should be set to "True".
 
     model.show_geometry(show_surface_ids=True)
 
+    # END CODE BLOCK
 
 Below the boundary conditions are defined. The base of the model is fixed in all directions with the name "base_fixed".
 For the surfaces at the symmetry plane, roller boundary condition is applied with the name "sides_roller".
@@ -981,11 +1032,15 @@ surface-dimension, "2".
     model.add_boundary_condition_by_geometry_ids(2, [4, 10], roller_displacement_parameters, "sides_roller")
     model.add_boundary_condition_by_geometry_ids(2, [2, 5, 6, 7, 11, 12, 15, 16, 17], absorbing_boundaries_parameters, "abs")
 
+    # END CODE BLOCK
+
 After which the mesh size can be set. The mesh will be generated when the Stem class is initialised.
 
 .. code-block:: python
 
     model.set_mesh_size(element_size=1.0)
+
+    # END CODE BLOCK
 
 Now that the geometry is defined, the solver settings of the model has to be set.
 The analysis type is set to "MECHANICAL" and the solution type is set to "DYNAMIC".
@@ -1027,6 +1082,8 @@ assumed, with a damping coefficient of 0.12 for the stiffness matrix and 0.0001 
                                      strategy_type=strategy_type, scheme=scheme_type,
                                      linear_solver_settings=linear_solver_settings, rayleigh_k=0.12,
                                      rayleigh_m=0.0001)
+
+    # END CODE BLOCK
 
 Now the problem data should be set up. The problem should be given a name, in this case it is
 "calculate_uvec_on_embankment_with_absorbing_boundaries". Then the solver settings are added to the problem.
@@ -1098,12 +1155,17 @@ the calculation time step `delta_time` is required.
         )
     )
 
+    # END CODE BLOCK
+
+
 When adding output settings by coordinates, the geometry is altered. The new geometry can again be visualised by
 calling the `Model.show_geometry` method.
 
 .. code-block:: python
 
     model.show_geometry()
+
+    # END CODE BLOCK
 
 Now that the model is set up, the calculation is almost ready to be run.
 
@@ -1114,6 +1176,8 @@ While initialising the Stem class, the mesh will be generated.
 
     stem = Stem(model, input_files_dir)
 
+    # END CODE BLOCK
+
 The Kratos input files are then written. The project settings and output definitions are written to
 ProjectParameters_stage_1.json file. The mesh is written to the .mdpa file and the material parameters are
 written to the MaterialParameters_stage_1.json file.
@@ -1123,8 +1187,12 @@ All of the input files are then written to the input files directory.
 
     stem.write_all_input_files()
 
+    # END CODE BLOCK
+
 The calculation is then ran by calling the run_calculation function within the stem class.
 
 .. code-block:: python
 
     stem.run_calculation()
+
+    # END CODE BLOCK
