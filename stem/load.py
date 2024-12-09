@@ -298,6 +298,7 @@ class UvecLoad(LoadParametersABC):
         Check if the UVEC model is supported in STEM.
         """
 
+        # ToDo: #267
         if self.uvec_model is not None:
             if self.uvec_model.__name__ not in (model.value for model in UvecSupportedModels):
                 raise ValueError(f"UVEC model {self.uvec_model} is not supported. Please use one of the following models: \
