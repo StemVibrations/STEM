@@ -250,6 +250,7 @@ class MovingLoad(LoadParametersABC):
 class UvecSupportedModels(Enum):
     """
     Enum class containing the supported UVEC models.
+
     Inheritance:
         - :class:`Enum`
     Attributes:
