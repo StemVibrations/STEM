@@ -1,21 +1,19 @@
 import os
 import sys
 
-import pytest
-
 from stem.model import Model
 from stem.soil_material import OnePhaseSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw, SmallStrainUmatLaw
 from stem.load import LineLoad
 from stem.table import Table
 from stem.boundary import DisplacementConstraint
-from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, StressInitialisationType, SolverSettings, Problem
-from stem.output import NodalOutput, VtkOutputParameters
+from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
+                         StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy)
+from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters
 from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
 from shutil import rmtree, copyfile
 
 
-@pytest.mark.skipif(sys.platform == "linux", reason="linear elastic umat is currently not available for linux")
 def test_stem():
     # Define geometry, conditions and material parameters
     # --------------------------------
@@ -74,7 +72,7 @@ def test_stem():
 
     # Set mesh size
     # --------------------------------
-    model.set_mesh_size(element_size=0.45)
+    model.set_mesh_size(element_size=0.15)
 
     # Define project parameters
     # --------------------------------
@@ -83,9 +81,10 @@ def test_stem():
     analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
     solution_type = SolutionType.DYNAMIC
     # Set up start and end time of calculation, time step and etc
+    delta_time = 0.0015
     time_integration = TimeIntegration(start_time=0.0,
                                        end_time=0.15,
-                                       delta_time=0.0025,
+                                       delta_time=delta_time,
                                        reduction_factor=1.0,
                                        increase_factor=1.0,
                                        max_delta_time_factor=1000)
@@ -99,6 +98,7 @@ def test_stem():
                                      is_stiffness_matrix_constant=True,
                                      are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
+                                     strategy_type=LinearNewtonRaphsonStrategy(),
                                      rayleigh_k=6e-6,
                                      rayleigh_m=0.02)
 
@@ -119,6 +119,13 @@ def test_stem():
                               output_dir="output",
                               output_name="vtk_output")
 
+    model.add_output_settings_by_coordinates([[0, 5, 0], [1, 5, 0]],
+                                             JsonOutputParameters(output_interval=delta_time * 0.99,
+                                                                  nodal_results=nodal_results,
+                                                                  gauss_point_results=[]),
+                                             "calculated_output",
+                                             output_dir="output")
+
     # Define the kratos input folder
     input_folder = "benchmark_tests/test_1d_wave_prop_drained_soil_umat/inputs_kratos"
 
@@ -127,10 +134,16 @@ def test_stem():
     stem = Stem(model, input_folder)
     stem.write_all_input_files()
 
-    # copy the linear elastic dll to the input folder
-    copyfile(src=r"benchmark_tests/user_defined_models/linear_elastic.dll",
-             dst=r"benchmark_tests/test_1d_wave_prop_drained_soil_umat/linear_elastic.dll")
+    # copy the linear elastic umat to the input folder
+    if sys.platform == "linux":
+        extension = "so"
+    elif sys.platform == "win32":
+        extension = "dll"
+    else:
+        raise Exception("Unknown platform")
 
+    copyfile(src=rf"benchmark_tests/user_defined_models/linear_elastic.{extension}",
+             dst=rf"benchmark_tests/test_1d_wave_prop_drained_soil_umat/linear_elastic.{extension}")
     # Run Kratos calculation
     # --------------------------------
     stem.run_calculation()

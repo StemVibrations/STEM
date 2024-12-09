@@ -4,14 +4,13 @@ import sys
 from shutil import rmtree, copyfile
 
 import numpy as np
-import pytest
 
 from stem.boundary import DisplacementConstraint
 from stem.load import LineLoad
 from stem.model import Model
 from stem.output import JsonOutputParameters, NodalOutput, VtkOutputParameters
 from stem.soil_material import LinearElasticSoil, OnePhaseSoil, SaturatedBelowPhreaticLevelLaw, SmallStrainUmatLaw, SoilMaterial
-from stem.solver import AnalysisType, DisplacementConvergenceCriteria, Problem, SolutionType, SolverSettings, StressInitialisationType, TimeIntegration
+from stem.solver import AnalysisType, DisplacementConvergenceCriteria, Problem, SolutionType, SolverSettings, StressInitialisationType, TimeIntegration, NewtonRaphsonStrategy, LinearNewtonRaphsonStrategy
 from stem.stem import Stem
 from stem.table import Table
 from stem.utils import Utils
@@ -21,7 +20,6 @@ from tests.utils import TestUtils
 SHOW_RESULTS = False
 
 
-@pytest.mark.skipif(sys.platform == "linux", reason="linear elastic umat is currently not available for linux")
 def test_stem():
     """
     Test STEM: 2D block with distributed cyclic loading with multistage for the umat using umat and changing the
@@ -114,6 +112,7 @@ def test_stem():
                                      is_stiffness_matrix_constant=True,
                                      are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
+                                     strategy_type=LinearNewtonRaphsonStrategy(),
                                      rayleigh_k=1e-03,
                                      rayleigh_m=0.02)
 
@@ -158,8 +157,16 @@ def test_stem():
     YOUNG_MODULUS_2 = YOUNG_MODULUS / 2
     SHEAR_MODULUS = YOUNG_MODULUS_2 / (2 * (1 + POISSON_RATIO))
 
+    # copy the linear elastic umat to the input folder
+    if sys.platform == "linux":
+        extension = "so"
+    elif sys.platform == "win32":
+        extension = "dll"
+    else:
+        raise Exception("Unknown platform")
+
     soil_formulation_stage_2 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
-    constitutive_law_stage_2 = SmallStrainUmatLaw(UMAT_NAME="../linear_elastic.dll",
+    constitutive_law_stage_2 = SmallStrainUmatLaw(UMAT_NAME=f"../linear_elastic.{extension}",
                                                   IS_FORTRAN_UMAT=True,
                                                   UMAT_PARAMETERS=[SHEAR_MODULUS, POISSON_RATIO],
                                                   STATE_VARIABLES=[0.0])
@@ -177,8 +184,8 @@ def test_stem():
     stem.write_all_input_files()
 
     # copy the linear elastic dll to the input folder
-    copyfile(src=r"benchmark_tests\user_defined_models\linear_elastic.dll",
-             dst=r"benchmark_tests\test_multi_stage_umat\linear_elastic.dll")
+    copyfile(src=rf"benchmark_tests/user_defined_models/linear_elastic.{extension}",
+             dst=rf"benchmark_tests/test_multi_stage_umat/linear_elastic.{extension}")
 
     # Run Kratos calculation
     # --------------------------------
@@ -228,6 +235,7 @@ def test_stem():
                    label="Calculated")
         ax[0].legend()
         ax[1].legend()
+        plt.grid()
         plt.tight_layout()
         plt.show()
 

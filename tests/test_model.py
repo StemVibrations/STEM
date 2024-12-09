@@ -2811,7 +2811,7 @@ class TestModel:
 
         # check if the node ids of the process model part are in the correct order, i.e. the node order should be
         # flipped, such that the normal is inwards
-        assert process_model_part.mesh.elements[1].node_ids == [3, 1, 2]
+        assert process_model_part.mesh.elements[1].node_ids == [2, 1, 3]
 
     def test_check_ordering_process_model_part_3d_multiple_elements(self):
         """
@@ -2853,8 +2853,8 @@ class TestModel:
 
         # check if the node ids of the process model part are in the correct order, i.e. the node order of only the
         # first element should be flipped, such that the normal is inwards
-        assert process_model_part.mesh.elements[1].node_ids == [3, 1, 2]
-        assert process_model_part.mesh.elements[2].node_ids == [4, 3, 2]
+        assert process_model_part.mesh.elements[1].node_ids == [2, 1, 3]
+        assert process_model_part.mesh.elements[2].node_ids == [2, 3, 4]
 
         # redefine process elements and redefine mapper in reverse order
         # manually create process model part with nodes in outwards normal order
@@ -2870,8 +2870,8 @@ class TestModel:
 
         # check if the node ids of the process model part are in the correct order, i.e. the node order of only the
         # first element should be flipped, such that the normal is inwards (the same order as before)
-        assert process_model_part.mesh.elements[1].node_ids == [3, 1, 2]
-        assert process_model_part.mesh.elements[2].node_ids == [4, 3, 2]
+        assert process_model_part.mesh.elements[1].node_ids == [2, 1, 3]
+        assert process_model_part.mesh.elements[2].node_ids == [2, 3, 4]
 
     def test_show_geometry_file(self, create_default_3d_soil_material):
         """

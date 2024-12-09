@@ -6,7 +6,7 @@ from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, Sa
 from stem.load import UvecLoad
 from stem.boundary import DisplacementConstraint
 from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
-                         StressInitialisationType, SolverSettings, Problem, Amgcl)
+                         StressInitialisationType, SolverSettings, Problem, Amgcl, NewtonRaphsonStrategy)
 from stem.output import NodalOutput, VtkOutputParameters, Output
 from stem.stem import Stem
 
@@ -103,6 +103,7 @@ def test_stem():
                                      is_stiffness_matrix_constant=True,
                                      are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
+                                     strategy_type=NewtonRaphsonStrategy(),
                                      rayleigh_k=0.0001,
                                      rayleigh_m=0.01)
 
