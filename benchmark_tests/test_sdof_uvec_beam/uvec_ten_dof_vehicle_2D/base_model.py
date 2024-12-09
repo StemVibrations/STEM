@@ -94,8 +94,8 @@ class TrainModel():
         :return:
         """
 
-        self.n_bogies = self.n_carts * len(self.bogie_distances)
-        self.n_wheels = self.n_bogies * len(self.wheel_distances)
+        self.n_bogies = len(self.bogie_distances)
+        self.n_wheels = len(self.wheel_distances)
 
     def generate_components(self):
         """
