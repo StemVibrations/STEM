@@ -215,11 +215,6 @@ should be set to "True".
 
     # END CODE BLOCK
 
-The geometry ids can be seen in the pictures below.
-
-.. image:: _static/geometry_ids.png
-
-
 Below the boundary conditions are defined. The base of the model is fixed in all directions with the name "base_fixed".
 The roller boundary condition is applied along the symmetry side of the domain with the name "sides_roller". On all other
 sides, absorbing boundary conditions are applied with the name "abs". In this tutorial, contrary to the previous tutorials,
