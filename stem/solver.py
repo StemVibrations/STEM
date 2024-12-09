@@ -599,7 +599,7 @@ class SolverSettings:
     convergence_criteria: ConvergenceCriteriaABC
     reset_displacements: bool = False
     calculate_stresses_on_nodes: bool = True
-    strategy_type: StrategyTypeABC = field(default_factory=LinearNewtonRaphsonStrategy)
+    strategy_type: StrategyTypeABC = field(default_factory=NewtonRaphsonStrategy)
     scheme: SchemeABC = field(default_factory=NewmarkScheme)
     linear_solver_settings: LinearSolverSettingsABC = field(default_factory=Amgcl)
     rayleigh_m: Optional[float] = None
