@@ -997,14 +997,24 @@ This tutorial shows how a subsurface model can be created directly from CPT data
 Theory
 ......
 
-* CPT data is being read into a data set of point with coordinates (X,Y,Z)
+* CPT data is read and interpreted into a set of point with coordinates `(x,y,z)` and corresponding interpreted properties $v_{data}$ (e.g. shear wave velocity `vs` based on  tip resistance and sleeve friction). The the distribution of the dataset $v_{data}$ is considered to be representative for the distribution of the site $v\inV$. 
+* A transfomration model is created based on the CPT data. This transfomration model $V=T(U)$ characterises the distribution of the physical stochastic parameter $X$ as a function of the standard-normal stochastic variable $U \\sim N(0,1)$. This model is used to create the standard-normal equivalent data $u_{data} = T^{-1}(v_{data})$ 
+* The standard-normal data is used to calibrate a Gaussian regression model. Sampling from this model provides the conditioned . Internally, the sampoling is performed in the traditional Kriging formulation, in which an unconditioned random field is conditioned to the conditioning data . This takes place in the standard-normal space, resultin gin standar-normal fields $u_{field}$.
+* The generated conditioned random fields are transformed to the parameter space using the transformation model: $v_{field} = T(u_{field})$.
+
+
+Implementation
+..............
+The CPT-based generation is implemented in a module of the `stem.random_fields` package. A single wrapper class is provided to combine the different components into a single random field generator that can be linked to STEM.
+
+[INTRODUCE DIFFERENT CLASSES HERE]
 
 
 
-
+Application in STEM
+...................
 
 The modules required for the computational model are loaded, together with two additional classes: `stem.additional_processes.ParamaterFieldParameter` is used as the interface between the `STEM` package and the `random_fields` package; `random_fields.geostatistical_cpt_interpretation.ElasticityFieldsCpt` is used as a generator of conditioned random fields.
-
 
 .. code-block:: python
 
@@ -1021,13 +1031,145 @@ The modules required for the computational model are loaded, together with two a
     from stem.additional_processes import ParameterFieldParameters
     from geostatistical_cpt_interpretation import ElasticityFieldsFromCpt
 
+As an example, a model for a single block of soil is created:
+
+.. code-block:: python
+    
+    ndim = 3
+    model = Model(ndim)
+    
+    solid_density_1 = 2650
+    porosity_1 = 0.3
+    young_modulus_1 = 0.
+    poisson_ratio_1 = 0.2
+    soil_formulation_1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_1, POROSITY=porosity_1)
+    constitutive_law_1 = LinearElasticSoil(YOUNG_MODULUS=young_modulus_1, POISSON_RATIO=poisson_ratio_1)
+    retention_parameters_1 = SaturatedBelowPhreaticLevelLaw()
+    material_soil_1 = SoilMaterial("soil_1", soil_formulation_1, constitutive_law_1, retention_parameters_1)
+
+    soil1_coordinates = [( 0.0, -25.0, -25.0), 
+                         ( 20.0, -25.0, -25.0), 
+                         ( 20.0,  -1.0, -25.0), 
+                         ( 1.0,  -1.0, -25.0), 
+                         ( 0.0,  -1.0, -25.0)]
+    
+    model.extrusion_length = 50.
+    orientation_x_axis = 72.
+    
+    model.set_mesh_size(element_size=1.)
+    
+    model.add_soil_layer_by_coordinates(soil1_coordinates, material_soil_1, "soil_layer_1")
+    
+    # create input files directory, since it might not have been created yet
+    os.makedirs(input_files_dir, exist_ok=True)
+
+.. code-block:: python
+
+    cpt_folder = r'/benchmark_tests/test_cpt_conditioning/cpt_data'
+   
+    elastic_field_generator_cpt = ElasticityFieldsFromCpt(cpt_file_folder = cpt_folder,
+                based_on_midpoint = True,
+                max_conditioning_points = 1000,
+                orientation_x_axis = orientation_x_axis,
+                return_property = 'young_modulus')
+    elastic_field_generator_cpt.calibrate_geostat_model(calibration_indices=(1,2),v_dim=0)
+    
+    field_parameters_json = ParameterFieldParameters(
+        property_name="YOUNG_MODULUS",
+        function_type="json_file",
+        field_generator=elastic_field_generator_cpt
+    )
+    
+    # add the random field to the model
+    model.add_field(part_name="soil_layer_1", field_parameters=field_parameters_json)
+
+Add a line load at the boundary. The mesh around the point load is :
+
+.. code-block:: python
+
+    load_coordinates = [(1., -1.0, 25),(1., -1.0, 25)]
+    point_load = PointLoad(active=[False, True, False], value=[0, -10000, 0])
+    model.add_load_by_coordinates(load_coordinates, point_load, "line_load")
+
+    model.set_element_size_of_group(0.5,'line_load')
+
+    model.show_geometry(show_surface_ids=True)
+
+Add boundary conditions:
+
+.. code-block:: python
+
+    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+                                                        is_fixed=[True, True, True], value=[0, 0, 0])
+    roller_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+                                                            is_fixed=[True, False, True], value=[0, 0, 0])
+    
+    
+    model.add_boundary_condition_by_geometry_ids(2, [2], no_displacement_parameters, "base_fixed")
+    model.add_boundary_condition_by_geometry_ids(2, [1, 7], roller_displacement_parameters, "sides_roller")
+    
+
+Set problem: 
+
+.. code-block:: python
+
+    end_time = 1.
+    delta_time = 1.
+    analysis_type = AnalysisType.MECHANICAL
+    solution_type = SolutionType.DYNAMIC
+    
+    # Set up start and end time of calculation, time step and etc
+    time_integration = TimeIntegration(start_time=0.0, end_time=1., delta_time=0.25, reduction_factor=1.0,
+                                       increase_factor=1.0)
+    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
+                                                            displacement_absolute_tolerance=1.0e-9)
+    strategy_type = NewtonRaphsonStrategy()
+    scheme_type = NewmarkScheme()
+    linear_solver_settings = Amgcl()
+    stress_initialisation_type = StressInitialisationType.NONE
+    solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
+                                     stress_initialisation_type=stress_initialisation_type,
+                                     time_integration=time_integration,
+                                     is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
+                                     convergence_criteria=convergence_criterion,
+                                     strategy_type=strategy_type, scheme=scheme_type,
+                                     linear_solver_settings=linear_solver_settings, rayleigh_k=0.12,
+                                     rayleigh_m=0.0001)
+    
+    
+    problem = Problem(problem_name="calculate_load_on_spatially_variable_embankment_3d", number_of_threads=1,
+                      settings=solver_settings)
+    model.project_parameters = problem
 
 
+Define output. Note that to visualise the random fields, here the Young modulus is set as a variable to include in the output. This is done at the integration points:
 
+.. code-block:: python
+    nodal_results = [NodalOutput.DISPLACEMENT, 
+                     NodalOutput.VELOCITY, 
+                     NodalOutput.ACCELERATION]
+    gauss_point_results = [GaussPointOutput.YOUNG_MODULUS]
+    
+    model.add_output_settings(
+        part_name="porous_computational_model_part",
+        output_dir=results_dir,
+        output_name="vtk_output",
+        output_parameters=VtkOutputParameters(
+            file_format="ascii",
+            output_interval=1,
+            nodal_results=nodal_results,
+            gauss_point_results=gauss_point_results,
+            output_control_type="step"
+        )
+    )
 
+The code is run in a single push as before:
 
+.. code-block:: python
 
-
+    stem = Stem(model, input_files_dir)
+    stem.write_all_input_files()
+    stem.run_calculation()
 
 
 
