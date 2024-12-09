@@ -7,9 +7,10 @@ from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, Sa
 from stem.load import UvecLoad
 from stem.boundary import DisplacementConstraint
 from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
-                         StressInitialisationType, SolverSettings, Problem, Amgcl)
+                         StressInitialisationType, SolverSettings, Problem, Amgcl, NewtonRaphsonStrategy)
 from stem.output import NodalOutput, VtkOutputParameters, Output
 from stem.stem import Stem
+import UVEC.uvec_ten_dof_vehicle_2D as uvec
 
 from benchmark_tests.utils import assert_files_equal
 
@@ -65,15 +66,17 @@ def test_stem():
         "contact_coefficient": 9.1e-5,
         "contact_power": 1.5,
         "initialisation_steps": 100,
+        "static_initialisation": False,
     }
 
     uvec_load = UvecLoad(direction=[1, 1, 1],
                          velocity=1000,
                          origin=[0.75, 3, 5],
                          wheel_configuration=[0.0, 2.5, 19.9, 22.4],
-                         uvec_file=r"uvec_ten_dof_vehicle_2D/uvec.py",
-                         uvec_function_name="uvec",
-                         uvec_parameters=uvec_parameters)
+                         uvec_parameters=uvec_parameters,
+                         uvec_model=uvec,
+                         )
+
     model.add_load_by_coordinates(load_coordinates, uvec_load, "train_load")
 
     # Define boundary conditions
@@ -113,7 +116,7 @@ def test_stem():
                                                             displacement_absolute_tolerance=1.0e-9)
     stress_initialisation_type = StressInitialisationType.NONE
 
-    linear_solver = Amgcl(krylov_type="gmres")
+    linear_solver = Amgcl(krylov_type="cg")
     solver_settings = SolverSettings(analysis_type=analysis_type,
                                      solution_type=solution_type,
                                      stress_initialisation_type=stress_initialisation_type,
@@ -122,6 +125,7 @@ def test_stem():
                                      is_stiffness_matrix_constant=True,
                                      are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
+                                     strategy_type=NewtonRaphsonStrategy(),
                                      rayleigh_k=0.001,
                                      rayleigh_m=0.01)
 
@@ -150,9 +154,6 @@ def test_stem():
     input_folder = r"benchmark_tests/test_train_uvec_3d/input_kratos"
     # copy uvec to input folder
     os.makedirs(input_folder, exist_ok=True)
-    copytree(r"benchmark_tests/test_train_uvec_3d/uvec_ten_dof_vehicle_2D",
-             os.path.join(input_folder, "uvec_ten_dof_vehicle_2D"),
-             dirs_exist_ok=True)
 
     # Write KRATOS input files
     # --------------------------------
