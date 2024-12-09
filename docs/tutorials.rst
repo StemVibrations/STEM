@@ -720,17 +720,6 @@ needs to provide the `uvec_file` and `uvec_function_name` as parameters in the U
 path to the UVEC model file and the `uvec_function_name` is the name of the function in the UVEC model file.
 The UVEC model file should be copied to the input files directory.
 
-.. code-block:: python
-
-    # copy UVEC model to input files directory
-    import os
-    from shutil import copytree
-
-    # create input files directory, since it might not have been created yet
-    os.makedirs(input_files_dir, exist_ok=True)
-    # copy uvec module to input files directory
-    copytree(uvec_folder, os.path.join(input_files_dir, "uvec_ten_dof_vehicle_2D"), dirs_exist_ok=True)
-
 A schematisation of the UVEC model as defined in this tutorial, is shown below.
 
 .. image:: _static/figure_uvec.png
@@ -755,8 +744,7 @@ Below the uvec parameters are defined.
                        "gravity_axis": 1, # axis on which gravity works [x =0, y = 1, z = 2]
                        "contact_coefficient": 9.1e-7, # Hertzian contact coefficient between the wheel and the rail [N/m]
                        "contact_power": 1.0, # Hertzian contact power between the wheel and the rail [-]
-                       "initialisation_steps": 20, # number of time steps on which the gravity on the UVEC is
-                                                    # gradually increased [-]
+                       "static_initialisation": False, # True if the analysis of the UVEC is static
                        }
 
     # define the UVEC load
