@@ -1277,7 +1277,7 @@ The code is run in a single push as before:
     stem.run_calculation()
 
 
-Visualisation in paraviw allows the following view with Young modulus values at 3 of the 5 CPTs and a block of soil in which the conditioned random field represents a field of Young modulus values in the domain:
+Visualisation in Paraview provides the following view of Young modulus values at 3 of the 5 CPTs and a block of soil in which the conditioned random field represents a field of Young modulus values in the domain:
 
 .. image:: _static/3D_conditioned_random_field_young_modulus.PNG
 
