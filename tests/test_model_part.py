@@ -108,7 +108,11 @@ class TestModelPart:
 
         # check uvec load names
         uvec_parameters = {"load_wheel_1": -10.0, "load_wheel_2": -20.0}
-        uvec_load = UvecLoad([10, 10, 10], 5, [0, 0, 0], [0, 2], r"sample_uvec.py", "uvec_test", uvec_parameters)
+        uvec_load = UvecLoad([10, 10, 10],
+                             5, [0, 0, 0], [0, 2],
+                             uvec_file="sample_uvec.py",
+                             uvec_function_name="uvec_test",
+                             uvec_parameters=uvec_parameters)
 
         uvec_part = ModelPart("uvec_load_part")
         uvec_part.parameters = uvec_load
