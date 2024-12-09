@@ -68,13 +68,14 @@ def test_stem():
         "static_initialisation": False,
     }
 
-    uvec_load = UvecLoad(direction=[1, 1, 1],
-                         velocity=1000,
-                         origin=[0.75, 3, 5],
-                         wheel_configuration=[0.0, 2.5, 19.9, 22.4],
-                         uvec_parameters=uvec_parameters,
-                         uvec_model=uvec,
-                         )
+    uvec_load = UvecLoad(
+        direction=[1, 1, 1],
+        velocity=1000,
+        origin=[0.75, 3, 5],
+        wheel_configuration=[0.0, 2.5, 19.9, 22.4],
+        uvec_parameters=uvec_parameters,
+        uvec_model=uvec,
+    )
 
     model.add_load_by_coordinates(load_coordinates, uvec_load, "train_load")
 

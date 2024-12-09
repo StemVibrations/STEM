@@ -296,7 +296,8 @@ class UvecLoad(LoadParametersABC):
         """
         if self.uvec_model is not None:
             if self.uvec_model.__name__ not in (model.value for model in UvecSupportedModels):
-                raise ValueError(f"UVEC model {self.uvec_model} is not supported. Please use one of the following models: \
+                raise ValueError(
+                    f"UVEC model {self.uvec_model} is not supported. Please use one of the following models: \
                         {[model.value for model in UvecSupportedModels]}")
             self.uvec_file = "/".join([self.uvec_model.__name__.split(".")[-1], "uvec.py"])
             self.uvec_function_name = "uvec"

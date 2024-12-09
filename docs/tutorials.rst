@@ -547,24 +547,14 @@ This tutorial shows step by step guide on how to set up a train model
 on top of track on an embankment with two soil layers underneath, in a 3D model.
 The UVEC (User defined VEhiCle model) is a model used to represent a train as dynamic loads on the system.
 
-In order to use the UVEC, before all the packages are imported, the directory where the UVEC source code is located
-should be appended to the python paths. This is required such that the imports within the UVEC source code can be found.
-Again, note that it is important that this is done before importing the stem packages.
-
-.. code-block:: python
-
-    import sys
-    uvec_module_path = r"benchmark_tests/test_train_uvec_3d"
-    sys.path.append(uvec_module_path)
-
-After the path of the UVEC module is added, the necessary packages are imported and paths are defined where the input
-input and output files will be located.
+In order to use the UVEC you need to import the UVEC package, together with all the remaining packages.
 
 .. code-block:: python
 
     input_files_dir = "uvec_train_model"
     results_dir = "output_uvec_train_model"
 
+    import UVEC.uvec_ten_dof_vehicle_2D as uvec
     from stem.model import Model
     from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
     from stem.structural_material import ElasticSpringDamper, NodalConcentrated
@@ -722,13 +712,13 @@ The UVEC model is then defined using the UvecLoad class. The train moves in posi
 defined in `direction=[1, 1, 1]`, values greater than 0 indicate positive direction, values smaller than 0 indicate
 negative direction. The velocity of the train is 40 m/s. The train starts moving from the origin point, which has to be
 located on top of the track, that includes an extra thickness of the rail-pad, as shown above in `rail_pad_thickness`.
-The wheel configuration is defined as a list of distances from the origin point to the wheels. The `uvec_file` parameter
-is the name of the python file that contains the UVEC model, this file name is relative to the input files directory or
-it can be an absolute path. For the sake of this tutorial, the UVEC model is copied from the benchmark tests folder
-to the input files directory. The `uvec_function_name` parameter is the name of the main function within the uvec file
-which starts the uvec calculation. The `uvec_parameters` parameter is a dictionary which contains the parameters of the
+The wheel configuration is defined as a list of distances from the origin point to the wheels. The `uvec_model` is the
+imported UVEC train model. The `uvec_parameters` parameter is a dictionary which contains the parameters of the
 UVEC model. The UVEC load is added on top of the previously defined track with the name "rail_track_1". And the name
-of the load is set to "train_load".
+of the load is set to "train_load". The user can also define a custom made UVEC model. In order to achieve this, it
+needs to provide the `uvec_file` and `uvec_function_name` as parameters in the UvecLoad class. The `uvec_file` is the
+path to the UVEC model file and the `uvec_function_name` is the name of the function in the UVEC model file.
+The UVEC model file should be copied to the input files directory.
 
 .. code-block:: python
 
@@ -736,8 +726,6 @@ of the load is set to "train_load".
     import os
     from shutil import copytree
 
-    # the name of the uvec module
-    uvec_folder = os.path.join(uvec_module_path, "uvec_ten_dof_vehicle_2D")
     # create input files directory, since it might not have been created yet
     os.makedirs(input_files_dir, exist_ok=True)
     # copy uvec module to input files directory
@@ -774,7 +762,7 @@ Below the uvec parameters are defined.
     # define the UVEC load
     uvec_load = UvecLoad(direction=[1, 1, 1], velocity=40, origin=[0.75, 3+rail_pad_thickness, 5],
                          wheel_configuration=[0.0, 2.5, 19.9, 22.4],
-                         uvec_file=r"uvec_ten_dof_vehicle_2D/uvec.py", uvec_function_name="uvec",
+                         uvec_model=uvec,
                          uvec_parameters=uvec_parameters)
 
     # add the load on the tracks
