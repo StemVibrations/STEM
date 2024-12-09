@@ -1167,11 +1167,12 @@ As an example, a model for a single block of soil is created:
     # create input files directory, since it might not have been created yet
     os.makedirs(input_files_dir, exist_ok=True)
 
-The random field generator for the Young modulus 
+The random field generator for the Young modulus is set up as follows, using only `y` and 'z' coordinates for the calibration, because the CPTs are all on one line along the z-axis. The length scale for the z-axis will be used for the x-axis as well. All other settings are identical to earlier examples:
 
 .. code-block:: python
 
     cpt_folder = r'/benchmark_tests/test_cpt_conditioning/cpt_data'
+    orientation_x_axis = 75
    
     elastic_field_generator_cpt = ElasticityFieldsFromCpt(cpt_file_folder = cpt_folder,
                 based_on_midpoint = True,
@@ -1188,7 +1189,7 @@ The random field generator for the Young modulus
     # add the random field to the model
     model.add_field(part_name="soil_layer_1", field_parameters=field_parameters_json)
 
-Add a line load at the boundary. The mesh around the point load is [TODO: FIX ELEMENT SIZE AT LINE LOAD]:
+Add a line load at the boundary. The mesh around the point load is [TODO: FIX ELEMENT SIZE AT LINE LOAD: set_element IS NOT ACCOUNTED FOR IN THE CODE]:
 
 .. code-block:: python
 
