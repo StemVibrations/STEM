@@ -60,7 +60,7 @@ def read_tutorial(rst_file: str, name: str) -> List[str]:
         # find end line
         for val in tutorial[idx_ini[i]:idx_end[i]]:
             # find the code inside the code block. the code should have at least 4 spaces and not be empty
-            if len(val.lstrip()) > 0 and re.search('\S', val).start() >= 4:
+            if len(val.lstrip()) > 0 and re.search(r'\S', val).start() >= 4:
                 data.append(val.lstrip())
 
     return data
