@@ -997,8 +997,8 @@ This tutorial shows how a subsurface model can be created directly from CPT data
 Theory
 ......
 
-* CPT data is read and interpreted into a set of point with coordinates `(x,y,z)` and corresponding interpreted properties $v_{data}$ (e.g. shear wave velocity `vs` based on  tip resistance and sleeve friction). The the distribution of the dataset $v_{data}$ is considered to be representative for the distribution of the site $v\inV$. 
-* A transfomration model is created based on the CPT data. This transfomration model $V=T(U)$ characterises the distribution of the physical stochastic parameter $X$ as a function of the standard-normal stochastic variable $U \\sim N(0,1)$. This model is used to create the standard-normal equivalent data $u_{data} = T^{-1}(v_{data})$ 
+* CPT data is read and interpreted into a set of point with coordinates `(x,y,z)` and corresponding interpreted properties $z_{data}$ (e.g. shear wave velocity `vs` based on  tip resistance and sleeve friction). The the distribution of the dataset $x_{data}$ is considered to be representative for the distribution of the site $x\inX$. 
+* A transfomration model is created based on the CPT data. This transfomration model $X=T(Z)$ characterises the distribution of the physical stochastic parameter $X$ as a function of the standard-normal stochastic variable $Z \\sim N(0,1)$. This model is used to create the standard-normal equivalent data $z_{data} = T^{-1}(x_{data})$ 
 * The standard-normal data is used to calibrate a Gaussian regression model. Sampling from this model provides the conditioned . Internally, the sampoling is performed in the traditional Kriging formulation, in which an unconditioned random field is conditioned to the conditioning data . This takes place in the standard-normal space, resultin gin standar-normal fields $u_{field}$.
 * The generated conditioned random fields are transformed to the parameter space using the transformation model: $v_{field} = T(u_{field})$.
 
@@ -1006,6 +1006,65 @@ Theory
 Implementation
 ..............
 The CPT-based generation is implemented in a module of the `stem.random_fields` package. A single wrapper class is provided to combine the different components into a single random field generator that can be linked to STEM.
+
+
+.. code_block:: python
+
+    from geostatistical_cpt_interpretation import CPT_data
+    
+    cpt_folder = r'/benchmark_tests/test_cpt_conditioning/cpt_data'
+    cpt_data = CPT_data(cpt_directory = cpt_folder)
+    cpt_data.read_cpt_data()
+    cpt_data.interpret_cpt_data()
+
+
+    # visualise
+    plt.title('Original coordinates')
+    cpt_data.plot_coordinates()
+    
+    # transform the data to a modelling domain
+    cpt_data.data_coordinate_change(orientation_x_axis=73,based_on_midpoint=True)
+    
+    plt.title('Model coordinates')
+    cpt_data.plot_coordinates()
+
+
+The `CPT_data` class makes use of the `d-geolib-plus` package, and contains all CPT data after reading. If necessary, the data is accessible, for example: 
+
+.. code-block:: python
+
+    from pathlib import Path
+    # create plots of CPT data using geolib-plus functionalities 
+    for cpt in cpt_data.cpt_list:
+        cpt.plot(Path('.'))
+
+The marginal transformation model can be generated and visualised:
+
+.. code-block:: python
+
+    marginal_transformator = MarginalTransformation(cpt_data.vs,min = 50)
+    marginal_transformator.plot(x_label = '$u$ : standard-normal variable',y_label = '$v$ : shear wave velocity [m/s]')
+
+
+Next, the data for the calibration of the geostatistical model can be selected.   
+
+.. code-block:: python
+
+    coords = cpt_data.data_coords[::5,[2,1]]
+    z_data = marginal_transformator.x_to_z(x = cpt_data.vs[::5])
+    
+    geo_model = GeostatisticalModel(nb_dimensions=2,v_dim = 1)
+    geo_model.calibrate(coords = coords,values = z_data)
+
+
+
+
+
+
+
+    
+
+
 
 [INTRODUCE DIFFERENT CLASSES HERE]
 
