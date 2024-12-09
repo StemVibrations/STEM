@@ -1167,6 +1167,8 @@ As an example, a model for a single block of soil is created:
     # create input files directory, since it might not have been created yet
     os.makedirs(input_files_dir, exist_ok=True)
 
+The random field generator for the Young modulus 
+
 .. code-block:: python
 
     cpt_folder = r'/benchmark_tests/test_cpt_conditioning/cpt_data'
@@ -1179,15 +1181,14 @@ As an example, a model for a single block of soil is created:
     elastic_field_generator_cpt.calibrate_geostat_model(calibration_indices=(1,2),v_dim=0)
     
     field_parameters_json = ParameterFieldParameters(
-        property_name="YOUNG_MODULUS",
-        function_type="json_file",
-        field_generator=elastic_field_generator_cpt
-    )
+                property_name="YOUNG_MODULUS",
+                function_type="json_file",
+                field_generator=elastic_field_generator_cpt)
     
     # add the random field to the model
     model.add_field(part_name="soil_layer_1", field_parameters=field_parameters_json)
 
-Add a line load at the boundary. The mesh around the point load is :
+Add a line load at the boundary. The mesh around the point load is [TODO: FIX ELEMENT SIZE AT LINE LOAD]:
 
 .. code-block:: python
 
@@ -1199,7 +1200,7 @@ Add a line load at the boundary. The mesh around the point load is :
 
     model.show_geometry(show_surface_ids=True)
 
-Add boundary conditions:
+Add boundary conditions [TODO: FIX TO REALISTIC BOUNDARY CONDITIONS]:
 
 .. code-block:: python
 
@@ -1213,7 +1214,7 @@ Add boundary conditions:
     model.add_boundary_condition_by_geometry_ids(2, [1, 7], roller_displacement_parameters, "sides_roller")
     
 
-Set problem: 
+Set problem [TODO: CHANGE TO QUASI STATIC IN A SINGLE STEP]: 
 
 .. code-block:: python
 
@@ -1276,10 +1277,9 @@ The code is run in a single push as before:
     stem.run_calculation()
 
 
+Visualisation in paraviw allows the following view with Young modulus values at 3 of the 5 CPTs and a block of soil in which the conditioned random field represents a field of Young modulus values in the domain:
 
-
-
-
+.. image:: _static/3D_conditioned_random_field_young_modulus.PNG
 
 
 
