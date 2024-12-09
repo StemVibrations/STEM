@@ -1,12 +1,12 @@
 import json
 
 import pytest
+import UVEC.uvec_ten_dof_vehicle_2D as uvec
 
 from stem.IO.kratos_solver_io import KratosSolverIO
 from stem.model_part import ModelPart, BodyModelPart
 from stem.solver import *
 from stem.load import UvecLoad
-import UVEC.uvec_ten_dof_vehicle_2D as uvec
 from tests.utils import TestUtils
 
 

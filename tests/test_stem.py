@@ -9,6 +9,7 @@ import KratosMultiphysics
 import numpy.testing as npt
 import pytest
 from gmsh_utils import gmsh_IO
+import UVEC.uvec_ten_dof_vehicle_2D as uvec
 
 from stem.boundary import DisplacementConstraint
 from stem.IO.kratos_io import KratosIO
@@ -19,7 +20,6 @@ from stem.soil_material import LinearElasticSoil, OnePhaseSoil, SaturatedBelowPh
 from stem.solver import (AnalysisType, DisplacementConvergenceCriteria, Problem, SolutionType, SolverSettings,
                          StressInitialisationType, TimeIntegration)
 from stem.stem import Stem
-import UVEC.uvec_ten_dof_vehicle_2D as uvec
 from tests.utils import TestUtils
 
 
