@@ -14,8 +14,7 @@ class TestAdditionalProcesses:
 
         """
         # Create a valid random field generator
-        random_field_generator = RandomFieldGenerator(n_dim=2,
-                                                      cov=0.1,
+        random_field_generator = RandomFieldGenerator(cov=0.1,
                                                       model_name="Gaussian",
                                                       v_scale_fluctuation=1,
                                                       anisotropy=[0.5],
@@ -29,9 +28,9 @@ class TestAdditionalProcesses:
                                                            field_generator=random_field_generator)
 
         # Generate random field
-        field_parameters_object.field_generator.generate(coordinates=np.array([(0, 1), (0, 5)]))
+        field_parameters_object.field_generator.generate(coordinates=np.array([(0, 1, 0), (0, 5, 0)]))
         actual_parameters = field_parameters_object.field_generator.generated_field
-        expected_parameters = [11.776473043743675, 10.723033896578464]
+        expected_parameters = [10.765957, 10.345959]
 
         # assert if the generated field is correct
         npt.assert_allclose(actual_parameters, expected_parameters)

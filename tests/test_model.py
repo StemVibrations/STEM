@@ -1979,12 +1979,11 @@ class TestModel:
                                       load_parameters=line_load_parameters)
 
         # Define the field generator
-        correct_rf_generator = RandomFieldGenerator(n_dim=3,
-                                                    cov=0.1,
+        correct_rf_generator = RandomFieldGenerator(cov=0.1,
                                                     model_name="Gaussian",
                                                     v_scale_fluctuation=5,
-                                                    anisotropy=[0.5, 0.5],
-                                                    angle=[0, 0],
+                                                    anisotropy=0.5,
+                                                    angle=0,
                                                     seed=42)
 
         # define the field parameters
@@ -1994,12 +1993,11 @@ class TestModel:
                                                                  field_generator=correct_rf_generator)
 
         # Define the field generator
-        wrong_rf_generator = RandomFieldGenerator(n_dim=3,
-                                                  cov=0.1,
+        wrong_rf_generator = RandomFieldGenerator(cov=0.1,
                                                   model_name="Gaussian",
                                                   v_scale_fluctuation=5,
-                                                  anisotropy=[0.5, 0.5],
-                                                  angle=[0, 0],
+                                                  anisotropy=0.5,
+                                                  angle=0,
                                                   seed=42)
         wrong_field_parameters_json = ParameterFieldParameters(property_name="YOUNGS_MODULUS",
                                                                function_type="json_file",
@@ -2049,8 +2047,7 @@ class TestModel:
         model.set_mesh_size(1)
 
         # Define the field generator
-        random_field_generator = RandomFieldGenerator(n_dim=3,
-                                                      cov=0.1,
+        random_field_generator = RandomFieldGenerator(cov=0.1,
                                                       model_name="Gaussian",
                                                       v_scale_fluctuation=1,
                                                       anisotropy=[0.5],
@@ -2099,8 +2096,7 @@ class TestModel:
         model.set_mesh_size(1.0)
 
         # Define the field generator
-        random_field_generator = RandomFieldGenerator(n_dim=3,
-                                                      cov=0.1,
+        random_field_generator = RandomFieldGenerator(cov=0.1,
                                                       model_name="Gaussian",
                                                       v_scale_fluctuation=1,
                                                       anisotropy=[0.5, 0.5],

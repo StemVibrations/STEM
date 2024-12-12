@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional, Any, Union
+from typing import List, Optional, Any, Union, Sequence
 
 import numpy as np
 import numpy.typing as npty
@@ -52,7 +52,7 @@ class FieldGeneratorABC(ABC):
 
 class RandomFieldGenerator(FieldGeneratorABC):
     """
-    Class to generate random fields for a material property in the model as funtion of the coordinates
+    Class to generate random fields for a material property in the model as function of the coordinates
     of the centroid of the elements (x, y and z).
 
     Inheritance:
@@ -74,7 +74,6 @@ class RandomFieldGenerator(FieldGeneratorABC):
 
     def __init__(self,
                  model_name: str,
-                 n_dim: int,
                  cov: float,
                  v_scale_fluctuation: float,
                  anisotropy: Union[float, List[float]],
@@ -87,10 +86,11 @@ class RandomFieldGenerator(FieldGeneratorABC):
 
         Anisotropy and angle can be given as scalar, 1-D and 2-D lists. In case the model is 3D but a 1-D or scalar
         is provided, it is assumed the same angle and anisotropy along both horizontal direction.
+        Because the models in stem have always coordinates with 3 dimensions (x, y and z), random fields
+        have always a dimension (n_dim) equal to 3.
 
         Args:
             - model_name (str): Name of the model to be used. Options are: "Gaussian", "Exponential", "Matern", "Linear"
-            - n_dim (int): number of dimensions of the model (2 or 3).
             - cov (float): The coefficient of variation of the random field.
             - v_scale_fluctuation (float): The vertical scale of fluctuation of the random field.
             - anisotropy (list): The anisotropy of the random field in the other directions (per dimension).
@@ -100,33 +100,35 @@ class RandomFieldGenerator(FieldGeneratorABC):
             - seed (int): The seed number for the random number generator.
 
         Raises:
-            - ValueError: if the model dimensions is not 2 or 3.
             - ValueError: if the model_name is not a valid or implemented model.
 
         """
-        # validate the number of dimensions of the model
-        if n_dim not in [2, 3]:
-            raise ValueError(f"Number of dimension {n_dim} specified, but should be one of either 2 or 3.")
 
         # check that random field model is one of the implemented
         if model_name not in AVAILABLE_RANDOM_FIELD_MODEL_NAMES:
             raise ValueError(f"Model name: `{model_name}` was provided but not understood or implemented yet. "
                              f"Available models are: {AVAILABLE_RANDOM_FIELD_MODEL_NAMES}")
 
-        # if anisotropy or angle are float, convert to list
-        if isinstance(anisotropy, float):
+        # if anisotropy or angle are not a sequence make a list out of them
+        if not isinstance(anisotropy, Sequence):
             anisotropy = [anisotropy]
-        if isinstance(angle, float):
+        if not isinstance(angle, Sequence):
             angle = [angle]
 
-        # if angle or anisotropy are 1-D list but model is 3-D duplicate them
-        if n_dim == 3:
-            anisotropy = anisotropy if len(anisotropy) == 2 else [anisotropy[0], anisotropy[0]]
-            angle = angle if len(angle) == 2 else [angle[0], angle[0]]
+        # validate the inputs for anistropy and angle that control the 3d effects of the field
+        if len(anisotropy) not in [1, 2]:
+            raise ValueError("Anisotropy has to be a float or integer, or a sequence of either 1 or 2 elements.")
+        if len(angle) not in [1, 2]:
+            raise ValueError("Angle has to be a float or integer, or a sequence of either 1 or 2 elements.")
+
+        # if angle or anisotropy are 1-D list duplicate them in the 3rd dimension.
+        # for 2d models this will have no effect, for 3d models it will make a radial symmetry of the field.
+        anisotropy = anisotropy if len(anisotropy) == 2 else [anisotropy[0], anisotropy[0]]
+        angle = angle if len(angle) == 2 else [angle[0], angle[0]]
 
         self.__generated_field: Optional[List[float]] = None
         self.model_name = model_name
-        self.n_dim = n_dim
+        self.n_dim = 3  # stem coordinates are always 3 even for a 2D model wit the third one being irrelevant.
         self.cov = cov
         self.v_scale_fluctuation = v_scale_fluctuation
         self.anisotropy = anisotropy

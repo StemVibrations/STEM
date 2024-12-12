@@ -952,7 +952,7 @@ The mean of the property is automatically obtained from the material property al
 .. code-block:: python
 
     random_field_generator = RandomFieldGenerator(
-        n_dim=3, cov=0.1, v_scale_fluctuation=1,
+        cov=0.1, v_scale_fluctuation=1,
         anisotropy=[20.0], angle=[0],
         model_name="Gaussian", seed=14
     )
