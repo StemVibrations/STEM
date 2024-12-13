@@ -1805,7 +1805,9 @@ class Model:
 
     def __finalise_json_output(self, input_folder: str):
         """
-        Adjust json output for nodal output coordinates so the order matches the desired one.
+        Adjust json output for nodal outputs:
+          * order of the output nodes should match the order the given order.
+          * include nodal coordinates in the node output to ease the interpretation.
 
         Args:
             - input_folder (str): input folder for the written files.
@@ -1865,9 +1867,12 @@ class Model:
                 new_json = {key: value for key, value in json_data_tmp.items() if "NODE" not in key}
 
                 # adjust the nodal outputs in the right order
-                for node_id in output_model_part.mesh.nodes.keys():
+                for node_id, node in output_model_part.mesh.nodes.items():
                     node_key = f"NODE_{node_id}"
-                    new_json[node_key] = json_data_tmp[node_key]
+                    data_node = json_data_tmp[node_key]
+                    # reassign the corresponding nodal outputs including the nodal coordinates at the top
+                    new_json[node_key] = {'COORDINATES': node.coordinates}
+                    new_json[node_key].update(data_node)
 
                 # write back the json file
                 with open(json_file_path, "w") as outfile:
