@@ -104,7 +104,7 @@ def test_stem():
     model.project_parameters = problem
 
     # Define the output process
-    json_output = JsonOutputParameters(0.049, nodal_results=[NodalOutput.DISPLACEMENT_Y])
+    json_output = JsonOutputParameters(0.05, nodal_results=[NodalOutput.DISPLACEMENT_Y])
     model.add_output_settings(json_output, "moving_load")
 
     input_folder = r"benchmark_tests/test_beam_multistage/input_kratos"

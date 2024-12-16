@@ -1098,7 +1098,7 @@ class TestStem:
                                                  part_name="nodal_accelerations",
                                                  output_name="json_nodal_accelerations",
                                                  output_dir="output",
-                                                 output_parameters=JsonOutputParameters(output_interval=0.0025 - 1e-10,
+                                                 output_parameters=JsonOutputParameters(output_interval=0.0025,
                                                                                         nodal_results=nodal_results))
 
         # define the STEM instance

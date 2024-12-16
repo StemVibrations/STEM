@@ -139,7 +139,7 @@ def test_stem():
         coordinates=output_coordinates,
         part_name="midline_output",
         output_parameters=JsonOutputParameters(
-            output_interval=delta_time - 1e-8,
+            output_interval=delta_time,
             nodal_results=nodal_results,
             gauss_point_results=[],
         ),

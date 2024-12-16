@@ -191,7 +191,7 @@
                     "FLUID_FLUX_VECTOR",
                     "HYDRAULIC_HEAD"
                 ],
-                "time_frequency": 0.002
+                "time_frequency":  0.00199999
             }
         },
         {
@@ -212,7 +212,7 @@
                     "TOTAL_STRESS_TENSOR",
                     "GREEN_LAGRANGE_STRAIN_VECTOR"
                 ],
-                "time_frequency": 0.002
+                "time_frequency":  0.00199999
             }
         },
         {
@@ -230,7 +230,7 @@
                     "DISPLACEMENT",
                     "TOTAL_DISPLACEMENT"
                 ],
-                "time_frequency": 0.002}}
+                "time_frequency":  0.00199999}}
         ]
     }
 }
