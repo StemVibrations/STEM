@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List, Dict, Tuple, Any
 
+from stem.globals import TIME_STEP_PRECISION
 from stem.output import (
     Output,
     GiDOutputParameters,
@@ -199,6 +200,14 @@ class KratosOutputsIO:
             op.name if isinstance(op, GaussPointOutput) else op for op in output_parameters.gauss_point_results
         ]
 
+        # subtract the time precision to request output frequency. Kratos provides the first time step
+        # right after the request time stamp
+        # so if 0.2000 is requested and the time step is 0.02, a time-step of 0.202 is given instead.
+        # to avoid this the time-precision is subtracted to the requested time step so that
+        # by requesting a time-step of 0.1999999 the correct time step of 0.2 is provided in output
+
+        output_interval = output_parameters.output_interval - TIME_STEP_PRECISION
+
         # initialize output dictionary
         output_dict: Dict[str, Any] = {
             "python_module": "json_output_process",
@@ -209,7 +218,7 @@ class KratosOutputsIO:
                 "output_file_name": output_path_json,
                 "output_variables": nodal_results,
                 "gauss_points_output_variables": gauss_results,
-                "time_frequency": output_parameters.output_interval,
+                "time_frequency": output_interval,
             },
         }
         return output_dict

@@ -114,7 +114,7 @@ def test_stem():
     model.add_output_settings(output_dir=".",
                               part_name="mass",
                               output_name="output_mass",
-                              output_parameters=JsonOutputParameters(output_interval=delta_time * 0.99,
+                              output_parameters=JsonOutputParameters(output_interval=delta_time,
                                                                      nodal_results=nodal_results,
                                                                      gauss_point_results=gauss_point_results))
 

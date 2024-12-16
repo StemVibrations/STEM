@@ -1104,8 +1104,7 @@ type is set to "step", meaning that the results will be written every time step.
 Additionally, nodal output can be retrieved on given coordinates, however it is required that these coordinates are
 placed on an existing surface within the model. For this tutorial, output is given on a few points perpendicular to
 the track. The results will be stored in a json file in the output folder. For json output it is required that the
-output interval is defined in seconds. In order to output data at each time step, a slightly smaller time interval than
-the calculation time step `delta_time` is required.
+output interval is defined in seconds.
 
 .. code-block:: python
 
@@ -1121,7 +1120,7 @@ the calculation time step `delta_time` is required.
         output_name="json_output",
         coordinates=desired_output_points,
         output_parameters=JsonOutputParameters(
-            output_interval=delta_time-1e-10,
+            output_interval=delta_time,
             nodal_results=nodal_results,
             gauss_point_results=gauss_point_results
         )
