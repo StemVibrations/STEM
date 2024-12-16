@@ -1806,7 +1806,7 @@ class Model:
     def __finalise_json_output(self, input_folder: str):
         """
         Adjust json output for nodal outputs:
-          * order of the output nodes should match the order the given order.
+          * order of the output nodes should match the order of the given order.
           * include nodal coordinates in the node output to ease the interpretation.
 
         Args:
