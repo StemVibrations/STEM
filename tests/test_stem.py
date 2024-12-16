@@ -1113,10 +1113,16 @@ class TestStem:
 
         # open produced dictionary
         with open(os.path.join(input_folder, "output/json_nodal_accelerations.json"), "r") as inputfile:
-            data_output_json = json.load(inputfile)
+            actual_output_json = json.load(inputfile)
 
-        # assert that the orders of the keys is as expected
-        actual_keys_json = list(data_output_json.keys())
+        # open expected dictionary
+        with open("tests/test_data/expected_output_on_coordinates.json", "r") as inputfile:
+            expected_output_json = json.load(inputfile)
+
+        TestUtils.assert_dictionary_almost_equal(expected=expected_output_json, actual=actual_output_json)
+
+        # assert the order
+        actual_keys_json = list(actual_output_json.keys())
         expected_keys_json = ["TIME", "NODE_5", "NODE_6", "NODE_7"]
         npt.assert_array_equal(actual_keys_json, expected_keys_json)
 

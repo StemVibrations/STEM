@@ -1869,10 +1869,8 @@ class Model:
                 # adjust the nodal outputs in the right order
                 for node_id, node in output_model_part.mesh.nodes.items():
                     node_key = f"NODE_{node_id}"
-                    data_node = json_data_tmp[node_key]
                     # reassign the corresponding nodal outputs including the nodal coordinates at the top
-                    new_json[node_key] = {'COORDINATES': node.coordinates}
-                    new_json[node_key].update(data_node)
+                    new_json[node_key] = {'COORDINATES': node.coordinates} | json_data_tmp[node_key]
 
                 # write back the json file
                 with open(json_file_path, "w") as outfile:
