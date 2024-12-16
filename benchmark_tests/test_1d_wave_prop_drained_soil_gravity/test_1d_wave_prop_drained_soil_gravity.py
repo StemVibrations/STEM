@@ -170,11 +170,11 @@ def test_stem():
         plt.plot(calculated_data_stage2["TIME"], calculated_data_stage2["NODE_7"]["VELOCITY_Y"])
         plt.show()
 
+    calculated_results = Utils.merge(calculated_data_stage1, calculated_data_stage2)
+
     # open expected results
     with open("benchmark_tests/test_1d_wave_prop_drained_soil_gravity/output_/expected_output.json") as f:
         expected_results = json.load(f)
-
-    calculated_results = Utils.merge(calculated_data_stage1, calculated_data_stage2)
 
     # Assert dictionaries
     TestUtils.assert_dictionary_almost_equal(expected_results, calculated_results)
