@@ -666,10 +666,15 @@ imported from stem.additional_processes and RandomFieldGenerator is imported fro
 In this step, the geometry, conditions, and material parameters for the simulation are defined.
 Firstly the dimension of the model is indicated which in this case is 3. After which the model can be initialised.
 
+In this tutorial we are going to consider two stages:
+1. The first stage is the static analysis with the train model on the track.
+2. The second stage is the dynamic analysis with the train model running along the track.
+
+
 .. code-block:: python
 
     ndim = 3
-    model = Model(ndim)
+    model_stage1 = Model(ndim)
 
     # END CODE BLOCK
 
@@ -758,7 +763,7 @@ length is 50 m in the z-direction.
     soil1_coordinates = [(0.0, 0.0, 0.0), (5.0, 0.0, 0.0), (5.0, 1.0, 0.0), (0.0, 1.0, 0.0)]
     soil2_coordinates = [(0.0, 1.0, 0.0), (5.0, 1.0, 0.0), (5.0, 2.0, 0.0), (0.0, 2.0, 0.0)]
     embankment_coordinates = [(0.0, 2.0, 0.0), (3.0, 2.0, 0.0), (1.5, 3.0, 0.0), (0.75, 3.0, 0.0), (0, 3.0, 0.0)]
-    model.extrusion_length = 50
+    model_stage1.extrusion_length = 50
 
     # END CODE BLOCK
 
@@ -774,9 +779,9 @@ a unique name.
 
 .. code-block:: python
 
-    model.add_soil_layer_by_coordinates(soil1_coordinates, material_soil_1, "soil_layer_1")
-    model.add_soil_layer_by_coordinates(soil2_coordinates, material_soil_2, "soil_layer_2")
-    model.add_soil_layer_by_coordinates(embankment_coordinates, material_embankment, "embankment_layer")
+    model_stage1.add_soil_layer_by_coordinates(soil1_coordinates, material_soil_1, "soil_layer_1")
+    model_stage1.add_soil_layer_by_coordinates(soil2_coordinates, material_soil_2, "soil_layer_2")
+    model_stage1.add_soil_layer_by_coordinates(embankment_coordinates, material_embankment, "embankment_layer")
 
     # END CODE BLOCK
 
@@ -808,10 +813,10 @@ are spaced 0.5m from each others which results in a 50m straight track, with par
     sleeper_spacing = 0.5
     rail_pad_thickness = 0.025
 
-    model.generate_straight_track(sleeper_spacing, number_of_sleepers, rail_parameters,
-                                  sleeper_parameters, rail_pad_parameters,
-                                  rail_pad_thickness, origin_point,
-                                  direction_vector, "rail_track_1")
+    model_stage1.generate_straight_track(sleeper_spacing, number_of_sleepers, rail_parameters,
+                                         sleeper_parameters, rail_pad_parameters,
+                                         rail_pad_thickness, origin_point,
+                                         direction_vector, "rail_track_1")
 
     # END CODE BLOCK
 
@@ -868,17 +873,17 @@ The following parameters can be defined in this tutorial:
                                                      NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0])
 
     # create a straight track with rails, sleepers, rail pads and a 1D soil extension
-    model.generate_extended_straight_track(sleeper_distance=sleeper_spacing,
-                                           n_sleepers=number_of_sleepers,
-                                           rail_parameters=rail_parameters,
-                                           sleeper_parameters=sleeper_parameters,
-                                           rail_pad_parameters=rail_pad_parameters,
-                                           rail_pad_thickness=rail_pad_thickness,
-                                           origin_point=origin_point,
-                                           soil_equivalent_parameters=soil_equivalent_parameters,
-                                           length_soil_equivalent_element=length_soil_equivalent_element,
-                                           direction_vector=direction_vector,
-                                           name="rail_track_1")
+    model_stage1.generate_extended_straight_track(sleeper_distance=sleeper_spacing,
+                                                  n_sleepers=number_of_sleepers,
+                                                  rail_parameters=rail_parameters,
+                                                  sleeper_parameters=sleeper_parameters,
+                                                  rail_pad_parameters=rail_pad_parameters,
+                                                  rail_pad_thickness=rail_pad_thickness,
+                                                  origin_point=origin_point,
+                                                  soil_equivalent_parameters=soil_equivalent_parameters,
+                                                  length_soil_equivalent_element=length_soil_equivalent_element,
+                                                  direction_vector=direction_vector,
+                                                  name="rail_track_1")
 
     # END CODE BLOCK
 
@@ -899,6 +904,7 @@ needs to provide the `uvec_file` and `uvec_function_name` as parameters in the U
 path to the UVEC model file and the `uvec_function_name` is the name of the function in the UVEC model file.
 The UVEC model file should be copied to the input files directory.
 
+Because we are in stage 1, which is static, we set the `uvec_parameters["static_initialisation"]` to `True`.
 A schematisation of the UVEC model as defined in this tutorial, is shown below.
 
 .. image:: _static/figure_uvec.png
@@ -923,17 +929,17 @@ Below the uvec parameters are defined.
                        "gravity_axis": 1, # axis on which gravity works [x =0, y = 1, z = 2]
                        "contact_coefficient": 9.1e-7, # Hertzian contact coefficient between the wheel and the rail [N/m]
                        "contact_power": 1.0, # Hertzian contact power between the wheel and the rail [-]
-                       "static_initialisation": False, # True if the analysis of the UVEC is static
+                       "static_initialisation": True, # True if the analysis of the UVEC is static
                        }
 
     # define the UVEC load
-    uvec_load = UvecLoad(direction=[1, 1, 1], velocity=40, origin=[0.75, 3+rail_pad_thickness, 5],
+    uvec_load = UvecLoad(direction=[1, 1, 1], velocity=0, origin=[0.75, 3+rail_pad_thickness, 5],
                          wheel_configuration=[0.0, 2.5, 19.9, 22.4],
                          uvec_model=uvec,
                          uvec_parameters=uvec_parameters)
 
     # add the load on the tracks
-    model.add_load_on_line_model_part("rail_track_1", uvec_load, "train_load")
+    model_stage1.add_load_on_line_model_part("rail_track_1", uvec_load, "train_load")
 
     # END CODE BLOCK
 
@@ -963,7 +969,7 @@ The mean of the property is automatically obtained from the material property al
         field_generator=random_field_generator
     )
     # add the random field to the model
-    model.add_field(part_name="soil_layer_2", field_parameters=field_parameters_json)
+    model_stage1.add_field(part_name="soil_layer_2", field_parameters=field_parameters_json)
 
     # END CODE BLOCK
 
@@ -980,7 +986,7 @@ should be set to "True".
 
 .. code-block:: python
 
-    model.show_geometry(show_surface_ids=True)
+    model_stage1.show_geometry(show_surface_ids=True)
 
     # END CODE BLOCK
 
@@ -1000,9 +1006,9 @@ surface-dimension, "2".
     absorbing_boundaries_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=40.0)
 
 
-    model.add_boundary_condition_by_geometry_ids(2, [1], no_displacement_parameters, "base_fixed")
-    model.add_boundary_condition_by_geometry_ids(2, [4, 10], roller_displacement_parameters, "sides_roller")
-    model.add_boundary_condition_by_geometry_ids(2, [2, 5, 6, 7, 11, 12, 15, 16, 17], absorbing_boundaries_parameters, "abs")
+    model_stage1.add_boundary_condition_by_geometry_ids(2, [1], no_displacement_parameters, "base_fixed")
+    model_stage1.add_boundary_condition_by_geometry_ids(2, [4, 10], roller_displacement_parameters, "sides_roller")
+    model_stage1.add_boundary_condition_by_geometry_ids(2, [2, 5, 6, 7, 11, 12, 15, 16, 17], absorbing_boundaries_parameters, "abs")
 
     # END CODE BLOCK
 
@@ -1010,7 +1016,7 @@ After which the mesh size can be set. The mesh will be generated when the Stem c
 
 .. code-block:: python
 
-    model.set_mesh_size(element_size=1.0)
+    model_stage1.set_mesh_size(element_size=1.0)
 
     # END CODE BLOCK
 
@@ -1031,16 +1037,16 @@ assumed, with a damping coefficient of 0.12 for the stiffness matrix and 0.0001 
 
 .. code-block:: python
 
-    end_time = 0.2
+    end_time = 10e-03
     delta_time = 1e-03
     analysis_type = AnalysisType.MECHANICAL
-    solution_type = SolutionType.DYNAMIC
+    solution_type = SolutionType.QUASI_STATIC
 
     time_integration = TimeIntegration(start_time=0.0, end_time=end_time, delta_time=delta_time,
                                    reduction_factor=1, increase_factor=1, max_delta_time_factor=1000)
 
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
-                                                        displacement_absolute_tolerance=1.0e-12)
+                                                            displacement_absolute_tolerance=1.0e-12)
 
     strategy_type = NewtonRaphsonStrategy()
     scheme_type = NewmarkScheme()
@@ -1052,8 +1058,7 @@ assumed, with a damping coefficient of 0.12 for the stiffness matrix and 0.0001 
                                      is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
                                      strategy_type=strategy_type, scheme=scheme_type,
-                                     linear_solver_settings=linear_solver_settings, rayleigh_k=0.12,
-                                     rayleigh_m=0.0001)
+                                     linear_solver_settings=linear_solver_settings)
 
     # END CODE BLOCK
 
@@ -1065,7 +1070,7 @@ Now the problem data should be set up. The problem should be given a name, in th
     # Set up problem data
     problem = Problem(problem_name="calculate_uvec_on_embankment_with_absorbing_boundaries", number_of_threads=4,
                       settings=solver_settings)
-    model.project_parameters = problem
+    model_stage1.project_parameters = problem
 
     # END CODE BLOCK
 
@@ -1086,7 +1091,7 @@ type is set to "step", meaning that the results will be written every time step.
 
 .. code-block:: python
 
-     model.add_output_settings(
+     model_stage1.add_output_settings(
         part_name="porous_computational_model_part",
         output_dir=results_dir,
         output_name="vtk_output",
@@ -1115,7 +1120,7 @@ the calculation time step `delta_time` is required.
     (5, 2.0, 25.0)
     ]
 
-    model.add_output_settings_by_coordinates(
+    model_stage1.add_output_settings_by_coordinates(
         part_name="subset_outputs",
         output_dir=results_dir,
         output_name="json_output",
@@ -1135,24 +1140,64 @@ calling the `Model.show_geometry` method.
 
 .. code-block:: python
 
-    model.show_geometry()
+    model_stage1.show_geometry()
 
     # END CODE BLOCK
 
-Now that the model is set up, the calculation is almost ready to be run.
+Now we need to assing stage 1 to the STEM model.
+
+
+.. code-block:: python
+
+    stem = Stem(model_stage1, input_files_dir)
+
+    # END CODE BLOCK
 
 Firstly the Stem class is initialised, with the model and the directory where the input files will be written to.
 While initialising the Stem class, the mesh will be generated.
 
+Once the initial stage is build we can add a second stage which correponds to the moving vehicle.
+First we start by creating a new stage:
+
 .. code-block:: python
 
-    stem = Stem(model, input_files_dir)
+    time_step = 1e-3
+    end_time = 0.2
+    model_stage2 = stem.create_new_stage(delta_time=time_step, stage_duration=end_time)
 
     # END CODE BLOCK
 
-The Kratos input files are then written. The project settings and output definitions are written to
-ProjectParameters_stage_1.json file. The mesh is written to the .mdpa file and the material parameters are
-written to the MaterialParameters_stage_1.json file.
+Now we need to redefine the UVEC model, since the train is moving in the second stage. In this case the train will
+travel at 40m/s.
+
+
+
+.. code-block:: python
+
+    model_stage2.get_model_part_by_name("train_load").parameters.velocity = 40.0
+
+    # END CODE BLOCK
+
+To perform a dynamic analysis the settings of the stage 2 need to be updated, in particular the solution type
+and the rayleigh damping coefficients.
+
+.. code-block:: python
+
+    model_stage2.project_parameters.settings.solution_type = SolutionType.DYNAMIC
+    model_stage2.project_parameters.settings.rayleigh_k = 0.001
+    model_stage2.project_parameters.settings.rayleigh_m = 0.01
+
+    # END CODE BLOCK
+
+The stage two needs to be added to the calculation:
+
+.. code-block:: python
+
+    stem.add_calculation_stage(model_stage2)
+
+    # END CODE BLOCK
+
+The Kratos input files are then written. The project settings and output definitions are written to files.
 All of the input files are then written to the input files directory.
 
 .. code-block:: python
