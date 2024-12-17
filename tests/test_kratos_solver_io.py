@@ -1,6 +1,8 @@
+import os
 import json
-
+import site
 import pytest
+
 import UVEC.uvec_ten_dof_vehicle_2D as uvec
 
 from stem.IO.kratos_solver_io import KratosSolverIO
@@ -207,6 +209,10 @@ class TestKratosSolverIO:
         # open expected settings dictionary
         with open("tests/test_data/expected_solver_settings_with_uvec_package.json") as f:
             expected_solver_settings = json.load(f)
+
+        # update the expected_solver_settings uvec path
+        expected_solver_settings['solver_settings']['uvec']['uvec_path'] = os.path.join(
+            site.getsitepackages()[0], "UVEC", expected_solver_settings['solver_settings']['uvec']['uvec_path'])
 
         # assert that the settings dictionary is as expected
         TestUtils.assert_dictionary_almost_equal(expected_solver_settings, test_dict)
