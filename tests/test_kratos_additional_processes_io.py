@@ -23,8 +23,7 @@ class TestKratosAdditionalProcessesIO:
         excavation_parameters = Excavation(deactivate_body_model_part=True)
 
         # Define the field generator
-        random_field_generator = RandomFieldGenerator(n_dim=3,
-                                                      cov=0.1,
+        random_field_generator = RandomFieldGenerator(cov=0.1,
                                                       model_name="Gaussian",
                                                       v_scale_fluctuation=5,
                                                       anisotropy=[0.5, 0.5],
@@ -75,8 +74,7 @@ class TestKratosAdditionalProcessesIO:
         """
 
         # Define the field generator
-        random_field_generator = RandomFieldGenerator(n_dim=3,
-                                                      cov=0.1,
+        random_field_generator = RandomFieldGenerator(cov=0.1,
                                                       model_name="Gaussian",
                                                       v_scale_fluctuation=5,
                                                       anisotropy=[0.5, 0.5],

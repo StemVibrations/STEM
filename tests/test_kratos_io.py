@@ -204,8 +204,7 @@ class TestKratosModelIO:
         model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "no_displacement")
 
         # Define the field generator
-        random_field_generator = RandomFieldGenerator(n_dim=3,
-                                                      cov=0.1,
+        random_field_generator = RandomFieldGenerator(cov=0.1,
                                                       model_name="Gaussian",
                                                       v_scale_fluctuation=1,
                                                       anisotropy=[0.5, 0.5],
