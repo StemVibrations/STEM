@@ -617,7 +617,7 @@ class Geometry:
             centre_of_mass += weight * line_centroid
             circumference += weight
 
-        centre_of_mass = centre_of_mass / circumference
+        centre_of_mass /= circumference
 
         return centre_of_mass
 
@@ -690,6 +690,6 @@ class Geometry:
             centre_of_mass += weight * surface_centroid
             surface_area += weight
 
-        centre_of_mass = centre_of_mass / surface_area
+        centre_of_mass /= surface_area
 
         return centre_of_mass
