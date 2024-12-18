@@ -86,8 +86,8 @@ class RandomFieldGenerator(FieldGeneratorABC):
 
         Anisotropy and angle can be given as scalar, 1-D and 2-D lists. In case the model is 3D but a 1-D or scalar
         is provided, it is assumed the same angle and anisotropy along both horizontal direction.
-        Because the models in stem has always coordinates with 3 dimensions (x, y and z), random fields
-        have always a dimension (n_dim) equal to 3.
+        Because the models in STEM always have coordinates in three dimensions (x, y, and z), random fields always have
+        a dimension (n_dim) equal to 3.
 
         Args:
             - model_name (str): Name of the model to be used. Options are: "Gaussian", "Exponential", "Matern", "Linear"
@@ -97,7 +97,7 @@ class RandomFieldGenerator(FieldGeneratorABC):
                 (per dimension). Either a float, or a list of float containing 1 or 2 elements is accepted.
             - angle (Union[float, List[float]]): The angle of the random field (per dimension). \
                 Either a float, or a list of float containing 1 or 2 elements is accepted.
-            - mean_value (Optional[Union[int, float]]): mean value of the random field. Defaults to None. \
+            - mean_value (Optional[float]): mean value of the random field. Defaults to None. \
                 In that case it should be set otherwise before running the generate method.
             - seed (int): The seed number for the random number generator.
 
@@ -113,7 +113,7 @@ class RandomFieldGenerator(FieldGeneratorABC):
             raise ValueError(f"Model name: `{model_name}` was provided but not understood or implemented yet. "
                              f"Available models are: {AVAILABLE_RANDOM_FIELD_MODEL_NAMES}")
 
-        # if anisotropy or angle are not a sequence make a list out of them
+        # if anisotropy or angle are not a list make a list out of them
         if not isinstance(anisotropy, list):
             anisotropy = [anisotropy]
         if not isinstance(angle, list):
@@ -121,9 +121,9 @@ class RandomFieldGenerator(FieldGeneratorABC):
 
         # validate the inputs for anisotropy and angle that control the 3d effects of the field
         if len(anisotropy) not in [1, 2]:
-            raise ValueError("Anisotropy has to be a float or integer, or a sequence of either 1 or 2 elements.")
+            raise ValueError("Anisotropy has to be a float, or a list of either 1 or 2 floats.")
         if len(angle) not in [1, 2]:
-            raise ValueError("Angle has to be a float or integer, or a sequence of either 1 or 2 elements.")
+            raise ValueError("Angle has to be a float, or a list of either 1 or 2 floats.")
 
         # if angle or anisotropy are 1-D list duplicate them in the 3rd dimension.
         # for 2d models this will have no effect, for 3d models it will make a radial symmetry of the field.
@@ -132,7 +132,7 @@ class RandomFieldGenerator(FieldGeneratorABC):
 
         self.__generated_field: Optional[List[float]] = None
         self.model_name = model_name
-        self.n_dim = 3  # stem coordinates are always 3 even for a 2D model wit the third one being irrelevant.
+        self.__n_dim = 3  # stem coordinates are always 3 even for a 2D model wit the third one being irrelevant.
         self.cov = cov
         self.v_scale_fluctuation = v_scale_fluctuation
         self.anisotropy = anisotropy
@@ -177,7 +177,7 @@ class RandomFieldGenerator(FieldGeneratorABC):
 
         variance = (self.cov * self.mean_value)**2
 
-        rf_generator = RandomFields(n_dim=self.n_dim,
+        rf_generator = RandomFields(n_dim=self.__n_dim,
                                     mean=self.mean_value,
                                     variance=variance,
                                     model_name=ModelName[self.model_name],
