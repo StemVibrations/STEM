@@ -24,7 +24,7 @@ class TestGenerators:
                                  seed=42)
 
         # Raise error when anisotropy has more than 2 elements.
-        msg = ("Anisotropy has to be a float or integer, or a sequence of either 1 or 2 elements.")
+        msg = ("Anisotropy has to be a float, or a list of either 1 or 2 floats.")
         with pytest.raises(ValueError, match=msg):
             RandomFieldGenerator(cov=0.1,
                                  model_name="Gaussian",
@@ -34,7 +34,7 @@ class TestGenerators:
                                  seed=42)
 
         # Raise error when anisotropy has more than 2 elements.
-        msg = ("Angle has to be a float or integer, or a sequence of either 1 or 2 elements.")
+        msg = ("Angle has to be a float, or a list of either 1 or 2 floats")
         with pytest.raises(ValueError, match=msg):
             RandomFieldGenerator(cov=0.1,
                                  model_name="Gaussian",
