@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import site
 import pytest
@@ -211,8 +212,13 @@ class TestKratosSolverIO:
             expected_solver_settings = json.load(f)
 
         # update the expected_solver_settings uvec path
-        expected_solver_settings['solver_settings']['uvec']['uvec_path'] = os.path.join(
-            site.getsitepackages()[0], "UVEC", expected_solver_settings['solver_settings']['uvec']['uvec_path'])
+        if sys.platform == "win32":
+            package_loc = site.getsitepackages()[1]
+        elif sys.platform == "linux":
+            package_loc = site.getsitepackages()[0]
+
+        expected_solver_settings['solver_settings']['uvec']['uvec_path'] = os.path.normpath(os.path.join(
+            package_loc, "UVEC", expected_solver_settings['solver_settings']['uvec']['uvec_path']))
 
         # assert that the settings dictionary is as expected
         TestUtils.assert_dictionary_almost_equal(expected_solver_settings, test_dict)
