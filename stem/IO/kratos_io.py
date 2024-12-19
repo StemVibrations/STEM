@@ -1083,21 +1083,6 @@ class KratosIO:
 
         return project_parameters_dict
 
-    def __copy_uvec_to_location(self, model: Model):
-        """
-        Copy the UVEC source code to the Kratos input folder.
-
-        Args:
-            - model (:class:`stem.model.Model`): The model object containing all the required info.
-        """
-
-        # loop on the process model parts
-        for mp in model.process_model_parts:
-            if isinstance(mp.parameters, UvecLoad) and (mp.parameters.uvec_model is not None):
-                # Copy UVEC to the input folder
-                mp.parameters.uvec_model.set_path_file(os.path.join(os.getcwd(), self.project_folder),
-                                                       mp.parameters.uvec_model.UVEC_NAME)
-
     def write_input_files_for_kratos(self,
                                      model: Model,
                                      mesh_file_name: str,
@@ -1122,6 +1107,3 @@ class KratosIO:
 
         # write mdpa files
         self.__write_mesh_to_mdpa(model, mesh_file_name)
-
-        # copy uvec to location
-        self.__copy_uvec_to_location(model)
