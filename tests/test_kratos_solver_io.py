@@ -217,8 +217,14 @@ class TestKratosSolverIO:
         elif sys.platform == "linux":
             package_loc = site.getsitepackages()[0]
 
-        expected_solver_settings['solver_settings']['uvec']['uvec_path'] = os.path.normpath(
-            os.path.join(package_loc, "UVEC", expected_solver_settings['solver_settings']['uvec']['uvec_path']))
+        # update the path to the uvec file on the test file
+        expected_solver_settings['solver_settings']['uvec']['uvec_path'] = os.path.normcase(
+            os.path.normpath(
+                os.path.join(package_loc, "UVEC", expected_solver_settings['solver_settings']['uvec']['uvec_path'])))
+
+        # normalise the path to be case-insensitive
+        test_dict['solver_settings']['uvec']['uvec_path'] = os.path.normcase(
+            test_dict['solver_settings']['uvec']['uvec_path'])
 
         # assert that the settings dictionary is as expected
         TestUtils.assert_dictionary_almost_equal(expected_solver_settings, test_dict)
