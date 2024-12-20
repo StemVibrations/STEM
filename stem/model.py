@@ -1211,8 +1211,8 @@ class Model:
         end_nodes = self.__find_end_nodes_of_line_strings(model_part.mesh)
         # find the node ids corresponding to the geometry points
         node_ids_at_geometry_points = set(
-            Utils.find_node_ids_close_to_geometry_nodes(mesh=model_part.mesh, geometry=model_part.geometry, eps=1e-06))
-
+            int(node_id) for node_id in Utils.find_node_ids_close_to_geometry_nodes(
+                mesh=model_part.mesh, geometry=model_part.geometry, eps=1e-06))
         element_ids_search_space = set(model_part.mesh.elements.keys())
         node_ids_search_space = set(model_part.mesh.nodes.keys())
 
