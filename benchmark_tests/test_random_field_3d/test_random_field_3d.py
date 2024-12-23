@@ -38,8 +38,7 @@ def test_stem():
                                         "layer1")
 
     # Define the field generator
-    random_field_generator = RandomFieldGenerator(n_dim=3,
-                                                  cov=0.1,
+    random_field_generator = RandomFieldGenerator(cov=0.1,
                                                   v_scale_fluctuation=1,
                                                   anisotropy=[10.0],
                                                   angle=[60],
