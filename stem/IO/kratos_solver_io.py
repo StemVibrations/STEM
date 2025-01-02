@@ -203,8 +203,7 @@ class KratosSolverIO:
                 # set strategy type to newton_raphson_with_uvec
                 if solver_settings_dict["strategy_type"] == "newton_raphson_linear_elastic":
                     if solver_settings_dict["solution_type"] == "dynamic":
-                        solver_settings_dict[
-                            "strategy_type"] = "newton_raphson_linear_elastic_with_uvec"
+                        solver_settings_dict["strategy_type"] = "newton_raphson_linear_elastic_with_uvec"
                     else:
                         solver_settings_dict["strategy_type"] = "newton_raphson_with_uvec"
                 elif solver_settings_dict["strategy_type"] == "newton_raphson":

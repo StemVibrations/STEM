@@ -53,6 +53,7 @@ class KratosIO:
         - solver_io (:class:`stem.IO.kratos_solver_io.KratosSolverIO`): The solver IO object.
         - additional_process_io (:class:`stem.IO.kratos_additional_process_io.KratosAdditionalProcessesIO`): \
             The IO object for the additional processes.
+        - __use_linear_elastic_solver (bool): Flag to determine if the linear elastic solver is used.
 
     """
 
@@ -73,6 +74,8 @@ class KratosIO:
         self.outputs_io = KratosOutputsIO(DOMAIN)
         self.solver_io = KratosSolverIO(self.ndim, DOMAIN)
         self.additional_process_io = KratosAdditionalProcessesIO(DOMAIN)
+
+        self.__use_linear_elastic_solver = False
 
     @staticmethod
     def __is_body_model_part(model_part: ModelPart):
@@ -917,7 +920,8 @@ class KratosIO:
             # add boundary condition
             elif isinstance(mp.parameters, BoundaryParametersABC):
                 parameters = self.boundaries_io.create_boundary_condition_dict(
-                    mp.name, mp.parameters, model.project_parameters.settings.time_integration.start_time)
+                    mp.name, mp.parameters, model.project_parameters.settings.time_integration.start_time,
+                    self.__use_linear_elastic_solver)
 
                 if mp.parameters.is_constraint:
                     _key = "constraints_process_list"
@@ -1113,6 +1117,13 @@ class KratosIO:
             - materials_file_name (str): The name of the materials file.
             - project_file_name (str): name of the project parameters file. Defaults to `ProjectParameters.json`.
         """
+
+        if model.project_parameters is None:
+            raise ValueError("Solver settings are not initialised in model.")
+
+        # check if linear elastic strategy is used
+        self.__use_linear_elastic_strategy = (
+            model.project_parameters.settings.strategy_type.strategy_type == "newton_raphson_linear_elastic")
 
         # write materials
         self.__write_material_parameters_json(model, materials_file_name)

@@ -247,7 +247,7 @@ class StrategyTypeABC(ABC):
 
     @property
     @abc.abstractmethod
-    def strategy_type(self):
+    def strategy_type(self) -> str:
         """
         Abstract property for returning the type of the strategy
 
@@ -278,7 +278,7 @@ class LinearNewtonRaphsonStrategy(StrategyTypeABC):
     number_cycles: int = 100
 
     @property
-    def strategy_type(self):
+    def strategy_type(self) -> str:
         """
         Returns the strategy type name of the Linear Newton-Raphson strategy
 
@@ -309,7 +309,7 @@ class NewtonRaphsonStrategy(StrategyTypeABC):
     number_cycles: int = 100
 
     @property
-    def strategy_type(self):
+    def strategy_type(self) -> str:
         """
         Returns the strategy type name of the Newton-Raphson strategy
 
@@ -355,7 +355,7 @@ class LineSearchStrategy(StrategyTypeABC):
     echo_level: int = 0
 
     @property
-    def strategy_type(self):
+    def strategy_type(self) -> str:
         """
         Returns the strategy type name of the line search strategy
 
@@ -393,7 +393,7 @@ class ArcLengthStrategy(StrategyTypeABC):
     min_radius_factor: float = 0.1
 
     @property
-    def strategy_type(self):
+    def strategy_type(self) -> str:
         """
         Returns the strategy type name of the arc length strategy
 
