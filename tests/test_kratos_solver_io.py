@@ -1,6 +1,9 @@
+import os
+import sys
 import json
-
+import site
 import pytest
+
 import UVEC.uvec_ten_dof_vehicle_2D as uvec
 
 from stem.IO.kratos_solver_io import KratosSolverIO
@@ -207,6 +210,21 @@ class TestKratosSolverIO:
         # open expected settings dictionary
         with open("tests/test_data/expected_solver_settings_with_uvec_package.json") as f:
             expected_solver_settings = json.load(f)
+
+        # update the expected_solver_settings uvec path
+        if sys.platform == "win32":
+            package_loc = site.getsitepackages()[1]
+        elif sys.platform == "linux":
+            package_loc = site.getsitepackages()[0]
+
+        # update the path to the uvec file on the test file
+        expected_solver_settings['solver_settings']['uvec']['uvec_path'] = os.path.normcase(
+            os.path.normpath(
+                os.path.join(package_loc, "UVEC", expected_solver_settings['solver_settings']['uvec']['uvec_path'])))
+
+        # normalise the path to be case-insensitive
+        test_dict['solver_settings']['uvec']['uvec_path'] = os.path.normcase(
+            test_dict['solver_settings']['uvec']['uvec_path'])
 
         # assert that the settings dictionary is as expected
         TestUtils.assert_dictionary_almost_equal(expected_solver_settings, test_dict)

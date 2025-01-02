@@ -303,52 +303,6 @@ class TestStem:
         create_default_model.project_parameters.settings.validate_settings.assert_called_once()
         stage2.project_parameters.settings.validate_settings.assert_called_once()
 
-    def test_write_all_input_files_with_uvec(self, create_default_model: Model):
-        """
-        Test the write_all_input_files method with UVEC of the Stem class. It checks if the UVEC is correctly copied.
-
-        Args:
-            - create_default_model (:class:`stem.model.Model`): The default model
-
-        """
-
-        uvec_parameters = {
-            "n_carts": 1,
-            "cart_inertia": (1128.8e3) / 2,
-            "cart_mass": (50e3) / 2,
-            "cart_stiffness": 2708e3,
-            "cart_damping": 64e3,
-            "bogie_distances": [-9.95, 9.95],
-            "bogie_inertia": (0.31e3) / 2,
-            "bogie_mass": (6e3) / 2,
-            "wheel_distances": [-1.25, 1.25],
-            "wheel_mass": 1.5e3,
-            "wheel_stiffness": 4800e3,
-            "wheel_damping": 0.25e3,
-            "gravity_axis": 1,
-            "contact_coefficient": 9.1e-5,
-            "contact_power": 1.5,
-            "static_initialisation": False,
-        }
-        uvec_load = UvecLoad(
-            direction=[1, 1, 1],
-            velocity=1000,
-            origin=[0, 10, 0],
-            wheel_configuration=[0.0, 2.5],
-            uvec_parameters=uvec_parameters,
-            uvec_model=uvec,
-        )
-        load_coordinates = [(0.0, 10.0, 0), (1.0, 10.0, 0)]
-
-        create_default_model.add_load_by_coordinates(load_coordinates, uvec_load, "train_load")
-        input_folder = "tests/test_data/generated_input/test_generate_write_all_input_files"
-        stem = Stem(initial_stage=create_default_model, input_files_dir=input_folder)
-        create_default_model.project_parameters.settings.validate_settings = MagicMock()
-
-        stem.write_all_input_files()
-
-        rmtree("tests/test_data/generated_input/test_generate_write_all_input_files/uvec_ten_dof_vehicle_2D")
-
     def test_run_stage(self, create_default_model: Model):
         """
         Test the run_stage method of the Stem class
@@ -1098,7 +1052,7 @@ class TestStem:
                                                  part_name="nodal_accelerations",
                                                  output_name="json_nodal_accelerations",
                                                  output_dir="output",
-                                                 output_parameters=JsonOutputParameters(output_interval=0.0025 - 1e-10,
+                                                 output_parameters=JsonOutputParameters(output_interval=0.0025,
                                                                                         nodal_results=nodal_results))
 
         # define the STEM instance
@@ -1113,10 +1067,16 @@ class TestStem:
 
         # open produced dictionary
         with open(os.path.join(input_folder, "output/json_nodal_accelerations.json"), "r") as inputfile:
-            data_output_json = json.load(inputfile)
+            actual_output_json = json.load(inputfile)
 
-        # assert that the orders of the keys is as expected
-        actual_keys_json = list(data_output_json.keys())
+        # open expected dictionary
+        with open("tests/test_data/expected_output_on_coordinates.json", "r") as inputfile:
+            expected_output_json = json.load(inputfile)
+
+        TestUtils.assert_dictionary_almost_equal(expected=expected_output_json, actual=actual_output_json)
+
+        # assert the order
+        actual_keys_json = list(actual_output_json.keys())
         expected_keys_json = ["TIME", "NODE_5", "NODE_6", "NODE_7"]
         npt.assert_array_equal(actual_keys_json, expected_keys_json)
 

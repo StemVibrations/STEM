@@ -1,3 +1,4 @@
+import os
 from typing import List, Dict, Any, Union, Optional
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
@@ -300,8 +301,9 @@ class UvecLoad(LoadParametersABC):
                 raise ValueError(
                     f"UVEC model {self.uvec_model} is not supported. Please use one of the following models: \
                         {[model.value for model in UvecSupportedModels]}")
-            self.uvec_file = "/".join([self.uvec_model.__name__.split(".")[-1], "uvec.py"])
+            self.uvec_file = os.path.join(self.uvec_model.get_path_file(self.uvec_model.UVEC_NAME), "uvec.py")
             self.uvec_function_name = "uvec"
+            self.uvec_model = None  # necessary to allow for a deep copy for a stage in Kratos
 
     @staticmethod
     def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:

@@ -7,6 +7,9 @@ from typing import Dict, Any
 GRAVITY_VALUE = -9.81  # [m/s2]
 VERTICAL_AXIS = 1  # [0, 1, 2] = [x, y, z]
 OUT_OF_PLANE_AXIS_2D = 2  # [0, 1, 2] = [x, y, z]
+# time step to subtract to the actual desired time step
+# Kratos provides the first time step following the desired one
+TIME_STEP_PRECISION = 1e-08  # s
 
 # yapf: disable
 #: Element data for supported element types in STEM. The data contains the following information: \
