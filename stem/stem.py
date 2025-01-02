@@ -104,13 +104,6 @@ class Stem:
         """
         self.__stages.append(stage)
 
-        # add the geo data to gmsh
-        stage.gmsh_io.generate_geo_from_geo_data()
-
-        # post setup and generate mesh
-        stage.post_setup()
-        stage.generate_mesh()
-
         # check if the mesh is the same in the new stage
         self.validate_latest_stage()
 
@@ -121,7 +114,7 @@ class Stem:
 
         Raises:
             - Exception: If the number of body model parts are not the same between stages.
-            - Exception: If the body model part names are not the same between stages.
+            - Exception: If the number of process model parts are not the same between stages.
 
         """
 
