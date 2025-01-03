@@ -167,6 +167,18 @@ class TestKratosSolverIO:
         # assert that the settings dictionary is as expected
         TestUtils.assert_dictionary_almost_equal(expected_solver_settings, test_dict)
 
+        # check if correct linear elastic strategy is used
+        solver_settings.strategy_type = LinearNewtonRaphsonStrategy()
+        test_dict = solver_io.create_settings_dictionary(problem_data, "mesh_test_name", "material_test_name.json",
+                                                         model_parts)
+
+        assert test_dict["solver_settings"]["strategy_type"] == "newton_raphson_linear_elastic_with_uvec"
+
+        solver_settings.solution_type = SolutionType.QUASI_STATIC
+        test_dict = solver_io.create_settings_dictionary(problem_data, "mesh_test_name", "material_test_name.json",
+                                                         model_parts)
+        assert test_dict["solver_settings"]["strategy_type"] == "newton_raphson_with_uvec"
+
     def test_create_settings_dictionary_with_uvec_package(self, set_solver_settings: SolverSettings):
         """
         Test the creation of the problem data and solver settings dictionary including uvec data.
