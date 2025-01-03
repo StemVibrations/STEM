@@ -720,7 +720,13 @@ class TestKratosModelIO:
                 solver settings.
             - create_default_outputs (List[:class:`stem.output.Output`]): list of default output processes.
         """
+
         model = create_default_2d_model
+
+        # test exception if project parameters are not added
+        with pytest.raises(ValueError, match="Solver settings are not initialised in model."):
+            kratos_io = KratosIO(ndim=model.ndim)
+            kratos_io.write_input_files_for_kratos(model=model, mesh_file_name="test_mdpa_file.mdpa")
 
         # apply default solver settings and output settings
         model.project_parameters = create_default_solver_settings
