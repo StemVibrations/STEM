@@ -378,7 +378,6 @@ class Stem:
                     base_path = Path(output_settings.output_name).parent / Path(output_settings.output_name).stem
                     output_settings.output_name = str(base_path) + stage_identifier + suffix
 
-
     def __check_if_acceleration_should_be_initialised(self, previous_stage, current_stage):
 
         # generally acceleration should not be initialized
