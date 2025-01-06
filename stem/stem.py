@@ -7,6 +7,7 @@ import KratosMultiphysics
 from KratosMultiphysics.StemApplication.geomechanics_analysis import StemGeoMechanicsAnalysis
 
 from stem.model import Model
+from stem.solver import SolutionType
 from stem.output import VtkOutputParameters, GiDOutputParameters, JsonOutputParameters
 from stem.IO.kratos_io import KratosIO
 
@@ -135,6 +136,9 @@ class Stem:
 
         # check if the mesh is the same in the new stage
         self.__check_if_mesh_between_stages_is_the_same(self.__stages[-2], self.__stages[-1])
+
+        # check solver settings new stage
+        self.__check_if_acceleration_should_be_initialised(self.__stages[-2], self.__stages[-1])
 
     def write_all_input_files(self):
         """
@@ -373,3 +377,16 @@ class Stem:
 
                     base_path = Path(output_settings.output_name).parent / Path(output_settings.output_name).stem
                     output_settings.output_name = str(base_path) + stage_identifier + suffix
+
+
+    def __check_if_acceleration_should_be_initialised(self, previous_stage, current_stage):
+
+        # generally acceleration should not be initialized
+        current_stage.project_parameters.settings._inititalize_acceleration = False
+        # acceleration should be initialized when transitioning from quasi static to dynamic
+        if (previous_stage.project_parameters.settings.solution_type == SolutionType.QUASI_STATIC
+                and current_stage.project_parameters.settings.solution_type == SolutionType.DYNAMIC):
+            current_stage.project_parameters.settings._inititalize_acceleration = True
+
+        # todo acceleration should be initialised when the load between 2 dynamic stages changes, #295
+        pass

@@ -270,7 +270,7 @@ class KratosSolverIO:
             "block_builder": True,
             "rebuild_level": (0 if solver_settings.is_stiffness_matrix_constant else 2),
             "prebuild_dynamics": solver_settings.are_mass_and_damping_constant,
-            "initialize_acceleration": False,
+            "initialize_acceleration": solver_settings._inititalize_acceleration,
             "solution_type": self.__set_solution_type(solver_settings),
             "rayleigh_m": (solver_settings.rayleigh_m if solver_settings.rayleigh_m is not None else 0),
             "rayleigh_k": (solver_settings.rayleigh_k if solver_settings.rayleigh_k is not None else 0),

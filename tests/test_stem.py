@@ -252,6 +252,13 @@ class TestStem:
         # check if no exception is raised
         stem.validate_latest_stage()
         stem._Stem__check_if_mesh_between_stages_is_the_same.assert_called_once()
+        assert (stem.stages[0].project_parameters.settings._inititalize_acceleration
+                == stem.stages[1].project_parameters.settings._inititalize_acceleration == False)
+
+        # set first stage solution type to quasi static, such that acceleration should be initialized in stage 2
+        stem.stages[0].project_parameters.settings.solution_type = SolutionType.QUASI_STATIC
+        stem.validate_latest_stage()
+        assert stem.stages[1].project_parameters.settings._inititalize_acceleration == True
 
         stage3 = deepcopy(create_default_model)
         stage3.gmsh_io.reset_gmsh_instance()

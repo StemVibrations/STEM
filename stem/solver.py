@@ -605,6 +605,7 @@ class SolverSettings:
     rayleigh_m: Optional[float] = None
     rayleigh_k: Optional[float] = None
     echo_level: int = 1
+    _inititalize_acceleration: bool = False
 
     def validate_settings(self):
         """
