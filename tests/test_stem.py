@@ -202,27 +202,22 @@ class TestStem:
         # create the second stage
         stage2 = deepcopy(create_default_model)
 
-        # Mock the methods of the stage object
-        stage2.gmsh_io.generate_geo_from_geo_data = MagicMock()
-        stage2.post_setup = MagicMock()
-        stage2.generate_mesh = MagicMock()
-
         # Add the stage to the stem object
         stem.add_calculation_stage(stage2)
 
         # check if the stage is added to the stem object
         assert len(stem.stages) == 2
 
-        # Check if the methods of the stage object are called
-        stage2.gmsh_io.generate_geo_from_geo_data.assert_called_once()
-        stage2.post_setup.assert_called_once()
-        stage2.generate_mesh.assert_called_once()
-
         # create an invalid stage with a different mesh
         stage3 = deepcopy(create_default_model)
 
         # change the coordinates of the body model part such that a different mesh is generated
         stage3.gmsh_io.geo_data["points"][2] = [10, 10, 0]
+
+        # add the geo data to gmsh and generate the mesh
+        stage3.gmsh_io.generate_geo_from_geo_data()
+        stage3.generate_mesh()
+
         # Check if ValueError is raised
         with pytest.raises(Exception,
                            match="Meshes between stages in body model part: "
