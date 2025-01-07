@@ -83,7 +83,7 @@ def test_stem():
     # Set up start and end time of calculation, time step and etc
     delta_time = 0.0015
     time_integration = TimeIntegration(start_time=0.0,
-                                       end_time=0.15,
+                                       end_time=0.30,
                                        delta_time=delta_time,
                                        reduction_factor=1.0,
                                        increase_factor=1.0,
