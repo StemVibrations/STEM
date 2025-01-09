@@ -1101,6 +1101,9 @@ class KratosIO:
             - mesh_file_name (str): The name of the mesh file.
             - materials_file_name (str): The name of the materials file.
             - project_file_name (str): name of the project parameters file. Defaults to `ProjectParameters.json`.
+
+        Raises:
+            - ValueError: if solver settings are not initialised in model.
         """
 
         if model.project_parameters is None:

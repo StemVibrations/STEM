@@ -378,7 +378,15 @@ class Stem:
                     base_path = Path(output_settings.output_name).parent / Path(output_settings.output_name).stem
                     output_settings.output_name = str(base_path) + stage_identifier + suffix
 
-    def __check_if_acceleration_should_be_initialised(self, previous_stage, current_stage):
+    def __check_if_acceleration_should_be_initialised(self, previous_stage: Model, current_stage: Model):
+        """
+        Check if the acceleration should be initialised in the current stage. Acceleration should be initialised when
+        transitioning from quasi static to dynamic.
+
+        Args:
+            - previous_stage (:class:`stem.model.Model`): The previous stage.
+            - current_stage (:class:`stem.model.Model`): The current stage.
+        """
 
         # generally acceleration should not be initialized
         current_stage.project_parameters.settings._inititalize_acceleration = False
@@ -388,4 +396,3 @@ class Stem:
             current_stage.project_parameters.settings._inititalize_acceleration = True
 
         # todo acceleration should be initialised when the load between 2 dynamic stages changes, #295
-        pass
