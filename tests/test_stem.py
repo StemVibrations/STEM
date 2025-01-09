@@ -684,8 +684,13 @@ class TestStem:
         vtk_file_stage_2 = vtk_dir_stage_2 / "PorousDomain_2.vtk"
         # create vtk files
         vtk_file_stage_2.touch()
-        # run the method
-        stem._Stem__transfer_vtk_files_to_main_output_directories()
+
+        # run the method and check if a warning is raised
+        with pytest.warns(UserWarning,
+                          match=f"No output vtk files were written for part: 'full_model' for stage 1. As the "
+                          f"output interval is greater than the amount of time steps in the stage."):
+            stem._Stem__transfer_vtk_files_to_main_output_directories()
+
         # check that 1 directory is removed and the other is not
         assert not vtk_dir_stage_2.is_dir()
         assert vtk_dir_stage_1.is_dir()
@@ -721,7 +726,12 @@ class TestStem:
         # create vtk files
         vtk_file_stage_1.touch()
         # run the method
-        stem._Stem__transfer_vtk_files_to_main_output_directories()
+        # run the method and check if a warning is raised
+        with pytest.warns(UserWarning,
+                          match=f"No output vtk files were written for part: 'full_model' for stage 2. As "
+                          f"the output interval is greater than the amount of time steps in the "
+                          f"stage."):
+            stem._Stem__transfer_vtk_files_to_main_output_directories()
         # check that 1 directory is removed and the other is not
         assert vtk_dir_stage_1.is_dir()
         assert not vtk_dir_stage_2.is_dir()
@@ -752,8 +762,17 @@ class TestStem:
         # create vtk files in the output directories
         vtk_dir_stage_1.mkdir(parents=True, exist_ok=True)
         vtk_dir_stage_2.mkdir(parents=True, exist_ok=True)
-        # run the method
-        stem._Stem__transfer_vtk_files_to_main_output_directories()
+
+        # run the method and check if a warning is raised
+        with pytest.warns(UserWarning) as record:
+            stem._Stem__transfer_vtk_files_to_main_output_directories()
+        assert str(record[0].message) == f"No output vtk files were written for part: 'full_model' for stage 1. As "
+        f"the output interval is greater than the amount of time steps in the "
+        f"stage."
+        assert str(record[1].message) == f"No output vtk files were written for part: 'full_model' for stage 2. As "
+        f"the output interval is greater than the amount of time steps in the "
+        f"stage."
+
         # check that 1 directory is removed and the other is not
         assert vtk_dir_stage_1.is_dir()
         assert not vtk_dir_stage_2.is_dir()
