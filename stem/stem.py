@@ -387,12 +387,12 @@ class Stem:
             - previous_stage (:class:`stem.model.Model`): The previous stage.
             - current_stage (:class:`stem.model.Model`): The current stage.
         """
-
-        # generally acceleration should not be initialized
-        current_stage.project_parameters.settings._inititalize_acceleration = False
-        # acceleration should be initialized when transitioning from quasi static to dynamic
-        if (previous_stage.project_parameters.settings.solution_type == SolutionType.QUASI_STATIC
-                and current_stage.project_parameters.settings.solution_type == SolutionType.DYNAMIC):
-            current_stage.project_parameters.settings._inititalize_acceleration = True
-
-        # todo acceleration should be initialised when the load between 2 dynamic stages changes, #295
+        if (current_stage.project_parameters is not None and previous_stage.project_parameters is not None
+                and current_stage.project_parameters.settings is not None
+                and previous_stage.project_parameters.settings is not None):
+            # generally acceleration should not be initialized
+            current_stage.project_parameters.settings._inititalize_acceleration = False
+            # acceleration should be initialized when transitioning from quasi static to dynamic
+            if (previous_stage.project_parameters.settings.solution_type == SolutionType.QUASI_STATIC
+                    and current_stage.project_parameters.settings.solution_type == SolutionType.DYNAMIC):
+                current_stage.project_parameters.settings._inititalize_acceleration = True

@@ -587,6 +587,8 @@ class SolverSettings:
         - echo_level (int): echo level. Default value is 1. If 0, only time information is printed. If 1, time \
             information and convergence information are printed. If 2, time information, convergence information, \
             intermediate rhs results and linear solver settings are printed.
+        - _inititalize_acceleration (bool): if true, the acceleration is initialized at the beginning of the stage, \
+            this value should not be changed by the user.
     """
     analysis_type: AnalysisType
     solution_type: SolutionType
