@@ -203,10 +203,7 @@ class KratosSolverIO:
                 # set strategy type to newton_raphson_with_uvec
                 if solver_settings_dict["strategy_type"] == "newton_raphson_linear_elastic":
                     if solver_settings_dict["solution_type"] == "dynamic":
-                        # There is an error with newton_raphson_linear_elastic_with_uvec, therefore we use
-                        # newton_raphson_with_uvec #todo: #265
-                        solver_settings_dict[
-                            "strategy_type"] = "newton_raphson_with_uvec"  # "newton_raphson_linear_elastic_with_uvec"
+                        solver_settings_dict["strategy_type"] = "newton_raphson_linear_elastic_with_uvec"
                     else:
                         solver_settings_dict["strategy_type"] = "newton_raphson_with_uvec"
                 elif solver_settings_dict["strategy_type"] == "newton_raphson":
@@ -273,7 +270,7 @@ class KratosSolverIO:
             "block_builder": True,
             "rebuild_level": (0 if solver_settings.is_stiffness_matrix_constant else 2),
             "prebuild_dynamics": solver_settings.are_mass_and_damping_constant,
-            "initialize_acceleration": False,
+            "initialize_acceleration": solver_settings._inititalize_acceleration,
             "solution_type": self.__set_solution_type(solver_settings),
             "rayleigh_m": (solver_settings.rayleigh_m if solver_settings.rayleigh_m is not None else 0),
             "rayleigh_k": (solver_settings.rayleigh_k if solver_settings.rayleigh_k is not None else 0),

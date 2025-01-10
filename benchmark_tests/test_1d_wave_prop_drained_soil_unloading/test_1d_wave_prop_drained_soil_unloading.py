@@ -1,6 +1,5 @@
 import os
-
-import pytest
+from shutil import rmtree
 
 from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
@@ -11,10 +10,10 @@ from stem.solver import AnalysisType, SolutionType, TimeIntegration, Displacemen
 from stem.output import NodalOutput, VtkOutputParameters, Output, JsonOutputParameters
 from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
-from shutil import rmtree
+
+SHOW_RESULTS = False
 
 
-@pytest.mark.skip(reason="Linear elastic newmark solver cannot handle this case #264")
 def test_stem():
     # Define geometry, conditions and material parameters
     # --------------------------------
@@ -117,7 +116,7 @@ def test_stem():
                               output_name="vtk_output")
 
     model.add_output_settings_by_coordinates([[0, 5, 0], [1, 5, 0]],
-                                             JsonOutputParameters(output_interval=delta_time * 0.99,
+                                             JsonOutputParameters(output_interval=delta_time,
                                                                   nodal_results=nodal_results,
                                                                   gauss_point_results=[]),
                                              "calculated_output",
@@ -133,7 +132,7 @@ def test_stem():
     stage2 = stem.create_new_stage(delta_time / 100, 0.30)
     stage2.get_model_part_by_name("load").parameters.value = [0.0, 0.0, 0.0]
     stage2.project_parameters.settings.solution_type = SolutionType.DYNAMIC
-    stage2.output_settings[1].output_parameters.output_interval = delta_time / 100 * 0.99
+    stage2.output_settings[1].output_parameters.output_interval = delta_time / 100
     stage2.project_parameters.settings.strategy_type = LinearNewtonRaphsonStrategy()
 
     stem.add_calculation_stage(stage2)
@@ -150,16 +149,43 @@ def test_stem():
     with open(os.path.join(input_folder, "output/calculated_output_stage_2.json")) as f:
         calculated_data_stage2 = json.load(f)
 
-    import matplotlib.pyplot as plt
+    if SHOW_RESULTS:
+        import matplotlib.pyplot as plt
 
-    plt.plot(calculated_data_stage1["TIME"], calculated_data_stage1["NODE_5"]["VELOCITY_Y"])
-    plt.plot(calculated_data_stage2["TIME"], calculated_data_stage2["NODE_5"]["VELOCITY_Y"])
-    # plt.plot(calculated_data_stage1["TIME"], calculated_data_stage1["NODE_5"]["DISPLACEMENT_Y"])
-    # plt.plot(calculated_data_stage2["TIME"], calculated_data_stage2["NODE_5"]["DISPLACEMENT_Y"])
-    plt.show()
-    #
-    # result = assert_files_equal("benchmark_tests/test_1d_wave_prop_drained_soil/output_/output_vtk_full_model",
-    #                             os.path.join(input_folder, "output/output_vtk_full_model"))
-    #
-    # assert result is True
-    # rmtree(input_folder)
+        # Create a figure and two subplots arranged vertically
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
+
+        # Plot velocity data on the first subplot
+        ax1.plot(calculated_data_stage1["TIME"],
+                 calculated_data_stage1["NODE_5"]["VELOCITY_Y"],
+                 label="Stage 1 Velocity")
+        ax1.plot(calculated_data_stage2["TIME"],
+                 calculated_data_stage2["NODE_5"]["VELOCITY_Y"],
+                 label="Stage 2 Velocity")
+        ax1.set_ylabel("Vertical velocity [m/s]")
+        ax1.set_title("y-coordinate = 5.0")
+        ax1.legend()
+        ax1.grid()
+
+        # Plot displacement data on the second subplot
+        ax2.plot(calculated_data_stage1["TIME"],
+                 calculated_data_stage1["NODE_5"]["DISPLACEMENT_Y"],
+                 label="Stage 1 Displacement")
+        ax2.plot(calculated_data_stage2["TIME"],
+                 calculated_data_stage2["NODE_5"]["DISPLACEMENT_Y"],
+                 label="Stage 2 Displacement")
+        ax2.set_ylabel("vertical displacement [m])")
+        ax2.set_xlabel("Time [s]")
+        ax2.legend()
+        ax2.grid()
+
+        # Adjust layout to prevent overlap
+        plt.tight_layout()
+
+        # Show the plot
+        plt.show()
+
+    assert assert_files_equal("benchmark_tests/test_1d_wave_prop_drained_soil_unloading/output_/output_vtk_full_model",
+                              os.path.join(input_folder, "output/output_vtk_full_model"))
+
+    rmtree(input_folder)

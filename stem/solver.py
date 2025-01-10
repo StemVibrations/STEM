@@ -247,7 +247,7 @@ class StrategyTypeABC(ABC):
 
     @property
     @abc.abstractmethod
-    def strategy_type(self):
+    def strategy_type(self) -> str:
         """
         Abstract property for returning the type of the strategy
 
@@ -278,7 +278,7 @@ class LinearNewtonRaphsonStrategy(StrategyTypeABC):
     number_cycles: int = 100
 
     @property
-    def strategy_type(self):
+    def strategy_type(self) -> str:
         """
         Returns the strategy type name of the Linear Newton-Raphson strategy
 
@@ -309,7 +309,7 @@ class NewtonRaphsonStrategy(StrategyTypeABC):
     number_cycles: int = 100
 
     @property
-    def strategy_type(self):
+    def strategy_type(self) -> str:
         """
         Returns the strategy type name of the Newton-Raphson strategy
 
@@ -355,7 +355,7 @@ class LineSearchStrategy(StrategyTypeABC):
     echo_level: int = 0
 
     @property
-    def strategy_type(self):
+    def strategy_type(self) -> str:
         """
         Returns the strategy type name of the line search strategy
 
@@ -393,7 +393,7 @@ class ArcLengthStrategy(StrategyTypeABC):
     min_radius_factor: float = 0.1
 
     @property
-    def strategy_type(self):
+    def strategy_type(self) -> str:
         """
         Returns the strategy type name of the arc length strategy
 
@@ -587,6 +587,8 @@ class SolverSettings:
         - echo_level (int): echo level. Default value is 1. If 0, only time information is printed. If 1, time \
             information and convergence information are printed. If 2, time information, convergence information, \
             intermediate rhs results and linear solver settings are printed.
+        - _inititalize_acceleration (bool): if true, the acceleration is initialized at the beginning of the stage, \
+            this value should not be changed by the user.
     """
     analysis_type: AnalysisType
     solution_type: SolutionType
@@ -605,6 +607,7 @@ class SolverSettings:
     rayleigh_m: Optional[float] = None
     rayleigh_k: Optional[float] = None
     echo_level: int = 1
+    _inititalize_acceleration: bool = False
 
     def validate_settings(self):
         """
