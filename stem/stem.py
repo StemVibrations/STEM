@@ -2,6 +2,7 @@ import os
 from copy import deepcopy
 from pathlib import Path
 from typing import List, Dict
+import warnings
 
 import KratosMultiphysics
 from KratosMultiphysics.StemApplication.geomechanics_analysis import StemGeoMechanicsAnalysis
@@ -255,41 +256,26 @@ class Stem:
                 raise Exception(f"Meshes between stages in body model part: {ref_body.name} "
                                 f"are not the same between stages")
 
-    def __check_if_vtk_directories_are_created_per_stage(self) -> Dict[int, bool]:
+    def __check_if_vtk_files_are_written_per_stage(self, path: Path, part_name, stage_index) -> bool:
         """
-        Check if vtk directories are created per stage. This is required as vtk files are always written to a new
-        directory, in order to avoid overwriting directories from previous stages. If no vtk files are written in any
-        stage, a print message is shown informing the user.
+        Check if vtk files are written per stage. This is required as vtk files are always written to a new directory,
+        in order to avoid overwriting directories from previous stages. If no vtk files are written in a stage, a
+        warning message is shown.
+
+        Args:
+            - path (Path): The path to the vtk output directory.
+            - part_name (str): The name of the part.
+            - stage_index (int): The index of the stage.
 
         Returns:
-            - (Dict[int, bool]): A dictionary containing the stage number as key and a boolean indicating if vtk
-                directories are created per stage as value.
-
+            - bool: A boolean indicating if vtk files are written
         """
 
-        vtk_dirs_per_stage = {}
-        output_intervals = []
-        for i, stage in enumerate(self.stages):
-            for output_settings in stage.output_settings:
-                if isinstance(output_settings.output_parameters, VtkOutputParameters):
-                    if stage.project_parameters is not None:
-                        start_time = stage.project_parameters.settings.time_integration.start_time
-                        end_time = stage.project_parameters.settings.time_integration.end_time
-                        delta_time = stage.project_parameters.settings.time_integration.delta_time
-                        if output_settings.output_parameters.output_control_type == "time":
-                            check = output_settings.output_parameters.output_interval <= (end_time - start_time)
-                        else:
-                            check = output_settings.output_parameters.output_interval <= (end_time -
-                                                                                          start_time) / delta_time
-                        if i not in vtk_dirs_per_stage:
-                            print(f"No output vtk files were written in stage {i}. "
-                                  f"The output interval "
-                                  f"({output_settings.output_parameters.output_interval}) is larger "
-                                  f"than than the amount of time steps ({(end_time - start_time) / delta_time}) "
-                                  f"available in the stage.")
-                        vtk_dirs_per_stage[i] = check
-                        output_intervals.append(output_settings.output_parameters.output_interval)
-        return vtk_dirs_per_stage
+        if not path.exists() or not os.listdir(path):
+            warnings.warn(f"No output vtk files were written for part: '{part_name}' for stage {stage_index+1}. As the "
+                          f"output interval is greater than the amount of time steps in the stage.")
+            return False
+        return True
 
     def __transfer_vtk_files_to_main_output_directories(self):
         """
@@ -297,8 +283,6 @@ class Stem:
         are always written to a new directory, in order to avoid overwriting directories from previous stages.
 
         """
-        # determine if the vtk directories are created per stage
-        vtk_dirs_per_stage = self.__check_if_vtk_directories_are_created_per_stage()
 
         # initialise dictionary to store main vtk output directories
         main_vtk_output_dirs = {}
@@ -316,10 +300,14 @@ class Stem:
                             main_vtk_output_dirs[part_name] = Path(output_settings.output_dir)
                         else:
                             main_vtk_output_dirs[part_name] = Path(self.input_files_dir) / output_settings.output_dir
+
+                        self.__check_if_vtk_files_are_written_per_stage(main_vtk_output_dirs[part_name], part_name, i)
+
                     else:
                         # create main output directory if it does not exist
                         if not (os.path.isdir(main_vtk_output_dirs[part_name])):
                             os.makedirs(main_vtk_output_dirs[part_name], exist_ok=True)
+
                         # check if vtk files are written in the stage
                         # if the current stage is not the main stage, move the vtk files to the main output
                         # directory
@@ -327,11 +315,13 @@ class Stem:
                             stage_vtk_output_dir = Path(output_settings.output_dir)
                         else:
                             stage_vtk_output_dir = Path(self.input_files_dir) / output_settings.output_dir
-                        if vtk_dirs_per_stage[i]:
+
+                        if self.__check_if_vtk_files_are_written_per_stage(stage_vtk_output_dir, part_name, i):
                             # move all vtk files in stage vtk output dir to main vtk output dir
                             for file in os.listdir(stage_vtk_output_dir):
                                 if file.endswith(".vtk"):
                                     os.rename(stage_vtk_output_dir / file, main_vtk_output_dirs[part_name] / file)
+
                         # remove the stage vtk output dir if it is empty
                         if not os.listdir(stage_vtk_output_dir):
                             os.rmdir(stage_vtk_output_dir)
