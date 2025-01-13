@@ -31,14 +31,14 @@ class TestKratosAdditionalProcessesIO:
                                                       seed=42)
 
         # add field via json file
-        field_parameters_json = ParameterFieldParameters(property_name="YOUNG_MODULUS",
+        field_parameters_json = ParameterFieldParameters(property_names=["YOUNG_MODULUS"],
                                                          function_type="json_file",
-                                                         field_file_name="json_file.json",
+                                                         field_file_names=["json_file.json"],
                                                          field_generator=random_field_generator)
 
         # add field via tiny expression
         field_parameters_input = ParameterFieldParameters(
-            property_name="YOUNG_MODULUS",
+            property_names=["YOUNG_MODULUS"],
             function_type="input",
             tiny_expr_function="20000*x + 30000*y",
         )
@@ -59,7 +59,7 @@ class TestKratosAdditionalProcessesIO:
         for part_name, part_parameters in all_parameters.items():
             _parameters = add_processes_io.create_additional_processes_dict(part_name=part_name,
                                                                             parameters=part_parameters)
-            test_dictionary["processes"]["constraints_process_list"].append(_parameters)
+            test_dictionary["processes"]["constraints_process_list"].extend(_parameters)
 
         # load expected dictionary from the json
         expected_load_parameters_json = json.load(open("tests/test_data/expected_additional_processes_parameters.json"))
@@ -82,9 +82,9 @@ class TestKratosAdditionalProcessesIO:
                                                       seed=42)
 
         # define the field parameters
-        field_parameters_json = ParameterFieldParameters(property_name="YOUNG_MODULUS",
+        field_parameters_json = ParameterFieldParameters(property_names=["YOUNG_MODULUS"],
                                                          function_type="json_file",
-                                                         field_file_name="test_random_field_json",
+                                                         field_file_names=["test_random_field_json"],
                                                          field_generator=random_field_generator)
 
         field_parameters_json.function_type = "csv"

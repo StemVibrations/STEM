@@ -35,7 +35,7 @@ class FieldGeneratorABC(ABC):
 
     @property
     @abstractmethod
-    def generated_field(self) -> Optional[List[Any]]:
+    def generated_fields(self) -> Optional[List[List[Any]]]:
         """
         Abstract property of the generated field.
 
@@ -43,11 +43,11 @@ class FieldGeneratorABC(ABC):
             - ValueError: if field is not generated using the `generate()` method
 
         Returns:
-            - Optional[list[Any]]: the list of generated values for the field.
+            - Optional[List[List[Any]]]: the list of generated values for the fields.
 
         """
 
-        raise Exception("abstract class of generated_field is called")
+        raise Exception("abstract class of generated_fields is called")
 
 
 class RandomFieldGenerator(FieldGeneratorABC):
@@ -141,7 +141,7 @@ class RandomFieldGenerator(FieldGeneratorABC):
         self.seed = seed
 
     @property
-    def generated_field(self) -> Optional[List[Any]]:
+    def generated_fields(self) -> Optional[List[Any]]:
         """
         Returns the value of the generated field.
 
@@ -149,14 +149,14 @@ class RandomFieldGenerator(FieldGeneratorABC):
             - ValueError: if field is not generated using the `generate()` method
 
         Returns:
-            - Optional[list[Any]]: the list of generated values for the field.
+            - Optional[List[List[Any]]]: the list of generated values for the fields.
 
         """
 
         if self.__generated_field is None:
             raise ValueError("Field is not generated yet.")
 
-        return self.__generated_field
+        return [self.__generated_field]
 
     def generate(self, coordinates: npty.NDArray[np.float64]):
         """

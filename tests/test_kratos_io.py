@@ -210,7 +210,7 @@ class TestKratosModelIO:
                                                       anisotropy=[0.5, 0.5],
                                                       angle=[0, 0])
 
-        field_parameters_json = ParameterFieldParameters(property_name="YOUNG_MODULUS",
+        field_parameters_json = ParameterFieldParameters(property_names=["YOUNG_MODULUS"],
                                                          function_type="json_file",
                                                          field_generator=random_field_generator)
 

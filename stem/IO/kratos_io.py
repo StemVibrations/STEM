@@ -937,7 +937,7 @@ class KratosIO:
 
                 # write the additional process model part parameters for the
                 # project parameters file
-                processes_dict["processes"]["constraints_process_list"].append(
+                processes_dict["processes"]["constraints_process_list"].extend(
                     self.additional_process_io.create_additional_processes_dict(mp.name, mp.parameters))
 
         return processes_dict
@@ -970,25 +970,39 @@ class KratosIO:
             return None
 
         # check that the name is not none!
-        if process_model_part.parameters.field_file_name is None:
+        if process_model_part.parameters.field_file_names is None:
             raise ValueError("No name was provided for the json file containing the "
-                             f"field parameters of model part {process_model_part.name} and property"
-                             f" {process_model_part.parameters.property_name}.")
+                             f"field parameters of model part {process_model_part.name} and properties"
+                             f" {process_model_part.parameters.property_names}.")
 
         # adjust extension of filename name is not none, check that extension is json and change it if not.
-        process_model_part.parameters.field_file_name = Utils.replace_extensions(
-            process_model_part.parameters.field_file_name, ".json")
+        for i in range(len(process_model_part.parameters.field_file_names)):
+            process_model_part.parameters.field_file_names[i] = Utils.replace_extensions(
+                process_model_part.parameters.field_file_names[i], ".json")
 
         # check that the name is not none!
         if process_model_part.parameters.field_generator is None:
             raise ValueError("Field generator object not provided for the field generation"
                              f" of model part {process_model_part.name} and "
-                             f"property {process_model_part.parameters.property_name}.")
+                             f"properties {process_model_part.parameters.property_names}.")
+
+        if process_model_part.parameters.field_generator.generated_fields is None:
+            raise ValueError("No field values were generated for the field generator"
+                             f" of model part {process_model_part.name} and "
+                             f"properties {process_model_part.parameters.property_names}.")
+
+        if len(process_model_part.parameters.field_file_names) != len(
+                process_model_part.parameters.field_generator.generated_fields):
+            raise ValueError("The number of field file names and the number of generated fields do not match"
+                             f" for model part {process_model_part.name} and "
+                             f"properties {process_model_part.parameters.property_names}.")
 
         # write field values in the json input file
-        IOUtils.write_json_file(output_folder=self.project_folder,
-                                file_name=process_model_part.parameters.field_file_name,
-                                dictionary={"values": process_model_part.parameters.field_generator.generated_field})
+        for i in range(len(process_model_part.parameters.field_file_names)):
+            IOUtils.write_json_file(
+                output_folder=self.project_folder,
+                file_name=process_model_part.parameters.field_file_names[i],
+                dictionary={"values": process_model_part.parameters.field_generator.generated_fields[i]})
 
     @staticmethod
     def __create_set_nodal_parameters_process_dictionary(model_part: BodyModelPart) -> Dict[str, Any]:
