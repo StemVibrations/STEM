@@ -20,7 +20,7 @@ First the necessary packages are imported and paths are defined.
     from stem.load import LineLoad
     from stem.boundary import DisplacementConstraint
     from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
-         NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
+         LinearNewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
     from stem.output import NodalOutput, VtkOutputParameters, Output
     from stem.stem import Stem
 
@@ -201,11 +201,12 @@ The analysis type is set to "MECHANICAL" and the solution type is set to "DYNAMI
 Then the start time is set to 0.0 second and the end time is set to 0.099 second. The time step size is set to 0.01 second.
 Furthermore, the reduction factor and increase factor are set to 1.0, such that the time step size is constant throughout
 the simulation. Displacement convergence criteria is set to 1.0e-4 for the relative tolerance and 1.0e-9 for the
-absolute tolerance. Newton-Raphson is used as a solving strategy. And Newmark is used as an integration method.
-Amgcl is used as a linear solver. Stresses are not initialised since the "stress_initialisation_type" is set to "NONE".
-Other options are "StressInitialisationType.GRAVITY_LOADING" and "StressInitialisationType.K0_PROCEDURE". Since the problem is linear elastic, the stiffness matrix is constant and the mass and
+absolute tolerance. Since the problem is linear elastic, Linear-Newton-Raphson is used as a solving strategy.
+And Newmark is used as an integration method. Amgcl is used as a linear solver. Stresses are not initialised since
+the "stress_initialisation_type" is set to "NONE". Other options are "StressInitialisationType.GRAVITY_LOADING" and
+"StressInitialisationType.K0_PROCEDURE". Since the problem is linear elastic, the stiffness matrix is constant and the mass and
 damping matrices are constant, defining the matrices as constant will speed up the computation. Rayleigh damping is
-assumed, with a damping coefficient of 0.12 for the stiffness matrix and 0.0001 for the mass matrix.
+assumed, with a damping coefficient of 0.012 for the stiffness matrix and 0.0001 for the mass matrix.
 
 .. code-block:: python
 
@@ -216,7 +217,7 @@ assumed, with a damping coefficient of 0.12 for the stiffness matrix and 0.0001 
                                        increase_factor=1.0)
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
                                                             displacement_absolute_tolerance=1.0e-9)
-    strategy_type = NewtonRaphsonStrategy()
+    strategy_type = LinearNewtonRaphsonStrategy()
     scheme_type = NewmarkScheme()
     linear_solver_settings = Amgcl()
     stress_initialisation_type = StressInitialisationType.NONE
@@ -226,7 +227,7 @@ assumed, with a damping coefficient of 0.12 for the stiffness matrix and 0.0001 
                                      is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
                                      strategy_type=strategy_type, scheme=scheme_type,
-                                     linear_solver_settings=linear_solver_settings, rayleigh_k=0.12,
+                                     linear_solver_settings=linear_solver_settings, rayleigh_k=0.012,
                                      rayleigh_m=0.0001)
 
     # END CODE BLOCK
@@ -323,7 +324,7 @@ First the necessary packages are imported and paths are defined.
     from stem.load import MovingLoad
     from stem.boundary import DisplacementConstraint
     from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
-         NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
+         LinearNewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
     from stem.output import NodalOutput, VtkOutputParameters, Output
     from stem.stem import Stem
 
@@ -507,12 +508,12 @@ The analysis type is set to "MECHANICAL" and the solution type is set to "DYNAMI
 Then the start time is set to 0.0 second and the end time is set to 1.5 second. The time step size is set to 0.01 second.
 Furthermore, the reduction factor and increase factor are set to 1.0, such that the time step size is constant throughout
 the simulation. Displacement convergence criteria is set to 1.0e-4 for the relative tolerance and 1.0e-9 for the
-absolute tolerance. Newton-Raphson is used as a solving strategy. And Newmark is used as an integration method.
-Amgcl is used as a linear solver. Stresses are not initialised since the "stress_initialisation_type" is set to "NONE".
-Other options are "StressInitialisationType.GRAVITY_LOADING" and "StressInitialisationType.K0_PROCEDURE".
-Since the problem is linear elastic, the stiffness matrix is constant and the mass and
+absolute tolerance. Since the problem is linear elastic, Linear-Newton-Raphson is used as a solving strategy.
+And Newmark is used as an integration method. Amgcl is used as a linear solver. Stresses are not initialised since the
+"stress_initialisation_type" is set to "NONE". Other options are "StressInitialisationType.GRAVITY_LOADING" and
+"StressInitialisationType.K0_PROCEDURE". Since the problem is linear elastic, the stiffness matrix is constant and the mass and
 damping matrices are constant, defining the matrices as constant will speed up the computation. Rayleigh damping is
-assumed, with a damping coefficient of 0.12 for the stiffness matrix and 0.0001 for the mass matrix.
+assumed, with a damping coefficient of 0.012 for the stiffness matrix and 0.0001 for the mass matrix.
 
 .. code-block:: python
 
@@ -523,7 +524,7 @@ assumed, with a damping coefficient of 0.12 for the stiffness matrix and 0.0001 
                                        increase_factor=1.0)
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
                                                             displacement_absolute_tolerance=1.0e-9)
-    strategy_type = NewtonRaphsonStrategy()
+    strategy_type = LinearNewtonRaphsonStrategy()
     scheme_type = NewmarkScheme()
     linear_solver_settings = Amgcl()
     stress_initialisation_type = StressInitialisationType.NONE
@@ -533,7 +534,7 @@ assumed, with a damping coefficient of 0.12 for the stiffness matrix and 0.0001 
                                      is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
                                      strategy_type=strategy_type, scheme=scheme_type,
-                                     linear_solver_settings=linear_solver_settings, rayleigh_k=0.12,
+                                     linear_solver_settings=linear_solver_settings, rayleigh_k=0.012,
                                      rayleigh_m=0.0001)
 
     # END CODE BLOCK
@@ -641,7 +642,7 @@ In order to use the UVEC you need to import the UVEC package, together with all 
     from stem.additional_processes import ParameterFieldParameters
     from stem.field_generator import RandomFieldGenerator
     from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
-         NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
+         LinearNewtonRaphsonStrategy, NewmarkScheme, Cg, StressInitialisationType, SolverSettings, Problem
     from stem.output import NodalOutput, VtkOutputParameters, Output, JsonOutputParameters
     from stem.stem import Stem
 
@@ -1022,12 +1023,12 @@ tutorial, the end time is kept low, such that the calculation does not take too 
 time step size is required, otherwise, the calculation will diverge. Furthermore, the reduction factor and increase
 factor are set to 1.0, such that the time step size is constant throughout the simulation. Displacement convergence
 criteria is set to 1.0e-4 for the relative tolerance and 1.0e-12 for the
-absolute tolerance. Newton-Raphson is used as a solving strategy. And Newmark is used for the time integration.
-Amgcl is used as a linear solver. Stresses are not initialised since the "stress_initialisation_type" is set to "NONE".
-Other options are "StressInitialisationType.GRAVITY_LOADING" and "StressInitialisationType.K0_PROCEDURE".
-Since the problem is linear elastic, the stiffness matrix is constant and the mass and
+absolute tolerance. Since the problem is linear elastic, Linear-Newton-Raphson is used as a solving strategy.
+And Newmark is used for the time integration. Cg is used as a linear solver. Stresses are not initialised since the
+"stress_initialisation_type" is set to "NONE". Other options are "StressInitialisationType.GRAVITY_LOADING" and
+"StressInitialisationType.K0_PROCEDURE". Since the problem is linear elastic, the stiffness matrix is constant and the mass and
 damping matrices are constant, defining the matrices as constant will speed up the computation. Rayleigh damping is
-assumed, with a damping coefficient of 0.12 for the stiffness matrix and 0.0001 for the mass matrix.
+assumed, with a damping coefficient of 0.012 for the stiffness matrix and 0.0001 for the mass matrix.
 
 .. code-block:: python
 
@@ -1042,9 +1043,9 @@ assumed, with a damping coefficient of 0.12 for the stiffness matrix and 0.0001 
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
                                                         displacement_absolute_tolerance=1.0e-12)
 
-    strategy_type = NewtonRaphsonStrategy()
+    strategy_type = LinearNewtonRaphsonStrategy()
     scheme_type = NewmarkScheme()
-    linear_solver_settings = Amgcl()
+    linear_solver_settings = Cg()
     stress_initialisation_type = StressInitialisationType.NONE
     solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
                                      stress_initialisation_type=stress_initialisation_type,
@@ -1052,7 +1053,7 @@ assumed, with a damping coefficient of 0.12 for the stiffness matrix and 0.0001 
                                      is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
                                      strategy_type=strategy_type, scheme=scheme_type,
-                                     linear_solver_settings=linear_solver_settings, rayleigh_k=0.12,
+                                     linear_solver_settings=linear_solver_settings, rayleigh_k=0.012,
                                      rayleigh_m=0.0001)
 
     # END CODE BLOCK
