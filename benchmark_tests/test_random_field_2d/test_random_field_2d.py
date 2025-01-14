@@ -42,7 +42,7 @@ def test_stem():
                                                   model_name="Gaussian",
                                                   seed=14)
 
-    field_parameters_json = ParameterFieldParameters(property_name="YOUNG_MODULUS",
+    field_parameters_json = ParameterFieldParameters(property_names=["YOUNG_MODULUS"],
                                                      function_type="json_file",
                                                      field_generator=random_field_generator)
 
