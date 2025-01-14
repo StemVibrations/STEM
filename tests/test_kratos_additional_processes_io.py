@@ -1,5 +1,6 @@
 import json
 from typing import Dict, Any
+import re
 
 import pytest
 
@@ -101,3 +102,10 @@ class TestKratosAdditionalProcessesIO:
         with pytest.raises(NotImplementedError):
             _parameters = add_processes_io.create_additional_processes_dict(part_name="test",
                                                                             parameters=load_parameters)
+
+        # Test Raise empty field_file_names with json function type
+        field_parameters_json.function_type = "json_file"
+        field_parameters_json.field_file_names = [""]
+        message = "`field_file_names` should be provided when `json_file` function type is selected."
+        with pytest.raises(ValueError, match=re.escape(message)):
+            add_processes_io.create_additional_processes_dict(part_name="test", parameters=field_parameters_json)

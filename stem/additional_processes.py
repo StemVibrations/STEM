@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from abc import ABC
 from typing import Optional, List
 
-from stem.field_generator import FieldGeneratorABC
+from stem.field_generator import FieldGeneratorABC, RandomFieldGenerator
 
 FIELD_INPUT_TYPES = ["json_file", "input"]
 
@@ -72,6 +72,9 @@ class ParameterFieldParameters(AdditionalProcessesParametersABC):
             - ValueError: if the function type is not `input` or `json_file`.
             - ValueError: if the field_generator is not provided when function_type is `json_file`.`input`
             - ValueError: if the tiny_expr_function is not provided when function_type is `input`.
+            - ValueError: if the length of the field_file_names is not equal to the length of the property_names.
+            - ValueError: if the length of the property_names is not equal to 1 when field_generator:
+                'RandomFieldGenerator' is used.
 
         """
         self.function_type = self.function_type.lower()
@@ -92,3 +95,8 @@ class ParameterFieldParameters(AdditionalProcessesParametersABC):
         if self.field_file_names is not None:
             if len(self.field_file_names) != len(self.property_names):
                 raise ValueError("`field_file_names` should have the same length as `property_names`.")
+
+        if isinstance(self.field_generator, RandomFieldGenerator):
+            if len(self.property_names) != 1:
+                raise ValueError("Only one property name can be provided for the field generator class "
+                                 "'RandomFieldGenerator'.")

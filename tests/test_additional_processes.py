@@ -63,3 +63,31 @@ class TestAdditionalProcesses:
                "selected for `function_type`.")
         with pytest.raises(ValueError, match=msg):
             ParameterFieldParameters(property_names=["YOUNG_MODULUS"], function_type="input")
+
+        # Raise error if field_file_names is not the same length as property_names
+        msg = "`field_file_names` should have the same length as `property_names`."
+        with pytest.raises(ValueError, match=msg):
+            ParameterFieldParameters(property_names=["YOUNG_MODULUS", "POISSON_RATIO"],
+                                     function_type="json_file",
+                                     field_generator=RandomFieldGenerator(cov=0.1,
+                                                                          model_name="Gaussian",
+                                                                          v_scale_fluctuation=1,
+                                                                          anisotropy=[0.5],
+                                                                          angle=[0],
+                                                                          seed=42,
+                                                                          mean_value=10),
+                                     field_file_names=["test_random_field_json"])
+
+        msg = ("Only one property name can be provided for the field generator class "
+               "'RandomFieldGenerator'.")
+        with pytest.raises(ValueError, match=msg):
+            ParameterFieldParameters(property_names=["YOUNG_MODULUS", "POISSON_RATIO"],
+                                     function_type="json_file",
+                                     field_file_names=["json_file1.json", "json_file2.json"],
+                                     field_generator=RandomFieldGenerator(cov=0.1,
+                                                                          model_name="Gaussian",
+                                                                          v_scale_fluctuation=1,
+                                                                          anisotropy=[0.5],
+                                                                          angle=[0],
+                                                                          seed=42,
+                                                                          mean_value=10))
