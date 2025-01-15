@@ -7,7 +7,7 @@ from gmsh_utils import gmsh_IO
 import numpy as np
 
 from stem.additional_processes import ParameterFieldParameters
-from stem.field_generator import RandomFieldGenerator
+from stem.field_generator import RandomFieldGenerator, ElasticFieldsFromCptGenerator
 from stem.globals import ELEMENT_DATA, OUT_OF_PLANE_AXIS_2D, VERTICAL_AXIS, GRAVITY_VALUE
 from stem.load import *
 from stem.boundary import *
@@ -941,6 +941,33 @@ class Model:
 
                 self.gmsh_io.mesh_data["physical_groups"][model_part.name]["node_ids"] = (list(new_mesh.nodes.keys()))
 
+    def __transfer_random_field_properties(self, target_part: BodyModelPart, property_name, field_parameters):
+        if field_parameters.field_generator.mean_value is None:
+
+            # Get the property of the material, this is the mean value of the random field.
+            # Checks also if the material of the body model part contains the desired parameter
+            mean_value_material = target_part.material.get_property_in_material(property_name=property_name)
+
+            if isinstance(mean_value_material, bool) or not isinstance(mean_value_material, (float, int)):
+                raise ValueError("The property for which a random field needs to be generated, "
+                                 f"`{property_name}` is not a numeric value.")
+
+            field_parameters.field_generator.mean_value = mean_value_material
+
+    def __transfer_cpt_field_properties(self, target_part: BodyModelPart, field_parameters):
+
+        if not isinstance(target_part.material, SoilMaterial):
+            raise ValueError("The material of the body model part is not a soil material.")
+        if not hasattr(target_part.material.soil_formulation, "POROSITY"):
+            raise ValueError("The soil material does not have a porosity property.")
+
+        # set constant properties for the field generator
+        field_parameters.field_generator.porosity = target_part.material.soil_formulation.POROSITY
+        field_parameters.field_generator.fluid_density = target_part.material.fluid_properties.DENSITY_FLUID
+
+        # set the random properties for the field generator
+        field_parameters.field_generator.field_properties = field_parameters.property_names
+
     def add_field(self, part_name: str, field_parameters: ParameterFieldParameters):
         """
         Add a parameter field to a given model part (specified by the part_name input). if the `mean_value` attribute
@@ -973,6 +1000,8 @@ class Model:
         if field_parameters.field_file_names is None:
             field_parameters.field_file_names = [""] * len(field_parameters.property_names)
 
+        self.__transfer_cpt_field_properties(target_part, field_parameters)
+
         for i, property_name in enumerate(field_parameters.property_names):
             # define the name of the new model part to generate the random field
             new_part_name = part_name + "_" + property_name.lower() + "_field"
@@ -980,17 +1009,7 @@ class Model:
             # validation for json input files
             if field_parameters.function_type == "json_file":
                 if isinstance(field_parameters.field_generator, RandomFieldGenerator):
-                    if field_parameters.field_generator.mean_value is None:
-
-                        # Get the property of the material, this is the mean value of the random field.
-                        # Checks also if the material of the body model part contains the desired parameter
-                        mean_value_material = target_part.material.get_property_in_material(property_name=property_name)
-
-                        if isinstance(mean_value_material, bool) or not isinstance(mean_value_material, (float, int)):
-                            raise ValueError("The property for which a random field needs to be generated, "
-                                             f"`{property_name}` is not a numeric value.")
-
-                        field_parameters.field_generator.mean_value = mean_value_material
+                    self.__transfer_random_field_properties(target_part, property_name, field_parameters)
 
                 if field_parameters.field_file_names[i] == "":
                     field_parameters.field_file_names[i] = new_part_name + ".json"
