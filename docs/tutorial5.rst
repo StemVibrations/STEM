@@ -113,8 +113,9 @@ The orientation of the x-axis is set to 75 degrees, to match the CPTs with the o
         based_on_midpoint=True,
         max_conditioning_points=1000,
         orientation_x_axis=orientation_x_axis,
-        porosity=0.3,
-        water_density=1000,
+        poisson_ratio=material_soil_1.constitutive_law.POISSON_RATIO,
+        porosity=material_soil_1.POROSITY,
+        water_density=material_soil_1.fluid_properties.DENSITY_FLUID,
         return_property=[RandomFieldProperties.YOUNG_MODULUS,
         RandomFieldProperties.DENSITY_SOLID],
     )
