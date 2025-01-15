@@ -198,7 +198,7 @@ will be generated when the Stem class is initialised.
 
 Now that the geometry is defined, the solver settings of the model has to be set.
 The analysis type is set to "MECHANICAL" and the solution type is set to "DYNAMIC".
-Then the start time is set to 0.0 second and the end time is set to 0.099 second. The time step size is set to 0.01 second.
+Then the start time is set to 0.0 second and the end time is set to 0.1 second. The time step size is set to 0.01 second.
 Furthermore, the reduction factor and increase factor are set to 1.0, such that the time step size is constant throughout
 the simulation. Displacement convergence criteria is set to 1.0e-4 for the relative tolerance and 1.0e-9 for the
 absolute tolerance. Since the problem is linear elastic, Linear-Newton-Raphson is used as a solving strategy.
@@ -213,7 +213,7 @@ assumed, with a damping coefficient of 0.012 for the stiffness matrix and 0.0001
     analysis_type = AnalysisType.MECHANICAL
     solution_type = SolutionType.DYNAMIC
     # Set up start and end time of calculation, time step and etc
-    time_integration = TimeIntegration(start_time=0.0, end_time=0.099, delta_time=0.01, reduction_factor=1.0,
+    time_integration = TimeIntegration(start_time=0.0, end_time=0.1, delta_time=0.01, reduction_factor=1.0,
                                        increase_factor=1.0)
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
                                                             displacement_absolute_tolerance=1.0e-9)
