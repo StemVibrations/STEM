@@ -956,8 +956,10 @@ class KratosIO:
                 parameters require adjustment.
 
         Raises:
-            - ValueError: if the `field_file_name` attribute in the parameters is None.
+            - ValueError: if the `field_file_names` attribute in the parameters is None.
             - ValueError: if the `field_generator` attribute in the parameters is None.
+            - ValueError: if the `generated_fields` attribute in the field generator is None.
+            - ValueError: if the number of field file names and generated fields do not match.
 
         Returns:
             - None

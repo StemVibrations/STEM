@@ -58,13 +58,16 @@ class KratosAdditionalProcessesIO:
             - parameters (:class:`stem.additional_processes.ParameterFieldParameters`): parameter field parameters \
                 object
 
+        Raises:
+            - ValueError: if `field_file_names` is not provided when `json_file` function type is selected
+
         Returns:
             - List[Dict[str, Any]]: list of dictionaries containing the parameter field process parameters
         """
         # add 1 process for each property
         processes = []
         for i, property_name in enumerate(parameters.property_names):
-            # initialize boundary dictionary
+            # initialize parameter field process dictionary
             process_dict: Dict[str, Any] = {
                 "python_module": "set_parameter_field_process",
                 "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
@@ -99,7 +102,7 @@ class KratosAdditionalProcessesIO:
     def create_additional_processes_dict(
             self, part_name: str, parameters: AdditionalProcessesParametersABC) -> Union[List[Dict[str, Any]], None]:
         """
-        Creates a dictionary containing the boundary parameters
+        Creates a list of dictionaries containing the parameters for the additional processes
 
         Args:
             - part_name (str): part name where the boundary condition is applied
