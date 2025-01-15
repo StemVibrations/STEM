@@ -958,7 +958,7 @@ The mean of the property is automatically obtained from the material property al
     )
 
     field_parameters_json = ParameterFieldParameters(
-        property_name="YOUNG_MODULUS",
+        property_names=["YOUNG_MODULUS"],
         function_type="json_file",
         field_generator=random_field_generator
     )

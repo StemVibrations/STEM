@@ -1987,9 +1987,9 @@ class TestModel:
                                                     seed=42)
 
         # define the field parameters
-        correct_field_parameters_json = ParameterFieldParameters(property_name="YOUNG_MODULUS",
+        correct_field_parameters_json = ParameterFieldParameters(property_names=["YOUNG_MODULUS"],
                                                                  function_type="json_file",
-                                                                 field_file_name="json_file.json",
+                                                                 field_file_names=["json_file.json"],
                                                                  field_generator=correct_rf_generator)
 
         # Define the field generator
@@ -1999,14 +1999,14 @@ class TestModel:
                                                   anisotropy=0.5,
                                                   angle=0,
                                                   seed=42)
-        wrong_field_parameters_json = ParameterFieldParameters(property_name="YOUNGS_MODULUS",
+        wrong_field_parameters_json = ParameterFieldParameters(property_names=["YOUNGS_MODULUS"],
                                                                function_type="json_file",
-                                                               field_file_name="json_file.json",
+                                                               field_file_names=["json_file.json"],
                                                                field_generator=wrong_rf_generator)
 
-        wrong_field_parameters_json_boolean = ParameterFieldParameters(property_name="IS_DRAINED",
+        wrong_field_parameters_json_boolean = ParameterFieldParameters(property_names=["IS_DRAINED"],
                                                                        function_type="json_file",
-                                                                       field_file_name="json_file.json",
+                                                                       field_file_names=["json_file.json"],
                                                                        field_generator=wrong_rf_generator)
 
         # add random field to process model part
@@ -2054,7 +2054,7 @@ class TestModel:
                                                       angle=[0],
                                                       seed=42)
 
-        field_parameters_json = ParameterFieldParameters(property_name="YOUNG_MODULUS",
+        field_parameters_json = ParameterFieldParameters(property_names=["YOUNG_MODULUS"],
                                                          function_type="json_file",
                                                          field_generator=random_field_generator)
 
@@ -2064,7 +2064,7 @@ class TestModel:
         # generate mesh
         model.generate_mesh()
 
-        actual_rf_values = model.process_model_parts[-1].parameters.field_generator.generated_field
+        actual_rf_values = model.process_model_parts[-1].parameters.field_generator.generated_fields[0]
 
         # assert the number of generated values to be equal to the amount of elements of the part
         assert len(actual_rf_values) == len(model.body_model_parts[0].mesh.elements)
@@ -2103,7 +2103,7 @@ class TestModel:
                                                       angle=[0, 0],
                                                       seed=42)
 
-        field_parameters_json = ParameterFieldParameters(property_name="YOUNG_MODULUS",
+        field_parameters_json = ParameterFieldParameters(property_names=["YOUNG_MODULUS"],
                                                          function_type="json_file",
                                                          field_generator=random_field_generator)
 
@@ -2114,7 +2114,7 @@ class TestModel:
         # generate mesh
         model.generate_mesh()
 
-        actual_rf_values = model.process_model_parts[0].parameters.field_generator.generated_field
+        actual_rf_values = model.process_model_parts[0].parameters.field_generator.generated_fields[0]
 
         # TODO: make test for Unix  with different values
 

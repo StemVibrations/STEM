@@ -1,13 +1,15 @@
+import sys
 import os
 from shutil import rmtree
 
+import pytest
+
 from stem.additional_processes import ParameterFieldParameters
-from stem.field_generator import RandomFieldGenerator
+from stem.field_generator import ElasticFieldsFromCptGenerator
 from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
 from stem.boundary import DisplacementConstraint
-from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
-                         StressInitialisationType, SolverSettings, Problem, NewtonRaphsonStrategy)
+from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, StressInitialisationType, SolverSettings, Problem, NewtonRaphsonStrategy
 from stem.output import VtkOutputParameters, GaussPointOutput
 from stem.stem import Stem
 
@@ -19,8 +21,9 @@ def test_stem():
     # --------------------------------
 
     # Specify dimension and initiate the model
-    ndim = 2
+    ndim = 3
     model = Model(ndim)
+    model.extrusion_length = 20
 
     soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
     constitutive_law = LinearElasticSoil(YOUNG_MODULUS=10, POISSON_RATIO=0.3)
@@ -28,23 +31,19 @@ def test_stem():
                                  soil_formulation=soil_formulation,
                                  constitutive_law=constitutive_law,
                                  retention_parameters=SaturatedBelowPhreaticLevelLaw())
-    width = 25
-    height = 12
+    width = 20
+    height = 20
     # add soil layers
     model.add_soil_layer_by_coordinates([(0, 0, 0), (width, 0, 0), (width, height, 0), (0, height, 0)], soil_material,
                                         "layer1")
 
     # Define the field generator
-    random_field_generator = RandomFieldGenerator(cov=0.1,
-                                                  v_scale_fluctuation=1,
-                                                  anisotropy=[10.0],
-                                                  angle=[60],
-                                                  model_name="Gaussian",
-                                                  seed=14)
+    field_generator = ElasticFieldsFromCptGenerator(cpt_folder=r"benchmark_tests\test_elastic_field_from_cpt\cpts", ref_coordinates=(0, 0, 0), orientation_x_axis=0.0)
 
-    field_parameters_json = ParameterFieldParameters(property_names=["YOUNG_MODULUS"],
+
+    field_parameters_json = ParameterFieldParameters(property_names=["YOUNG_MODULUS", "DENSITY_SOLID"],
                                                      function_type="json_file",
-                                                     field_generator=random_field_generator)
+                                                     field_generator=field_generator)
 
     model.add_field(part_name="layer1", field_parameters=field_parameters_json)
 
@@ -57,8 +56,9 @@ def test_stem():
                                                             is_fixed=[True, False, True],
                                                             value=[0, 0, 0])
 
-    model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "base_fixed")
-    model.add_boundary_condition_by_geometry_ids(1, [2, 4], roller_displacement_parameters, "sides_roller")
+    # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
+    model.add_boundary_condition_by_geometry_ids(2, [2], no_displacement_parameters, "base_fixed")
+    model.add_boundary_condition_by_geometry_ids(2, [1, 3, 5, 6], roller_displacement_parameters, "roller_fixed")
 
     # set mesh size
     model.set_mesh_size(element_size=1)
@@ -68,7 +68,7 @@ def test_stem():
     # Set up start and end time of calculation, time step and etc
     time_integration = TimeIntegration(start_time=0.0,
                                        end_time=1.0,
-                                       delta_time=1,
+                                       delta_time=1.0,
                                        reduction_factor=1.0,
                                        increase_factor=1.0,
                                        max_delta_time_factor=1000)
@@ -88,13 +88,12 @@ def test_stem():
                                      rayleigh_m=0.0)
 
     # Set up problem data
-    problem = Problem(problem_name="create_random_field_2d", number_of_threads=1, settings=solver_settings)
+    problem = Problem(problem_name="create_random_field_3d", number_of_threads=1, settings=solver_settings)
     model.project_parameters = problem
 
     # Define the results to be written to the output file
-
     # Gauss point results
-    gauss_point_results = [GaussPointOutput.YOUNG_MODULUS]
+    gauss_point_results = [GaussPointOutput.YOUNG_MODULUS, GaussPointOutput.DENSITY_SOLID]
 
     # Define the output process
     model.add_output_settings(output_parameters=VtkOutputParameters(file_format="ascii",
@@ -109,7 +108,7 @@ def test_stem():
     # Write KRATOS input files
     # --------------------------------
 
-    input_folder = "benchmark_tests/test_random_field_2d/inputs_kratos"
+    input_folder = "benchmark_tests/test_elastic_field_from_cpt/inputs_kratos"
 
     stem = Stem(model, input_folder)
     stem.write_all_input_files()
@@ -118,9 +117,15 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
-    result = assert_files_equal(
-        "benchmark_tests/test_random_field_2d/output_/output_vtk_porous_computational_model_part",
-        os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
+    if sys.platform == "win32":
+        expected_output_dir = "benchmark_tests/test_random_field_3d/output_windows/output_vtk_porous_computational_model_part"
+    elif sys.platform == "linux":
+        expected_output_dir = "benchmark_tests/test_random_field_3d/output_linux/output_vtk_porous_computational_model_part"
+    else:
+        raise Exception("Unknown platform")
+
+    result = assert_files_equal(expected_output_dir,
+                                os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
 
     assert result is True
     rmtree(input_folder)

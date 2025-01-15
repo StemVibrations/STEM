@@ -52,7 +52,7 @@ class TestGenerators:
                                                       seed=42)
         msg = "Field is not generated yet."
         with pytest.raises(ValueError, match=msg):
-            values = random_field_generator.generated_field
+            values = random_field_generator.generated_fields[0]
 
         msg = "The mean value of the random field is not set yet. Error."
         with pytest.raises(ValueError, match=msg):
@@ -60,5 +60,5 @@ class TestGenerators:
 
         random_field_generator.mean_value = 10
         random_field_generator.generate([(0, 0, 0), (10, 1, 0)])
-        values = random_field_generator.generated_field
+        values = random_field_generator.generated_fields[0]
         npt.assert_allclose(values, [12.379497, 10.593184])

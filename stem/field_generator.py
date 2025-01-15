@@ -4,6 +4,7 @@ from typing import List, Optional, Any, Union
 import numpy as np
 import numpy.typing as npty
 from random_fields.generate_field import RandomFields, ModelName
+from random_fields.geostatistical_cpt_interpretation import ElasticityFieldsFromCpt, RandomFieldProperties
 
 from stem.globals import VERTICAL_AXIS
 
@@ -35,7 +36,7 @@ class FieldGeneratorABC(ABC):
 
     @property
     @abstractmethod
-    def generated_field(self) -> Optional[List[Any]]:
+    def generated_fields(self) -> Optional[List[List[Any]]]:
         """
         Abstract property of the generated field.
 
@@ -43,11 +44,11 @@ class FieldGeneratorABC(ABC):
             - ValueError: if field is not generated using the `generate()` method
 
         Returns:
-            - Optional[list[Any]]: the list of generated values for the field.
+            - Optional[List[List[Any]]]: the list of generated values for the fields.
 
         """
 
-        raise Exception("abstract class of generated_field is called")
+        raise Exception("abstract class of generated_fields is called")
 
 
 class RandomFieldGenerator(FieldGeneratorABC):
@@ -141,7 +142,7 @@ class RandomFieldGenerator(FieldGeneratorABC):
         self.seed = seed
 
     @property
-    def generated_field(self) -> Optional[List[Any]]:
+    def generated_fields(self) -> Optional[List[Any]]:
         """
         Returns the value of the generated field.
 
@@ -149,14 +150,14 @@ class RandomFieldGenerator(FieldGeneratorABC):
             - ValueError: if field is not generated using the `generate()` method
 
         Returns:
-            - Optional[list[Any]]: the list of generated values for the field.
+            - Optional[List[List[Any]]]: the list of generated values for the fields.
 
         """
 
         if self.__generated_field is None:
             raise ValueError("Field is not generated yet.")
 
-        return self.__generated_field
+        return [self.__generated_field]
 
     def generate(self, coordinates: npty.NDArray[np.float64]):
         """
@@ -189,3 +190,54 @@ class RandomFieldGenerator(FieldGeneratorABC):
         coordinates_for_rf = np.array(coordinates)
         rf_generator.generate(coordinates_for_rf)
         self.__generated_field = list(rf_generator.random_field)[0].tolist()
+
+
+class ElasticFieldsFromCptGenerator(FieldGeneratorABC):
+
+    def __init__(self, cpt_folder, ref_coordinates, orientation_x_axis):
+
+        self.cpt_folder = cpt_folder
+        self.ref_coordinates = ref_coordinates
+        self.orientation_x_axis = orientation_x_axis
+
+        self.porosity: Optional[float] = None
+        self.fluid_density: Optional[float] = None
+        self.field_properties: List[str] = []
+        self.max_conditioning_points: int = 2000
+        self.__generated_fields: Optional[List[List[Any]]] = None
+
+    @property
+    def generated_fields(self) -> Optional[List[List[Any]]]:
+        return self.__generated_fields
+
+    def generate(self, coordinates: npty.NDArray[np.float64]):
+
+        if self.porosity is None:
+            raise ValueError("Porosity is not set.")
+        if self.fluid_density is None:
+            raise ValueError("Fluid density is not set.")
+        if len(self.field_properties) == 0:
+            raise ValueError("Field properties are not set.")
+        if any([field not in RandomFieldProperties.__members__ for field in self.field_properties]):
+            raise ValueError(f"Field properties should be one or both of {list(RandomFieldProperties.__members__)}")
+
+        # get enums from the field properties
+        field_properties = [RandomFieldProperties[field] for field in self.field_properties]
+
+        elastic_field_generator = ElasticityFieldsFromCpt(cpt_file_folder=self.cpt_folder,
+                                                          porosity=self.porosity,
+                                                          water_density=self.fluid_density,
+                                                          x_ref=self.ref_coordinates[0],
+                                                          y_ref=self.ref_coordinates[2],
+                                                          orientation_x_axis=self.orientation_x_axis,
+                                                          return_property=field_properties,
+                                                          max_conditioning_points=self.max_conditioning_points,
+                                                          based_on_midpoint=False)
+
+        # calibrate the geostatistical model
+        elastic_field_generator.calibrate_geostat_model()
+
+        # generate the fields on the coordinates
+        elastic_field_generator.generate(coordinates)
+
+        self.__generated_fields = [field.tolist() for field in elastic_field_generator.generated_field]
