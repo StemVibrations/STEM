@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from abc import ABC
-from typing import Optional
+from typing import Optional, List
 
-from stem.field_generator import FieldGeneratorABC
+from stem.field_generator import FieldGeneratorABC, RandomFieldGenerator
 
 FIELD_INPUT_TYPES = ["json_file", "input"]
 
@@ -41,10 +41,11 @@ class ParameterFieldParameters(AdditionalProcessesParametersABC):
         -   python: A python script needs to be provided for the purpose. This is currently not supported in STEM.\
 
     Attributes:
-        - property_name (str): the name of the (material) property that needs to be changed (e.g. YOUNG_MODULUS)
+        - property_names (List[str]): the names of the (material) properties that needs to be changed \
+            (e.g. [YOUNG_MODULUS])
         - function_type (str): the type of function to be provided. It can be either `json_file` or `input`,
             as provided in the function documentation.
-        - field_file_name (Optional[str]): Name for the json file where the field parameters will be stored.
+        - field_file_names (Optional[List[str]]): Name for the json file where the field parameters will be stored. \
             This is optional for `json` function_type.
         - field_generator (Optional[:class:`stem.field_generator.FieldGeneratorABC`]): the field generator to produce \
             the values in the json file. Currently only random fields is supported but will be in the future \
@@ -57,9 +58,9 @@ class ParameterFieldParameters(AdditionalProcessesParametersABC):
 
     """
 
-    property_name: str
+    property_names: List[str]
     function_type: str
-    field_file_name: Optional[str] = None
+    field_file_names: Optional[List[str]] = None
     field_generator: Optional[FieldGeneratorABC] = None
     tiny_expr_function: Optional[str] = None
 
@@ -71,6 +72,9 @@ class ParameterFieldParameters(AdditionalProcessesParametersABC):
             - ValueError: if the function type is not `input` or `json_file`.
             - ValueError: if the field_generator is not provided when function_type is `json_file`.`input`
             - ValueError: if the tiny_expr_function is not provided when function_type is `input`.
+            - ValueError: if the length of the field_file_names is not equal to the length of the property_names.
+            - ValueError: if the length of the property_names is not equal to 1 when field_generator:
+                'RandomFieldGenerator' is used.
 
         """
         self.function_type = self.function_type.lower()
@@ -87,3 +91,12 @@ class ParameterFieldParameters(AdditionalProcessesParametersABC):
         if self.function_type == "input" and self.tiny_expr_function is None:
             raise ValueError("`tiny_expr_function` parameter is a required when `input` field parameter is "
                              "selected for `function_type`.")
+
+        if self.field_file_names is not None:
+            if len(self.field_file_names) != len(self.property_names):
+                raise ValueError("`field_file_names` should have the same length as `property_names`.")
+
+        if isinstance(self.field_generator, RandomFieldGenerator):
+            if len(self.property_names) != 1:
+                raise ValueError("Only one property name can be provided for the field generator class "
+                                 "'RandomFieldGenerator'.")

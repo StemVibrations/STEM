@@ -5,6 +5,7 @@ import json
 from typing import List
 import re
 from shutil import rmtree
+from unittest.mock import MagicMock
 
 import numpy as np
 import numpy.testing as npt
@@ -210,7 +211,7 @@ class TestKratosModelIO:
                                                       anisotropy=[0.5, 0.5],
                                                       angle=[0, 0])
 
-        field_parameters_json = ParameterFieldParameters(property_name="YOUNG_MODULUS",
+        field_parameters_json = ParameterFieldParameters(property_names=["YOUNG_MODULUS"],
                                                          function_type="json_file",
                                                          field_generator=random_field_generator)
 
@@ -507,6 +508,40 @@ class TestKratosModelIO:
         )
         expected_dict = json.load(open("tests/test_data/expected_ProjectParameters_random_field_2d.json", 'r'))
         TestUtils.assert_dictionary_almost_equal(expected_dict, actual_dict)
+
+    def test__adjust_parameter_field_parameters_validation(self):
+        """
+        Test the validation messages of the parameter field parameters.
+        """
+
+        process = ParameterFieldParameters(property_names=["YOUNG_MODULUS"],
+                                           function_type="json_file",
+                                           field_file_names=["soil1_young_modulus_field.json"],
+                                           field_generator=MagicMock())
+
+        model_part = ModelPart("parameter_field")
+        model_part.parameters = process
+
+        kratos_io = KratosIO(ndim=2)
+        kratos_io.project_folder = "dir_test"
+
+        # expected raise for the number of field file names and the number of generated fields do not match
+        expected_message = ("The number of field file names and the number of generated fields do "
+                            "not match for model part parameter_field and properties ['YOUNG_MODULUS'].")
+        with pytest.raises(ValueError, match=re.escape(expected_message)):
+            kratos_io._KratosIO__adjust_parameter_field_parameters_and_write_json_file(model_part)
+
+        process.field_generator.generated_fields = None
+        expected_message = ("No field values were generated for the field generator of model part "
+                            "parameter_field and properties ['YOUNG_MODULUS'].")
+        with pytest.raises(ValueError, match=re.escape(expected_message)):
+            kratos_io._KratosIO__adjust_parameter_field_parameters_and_write_json_file(model_part)
+
+        process.field_generator = None
+        expected_message = ("Field generator object not provided for the field generation of model "
+                            "part parameter_field and properties ['YOUNG_MODULUS'].")
+        with pytest.raises(ValueError, match=re.escape(expected_message)):
+            kratos_io._KratosIO__adjust_parameter_field_parameters_and_write_json_file(model_part)
 
     def test_write_material_parameters_json(self, create_default_2d_model: Model):
         """

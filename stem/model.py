@@ -969,40 +969,44 @@ class Model:
         if target_part.material is None:
             raise ValueError("No material assigned to the body model part!")
 
-        # define the name of the new model part to generate the random field
-        new_part_name = part_name + "_" + field_parameters.property_name.lower() + "_field"
+        # Check if the field file names are provided, if not, set them to empty strings
+        if field_parameters.field_file_names is None:
+            field_parameters.field_file_names = [""] * len(field_parameters.property_names)
 
-        # validation for json input files
-        if field_parameters.function_type == "json_file":
-            if isinstance(field_parameters.field_generator, RandomFieldGenerator):
-                if field_parameters.field_generator.mean_value is None:
+        for i, property_name in enumerate(field_parameters.property_names):
+            # define the name of the new model part to generate the random field
+            new_part_name = part_name + "_" + property_name.lower() + "_field"
 
-                    # Get the property of the material, this is the mean value of the random field.
-                    # Checks also if the material of the body model part contains the desired parameter
-                    mean_value_material = target_part.material.get_property_in_material(
-                        property_name=field_parameters.property_name)
+            # validation for json input files
+            if field_parameters.function_type == "json_file":
+                if isinstance(field_parameters.field_generator, RandomFieldGenerator):
+                    if field_parameters.field_generator.mean_value is None:
 
-                    if isinstance(mean_value_material, bool) or not isinstance(mean_value_material, (float, int)):
-                        raise ValueError("The property for which a random field needs to be generated, "
-                                         f"`{field_parameters.property_name}` is not a numeric value.")
+                        # Get the property of the material, this is the mean value of the random field.
+                        # Checks also if the material of the body model part contains the desired parameter
+                        mean_value_material = target_part.material.get_property_in_material(property_name=property_name)
 
-                    field_parameters.field_generator.mean_value = mean_value_material
+                        if isinstance(mean_value_material, bool) or not isinstance(mean_value_material, (float, int)):
+                            raise ValueError("The property for which a random field needs to be generated, "
+                                             f"`{property_name}` is not a numeric value.")
 
-            if field_parameters.field_file_name is None:
-                field_parameters.field_file_name = new_part_name + ".json"
+                        field_parameters.field_generator.mean_value = mean_value_material
 
-        model_part_geometry_ids = self.gmsh_io.geo_data["physical_groups"][part_name]["geometry_ids"]
-        model_part_ndim = self.gmsh_io.geo_data["physical_groups"][part_name]["ndim"]
-        # create the field_parameter physical group and model part
-        self.gmsh_io.add_physical_group(new_part_name, model_part_ndim, model_part_geometry_ids)
-        model_part = ModelPart(new_part_name)
+                if field_parameters.field_file_names[i] == "":
+                    field_parameters.field_file_names[i] = new_part_name + ".json"
 
-        model_part.parameters = field_parameters
+            model_part_geometry_ids = self.gmsh_io.geo_data["physical_groups"][part_name]["geometry_ids"]
+            model_part_ndim = self.gmsh_io.geo_data["physical_groups"][part_name]["ndim"]
+            # create the field_parameter physical group and model part
+            self.gmsh_io.add_physical_group(new_part_name, model_part_ndim, model_part_geometry_ids)
+            model_part = ModelPart(new_part_name)
 
-        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, new_part_name)
+            model_part.parameters = field_parameters
 
-        # add the field_parameter part to process model parts
-        self.process_model_parts.append(model_part)
+            model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, new_part_name)
+
+            # add the field_parameter part to process model parts
+            self.process_model_parts.append(model_part)
 
     def synchronise_geometry(self):
         """
