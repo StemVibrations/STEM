@@ -158,6 +158,7 @@ From this point, the track follows the direction of the 'direction_vector' [0, 0
 is supported with 1D soil equivalent elements with a length of 2 meters.
 
 .. code-block:: python
+
     sleeper_distance =0.5
     total_length = 18
     n_sleepers = int(total_length/sleeper_distance)
@@ -180,7 +181,7 @@ is supported with 1D soil equivalent elements with a length of 2 meters.
 
 The new geometry is shown in the figure below.
 
-.. image:: _static/double_extrusion.png
+.. image:: _static/double_extrusion_with_track.png
 
 For the moving load, MovingLoad class is called. The load has a value of -10000 N in the y-direction and is applied on the
 track. When the load starts moving, the load follows a positive x,y,z trajectory. However, in this tutorial, a multistage
