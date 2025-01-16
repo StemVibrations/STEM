@@ -237,7 +237,7 @@ the first stage is set to "QUASI_STATIC". The start time is set to 0.0 second an
 time step size is set to 0.025 second. Furthermore, the reduction factor and increase factor are set to 1.0, such that the
 time step size is constant throughout the simulation. Displacement convergence criteria is set to 1.0e-4 for the relative
 tolerance and 1.0e-12 for the absolute tolerance. No stress initialisation is used. Furthemore, all matrices are assumed
-to be constant.Cg is used as a linear solver. Further solver settings are set to the default settings.
+to be constant. Cg is used as a linear solver. Further solver settings are set to the default settings.
 
 .. code-block:: python
 
