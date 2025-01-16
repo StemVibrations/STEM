@@ -21,7 +21,7 @@ First the necessary packages are imported and paths are defined.
     from stem.load import MovingLoad
     from stem.boundary import DisplacementConstraint, AbsorbingBoundary
     from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, \
-        NewtonRaphsonStrategy, StressInitialisationType, SolverSettings, Problem
+        LinearNewtonRaphsonStrategy, StressInitialisationType, SolverSettings, Problem, Cg
     from stem.output import NodalOutput, VtkOutputParameters
     from stem.stem import Stem
 
@@ -158,6 +158,7 @@ From this point, the track follows the direction of the 'direction_vector' [0, 0
 is supported with 1D soil equivalent elements with a length of 2 meters.
 
 .. code-block:: python
+
     sleeper_distance =0.5
     total_length = 18
     n_sleepers = int(total_length/sleeper_distance)
@@ -180,7 +181,7 @@ is supported with 1D soil equivalent elements with a length of 2 meters.
 
 The new geometry is shown in the figure below.
 
-.. image:: _static/double_extrusion.png
+.. image:: _static/double_extrusion_with_track.png
 
 For the moving load, MovingLoad class is called. The load has a value of -10000 N in the y-direction and is applied on the
 track. When the load starts moving, the load follows a positive x,y,z trajectory. However, in this tutorial, a multistage
@@ -237,7 +238,7 @@ the first stage is set to "QUASI_STATIC". The start time is set to 0.0 second an
 time step size is set to 0.025 second. Furthermore, the reduction factor and increase factor are set to 1.0, such that the
 time step size is constant throughout the simulation. Displacement convergence criteria is set to 1.0e-4 for the relative
 tolerance and 1.0e-12 for the absolute tolerance. No stress initialisation is used. Furthemore, all matrices are assumed
-to be constant. Further solver settings are set to the default settings.
+to be constant. Cg is used as a linear solver. Further solver settings are set to the default settings.
 
 .. code-block:: python
 
@@ -257,7 +258,8 @@ to be constant. Further solver settings are set to the default settings.
                                      stress_initialisation_type=StressInitialisationType.NONE,
                                      time_integration=time_integration,
                                      is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
-                                     convergence_criteria=convergence_criterion)
+                                     convergence_criteria=convergence_criterion,
+                                     linear_solver_settings=Cg())
 
     # END CODE BLOCK
 
@@ -320,8 +322,9 @@ While initialising the Stem class, the mesh will be generated.
 The second stage can easily be created  by calling the "create_new_stage" function, this function requires the delta time
 and the duration of the stage, for the rest, the latest added stage is coppied. In the second stage, the solution type is
 set to "DYNAMIC" and the Rayleigh damping coefficients are set to 0.012 for the stiffness matrix and 0.0001 for the mass
-matrix. Furthermore, the velocity of the moving load is set to move with a velocity of 18 m/s. After the stage is created,
-and the settings are set, the stage is added to the calculation.
+matrix. Since the problem is linear elastic, the Linear-Newton-Raphson strategy is used. Furthermore, the velocity of the
+moving load is set to move with a velocity of 18 m/s. After the stage is created, and the settings are set, the stage is
+added to the calculation.
 
 .. code-block:: python
 
@@ -329,6 +332,7 @@ and the settings are set, the stage is added to the calculation.
     duration_stage_2 = 1.0
     stage2 = stem.create_new_stage(delta_time_stage_2,duration_stage_2)
     stage2.project_parameters.settings.solution_type = SolutionType.DYNAMIC
+    stage2.project_parameters.settings.strategy_type = LinearNewtonRaphsonStrategy()
     stage2.project_parameters.settings.rayleigh_k = 0.012
     stage2.project_parameters.settings.rayleigh_m = 0.0001
     stage2.get_model_part_by_name("moving_load").parameters.velocity = 18.0
