@@ -29,7 +29,7 @@ To install the STEM, follow the following steps:
 pip install STEM-Vibrations
 ```
 
-Further details about the installation can be found [here](https://stemvibrations.readthedocs.io/v1.2.0/installation.html#).
+Further details about the installation can be found [here](https://stemvibrations.readthedocs.io/v1.2/installation.html#).
 
 ## Usage
 
