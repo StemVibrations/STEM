@@ -1,6 +1,6 @@
 from .__version__ import __version__
 import subprocess
-import pkg_resources
+import importlib.metadata
 
 
 def install_external_dependency():
@@ -24,14 +24,12 @@ def check_package_version(package_name: str, target_version: str) -> bool:
     """
     try:
         # Use `require` to check if the package is installed and get its version
-        package_version = pkg_resources.require(package_name)[0].version
+        package_version = importlib.metadata.version(package_name)
 
         # Compare the installed version with the target version
-        if package_version == target_version:
-            return True
-        else:
-            return False
-    except Exception:
+        return package_version == target_version
+
+    except importlib.metadata.PackageNotFoundError:
         return False
 
 
