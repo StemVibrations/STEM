@@ -33,4 +33,4 @@ Further details about the installation can be found [here](https://stemvibration
 
 ## Usage
 
-To use STEM please refer to the tutorials available [here](https://stemvibrations.readthedocs.io/v1.2.0/#tutorials).
+To use STEM please refer to the tutorials available [here](https://stemvibrations.readthedocs.io/v1.2/#tutorials).
