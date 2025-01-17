@@ -9,7 +9,7 @@
 import stem
 
 project = 'STEM'
-copyright = '2023, STEM team'
+copyright = '2023-2025, STEM team'
 author = 'STEM team'
 version = stem.__version__
 
