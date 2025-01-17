@@ -29,8 +29,8 @@ To install the STEM, follow the following steps:
 pip install STEM-Vibrations
 ```
 
-Further details about the installation can be found [here](https://stemvibrations.readthedocs.io/installation.html#).
+Further details about the installation can be found [here](https://stemvibrations.readthedocs.io/latest/installation.html#).
 
 ## Usage
 
-To use STEM please refer to the tutorials available [here](https://stemvibrations.readthedocs.io/tutorials.html#).
+To use STEM please refer to the tutorials available [here](https://stemvibrations.readthedocs.io/latest/#tutorials).
