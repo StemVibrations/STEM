@@ -206,7 +206,7 @@ And Newmark is used as an integration method. Amgcl is used as a linear solver. 
 the "stress_initialisation_type" is set to "NONE". Other options are "StressInitialisationType.GRAVITY_LOADING" and
 "StressInitialisationType.K0_PROCEDURE". Since the problem is linear elastic, the stiffness matrix is constant and the mass and
 damping matrices are constant, defining the matrices as constant will speed up the computation. Rayleigh damping is
-assumed, with a damping coefficient of 0.012 for the stiffness matrix and 0.0001 for the mass matrix.
+assumed, with a damping coefficient of 0.0002 for the stiffness matrix and 0.6 for the mass matrix.
 
 .. code-block:: python
 
@@ -227,8 +227,8 @@ assumed, with a damping coefficient of 0.012 for the stiffness matrix and 0.0001
                                      is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
                                      strategy_type=strategy_type, scheme=scheme_type,
-                                     linear_solver_settings=linear_solver_settings, rayleigh_k=0.012,
-                                     rayleigh_m=0.0001)
+                                     linear_solver_settings=linear_solver_settings, rayleigh_k=0.0002,
+                                     rayleigh_m=0.6)
 
     # END CODE BLOCK
 
