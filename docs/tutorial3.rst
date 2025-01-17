@@ -386,8 +386,8 @@ surface-dimension, "2".
 
 
     model.add_boundary_condition_by_geometry_ids(2, [1], no_displacement_parameters, "base_fixed")
-    model.add_boundary_condition_by_geometry_ids(2, [4, 10], roller_displacement_parameters, "sides_roller")
-    model.add_boundary_condition_by_geometry_ids(2, [2, 5, 6, 7, 11, 12, 15, 16, 17], absorbing_boundaries_parameters, "abs")
+    model.add_boundary_condition_by_geometry_ids(2, [4, 10, 16], roller_displacement_parameters, "sides_roller")
+    model.add_boundary_condition_by_geometry_ids(2, [2, 5, 6, 7, 11, 12, 15, 17, 18], absorbing_boundaries_parameters, "abs")
 
     # END CODE BLOCK
 
