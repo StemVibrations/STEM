@@ -1,7 +1,7 @@
 numpy==2.0.2
 scipy==1.13.1
 plotly==5.24.1
-gmsh_utils @ git+https://github.com/StemVibrations/gmsh_utils
-random_fields @ git+https://github.com/StemVibrations/RandomFields
-StemKratos @ git+https://github.com/StemVibrations/StemKratos
-UVEC @ git+https://github.com/StemVibrations/vehicle_models
+gmsh_utils==1.1.1
+random_fields==1.0.1
+UVEC==1.1.1
+StemKratos @ git+https://github.com/StemVibrations/StemKratos@v1.2.1
