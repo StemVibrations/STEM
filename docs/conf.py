@@ -16,10 +16,12 @@ version = stem.__version__
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ['sphinx.ext.autodoc', 'sphinx_rtd_theme', 'sphinx.ext.intersphinx']
+extensions = ['sphinx.ext.autodoc', 'sphinx_rtd_theme', 'sphinx.ext.intersphinx', 'sphinxcontrib.bibtex']
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+
+bibtex_bibfiles = ['refs.bib']
 
 # to add __init__ documentation to the build
 autoclass_content = 'both'

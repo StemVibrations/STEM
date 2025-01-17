@@ -69,7 +69,7 @@ def read_tutorial(rst_file: str, name: str) -> List[str]:
 def test_tutorial_1():
     """Test the code in tutorial 1"""
     name = "_tutorial1"
-    tutorial_file = "./docs/tutorials.rst"
+    tutorial_file = "./docs/tutorial1.rst"
 
     data = read_tutorial(tutorial_file, name)
     exec("\n".join(data))
@@ -79,7 +79,7 @@ def test_tutorial_1():
 def test_tutorial_2():
     """Test the code in tutorial 2"""
     name = "_tutorial2"
-    tutorial_file = "./docs/tutorials.rst"
+    tutorial_file = "./docs/tutorial2.rst"
 
     data = read_tutorial(tutorial_file, name)
     exec("\n".join(data))
@@ -89,7 +89,7 @@ def test_tutorial_2():
 def test_tutorial_3():
     """Test the code in tutorial 3"""
     name = "_tutorial3"
-    tutorial_file = "./docs/tutorials.rst"
+    tutorial_file = "./docs/tutorial3.rst"
 
     data = read_tutorial(tutorial_file, name)
     exec("\n".join(data))
