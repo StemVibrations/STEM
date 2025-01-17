@@ -321,7 +321,7 @@ While initialising the Stem class, the mesh will be generated.
 
 The second stage can easily be created  by calling the "create_new_stage" function, this function requires the delta time
 and the duration of the stage, for the rest, the latest added stage is coppied. In the second stage, the solution type is
-set to "DYNAMIC" and the Rayleigh damping coefficients are set to 0.012 for the stiffness matrix and 0.0001 for the mass
+set to "DYNAMIC" and the Rayleigh damping coefficients are set to 0.0002 for the stiffness matrix and 0.6 for the mass
 matrix. Since the problem is linear elastic, the Linear-Newton-Raphson strategy is used. Furthermore, the velocity of the
 moving load is set to move with a velocity of 18 m/s. After the stage is created, and the settings are set, the stage is
 added to the calculation.
@@ -333,8 +333,8 @@ added to the calculation.
     stage2 = stem.create_new_stage(delta_time_stage_2,duration_stage_2)
     stage2.project_parameters.settings.solution_type = SolutionType.DYNAMIC
     stage2.project_parameters.settings.strategy_type = LinearNewtonRaphsonStrategy()
-    stage2.project_parameters.settings.rayleigh_k = 0.012
-    stage2.project_parameters.settings.rayleigh_m = 0.0001
+    stage2.project_parameters.settings.rayleigh_k = 0.0002
+    stage2.project_parameters.settings.rayleigh_m = 0.6
     stage2.get_model_part_by_name("moving_load").parameters.velocity = 18.0
     stem.add_calculation_stage(stage2)
 
