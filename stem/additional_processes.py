@@ -100,3 +100,20 @@ class ParameterFieldParameters(AdditionalProcessesParametersABC):
             if len(self.property_names) != 1:
                 raise ValueError("Only one property name can be provided for the field generator class "
                                  "'RandomFieldGenerator'.")
+
+
+@dataclass
+class HingeParameters(AdditionalProcessesParametersABC):
+    """
+    Class containing the parameters for a hinge process
+
+    Inheritance:
+        - :class:`AdditionalProcessesParametersABC`
+
+    Attributes:
+        - ROTATIONAL_STIFFNESS_RATIO_AXIS_2 (float): Rotational stiffness ratio local axis 2
+        - ROTATIONAL_STIFFNESS_RATIO_AXIS_3 (float): Rotational stiffness ratio local axis 3
+    """
+
+    ROTATIONAL_STIFFNESS_AXIS_2: float
+    ROTATIONAL_STIFFNESS_AXIS_3: float
