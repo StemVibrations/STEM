@@ -4,9 +4,8 @@ import re
 
 import pytest
 
-from stem.field_generator import RandomFieldGenerator
 from stem.IO.kratos_additional_processes_io import KratosAdditionalProcessesIO
-from stem.additional_processes import *
+from stem.additional_processes import Excavation, RandomFieldGenerator, ParameterFieldParameters, HingeParameters
 from stem.load import PointLoad
 from tests.utils import TestUtils
 
@@ -109,3 +108,44 @@ class TestKratosAdditionalProcessesIO:
         message = "`field_file_names` should be provided when `json_file` function type is selected."
         with pytest.raises(ValueError, match=re.escape(message)):
             add_processes_io.create_additional_processes_dict(part_name="test", parameters=field_parameters_json)
+
+    def test_create_hinge_dict(self):
+        """
+        Test the creation of the hinge dictionary for the ProjectParameters.json file
+
+        """
+
+        # Define the hinge parameters
+        hinge_parameters = HingeParameters(ROTATIONAL_STIFFNESS_AXIS_2=14, ROTATIONAL_STIFFNESS_AXIS_3=13)
+
+        # write dictionary for the boundary(/ies)
+        additional_processes_io = KratosAdditionalProcessesIO(domain="PorousDomain")
+
+        # create the hinge dictionary
+        generated_dicts = additional_processes_io.create_additional_processes_dict(part_name="hinge",
+                                                                                   parameters=hinge_parameters)
+
+        expected_dicts = [{
+            "python_module": "assign_scalar_variable_to_nodes_process",
+            "kratos_module": "KratosMultiphysics",
+            "process_name": "AssignScalarVariableToNodesProcess",
+            "Parameters": {
+                "model_part_name": "PorousDomain.hinge",
+                "variable_name": "ROTATIONAL_STIFFNESS_AXIS_2",
+                "value": 14
+            }
+        }, {
+            "python_module": "assign_scalar_variable_to_nodes_process",
+            "kratos_module": "KratosMultiphysics",
+            "process_name": "AssignScalarVariableToNodesProcess",
+            "Parameters": {
+                "model_part_name": "PorousDomain.hinge",
+                "variable_name": "ROTATIONAL_STIFFNESS_AXIS_3",
+                "value": 13
+            }
+        }]
+
+        # assert the objects to be equal
+        assert len(generated_dicts) == len(expected_dicts) == 2
+        for generated_dict, expected_dict in zip(generated_dicts, expected_dicts):
+            TestUtils.assert_dictionary_almost_equal(generated_dict, expected_dict)

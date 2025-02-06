@@ -335,6 +335,24 @@ class TestModel:
         return soil_material
 
     @pytest.fixture
+    def create_default_3d_beam(self):
+        """
+        Create a default beam material for a 3D geometry.
+        """
+        # Specify beam material model
+        YOUNG_MODULUS = 210000000000
+        POISSON_RATIO = 0.30000
+        DENSITY = 7850
+        CROSS_AREA = 0.01
+        I22 = 0.0001
+        I33 = 0.0001
+
+        TORTIONAL_INERTIA = I22 + I33
+        beam_material = EulerBeam(3, YOUNG_MODULUS, POISSON_RATIO, DENSITY, CROSS_AREA, I33, I22, TORTIONAL_INERTIA)
+        name = "beam"
+        return StructuralMaterial(name, beam_material)
+
+    @pytest.fixture
     def create_default_point_load_parameters(self):
         """
         Create a default point load parameters.
@@ -4159,3 +4177,67 @@ class TestModel:
         TestUtils.assert_almost_equal_geometries(expected_soil_equivalent_geometry, calculated_soil_equivalent_geometry)
         TestUtils.assert_dictionary_almost_equal(extended_soil_parameters.__dict__,
                                                  calculated_soil_equivalent_parameters.__dict__)
+
+    def test_add_hinge_on_beam(self, create_default_3d_beam):
+        """
+        Test if a hinge is added correctly on a beam. A model is created with a beam and a hinge is added on the beam.
+        This test also checks for errors.
+        """
+
+        model = Model(3)
+        beam_material = create_default_3d_beam
+        # Specify the coordinates for the beam: x:1m x y:0m
+        beam_coordinates = [(0, 0, 0), (1, 0, 0)]
+        # Create the beam
+        gmsh_input = {beam_material.name: {"coordinates": beam_coordinates, "ndim": 1}}
+
+        # check if extrusion length is specified in 3D
+        model.gmsh_io.generate_geometry(gmsh_input, "")
+        #
+        # create body model part
+        body_model_part = BodyModelPart(beam_material.name)
+        body_model_part.material = beam_material
+
+        # set the geometry of the body model part
+        body_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, beam_material.name)
+        model.body_model_parts.append(body_model_part)
+
+        hinge_parameters = HingeParameters(1e9, 1e9)
+
+        model.add_hinge_on_beam(beam_material.name, [(0.2, 0.0, 0.0)], hinge_parameters, "hinge_1")
+
+        # check if hinge is added to the model
+        assert model.process_model_parts[0].name == "hinge_1"
+        TestUtils.assert_almost_equal_geometries(model.process_model_parts[0].geometry,
+                                                 Geometry({3: Point.create([0.2, 0.0, 0.0], 3)}))
+        assert model.process_model_parts[0].parameters == hinge_parameters
+
+        # check that the hinge node is part of the beam model part
+        assert 3 in model.body_model_parts[0].geometry.points.keys()
+
+        # try to add hinge outside of beam
+        with pytest.raises(ValueError, match="The hinge points are not part of the beam model part `beam`."):
+            model.add_hinge_on_beam(beam_material.name, [(0.2, 0.2, 0.0)], hinge_parameters, "hinge_2")
+
+        # try to add hinge on a spring damper
+        spring_damper_parameters = ElasticSpringDamper([1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1])
+        spring_damper_material = StructuralMaterial(name="spring_damper", material_parameters=spring_damper_parameters)
+        gmsh_input = {spring_damper_material.name: {"coordinates": [(-1, 0, 0), (0, 0, 0)], "ndim": 1}}
+        model.gmsh_io.generate_geometry(gmsh_input, "")
+
+        spring_damper_part = BodyModelPart("spring_damper")
+        spring_damper_part.material = spring_damper_material
+        spring_damper_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, spring_damper_material.name)
+        model.body_model_parts.append(spring_damper_part)
+
+        with pytest.raises(ValueError, match="Hinges can only be applied to beam model parts"):
+            model.add_hinge_on_beam(spring_damper_part.name, [(-0.2, 0.0, 0.0)], hinge_parameters, "hinge_3")
+
+        # try to add hinge on non existing model part
+        with pytest.raises(ValueError, match="Model part `non_existing_part` not found."):
+            model.add_hinge_on_beam("non_existing_part", [(-0.2, 0.0, 0.0)], hinge_parameters, "hinge_4")
+
+        # try to add hinge on 2D model
+        model.ndim = 2
+        with pytest.raises(NotImplementedError, match="Hinges can only be applied in 3D models"):
+            model.add_hinge_on_beam(beam_material.name, [(-0.2, 0.0, 0.0)], hinge_parameters, "hinge_5")

@@ -15,7 +15,7 @@ from stem.IO.kratos_additional_processes_io import KratosAdditionalProcessesIO
 from stem.structural_material import *
 from stem.boundary import BoundaryParametersABC, AbsorbingBoundary, DisplacementConstraint, RotationConstraint
 from stem.load import LoadParametersABC, LineLoad, MovingLoad, SurfaceLoad, PointLoad, UvecLoad
-from stem.additional_processes import ParameterFieldParameters, AdditionalProcessesParametersABC
+from stem.additional_processes import ParameterFieldParameters, Excavation, AdditionalProcessesParametersABC
 from stem.water_processes import WaterProcessParametersABC
 from stem.mesh import Element, Node
 from stem.model import Model
@@ -36,6 +36,16 @@ FORMAT_INTEGER: str = "{:d}"
 FORMAT_FLOAT_LONG: str = " {:.10f}"
 # format for floats (short)
 FORMAT_FLOAT_SHORT: str = " {:.4f}"
+
+# type aliases
+ElementAdditionalProcessParameters = Excavation, ParameterFieldParameters
+"""
+Type alias for additional process parameter classes which can be applied to elements.
+
+TypeAlias:
+    - ElementAdditionalProcessParameters: (:class:`stem.additional_processes.Excavation`, \
+        :class:`stem.additional_processes.ParameterFieldParameters`)
+"""
 
 
 class KratosIO:
@@ -333,7 +343,7 @@ class KratosIO:
                 block_text = self.__write_sub_model_part_block(block_text,
                                                                block_name="Conditions",
                                                                block_entities=entities)
-            elif isinstance(process_model_part.parameters, AdditionalProcessesParametersABC):
+            elif isinstance(process_model_part.parameters, ElementAdditionalProcessParameters):
                 # write elements for additional processes
                 block_text = self.__write_sub_model_part_block(block_text,
                                                                block_name="Elements",
