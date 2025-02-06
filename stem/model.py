@@ -817,13 +817,13 @@ class Model:
         model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, hinge_model_part_name)
 
         if model_part.geometry is None:
-            raise ValueError(f"Model part {hinge_model_part_name} has no geometry.")
+            raise ValueError(f"Model part `{hinge_model_part_name}` has no geometry.")
 
         beam_model_part = self.get_model_part_by_name(beam_model_part_name)
         if beam_model_part is None:
-            raise ValueError(f"Model part {beam_model_part_name} not found.")
+            raise ValueError(f"Model part `{beam_model_part_name}` not found.")
         if beam_model_part.geometry is None:
-            raise ValueError(f"Model part {beam_model_part_name} has no geometry.")
+            raise ValueError(f"Model part `{beam_model_part_name}` has no geometry.")
 
         # validate if the hinge is applied on a 3D beam model part
         if not isinstance(beam_model_part, BodyModelPart) or not isinstance(
