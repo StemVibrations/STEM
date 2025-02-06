@@ -111,8 +111,8 @@ class HingeParameters(AdditionalProcessesParametersABC):
         - :class:`AdditionalProcessesParametersABC`
 
     Attributes:
-        - ROTATIONAL_STIFFNESS_RATIO_AXIS_2 (float): Rotational stiffness ratio local axis 2
-        - ROTATIONAL_STIFFNESS_RATIO_AXIS_3 (float): Rotational stiffness ratio local axis 3
+        - ROTATIONAL_STIFFNESS_AXIS_2 (float): Rotational stiffness ratio local axis 2
+        - ROTATIONAL_STIFFNESS_AXIS_3 (float): Rotational stiffness ratio local axis 3
     """
 
     ROTATIONAL_STIFFNESS_AXIS_2: float

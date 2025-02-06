@@ -43,8 +43,8 @@ ElementAdditionalProcessParameters = Excavation, ParameterFieldParameters
 Type alias for additional process parameter classes which can be applied to elements.
 
 TypeAlias:
-    - ElementAdditionalProcessParameters: Union[:class:`stem.additional_processes.Excavation`, \
-        :class:`stem.additional_processes.ParameterFieldParameters`]
+    - ElementAdditionalProcessParameters: (:class:`stem.additional_processes.Excavation`, \
+        :class:`stem.additional_processes.ParameterFieldParameters`)
 """
 
 
