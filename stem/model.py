@@ -75,9 +75,10 @@ class Model:
         return self.body_model_parts + self.process_model_parts
 
     def generate_straight_track(self, sleeper_distance: float, n_sleepers: int, rail_parameters: EulerBeam,
-                                sleeper_parameters: NodalConcentrated, rail_pad_parameters: ElasticSpringDamper,
-                                rail_pad_thickness: float, origin_point: Sequence[float],
-                                direction_vector: Sequence[float], name: str):
+                                sleeper_parameters: Union[NodalConcentrated, SoilMaterial],
+                                rail_pad_parameters: ElasticSpringDamper, rail_pad_thickness: float,
+                                origin_point: Sequence[float], direction_vector: Sequence[float], name: str,
+                                sleeper_dimensions: Optional[Sequence[float]]=None):
         """
         Generates a track geometry. With rail, rail-pads and sleepers as mass elements. Sleepers are placed at the
         bottom of the track with a distance of sleeper_distance between them. The sleepers are connected to the rail
@@ -88,18 +89,23 @@ class Model:
             - sleeper_distance (float): distance between sleepers
             - n_sleepers (int): number of sleepers
             - rail_parameters (:class:`stem.structural_material.EulerBeam`): rail parameters
-            - sleeper_parameters (:class:`stem.structural_material.NodalConcentrated`): sleeper parameters
+            - sleeper_parameters (Union[:class:`stem.structural_material.NodalConcentrated`, :class:`stem.soil_material.SoilMaterial`]): sleeper parameters
             - rail_pad_parameters (:class:`stem.structural_material.ElasticSpringDamper`): rail pad parameters
             - rail_pad_thickness (float): thickness of the rail pad
             - origin_point (Sequence[float]): origin point of the track
             - direction_vector (Sequence[float]): direction vector of the track
             - name (str): name of the track
+            - sleeper_dimensions (Sequence[float]): dimensions of the sleepers with the format [length, width, height]
         """
 
         rail_name = f"{name}"
 
         sleeper_name = f"sleeper_{name}"
         rail_pads_name = f"rail_pads_{name}"
+
+        vertical_addition_sleeper_soil_volume = 0
+        if isinstance(sleeper_parameters, SoilMaterial):
+            vertical_addition_sleeper_soil_volume = sleeper_dimensions[2]
 
         normalized_direction_vector = np.array(direction_vector) / np.linalg.norm(direction_vector)
 
@@ -110,21 +116,38 @@ class Model:
         # set global rail geometry
         rail_global_coords = rail_local_distance[:, None].dot(normalized_direction_vector[None, :]) + origin_point
         rail_global_coords[:, VERTICAL_AXIS] += rail_pad_thickness
+        rail_global_coords[:, VERTICAL_AXIS] += vertical_addition_sleeper_soil_volume
         rail_geo_settings = {rail_name: {"coordinates": rail_global_coords, "ndim": 1}}
 
-        # set sleepers geometry
         sleeper_global_coords = sleeper_local_coords[:, None].dot(normalized_direction_vector[None, :]) + origin_point
-        connection_geo_settings = {"": {"coordinates": sleeper_global_coords, "ndim": 1}}
-
-        sleeper_geo_settings = {sleeper_name: {"coordinates": sleeper_global_coords, "ndim": 0}}
-
-        # firstly create lines for the connection between the track and the foundation
-
-        self.gmsh_io.generate_geometry(connection_geo_settings, "")
-
-        # add the sleepers to the track
-        self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
-
+        # set sleepers geometry
+        if sleeper_dimensions is None and isinstance(sleeper_parameters, NodalConcentrated):
+            connection_geo_settings = {"": {"coordinates": sleeper_global_coords, "ndim": 1}}
+            sleeper_geo_settings = {sleeper_name: {"coordinates": sleeper_global_coords, "ndim": 0}}
+            names_sleepers = [sleeper_name]
+            # firstly create lines for the connection between the track and the foundation
+            self.gmsh_io.generate_geometry(connection_geo_settings, "")
+            # add the sleepers to the track
+            self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
+        elif sleeper_dimensions is not None and isinstance(sleeper_parameters, SoilMaterial):
+            # here I make the assumption that the HORIZONTAL_AXIS is the first axis
+            # I need to create a 3d rectangles for the sleepers with the given dimensions
+            names_sleepers  = []
+            for counter, sleeper_coord in enumerate(sleeper_global_coords):
+                coords_volume_sleepers = Utils.create_sleeper_volume(sleeper_coord, sleeper_dimensions)
+                extrusions = [0, 0, 0]
+                extrusions[1] = sleeper_dimensions[2]
+                names_sleepers.append(f"{sleeper_name}_{counter}")
+                sleeper_geo_settings = {f"{sleeper_name}_{counter}":
+                                            {"coordinates": coords_volume_sleepers,
+                                             "ndim": 3,
+                                             "extrusion_length": extrusions}}
+                self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
+        else:
+            raise ValueError(f"Invalid sleeper parameters: {sleeper_parameters} and dimensions: {sleeper_dimensions}"
+                             f"combination. If sleeper parameters are NodalConcentrated, dimensions must be None."
+                             f"If sleeper parameters are SoilMaterial, dimensions must be a list of length, width, "
+                             f"height.")
         # add the rail geometry
         self.gmsh_io.generate_geometry(rail_geo_settings, "")
 
@@ -132,21 +155,25 @@ class Model:
         rail_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_name)
         rail_model_part.material = StructuralMaterial(name=rail_name, material_parameters=rail_parameters)
 
-        sleeper_model_part = BodyModelPart(sleeper_name)
-        sleeper_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, sleeper_name)
+        sleeper_model_parts = []
+        for sleeper_name in names_sleepers:
+            sleeper_model_part = BodyModelPart(sleeper_name)
+            sleeper_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, sleeper_name)
+            if isinstance(sleeper_parameters, NodalConcentrated):
+                sleeper_model_part.material = StructuralMaterial(name=sleeper_name, material_parameters=sleeper_parameters)
+            elif isinstance(sleeper_parameters, SoilMaterial):
+                sleeper_model_part.material = sleeper_parameters
+            sleeper_model_parts.append(sleeper_model_part)
 
         # create rail pad geometries
-        rail_pad_line_ids_aux = [
-            self.gmsh_io.make_geometry_1d((top_coordinates, bot_coordinates))
-            for top_coordinates, bot_coordinates in zip(rail_global_coords, sleeper_global_coords)
-        ]
-
+        rail_pad_line_ids_aux = []
+        for top_coordinates, bot_coordinates in zip(rail_global_coords, sleeper_global_coords):
+            bot_coordinates[VERTICAL_AXIS] += vertical_addition_sleeper_soil_volume
+            rail_pad_line_ids_aux.append(self.gmsh_io.make_geometry_1d((top_coordinates, bot_coordinates)))
         rail_pad_line_ids = [ids[0] for ids in rail_pad_line_ids_aux]
 
         self.gmsh_io.add_physical_group(rail_pads_name, 1, rail_pad_line_ids)
 
-        # create rail, sleeper, and rail_pad body model parts
-        sleeper_model_part.material = StructuralMaterial(name=sleeper_name, material_parameters=sleeper_parameters)
 
         rail_pads_model_part = BodyModelPart(rail_pads_name)
         rail_pads_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_pads_name)
@@ -170,7 +197,8 @@ class Model:
         constraint_model_part.parameters.is_fixed[VERTICAL_AXIS] = False
 
         self.body_model_parts.append(rail_model_part)
-        self.body_model_parts.append(sleeper_model_part)
+        for sleeper_model_part in sleeper_model_parts:
+            self.body_model_parts.append(sleeper_model_part)
         self.body_model_parts.append(rail_pads_model_part)
 
         self.process_model_parts.append(constraint_model_part)

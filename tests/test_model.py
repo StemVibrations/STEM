@@ -14,6 +14,7 @@ from stem.output import NodalOutput, GiDOutputParameters, JsonOutputParameters
 from stem.solver import *
 from stem.boundary import RotationConstraint, DisplacementConstraint
 from tests.utils import TestUtils
+from stem.soil_material import SoilMaterial, OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
 
 IS_LINUX = sys.platform == "linux"
 
@@ -3147,6 +3148,46 @@ class TestModel:
         TestUtils.assert_almost_equal_geometries(expected_rail_pad_geometry, calculated_rail_pad_geometry)
         TestUtils.assert_dictionary_almost_equal(rail_pad_parameters.__dict__, calculated_rail_pad_parameters.__dict__)
 
+    def test_generate_straight_track_3d_volume_sleeper(self):
+        ndim = 3
+        model = Model(ndim)
+        #solid_density = 2650
+        #porosity = 0.3
+        #young_modulus = 30e6
+        #poisson_ratio = 0.2
+        #soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density, POROSITY=porosity)
+        #constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=young_modulus, POISSON_RATIO=poisson_ratio)
+        #retention_parameters1 = SaturatedLaw()
+        #material_soil1 = SoilMaterial("soil1", soil_formulation1, constitutive_law1, retention_parameters1)
+        #soil1_coordinates = [(0.0, 0.0, 0.0), (5.0, 0.0, 0.0), (5.0, 1.0, 0.0), (0.0, 1.0, 0.0)]
+        #model.extrusion_length = 50
+        #model.add_soil_layer_by_coordinates(soil1_coordinates, material_soil1, "soil1")
+        #model.synchronise_geometry()
+
+        rail_parameters = EulerBeam(3, 1, 1, 1, 1, 1, 1, 1)
+        rail_pad_parameters = ElasticSpringDamper([1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1])
+
+        DENSITY_SOLID = 2700
+        POROSITY = 0.3
+        YOUNG_MODULUS = 50e6
+        POISSON_RATIO = 0.3
+        soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
+        constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=YOUNG_MODULUS, POISSON_RATIO=POISSON_RATIO)
+        retention_parameters1 = SaturatedBelowPhreaticLevelLaw()
+        sleeper_parameters = SoilMaterial("soil", soil_formulation1, constitutive_law1, retention_parameters1)
+
+        origin_point = np.array([2.5, 1.0, 0.0])
+        direction_vector = np.array([0, 0, 1])
+
+        # dimensions of the sleeper
+        sleeper_dimensions = [2.6, 0.234, 0.3]
+        # create a straight track with rails, sleepers and rail pads
+        model.generate_straight_track(5.0, 10, rail_parameters, sleeper_parameters,
+                                      rail_pad_parameters, 0.02, origin_point, direction_vector,
+                                      "track_1", sleeper_dimensions)
+        # lets plot the geometry
+        model.show_geometry(file_name=r"tests/test_geometry.html")
+
     def test_generate_straight_track_3d(self):
         """
         Tests if a straight track is generated correctly in a 3d space. A straight track is generated and added to the
@@ -3165,7 +3206,7 @@ class TestModel:
         # create a straight track with rails, sleepers and rail pads
         model.generate_straight_track(0.6, 3, rail_parameters, sleeper_parameters, rail_pad_parameters, 0.02,
                                       origin_point, direction_vector, "track_1")
-
+        model.show_geometry()
         distance_sleepers_xyz = 0.6 / 3**0.5
 
         # check geometry and material of the rail

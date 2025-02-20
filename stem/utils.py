@@ -5,7 +5,7 @@ import numpy as np
 import numpy.typing as npty
 from scipy.spatial import cKDTree
 
-from stem.globals import ELEMENT_DATA
+from stem.globals import ELEMENT_DATA, VERTICAL_AXIS, OUT_OF_PLANE_AXIS_2D
 
 if TYPE_CHECKING:
     from stem.mesh import Element, Mesh
@@ -760,3 +760,44 @@ class Utils:
                 if not isinstance(i, NUMBER_TYPES) or np.isnan(i) or np.isinf(i):
                     raise ValueError(f"Coordinates should be a sequence of sequence of real numbers, "
                                      f"but {i} was given.")
+
+
+    @staticmethod
+    def create_sleeper_volume(local_coord: Sequence[float], sleeper_dimensions: Sequence[float]) -> npty.NDArray[np.float64]:
+        """"
+        This function creates the coordinates of the volume of the sleeper given the local coordinates and the
+        dimensions of the sleeper.
+
+          D ------- C
+            |      |
+            |      |
+            |      |
+          A ------- B
+
+
+        xi, yi , zi are the local coordinates of the sleeper
+        A (xi - width/2, yi, zi)
+        B (xi + width/2, yi, zi)
+        C (xi + width/2, yi + height, zi)
+        D (xi - width/2, yi + height, zi)
+
+        Args:
+            - local_coord (Sequence[float]): local coordinates of the sleeper
+            - sleeper_dimensions (Sequence[float]): dimensions of the sleeper
+
+        Returns:
+            - npty.NDArray[np.float64]: coordinates of the volume of the sleeper
+        """
+        xi, yi, zi = local_coord
+        length, width, height = sleeper_dimensions
+        x = [xi + length / 2, xi + length / 2, xi - length / 2, xi - length / 2]
+        y = [yi, yi, yi, yi]
+        z = [zi + width / 2, zi - width / 2, zi - width / 2, zi + width / 2]
+
+        coords_volume_sleepers = np.zeros((len(x), 3))
+        # determine the dimensions that the x should be assigned to by process of elimination
+        x_axis_dimension = 3 - VERTICAL_AXIS - OUT_OF_PLANE_AXIS_2D
+        coords_volume_sleepers[:, x_axis_dimension] = x
+        coords_volume_sleepers[:, VERTICAL_AXIS] = y
+        coords_volume_sleepers[:, OUT_OF_PLANE_AXIS_2D] = z
+        return coords_volume_sleepers
