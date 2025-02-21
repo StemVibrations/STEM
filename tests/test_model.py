@@ -3149,21 +3149,47 @@ class TestModel:
         TestUtils.assert_almost_equal_geometries(expected_rail_pad_geometry, calculated_rail_pad_geometry)
         TestUtils.assert_dictionary_almost_equal(rail_pad_parameters.__dict__, calculated_rail_pad_parameters.__dict__)
 
-    def test_generate_straight_track_3d_volume_sleeper(self):
+    def test_generate_straight_track_3d_volume_sleeper_error_no_sleeper_dims(
+            self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if an error is raised when no sleeper dimensions are provided. A straight track is generated in 3d space
+        without sleeper dimensions. An error should be raised.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+
+        """
         ndim = 3
         model = Model(ndim)
 
         rail_parameters = EulerBeam(3, 1, 1, 1, 1, 1, 1, 1)
         rail_pad_parameters = ElasticSpringDamper([1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1])
 
-        DENSITY_SOLID = 2700
-        POROSITY = 0.3
-        YOUNG_MODULUS = 50e6
-        POISSON_RATIO = 0.3
-        soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
-        constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=YOUNG_MODULUS, POISSON_RATIO=POISSON_RATIO)
-        retention_parameters1 = SaturatedBelowPhreaticLevelLaw()
-        sleeper_parameters = SoilMaterial("soil", soil_formulation1, constitutive_law1, retention_parameters1)
+        origin_point = np.array([2.5, 1.0, 0.0])
+        direction_vector = np.array([0, 0, 1])
+
+        with pytest.raises(ValueError, match=r"sleeper_dimensions cannot be None"):
+            model.generate_straight_track(5.0, 2, rail_parameters, create_default_3d_soil_material, rail_pad_parameters,
+                                          0.02, origin_point, direction_vector, "track_1", None)
+
+    def test_generate_straight_track_3d_volume_sleeper(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if a straight track is generated correctly in a 3d space. A straight track is generated and added to the
+        model. The geometry and material of the rails, sleepers and rail pads are checked. The sleepers are modelled as
+        volumes.
+
+        Args:
+            create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+
+        """
+
+        ndim = 3
+        model = Model(ndim)
+
+        rail_parameters = EulerBeam(3, 1, 1, 1, 1, 1, 1, 1)
+        rail_pad_parameters = ElasticSpringDamper([1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1])
+
+        sleeper_parameters = create_default_3d_soil_material
 
         origin_point = np.array([2.5, 1.0, 0.0])
         direction_vector = np.array([0, 0, 1])
@@ -4379,6 +4405,23 @@ class TestModel:
         sleeper_dims = [2.0, 0.5, 0.3]  # length, width, height
         offset = model._compute_vertical_offset(sleeper_params, sleeper_dims)
         assert offset - sleeper_dims[2] < 1e-6
+
+    def test_compute_vertical_offset_soil_error(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Tests if an error is raised when the sleeper dimensions are not provided. In this case, the sleeper is a soil
+        material and the dimensions are not provided. An error is expected.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+        """
+        model = Model(3)
+        # If sleeper_parameters is a SoilMaterial, should return the sleeper height.
+        sleeper_params = create_default_3d_soil_material
+        sleeper_dims = None
+        with pytest.raises(
+                ValueError,
+                match="If sleeper parameters are SoilMaterial, dimensions must be a list of length, width, height."):
+            model._compute_vertical_offset(sleeper_params, sleeper_dims)
 
     def test_compute_vertical_offset_nodal(self):
         """
