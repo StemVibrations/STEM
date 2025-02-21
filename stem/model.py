@@ -103,7 +103,7 @@ class Model:
         sleeper_name = f"sleeper_{name}"
         rail_pads_name = f"rail_pads_{name}"
 
-        vertical_addition_sleeper_soil_volume = 0
+        vertical_addition_sleeper_soil_volume = 0.0
         if isinstance(sleeper_parameters, SoilMaterial):
             if sleeper_dimensions is None:
                 raise ValueError("If sleeper parameters are SoilMaterial, dimensions must be a list of length, width, "
@@ -137,9 +137,11 @@ class Model:
             # I need to create a 3d rectangles for the sleepers with the given dimensions
             names_sleepers  = []
             for counter, sleeper_coord in enumerate(sleeper_global_coords):
+                if sleeper_dimensions is None:
+                    raise ValueError("sleeper_dimensions cannot be None")
                 coords_volume_sleepers = Utils.create_sleeper_volume(sleeper_coord, sleeper_dimensions)
-                extrusions = [0, 0, 0]
-                extrusions[1] = sleeper_dimensions[2]
+                extrusions = [0.0, 0.0, 0.0]  # Ensure these are floats
+                extrusions[1] = sleeper_dimensions[2]  # Ensure this is a float
                 names_sleepers.append(f"{sleeper_name}_{counter}")
                 sleeper_geo_settings = {f"{sleeper_name}_{counter}":
                                             {"coordinates": coords_volume_sleepers,
