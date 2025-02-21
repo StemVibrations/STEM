@@ -768,25 +768,36 @@ class Utils:
         This function creates the coordinates of the volume of the sleeper given the local coordinates and the
         dimensions of the sleeper.
 
-          D ------- C
-            |      |
-            |      |
-            |      |
-          A ------- B
+         x-axis
+          ▲
+          │  D┌──────────────────────────────┐C
+          │   │                              │
+          │   │                              │
+          │   │                              │
+          │   │               A=origin+      │
+          │   │              O [0,0,distance │
+          │   │                     sleeper] │
+          │   │                              │
+          │   │                              │
+          │   │                              │
+          │  E└──────────────────────────────┘
+          │                                   B  z-axis
+          └────────────────────────────────────────►
 
 
         xi, yi , zi are the local coordinates of the sleeper
-        A (xi - width/2, yi, zi)
-        B (xi + width/2, yi, zi)
-        C (xi + width/2, yi + height, zi)
-        D (xi - width/2, yi + height, zi)
+        A: origin of the sleeper plus the distance to the sleeper in the out of plane axis
+        B (xi - length/2, yi, zi + width/2)
+        C (xi + length/2, yi, zi + width/2)
+        D (xi + length/2, yi, zi - width/2)
+        E (xi - length/2, yi, zi - width/2)
 
         Args:
             - local_coord (Sequence[float]): local coordinates of the sleeper
             - sleeper_dimensions (Sequence[float]): dimensions of the sleeper
 
         Returns:
-            - npty.NDArray[np.float64]: coordinates of the volume of the sleeper
+            - npty.NDArray[np.float64]: coordinates of the volume of the sleeper in the global coordinate system
         """
         xi, yi, zi = local_coord
         length, width, height = sleeper_dimensions
