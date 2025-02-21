@@ -828,7 +828,6 @@ class TestUtilsStem:
         with pytest.raises(ValueError, match=f"could not convert string to float: 'test'"):
             Utils.validate_coordinates([(0.0, 0.0, 0.0), (0.0, "test", 0.0)])
 
-
     def test_create_sleeper_volume_at_origin(self):
         local_coord = [0.0, 0.0, 0.0]
         sleeper_dimensions = [2.0, 4.0, 1.0]  # length, width, height

@@ -3175,18 +3175,17 @@ class TestModel:
         sleeper_distance = 5.0
         sleeper_dimensions = [sleeper_length, sleeper_width, sleeper_height]
         # create a straight track with rails, sleepers and rail pads
-        model.generate_straight_track(sleeper_distance, 2, rail_parameters, sleeper_parameters,
-                                      rail_pad_parameters, rail_pad_thickness, origin_point, direction_vector,
-                                      "track_1", sleeper_dimensions)
+        model.generate_straight_track(sleeper_distance, 2, rail_parameters, sleeper_parameters, rail_pad_parameters,
+                                      rail_pad_thickness, origin_point, direction_vector, "track_1", sleeper_dimensions)
 
         # check geometry and material of the rail
         expected_rail_points = {
-            17: Point.create([origin_point[0],
-                              origin_point[1] + sleeper_height + rail_pad_thickness,
-                              origin_point[2]], 17), #
-            18: Point.create([origin_point[0],
-                              origin_point[1] + sleeper_height + rail_pad_thickness,
-                              origin_point[2] + sleeper_distance], 18),
+            17: Point.create([origin_point[0], origin_point[1] + sleeper_height + rail_pad_thickness, origin_point[2]],
+                             17),  #
+            18: Point.create([
+                origin_point[0], origin_point[1] + sleeper_height + rail_pad_thickness,
+                origin_point[2] + sleeper_distance
+            ], 18),
         }
         expected_rail_lines = {25: Line.create([17, 18], 25)}
 
@@ -3203,28 +3202,45 @@ class TestModel:
         # check first sleeper
 
         expected_sleeper_points = {
-         1: Point.create([origin_point[0] + sleeper_length/ 2, origin_point[1], origin_point[2] + sleeper_width /2], 1),
-         5: Point.create([origin_point[0] + sleeper_length/ 2, origin_point[1] + sleeper_height, origin_point[2] + sleeper_width /2], 5),
-         6: Point.create([origin_point[0] + sleeper_length/ 2, origin_point[1] + sleeper_height, origin_point[2] - sleeper_width /2], 6),
-         2: Point.create([origin_point[0] + sleeper_length/ 2, origin_point[1] , origin_point[2] - sleeper_width /2], 2),
-         7: Point.create([origin_point[0] - sleeper_length/ 2, origin_point[1] + sleeper_height, origin_point[2] - sleeper_width /2], 7),
-         3: Point.create([origin_point[0] - sleeper_length/ 2, origin_point[1] , origin_point[2] - sleeper_width /2], 3),
-         8: Point.create([origin_point[0] - sleeper_length/ 2, origin_point[1] + sleeper_height, origin_point[2] + sleeper_width /2], 8),
-         4: Point.create([origin_point[0] - sleeper_length/ 2, origin_point[1], origin_point[2] + sleeper_width /2], 4),
+            1: Point.create(
+                [origin_point[0] + sleeper_length / 2, origin_point[1], origin_point[2] + sleeper_width / 2], 1),
+            5: Point.create([
+                origin_point[0] + sleeper_length / 2, origin_point[1] + sleeper_height,
+                origin_point[2] + sleeper_width / 2
+            ], 5),
+            6: Point.create([
+                origin_point[0] + sleeper_length / 2, origin_point[1] + sleeper_height,
+                origin_point[2] - sleeper_width / 2
+            ], 6),
+            2: Point.create(
+                [origin_point[0] + sleeper_length / 2, origin_point[1], origin_point[2] - sleeper_width / 2], 2),
+            7: Point.create([
+                origin_point[0] - sleeper_length / 2, origin_point[1] + sleeper_height,
+                origin_point[2] - sleeper_width / 2
+            ], 7),
+            3: Point.create(
+                [origin_point[0] - sleeper_length / 2, origin_point[1], origin_point[2] - sleeper_width / 2], 3),
+            8: Point.create([
+                origin_point[0] - sleeper_length / 2, origin_point[1] + sleeper_height,
+                origin_point[2] + sleeper_width / 2
+            ], 8),
+            4: Point.create(
+                [origin_point[0] - sleeper_length / 2, origin_point[1], origin_point[2] + sleeper_width / 2], 4),
         }
-        expected_sleeper_lines = {5: Line.create([1, 5], 5),
-                                  7: Line.create([5, 6], 7),
-                                  6: Line.create([2, 6], 6),
-                                  1: Line.create([1, 2], 1),
-                                  9: Line.create([6, 7], 9),
-                                  8: Line.create([3, 7], 8),
-                                  2: Line.create([2, 3], 2),
-                                  11: Line.create([7, 8], 11),
-                                  10: Line.create([4, 8], 10),
-                                  3: Line.create([3, 4], 3),
-                                  12: Line.create([8, 5], 12),
-                                  4: Line.create([4, 1], 4),
-                                  }
+        expected_sleeper_lines = {
+            5: Line.create([1, 5], 5),
+            7: Line.create([5, 6], 7),
+            6: Line.create([2, 6], 6),
+            1: Line.create([1, 2], 1),
+            9: Line.create([6, 7], 9),
+            8: Line.create([3, 7], 8),
+            2: Line.create([2, 3], 2),
+            11: Line.create([7, 8], 11),
+            10: Line.create([4, 8], 10),
+            3: Line.create([3, 4], 3),
+            12: Line.create([8, 5], 12),
+            4: Line.create([4, 1], 4),
+        }
         expected_surfaces_sleeper = {
             2: Surface.create([5, 7, -6, -1], 2),
             3: Surface.create([6, 9, -8, -2], 3),
@@ -3236,37 +3252,63 @@ class TestModel:
         expected_volume_sleeper = {
             1: Volume.create([-2, -3, -4, -5, -1, 6], 1),
         }
-        expected_sleeper_geometry = Geometry(expected_sleeper_points, expected_sleeper_lines, expected_surfaces_sleeper, expected_volume_sleeper)
+        expected_sleeper_geometry = Geometry(expected_sleeper_points, expected_sleeper_lines, expected_surfaces_sleeper,
+                                             expected_volume_sleeper)
 
         sleeper_model_part = model.body_model_parts[1]
         calculated_sleeper_geometry = sleeper_model_part.geometry
 
         TestUtils.assert_almost_equal_geometries(expected_sleeper_geometry, calculated_sleeper_geometry)
 
-    # check second sleeper
+        # check second sleeper
         expected_sleeper_points = {
-         9: Point.create([origin_point[0] + sleeper_length/ 2, origin_point[1], origin_point[2] + sleeper_width /2 + sleeper_distance], 9),
-         13: Point.create([origin_point[0] + sleeper_length/ 2, origin_point[1] + sleeper_height, origin_point[2] + sleeper_width /2 + sleeper_distance], 13),
-         14: Point.create([origin_point[0] + sleeper_length/ 2, origin_point[1] + sleeper_height, origin_point[2] - sleeper_width /2 + sleeper_distance], 14),
-         10: Point.create([origin_point[0] + sleeper_length/ 2, origin_point[1] , origin_point[2] - sleeper_width /2 + sleeper_distance], 10),
-         15: Point.create([origin_point[0] - sleeper_length/ 2, origin_point[1] + sleeper_height, origin_point[2] - sleeper_width /2 + sleeper_distance], 15),
-         11: Point.create([origin_point[0] - sleeper_length/ 2, origin_point[1] , origin_point[2] - sleeper_width /2 + sleeper_distance], 11),
-         16: Point.create([origin_point[0] - sleeper_length/ 2, origin_point[1] + sleeper_height, origin_point[2] + sleeper_width /2 + sleeper_distance], 16),
-         12: Point.create([origin_point[0] - sleeper_length/ 2, origin_point[1], origin_point[2] + sleeper_width /2 + sleeper_distance], 12),
+            9: Point.create([
+                origin_point[0] + sleeper_length / 2, origin_point[1],
+                origin_point[2] + sleeper_width / 2 + sleeper_distance
+            ], 9),
+            13: Point.create([
+                origin_point[0] + sleeper_length / 2, origin_point[1] + sleeper_height,
+                origin_point[2] + sleeper_width / 2 + sleeper_distance
+            ], 13),
+            14: Point.create([
+                origin_point[0] + sleeper_length / 2, origin_point[1] + sleeper_height,
+                origin_point[2] - sleeper_width / 2 + sleeper_distance
+            ], 14),
+            10: Point.create([
+                origin_point[0] + sleeper_length / 2, origin_point[1],
+                origin_point[2] - sleeper_width / 2 + sleeper_distance
+            ], 10),
+            15: Point.create([
+                origin_point[0] - sleeper_length / 2, origin_point[1] + sleeper_height,
+                origin_point[2] - sleeper_width / 2 + sleeper_distance
+            ], 15),
+            11: Point.create([
+                origin_point[0] - sleeper_length / 2, origin_point[1],
+                origin_point[2] - sleeper_width / 2 + sleeper_distance
+            ], 11),
+            16: Point.create([
+                origin_point[0] - sleeper_length / 2, origin_point[1] + sleeper_height,
+                origin_point[2] + sleeper_width / 2 + sleeper_distance
+            ], 16),
+            12: Point.create([
+                origin_point[0] - sleeper_length / 2, origin_point[1],
+                origin_point[2] + sleeper_width / 2 + sleeper_distance
+            ], 12),
         }
-        expected_sleeper_lines = {17: Line.create([9, 13], 17),
-                                  19: Line.create([13, 14], 19),
-                                  18: Line.create([10, 14], 18),
-                                  13: Line.create([9, 10], 13),
-                                  21: Line.create([14, 15], 21),
-                                  20: Line.create([11, 15], 20),
-                                  14: Line.create([10, 11], 14),
-                                  23: Line.create([15, 16], 23),
-                                  22: Line.create([12, 16], 22),
-                                  15: Line.create([11, 12], 15),
-                                  24: Line.create([16, 13], 24),
-                                  16: Line.create([12, 9], 16),
-                                  }
+        expected_sleeper_lines = {
+            17: Line.create([9, 13], 17),
+            19: Line.create([13, 14], 19),
+            18: Line.create([10, 14], 18),
+            13: Line.create([9, 10], 13),
+            21: Line.create([14, 15], 21),
+            20: Line.create([11, 15], 20),
+            14: Line.create([10, 11], 14),
+            23: Line.create([15, 16], 23),
+            22: Line.create([12, 16], 22),
+            15: Line.create([11, 12], 15),
+            24: Line.create([16, 13], 24),
+            16: Line.create([12, 9], 16),
+        }
         expected_surfaces_sleeper = {
             8: Surface.create([17, 19, -18, -13], 8),
             9: Surface.create([18, 21, -20, -14], 9),
@@ -3278,7 +3320,8 @@ class TestModel:
         expected_volume_sleeper = {
             2: Volume.create([-8, -9, -10, -11, -7, 12], 2),
         }
-        expected_sleeper_geometry = Geometry(expected_sleeper_points, expected_sleeper_lines, expected_surfaces_sleeper, expected_volume_sleeper)
+        expected_sleeper_geometry = Geometry(expected_sleeper_points, expected_sleeper_lines, expected_surfaces_sleeper,
+                                             expected_volume_sleeper)
 
         sleeper_model_part = model.body_model_parts[2]
         calculated_sleeper_geometry = sleeper_model_part.geometry
@@ -3287,10 +3330,15 @@ class TestModel:
 
         # check the rail pads
         expected_rail_pad_points = {
-            17: Point.create([origin_point[0], origin_point[1] + sleeper_height + rail_pad_thickness, origin_point[2]], 17),
+            17: Point.create([origin_point[0], origin_point[1] + sleeper_height + rail_pad_thickness, origin_point[2]],
+                             17),
             19: Point.create([origin_point[0], origin_point[1] + sleeper_height, origin_point[2]], 19),
-            18: Point.create([origin_point[0], origin_point[1] + sleeper_height + rail_pad_thickness, origin_point[2] + sleeper_distance], 18),
-            20: Point.create([origin_point[0], origin_point[1] + sleeper_height, origin_point[2] + sleeper_distance], 20),
+            18: Point.create([
+                origin_point[0], origin_point[1] + sleeper_height + rail_pad_thickness,
+                origin_point[2] + sleeper_distance
+            ], 18),
+            20: Point.create([origin_point[0], origin_point[1] + sleeper_height, origin_point[2] + sleeper_distance],
+                             20),
         }
         expected_rail_pad_lines = {26: Line.create([17, 19], 26), 27: Line.create([18, 20], 27)}
 
@@ -3302,7 +3350,6 @@ class TestModel:
 
         TestUtils.assert_almost_equal_geometries(expected_rail_pad_geometry, calculated_rail_pad_geometry)
         TestUtils.assert_dictionary_almost_equal(rail_pad_parameters.__dict__, calculated_rail_pad_parameters.__dict__)
-
 
     def test_generate_straight_track_3d(self):
         """
