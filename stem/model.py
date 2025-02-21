@@ -145,6 +145,117 @@ class Model:
                 names_sleepers.append(sleeper_name_i)
         return names_sleepers
 
+    def _create_rail_model_part(self, rail_name: str, rail_parameters: EulerBeam) -> BodyModelPart:
+        """
+        Creates the model part for the rail.
+
+        Args:
+            rail_name (str): Name of the rail.
+            rail_parameters (EulerBeam): Material and geometric parameters for the rail.
+
+        Returns:
+            BodyModelPart: Configured rail model part.
+        """
+        rail_model_part = BodyModelPart(rail_name)
+        rail_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_name)
+        rail_model_part.material = StructuralMaterial(name=rail_name, material_parameters=rail_parameters)
+        return rail_model_part
+
+    def _create_sleeper_model_parts(self, names_sleepers: List[str],
+                                    sleeper_parameters: Union[NodalConcentrated, SoilMaterial]) -> List[BodyModelPart]:
+        """
+        Creates model parts for each sleeper.
+
+        Args:
+            names_sleepers (List[str]): List of sleeper names.
+            sleeper_parameters (Union[NodalConcentrated, SoilMaterial]): Sleeper material parameters.
+
+        Returns:
+            List[BodyModelPart]: List of configured sleeper model parts.
+        """
+        model_parts: List[BodyModelPart] = []
+        for name in names_sleepers:
+            part = BodyModelPart(name)
+            part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name)
+            if isinstance(sleeper_parameters, NodalConcentrated):
+                part.material = StructuralMaterial(name=name, material_parameters=sleeper_parameters)
+            elif isinstance(sleeper_parameters, SoilMaterial):
+                part.material = sleeper_parameters
+            model_parts.append(part)
+        return model_parts
+
+    def _create_rail_pads_model_part(self, rail_pads_name: str,
+                                     rail_pad_parameters: ElasticSpringDamper) -> BodyModelPart:
+        """
+        Creates the model part for the rail pads.
+
+        Args:
+            rail_pads_name (str): Name for the rail pads.
+            rail_pad_parameters (ElasticSpringDamper): Material and geometric parameters for the rail pads.
+
+        Returns:
+            BodyModelPart: Configured rail pads model part.
+        """
+        rail_pads_model_part = BodyModelPart(rail_pads_name)
+        rail_pads_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_pads_name)
+        rail_pads_model_part.material = StructuralMaterial(name=rail_pads_name, material_parameters=rail_pad_parameters)
+        return rail_pads_model_part
+
+    def _create_constraint_model_part(self, rail_name: str, rail_global_coords: np.ndarray) -> ModelPart:
+        """
+        Creates the displacement constraint model part for the rail.
+
+        This constraint prevents movement in non-vertical directions.
+
+        Args:
+            rail_name (str): Name of the rail.
+            rail_global_coords (np.ndarray): Global coordinates of the rail.
+
+        Returns:
+            ModelPart: Configured constraint model part.
+        """
+        rail_constraint_name: str = f"constraint_{rail_name}"
+        rail_constraint_geometry_ids: List[int] = self.gmsh_io.geo_data["physical_groups"][rail_name]["geometry_ids"]
+        self.gmsh_io.add_physical_group(rail_constraint_name, 1, rail_constraint_geometry_ids)
+
+        constraint_model_part = ModelPart(rail_constraint_name)
+        constraint_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_constraint_name)
+        constraint_model_part.parameters = DisplacementConstraint(active=[True, True, True],
+                                                                  is_fixed=[True, True, True],
+                                                                  value=[0, 0, 0])
+        # Allow vertical movement.
+        constraint_model_part.parameters.is_fixed[VERTICAL_AXIS] = False
+        return constraint_model_part
+
+    def _create_no_rotation_model_part(self, rail_name: str, rail_global_coords: np.ndarray) -> ModelPart:
+        """
+        Creates a model part that prevents rotation at the rail ends,
+        enhancing the physical realism and preventing torsion.
+
+        Args:
+            rail_name (str): Name of the rail.
+            rail_global_coords (np.ndarray): Global coordinates of the rail.
+
+        Returns:
+            ModelPart: Configured no-rotation constraint model part.
+        """
+        rotation_constraint_name: str = f"rotation_constraint_{rail_name}"
+        no_rotation_model_part = ModelPart(rotation_constraint_name)
+        no_rotation_constraint = RotationConstraint(active=[True, True, True],
+                                                    is_fixed=[True, True, True],
+                                                    value=[0, 0, 0])
+        no_rotation_model_part.parameters = no_rotation_constraint
+
+        no_rotation_geo_settings: Dict[str, Any] = {
+            rotation_constraint_name: {
+                "coordinates": [rail_global_coords[0], rail_global_coords[-1]],
+                "ndim": 0
+            }
+        }
+        self.gmsh_io.generate_geometry(no_rotation_geo_settings, "")
+        no_rotation_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rotation_constraint_name)
+        return no_rotation_model_part
+
     def generate_straight_track(self,
                                 sleeper_distance: float,
                                 n_sleepers: int,
@@ -226,55 +337,17 @@ class Model:
 
         self.gmsh_io.add_physical_group(rail_pads_name, 1, rail_pad_line_ids)
 
-        rail_pads_model_part = BodyModelPart(rail_pads_name)
-        rail_pads_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_pads_name)
-        rail_pads_model_part.material = StructuralMaterial(name=rail_pads_name, material_parameters=rail_pad_parameters)
-
-        # add physical group to gmsh
-        rail_constraint_name = f"constraint_{rail_name}"
-        rail_constraint_geometry_ids = self.gmsh_io.geo_data["physical_groups"][rail_name]["geometry_ids"]
-        self.gmsh_io.add_physical_group(f"constraint_{rail_name}", 1, rail_constraint_geometry_ids)
-
-        # create model part
-        constraint_model_part = ModelPart(rail_constraint_name)
-
-        # retrieve geometry from gmsh and add to model part
-        constraint_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_constraint_name)
-
-        # add displacement_constraint in the non-vertical directions
-        constraint_model_part.parameters = DisplacementConstraint(active=[True, True, True],
-                                                                  is_fixed=[True, True, True],
-                                                                  value=[0, 0, 0])
-        constraint_model_part.parameters.is_fixed[VERTICAL_AXIS] = False
+        # Create and add model parts
+        rail_model_part = self._create_rail_model_part(rail_name, rail_parameters)
+        sleeper_model_parts = self._create_sleeper_model_parts(names_sleepers, sleeper_parameters)
+        rail_pads_model_part = self._create_rail_pads_model_part(rail_pads_name, rail_pad_parameters)
+        constraint_model_part = self._create_constraint_model_part(rail_name, rail_global_coords)
+        no_rotation_model_part = self._create_no_rotation_model_part(rail_name, rail_global_coords)
 
         self.body_model_parts.append(rail_model_part)
-        for sleeper_model_part in sleeper_model_parts:
-            self.body_model_parts.append(sleeper_model_part)
+        self.body_model_parts.extend(sleeper_model_parts)
         self.body_model_parts.append(rail_pads_model_part)
-
         self.process_model_parts.append(constraint_model_part)
-
-        # add no rotation constraint at the rail ends for a more realistic boundary in 2D and 3D and to prevent torsion
-        # in 3D
-        rotation_constraint_name = f"rotation_constraint_{rail_name}"
-
-        no_rotation_model_part = ModelPart(rotation_constraint_name)
-        no_rotation_constraint = RotationConstraint(active=[True, True, True],
-                                                    is_fixed=[True, True, True],
-                                                    value=[0, 0, 0])
-        no_rotation_model_part.parameters = no_rotation_constraint
-
-        # add constraint geometries to both edges of the rail
-        no_rotation_geo_settings = {
-            rotation_constraint_name: {
-                "coordinates": [rail_global_coords[0], rail_global_coords[-1]],
-                "ndim": 0
-            }
-        }
-        self.gmsh_io.generate_geometry(no_rotation_geo_settings, "")
-
-        no_rotation_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rotation_constraint_name)
-
         self.process_model_parts.append(no_rotation_model_part)
 
     def generate_extended_straight_track(self, sleeper_distance: float, n_sleepers: int, rail_parameters: EulerBeam,
