@@ -96,6 +96,55 @@ class Model:
             return sleeper_dimensions[2]
         return 0.0
 
+    def _generate_sleepers(self, sleeper_parameters: Union[NodalConcentrated,
+                                                           SoilMaterial], sleeper_dimensions: Sequence[float],
+                           base_sleeper_name: str, sleeper_global_coords: np.ndarray) -> List[str]:
+        """
+        Generates sleeper geometry based on the type of sleeper parameters.
+
+        For NodalConcentrated sleepers, creates point-based geometries.
+        For SoilMaterial sleepers, creates 3D volumes.
+
+        Args:
+            sleeper_parameters (Union[NodalConcentrated, SoilMaterial]): Sleeper parameters.
+            sleeper_dimensions (Sequence[float]): Dimensions for the sleeper if applicable.
+            base_sleeper_name (str): Base name for sleepers.
+            sleeper_global_coords (np.ndarray): Global coordinates for sleeper placement.
+
+        Returns:
+            List[str]: List of generated sleeper names.
+        """
+        names_sleepers = []
+        if isinstance(sleeper_parameters, NodalConcentrated):
+            # For nodal sleepers, create a connection line and a point geometry for the sleeper.
+            connection_geo_settings: Dict[str, Any] = {"": {"coordinates": sleeper_global_coords, "ndim": 1}}
+            sleeper_geo_settings: Dict[str, Any] = {
+                base_sleeper_name: {
+                    "coordinates": sleeper_global_coords,
+                    "ndim": 0
+                }
+            }
+            names_sleepers.append(base_sleeper_name)
+            self.gmsh_io.generate_geometry(connection_geo_settings, "")
+            self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
+        elif isinstance(sleeper_parameters, SoilMaterial):
+            # For soil sleepers, create a 3D volume for each sleeper.
+            for i, coord in enumerate(sleeper_global_coords):
+                coords_volume = Utils.create_sleeper_volume(coord, sleeper_dimensions)
+                # Assuming extrusion occurs in the second axis (index 1) for the sleeper height.
+                extrusions = [0, sleeper_dimensions[2], 0]
+                sleeper_name_i = f"{base_sleeper_name}_{i}"
+                sleeper_geo_settings = {
+                    sleeper_name_i: {
+                        "coordinates": coords_volume,
+                        "ndim": 3,
+                        "extrusion_length": extrusions
+                    }
+                }
+                self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
+                names_sleepers.append(sleeper_name_i)
+        return names_sleepers
+
     def generate_straight_track(self,
                                 sleeper_distance: float,
                                 n_sleepers: int,
@@ -147,32 +196,9 @@ class Model:
         rail_geo_settings = {rail_name: {"coordinates": rail_global_coords, "ndim": 1}}
 
         sleeper_global_coords = sleeper_local_coords[:, None].dot(normalized_direction_vector[None, :]) + origin_point
-        # set sleepers geometry
-        if isinstance(sleeper_parameters, NodalConcentrated):
-            connection_geo_settings = {"": {"coordinates": sleeper_global_coords, "ndim": 1}}
-            sleeper_geo_settings = {sleeper_name: {"coordinates": sleeper_global_coords, "ndim": 0}}
-            names_sleepers = [sleeper_name]
-            # firstly create lines for the connection between the track and the foundation
-            self.gmsh_io.generate_geometry(connection_geo_settings, "")
-            # add the sleepers to the track
-            self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
-        elif isinstance(sleeper_parameters, SoilMaterial):
-            names_sleepers = []
-            for counter, sleeper_coord in enumerate(sleeper_global_coords):
-                if sleeper_dimensions is None:
-                    raise ValueError("sleeper_dimensions cannot be None")
-                coords_volume_sleepers = Utils.create_sleeper_volume(sleeper_coord, sleeper_dimensions)
-                extrusions = [0.0, 0.0, 0.0]  # Ensure these are floats
-                extrusions[1] = sleeper_dimensions[2]  # Ensure this is a float
-                names_sleepers.append(f"{sleeper_name}_{counter}")
-                sleeper_geo_settings = {
-                    f"{sleeper_name}_{counter}": {
-                        "coordinates": coords_volume_sleepers,
-                        "ndim": 3,
-                        "extrusion_length": extrusions
-                    }
-                }
-                self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
+        # Generate sleeper geometry based on the type of sleeper parameters
+        names_sleepers = self._generate_sleepers(sleeper_parameters, sleeper_dimensions, sleeper_name,
+                                                 sleeper_global_coords)
         # add the rail geometry
         self.gmsh_io.generate_geometry(rail_geo_settings, "")
 
