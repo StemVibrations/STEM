@@ -74,8 +74,7 @@ class Model:
         """
         return self.body_model_parts + self.process_model_parts
 
-    def _compute_vertical_offset(self,
-                                 sleeper_parameters: Union[NodalConcentrated, SoilMaterial],
+    def _compute_vertical_offset(self, sleeper_parameters: Union[NodalConcentrated, SoilMaterial],
                                  sleeper_dimensions: Optional[Sequence[float]]) -> float:
         """
         Computes the vertical offset based on sleeper parameters.
@@ -92,9 +91,8 @@ class Model:
         """
         if isinstance(sleeper_parameters, SoilMaterial):
             if sleeper_dimensions is None:
-                raise ValueError(
-                    "If sleeper parameters are SoilMaterial, dimensions must be a list of length, width, "
-                    "height.")
+                raise ValueError("If sleeper parameters are SoilMaterial, dimensions must be a list of length, width, "
+                                 "height.")
             return sleeper_dimensions[2]
         return 0.0
 
