@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+from numpy import ndarray
 from typing import Sequence, Tuple, get_args, Set, Optional, List, Dict, Any, Union
 
 from gmsh_utils import gmsh_IO
@@ -98,7 +99,7 @@ class Model:
 
     def _generate_sleepers(self, sleeper_parameters: Union[NodalConcentrated,
                                                            SoilMaterial], sleeper_dimensions: Sequence[float],
-                           base_sleeper_name: str, sleeper_global_coords: np.ndarray) -> List[str]:
+                           base_sleeper_name: str, sleeper_global_coords: ndarray[Any, Any]) -> List[str]:
         """
         Generates sleeper geometry based on the type of sleeper parameters.
 
@@ -117,13 +118,8 @@ class Model:
         names_sleepers = []
         if isinstance(sleeper_parameters, NodalConcentrated):
             # For nodal sleepers, create a connection line and a point geometry for the sleeper.
-            connection_geo_settings: Dict[str, Any] = {"": {"coordinates": sleeper_global_coords, "ndim": 1}}
-            sleeper_geo_settings: Dict[str, Any] = {
-                base_sleeper_name: {
-                    "coordinates": sleeper_global_coords,
-                    "ndim": 0
-                }
-            }
+            connection_geo_settings = {"": {"coordinates": sleeper_global_coords, "ndim": 1}}
+            sleeper_geo_settings = {base_sleeper_name: {"coordinates": sleeper_global_coords, "ndim": 0}}
             names_sleepers.append(base_sleeper_name)
             self.gmsh_io.generate_geometry(connection_geo_settings, "")
             self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
@@ -201,7 +197,7 @@ class Model:
         rail_pads_model_part.material = StructuralMaterial(name=rail_pads_name, material_parameters=rail_pad_parameters)
         return rail_pads_model_part
 
-    def _create_constraint_model_part(self, rail_name: str, rail_global_coords: np.ndarray) -> ModelPart:
+    def _create_constraint_model_part(self, rail_name: str) -> ModelPart:
         """
         Creates the displacement constraint model part for the rail.
 
@@ -209,13 +205,12 @@ class Model:
 
         Args:
             rail_name (str): Name of the rail.
-            rail_global_coords (np.ndarray): Global coordinates of the rail.
 
         Returns:
             ModelPart: Configured constraint model part.
         """
-        rail_constraint_name: str = f"constraint_{rail_name}"
-        rail_constraint_geometry_ids: List[int] = self.gmsh_io.geo_data["physical_groups"][rail_name]["geometry_ids"]
+        rail_constraint_name = f"constraint_{rail_name}"
+        rail_constraint_geometry_ids = self.gmsh_io.geo_data["physical_groups"][rail_name]["geometry_ids"]
         self.gmsh_io.add_physical_group(rail_constraint_name, 1, rail_constraint_geometry_ids)
 
         constraint_model_part = ModelPart(rail_constraint_name)
@@ -227,7 +222,7 @@ class Model:
         constraint_model_part.parameters.is_fixed[VERTICAL_AXIS] = False
         return constraint_model_part
 
-    def _create_no_rotation_model_part(self, rail_name: str, rail_global_coords: np.ndarray) -> ModelPart:
+    def _create_no_rotation_model_part(self, rail_name: str, rail_global_coords: ndarray[Any, Any]) -> ModelPart:
         """
         Creates a model part that prevents rotation at the rail ends,
         enhancing the physical realism and preventing torsion.
@@ -239,7 +234,7 @@ class Model:
         Returns:
             ModelPart: Configured no-rotation constraint model part.
         """
-        rotation_constraint_name: str = f"rotation_constraint_{rail_name}"
+        rotation_constraint_name = f"rotation_constraint_{rail_name}"
         no_rotation_model_part = ModelPart(rotation_constraint_name)
         no_rotation_constraint = RotationConstraint(active=[True, True, True],
                                                     is_fixed=[True, True, True],
@@ -292,6 +287,8 @@ class Model:
         sleeper_name = f"sleeper_{name}"
         rail_pads_name = f"rail_pads_{name}"
 
+        if sleeper_dimensions is None:
+            raise ValueError("sleeper_dimensions cannot be None")
         vertical_addition_sleeper_soil_volume = self._compute_vertical_offset(sleeper_parameters, sleeper_dimensions)
 
         normalized_direction_vector = np.array(direction_vector) / np.linalg.norm(direction_vector)
@@ -341,7 +338,7 @@ class Model:
         rail_model_part = self._create_rail_model_part(rail_name, rail_parameters)
         sleeper_model_parts = self._create_sleeper_model_parts(names_sleepers, sleeper_parameters)
         rail_pads_model_part = self._create_rail_pads_model_part(rail_pads_name, rail_pad_parameters)
-        constraint_model_part = self._create_constraint_model_part(rail_name, rail_global_coords)
+        constraint_model_part = self._create_constraint_model_part(rail_name)
         no_rotation_model_part = self._create_no_rotation_model_part(rail_name, rail_global_coords)
 
         self.body_model_parts.append(rail_model_part)
