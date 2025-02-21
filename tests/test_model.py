@@ -5,6 +5,7 @@ import re
 import sys
 from pathlib import Path
 
+import numpy as np
 import numpy.testing as npt
 import pytest
 
@@ -4363,3 +4364,152 @@ class TestModel:
         TestUtils.assert_almost_equal_geometries(expected_soil_equivalent_geometry, calculated_soil_equivalent_geometry)
         TestUtils.assert_dictionary_almost_equal(extended_soil_parameters.__dict__,
                                                  calculated_soil_equivalent_parameters.__dict__)
+
+    def test_compute_vertical_offset_soil(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Tests if the vertical offset is correctly computed for a soil material. In this case, the sleeper is a mass
+        so the vertical offset should be the height of the sleeper.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+        """
+        model = Model(3)
+        # If sleeper_parameters is a SoilMaterial, should return the sleeper height.
+        sleeper_params = create_default_3d_soil_material
+        sleeper_dims = [2.0, 0.5, 0.3]  # length, width, height
+        offset = model._compute_vertical_offset(sleeper_params, sleeper_dims)
+        assert offset - sleeper_dims[2] < 1e-6
+
+    def test_compute_vertical_offset_nodal(self):
+        """
+        Tests if the vertical offset is correctly computed for a soil material. In this case, the sleeper is a nodal
+        concentrated type so the vertical offset should be zero.
+
+        """
+        model = Model(3)
+        # If sleeper_parameters is not SoilMaterial, returns 0.
+        sleeper_params = NodalConcentrated(1, 1, 1)  # dummy nodal concentrated type
+        offset = model._compute_vertical_offset(sleeper_params, None)
+        assert offset - 0.0 < 1e-6
+
+    def test_create_rail_model_part(self):
+        """
+        Tests if the rail model part is correctly created.
+
+        """
+        model = Model(3)
+        rail_name = "rail1"
+        # add rail geometry
+        rail_geo_settings = {rail_name: {"coordinates": [(0, 0, 0), (0, 2, 0), (0, 2, 1)], "ndim": 1}}
+        model.gmsh_io.generate_geometry(rail_geo_settings, "")
+        # set up materials
+        rail_params = EulerBeam(1, 1, 1, 1, 1, 1)
+        rail_part = model._create_rail_model_part(rail_name, rail_params)
+        # Check that the geometry was set by our dummy function.
+        assert rail_part.geometry is not None
+        # Check that material was set properly.
+        TestUtils.assert_dictionary_almost_equal(rail_params.__dict__, rail_part.material.material_parameters.__dict__)
+        assert rail_part.material.name == rail_name
+
+    def test_create_sleeper_model_parts_nodal(self):
+        """
+        Tests if the sleeper model part is correctly created when the sleeper is a nodal concentrated type.
+
+        """
+        model = Model(3)
+        sleeper_name = "sleeper1"
+        model.gmsh_io.generate_geometry(
+            {sleeper_name: {
+                "coordinates": [(0, 0, 0), (0, 2, 0), (0, 2, 1), (0, 0, 1)],
+                "ndim": 2
+            }}, "")
+        sleeper_params = NodalConcentrated(1, 1, 1)
+        parts = model._create_sleeper_model_parts([sleeper_name], sleeper_params)
+        assert len(parts) == 1
+        assert parts[0].geometry is not None
+        assert parts[0].name == sleeper_name
+        assert parts[0].material.material_parameters == sleeper_params
+
+    def test_create_sleeper_model_parts_soil(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Tests if the sleeper model part is correctly created when the sleeper is a soil material.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+        """
+        model = Model(3)
+        sleeper_names = ["sleeper1", "sleeper2"]
+        for counter, sleeper_name in enumerate(sleeper_names):
+            model.gmsh_io.generate_geometry(
+                {
+                    sleeper_name: {
+                        "coordinates": [(0, 0 + counter, 0), (0, 2 + counter, 0), (0, 2 + counter, 1),
+                                        (0, 0 + counter, 1)],
+                        "ndim": 3,
+                        "extrusion_length": [1, 0, 0]
+                    }
+                }, "")
+        sleeper_params = create_default_3d_soil_material
+        parts = model._create_sleeper_model_parts(sleeper_names, sleeper_params)
+        assert len(parts) == 2
+        assert parts[0].geometry is not None
+        assert parts[1].geometry is not None
+        assert parts[0].name == sleeper_names[0]
+        assert parts[1].name == sleeper_names[1]
+        assert parts[0].material == sleeper_params
+        assert parts[1].material == sleeper_params
+
+    def test_create_rail_pads_model_part(self):
+        """
+        Tests if the rail pads model part is correctly created.
+
+        """
+        model = Model(3)
+        rail_pads_name = "rail_pads1"
+        model.gmsh_io.generate_geometry(
+            {rail_pads_name: {
+                "coordinates": [(0, 0, 0), (0, 2, 0), (0, 2, 1), (0, 0, 1)],
+                "ndim": 2
+            }}, "")
+        pad_params = ElasticSpringDamper(1, 1, 1, 1)
+        pads_part = model._create_rail_pads_model_part(rail_pads_name, pad_params)
+        assert pads_part.geometry is not None
+        assert pads_part.name == rail_pads_name
+        assert pads_part.material.material_parameters == pad_params
+
+    def test_create_constraint_model_part(self):
+        """
+        Tests if the constraint model part is correctly created.
+
+        """
+        model = Model(3)
+        rail_name = "track1"
+        model.gmsh_io.generate_geometry(
+            {rail_name: {
+                "coordinates": [(0, 0, 0), (0, 2, 0), (0, 2, 1), (0, 0, 1)],
+                "ndim": 2
+            }}, "")
+        constraint_params = RotationConstraint([True, True, True], [True, False, True], [0.0, 0.0, 0.0])
+        constraint_part = model._create_constraint_model_part(rail_name)
+        assert constraint_part.geometry is not None
+        assert constraint_part.name == "constraint_" + rail_name
+        TestUtils.assert_dictionary_almost_equal(constraint_params.__dict__, constraint_part.parameters.__dict__)
+
+    def test_create_no_rotation_model_part(self):
+        """
+        Tests if the no rotation model part is correctly created.
+
+        """
+        model = Model(3)
+        rail_name = "track1"
+        global_rail_coords = np.array([(0, 0, 0), (0, 2, 0), (0, 2, 1), (0, 0, 1)])
+        model.gmsh_io.generate_geometry(
+            {rail_name: {
+                "coordinates": [(0, 0, 0), (0, 2, 0), (0, 2, 1), (0, 0, 1)],
+                "ndim": 2
+            }}, "")
+        no_rotation_params = RotationConstraint([True, True, True], [True, True, True], [0.0, 0.0, 0.0])
+        no_rotation_part = model._create_no_rotation_model_part(rail_name, global_rail_coords)
+        assert no_rotation_part.geometry is not None
+        assert no_rotation_part.name == "rotation_constraint_" + rail_name
+        TestUtils.assert_dictionary_almost_equal(no_rotation_params.__dict__, no_rotation_part.parameters.__dict__)
