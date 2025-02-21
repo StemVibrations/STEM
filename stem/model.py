@@ -74,10 +74,16 @@ class Model:
         """
         return self.body_model_parts + self.process_model_parts
 
-    def generate_straight_track(self, sleeper_distance: float, n_sleepers: int, rail_parameters: EulerBeam,
+    def generate_straight_track(self,
+                                sleeper_distance: float,
+                                n_sleepers: int,
+                                rail_parameters: EulerBeam,
                                 sleeper_parameters: Union[NodalConcentrated, SoilMaterial],
-                                rail_pad_parameters: ElasticSpringDamper, rail_pad_thickness: float,
-                                origin_point: Sequence[float], direction_vector: Sequence[float], name: str,
+                                rail_pad_parameters: ElasticSpringDamper,
+                                rail_pad_thickness: float,
+                                origin_point: Sequence[float],
+                                direction_vector: Sequence[float],
+                                name: str,
                                 sleeper_dimensions: Optional[Sequence[float]] = None):
         """
         Generates a track geometry. With rail, rail-pads and sleepers as mass elements. Sleepers are placed at the
@@ -142,8 +148,13 @@ class Model:
                 extrusions = [0.0, 0.0, 0.0]  # Ensure these are floats
                 extrusions[1] = sleeper_dimensions[2]  # Ensure this is a float
                 names_sleepers.append(f"{sleeper_name}_{counter}")
-                sleeper_geo_settings = {f"{sleeper_name}_{counter}": {"coordinates": coords_volume_sleepers, "ndim": 3,
-                                        "extrusion_length": extrusions}}
+                sleeper_geo_settings = {
+                    f"{sleeper_name}_{counter}": {
+                        "coordinates": coords_volume_sleepers,
+                        "ndim": 3,
+                        "extrusion_length": extrusions
+                    }
+                }
                 self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
         # add the rail geometry
         self.gmsh_io.generate_geometry(rail_geo_settings, "")

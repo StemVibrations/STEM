@@ -761,9 +761,9 @@ class Utils:
                     raise ValueError(f"Coordinates should be a sequence of sequence of real numbers, "
                                      f"but {i} was given.")
 
-
     @staticmethod
-    def create_sleeper_volume(local_coord: Sequence[float], sleeper_dimensions: Sequence[float]) -> npty.NDArray[np.float64]:
+    def create_sleeper_volume(local_coord: Sequence[float],
+                              sleeper_dimensions: Sequence[float]) -> npty.NDArray[np.float64]:
         """"
         This function creates the coordinates of the volume of the sleeper given the local coordinates and the
         dimensions of the sleeper.
