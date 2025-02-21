@@ -78,7 +78,7 @@ class Model:
                                 sleeper_parameters: Union[NodalConcentrated, SoilMaterial],
                                 rail_pad_parameters: ElasticSpringDamper, rail_pad_thickness: float,
                                 origin_point: Sequence[float], direction_vector: Sequence[float], name: str,
-                                sleeper_dimensions: Optional[Sequence[float]]=None):
+                                sleeper_dimensions: Sequence[float] = [0.0, 0.0, 0.0]):
         """
         Generates a track geometry. With rail, rail-pads and sleepers as mass elements. Sleepers are placed at the
         bottom of the track with a distance of sleeper_distance between them. The sleepers are connected to the rail
