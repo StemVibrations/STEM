@@ -287,7 +287,7 @@ class Model:
         sleeper_name = f"sleeper_{name}"
         rail_pads_name = f"rail_pads_{name}"
 
-        if sleeper_dimensions is None:
+        if sleeper_dimensions is None and isinstance(sleeper_parameters, SoilMaterial):
             raise ValueError("sleeper_dimensions cannot be None")
         vertical_addition_sleeper_soil_volume = self._compute_vertical_offset(sleeper_parameters, sleeper_dimensions)
 
@@ -305,6 +305,8 @@ class Model:
 
         sleeper_global_coords = sleeper_local_coords[:, None].dot(normalized_direction_vector[None, :]) + origin_point
         # Generate sleeper geometry based on the type of sleeper parameters
+        if sleeper_dimensions is None:
+            sleeper_dimensions = [0., 0., 0.]
         names_sleepers = self._generate_sleepers(sleeper_parameters, sleeper_dimensions, sleeper_name,
                                                  sleeper_global_coords)
         # add the rail geometry
