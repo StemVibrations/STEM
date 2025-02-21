@@ -89,7 +89,8 @@ class Model:
             - sleeper_distance (float): distance between sleepers
             - n_sleepers (int): number of sleepers
             - rail_parameters (:class:`stem.structural_material.EulerBeam`): rail parameters
-            - sleeper_parameters (Union[:class:`stem.structural_material.NodalConcentrated`, :class:`stem.soil_material.SoilMaterial`]): sleeper parameters
+            - sleeper_parameters (Union[:class:`stem.structural_material.NodalConcentrated`,
+            :class:`stem.soil_material.SoilMaterial`]): sleeper parameters
             - rail_pad_parameters (:class:`stem.structural_material.ElasticSpringDamper`): rail pad parameters
             - rail_pad_thickness (float): thickness of the rail pad
             - origin_point (Sequence[float]): origin point of the track
@@ -133,9 +134,7 @@ class Model:
             # add the sleepers to the track
             self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
         elif isinstance(sleeper_parameters, SoilMaterial):
-            # here I make the assumption that the HORIZONTAL_AXIS is the first axis
-            # I need to create a 3d rectangles for the sleepers with the given dimensions
-            names_sleepers  = []
+            names_sleepers = []
             for counter, sleeper_coord in enumerate(sleeper_global_coords):
                 if sleeper_dimensions is None:
                     raise ValueError("sleeper_dimensions cannot be None")
@@ -143,10 +142,8 @@ class Model:
                 extrusions = [0.0, 0.0, 0.0]  # Ensure these are floats
                 extrusions[1] = sleeper_dimensions[2]  # Ensure this is a float
                 names_sleepers.append(f"{sleeper_name}_{counter}")
-                sleeper_geo_settings = {f"{sleeper_name}_{counter}":
-                                            {"coordinates": coords_volume_sleepers,
-                                             "ndim": 3,
-                                             "extrusion_length": extrusions}}
+                sleeper_geo_settings = {f"{sleeper_name}_{counter}": {"coordinates": coords_volume_sleepers, "ndim": 3,
+                                        "extrusion_length": extrusions}}
                 self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
         # add the rail geometry
         self.gmsh_io.generate_geometry(rail_geo_settings, "")
@@ -160,7 +157,8 @@ class Model:
             sleeper_model_part = BodyModelPart(sleeper_name)
             sleeper_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, sleeper_name)
             if isinstance(sleeper_parameters, NodalConcentrated):
-                sleeper_model_part.material = StructuralMaterial(name=sleeper_name, material_parameters=sleeper_parameters)
+                sleeper_model_part.material = StructuralMaterial(name=sleeper_name,
+                                                                 material_parameters=sleeper_parameters)
             elif isinstance(sleeper_parameters, SoilMaterial):
                 sleeper_model_part.material = sleeper_parameters
             sleeper_model_parts.append(sleeper_model_part)
@@ -173,7 +171,6 @@ class Model:
         rail_pad_line_ids = [ids[0] for ids in rail_pad_line_ids_aux]
 
         self.gmsh_io.add_physical_group(rail_pads_name, 1, rail_pad_line_ids)
-
 
         rail_pads_model_part = BodyModelPart(rail_pads_name)
         rail_pads_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_pads_name)
