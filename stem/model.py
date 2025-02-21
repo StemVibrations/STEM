@@ -74,6 +74,30 @@ class Model:
         """
         return self.body_model_parts + self.process_model_parts
 
+    def _compute_vertical_offset(self,
+                                 sleeper_parameters: Union[NodalConcentrated, SoilMaterial],
+                                 sleeper_dimensions: Optional[Sequence[float]]) -> float:
+        """
+        Computes the vertical offset based on sleeper parameters.
+
+        If sleeper_parameters is a SoilMaterial and dimensions are provided,
+        returns the sleeper height. Otherwise, returns 0.
+
+        Args:
+            sleeper_parameters (Union[NodalConcentrated, SoilMaterial]): Sleeper parameters.
+            sleeper_dimensions (Optional[Sequence[float]]): Sleeper dimensions [length, width, height].
+
+        Returns:
+            float: Vertical offset.
+        """
+        if isinstance(sleeper_parameters, SoilMaterial):
+            if sleeper_dimensions is None:
+                raise ValueError(
+                    "If sleeper parameters are SoilMaterial, dimensions must be a list of length, width, "
+                    "height.")
+            return sleeper_dimensions[2]
+        return 0.0
+
     def generate_straight_track(self,
                                 sleeper_distance: float,
                                 n_sleepers: int,
@@ -110,12 +134,7 @@ class Model:
         sleeper_name = f"sleeper_{name}"
         rail_pads_name = f"rail_pads_{name}"
 
-        vertical_addition_sleeper_soil_volume = 0.0
-        if isinstance(sleeper_parameters, SoilMaterial):
-            if sleeper_dimensions is None:
-                raise ValueError("If sleeper parameters are SoilMaterial, dimensions must be a list of length, width, "
-                                 "height.")
-            vertical_addition_sleeper_soil_volume = sleeper_dimensions[2]
+        vertical_addition_sleeper_soil_volume = self._compute_vertical_offset(sleeper_parameters, sleeper_dimensions)
 
         normalized_direction_vector = np.array(direction_vector) / np.linalg.norm(direction_vector)
 
