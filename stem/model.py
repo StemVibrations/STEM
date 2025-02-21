@@ -124,7 +124,7 @@ class Model:
 
         sleeper_global_coords = sleeper_local_coords[:, None].dot(normalized_direction_vector[None, :]) + origin_point
         # set sleepers geometry
-        if sleeper_dimensions is None and isinstance(sleeper_parameters, NodalConcentrated):
+        if isinstance(sleeper_parameters, NodalConcentrated):
             connection_geo_settings = {"": {"coordinates": sleeper_global_coords, "ndim": 1}}
             sleeper_geo_settings = {sleeper_name: {"coordinates": sleeper_global_coords, "ndim": 0}}
             names_sleepers = [sleeper_name]
@@ -132,7 +132,7 @@ class Model:
             self.gmsh_io.generate_geometry(connection_geo_settings, "")
             # add the sleepers to the track
             self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
-        elif sleeper_dimensions is not None and isinstance(sleeper_parameters, SoilMaterial):
+        elif isinstance(sleeper_parameters, SoilMaterial):
             # here I make the assumption that the HORIZONTAL_AXIS is the first axis
             # I need to create a 3d rectangles for the sleepers with the given dimensions
             names_sleepers  = []
@@ -146,11 +146,6 @@ class Model:
                                              "ndim": 3,
                                              "extrusion_length": extrusions}}
                 self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
-        else:
-            raise ValueError(f"Invalid sleeper parameters: {sleeper_parameters} and dimensions: {sleeper_dimensions}"
-                             f"combination. If sleeper parameters are NodalConcentrated, dimensions must be None."
-                             f"If sleeper parameters are SoilMaterial, dimensions must be a list of length, width, "
-                             f"height.")
         # add the rail geometry
         self.gmsh_io.generate_geometry(rail_geo_settings, "")
 
