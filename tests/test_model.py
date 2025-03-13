@@ -3200,10 +3200,12 @@ class TestModel:
         sleeper_length = 2.6
         sleeper_width = 0.234
         sleeper_distance = 5.0
+        sleeper_rail_pad_offset = sleeper_length / 2
         sleeper_dimensions = [sleeper_length, sleeper_width, sleeper_height]
         # create a straight track with rails, sleepers and rail pads
         model.generate_straight_track(sleeper_distance, 2, rail_parameters, sleeper_parameters, rail_pad_parameters,
-                                      rail_pad_thickness, origin_point, direction_vector, "track_1", sleeper_dimensions)
+                                      rail_pad_thickness, origin_point, direction_vector, "track_1", sleeper_rail_pad_offset,
+                                      sleeper_dimensions)
 
         # check geometry and material of the rail
         expected_rail_points = {

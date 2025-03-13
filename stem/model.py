@@ -84,8 +84,8 @@ class Model:
         returns the sleeper height. Otherwise, returns 0.
 
         Args:
-            sleeper_parameters (Union[NodalConcentrated, SoilMaterial]): Sleeper parameters.
-            sleeper_dimensions (Optional[Sequence[float]]): Sleeper dimensions [length, width, height].
+        - sleeper_parameters (Union[NodalConcentrated, SoilMaterial]): Sleeper parameters.
+        - sleeper_dimensions (Optional[Sequence[float]]): Sleeper dimensions [length, width, height].
 
         Returns:
             float: Vertical offset.
@@ -97,9 +97,12 @@ class Model:
             return sleeper_dimensions[2]
         return 0.0
 
-    def _generate_sleepers(self, sleeper_parameters: Union[NodalConcentrated,
-                                                           SoilMaterial], sleeper_dimensions: Sequence[float],
-                           base_sleeper_name: str, sleeper_global_coords: ndarray[Any, Any]) -> List[str]:
+    def _generate_sleepers(self,
+                           sleeper_parameters: Union[NodalConcentrated,
+                                                           SoilMaterial],
+                           sleeper_dimensions: Sequence[float],
+                           base_sleeper_name: str, sleeper_global_coords: ndarray[Any, Any],
+                           sleeper_rail_pad_offset: float) -> List[str]:
         """
         Generates sleeper geometry based on the type of sleeper parameters.
 
@@ -111,22 +114,38 @@ class Model:
             sleeper_dimensions (Sequence[float]): Dimensions for the sleeper if applicable.
             base_sleeper_name (str): Base name for sleepers.
             sleeper_global_coords (np.ndarray): Global coordinates for sleeper placement.
+            sleeper_rail_pad_offset (float): Offset between the sleeper end and the rail pad location.
 
         Returns:
             List[str]: List of generated sleeper names.
         """
         names_sleepers = []
+
         if isinstance(sleeper_parameters, NodalConcentrated):
-            # For nodal sleepers, create a connection line and a point geometry for the sleeper.
             connection_geo_settings = {"": {"coordinates": sleeper_global_coords, "ndim": 1}}
+            self.gmsh_io.generate_geometry(connection_geo_settings, "")
+            # For nodal sleepers, create a connection line and a point geometry for the sleeper.
             sleeper_geo_settings = {base_sleeper_name: {"coordinates": sleeper_global_coords, "ndim": 0}}
             names_sleepers.append(base_sleeper_name)
-            self.gmsh_io.generate_geometry(connection_geo_settings, "")
             self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
         elif isinstance(sleeper_parameters, SoilMaterial):
-            # For soil sleepers, create a 3D volume for each sleeper.
+            # if no soil is present then this can be skipped
+            if len(self.body_model_parts) > 0:
+                # get the min and max coordinates of the soils
+                min_coords, max_coords = self.get_bounding_box_soil()
+                # vertical axis should be the same as the initial sleeper height
+                level_vertical_sleeper = sleeper_global_coords[0][VERTICAL_AXIS]
+                level_x_axis = sleeper_global_coords[0][0]
+                min_coords[0] = level_x_axis
+                max_coords[0] = level_x_axis
+                min_coords[VERTICAL_AXIS] = level_vertical_sleeper
+                max_coords[VERTICAL_AXIS] = level_vertical_sleeper
+                # the connection line should connect the soil minimum and maximum coordinates in the OUT_OF_PLANE_AXIS_2D
+                connection_geo_settings = {"": {"coordinates": [min_coords, max_coords], "ndim": 1}}
+                self.gmsh_io.generate_geometry(connection_geo_settings, "")
+                # For soil sleepers, create a 3D volume for each sleeper.
             for i, coord in enumerate(sleeper_global_coords):
-                coords_volume = Utils.create_sleeper_volume(coord, sleeper_dimensions)
+                coords_volume = Utils.create_sleeper_volume(coord, sleeper_dimensions, sleeper_rail_pad_offset)
                 # Assuming extrusion occurs in the second axis (index 1) for the sleeper height.
                 extrusions = [0, sleeper_dimensions[2], 0]
                 sleeper_name_i = f"{base_sleeper_name}_{i}"
@@ -261,12 +280,22 @@ class Model:
                                 origin_point: Sequence[float],
                                 direction_vector: Sequence[float],
                                 name: str,
+                                sleeper_rail_pad_offset: float = 0.0,
                                 sleeper_dimensions: Optional[Sequence[float]] = None):
         """
         Generates a track geometry. With rail, rail-pads and sleepers as mass elements. Sleepers are placed at the
         bottom of the track with a distance of sleeper_distance between them. The sleepers are connected to the rail
         with rail-pads with a thickness of rail_pad_thickness. The track is generated in the direction of the
         direction_vector starting from the origin_point. The track can only move in the vertical direction.
+
+        Sleepers can be modelled as NodalConcentrated or SoilMaterial, so as volume elements or mass points.
+        If the sleepers are modelled as SoilMaterial, the dimensions of the sleepers must be provided and the offset
+        between the sleeper end and the rail pad location.
+
+        The sleeper dimensions must be provided in the format [length, width, height], where
+        all the these dimensions represent the lengths that are modelled in the 3D space and not the actual dimensions
+        as only a part of the sleeper is modelled. Most commonly the height and width are the same as the actual
+        size but the length is shorter than the actual size.
 
         Args:
             - sleeper_distance (float): distance between sleepers
@@ -279,7 +308,9 @@ class Model:
             - origin_point (Sequence[float]): origin point of the track
             - direction_vector (Sequence[float]): direction vector of the track
             - name (str): name of the track
-            - sleeper_dimensions (Sequence[float]): dimensions of the sleepers with the format [length, width, height]
+            - sleeper_rail_pad_offset  (float): offset between the sleeper end and the rail pad location
+            - sleeper_dimensions (Sequence[float]): dimensions of the sleepers  to be modelled
+            with the format [length, width, height]
         """
 
         rail_name = f"{name}"
@@ -308,7 +339,7 @@ class Model:
         if sleeper_dimensions is None:
             sleeper_dimensions = [0., 0., 0.]
         names_sleepers = self._generate_sleepers(sleeper_parameters, sleeper_dimensions, sleeper_name,
-                                                 sleeper_global_coords)
+                                                 sleeper_global_coords, sleeper_rail_pad_offset)
         # add the rail geometry
         self.gmsh_io.generate_geometry(rail_geo_settings, "")
 
@@ -517,6 +548,7 @@ class Model:
                 # Find the minimum and maximum for each axis (x, y, z) across all points
                 min_coords = np.min(np.vstack((coordinates, min_coords)), axis=0)
                 max_coords = np.max(np.vstack((coordinates, max_coords)), axis=0)
+
 
         return min_coords, max_coords
 

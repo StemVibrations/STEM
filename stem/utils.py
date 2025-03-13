@@ -763,7 +763,8 @@ class Utils:
 
     @staticmethod
     def create_sleeper_volume(local_coord: Sequence[float],
-                              sleeper_dimensions: Sequence[float]) -> npty.NDArray[np.float64]:
+                              sleeper_dimensions: Sequence[float],
+                              sleeper_rail_pad_offset: float) -> npty.NDArray[np.float64]:
         """"
         This function creates the coordinates of the volume of the sleeper given the local coordinates and the
         dimensions of the sleeper.
@@ -787,21 +788,25 @@ class Utils:
 
         xi, yi , zi are the local coordinates of the sleeper
         A: origin of the sleeper plus the distance to the sleeper in the out of plane axis
-        B (xi - length/2, yi, zi + width/2)
-        C (xi + length/2, yi, zi + width/2)
-        D (xi + length/2, yi, zi - width/2)
-        E (xi - length/2, yi, zi - width/2)
+        B (xi + (length - offset), yi, zi + width/2)
+        C (xi + (length - offset), yi, zi - width/2)
+        D (xi - offset, yi, zi - width/2)
+        E (xi - offset, yi, zi + width/2)
 
         Args:
             - local_coord (Sequence[float]): local coordinates of the sleeper
             - sleeper_dimensions (Sequence[float]): dimensions of the sleeper
+            - ndim (int): number of dimensions of the model
 
         Returns:
             - npty.NDArray[np.float64]: coordinates of the volume of the sleeper in the global coordinate system
         """
         xi, yi, zi = local_coord
         length, width, height = sleeper_dimensions
-        x = [xi + length / 2, xi + length / 2, xi - length / 2, xi - length / 2]
+        x = [xi + length - sleeper_rail_pad_offset,
+             xi + length - sleeper_rail_pad_offset,
+             xi - sleeper_rail_pad_offset,
+             xi - sleeper_rail_pad_offset]
         y = [yi, yi, yi, yi]
         z = [zi + width / 2, zi - width / 2, zi - width / 2, zi + width / 2]
 
