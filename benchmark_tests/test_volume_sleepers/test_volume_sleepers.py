@@ -62,9 +62,9 @@ def test_moving_load_on_track():
     soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2400, POROSITY=0.1)
     constitutive_law = LinearElasticSoil(YOUNG_MODULUS=30e9, POISSON_RATIO=0.2)
     sleeper_parameters = SoilMaterial(name="concrete",
-                                 soil_formulation=soil_formulation,
-                                 constitutive_law=constitutive_law,
-                                 retention_parameters=SaturatedBelowPhreaticLevelLaw())
+                                      soil_formulation=soil_formulation,
+                                      constitutive_law=constitutive_law,
+                                      retention_parameters=SaturatedBelowPhreaticLevelLaw())
 
     origin_point = np.array([2.5, 2.5, -4.5])
     direction_vector = np.array([0, 0, 1])
@@ -76,7 +76,6 @@ def test_moving_load_on_track():
     sleeper_distance = 1.0
     sleeper_dimensions = [sleeper_length, sleeper_width, sleeper_height]
     offset_sleepers_rail_pads = 0.43
-
 
     # create a straight track with rails, sleepers and rail pads
     model.generate_straight_track(sleeper_distance=sleeper_distance,
