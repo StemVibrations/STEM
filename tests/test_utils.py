@@ -12,20 +12,6 @@ from stem.globals import ELEMENT_DATA
 from tests.utils import TestUtils
 
 
-def compute_expected(local_coord, sleeper_dimensions):
-    xi, yi, zi = local_coord
-    length, width, _ = sleeper_dimensions  # height is not used
-    x = [xi + length / 2, xi + length / 2, xi - length / 2, xi - length / 2]
-    y = [yi, yi, yi, yi]
-    z = [zi + width / 2, zi - width / 2, zi - width / 2, zi + width / 2]
-    # With the assumed constants, x is in column 0, y in column 1, and z in column 2.
-    expected = np.zeros((4, 3))
-    expected[:, 0] = x
-    expected[:, 1] = y
-    expected[:, 2] = z
-    return expected
-
-
 class TestUtilsStem:
 
     def test_check_ndim_nnodes_combinations(self):
@@ -829,24 +815,52 @@ class TestUtilsStem:
             Utils.validate_coordinates([(0.0, 0.0, 0.0), (0.0, "test", 0.0)])
 
     def test_create_sleeper_volume_at_origin(self):
+        """
+        Test the creation of a sleeper volume at the origin.
+
+        This test ensures that the function correctly calculates the sleeper volume
+        when the origin is at (0, 0, 0).
+
+        Asserts that the result matches the expected output.
+        """
+        sleeper_rail_pad_offset = 0.5
         local_coord = [0.0, 0.0, 0.0]
         sleeper_dimensions = [2.0, 4.0, 1.0]  # length, width, height
-        expected = compute_expected(local_coord, sleeper_dimensions)
-        result = Utils.create_sleeper_volume(local_coord, sleeper_dimensions)
+        expected = np.array([[1.5, 0.0, 2.0], [1.5, 0.0, -2.0], [-0.5, 0.0, -2.0], [-0.5, 0.0, 2.0]])
+        result = Utils.create_sleeper_volume(local_coord, sleeper_dimensions, sleeper_rail_pad_offset)
         np.testing.assert_array_almost_equal(result, expected)
 
     def test_create_sleeper_volume_nonzero_origin(self):
+        """
+        Test the creation of a sleeper volume with a non-zero origin.
+
+        This test ensures that the function correctly calculates the sleeper volume
+        when given a non-zero origin.
+
+        Asserts that the result matches the expected output.
+        """
         local_coord = [1.0, -1.0, 0.5]
         sleeper_dimensions = [3.0, 2.0, 0.5]
-        expected = compute_expected(local_coord, sleeper_dimensions)
-        result = Utils.create_sleeper_volume(local_coord, sleeper_dimensions)
+        sleeper_rail_pad_offset = 0.5
+        expected = np.array([[3.5, -1.0, 1.5], [3.5, -1.0, -0.5], [0.5, -1.0, -0.5], [0.5, -1.0, 1.5]])
+        result = Utils.create_sleeper_volume(local_coord, sleeper_dimensions, sleeper_rail_pad_offset)
         np.testing.assert_array_almost_equal(result, expected)
 
     def test_create_sleeper_volume_with_negative_dimensions(self):
-        # While negative dimensions might not be physically meaningful,
-        # this test ensures that the function handles them consistently.
+        """
+        Test the creation of a sleeper volume with negative dimensions.
+
+        While negative dimensions might not be physically meaningful,
+        this test ensures that the function handles them consistently.
+
+        The test checks if the function correctly calculates the sleeper volume
+        when given negative dimensions.
+
+        Asserts that the result matches the expected output.
+        """
         local_coord = [2.0, 3.0, 4.0]
         sleeper_dimensions = [-2.0, -4.0, 1.0]
-        expected = compute_expected(local_coord, sleeper_dimensions)
-        result = Utils.create_sleeper_volume(local_coord, sleeper_dimensions)
+        sleeper_rail_pad_offset = 0.5
+        expected = np.array([[-0.5, 3.0, 2.0], [-0.5, 3.0, 6.0], [1.5, 3.0, 6.0], [1.5, 3.0, 2.0]])
+        result = Utils.create_sleeper_volume(local_coord, sleeper_dimensions, sleeper_rail_pad_offset)
         np.testing.assert_array_almost_equal(result, expected)
