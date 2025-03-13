@@ -97,12 +97,9 @@ class Model:
             return sleeper_dimensions[2]
         return 0.0
 
-    def _generate_sleepers(self,
-                           sleeper_parameters: Union[NodalConcentrated,
-                                                           SoilMaterial],
-                           sleeper_dimensions: Sequence[float],
-                           base_sleeper_name: str, sleeper_global_coords: ndarray[Any, Any],
-                           sleeper_rail_pad_offset: float) -> List[str]:
+    def _generate_sleepers(self, sleeper_parameters: Union[NodalConcentrated, SoilMaterial],
+                           sleeper_dimensions: Sequence[float], base_sleeper_name: str,
+                           sleeper_global_coords: ndarray[Any, Any], sleeper_rail_pad_offset: float) -> List[str]:
         """
         Generates sleeper geometry based on the type of sleeper parameters.
 
@@ -140,7 +137,8 @@ class Model:
                 max_coords[0] = level_x_axis
                 min_coords[VERTICAL_AXIS] = level_vertical_sleeper
                 max_coords[VERTICAL_AXIS] = level_vertical_sleeper
-                # the connection line should connect the soil minimum and maximum coordinates in the OUT_OF_PLANE_AXIS_2D
+                # the connection line should connect the soil minimum and maximum coordinates in the
+                # OUT_OF_PLANE_AXIS_2D
                 connection_geo_settings = {"": {"coordinates": [min_coords, max_coords], "ndim": 1}}
                 self.gmsh_io.generate_geometry(connection_geo_settings, "")
                 # For soil sleepers, create a 3D volume for each sleeper.
@@ -548,7 +546,6 @@ class Model:
                 # Find the minimum and maximum for each axis (x, y, z) across all points
                 min_coords = np.min(np.vstack((coordinates, min_coords)), axis=0)
                 max_coords = np.max(np.vstack((coordinates, max_coords)), axis=0)
-
 
         return min_coords, max_coords
 

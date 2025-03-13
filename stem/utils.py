@@ -762,8 +762,7 @@ class Utils:
                                      f"but {i} was given.")
 
     @staticmethod
-    def create_sleeper_volume(local_coord: Sequence[float],
-                              sleeper_dimensions: Sequence[float],
+    def create_sleeper_volume(local_coord: Sequence[float], sleeper_dimensions: Sequence[float],
                               sleeper_rail_pad_offset: float) -> npty.NDArray[np.float64]:
         """"
         This function creates the coordinates of the volume of the sleeper given the local coordinates and the
@@ -803,10 +802,10 @@ class Utils:
         """
         xi, yi, zi = local_coord
         length, width, height = sleeper_dimensions
-        x = [xi + length - sleeper_rail_pad_offset,
-             xi + length - sleeper_rail_pad_offset,
-             xi - sleeper_rail_pad_offset,
-             xi - sleeper_rail_pad_offset]
+        x = [
+            xi + length - sleeper_rail_pad_offset, xi + length - sleeper_rail_pad_offset, xi - sleeper_rail_pad_offset,
+            xi - sleeper_rail_pad_offset
+        ]
         y = [yi, yi, yi, yi]
         z = [zi + width / 2, zi - width / 2, zi - width / 2, zi + width / 2]
 
