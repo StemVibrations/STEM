@@ -785,8 +785,8 @@ class Model:
 
         self.process_model_parts.append(model_part)
 
-    def add_hinge_on_beam(self, beam_model_part_name: str, hinge_coordinates, hinge_parameters: HingeParameters,
-                          hinge_model_part_name: str):
+    def add_hinge_on_beam(self, beam_model_part_name: str, hinge_coordinates: Sequence[Sequence[float]],
+                          hinge_parameters: HingeParameters, hinge_model_part_name: str):
         """
         Adds a hinge to the model by giving the name of the beam model part where the hinge has to be applied.
 
