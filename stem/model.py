@@ -1,5 +1,6 @@
 import json
 import os
+from copy import deepcopy
 from pathlib import Path
 from typing import Sequence, Tuple, get_args, Set, Optional, List, Dict, Any, Union
 
@@ -1061,6 +1062,13 @@ class Model:
                                    mesh_name=mesh_name,
                                    open_gmsh_gui=open_gmsh_gui)
 
+        # reorder gmsh format to Kratos format
+        if "TETRAHEDRON_10N" in self.gmsh_io.mesh_data["elements"]:
+            gmsh_to_kratos_indices = ELEMENT_DATA["TETRAHEDRON_10N"]["gmsh_to_kratos_order"]
+            for key,value in self.gmsh_io.mesh_data["elements"]["TETRAHEDRON_10N"].items():
+                self.gmsh_io.mesh_data["elements"]["TETRAHEDRON_10N"][key] = np.array(self.gmsh_io.mesh_data["elements"]["TETRAHEDRON_10N"][key])[gmsh_to_kratos_indices].tolist()
+
+
         # add the mesh to each model part
         for model_part in self.all_model_parts:
             model_part.mesh = Mesh.create_mesh_from_gmsh_group(self.gmsh_io.mesh_data, model_part.name)
@@ -1081,6 +1089,45 @@ class Model:
         # perform post mesh operations
         self.__post_mesh()
 
+    def __split_second_order_elements(self):
+        """
+        Splits the second order elements into first order elements. This is necessary for the correct calculation of
+        the shape functions in the element.
+
+        """
+
+        for model_part in self.body_model_parts:
+            if isinstance(model_part.material, StructuralMaterial):
+                types_to_be_split = (ElasticSpringDamper, EulerBeam)
+                if isinstance(model_part.material.material_parameters, types_to_be_split):
+                    # get the new element id which is the maximum current element id + 1
+                    new_element_id = self.__get_maximum_element_id() + 1
+
+                    new_elements = {}
+                    if "LINE_2N" not in self.gmsh_io.mesh_data["elements"]:
+                        self.gmsh_io.mesh_data["elements"]["LINE_2N"] = {}
+
+                    for id, element in model_part.mesh.elements.items():
+
+
+                        node_ids = element.node_ids
+                        node_ids_part_1 = [node_ids[0], node_ids[2]]
+                        node_ids_part_2 = [node_ids[2], node_ids[1]]
+                        new_elements[new_element_id] = Element(id, "LINE_2N", node_ids_part_1)
+                        self.gmsh_io.mesh_data["elements"]["LINE_2N"][new_element_id] = node_ids_part_2
+                        new_element_id += 1
+
+                        new_elements[new_element_id] = Element(new_element_id, "LINE_2N", node_ids_part_2)
+                        self.gmsh_io.mesh_data["elements"]["LINE_2N"][new_element_id] = node_ids_part_2
+
+
+                        new_element_id += 1
+
+
+                    model_part.mesh.elements = new_elements
+                    self.gmsh_io.mesh_data["physical_groups"][model_part.name]["element_ids"] = sorted(list(new_elements.keys()))
+
+
     def __post_mesh(self):
         """
         Function to be called after the mesh is generated and finalised. The following steps are performed:
@@ -1089,8 +1136,9 @@ class Model:
             - adjust the elements for the spring damper parts.
 
         """
-        self.__initialise_fields()
 
+        self.__split_second_order_elements()
+        self.__initialise_fields()
         self.__exclude_non_output_nodes()
         self.__adjust_mesh_spring_dampers()
 
@@ -1168,6 +1216,12 @@ class Model:
                     sorted(list(new_mesh.elements.keys()))
 
                 for element_id, element in new_mesh.elements.items():
+                    if self.mesh_settings.element_order > 1:
+                        #add LINE_2N key to the mesh data dictionary
+                        if "LINE_2N" not in self.gmsh_io.mesh_data["elements"]:
+                            self.gmsh_io.mesh_data["elements"]["LINE_2N"] = {}
+
+
                     self.gmsh_io.mesh_data["elements"]["LINE_2N"][element_id] = element.node_ids
 
                 mp.mesh = new_mesh
@@ -1259,8 +1313,7 @@ class Model:
                 completed_points.add(first_node_id)
         return line_node_ids
 
-    @staticmethod
-    def __find_end_nodes_of_line_strings(mesh: Mesh) -> Set[int]:
+    def __find_end_nodes_of_line_strings(self, mesh: Mesh) -> Set[int]:
         """
         Finds the nodes at the end of linestrings.
 
@@ -1271,8 +1324,22 @@ class Model:
             - end_nodes (Set[int]): End node ids of linestring clusters.
 
         """
-        nodes_to_elements = mesh.find_elements_connected_to_nodes()
+
+        # if the mesh is higher order, convert it to linear mesh in order to find the end nodes
+        if self.mesh_settings.element_order >1:
+            linear_mesh = deepcopy(mesh)
+
+            # remove middle nodes of line elements in case of higher order meshes
+            for id, element in linear_mesh.elements.items():
+                linear_mesh.elements[id].node_ids = element.node_ids[:2]
+
+            nodes_to_elements = linear_mesh.find_elements_connected_to_nodes()
+        else:
+            nodes_to_elements = mesh.find_elements_connected_to_nodes()
+
         end_nodes = set(node_id for node_id, elements in nodes_to_elements.items() if len(elements) == 1)
+
+
         return end_nodes
 
     @staticmethod
@@ -1320,6 +1387,8 @@ class Model:
             if len(elements_connected) > 1:
                 raise ValueError(f"There is a fork in the mesh at elements: {elements_connected}, the next node along "
                                  f"the line cannot be found.")
+            if len(elements_connected) == 0:
+                raise ValueError(f"Next node along the line cannot be found. As it is not included in the search space")
 
             next_element_id = elements_connected.pop()
 
