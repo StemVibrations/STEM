@@ -200,6 +200,10 @@ class TestModelPart:
                                                          AnalysisType.MECHANICAL) == "UPwLysmerAbsorbingCondition3D3N")
         assert (absorbing_boundary_part.get_element_name(3, 4,
                                                          AnalysisType.MECHANICAL) == "UPwLysmerAbsorbingCondition3D4N")
+        assert (absorbing_boundary_part.get_element_name(3, 6,
+                                                            AnalysisType.MECHANICAL) == "UPwLysmerAbsorbingCondition3D6N")
+        assert (absorbing_boundary_part.get_element_name(3, 8,
+                                                            AnalysisType.MECHANICAL) == "UPwLysmerAbsorbingCondition3D8N")
 
         # wrong absorbing_boundary input
         with pytest.raises(ValueError,
@@ -209,9 +213,9 @@ class TestModelPart:
 
         # wrong ndim nnodes combination
         with pytest.raises(ValueError,
-                           match=re.escape('In 3 dimensions, only [3, 4] noded Absorbing boundary elements are '
-                                           'supported. 6 nodes were provided.')):
-            absorbing_boundary_part.get_element_name(3, 6, AnalysisType.MECHANICAL)
+                           match=re.escape('In 3 dimensions, only [3, 4, 6, 8] noded Absorbing boundary elements are '
+                                           'supported. 7 nodes were provided.')):
+            absorbing_boundary_part.get_element_name(3, 7, AnalysisType.MECHANICAL)
 
     def test_get_element_name_bodies(self):
         """

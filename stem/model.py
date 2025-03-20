@@ -1137,7 +1137,8 @@ class Model:
 
         """
 
-        self.__split_second_order_elements()
+        if self.mesh_settings.element_order == 2:
+            self.__split_second_order_elements()
         self.__initialise_fields()
         self.__exclude_non_output_nodes()
         self.__adjust_mesh_spring_dampers()
