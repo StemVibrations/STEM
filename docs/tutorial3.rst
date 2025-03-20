@@ -168,7 +168,7 @@ a unique name.
 Generating the train track
 --------------------------
 
-STEM provides two options to generate a straight track:
+STEM provides two options to generate a straight track, with two different ways to model the track:
 
 1. A straight track with rails, sleepers and rail pads. This track placed on top of the 2D or 3D geometry.
 1. A straight track with rails, sleepers, rail pads and an extension of the track outside the 2D or 3D geometry.
@@ -271,6 +271,67 @@ Visualising the geometry, the track and the equivalent soil part are shown in th
 
 .. image:: _static/embankment_extended.png
 
+**Modeling the sleepers by choosing different materials**
+
+The sleepers in STEM can be modelled using different materials. The options available are:
+- NodalConcentrated: This models the sleeper as a concentrated mass at the sleeper location.
+- Material: This models the sleeper as a material with a specific density and Young's modulus.
+
+The nodal concentrated mass is defined by the mass of the sleeper in kg. The user can follow the example above to
+define the nodal concentrated mass.
+
+The material option is defined by the material parameters of the sleeper and the dimensions of the sleeper.
+The difference in configuration between the nodal concentrated mass and the material option is shown below.
+
+.. image:: _static/Sleepers.png
+
+To define the sleepers as a material, the first step is to define the material parameters of the sleeper.
+Here the sleeper is modelled as a concrete material with a density of 2400 kg/m3 and a Young's modulus of 30e9 Pa.
+
+.. code-block:: python2
+
+    from stem.soil_material import SoilMaterial, OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
+
+    soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2400, POROSITY=0.0)
+    constitutive_law = LinearElasticSoil(YOUNG_MODULUS=30e9, POISSON_RATIO=0.2)
+    sleeper_parameters_soil = SoilMaterial(name="concrete",
+                                      soil_formulation=soil_formulation,
+                                      constitutive_law=constitutive_law,
+                                      retention_parameters=SaturatedBelowPhreaticLevelLaw())
+
+After that the dimensions of the modelled sleeper are defined. Since we only model half of the domain, the length of the
+sleeper should be set to half. The dimensions of the sleeper are defined as a list of the length, width and height.
+Finally the offset of the rail pad on the sleeper is defined. The offset is the distance from the edge of the sleeper to
+the edge of the rail pad.
+
+.. code-block:: python2
+
+        sleeper_height = 0.3
+        rail_pad_thickness = 0.02
+        sleeper_length = 2.8 / 2
+        sleeper_width = 0.234
+        sleeper_distance = 1.0
+        sleeper_dimensions = [sleeper_length, sleeper_width, sleeper_height]
+        offset_sleepers_rail_pads = 0.43
+
+The generate straight track function is then called with the sleeper parameters defined above.
+
+.. code-block:: python2
+
+    # create a straight track with rails, sleepers and rail pads
+    model.generate_straight_track(sleeper_distance=sleeper_distance,
+                                  n_sleepers=20,
+                                  rail_parameters=rail_parameters,
+                                  sleeper_parameters=sleeper_parameters,
+                                  rail_pad_parameters=rail_pad_parameters,
+                                  rail_pad_thickness=rail_pad_thickness,
+                                  origin_point=origin_point,
+                                  direction_vector=direction_vector,
+                                  sleeper_dimensions=sleeper_dimensions,
+                                  sleeper_rail_pad_offset=offset_sleepers_rail_pads,
+                                  name="rail_track_1")
+
+**Adding the UVEC model**
 
 The UVEC model is then defined using the UvecLoad class. The train moves in positive direction from the origin, this is
 defined in `direction=[1, 1, 1]`, values greater than 0 indicate positive direction, values smaller than 0 indicate
