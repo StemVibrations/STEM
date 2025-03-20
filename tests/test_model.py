@@ -4675,8 +4675,7 @@ class TestModel:
         model.gmsh_io.generate_geometry(
             {
                 sleeper_name: {
-                    "coordinates": [(0, 0 , 0), (0, 2 , 0), (0, 2 , 1),
-                                    (0, 0 , 1)],
+                    "coordinates": [(0, 0, 0), (0, 2, 0), (0, 2, 1), (0, 0, 1)],
                     "ndim": 3,
                     "extrusion_length": [1, 0, 0]
                 }

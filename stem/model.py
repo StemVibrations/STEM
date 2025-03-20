@@ -99,7 +99,7 @@ class Model:
 
     def _generate_sleepers(self, sleeper_parameters: Union[NodalConcentrated, SoilMaterial],
                            sleeper_dimensions: Sequence[float], base_sleeper_name: str,
-                           sleeper_global_coords: ndarray[Any, Any], sleeper_rail_pad_offset: float) -> List[str]:
+                           sleeper_global_coords: ndarray[Any, Any], sleeper_rail_pad_offset: float) -> None:
         """
         Generates sleeper geometry based on the type of sleeper parameters.
 
@@ -113,6 +113,9 @@ class Model:
             sleeper_global_coords (np.ndarray): Global coordinates for sleeper placement.
             sleeper_rail_pad_offset (float): Offset between the sleeper end and the rail pad location.
 
+        Returns:
+            None
+
         """
         if isinstance(sleeper_parameters, NodalConcentrated):
             connection_geo_settings = {"": {"coordinates": sleeper_global_coords, "ndim": 1}}
@@ -121,7 +124,6 @@ class Model:
             sleeper_geo_settings = {base_sleeper_name: {"coordinates": sleeper_global_coords, "ndim": 0}}
             self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
         elif isinstance(sleeper_parameters, SoilMaterial):
-            volume_ids = []
             # if no soil is present then this can be skipped
             if len(self.body_model_parts) > 0:
                 # get the min and max coordinates of the soils
@@ -141,8 +143,9 @@ class Model:
             for i, coord in enumerate(sleeper_global_coords):
                 coords_volume = Utils.create_sleeper_volume(coord, sleeper_dimensions, sleeper_rail_pad_offset)
                 # Assuming extrusion occurs in the second axis (index 1) for the sleeper height.
-                extrusions = [0, 0 ,0]
-                extrusions[VERTICAL_AXIS] = sleeper_dimensions[2]
+                # Ensure the list is initialized with float values
+                extrusions: List[float] = [0.0, 0.0, 0.0]
+                extrusions[VERTICAL_AXIS] = sleeper_dimensions[2]  # Ensure this is a float
                 sleeper_geo_settings = {
                     base_sleeper_name: {
                         "coordinates": coords_volume,
@@ -168,8 +171,8 @@ class Model:
         rail_model_part.material = StructuralMaterial(name=rail_name, material_parameters=rail_parameters)
         return rail_model_part
 
-    def _create_sleeper_model_parts(self, names_sleeper: str,
-                                    sleeper_parameters: Union[NodalConcentrated, SoilMaterial]) -> BodyModelPart:
+    def _create_sleeper_model_parts(self, names_sleeper: str, sleeper_parameters: Union[NodalConcentrated,
+                                                                                        SoilMaterial]) -> BodyModelPart:
         """
         Creates model parts for each sleeper.
 
@@ -339,8 +342,7 @@ class Model:
         sleeper_model_part = BodyModelPart(sleeper_name)
         sleeper_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, sleeper_name)
         if isinstance(sleeper_parameters, NodalConcentrated):
-            sleeper_model_part.material = StructuralMaterial(name=sleeper_name,
-                                                             material_parameters=sleeper_parameters)
+            sleeper_model_part.material = StructuralMaterial(name=sleeper_name, material_parameters=sleeper_parameters)
         elif isinstance(sleeper_parameters, SoilMaterial):
             sleeper_model_part.material = sleeper_parameters
 
