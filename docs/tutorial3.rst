@@ -274,6 +274,7 @@ Visualising the geometry, the track and the equivalent soil part are shown in th
 **Modeling the sleepers by choosing different materials**
 
 The sleepers in STEM can be modelled using different materials. The options available are:
+
 - NodalConcentrated: This models the sleeper as a concentrated mass at the sleeper location.
 - Material: This models the sleeper as a material with a specific density and Young's modulus.
 
