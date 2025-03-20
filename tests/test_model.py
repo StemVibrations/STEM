@@ -3259,46 +3259,6 @@ class TestModel:
             15: Point.create(
                 [origin_point[0] - sleeper_length / 2, origin_point[1], origin_point[2] + sleeper_width / 2], 15),
             11: Point.create([origin_point[0], origin_point[1], origin_point[2] + sleeper_width / 2], 11),
-        }
-        expected_sleeper_lines = {
-            24: Line.create([10, 17], 24),
-            26: Line.create([17, 18], 26),
-            25: Line.create([9, 18], 25),
-            11: Line.create([10, 9], 11),
-            28: Line.create([18, 19], 28),
-            27: Line.create([16, 19], 27),
-            21: Line.create([8, 16], 21),
-            10: Line.create([9, 8], 10),
-            30: Line.create([19, 20], 30),
-            29: Line.create([15, 20], 29),
-            20: Line.create([16, 15], 20),
-            31: Line.create([20, 17], 31),
-            12: Line.create([11, 10], 12),
-            19: Line.create([15, 11], 19),
-            15: Line.create([8, 11], 15)
-        }
-        expected_surfaces_sleeper = {
-            10: Surface.create([24, 26, -25, -11], 10),
-            11: Surface.create([25, 28, -27, -21, -10], 11),
-            12: Surface.create([27, 30, -29, -20], 12),
-            13: Surface.create([29, 31, -24, -12, -19], 13),
-            4: Surface.create([-15, -10, -11, -12], 4),
-            6: Surface.create([-21, 15, -19, -20], 6),
-            14: Surface.create([26, 28, 30, 31], 14),
-        }
-        expected_volume_sleeper = {
-            2: Volume.create([-10, -11, -12, -13, 4, 6, 14], 2),
-        }
-        expected_sleeper_geometry = Geometry(expected_sleeper_points, expected_sleeper_lines, expected_surfaces_sleeper,
-                                             expected_volume_sleeper)
-
-        sleeper_model_part = model.body_model_parts[2]
-        calculated_sleeper_geometry = sleeper_model_part.geometry
-
-        TestUtils.assert_almost_equal_geometries(expected_sleeper_geometry, calculated_sleeper_geometry)
-
-        # check second sleeper
-        expected_sleeper_points = {
             30: Point.create([
                 origin_point[0] + sleeper_length / 2, origin_point[1],
                 origin_point[2] + sleeper_width / 2 + sleeper_distance
@@ -3337,6 +3297,21 @@ class TestModel:
                              31),
         }
         expected_sleeper_lines = {
+            24: Line.create([10, 17], 24),
+            26: Line.create([17, 18], 26),
+            25: Line.create([9, 18], 25),
+            11: Line.create([10, 9], 11),
+            28: Line.create([18, 19], 28),
+            27: Line.create([16, 19], 27),
+            21: Line.create([8, 16], 21),
+            10: Line.create([9, 8], 10),
+            30: Line.create([19, 20], 30),
+            29: Line.create([15, 20], 29),
+            20: Line.create([16, 15], 20),
+            31: Line.create([20, 17], 31),
+            12: Line.create([11, 10], 12),
+            19: Line.create([15, 11], 19),
+            15: Line.create([8, 11], 15),
             56: Line.create([30, 37], 56),
             58: Line.create([37, 38], 58),
             57: Line.create([29, 38], 57),
@@ -3354,6 +3329,13 @@ class TestModel:
             47: Line.create([28, 31], 47),
         }
         expected_surfaces_sleeper = {
+            10: Surface.create([24, 26, -25, -11], 10),
+            11: Surface.create([25, 28, -27, -21, -10], 11),
+            12: Surface.create([27, 30, -29, -20], 12),
+            13: Surface.create([29, 31, -24, -12, -19], 13),
+            4: Surface.create([-15, -10, -11, -12], 4),
+            6: Surface.create([-21, 15, -19, -20], 6),
+            14: Surface.create([26, 28, 30, 31], 14),
             24: Surface.create([56, 58, -57, -43], 24),
             25: Surface.create([57, 60, -59, -53, -42], 25),
             26: Surface.create([59, 62, -61, -52], 26),
@@ -3363,12 +3345,13 @@ class TestModel:
             28: Surface.create([58, 60, 62, 63], 28),
         }
         expected_volume_sleeper = {
+            2: Volume.create([-10, -11, -12, -13, 4, 6, 14], 2),
             3: Volume.create([-24, -25, -26, -27, 18, 20, 28], 3),
         }
         expected_sleeper_geometry = Geometry(expected_sleeper_points, expected_sleeper_lines, expected_surfaces_sleeper,
                                              expected_volume_sleeper)
 
-        sleeper_model_part = model.body_model_parts[3]
+        sleeper_model_part = model.body_model_parts[2]
         calculated_sleeper_geometry = sleeper_model_part.geometry
 
         TestUtils.assert_almost_equal_geometries(expected_sleeper_geometry, calculated_sleeper_geometry)
@@ -3389,7 +3372,7 @@ class TestModel:
 
         expected_rail_pad_geometry = Geometry(expected_rail_pad_points, expected_rail_pad_lines)
 
-        rail_pad_model_part = model.body_model_parts[4]
+        rail_pad_model_part = model.body_model_parts[3]
         calculated_rail_pad_geometry = rail_pad_model_part.geometry
         calculated_rail_pad_parameters = rail_pad_model_part.material.material_parameters
 
@@ -3479,42 +3462,6 @@ class TestModel:
             ], 8),
             4: Point.create(
                 [origin_point[0] - sleeper_length / 2, origin_point[1], origin_point[2] + sleeper_width / 2], 4),
-        }
-        expected_sleeper_lines = {
-            5: Line.create([1, 5], 5),
-            7: Line.create([5, 6], 7),
-            6: Line.create([2, 6], 6),
-            1: Line.create([1, 2], 1),
-            9: Line.create([6, 7], 9),
-            8: Line.create([3, 7], 8),
-            2: Line.create([2, 3], 2),
-            11: Line.create([7, 8], 11),
-            10: Line.create([4, 8], 10),
-            3: Line.create([3, 4], 3),
-            12: Line.create([8, 5], 12),
-            4: Line.create([4, 1], 4),
-        }
-        expected_surfaces_sleeper = {
-            2: Surface.create([5, 7, -6, -1], 2),
-            3: Surface.create([6, 9, -8, -2], 3),
-            4: Surface.create([8, 11, -10, -3], 4),
-            5: Surface.create([10, 12, -5, -4], 5),
-            1: Surface.create([1, 2, 3, 4], 1),
-            6: Surface.create([7, 9, 11, 12], 6),
-        }
-        expected_volume_sleeper = {
-            1: Volume.create([-2, -3, -4, -5, -1, 6], 1),
-        }
-        expected_sleeper_geometry = Geometry(expected_sleeper_points, expected_sleeper_lines, expected_surfaces_sleeper,
-                                             expected_volume_sleeper)
-
-        sleeper_model_part = model.body_model_parts[1]
-        calculated_sleeper_geometry = sleeper_model_part.geometry
-
-        TestUtils.assert_almost_equal_geometries(expected_sleeper_geometry, calculated_sleeper_geometry)
-
-        # check second sleeper
-        expected_sleeper_points = {
             9: Point.create([
                 origin_point[0] + sleeper_length / 2, origin_point[1],
                 origin_point[2] + sleeper_width / 2 + sleeper_distance
@@ -3549,6 +3496,18 @@ class TestModel:
             ], 12),
         }
         expected_sleeper_lines = {
+            5: Line.create([1, 5], 5),
+            7: Line.create([5, 6], 7),
+            6: Line.create([2, 6], 6),
+            1: Line.create([1, 2], 1),
+            9: Line.create([6, 7], 9),
+            8: Line.create([3, 7], 8),
+            2: Line.create([2, 3], 2),
+            11: Line.create([7, 8], 11),
+            10: Line.create([4, 8], 10),
+            3: Line.create([3, 4], 3),
+            12: Line.create([8, 5], 12),
+            4: Line.create([4, 1], 4),
             17: Line.create([9, 13], 17),
             19: Line.create([13, 14], 19),
             18: Line.create([10, 14], 18),
@@ -3563,6 +3522,12 @@ class TestModel:
             16: Line.create([12, 9], 16),
         }
         expected_surfaces_sleeper = {
+            2: Surface.create([5, 7, -6, -1], 2),
+            3: Surface.create([6, 9, -8, -2], 3),
+            4: Surface.create([8, 11, -10, -3], 4),
+            5: Surface.create([10, 12, -5, -4], 5),
+            1: Surface.create([1, 2, 3, 4], 1),
+            6: Surface.create([7, 9, 11, 12], 6),
             8: Surface.create([17, 19, -18, -13], 8),
             9: Surface.create([18, 21, -20, -14], 9),
             10: Surface.create([20, 23, -22, -15], 10),
@@ -3571,12 +3536,13 @@ class TestModel:
             12: Surface.create([19, 21, 23, 24], 12),
         }
         expected_volume_sleeper = {
+            1: Volume.create([-2, -3, -4, -5, -1, 6], 1),
             2: Volume.create([-8, -9, -10, -11, -7, 12], 2),
         }
         expected_sleeper_geometry = Geometry(expected_sleeper_points, expected_sleeper_lines, expected_surfaces_sleeper,
                                              expected_volume_sleeper)
 
-        sleeper_model_part = model.body_model_parts[2]
+        sleeper_model_part = model.body_model_parts[1]
         calculated_sleeper_geometry = sleeper_model_part.geometry
 
         TestUtils.assert_almost_equal_geometries(expected_sleeper_geometry, calculated_sleeper_geometry)
@@ -3597,7 +3563,7 @@ class TestModel:
 
         expected_rail_pad_geometry = Geometry(expected_rail_pad_points, expected_rail_pad_lines)
 
-        rail_pad_model_part = model.body_model_parts[3]
+        rail_pad_model_part = model.body_model_parts[2]
         calculated_rail_pad_geometry = rail_pad_model_part.geometry
         calculated_rail_pad_parameters = rail_pad_model_part.material.material_parameters
 
@@ -4692,11 +4658,10 @@ class TestModel:
                 "ndim": 2
             }}, "")
         sleeper_params = NodalConcentrated(1, 1, 1)
-        parts = model._create_sleeper_model_parts([sleeper_name], sleeper_params)
-        assert len(parts) == 1
-        assert parts[0].geometry is not None
-        assert parts[0].name == sleeper_name
-        assert parts[0].material.material_parameters == sleeper_params
+        part = model._create_sleeper_model_parts(sleeper_name, sleeper_params)
+        assert part.geometry is not None
+        assert part.name == sleeper_name
+        assert part.material.material_parameters == sleeper_params
 
     def test_create_sleeper_model_parts_soil(self, create_default_3d_soil_material: SoilMaterial):
         """
@@ -4706,26 +4671,21 @@ class TestModel:
             - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
         """
         model = Model(3)
-        sleeper_names = ["sleeper1", "sleeper2"]
-        for counter, sleeper_name in enumerate(sleeper_names):
-            model.gmsh_io.generate_geometry(
-                {
-                    sleeper_name: {
-                        "coordinates": [(0, 0 + counter, 0), (0, 2 + counter, 0), (0, 2 + counter, 1),
-                                        (0, 0 + counter, 1)],
-                        "ndim": 3,
-                        "extrusion_length": [1, 0, 0]
-                    }
-                }, "")
+        sleeper_name = "sleeper1"
+        model.gmsh_io.generate_geometry(
+            {
+                sleeper_name: {
+                    "coordinates": [(0, 0 , 0), (0, 2 , 0), (0, 2 , 1),
+                                    (0, 0 , 1)],
+                    "ndim": 3,
+                    "extrusion_length": [1, 0, 0]
+                }
+            }, "")
         sleeper_params = create_default_3d_soil_material
-        parts = model._create_sleeper_model_parts(sleeper_names, sleeper_params)
-        assert len(parts) == 2
-        assert parts[0].geometry is not None
-        assert parts[1].geometry is not None
-        assert parts[0].name == sleeper_names[0]
-        assert parts[1].name == sleeper_names[1]
-        assert parts[0].material == sleeper_params
-        assert parts[1].material == sleeper_params
+        part = model._create_sleeper_model_parts(sleeper_name, sleeper_params)
+        assert part.geometry is not None
+        assert part.name == sleeper_name
+        assert part.material == sleeper_params
 
     def test_create_rail_pads_model_part(self):
         """
