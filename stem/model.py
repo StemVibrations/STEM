@@ -117,7 +117,6 @@ class Model:
             List[str]: List of generated sleeper names.
         """
         names_sleepers = []
-
         if isinstance(sleeper_parameters, NodalConcentrated):
             connection_geo_settings = {"": {"coordinates": sleeper_global_coords, "ndim": 1}}
             self.gmsh_io.generate_geometry(connection_geo_settings, "")
@@ -126,6 +125,7 @@ class Model:
             names_sleepers.append(base_sleeper_name)
             self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
         elif isinstance(sleeper_parameters, SoilMaterial):
+            volume_ids = []
             # if no soil is present then this can be skipped
             if len(self.body_model_parts) > 0:
                 # get the min and max coordinates of the soils
@@ -145,7 +145,8 @@ class Model:
             for i, coord in enumerate(sleeper_global_coords):
                 coords_volume = Utils.create_sleeper_volume(coord, sleeper_dimensions, sleeper_rail_pad_offset)
                 # Assuming extrusion occurs in the second axis (index 1) for the sleeper height.
-                extrusions = [0, sleeper_dimensions[2], 0]
+                extrusions = [0, 0 ,0]
+                extrusions[VERTICAL_AXIS] = sleeper_dimensions[2]
                 sleeper_name_i = f"{base_sleeper_name}_{i}"
                 sleeper_geo_settings = {
                     sleeper_name_i: {
