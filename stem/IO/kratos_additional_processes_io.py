@@ -1,4 +1,5 @@
 from typing import Any, Dict, Union, List
+from copy import deepcopy
 
 from stem.additional_processes import *
 
@@ -99,6 +100,36 @@ class KratosAdditionalProcessesIO:
 
         return processes
 
+    def __create_hinge_dict(self, part_name: str, parameters: HingeParameters) -> List[Dict[str, Any]]:
+        """
+        Creates a dictionary containing the parameters for the hinge process
+
+        Args:
+            - part_name (str): part name where the hinge is applied
+            - parameters (:class:`stem.additional_processes.HingeParameters`): hinge parameters object
+
+        Returns:
+            - List[Dict[str, Any]]: list of dictionaries containing the rotational stiffness ratio values for
+            axis 2 and 3
+        """
+
+        process_dict_axis_2: Dict[str, Any] = {
+            "python_module": "assign_scalar_variable_to_nodes_process",
+            "kratos_module": "KratosMultiphysics",
+            "process_name": "AssignScalarVariableToNodesProcess",
+            "Parameters": {},
+        }
+        process_dict_axis_2["Parameters"]["model_part_name"] = f"{self.domain}.{part_name}"
+        process_dict_axis_2["Parameters"]["variable_name"] = "ROTATIONAL_STIFFNESS_AXIS_2"
+
+        process_dict_axis_2["Parameters"]["value"] = parameters.ROTATIONAL_STIFFNESS_AXIS_2
+
+        process_dict_axis_3 = deepcopy(process_dict_axis_2)
+        process_dict_axis_3["Parameters"]["variable_name"] = "ROTATIONAL_STIFFNESS_AXIS_3"
+        process_dict_axis_3["Parameters"]["value"] = parameters.ROTATIONAL_STIFFNESS_AXIS_3
+
+        return [process_dict_axis_2, process_dict_axis_3]
+
     def create_additional_processes_dict(
             self, part_name: str, parameters: AdditionalProcessesParametersABC) -> Union[List[Dict[str, Any]], None]:
         """
@@ -118,5 +149,7 @@ class KratosAdditionalProcessesIO:
             return [self.__create_excavation_dict(part_name, parameters)]
         elif isinstance(parameters, ParameterFieldParameters):
             return self.__create_parameter_field_dict(part_name, parameters)
+        elif isinstance(parameters, HingeParameters):
+            return self.__create_hinge_dict(part_name, parameters)
         else:
             raise NotImplementedError
