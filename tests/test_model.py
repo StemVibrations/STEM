@@ -14,6 +14,7 @@ from stem.output import NodalOutput, GiDOutputParameters, JsonOutputParameters
 from stem.solver import *
 from stem.boundary import RotationConstraint, DisplacementConstraint
 from tests.utils import TestUtils
+from stem.soil_material import SoilMaterial, OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
 
 IS_LINUX = sys.platform == "linux"
 
@@ -417,15 +418,6 @@ class TestModel:
         # Gauss point results
         # define output process
 
-        output_process = Output(part_name="nodal_accelerations",
-                                output_name="gid_nodal_accelerations_top",
-                                output_dir="dir_test",
-                                output_parameters=GiDOutputParameters(file_format="binary",
-                                                                      output_interval=100,
-                                                                      nodal_results=nodal_results))
-
-        return output_process
-
     @pytest.fixture
     def expected_geometry_two_layers_3D_extruded(self) -> Tuple[Geometry, Geometry]:
         """
@@ -514,108 +506,6 @@ class TestModel:
         geometry_2.volumes = {2: Volume.create([-7, -8, 3, -9, -10, 11], 2)}
 
         return geometry_1, geometry_2
-
-    @pytest.fixture
-    def expected_geometry_two_layers_3D_geo_file(self):
-        """
-        Expected geometry data for a 3D geometry create in a geo file. The geometry is 2 stacked blocks, where the top
-        and bottom blocks are in different groups.
-
-        Returns:
-            - Tuple[:class:`stem.geometry.Geometry`,:class:`stem.geometry.Geometry`]: expected geometry data
-        """
-
-        geometry_1 = Geometry()
-        geometry_1.volumes = {1: Volume.create([-10, 39, 26, 30, 34, 38], 1)}
-
-        geometry_1.surfaces = {
-            10: Surface.create([5, 6, 7, 8], 10),
-            39: Surface.create([19, 20, 21, 22], 39),
-            26: Surface.create([5, 25, -19, -24], 26),
-            30: Surface.create([6, 29, -20, -25], 30),
-            34: Surface.create([7, 33, -21, -29], 34),
-            38: Surface.create([8, 24, -22, -33], 38)
-        }
-
-        geometry_1.lines = {
-            5: Line.create([1, 2], 5),
-            6: Line.create([2, 3], 6),
-            7: Line.create([3, 4], 7),
-            8: Line.create([4, 1], 8),
-            19: Line.create([13, 14], 19),
-            20: Line.create([14, 18], 20),
-            21: Line.create([18, 22], 21),
-            22: Line.create([22, 13], 22),
-            25: Line.create([2, 14], 25),
-            24: Line.create([1, 13], 24),
-            29: Line.create([3, 18], 29),
-            33: Line.create([4, 22], 33)
-        }
-
-        geometry_1.points = {
-            1: Point.create([0., 0., 0.], 1),
-            2: Point.create([0.5, 0., 0.], 2),
-            3: Point.create([0.5, 1., 0.], 3),
-            4: Point.create([0., 1., 0.], 4),
-            13: Point.create([0., 0., -0.5], 13),
-            14: Point.create([0.5, 0., -0.5], 14),
-            18: Point.create([0.5, 1., -0.5], 18),
-            22: Point.create([0., 1., -0.5], 22)
-        }
-
-        geometry_2 = Geometry()
-        geometry_2.volumes = {2: Volume.create([-17, 61, -48, -34, -56, -60], 2)}
-
-        geometry_2.surfaces = {
-            17: Surface.create([-13, -7, -15, -14], 17),
-            61: Surface.create([41, -21, 43, 44], 61),
-            48: Surface.create([-13, 33, -41, -46], 48),
-            34: Surface.create([7, 33, -21, -29], 34),
-            56: Surface.create([-15, 55, -43, -29], 56),
-            60: Surface.create([-14, 46, -44, -55], 60)
-        }
-
-        geometry_2.lines = {
-            13: Line.create([4, 11], 13),
-            7: Line.create([3, 4], 7),
-            15: Line.create([12, 3], 15),
-            14: Line.create([11, 12], 14),
-            41: Line.create([23, 22], 41),
-            21: Line.create([18, 22], 21),
-            43: Line.create([18, 32], 43),
-            44: Line.create([32, 23], 44),
-            33: Line.create([4, 22], 33),
-            46: Line.create([11, 23], 46),
-            29: Line.create([3, 18], 29),
-            55: Line.create([12, 32], 55)
-        }
-
-        geometry_2.points = {
-            4: Point.create([0., 1., 0.], 4),
-            11: Point.create([0., 2., 0.], 11),
-            3: Point.create([0.5, 1., 0.], 3),
-            12: Point.create([0.5, 2., 0.], 12),
-            23: Point.create([0., 2., -0.5], 23),
-            22: Point.create([0., 1., -0.5], 22),
-            18: Point.create([0.5, 1., -0.5], 18),
-            32: Point.create([0.5, 2., -0.5], 32)
-        }
-
-        return geometry_1, geometry_2
-
-    @pytest.fixture(autouse=True)
-    def close_gmsh(self):
-        """
-        Initializer to close gmsh if it was not closed before. In case a test fails, the destroyer method is not called
-        on the Model object and gmsh keeps on running. Therefore, nodes, lines, surfaces and volumes ids are not
-        reset to one. This causes also the next test after the failed one to fail as well, which has nothing to do
-        the test itself.
-
-        Returns:
-            - None
-
-        """
-        gmsh_IO.GmshIO().finalize_gmsh()
 
     def test_add_single_soil_layer_2D(self, expected_geometry_single_layer_2D: Geometry,
                                       create_default_2d_soil_material: SoilMaterial):
@@ -993,6 +883,108 @@ class TestModel:
         for model_part, expected_geometry in zip(model.body_model_parts, expected_geometries):
 
             TestUtils.assert_almost_equal_geometries(expected_geometry, model_part.geometry)
+
+    @pytest.fixture
+    def expected_geometry_two_layers_3D_geo_file(self):
+        """
+        Expected geometry data for a 3D geometry create in a geo file. The geometry is 2 stacked blocks, where the top
+        and bottom blocks are in different groups.
+
+        Returns:
+            - Tuple[:class:`stem.geometry.Geometry`,:class:`stem.geometry.Geometry`]: expected geometry data
+        """
+
+        geometry_1 = Geometry()
+        geometry_1.volumes = {1: Volume.create([-10, 39, 26, 30, 34, 38], 1)}
+
+        geometry_1.surfaces = {
+            10: Surface.create([5, 6, 7, 8], 10),
+            39: Surface.create([19, 20, 21, 22], 39),
+            26: Surface.create([5, 25, -19, -24], 26),
+            30: Surface.create([6, 29, -20, -25], 30),
+            34: Surface.create([7, 33, -21, -29], 34),
+            38: Surface.create([8, 24, -22, -33], 38)
+        }
+
+        geometry_1.lines = {
+            5: Line.create([1, 2], 5),
+            6: Line.create([2, 3], 6),
+            7: Line.create([3, 4], 7),
+            8: Line.create([4, 1], 8),
+            19: Line.create([13, 14], 19),
+            20: Line.create([14, 18], 20),
+            21: Line.create([18, 22], 21),
+            22: Line.create([22, 13], 22),
+            25: Line.create([2, 14], 25),
+            24: Line.create([1, 13], 24),
+            29: Line.create([3, 18], 29),
+            33: Line.create([4, 22], 33)
+        }
+
+        geometry_1.points = {
+            1: Point.create([0., 0., 0.], 1),
+            2: Point.create([0.5, 0., 0.], 2),
+            3: Point.create([0.5, 1., 0.], 3),
+            4: Point.create([0., 1., 0.], 4),
+            13: Point.create([0., 0., -0.5], 13),
+            14: Point.create([0.5, 0., -0.5], 14),
+            18: Point.create([0.5, 1., -0.5], 18),
+            22: Point.create([0., 1., -0.5], 22)
+        }
+
+        geometry_2 = Geometry()
+        geometry_2.volumes = {2: Volume.create([-17, 61, -48, -34, -56, -60], 2)}
+
+        geometry_2.surfaces = {
+            17: Surface.create([-13, -7, -15, -14], 17),
+            61: Surface.create([41, -21, 43, 44], 61),
+            48: Surface.create([-13, 33, -41, -46], 48),
+            34: Surface.create([7, 33, -21, -29], 34),
+            56: Surface.create([-15, 55, -43, -29], 56),
+            60: Surface.create([-14, 46, -44, -55], 60)
+        }
+
+        geometry_2.lines = {
+            13: Line.create([4, 11], 13),
+            7: Line.create([3, 4], 7),
+            15: Line.create([12, 3], 15),
+            14: Line.create([11, 12], 14),
+            41: Line.create([23, 22], 41),
+            21: Line.create([18, 22], 21),
+            43: Line.create([18, 32], 43),
+            44: Line.create([32, 23], 44),
+            33: Line.create([4, 22], 33),
+            46: Line.create([11, 23], 46),
+            29: Line.create([3, 18], 29),
+            55: Line.create([12, 32], 55)
+        }
+
+        geometry_2.points = {
+            4: Point.create([0., 1., 0.], 4),
+            11: Point.create([0., 2., 0.], 11),
+            3: Point.create([0.5, 1., 0.], 3),
+            12: Point.create([0.5, 2., 0.], 12),
+            23: Point.create([0., 2., -0.5], 23),
+            22: Point.create([0., 1., -0.5], 22),
+            18: Point.create([0.5, 1., -0.5], 18),
+            32: Point.create([0.5, 2., -0.5], 32)
+        }
+
+        return geometry_1, geometry_2
+
+    @pytest.fixture(autouse=True)
+    def close_gmsh(self):
+        """
+        Initializer to close gmsh if it was not closed before. In case a test fails, the destroyer method is not called
+        on the Model object and gmsh keeps on running. Therefore, nodes, lines, surfaces and volumes ids are not
+        reset to one. This causes also the next test after the failed one to fail as well, which has nothing to do
+        the test itself.
+
+        Returns:
+            - None
+
+        """
+        gmsh_IO.GmshIO().finalize_gmsh()
 
     def test_add_all_layers_from_geo_file_2D(self, expected_geometry_two_layers_2D: Tuple[Geometry, Geometry,
                                                                                           Geometry]):
@@ -3165,6 +3157,478 @@ class TestModel:
         TestUtils.assert_almost_equal_geometries(expected_rail_pad_geometry, calculated_rail_pad_geometry)
         TestUtils.assert_dictionary_almost_equal(rail_pad_parameters.__dict__, calculated_rail_pad_parameters.__dict__)
 
+    def test_generate_straight_track_3d_volume_sleeper_error_no_sleeper_dims(
+            self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if an error is raised when no sleeper dimensions are provided. A straight track is generated in 3d space
+        without sleeper dimensions. An error should be raised.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+
+        """
+        ndim = 3
+        model = Model(ndim)
+
+        rail_parameters = EulerBeam(3, 1, 1, 1, 1, 1, 1, 1)
+        rail_pad_parameters = ElasticSpringDamper([1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1])
+
+        origin_point = np.array([2.5, 1.0, 0.0])
+        direction_vector = np.array([0, 0, 1])
+
+        with pytest.raises(
+                ValueError,
+                match=r"If sleeper parameters are SoilMaterial, dimensions must be a list of length, width, height."):
+            model.generate_straight_track(5.0, 2, rail_parameters, create_default_3d_soil_material, rail_pad_parameters,
+                                          0.02, origin_point, direction_vector, "track_1", None)
+
+    def test_generate_straight_track_3d_volume_sleeper_on_soil(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if a straight track is generated correctly in a 3d space. A straight track is generated and added to the
+        model. The geometry and material of the rails, sleepers and rail pads are checked. The sleepers are modelled as
+        volumes. The sleepers are placed on the soil layer.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+
+        """
+        # define the mock model
+        ndim = 3
+        model = Model(ndim)
+        model.extrusion_length = 19.5
+        # define the soil dimensions and material and assign it to the model
+        material_soil = create_default_3d_soil_material
+        # Specify the coordinates for the soil layer in the model
+        layer1_coordinates = [(0.0, 0.0, -5.0), (4.0, 0.0, -5.0), (4.0, 1.0, -5.0), (0.0, 1.0, -5.0)]
+        model.add_soil_layer_by_coordinates(layer1_coordinates, material_soil, "soil_layer_1")
+        # define the rail parameters
+        rail_parameters = EulerBeam(3, 1, 1, 1, 1, 1, 1, 1)
+        rail_pad_parameters = ElasticSpringDamper([1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1])
+        sleeper_parameters = create_default_3d_soil_material
+        origin_point = np.array([2.5, 1.0, 0.0])
+        direction_vector = np.array([0, 0, 1])
+        # dimensions of the sleeper
+        sleeper_height = 0.3
+        rail_pad_thickness = 0.02
+        sleeper_length = 2.6
+        sleeper_width = 0.234
+        sleeper_distance = 5.0
+        sleeper_rail_pad_offset = sleeper_length / 2
+        sleeper_dimensions = [sleeper_length, sleeper_width, sleeper_height]
+        # create a straight track with rails, sleepers and rail pads
+        model.generate_straight_track(sleeper_distance, 2, rail_parameters, sleeper_parameters, rail_pad_parameters,
+                                      rail_pad_thickness, origin_point, direction_vector, "track_1",
+                                      sleeper_rail_pad_offset, sleeper_dimensions)
+
+        # check geometry and material of the rail
+        expected_rail_points = {
+            49: Point.create([origin_point[0], origin_point[1] + sleeper_height + rail_pad_thickness, origin_point[2]],
+                             49),  #
+            50: Point.create([
+                origin_point[0], origin_point[1] + sleeper_height + rail_pad_thickness,
+                origin_point[2] + sleeper_distance
+            ], 50),
+        }
+        expected_rail_lines = {83: Line.create([49, 50], 83)}
+
+        expected_rail_geometry = Geometry(expected_rail_points, expected_rail_lines)
+
+        # check rail model part
+        rail_model_part = model.body_model_parts[1]
+        calculated_rail_geometry = rail_model_part.geometry
+        calculated_rail_parameters = rail_model_part.material.material_parameters
+
+        TestUtils.assert_almost_equal_geometries(expected_rail_geometry, calculated_rail_geometry)
+        TestUtils.assert_dictionary_almost_equal(rail_parameters.__dict__, calculated_rail_parameters.__dict__)
+
+        # Check sleepers
+        expected_sleeper_points = {
+            21: Point.create(
+                [origin_point[0] + sleeper_length / 2, origin_point[1], origin_point[2] + sleeper_width / 2], 21),
+            27: Point.create([
+                origin_point[0] + sleeper_length / 2, origin_point[1] + sleeper_height,
+                origin_point[2] + sleeper_width / 2
+            ], 27),
+            28: Point.create([
+                origin_point[0] + sleeper_length / 2, origin_point[1] + sleeper_height,
+                origin_point[2] - sleeper_width / 2
+            ], 28),
+            20: Point.create(
+                [origin_point[0] + sleeper_length / 2, origin_point[1], origin_point[2] - sleeper_width / 2], 20),
+            29: Point.create([
+                origin_point[0] - sleeper_length / 2, origin_point[1] + sleeper_height,
+                origin_point[2] - sleeper_width / 2
+            ], 29),
+            26: Point.create(
+                [origin_point[0] - sleeper_length / 2, origin_point[1], origin_point[2] - sleeper_width / 2], 26),
+            19: Point.create([origin_point[0], origin_point[1], origin_point[2] - sleeper_width / 2], 19),
+            30: Point.create([
+                origin_point[0] - sleeper_length / 2, origin_point[1] + sleeper_height,
+                origin_point[2] + sleeper_width / 2
+            ], 30),
+            25: Point.create(
+                [origin_point[0] - sleeper_length / 2, origin_point[1], origin_point[2] + sleeper_width / 2], 25),
+            22: Point.create([origin_point[0], origin_point[1], origin_point[2] + sleeper_width / 2], 22),
+            39: Point.create([
+                origin_point[0] + sleeper_length / 2, origin_point[1],
+                origin_point[2] + sleeper_width / 2 + sleeper_distance
+            ], 39),
+            45: Point.create([
+                origin_point[0] + sleeper_length / 2, origin_point[1] + sleeper_height,
+                origin_point[2] + sleeper_width / 2 + sleeper_distance
+            ], 45),
+            46: Point.create([
+                origin_point[0] + sleeper_length / 2, origin_point[1] + sleeper_height,
+                origin_point[2] - sleeper_width / 2 + sleeper_distance
+            ], 46),
+            38: Point.create([
+                origin_point[0] + sleeper_length / 2, origin_point[1],
+                origin_point[2] - sleeper_width / 2 + sleeper_distance
+            ], 38),
+            47: Point.create([
+                origin_point[0] - sleeper_length / 2, origin_point[1] + sleeper_height,
+                origin_point[2] - sleeper_width / 2 + sleeper_distance
+            ], 47),
+            44: Point.create([
+                origin_point[0] - sleeper_length / 2, origin_point[1],
+                origin_point[2] - sleeper_width / 2 + sleeper_distance
+            ], 44),
+            37: Point.create([origin_point[0], origin_point[1], origin_point[2] - sleeper_width / 2 + sleeper_distance],
+                             37),
+            48: Point.create([
+                origin_point[0] - sleeper_length / 2, origin_point[1] + sleeper_height,
+                origin_point[2] + sleeper_width / 2 + sleeper_distance
+            ], 48),
+            43: Point.create([
+                origin_point[0] - sleeper_length / 2, origin_point[1],
+                origin_point[2] + sleeper_width / 2 + sleeper_distance
+            ], 43),
+            40: Point.create([origin_point[0], origin_point[1], origin_point[2] + sleeper_width / 2 + sleeper_distance],
+                             40),
+        }
+        expected_sleeper_lines = {
+            43: Line.create([21, 27], 43),
+            45: Line.create([27, 28], 45),
+            44: Line.create([20, 28], 44),
+            30: Line.create([21, 20], 30),
+            47: Line.create([28, 29], 47),
+            46: Line.create([26, 29], 46),
+            40: Line.create([19, 26], 40),
+            29: Line.create([20, 19], 29),
+            49: Line.create([29, 30], 49),
+            48: Line.create([25, 30], 48),
+            39: Line.create([26, 25], 39),
+            50: Line.create([30, 27], 50),
+            31: Line.create([22, 21], 31),
+            38: Line.create([25, 22], 38),
+            34: Line.create([19, 22], 34),
+            75: Line.create([39, 45], 75),
+            77: Line.create([45, 46], 77),
+            76: Line.create([38, 46], 76),
+            62: Line.create([39, 38], 62),
+            79: Line.create([46, 47], 79),
+            78: Line.create([44, 47], 78),
+            72: Line.create([37, 44], 72),
+            61: Line.create([38, 37], 61),
+            81: Line.create([47, 48], 81),
+            80: Line.create([43, 48], 80),
+            71: Line.create([44, 43], 71),
+            82: Line.create([48, 45], 82),
+            63: Line.create([40, 39], 63),
+            70: Line.create([43, 40], 70),
+            66: Line.create([37, 40], 66),
+        }
+        expected_surfaces_sleeper = {
+            10: Surface.create([43, 45, -44, -30], 10),
+            11: Surface.create([44, 47, -46, -40, -29], 11),
+            12: Surface.create([46, 49, -48, -39], 12),
+            13: Surface.create([48, 50, -43, -31, -38], 13),
+            4: Surface.create([-34, -29, -30, -31], 4),
+            6: Surface.create([-40, 34, -38, -39], 6),
+            14: Surface.create([45, 47, 49, 50], 14),
+            24: Surface.create([75, 77, -76, -62], 24),
+            25: Surface.create([76, 79, -78, -72, -61], 25),
+            26: Surface.create([78, 81, -80, -71], 26),
+            27: Surface.create([80, 82, -75, -63, -70], 27),
+            18: Surface.create([-63, -66, -61, -62], 18),
+            20: Surface.create([66, -70, -71, -72], 20),
+            28: Surface.create([77, 79, 81, 82], 28),
+        }
+        expected_volume_sleeper = {
+            2: Volume.create([-10, -11, -12, -13, 4, 6, 14], 2),
+            3: Volume.create([-24, -25, -26, -27, 18, 20, 28], 3),
+        }
+        expected_sleeper_geometry = Geometry(expected_sleeper_points, expected_sleeper_lines, expected_surfaces_sleeper,
+                                             expected_volume_sleeper)
+
+        sleeper_model_part = model.body_model_parts[2]
+        calculated_sleeper_geometry = sleeper_model_part.geometry
+
+        TestUtils.assert_almost_equal_geometries(expected_sleeper_geometry, calculated_sleeper_geometry)
+
+        # check the rail pads
+        expected_rail_pad_points = {
+            49: Point.create([origin_point[0], origin_point[1] + sleeper_height + rail_pad_thickness, origin_point[2]],
+                             49),
+            51: Point.create([origin_point[0], origin_point[1] + sleeper_height, origin_point[2]], 51),
+            50: Point.create([
+                origin_point[0], origin_point[1] + sleeper_height + rail_pad_thickness,
+                origin_point[2] + sleeper_distance
+            ], 50),
+            52: Point.create([origin_point[0], origin_point[1] + sleeper_height, origin_point[2] + sleeper_distance],
+                             52),
+        }
+        expected_rail_pad_lines = {84: Line.create([49, 51], 84), 85: Line.create([50, 52], 85)}
+
+        expected_rail_pad_geometry = Geometry(expected_rail_pad_points, expected_rail_pad_lines)
+
+        rail_pad_model_part = model.body_model_parts[3]
+        calculated_rail_pad_geometry = rail_pad_model_part.geometry
+        calculated_rail_pad_parameters = rail_pad_model_part.material.material_parameters
+
+        TestUtils.assert_almost_equal_geometries(expected_rail_pad_geometry, calculated_rail_pad_geometry)
+        TestUtils.assert_dictionary_almost_equal(rail_pad_parameters.__dict__, calculated_rail_pad_parameters.__dict__)
+
+    def test_generate_straight_track_3d_volume_sleeper_on_soil_x_direction(
+            self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if a straight track is generated correctly along the x-axis in a 3D space. The sleepers are modeled as
+        volumes and placed on the soil layer.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+        """
+        ndim = 3
+        model = Model(ndim)
+        model.extrusion_length = 19.5
+        material_soil = create_default_3d_soil_material
+
+        layer1_coordinates = [(0.0, 0.0, -5.0), (4.0, 0.0, -5.0), (4.0, 1.0, -5.0), (0.0, 1.0, -5.0)]
+        model.add_soil_layer_by_coordinates(layer1_coordinates, material_soil, "soil_layer_1")
+
+        rail_parameters = EulerBeam(3, 1, 1, 1, 1, 1, 1, 1)
+        rail_pad_parameters = ElasticSpringDamper([1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1])
+        sleeper_parameters = create_default_3d_soil_material
+        origin_point = np.array([0.0, 1.0, 0.5])
+        direction_vector = np.array([1, 0, 0])
+
+        sleeper_height = 0.3
+        rail_pad_thickness = 0.02
+        sleeper_length = 2.6
+        sleeper_width = 0.234
+        sleeper_distance = 5.0
+        sleeper_rail_pad_offset = sleeper_length / 2
+        sleeper_dimensions = [sleeper_length, sleeper_width, sleeper_height]
+
+        model.generate_straight_track(sleeper_distance, 2, rail_parameters, sleeper_parameters, rail_pad_parameters,
+                                      rail_pad_thickness, origin_point, direction_vector, "track_x",
+                                      sleeper_rail_pad_offset, sleeper_dimensions)
+
+        rail_model_part = model.body_model_parts[1]
+        sleeper_model_part = model.body_model_parts[2]
+        rail_pad_model_part = model.body_model_parts[3]
+
+        assert len(rail_model_part.geometry.points) == 2
+        assert len(sleeper_model_part.geometry.volumes) == 2
+        assert len(rail_pad_model_part.geometry.lines) == 2
+
+        first_rail_point = rail_model_part.geometry.points[min(rail_model_part.geometry.points)]
+        second_rail_point = rail_model_part.geometry.points[max(rail_model_part.geometry.points)]
+        assert first_rail_point.coordinates[0] == origin_point[0]
+        assert second_rail_point.coordinates[0] == origin_point[0] + sleeper_distance
+        assert first_rail_point.coordinates[1] == origin_point[1] + sleeper_height + rail_pad_thickness
+
+    def test_generate_straight_track_3d_volume_sleeper(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test if a straight track is generated correctly in a 3d space. A straight track is generated and added to the
+        model. The geometry and material of the rails, sleepers and rail pads are checked. The sleepers are modelled as
+        volumes.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+
+        """
+
+        ndim = 3
+        model = Model(ndim)
+
+        rail_parameters = EulerBeam(3, 1, 1, 1, 1, 1, 1, 1)
+        rail_pad_parameters = ElasticSpringDamper([1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1])
+
+        sleeper_parameters = create_default_3d_soil_material
+
+        origin_point = np.array([2.5, 1.0, 0.0])
+        direction_vector = np.array([0, 0, 1])
+
+        # dimensions of the sleeper
+        sleeper_height = 0.3
+        rail_pad_thickness = 0.02
+        sleeper_length = 2.6
+        sleeper_width = 0.234
+        sleeper_distance = 5.0
+        sleeper_rail_pad_offset = sleeper_length / 2
+        sleeper_dimensions = [sleeper_length, sleeper_width, sleeper_height]
+        # create a straight track with rails, sleepers and rail pads
+        model.generate_straight_track(sleeper_distance, 2, rail_parameters, sleeper_parameters, rail_pad_parameters,
+                                      rail_pad_thickness, origin_point, direction_vector, "track_1",
+                                      sleeper_rail_pad_offset, sleeper_dimensions)
+
+        # check geometry and material of the rail
+        expected_rail_points = {
+            17: Point.create([origin_point[0], origin_point[1] + sleeper_height + rail_pad_thickness, origin_point[2]],
+                             17),  #
+            18: Point.create([
+                origin_point[0], origin_point[1] + sleeper_height + rail_pad_thickness,
+                origin_point[2] + sleeper_distance
+            ], 18),
+        }
+        expected_rail_lines = {25: Line.create([17, 18], 25)}
+
+        expected_rail_geometry = Geometry(expected_rail_points, expected_rail_lines)
+
+        # check rail model part
+        rail_model_part = model.body_model_parts[0]
+        calculated_rail_geometry = rail_model_part.geometry
+        calculated_rail_parameters = rail_model_part.material.material_parameters
+
+        TestUtils.assert_almost_equal_geometries(expected_rail_geometry, calculated_rail_geometry)
+        TestUtils.assert_dictionary_almost_equal(rail_parameters.__dict__, calculated_rail_parameters.__dict__)
+
+        # check first sleeper
+
+        expected_sleeper_points = {
+            1: Point.create(
+                [origin_point[0] + sleeper_length / 2, origin_point[1], origin_point[2] + sleeper_width / 2], 1),
+            5: Point.create([
+                origin_point[0] + sleeper_length / 2, origin_point[1] + sleeper_height,
+                origin_point[2] + sleeper_width / 2
+            ], 5),
+            6: Point.create([
+                origin_point[0] + sleeper_length / 2, origin_point[1] + sleeper_height,
+                origin_point[2] - sleeper_width / 2
+            ], 6),
+            2: Point.create(
+                [origin_point[0] + sleeper_length / 2, origin_point[1], origin_point[2] - sleeper_width / 2], 2),
+            7: Point.create([
+                origin_point[0] - sleeper_length / 2, origin_point[1] + sleeper_height,
+                origin_point[2] - sleeper_width / 2
+            ], 7),
+            3: Point.create(
+                [origin_point[0] - sleeper_length / 2, origin_point[1], origin_point[2] - sleeper_width / 2], 3),
+            8: Point.create([
+                origin_point[0] - sleeper_length / 2, origin_point[1] + sleeper_height,
+                origin_point[2] + sleeper_width / 2
+            ], 8),
+            4: Point.create(
+                [origin_point[0] - sleeper_length / 2, origin_point[1], origin_point[2] + sleeper_width / 2], 4),
+            9: Point.create([
+                origin_point[0] + sleeper_length / 2, origin_point[1],
+                origin_point[2] + sleeper_width / 2 + sleeper_distance
+            ], 9),
+            13: Point.create([
+                origin_point[0] + sleeper_length / 2, origin_point[1] + sleeper_height,
+                origin_point[2] + sleeper_width / 2 + sleeper_distance
+            ], 13),
+            14: Point.create([
+                origin_point[0] + sleeper_length / 2, origin_point[1] + sleeper_height,
+                origin_point[2] - sleeper_width / 2 + sleeper_distance
+            ], 14),
+            10: Point.create([
+                origin_point[0] + sleeper_length / 2, origin_point[1],
+                origin_point[2] - sleeper_width / 2 + sleeper_distance
+            ], 10),
+            15: Point.create([
+                origin_point[0] - sleeper_length / 2, origin_point[1] + sleeper_height,
+                origin_point[2] - sleeper_width / 2 + sleeper_distance
+            ], 15),
+            11: Point.create([
+                origin_point[0] - sleeper_length / 2, origin_point[1],
+                origin_point[2] - sleeper_width / 2 + sleeper_distance
+            ], 11),
+            16: Point.create([
+                origin_point[0] - sleeper_length / 2, origin_point[1] + sleeper_height,
+                origin_point[2] + sleeper_width / 2 + sleeper_distance
+            ], 16),
+            12: Point.create([
+                origin_point[0] - sleeper_length / 2, origin_point[1],
+                origin_point[2] + sleeper_width / 2 + sleeper_distance
+            ], 12),
+        }
+        expected_sleeper_lines = {
+            5: Line.create([1, 5], 5),
+            7: Line.create([5, 6], 7),
+            6: Line.create([2, 6], 6),
+            1: Line.create([1, 2], 1),
+            9: Line.create([6, 7], 9),
+            8: Line.create([3, 7], 8),
+            2: Line.create([2, 3], 2),
+            11: Line.create([7, 8], 11),
+            10: Line.create([4, 8], 10),
+            3: Line.create([3, 4], 3),
+            12: Line.create([8, 5], 12),
+            4: Line.create([4, 1], 4),
+            17: Line.create([9, 13], 17),
+            19: Line.create([13, 14], 19),
+            18: Line.create([10, 14], 18),
+            13: Line.create([9, 10], 13),
+            21: Line.create([14, 15], 21),
+            20: Line.create([11, 15], 20),
+            14: Line.create([10, 11], 14),
+            23: Line.create([15, 16], 23),
+            22: Line.create([12, 16], 22),
+            15: Line.create([11, 12], 15),
+            24: Line.create([16, 13], 24),
+            16: Line.create([12, 9], 16),
+        }
+        expected_surfaces_sleeper = {
+            2: Surface.create([5, 7, -6, -1], 2),
+            3: Surface.create([6, 9, -8, -2], 3),
+            4: Surface.create([8, 11, -10, -3], 4),
+            5: Surface.create([10, 12, -5, -4], 5),
+            1: Surface.create([1, 2, 3, 4], 1),
+            6: Surface.create([7, 9, 11, 12], 6),
+            8: Surface.create([17, 19, -18, -13], 8),
+            9: Surface.create([18, 21, -20, -14], 9),
+            10: Surface.create([20, 23, -22, -15], 10),
+            11: Surface.create([22, 24, -17, -16], 11),
+            7: Surface.create([13, 14, 15, 16], 7),
+            12: Surface.create([19, 21, 23, 24], 12),
+        }
+        expected_volume_sleeper = {
+            1: Volume.create([-2, -3, -4, -5, -1, 6], 1),
+            2: Volume.create([-8, -9, -10, -11, -7, 12], 2),
+        }
+        expected_sleeper_geometry = Geometry(expected_sleeper_points, expected_sleeper_lines, expected_surfaces_sleeper,
+                                             expected_volume_sleeper)
+
+        sleeper_model_part = model.body_model_parts[1]
+        calculated_sleeper_geometry = sleeper_model_part.geometry
+
+        TestUtils.assert_almost_equal_geometries(expected_sleeper_geometry, calculated_sleeper_geometry)
+
+        # check the rail pads
+        expected_rail_pad_points = {
+            17: Point.create([origin_point[0], origin_point[1] + sleeper_height + rail_pad_thickness, origin_point[2]],
+                             17),
+            19: Point.create([origin_point[0], origin_point[1] + sleeper_height, origin_point[2]], 19),
+            18: Point.create([
+                origin_point[0], origin_point[1] + sleeper_height + rail_pad_thickness,
+                origin_point[2] + sleeper_distance
+            ], 18),
+            20: Point.create([origin_point[0], origin_point[1] + sleeper_height, origin_point[2] + sleeper_distance],
+                             20),
+        }
+        expected_rail_pad_lines = {26: Line.create([17, 19], 26), 27: Line.create([18, 20], 27)}
+
+        expected_rail_pad_geometry = Geometry(expected_rail_pad_points, expected_rail_pad_lines)
+
+        rail_pad_model_part = model.body_model_parts[2]
+        calculated_rail_pad_geometry = rail_pad_model_part.geometry
+        calculated_rail_pad_parameters = rail_pad_model_part.material.material_parameters
+
+        TestUtils.assert_almost_equal_geometries(expected_rail_pad_geometry, calculated_rail_pad_geometry)
+        TestUtils.assert_dictionary_almost_equal(rail_pad_parameters.__dict__, calculated_rail_pad_parameters.__dict__)
+
     def test_generate_straight_track_3d(self):
         """
         Tests if a straight track is generated correctly in a 3d space. A straight track is generated and added to the
@@ -4241,3 +4705,172 @@ class TestModel:
         model.ndim = 2
         with pytest.raises(NotImplementedError, match="Hinges can only be applied in 3D models"):
             model.add_hinge_on_beam(beam_material.name, [(-0.2, 0.0, 0.0)], hinge_parameters, "hinge_5")
+
+    def test_create_rail_model_part(self):
+        """
+        Tests if the rail model part is correctly created.
+
+        """
+        model = Model(3)
+        rail_name = "rail1"
+        # add rail geometry
+        rail_geo_settings = {rail_name: {"coordinates": [(0, 0, 0), (0, 2, 0), (0, 2, 1)], "ndim": 1}}
+        model.gmsh_io.generate_geometry(rail_geo_settings, "")
+        # set up materials
+        rail_params = EulerBeam(1, 1, 1, 1, 1, 1)
+        rail_part = model._Model__create_rail_model_part(rail_name, rail_params)
+        # Check that the geometry was set by our dummy function.
+        assert rail_part.geometry is not None
+        # Check that material was set properly.
+        TestUtils.assert_dictionary_almost_equal(rail_params.__dict__, rail_part.material.material_parameters.__dict__)
+        assert rail_part.material.name == rail_name
+
+    def test_create_sleeper_model_parts_nodal(self):
+        """
+        Tests if the sleeper model part is correctly created when the sleeper is a nodal concentrated type.
+
+        """
+        model = Model(3)
+        sleeper_name = "sleeper1"
+        model.gmsh_io.generate_geometry(
+            {sleeper_name: {
+                "coordinates": [(0, 0, 0), (0, 2, 0), (0, 2, 1), (0, 0, 1)],
+                "ndim": 2
+            }}, "")
+        sleeper_params = NodalConcentrated(1, 1, 1)
+        part = model._Model__create_sleeper_model_parts(sleeper_name, sleeper_params)
+        assert part.geometry is not None
+        assert part.name == sleeper_name
+        assert part.material.material_parameters == sleeper_params
+
+    def test_create_sleeper_model_parts_soil(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Tests if the sleeper model part is correctly created when the sleeper is a soil material.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+        """
+        model = Model(3)
+        sleeper_name = "sleeper1"
+        model.gmsh_io.generate_geometry(
+            {
+                sleeper_name: {
+                    "coordinates": [(0, 0, 0), (0, 2, 0), (0, 2, 1), (0, 0, 1)],
+                    "ndim": 3,
+                    "extrusion_length": [1, 0, 0]
+                }
+            }, "")
+        sleeper_params = create_default_3d_soil_material
+        part = model._Model__create_sleeper_model_parts(sleeper_name, sleeper_params)
+        assert part.geometry is not None
+        assert part.name == sleeper_name
+        assert part.material == sleeper_params
+
+    def test_create_rail_pads_model_part(self):
+        """
+        Tests if the rail pads model part is correctly created.
+
+        """
+        model = Model(3)
+        rail_pads_name = "rail_pads1"
+        model.gmsh_io.generate_geometry(
+            {rail_pads_name: {
+                "coordinates": [(0, 0, 0), (0, 2, 0), (0, 2, 1), (0, 0, 1)],
+                "ndim": 2
+            }}, "")
+        pad_params = ElasticSpringDamper(1, 1, 1, 1)
+        pads_part = model._Model__create_rail_pads_model_part(rail_pads_name, pad_params)
+        assert pads_part.geometry is not None
+        assert pads_part.name == rail_pads_name
+        assert pads_part.material.material_parameters == pad_params
+
+    def test_create_constraint_model_part(self):
+        """
+        Tests if the constraint model part is correctly created.
+
+        """
+        model = Model(3)
+        rail_name = "track1"
+        model.gmsh_io.generate_geometry(
+            {rail_name: {
+                "coordinates": [(0, 0, 0), (0, 2, 0), (0, 2, 1), (0, 0, 1)],
+                "ndim": 2
+            }}, "")
+        constraint_params = DisplacementConstraint([True, True, True], [True, False, True], [0.0, 0.0, 0.0])
+        constraint_part = model._Model__create_constraint_model_part(rail_name)
+        assert constraint_part.geometry is not None
+        assert constraint_part.name == "constraint_" + rail_name
+        TestUtils.assert_dictionary_almost_equal(constraint_params.__dict__, constraint_part.parameters.__dict__)
+
+    def test_create_no_rotation_model_part(self):
+        """
+        Tests if the no rotation model part is correctly created.
+
+        """
+        model = Model(3)
+        rail_name = "track1"
+        global_rail_coords = np.array([(0, 0, 0), (0, 2, 0), (0, 2, 1), (0, 0, 1)])
+        model.gmsh_io.generate_geometry(
+            {rail_name: {
+                "coordinates": [(0, 0, 0), (0, 2, 0), (0, 2, 1), (0, 0, 1)],
+                "ndim": 2
+            }}, "")
+        no_rotation_params = RotationConstraint([True, True, True], [True, True, True], [0.0, 0.0, 0.0])
+        no_rotation_part = model._Model__create_no_rotation_model_part(rail_name, global_rail_coords)
+        assert no_rotation_part.geometry is not None
+        assert no_rotation_part.name == "rotation_constraint_" + rail_name
+        TestUtils.assert_dictionary_almost_equal(no_rotation_params.__dict__, no_rotation_part.parameters.__dict__)
+
+    def test_generate_sleeper_base_coordinates_at_origin(self):
+        """
+        Test the creation of a sleeper base coordinates at the origin.
+
+        This test ensures that the function correctly calculates the sleeper base coordinates
+        when the origin is at (0, 0, 0).
+
+        Asserts that the result matches the expected output.
+        """
+        sleeper_rail_pad_offset = 0.5
+        local_coord = [0.0, 0.0, 0.0]
+        sleeper_dimensions = [2.0, 4.0, 1.0]  # length, width, height
+        expected = np.array([[1.5, 0.0, 2.0], [1.5, 0.0, -2.0], [-0.5, 0.0, -2.0], [-0.5, 0.0, 2.0]])
+        result = Model._Model__generate_sleeper_base_coordinates(local_coord, sleeper_dimensions,
+                                                                 sleeper_rail_pad_offset)
+        np.testing.assert_array_almost_equal(result, expected)
+
+    def test_generate_sleeper_base_coordinates_nonzero_origin(self):
+        """
+        Test the creation of a sleeper base coordinates with a non-zero origin.
+
+        This test ensures that the function correctly calculates the sleeper base coordinates
+        when given a non-zero origin.
+
+        Asserts that the result matches the expected output.
+        """
+        local_coord = [1.0, -1.0, 0.5]
+        sleeper_dimensions = [3.0, 2.0, 0.5]
+        sleeper_rail_pad_offset = 0.5
+        expected = np.array([[3.5, -1.0, 1.5], [3.5, -1.0, -0.5], [0.5, -1.0, -0.5], [0.5, -1.0, 1.5]])
+        result = Model._Model__generate_sleeper_base_coordinates(local_coord, sleeper_dimensions,
+                                                                 sleeper_rail_pad_offset)
+        np.testing.assert_array_almost_equal(result, expected)
+
+    def test_generate_sleeper_base_coordinates_with_negative_dimensions(self):
+        """
+        Test the creation of sleeper base coordinates with negative dimensions.
+
+        While negative dimensions might not be physically meaningful,
+        this test ensures that the function handles them consistently.
+
+        The test checks if the function correctly calculates the sleeper base coordinates
+        when given negative dimensions.
+
+        Asserts that the result matches the expected output.
+        """
+        local_coord = [2.0, 3.0, 4.0]
+        sleeper_dimensions = [-2.0, -4.0, 1.0]
+        sleeper_rail_pad_offset = 0.5
+        expected = np.array([[-0.5, 3.0, 2.0], [-0.5, 3.0, 6.0], [1.5, 3.0, 6.0], [1.5, 3.0, 2.0]])
+        result = Model._Model__generate_sleeper_base_coordinates(local_coord, sleeper_dimensions,
+                                                                 sleeper_rail_pad_offset)
+        np.testing.assert_array_almost_equal(result, expected)
