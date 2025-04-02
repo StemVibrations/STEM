@@ -1,5 +1,7 @@
 import json
 import numpy.typing as npty
+import os
+import numpy as np
 from pathlib import Path
 from numpy import ndarray
 from typing import Sequence, Tuple, get_args, Set, Optional, List, Dict, Any, Union
@@ -128,10 +130,10 @@ class Model:
         coords_volume_sleepers[:, OUT_OF_PLANE_AXIS_2D] = z
         return coords_volume_sleepers
 
-    def __generate_sleepers(self, sleeper_parameters: Union[NodalConcentrated, SoilMaterial],
-                            sleeper_dimensions: Sequence[float], base_sleeper_name: str,
-                            sleeper_global_coords: ndarray[Any, Any], sleeper_rail_pad_offset: float,
-                            direction_vector: Sequence[float] ) -> None:
+    def __generate_sleepers(self, sleeper_parameters: Union[NodalConcentrated,
+                                                            SoilMaterial], sleeper_dimensions: Sequence[float],
+                            base_sleeper_name: str, sleeper_global_coords: ndarray[Any, Any],
+                            sleeper_rail_pad_offset: float, direction_vector: Sequence[float]) -> None:
         """
         Generates sleeper geometry based on the type of sleeper parameters.
         Note that for the SoilMaterial sleepers, the function assumes tha there are no elevation changes in the track.
@@ -168,11 +170,12 @@ class Model:
                 # extend the start and end points in the direction of the track so that they are outside the soil domain
                 extension_start_point = start_point - np.array(direction_vector) * LARGE_DISTANCE
                 extension_end_point = end_point + np.array(direction_vector) * LARGE_DISTANCE
-                connection_geo_settings = {"": {"coordinates": [extension_start_point, extension_end_point],  "ndim": 1}}
+                connection_geo_settings = {"": {"coordinates": [extension_start_point, extension_end_point], "ndim": 1}}
                 self.gmsh_io.generate_geometry(connection_geo_settings, "")
                 # For soil sleepers, create a 3D volume for each sleeper.
             for i, coord in enumerate(sleeper_global_coords):
-                coords_volume = Model.__generate_sleeper_base_coordinates(coord, sleeper_dimensions, sleeper_rail_pad_offset)
+                coords_volume = Model.__generate_sleeper_base_coordinates(coord, sleeper_dimensions,
+                                                                          sleeper_rail_pad_offset)
                 # Assuming extrusion occurs in the second axis (index 1) for the sleeper height.
                 # Ensure the list is initialized with float values
                 extrusions: List[float] = [0.0, 0.0, 0.0]
@@ -342,7 +345,8 @@ class Model:
 
         if isinstance(sleeper_parameters, SoilMaterial):
             if sleeper_dimensions is None:
-                raise ValueError("If sleeper parameters are SoilMaterial, dimensions must be a list of length, width, height.")
+                raise ValueError("If sleeper parameters are SoilMaterial, dimensions must be a list of "
+                                 "length, width, height.")
         else:
             if sleeper_dimensions is None:
                 sleeper_dimensions = [0., 0., 0.]
