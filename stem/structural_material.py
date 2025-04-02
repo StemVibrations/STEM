@@ -215,6 +215,48 @@ class NodalConcentrated(StructuralParametersABC):
 
         return element_name
 
+@dataclass
+class Shell(StructuralParametersABC):
+    """
+    Class containing the material parameters for a shell element
+
+    Inheritance:
+        - :class:`Structural
+        ParametersABC`
+
+    Attributes:
+        - ndim (int): The number of dimensions of the shell formulation (2 or 3)
+        - YOUNG_MODULUS (float): The Young's modulus [Pa].
+        - POISSON_RATIO (float): The Poisson's ratio [-].
+        - DENSITY (float): The density [kg/m3].
+        - THICKNESS (float): The thickness of the shell [m].
+    """
+    YOUNG_MODULUS: float
+    POISSON_RATIO: float
+    DENSITY: float
+    THICKNESS: float
+
+    @staticmethod
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
+        """
+        Static method to get the element name for a shell element.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model
+            - n_nodes_element (int): The number of nodes per element
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type.
+
+        Raises:
+            - ValueError: If the analysis type is not implemented yet for shell elements.
+
+        Returns:
+            - Optional[str]: The element name
+        """
+
+        element_name = f"ShellThinElement3D3N"
+        return element_name
+
+
 
 @dataclass
 class StructuralMaterial:
