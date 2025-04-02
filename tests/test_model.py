@@ -336,6 +336,24 @@ class TestModel:
         return soil_material
 
     @pytest.fixture
+    def create_default_3d_beam(self):
+        """
+        Create a default beam material for a 3D geometry.
+        """
+        # Specify beam material model
+        YOUNG_MODULUS = 210000000000
+        POISSON_RATIO = 0.30000
+        DENSITY = 7850
+        CROSS_AREA = 0.01
+        I22 = 0.0001
+        I33 = 0.0001
+
+        TORTIONAL_INERTIA = I22 + I33
+        beam_material = EulerBeam(3, YOUNG_MODULUS, POISSON_RATIO, DENSITY, CROSS_AREA, I33, I22, TORTIONAL_INERTIA)
+        name = "beam"
+        return StructuralMaterial(name, beam_material)
+
+    @pytest.fixture
     def create_default_point_load_parameters(self):
         """
         Create a default point load parameters.
@@ -400,205 +418,6 @@ class TestModel:
         # Gauss point results
         # define output process
 
-        output_process = Output(part_name="nodal_accelerations",
-                                output_name="gid_nodal_accelerations_top",
-                                output_dir="dir_test",
-                                output_parameters=GiDOutputParameters(file_format="binary",
-                                                                      output_interval=100,
-                                                                      nodal_results=nodal_results))
-
-        return output_process
-
-    @pytest.fixture
-    def expected_geometry_two_layers_3D_extruded(self) -> Tuple[Geometry, Geometry]:
-        """
-        Expected geometry data for a 3D geometry create from 2D extrusion. The geometry is 2 stacked blocks, where the
-        top and bottom blocks are in different groups.
-
-        Returns:
-            - Tuple[:class:`stem.geometry.Geometry`,:class:`stem.geometry.Geometry`]: expected geometry data
-        """
-
-        geometry_1 = Geometry()
-        geometry_1.points = {
-            1: Point.create([0, 0, 0], 1),
-            2: Point.create([0, 0, 1], 2),
-            4: Point.create([1, 0, 1], 4),
-            3: Point.create([1, 0, 0], 3),
-            6: Point.create([1, 1, 1], 6),
-            5: Point.create([1, 1, 0], 5),
-            8: Point.create([0, 1, 1], 8),
-            7: Point.create([0, 1, 0], 7)
-        }
-
-        geometry_1.lines = {
-            1: Line.create([1, 2], 1),
-            4: Line.create([2, 4], 4),
-            2: Line.create([3, 4], 2),
-            3: Line.create([1, 3], 3),
-            7: Line.create([4, 6], 7),
-            5: Line.create([5, 6], 5),
-            6: Line.create([3, 5], 6),
-            10: Line.create([6, 8], 10),
-            8: Line.create([7, 8], 8),
-            9: Line.create([5, 7], 9),
-            12: Line.create([8, 2], 12),
-            11: Line.create([7, 1], 11)
-        }
-
-        geometry_1.surfaces = {
-            1: Surface.create([1, 4, -2, -3], 1),
-            2: Surface.create([2, 7, -5, -6], 2),
-            3: Surface.create([5, 10, -8, -9], 3),
-            4: Surface.create([8, 12, -1, -11], 4),
-            5: Surface.create([3, 6, 9, 11], 5),
-            6: Surface.create([4, 7, 10, 12], 6)
-        }
-
-        geometry_1.volumes = {1: Volume.create([-1, -2, -3, -4, -5, 6], 1)}
-
-        geometry_2 = Geometry()
-
-        geometry_2.points = {
-            9: Point.create([1.0, 2.0, 0.0], 9),
-            10: Point.create([1., 2., 1.], 10),
-            12: Point.create([0.0, 2., 1.], 12),
-            11: Point.create([0, 2., 0.], 11),
-            8: Point.create([0., 1., 1], 8),
-            7: Point.create([0., 1., 0], 7),
-            5: Point.create([1, 1., 0], 5),
-            6: Point.create([1, 1., 1], 6)
-        }
-
-        geometry_2.lines = {
-            13: Line.create([9, 10], 13),
-            16: Line.create([10, 12], 16),
-            14: Line.create([11, 12], 14),
-            15: Line.create([9, 11], 15),
-            18: Line.create([12, 8], 18),
-            8: Line.create([7, 8], 8),
-            17: Line.create([11, 7], 17),
-            5: Line.create([5, 6], 5),
-            10: Line.create([6, 8], 10),
-            9: Line.create([5, 7], 9),
-            20: Line.create([6, 10], 20),
-            19: Line.create([5, 9], 19)
-        }
-
-        geometry_2.surfaces = {
-            7: Surface.create([13, 16, -14, -15], 7),
-            8: Surface.create([14, 18, -8, -17], 8),
-            3: Surface.create([5, 10, -8, -9], 3),
-            9: Surface.create([5, 20, -13, -19], 9),
-            10: Surface.create([15, 17, -9, 19], 10),
-            11: Surface.create([16, 18, -10, 20], 11)
-        }
-
-        geometry_2.volumes = {2: Volume.create([-7, -8, 3, -9, -10, 11], 2)}
-
-        return geometry_1, geometry_2
-
-    @pytest.fixture
-    def expected_geometry_two_layers_3D_geo_file(self):
-        """
-        Expected geometry data for a 3D geometry create in a geo file. The geometry is 2 stacked blocks, where the top
-        and bottom blocks are in different groups.
-
-        Returns:
-            - Tuple[:class:`stem.geometry.Geometry`,:class:`stem.geometry.Geometry`]: expected geometry data
-        """
-
-        geometry_1 = Geometry()
-        geometry_1.volumes = {1: Volume.create([-10, 39, 26, 30, 34, 38], 1)}
-
-        geometry_1.surfaces = {
-            10: Surface.create([5, 6, 7, 8], 10),
-            39: Surface.create([19, 20, 21, 22], 39),
-            26: Surface.create([5, 25, -19, -24], 26),
-            30: Surface.create([6, 29, -20, -25], 30),
-            34: Surface.create([7, 33, -21, -29], 34),
-            38: Surface.create([8, 24, -22, -33], 38)
-        }
-
-        geometry_1.lines = {
-            5: Line.create([1, 2], 5),
-            6: Line.create([2, 3], 6),
-            7: Line.create([3, 4], 7),
-            8: Line.create([4, 1], 8),
-            19: Line.create([13, 14], 19),
-            20: Line.create([14, 18], 20),
-            21: Line.create([18, 22], 21),
-            22: Line.create([22, 13], 22),
-            25: Line.create([2, 14], 25),
-            24: Line.create([1, 13], 24),
-            29: Line.create([3, 18], 29),
-            33: Line.create([4, 22], 33)
-        }
-
-        geometry_1.points = {
-            1: Point.create([0., 0., 0.], 1),
-            2: Point.create([0.5, 0., 0.], 2),
-            3: Point.create([0.5, 1., 0.], 3),
-            4: Point.create([0., 1., 0.], 4),
-            13: Point.create([0., 0., -0.5], 13),
-            14: Point.create([0.5, 0., -0.5], 14),
-            18: Point.create([0.5, 1., -0.5], 18),
-            22: Point.create([0., 1., -0.5], 22)
-        }
-
-        geometry_2 = Geometry()
-        geometry_2.volumes = {2: Volume.create([-17, 61, -48, -34, -56, -60], 2)}
-
-        geometry_2.surfaces = {
-            17: Surface.create([-13, -7, -15, -14], 17),
-            61: Surface.create([41, -21, 43, 44], 61),
-            48: Surface.create([-13, 33, -41, -46], 48),
-            34: Surface.create([7, 33, -21, -29], 34),
-            56: Surface.create([-15, 55, -43, -29], 56),
-            60: Surface.create([-14, 46, -44, -55], 60)
-        }
-
-        geometry_2.lines = {
-            13: Line.create([4, 11], 13),
-            7: Line.create([3, 4], 7),
-            15: Line.create([12, 3], 15),
-            14: Line.create([11, 12], 14),
-            41: Line.create([23, 22], 41),
-            21: Line.create([18, 22], 21),
-            43: Line.create([18, 32], 43),
-            44: Line.create([32, 23], 44),
-            33: Line.create([4, 22], 33),
-            46: Line.create([11, 23], 46),
-            29: Line.create([3, 18], 29),
-            55: Line.create([12, 32], 55)
-        }
-
-        geometry_2.points = {
-            4: Point.create([0., 1., 0.], 4),
-            11: Point.create([0., 2., 0.], 11),
-            3: Point.create([0.5, 1., 0.], 3),
-            12: Point.create([0.5, 2., 0.], 12),
-            23: Point.create([0., 2., -0.5], 23),
-            22: Point.create([0., 1., -0.5], 22),
-            18: Point.create([0.5, 1., -0.5], 18),
-            32: Point.create([0.5, 2., -0.5], 32)
-        }
-
-        return geometry_1, geometry_2
-
-    @pytest.fixture(autouse=True)
-    def close_gmsh(self):
-        """
-        Initializer to close gmsh if it was not closed before. In case a test fails, the destroyer method is not called
-        on the Model object and gmsh keeps on running. Therefore, nodes, lines, surfaces and volumes ids are not
-        reset to one. This causes also the next test after the failed one to fail as well, which has nothing to do
-        the test itself.
-
-        Returns:
-            - None
-
-        """
-        gmsh_IO.GmshIO().finalize_gmsh()
 
     def test_add_single_soil_layer_2D(self, expected_geometry_single_layer_2D: Geometry,
                                       create_default_2d_soil_material: SoilMaterial):
