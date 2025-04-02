@@ -51,6 +51,20 @@ class MeshSettings:
 
         self.__element_order: int = element_order
 
+        self.__constraints: Dict[str, Any] = {"transfinite_curve":{},
+                                              "transfinite_surface":{},
+                                              "transfinite_volume":{}}
+
+    @property
+    def constraints(self) -> Dict[str, Any]:
+        """
+        Get the constraints.
+
+        Returns:
+            - Dict[str, Any]: The constraints.
+        """
+        return self.__constraints
+
     @property
     def element_order(self) -> int:
         """
@@ -77,6 +91,36 @@ class MeshSettings:
             raise ValueError("The element order must be 1 or 2. Higher order elements are not supported.")
 
         self.__element_order = element_order
+
+    def set_structured_mesh_constraint_line(self, line_id: int, n_points: int):
+        """
+        Set the structured mesh constraint for a line.
+
+        Args:
+            - line_id (int): The line id.
+            - n_points (int): The number of points.
+        """
+        self.__constraints["transfinite_curve"][line_id] = n_points
+
+    def set_structured_mesh_constraint_surface(self, surface_id: int, n_points: List[int]):
+        """
+        Set the structured mesh constraint for a surface.
+
+        Args:
+            - surface_id (int): The surface id.
+            - n_points (List[int]): The number of points in x,y,z direction.
+        """
+        self.__constraints["transfinite_surface"][surface_id] = n_points
+
+    def set_structured_mesh_constraint_volume(self, volume_id: int, n_points: List[int]):
+        """
+        Set the structured mesh constraint for a volume.
+
+        Args:
+            - volume_id (int): The volume id.
+            - n_points (int): The number of points in x,y,z direction.
+        """
+        self.__constraints["transfinite_volume"][volume_id] = n_points
 
 
 class Node:
@@ -317,6 +361,8 @@ class Mesh:
 
         for element_id, element in self.elements.items():
             for node_id in element.node_ids:
+                if node_id == 110:
+                    a=1+1
                 node_to_elements[node_id].append(element_id)
 
         return node_to_elements
