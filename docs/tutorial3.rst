@@ -168,7 +168,7 @@ a unique name.
 Generating the train track
 --------------------------
 
-STEM provides two options to generate a straight track, with two different ways to model the track:
+STEM provides two options to generate a straight track, with two different ways to model the sleepers:
 
 1. A straight track with rails, sleepers and rail pads. This track placed on top of the 2D or 3D geometry.
 1. A straight track with rails, sleepers, rail pads and an extension of the track outside the 2D or 3D geometry.
