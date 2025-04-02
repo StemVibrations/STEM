@@ -6,7 +6,7 @@ from typing import Sequence, Tuple, get_args, Set, Optional, List, Dict, Any, Un
 
 from gmsh_utils import gmsh_IO
 
-from stem.additional_processes import ParameterFieldParameters
+from stem.additional_processes import ParameterFieldParameters, HingeParameters
 from stem.field_generator import RandomFieldGenerator
 from stem.globals import ELEMENT_DATA, OUT_OF_PLANE_AXIS_2D, VERTICAL_AXIS, GRAVITY_VALUE, LARGE_DISTANCE
 from stem.load import *
@@ -984,6 +984,61 @@ class Model:
         model_part.parameters = boundary_parameters
 
         model_part.validate_input()
+
+        self.process_model_parts.append(model_part)
+
+    def add_hinge_on_beam(self, beam_model_part_name: str, hinge_coordinates: Sequence[Sequence[float]],
+                          hinge_parameters: HingeParameters, hinge_model_part_name: str):
+        """
+        Adds a hinge to the model by giving the name of the beam model part where the hinge has to be applied.
+
+        Args:
+            - beam_model_part_name (str): name of the beam model part where the hinge needs to be applied.
+            - hinge_coordinates (Sequence[Sequence[float]]): coordinates of the hinge.
+            - hinge_parameters (:class:`stem.hinge.HingeParametersABC`): hinge parameters to define the hinge object.
+            - hinge_model_part_name (str): name of the hinge.
+
+        Raises:
+            - ValueError: if the hinge model part does not have a geometry.
+            - ValueError: if the beam model part is not found.
+            - ValueError: if the beam model part does not have a geometry.
+            - ValueError: if the beam model part does not have a beam material.
+            - NotImplementedError: if the hinge is applied in a 2D model.
+            - ValueError: if the hinge points are not part of the beam model part.
+            """
+
+        gmsh_input = {hinge_model_part_name: {"coordinates": hinge_coordinates, "ndim": 0}}
+        self.gmsh_io.generate_geometry(gmsh_input, "")
+        self.synchronise_geometry()
+
+        # create model part
+        model_part = ModelPart(hinge_model_part_name)
+        model_part.parameters = hinge_parameters
+
+        # set the geometry of the model part
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, hinge_model_part_name)
+
+        if model_part.geometry is None:
+            raise ValueError(f"Model part `{hinge_model_part_name}` has no geometry.")
+
+        beam_model_part = self.get_model_part_by_name(beam_model_part_name)
+        if beam_model_part is None:
+            raise ValueError(f"Model part `{beam_model_part_name}` not found.")
+        if beam_model_part.geometry is None:
+            raise ValueError(f"Model part `{beam_model_part_name}` has no geometry.")
+
+        # validate if the hinge is applied on a 3D beam model part
+        if not isinstance(beam_model_part, BodyModelPart) or not isinstance(
+                beam_model_part.material, StructuralMaterial) or not isinstance(
+                    beam_model_part.material.material_parameters, EulerBeam):
+            raise ValueError("Hinges can only be applied to beam model parts")
+
+        if self.ndim != 3:
+            raise NotImplementedError("Hinges can only be applied in 3D models.")
+
+        beam_points = beam_model_part.geometry.points
+        if not all(point_id in beam_points for point_id in model_part.geometry.points.keys()):
+            raise ValueError(f"The hinge points are not part of the beam model part `{beam_model_part_name}`.")
 
         self.process_model_parts.append(model_part)
 

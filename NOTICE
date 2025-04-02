@@ -1,0 +1,11 @@
+This project includes the following third-party libraries that are licensed under the LGPL and BSD-4-Clause:
+
+- Library Name: Gmsh
+  - License: GNU Lesser General Public License (LGPL)
+  - Source: [Gmsh](https://gitlab.onelab.info/gmsh/gmsh/)
+
+- Library Name: Kratos Multiphysics
+  - License: BSD 4-Clause License
+  - Source: [Kratos Multiphysics](https://github.com/KratosMultiphysics/Kratos)
+
+For more details, please refer to the LICENSE file of these libraries included in this project.
