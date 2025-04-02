@@ -4638,7 +4638,7 @@ class TestModel:
         model.gmsh_io.generate_geometry(rail_geo_settings, "")
         # set up materials
         rail_params = EulerBeam(1, 1, 1, 1, 1, 1)
-        rail_part = model._create_rail_model_part(rail_name, rail_params)
+        rail_part = model.__create_rail_model_part(rail_name, rail_params)
         # Check that the geometry was set by our dummy function.
         assert rail_part.geometry is not None
         # Check that material was set properly.
@@ -4658,7 +4658,7 @@ class TestModel:
                 "ndim": 2
             }}, "")
         sleeper_params = NodalConcentrated(1, 1, 1)
-        part = model._create_sleeper_model_parts(sleeper_name, sleeper_params)
+        part = model.__create_sleeper_model_parts(sleeper_name, sleeper_params)
         assert part.geometry is not None
         assert part.name == sleeper_name
         assert part.material.material_parameters == sleeper_params
@@ -4681,7 +4681,7 @@ class TestModel:
                 }
             }, "")
         sleeper_params = create_default_3d_soil_material
-        part = model._create_sleeper_model_parts(sleeper_name, sleeper_params)
+        part = model.__create_sleeper_model_parts(sleeper_name, sleeper_params)
         assert part.geometry is not None
         assert part.name == sleeper_name
         assert part.material == sleeper_params
@@ -4699,7 +4699,7 @@ class TestModel:
                 "ndim": 2
             }}, "")
         pad_params = ElasticSpringDamper(1, 1, 1, 1)
-        pads_part = model._create_rail_pads_model_part(rail_pads_name, pad_params)
+        pads_part = model.__create_rail_pads_model_part(rail_pads_name, pad_params)
         assert pads_part.geometry is not None
         assert pads_part.name == rail_pads_name
         assert pads_part.material.material_parameters == pad_params
@@ -4717,7 +4717,7 @@ class TestModel:
                 "ndim": 2
             }}, "")
         constraint_params = RotationConstraint([True, True, True], [True, False, True], [0.0, 0.0, 0.0])
-        constraint_part = model._create_constraint_model_part(rail_name)
+        constraint_part = model.__create_constraint_model_part(rail_name)
         assert constraint_part.geometry is not None
         assert constraint_part.name == "constraint_" + rail_name
         TestUtils.assert_dictionary_almost_equal(constraint_params.__dict__, constraint_part.parameters.__dict__)
@@ -4736,7 +4736,7 @@ class TestModel:
                 "ndim": 2
             }}, "")
         no_rotation_params = RotationConstraint([True, True, True], [True, True, True], [0.0, 0.0, 0.0])
-        no_rotation_part = model._create_no_rotation_model_part(rail_name, global_rail_coords)
+        no_rotation_part = model.__create_no_rotation_model_part(rail_name, global_rail_coords)
         assert no_rotation_part.geometry is not None
         assert no_rotation_part.name == "rotation_constraint_" + rail_name
         TestUtils.assert_dictionary_almost_equal(no_rotation_params.__dict__, no_rotation_part.parameters.__dict__)
