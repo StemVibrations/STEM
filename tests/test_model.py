@@ -3176,7 +3176,9 @@ class TestModel:
         origin_point = np.array([2.5, 1.0, 0.0])
         direction_vector = np.array([0, 0, 1])
 
-        with pytest.raises(ValueError, match=r"If sleeper parameters are SoilMaterial, dimensions must be a list of length, width, height."):
+        with pytest.raises(
+                ValueError,
+                match=r"If sleeper parameters are SoilMaterial, dimensions must be a list of length, width, height."):
             model.generate_straight_track(5.0, 2, rail_parameters, create_default_3d_soil_material, rail_pad_parameters,
                                           0.02, origin_point, direction_vector, "track_1", None)
 
@@ -3259,16 +3261,14 @@ class TestModel:
             ], 29),
             26: Point.create(
                 [origin_point[0] - sleeper_length / 2, origin_point[1], origin_point[2] - sleeper_width / 2], 26),
-            19: Point.create(
-                [origin_point[0], origin_point[1], origin_point[2] - sleeper_width / 2], 19),
+            19: Point.create([origin_point[0], origin_point[1], origin_point[2] - sleeper_width / 2], 19),
             30: Point.create([
                 origin_point[0] - sleeper_length / 2, origin_point[1] + sleeper_height,
                 origin_point[2] + sleeper_width / 2
             ], 30),
             25: Point.create(
                 [origin_point[0] - sleeper_length / 2, origin_point[1], origin_point[2] + sleeper_width / 2], 25),
-            22: Point.create(
-                [origin_point[0], origin_point[1], origin_point[2] + sleeper_width / 2], 22),
+            22: Point.create([origin_point[0], origin_point[1], origin_point[2] + sleeper_width / 2], 22),
             39: Point.create([
                 origin_point[0] + sleeper_length / 2, origin_point[1],
                 origin_point[2] + sleeper_width / 2 + sleeper_distance
@@ -3293,8 +3293,8 @@ class TestModel:
                 origin_point[0] - sleeper_length / 2, origin_point[1],
                 origin_point[2] - sleeper_width / 2 + sleeper_distance
             ], 44),
-            37: Point.create(
-                [origin_point[0], origin_point[1], origin_point[2] - sleeper_width / 2 + sleeper_distance], 37),
+            37: Point.create([origin_point[0], origin_point[1], origin_point[2] - sleeper_width / 2 + sleeper_distance],
+                             37),
             48: Point.create([
                 origin_point[0] - sleeper_length / 2, origin_point[1] + sleeper_height,
                 origin_point[2] + sleeper_width / 2 + sleeper_distance
@@ -3303,8 +3303,8 @@ class TestModel:
                 origin_point[0] - sleeper_length / 2, origin_point[1],
                 origin_point[2] + sleeper_width / 2 + sleeper_distance
             ], 43),
-            40: Point.create(
-                [origin_point[0], origin_point[1], origin_point[2] + sleeper_width / 2 + sleeper_distance], 40),
+            40: Point.create([origin_point[0], origin_point[1], origin_point[2] + sleeper_width / 2 + sleeper_distance],
+                             40),
         }
         expected_sleeper_lines = {
             43: Line.create([21, 27], 43),
@@ -3389,8 +3389,8 @@ class TestModel:
         TestUtils.assert_almost_equal_geometries(expected_rail_pad_geometry, calculated_rail_pad_geometry)
         TestUtils.assert_dictionary_almost_equal(rail_pad_parameters.__dict__, calculated_rail_pad_parameters.__dict__)
 
-    def test_generate_straight_track_3d_volume_sleeper_on_soil_x_direction(self,
-                                                                           create_default_3d_soil_material: SoilMaterial):
+    def test_generate_straight_track_3d_volume_sleeper_on_soil_x_direction(
+            self, create_default_3d_soil_material: SoilMaterial):
         """
         Test if a straight track is generated correctly along the x-axis in a 3D space. The sleepers are modeled as
         volumes and placed on the soil layer.
@@ -3437,7 +3437,6 @@ class TestModel:
         assert first_rail_point.coordinates[0] == origin_point[0]
         assert second_rail_point.coordinates[0] == origin_point[0] + sleeper_distance
         assert first_rail_point.coordinates[1] == origin_point[1] + sleeper_height + rail_pad_thickness
-
 
     def test_generate_straight_track_3d_volume_sleeper(self, create_default_3d_soil_material: SoilMaterial):
         """
@@ -4707,8 +4706,6 @@ class TestModel:
         with pytest.raises(NotImplementedError, match="Hinges can only be applied in 3D models"):
             model.add_hinge_on_beam(beam_material.name, [(-0.2, 0.0, 0.0)], hinge_parameters, "hinge_5")
 
-
-
     def test_create_rail_model_part(self):
         """
         Tests if the rail model part is correctly created.
@@ -4824,7 +4821,6 @@ class TestModel:
         assert no_rotation_part.name == "rotation_constraint_" + rail_name
         TestUtils.assert_dictionary_almost_equal(no_rotation_params.__dict__, no_rotation_part.parameters.__dict__)
 
-
     def test_generate_sleeper_base_coordinates_at_origin(self):
         """
         Test the creation of a sleeper base coordinates at the origin.
@@ -4838,7 +4834,8 @@ class TestModel:
         local_coord = [0.0, 0.0, 0.0]
         sleeper_dimensions = [2.0, 4.0, 1.0]  # length, width, height
         expected = np.array([[1.5, 0.0, 2.0], [1.5, 0.0, -2.0], [-0.5, 0.0, -2.0], [-0.5, 0.0, 2.0]])
-        result = Model._Model__generate_sleeper_base_coordinates(local_coord, sleeper_dimensions, sleeper_rail_pad_offset)
+        result = Model._Model__generate_sleeper_base_coordinates(local_coord, sleeper_dimensions,
+                                                                 sleeper_rail_pad_offset)
         np.testing.assert_array_almost_equal(result, expected)
 
     def test_generate_sleeper_base_coordinates_nonzero_origin(self):
@@ -4854,7 +4851,8 @@ class TestModel:
         sleeper_dimensions = [3.0, 2.0, 0.5]
         sleeper_rail_pad_offset = 0.5
         expected = np.array([[3.5, -1.0, 1.5], [3.5, -1.0, -0.5], [0.5, -1.0, -0.5], [0.5, -1.0, 1.5]])
-        result = Model._Model__generate_sleeper_base_coordinates(local_coord, sleeper_dimensions, sleeper_rail_pad_offset)
+        result = Model._Model__generate_sleeper_base_coordinates(local_coord, sleeper_dimensions,
+                                                                 sleeper_rail_pad_offset)
         np.testing.assert_array_almost_equal(result, expected)
 
     def test_generate_sleeper_base_coordinates_with_negative_dimensions(self):
@@ -4873,5 +4871,6 @@ class TestModel:
         sleeper_dimensions = [-2.0, -4.0, 1.0]
         sleeper_rail_pad_offset = 0.5
         expected = np.array([[-0.5, 3.0, 2.0], [-0.5, 3.0, 6.0], [1.5, 3.0, 6.0], [1.5, 3.0, 2.0]])
-        result = Model._Model__generate_sleeper_base_coordinates(local_coord, sleeper_dimensions, sleeper_rail_pad_offset)
+        result = Model._Model__generate_sleeper_base_coordinates(local_coord, sleeper_dimensions,
+                                                                 sleeper_rail_pad_offset)
         np.testing.assert_array_almost_equal(result, expected)
