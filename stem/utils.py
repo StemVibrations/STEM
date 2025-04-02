@@ -5,7 +5,7 @@ import numpy as np
 import numpy.typing as npty
 from scipy.spatial import cKDTree
 
-from stem.globals import ELEMENT_DATA, VERTICAL_AXIS, OUT_OF_PLANE_AXIS_2D
+from stem.globals import ELEMENT_DATA
 
 if TYPE_CHECKING:
     from stem.mesh import Element, Mesh
@@ -760,59 +760,3 @@ class Utils:
                 if not isinstance(i, NUMBER_TYPES) or np.isnan(i) or np.isinf(i):
                     raise ValueError(f"Coordinates should be a sequence of sequence of real numbers, "
                                      f"but {i} was given.")
-
-    @staticmethod
-    def create_sleeper_volume(local_coord: Sequence[float], sleeper_dimensions: Sequence[float],
-                              sleeper_rail_pad_offset: float) -> npty.NDArray[np.float64]:
-        """"
-        This function creates the coordinates of the volume of the sleeper given the local coordinates and the
-        dimensions of the sleeper.
-
-         x-axis
-          ▲
-          │  D┌──────────────────────────────┐C
-          │   │                              │
-          │   │                              │
-          │   │                              │
-          │   │               A=origin+      │
-          │   │              O [0,0,distance │
-          │   │                     sleeper] │
-          │   │                              │
-          │   │                              │
-          │   │                              │
-          │  E└──────────────────────────────┘
-          │                                   B  z-axis
-          └────────────────────────────────────────►
-
-
-        xi, yi , zi are the local coordinates of the sleeper
-        A: origin of the sleeper plus the distance to the sleeper in the out of plane axis
-        B (xi + (length - offset), yi, zi + width/2)
-        C (xi + (length - offset), yi, zi - width/2)
-        D (xi - offset, yi, zi - width/2)
-        E (xi - offset, yi, zi + width/2)
-
-        Args:
-            - local_coord (Sequence[float]): local coordinates of the sleeper
-            - sleeper_dimensions (Sequence[float]): dimensions of the sleeper
-            - ndim (int): number of dimensions of the model
-
-        Returns:
-            - npty.NDArray[np.float64]: coordinates of the volume of the sleeper in the global coordinate system
-        """
-        xi, yi, zi = local_coord
-        length, width, height = sleeper_dimensions
-        x = [
-            xi + length - sleeper_rail_pad_offset, xi + length - sleeper_rail_pad_offset, xi - sleeper_rail_pad_offset,
-            xi - sleeper_rail_pad_offset
-        ]
-        y = [yi, yi, yi, yi]
-        z = [zi + width / 2, zi - width / 2, zi - width / 2, zi + width / 2]
-
-        coords_volume_sleepers = np.zeros((len(x), 3))
-        # determine the dimensions that the x should be assigned to by process of elimination
-        x_axis_dimension = 3 - VERTICAL_AXIS - OUT_OF_PLANE_AXIS_2D
-        coords_volume_sleepers[:, x_axis_dimension] = x
-        coords_volume_sleepers[:, VERTICAL_AXIS] = y
-        coords_volume_sleepers[:, OUT_OF_PLANE_AXIS_2D] = z
-        return coords_volume_sleepers
