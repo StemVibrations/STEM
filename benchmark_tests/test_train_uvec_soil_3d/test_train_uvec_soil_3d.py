@@ -3,21 +3,16 @@ import json
 import sys
 from shutil import rmtree
 
-import numpy as np
-import pytest
-
 import UVEC.uvec_ten_dof_vehicle_2D as uvec
 from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
 from stem.structural_material import ElasticSpringDamper, NodalConcentrated
 from stem.default_materials import DefaultMaterial
-from stem.load import MovingLoad, UvecLoad
+from stem.load import UvecLoad
 from stem.boundary import DisplacementConstraint, AbsorbingBoundary
-from stem.additional_processes import ParameterFieldParameters
-from stem.field_generator import RandomFieldGenerator
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
      LinearNewtonRaphsonStrategy, NewmarkScheme, Cg, StressInitialisationType, SolverSettings, Problem
-from stem.output import NodalOutput, VtkOutputParameters, Output, JsonOutputParameters
+from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters
 from stem.stem import Stem
 
 from benchmark_tests.utils import assert_files_equal
