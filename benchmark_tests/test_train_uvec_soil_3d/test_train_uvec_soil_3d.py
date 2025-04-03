@@ -122,8 +122,6 @@ def test_train_uvec_soil_3d():
     # add the load on the tracks
     model.add_load_on_line_model_part("rail_track", uvec_load, "train_load")
 
-    model.show_geometry(show_surface_ids=True)
-
     # define BC
     no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
                                                         is_fixed=[True, True, True], value=[0, 0, 0])
