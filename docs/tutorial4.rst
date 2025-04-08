@@ -1,3 +1,5 @@
+STEM tutorials
+==============
 
 .. _tutorial4:
 

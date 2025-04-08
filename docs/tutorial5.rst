@@ -1,3 +1,6 @@
+STEM tutorials
+==============
+
 .. _tutorial5:
 
 Train model (UVEC) with rail joint and static initialisation
@@ -283,7 +286,14 @@ surface-dimension, "2".
 
 .. code-block:: python
 
-    model.add_boundary_condition_on_plane([(0, 0, 0), (0, 0, 50), (5, 0, 0)],no_displacement_parameters,"base_fixed")
+    # define BC
+    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+                                                        is_fixed=[True, True, True], value=[0, 0, 0])
+    roller_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+                                                            is_fixed=[True, False, True], value=[0, 0, 0])
+    absorbing_boundaries_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=40.0)
+
+    model.add_boundary_condition_on_plane([(0, 0, 0), (0, 0, 50), (5, 0, 0)], no_displacement_parameters,"base_fixed")
     model.add_boundary_condition_on_plane([(0, 0, 0), (0, 0, 50), (0, 3, 0)], roller_displacement_parameters, "sides_roller")
     #
     model.add_boundary_condition_on_plane([(0, 0, 0), (5, 0, 0), (5, 3, 0)],absorbing_boundaries_parameters,"abs")
@@ -347,6 +357,7 @@ Now the problem data should be set up. The problem should be given a name, in th
     # Set up problem data
     problem = Problem(problem_name="compute_train_with_joint", number_of_threads=8,
                       settings=solver_settings)
+    model.project_parameters = problem
 
     # END CODE BLOCK
 
@@ -365,9 +376,11 @@ For this stage the velocity and acceleration are zero, since the calculations is
 The output process is added to the model using the `Model.add_output_settings` method. The results will be then
 written to the output directory in vtk format. In this case, the output interval is set to 1 and the output control
 type is set to "step", meaning that the results will be written every time step.
+The output directory is set to "results".
 
 .. code-block:: python
 
+    results_dir = "results"
     model.add_output_settings(
         part_name="porous_computational_model_part",
         output_dir=results_dir,
@@ -416,7 +429,7 @@ with the model and the directory where the input files will be written to.
 
 .. code-block:: python
 
-    input_files_dir = "input_files"
+    input_files_dir = "compute_train_with_joint"
     stem = Stem(model, input_files_dir)
 
     # END CODE BLOCK
@@ -426,7 +439,7 @@ This copies the entire stage into stage 2. The new stage requires the definition
 
 .. code-block:: python
 
-    delta_time_stage_2 = 1e-2
+    delta_time_stage_2 = 1e-3
     duration_stage_2 = 0.5
     stage2 = stem.create_new_stage(delta_time_stage_2, duration_stage_2)
 
