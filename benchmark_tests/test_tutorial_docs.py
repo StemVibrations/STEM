@@ -105,6 +105,7 @@ def test_tutorial_4():
     exec("\n".join(data))
     shutil.rmtree("variation_z")
 
+
 def test_tutorial_5():
     """Test the code in tutorial 5"""
     name = "_tutorial5"
