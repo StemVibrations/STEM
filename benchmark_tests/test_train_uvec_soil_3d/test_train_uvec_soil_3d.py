@@ -154,7 +154,7 @@ def test_train_uvec_soil_3d():
 
     strategy_type = LinearNewtonRaphsonStrategy()
     scheme_type = NewmarkScheme()
-    linear_solver_settings = Cg()
+    linear_solver_settings = Cg(tolerance=1e-6)
     stress_initialisation_type = StressInitialisationType.NONE
     solver_settings = SolverSettings(analysis_type=analysis_type,
                                      solution_type=solution_type,

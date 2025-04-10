@@ -6,7 +6,8 @@ from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, Sa
 from stem.load import LineLoad
 from stem.table import Table
 from stem.boundary import DisplacementConstraint
-from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, StressInitialisationType, SolverSettings, Problem, NewtonRaphsonStrategy, LinearNewtonRaphsonStrategy
+from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
+    StressInitialisationType, SolverSettings, Problem, NewtonRaphsonStrategy, LinearNewtonRaphsonStrategy, Amgcl)
 from stem.output import NodalOutput, VtkOutputParameters, Output, JsonOutputParameters
 from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
@@ -93,6 +94,7 @@ def test_stem():
                                      are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
                                      strategy_type=NewtonRaphsonStrategy(),
+                                     linear_solver_settings=Amgcl(tolerance=1e-6),
                                      rayleigh_k=6e-6,
                                      rayleigh_m=0.02)
 
