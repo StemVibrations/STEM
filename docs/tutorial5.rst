@@ -226,14 +226,23 @@ UVEC model. The UVEC load is added on top of the previously defined track with t
 And the name of the load is set to "train_load".
 Because a rail joint is present in the model, the "joint_parameters" key needs to be defined in the `uvec_parameters`
 dictionary. If not, the joint will not be taken into account in the UVEC model.
-The joint parameters are defined as a dictionary with the following keys:
+The joint is modelled following the model of dipped joint :cite:`Kabo_2006`, and the parameters are defined as a
+dictionary with the following keys:
+
 - "location_joint": the distance from the origin point to the joint in meters
 - "depth_joint": the depth of the joint in meters
 - "width_joint": the width of the joint in meters.
 
-A schematisation of the UVEC model as defined in this tutorial, is shown below.
+A schematisation of the UVEC model and the rail joint as defined in this tutorial, is shown below.
 
-.. image:: _static/figure_uvec.png
+.. |uvec_model| image:: _static/figure_uvec.png
+    :width: 60%
+
+.. |joint_model| image:: _static/figure_joint.png
+    :width: 39%
+
+|uvec_model| |joint_model|
+
 
 Below the uvec parameters are defined.
 
