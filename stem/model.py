@@ -115,13 +115,13 @@ class Model:
         Finally, the rotated points are given by $R \cdot P + global\_coord$, where $P$ are the local coordinates.
 
         Args:
-            global_coord (Sequence[float]): Global coordinate of the sleeper origin.
-            sleeper_dimensions (Sequence[float]): Sleeper dimensions [length, width, height].
-            sleeper_rail_pad_offset (float): Offset from the local origin to the rail pad along x.
-            direction_vector (Sequence[float]): Global direction in which the sleeper's length should point.
+            - global_coord (Sequence[float]): Global coordinate of the sleeper origin.
+            - sleeper_dimensions (Sequence[float]): Sleeper dimensions [length, width, height].
+            - sleeper_rail_pad_offset (float): Offset from the local origin to the rail pad along x.
+            - direction_vector (Sequence[float]): Global direction in which the sleeper's length should point.
 
         Returns:
-            np.ndarray: An array (shape (4, 3)) of the global coordinates for the sleeper's four base corners.
+            - np.ndarray: An array (shape (4, 3)) of the global coordinates for the sleeper's four base corners.
         """
         # Unpack dimensions; height is not used here.
         length, width, height = sleeper_dimensions
@@ -214,9 +214,11 @@ class Model:
                 # Get the start and end points of the sleepers
                 start_point = sleeper_global_coords[0]
                 end_point = sleeper_global_coords[-1]
+                min_coords, max_coords = self.get_bounding_box_soil()
+                identity_vector = np.array([1, 1, 1])
                 # extend the start and end points in the direction of the track so that they are outside the soil domain
-                extension_start_point = start_point - np.array(direction_vector) * LARGE_DISTANCE
-                extension_end_point = end_point + np.array(direction_vector) * LARGE_DISTANCE
+                extension_start_point = start_point * (identity_vector - np.array(direction_vector)) + np.array(direction_vector) * min_coords
+                extension_end_point = end_point * (identity_vector - np.array(direction_vector))+ np.array(direction_vector) * max_coords
                 connection_geo_settings = {"": {"coordinates": [extension_start_point, extension_end_point], "ndim": 1}}
                 self.gmsh_io.generate_geometry(connection_geo_settings, "")
                 # For soil sleepers, create a 3D volume for each sleeper.

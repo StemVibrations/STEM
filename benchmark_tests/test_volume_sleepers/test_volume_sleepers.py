@@ -164,7 +164,6 @@ def test_moving_load_on_track():
     # --------------------------------
     model.set_mesh_size(element_size=1)
     input_folder = "benchmark_tests/test_volume_sleepers/inputs_kratos_full_qs"
-
     # Write KRATOS input files
     # --------------------------------
     stem = Stem(model, input_folder)

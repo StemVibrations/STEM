@@ -10,8 +10,6 @@ OUT_OF_PLANE_AXIS_2D = 2  # [0, 1, 2] = [x, y, z]
 # time step to subtract to the actual desired time step
 # Kratos provides the first time step following the desired one
 TIME_STEP_PRECISION = 1e-08  # s
-# An arbitrary large distance to be used in the code for the mesh to be created by gmsh.
-LARGE_DISTANCE = 100  # m
 
 # yapf: disable
 #: Element data for supported element types in STEM. The data contains the following information: \
