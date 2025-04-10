@@ -493,14 +493,14 @@ The figure compares the results of the model with rail joint and without rail jo
 The analysis for this results have been obtained with an element size of 0.25m, time step of 5e-4 s and a
 duration of 5e-3s for stage 1 and 0.5s for stage 2.
 
-.. image:: _static/rail_joint.png
+.. image:: _static/time_history_rail_joint.png
     :alt: Comparison of the results
 
 
 This animation shows the vertical velocity of the model with rail joint.
 It is clear when the train crosses the rail joint, the velocity increases significantly.
 
-.. image:: _static/rail_joint.gif
+.. image:: _static/field_rail_joint.gif
    :alt: Vertical velocity
 
 

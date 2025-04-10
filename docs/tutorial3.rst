@@ -171,9 +171,9 @@ Generating the train track
 
 STEM provides two options to generate a straight track:
 
-1. A straight track with rails, sleepers and rail pads. This track placed on top of the 2D or 3D geometry.
-1. A straight track with rails, sleepers, rail pads and an extension of the track outside the 2D or 3D geometry.
-  This extension is placed on 1D elements which simulate the 2D or 3D soil behaviour.
+1. A straight track with rails, sleepers and rail pads. This track is placed on top of the 2D or 3D geometry.
+
+2. A straight track with rails, sleepers, rail pads and an extension of the track outside the 2D or 3D geometry. This extension is placed on 1D elements which simulate the soil behaviour.
 
 **Option 1: Straight track with rails, sleepers and rail pads**
 
