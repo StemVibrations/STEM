@@ -320,6 +320,8 @@ Below the uvec parameters are defined.
 
 .. code-block:: python
 
+    wheel_configuration = [0.0, 2.5, 19.9, 22.4] # distances of the wheels from the origin point [m]
+    velocity = 40  # velocity of the UVEC [m/s]
     # define uvec parameters
     uvec_parameters = {"n_carts": 1, # number of carts [-]
                        "cart_inertia": (1128.8e3) / 2, # inertia of the cart [kgm2]
@@ -337,15 +339,17 @@ Below the uvec parameters are defined.
                        "contact_coefficient": 9.1e-7, # Hertzian contact coefficient between the wheel and the rail [N/m]
                        "contact_power": 1.0, # Hertzian contact power between the wheel and the rail [-]
                        "static_initialisation": False, # True if the analysis of the UVEC is static
-                        "irr_parameters": {
+                       "wheel_configuration": wheel_configuration, # initial position of the wheels [m]
+                       "velocity": velocity, # velocity of the UVEC [m/s]
+                       "irr_parameters": {
                                 "Av": 2.095e-05,
                                 "seed": 14
                                 },
                        }
 
     # define the UVEC load
-    uvec_load = UvecLoad(direction=[1, 1, 1], velocity=40, origin=[0.75, 3+rail_pad_thickness, 5],
-                         wheel_configuration=[0.0, 2.5, 19.9, 22.4],
+    uvec_load = UvecLoad(direction=[1, 1, 1], velocity=velocity, origin=[0.75, 3+rail_pad_thickness, 5],
+                         wheel_configuration=wheel_configuration,
                          uvec_model=uvec,
                          uvec_parameters=uvec_parameters)
 
