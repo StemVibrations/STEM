@@ -195,7 +195,7 @@ def test_train_uvec_soil_3d(test_type, input_folder_suffix, expected_folder):
 
     strategy_type = LinearNewtonRaphsonStrategy()
     scheme_type = NewmarkScheme()
-    linear_solver_settings = Amgcl()
+    linear_solver_settings = Amgcl(tolerance=1e-16)
     stress_initialisation_type = StressInitialisationType.NONE
     solver_settings = SolverSettings(analysis_type=analysis_type,
                                      solution_type=solution_type,
@@ -290,7 +290,7 @@ def test_train_uvec_soil_3d(test_type, input_folder_suffix, expected_folder):
     TestUtils.assert_dictionary_almost_equal(json_stage_1, expected_json_stage_1)
     TestUtils.assert_dictionary_almost_equal(json_stage_2, expected_json_stage_2)
 
-    # rmtree(input_folder)
+    rmtree(input_folder)
 
     # remove stage folders
     folder = "benchmark_tests/test_train_uvec_soil_3d_joint"
