@@ -106,12 +106,12 @@ class Model:
             E (xi - offset, yi, zi + width/2)
 
         Args:
-            global_coord (Sequence[float]): Global coordinate of the sleeper origin (typically the rail pad position)
-            sleeper_dimensions (Sequence[float]): Dimensions of the sleeper [length, width, height]
-            sleeper_rail_pad_offset (float): Offset from the center to where the rail pad is positioned
+            - global_coord (Sequence[float]): Global coordinate of the sleeper origin (typically the rail pad position)
+            - sleeper_dimensions (Sequence[float]): Dimensions of the sleeper [length, width, height]
+            - sleeper_rail_pad_offset (float): Offset from the center to where the rail pad is positioned
 
         Returns:
-            npty.NDArray[np.float64]: Array of 4 base corner coordinates of the sleeper in global space
+            - npty.NDArray[np.float64]: Array of 4 base corner coordinates of the sleeper in global space
         """
         xi, yi, zi = global_coord
         length, width, height = sleeper_dimensions
@@ -182,7 +182,7 @@ class Model:
                 extrusions[VERTICAL_AXIS] = sleeper_dimensions[2]  # Ensure this is a float
                 sleeper_geo_settings = {
                     base_sleeper_name: {
-                        "coordinates": coords_volume,
+                        "coordinates": coords_base,
                         "ndim": 3,
                         "extrusion_length": extrusions
                     }
@@ -244,7 +244,7 @@ class Model:
         rail_pads_model_part.material = StructuralMaterial(name=rail_pads_name, material_parameters=rail_pad_parameters)
         return rail_pads_model_part
 
-    def __create_constraint_model_part(self, rail_name: str) -> ModelPart:
+    def __create_rail_constraint_model_part(self, rail_name: str) -> ModelPart:
         """
         Creates the displacement constraint model part for the rail.
 
@@ -395,7 +395,7 @@ class Model:
         rail_model_part = self.__create_rail_model_part(rail_name, rail_parameters)
         sleeper_model_part = self.__create_sleeper_model_parts(sleeper_name, sleeper_parameters)
         rail_pads_model_part = self.__create_rail_pads_model_part(rail_pads_name, rail_pad_parameters)
-        constraint_model_part = self.__create_constraint_model_part(rail_name)
+        constraint_model_part = self.__create_rail_constraint_model_part(rail_name)
         no_rotation_model_part = self.__create_no_rotation_model_part(rail_name, rail_global_coords)
 
         self.body_model_parts.append(rail_model_part)

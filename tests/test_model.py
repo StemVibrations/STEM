@@ -4735,7 +4735,7 @@ class TestModel:
         model.gmsh_io.generate_geometry(
             {sleeper_name: {
                 "coordinates": [(0, 0, 0), (0, 2, 0), (0, 2, 1), (0, 0, 1)],
-                "ndim": 2
+                "ndim": 0
             }}, "")
         sleeper_params = NodalConcentrated(1, 1, 1)
         part = model._Model__create_sleeper_model_parts(sleeper_name, sleeper_params)
@@ -4776,7 +4776,7 @@ class TestModel:
         model.gmsh_io.generate_geometry(
             {rail_pads_name: {
                 "coordinates": [(0, 0, 0), (0, 2, 0), (0, 2, 1), (0, 0, 1)],
-                "ndim": 2
+                "ndim": 1
             }}, "")
         pad_params = ElasticSpringDamper(1, 1, 1, 1)
         pads_part = model._Model__create_rail_pads_model_part(rail_pads_name, pad_params)
@@ -4784,7 +4784,7 @@ class TestModel:
         assert pads_part.name == rail_pads_name
         assert pads_part.material.material_parameters == pad_params
 
-    def test_create_constraint_model_part(self):
+    def test_create_rail_constraint_model_part(self):
         """
         Tests if the constraint model part is correctly created.
 
@@ -4794,10 +4794,10 @@ class TestModel:
         model.gmsh_io.generate_geometry(
             {rail_name: {
                 "coordinates": [(0, 0, 0), (0, 2, 0), (0, 2, 1), (0, 0, 1)],
-                "ndim": 2
+                "ndim": 1
             }}, "")
         constraint_params = DisplacementConstraint([True, True, True], [True, False, True], [0.0, 0.0, 0.0])
-        constraint_part = model._Model__create_constraint_model_part(rail_name)
+        constraint_part = model._Model__create_rail_constraint_model_part(rail_name)
         assert constraint_part.geometry is not None
         assert constraint_part.name == "constraint_" + rail_name
         TestUtils.assert_dictionary_almost_equal(constraint_params.__dict__, constraint_part.parameters.__dict__)
@@ -4813,7 +4813,7 @@ class TestModel:
         model.gmsh_io.generate_geometry(
             {rail_name: {
                 "coordinates": [(0, 0, 0), (0, 2, 0), (0, 2, 1), (0, 0, 1)],
-                "ndim": 2
+                "ndim": 1
             }}, "")
         no_rotation_params = RotationConstraint([True, True, True], [True, True, True], [0.0, 0.0, 0.0])
         no_rotation_part = model._Model__create_no_rotation_model_part(rail_name, global_rail_coords)
