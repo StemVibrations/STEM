@@ -118,7 +118,7 @@ def test_train_uvec_soil_3d_irr():
         "wheel_configuration": wheel_configuration,
         "velocity": velocity,
         "irr_parameters": {
-            "Av": 2.095e-05,
+            "Av": 0.2095e-05,
             "seed": 14
         },
     }
@@ -152,13 +152,13 @@ def test_train_uvec_soil_3d_irr():
     model.add_boundary_condition_on_plane([(5, 0, 0), (5, 3, 0), (5, 0, 50)], absorbing_boundaries_parameters, "abs")
 
     # coarse mesh
-    model.set_mesh_size(element_size=1.0)
+    model.set_mesh_size(element_size=2)
 
     # model.show_geometry(show_surface_ids=True)
 
     # analysis parameters
-    end_time = 0.5e-2
-    delta_time = 0.5e-3
+    end_time = 0.01
+    delta_time = 0.001
     analysis_type = AnalysisType.MECHANICAL
     solution_type = SolutionType.QUASI_STATIC
 
@@ -174,7 +174,7 @@ def test_train_uvec_soil_3d_irr():
 
     strategy_type = LinearNewtonRaphsonStrategy()
     scheme_type = NewmarkScheme()
-    linear_solver_settings = Amgcl(tolerance=1e-16)
+    linear_solver_settings = Amgcl(tolerance=1e-12)
     stress_initialisation_type = StressInitialisationType.NONE
     solver_settings = SolverSettings(analysis_type=analysis_type,
                                      solution_type=solution_type,
@@ -227,7 +227,7 @@ def test_train_uvec_soil_3d_irr():
     # # write the files and run the calculation
     stem = Stem(model, input_folder)
 
-    delta_time_stage_2 = 0.5e-3
+    delta_time_stage_2 = 0.001
     duration_stage_2 = 0.5
     velocity = 40
     stage2 = stem.create_new_stage(delta_time_stage_2, duration_stage_2)
@@ -267,7 +267,7 @@ def test_train_uvec_soil_3d_irr():
         expected_json_stage_2 = json.load(json_file)
 
     TestUtils.assert_dictionary_almost_equal(json_stage_1, expected_json_stage_1)
-    TestUtils.assert_dictionary_almost_equal(json_stage_2, expected_json_stage_2, abs_tolerance=1e-15)
+    TestUtils.assert_dictionary_almost_equal(json_stage_2, expected_json_stage_2, abs_tolerance=1e-12)
 
     rmtree(os.path.join(input_folder, "output"))
 

@@ -21,8 +21,6 @@ from benchmark_tests.utils import assert_files_equal
 from tests.utils import TestUtils
 import os
 
-DELTA_TIME = 5e-3
-
 
 @pytest.mark.parametrize("test_type, input_folder_suffix , expected_folder",
                          [("normal", "inputs_kratos_normal", "output_normal"),
