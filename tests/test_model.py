@@ -3269,16 +3269,14 @@ class TestModel:
             ], 19),
             16: Point.create(
                 [origin_point[0] - sleeper_length / 2, origin_point[1], origin_point[2] - sleeper_width / 2], 16),
-            8: Point.create(
-                [origin_point[0], origin_point[1], origin_point[2] - sleeper_width / 2], 8),
+            8: Point.create([origin_point[0], origin_point[1], origin_point[2] - sleeper_width / 2], 8),
             20: Point.create([
                 origin_point[0] - sleeper_length / 2, origin_point[1] + sleeper_height,
                 origin_point[2] + sleeper_width / 2
             ], 20),
             15: Point.create(
                 [origin_point[0] - sleeper_length / 2, origin_point[1], origin_point[2] + sleeper_width / 2], 15),
-            11: Point.create(
-                [origin_point[0], origin_point[1], origin_point[2] + sleeper_width / 2], 11),
+            11: Point.create([origin_point[0], origin_point[1], origin_point[2] + sleeper_width / 2], 11),
             30: Point.create([
                 origin_point[0] + sleeper_length / 2, origin_point[1],
                 origin_point[2] + sleeper_width / 2 + sleeper_distance
@@ -3303,8 +3301,8 @@ class TestModel:
                 origin_point[0] - sleeper_length / 2, origin_point[1],
                 origin_point[2] - sleeper_width / 2 + sleeper_distance
             ], 36),
-            28: Point.create(
-                [origin_point[0], origin_point[1], origin_point[2] - sleeper_width / 2 + sleeper_distance], 28),
+            28: Point.create([origin_point[0], origin_point[1], origin_point[2] - sleeper_width / 2 + sleeper_distance],
+                             28),
             40: Point.create([
                 origin_point[0] - sleeper_length / 2, origin_point[1] + sleeper_height,
                 origin_point[2] + sleeper_width / 2 + sleeper_distance
@@ -3313,8 +3311,8 @@ class TestModel:
                 origin_point[0] - sleeper_length / 2, origin_point[1],
                 origin_point[2] + sleeper_width / 2 + sleeper_distance
             ], 35),
-            31: Point.create(
-                [origin_point[0], origin_point[1], origin_point[2] + sleeper_width / 2 + sleeper_distance], 31),
+            31: Point.create([origin_point[0], origin_point[1], origin_point[2] + sleeper_width / 2 + sleeper_distance],
+                             31),
         }
 
         expected_sleeper_lines = {
@@ -4844,13 +4842,9 @@ class TestModel:
         global_coord = [0.0, 0.0, 0.0]
         sleeper_dimensions = [2.0, 4.0, 1.0]  # length, width, height
         direction_vector = [1.0, 0.0, 0.0]  # rotated 90 degrees
-        expected = np.array([[ 2.0 , 0.0,-1.5],
-                             [-2.0 , 0.0,-1.5],
-                             [-2.0 , 0.0,0.5],
-                             [ 2.0 , 0.0,0.5]])
+        expected = np.array([[2.0, 0.0, -1.5], [-2.0, 0.0, -1.5], [-2.0, 0.0, 0.5], [2.0, 0.0, 0.5]])
         result = Model._Model__generate_sleeper_base_coordinates(global_coord, sleeper_dimensions,
-                                                                 sleeper_rail_pad_offset,
-                                                                 direction_vector)
+                                                                 sleeper_rail_pad_offset, direction_vector)
         np.testing.assert_array_almost_equal(result, expected)
 
     def test_generate_sleeper_base_coordinates_nonzero_origin(self):
@@ -4866,14 +4860,10 @@ class TestModel:
         sleeper_rail_pad_offset = 0.5
         direction_vector = [0.0, 0.0, 1.0]  # no rotation
 
-        expected = np.array([[3.5, -1.0, 1.5],
-                             [3.5, -1.0, -0.5],
-                             [0.5, -1.0, -0.5],
-                             [0.5, -1.0, 1.5]])
+        expected = np.array([[3.5, -1.0, 1.5], [3.5, -1.0, -0.5], [0.5, -1.0, -0.5], [0.5, -1.0, 1.5]])
 
         result = Model._Model__generate_sleeper_base_coordinates(local_coord, sleeper_dimensions,
-                                                                 sleeper_rail_pad_offset,
-                                                                 direction_vector)
+                                                                 sleeper_rail_pad_offset, direction_vector)
         np.testing.assert_array_almost_equal(result, expected)
 
     def test_generate_sleeper_base_coordinates_with_negative_dimensions(self):

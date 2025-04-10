@@ -76,14 +76,11 @@ class Model:
         """
         return self.body_model_parts + self.process_model_parts
 
-
-
     @staticmethod
-    def __generate_sleeper_base_coordinates(global_coord: Sequence[float],
-                                            sleeper_dimensions: Sequence[float],
+    def __generate_sleeper_base_coordinates(global_coord: Sequence[float], sleeper_dimensions: Sequence[float],
                                             sleeper_rail_pad_offset: float,
                                             direction_vector: Sequence[float]) -> npty.NDArray[np.float64]:
-        """
+        r"""
         Computes the global coordinates of the four base corner points of a sleeper,
         rotated so that its long (x) axis aligns with the given direction vector.
 
@@ -106,9 +103,12 @@ class Model:
 
         $$
         R = \begin{pmatrix}
-        \cos\theta + u_x^2 (1-\cos\theta) & u_x u_y (1-\cos\theta) - u_z \sin\theta & u_x u_z (1-\cos\theta) + u_y \sin\theta \\
-        u_y u_x (1-\cos\theta) + u_z \sin\theta & \cos\theta + u_y^2 (1-\cos\theta) & u_y u_z (1-\cos\theta) - u_x \sin\theta \\
-        u_z u_x (1-\cos\theta) - u_y \sin\theta & u_z u_y (1-\cos\theta) + u_x \sin\theta & \cos\theta + u_z^2 (1-\cos\theta)
+        \cos\theta + u_x^2 (1-\cos\theta) & u_x u_y (1-\cos\theta) - u_z \sin\theta &
+        u_x u_z (1-\cos\theta) + u_y \sin\theta \\
+        u_y u_x (1-\cos\theta) + u_z \sin\theta & \cos\theta + u_y^2 (1-\cos\theta) &
+        u_y u_z (1-\cos\theta) - u_x \sin\theta \\
+        u_z u_x (1-\cos\theta) - u_y \sin\theta & u_z u_y (1-\cos\theta) + u_x \sin\theta &
+        \cos\theta + u_z^2 (1-\cos\theta)
         \end{pmatrix}.
         $$
 
@@ -127,12 +127,10 @@ class Model:
         length, width, height = sleeper_dimensions
 
         # Define the sleeper's local base coordinates (with local origin = [0,0,0])
-        points_local = np.array([
-            [length - sleeper_rail_pad_offset, 0.0, +width / 2],
-            [length - sleeper_rail_pad_offset, 0.0, -width / 2],
-            [-sleeper_rail_pad_offset, 0.0, -width / 2],
-            [-sleeper_rail_pad_offset, 0.0, +width / 2]
-        ])
+        points_local = np.array([[length - sleeper_rail_pad_offset, 0.0, +width / 2],
+                                 [length - sleeper_rail_pad_offset, 0.0, -width / 2],
+                                 [-sleeper_rail_pad_offset, 0.0, -width / 2],
+                                 [-sleeper_rail_pad_offset, 0.0, +width / 2]])
 
         # Compute rotation matrix to align the local z-axis [0,0,1] with the given direction_vector
         def normalize(v: np.ndarray) -> np.ndarray:
@@ -144,7 +142,7 @@ class Model:
         target = normalize(np.array(direction_vector))
         local_x = np.array([0.0, 0.0, 1.0])
         dot_prod = np.clip(np.dot(local_x, target), -1.0, 1.0)
-        angle = np.arccos(dot_prod) # The inverse of cos so that, if y = cos(x), then x = arccos(y).
+        angle = np.arccos(dot_prod)  # The inverse of cos so that, if y = cos(x), then x = arccos(y).
 
         # Use the identity matrix when no rotation is needed.
         if np.abs(angle) < 1e-8:
@@ -156,17 +154,18 @@ class Model:
             cos_theta = np.cos(angle)
             sin_theta = np.sin(angle)
             ux, uy, uz = axis
-            R = np.array([
-                [cos_theta + ux ** 2 * (1 - cos_theta),
-                 ux * uy * (1 - cos_theta) - uz * sin_theta,
-                 ux * uz * (1 - cos_theta) + uy * sin_theta],
-                [uy * ux * (1 - cos_theta) + uz * sin_theta,
-                 cos_theta + uy ** 2 * (1 - cos_theta),
-                 uy * uz * (1 - cos_theta) - ux * sin_theta],
-                [uz * ux * (1 - cos_theta) - uy * sin_theta,
-                 uz * uy * (1 - cos_theta) + ux * sin_theta,
-                 cos_theta + uz ** 2 * (1 - cos_theta)]
-            ])
+            R = np.array([[
+                cos_theta + ux**2 * (1 - cos_theta), ux * uy * (1 - cos_theta) - uz * sin_theta,
+                ux * uz * (1 - cos_theta) + uy * sin_theta
+            ],
+                          [
+                              uy * ux * (1 - cos_theta) + uz * sin_theta, cos_theta + uy**2 * (1 - cos_theta),
+                              uy * uz * (1 - cos_theta) - ux * sin_theta
+                          ],
+                          [
+                              uz * ux * (1 - cos_theta) - uy * sin_theta, uz * uy * (1 - cos_theta) + ux * sin_theta,
+                              cos_theta + uz**2 * (1 - cos_theta)
+                          ]])
 
         # Rotate the local points.
         rotated_points = np.matmul(R, points_local.T).T
@@ -217,14 +216,16 @@ class Model:
                 min_coords, max_coords = self.get_bounding_box_soil()
                 identity_vector = np.array([1, 1, 1])
                 # extend the start and end points in the direction of the track so that they are outside the soil domain
-                extension_start_point = start_point * (identity_vector - np.array(direction_vector)) + np.array(direction_vector) * min_coords
-                extension_end_point = end_point * (identity_vector - np.array(direction_vector))+ np.array(direction_vector) * max_coords
+                extension_start_point = start_point * (
+                    identity_vector - np.array(direction_vector)) + np.array(direction_vector) * min_coords
+                extension_end_point = end_point * (identity_vector -
+                                                   np.array(direction_vector)) + np.array(direction_vector) * max_coords
                 connection_geo_settings = {"": {"coordinates": [extension_start_point, extension_end_point], "ndim": 1}}
                 self.gmsh_io.generate_geometry(connection_geo_settings, "")
                 # For soil sleepers, create a 3D volume for each sleeper.
             for i, coord in enumerate(sleeper_global_coords):
                 coords_base = self.__generate_sleeper_base_coordinates(coord, sleeper_dimensions,
-                                                                          sleeper_rail_pad_offset, direction_vector)
+                                                                       sleeper_rail_pad_offset, direction_vector)
                 # Assuming extrusion occurs in the second axis (index 1) for the sleeper height.
                 # Ensure the list is initialized with float values
                 extrusions: List[float] = [0.0, 0.0, 0.0]
