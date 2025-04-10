@@ -135,8 +135,6 @@ class Model:
         # Compute rotation matrix to align the local z-axis [0,0,1] with the given direction_vector
         def normalize(v: np.ndarray) -> np.ndarray:
             norm = np.linalg.norm(v)
-            if norm < 1e-8:
-                raise ValueError("Zero-length vector provided for rotation.")
             return v / norm
 
         target = normalize(np.array(direction_vector))
