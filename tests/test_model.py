@@ -417,6 +417,14 @@ class TestModel:
         nodal_results = [NodalOutput.ACCELERATION]
         # Gauss point results
         # define output process
+        output_process = Output(part_name="nodal_accelerations",
+                                output_name="gid_nodal_accelerations_top",
+                                output_dir="dir_test",
+                                output_parameters=GiDOutputParameters(file_format="binary",
+                                                                      output_interval=100,
+                                                                      nodal_results=nodal_results))
+
+        return output_process
 
     @pytest.fixture
     def expected_geometry_two_layers_3D_extruded(self) -> Tuple[Geometry, Geometry]:
@@ -4818,7 +4826,7 @@ class TestModel:
                 "ndim": 1
             }}, "")
         no_rotation_params = RotationConstraint([True, True, True], [True, True, True], [0.0, 0.0, 0.0])
-        no_rotation_part = model._Model__create_no_rotation_model_part(rail_name, global_rail_coords)
+        no_rotation_part = model._Model__create_rail_no_rotation_model_part(rail_name, global_rail_coords)
         assert no_rotation_part.geometry is not None
         assert no_rotation_part.name == "rotation_constraint_" + rail_name
         TestUtils.assert_dictionary_almost_equal(no_rotation_params.__dict__, no_rotation_part.parameters.__dict__)

@@ -10,7 +10,7 @@ from gmsh_utils import gmsh_IO
 
 from stem.additional_processes import ParameterFieldParameters, HingeParameters
 from stem.field_generator import RandomFieldGenerator
-from stem.globals import ELEMENT_DATA, OUT_OF_PLANE_AXIS_2D, VERTICAL_AXIS, GRAVITY_VALUE, LARGE_DISTANCE
+from stem.globals import ELEMENT_DATA, OUT_OF_PLANE_AXIS_2D, VERTICAL_AXIS, GRAVITY_VALUE
 from stem.load import *
 from stem.boundary import *
 from stem.geometry import Geometry, Point
@@ -318,7 +318,7 @@ class Model:
         constraint_model_part.parameters.is_fixed[VERTICAL_AXIS] = False
         return constraint_model_part
 
-    def __create_no_rotation_model_part(self, rail_name: str, rail_global_coords: ndarray[Any, Any]) -> ModelPart:
+    def __create_rail_no_rotation_model_part(self, rail_name: str, rail_global_coords: ndarray[Any, Any]) -> ModelPart:
         """
         Creates a model part that prevents rotation at the rail ends preventing torsion.
 
@@ -327,7 +327,7 @@ class Model:
             - rail_global_coords (np.ndarray): Global coordinates of the rail.
 
         Returns:
-            :class:`stem.model_part.ModelPart`: Configured no-rotation constraint model part.
+            - :class:`stem.model_part.ModelPart`: Configured no-rotation constraint model part.
         """
         rotation_constraint_name = f"rotation_constraint_{rail_name}"
         no_rotation_model_part = ModelPart(rotation_constraint_name)
@@ -445,7 +445,7 @@ class Model:
         sleeper_model_part = self.__create_sleeper_model_parts(sleeper_name, sleeper_parameters)
         rail_pads_model_part = self.__create_rail_pads_model_part(rail_pads_name, rail_pad_parameters)
         constraint_model_part = self.__create_rail_constraint_model_part(rail_name)
-        no_rotation_model_part = self.__create_no_rotation_model_part(rail_name, rail_global_coords)
+        no_rotation_model_part = self.__create_rail_no_rotation_model_part(rail_name, rail_global_coords)
 
         self.body_model_parts.append(rail_model_part)
         self.body_model_parts.append(sleeper_model_part)
