@@ -76,59 +76,106 @@ class Model:
         """
         return self.body_model_parts + self.process_model_parts
 
+
+
     @staticmethod
-    def __generate_sleeper_base_coordinates(global_coord: Sequence[float], sleeper_dimensions: Sequence[float],
-                                            sleeper_rail_pad_offset: float) -> npty.NDArray[np.float64]:
+    def __generate_sleeper_base_coordinates(global_coord: Sequence[float],
+                                            sleeper_dimensions: Sequence[float],
+                                            sleeper_rail_pad_offset: float,
+                                            direction_vector: Sequence[float]) -> npty.NDArray[np.float64]:
         """
-        Computes the global coordinates of the four base corner points of a sleeper, based on its origin and dimensions.
+        Computes the global coordinates of the four base corner points of a sleeper,
+        rotated so that its long (x) axis aligns with the given direction vector.
 
-        The sleeper is assumed to be aligned with the local axes, and the base corners are calculated using:
-        - Sleeper length (along the track direction, typically x-axis)
-        - Sleeper width (perpendicular to the track, typically z-axis)
-        - Sleeper height is not used in this calculation, as only the base (bottom face) is considered.
+        The sleeper is defined in its local coordinate system with the origin at (0, 0, 0):
+          - The x-axis (sleeper length) is originally along [1, 0, 0]
+          - The z-axis (sleeper width) is along [0, 0, 1]
 
-        Visual Reference:
+        Local base corners (relative to the origin) are defined as:
+            B: [ length - rail_pad_offset,    0, +width/2 ]
+            C: [ length - rail_pad_offset,    0, -width/2 ]
+            D: [ -rail_pad_offset,            0, -width/2 ]
+            E: [ -rail_pad_offset,            0, +width/2 ]
 
-             x-axis
-              ▲
-              │  D┌──────────────────────────────┐C
-              │   │                              │
-              │   │               A=origin       │
-              │   │                              │
-              │  E└──────────────────────────────┘
-              │                                   B   z-axis
-              └────────────────────────────────────────►
+        These local coordinates are then rotated so that the local z-axis aligns with the provided
+        direction_vector (using Rodrigues' rotation formula) and finally translated by global_coord.
 
-        Points are computed in the following order:
-            B (xi + (length - offset), yi, zi + width/2)
-            C (xi + (length - offset), yi, zi - width/2)
-            D (xi - offset, yi, zi - width/2)
-            E (xi - offset, yi, zi + width/2)
+        Essentially the direction vector and the local z-axis define an angle $theta$.
+        This angle is used together with the normalized axis of rotation ($u = (u_x, u_x, u_y)$)
+        to define the rotational matrix https://en.wikipedia.org/wiki/Rotation_matrix.
+
+        $$
+        R = \begin{pmatrix}
+        \cos\theta + u_x^2 (1-\cos\theta) & u_x u_y (1-\cos\theta) - u_z \sin\theta & u_x u_z (1-\cos\theta) + u_y \sin\theta \\
+        u_y u_x (1-\cos\theta) + u_z \sin\theta & \cos\theta + u_y^2 (1-\cos\theta) & u_y u_z (1-\cos\theta) - u_x \sin\theta \\
+        u_z u_x (1-\cos\theta) - u_y \sin\theta & u_z u_y (1-\cos\theta) + u_x \sin\theta & \cos\theta + u_z^2 (1-\cos\theta)
+        \end{pmatrix}.
+        $$
+
+        Finally, the rotated points are given by $R \cdot P + global\_coord$, where $P$ are the local coordinates.
 
         Args:
-            - global_coord (Sequence[float]): Global coordinate of the sleeper origin (typically the rail pad position)
-            - sleeper_dimensions (Sequence[float]): Dimensions of the sleeper [length, width, height]
-            - sleeper_rail_pad_offset (float): Offset from the center to where the rail pad is positioned
+            global_coord (Sequence[float]): Global coordinate of the sleeper origin.
+            sleeper_dimensions (Sequence[float]): Sleeper dimensions [length, width, height].
+            sleeper_rail_pad_offset (float): Offset from the local origin to the rail pad along x.
+            direction_vector (Sequence[float]): Global direction in which the sleeper's length should point.
 
         Returns:
-            - npty.NDArray[np.float64]: Array of 4 base corner coordinates of the sleeper in global space
+            np.ndarray: An array (shape (4, 3)) of the global coordinates for the sleeper's four base corners.
         """
-        xi, yi, zi = global_coord
+        # Unpack dimensions; height is not used here.
         length, width, height = sleeper_dimensions
-        x = [
-            xi + length - sleeper_rail_pad_offset, xi + length - sleeper_rail_pad_offset, xi - sleeper_rail_pad_offset,
-            xi - sleeper_rail_pad_offset
-        ]
-        y = [yi, yi, yi, yi]
-        z = [zi + width / 2, zi - width / 2, zi - width / 2, zi + width / 2]
 
-        coords_volume_sleepers = np.zeros((len(x), 3))
-        # determine the dimensions that the x should be assigned to by process of elimination
-        x_axis_dimension = 3 - VERTICAL_AXIS - OUT_OF_PLANE_AXIS_2D
-        coords_volume_sleepers[:, x_axis_dimension] = x
-        coords_volume_sleepers[:, VERTICAL_AXIS] = y
-        coords_volume_sleepers[:, OUT_OF_PLANE_AXIS_2D] = z
-        return coords_volume_sleepers
+        # Define the sleeper's local base coordinates (with local origin = [0,0,0])
+        points_local = np.array([
+            [length - sleeper_rail_pad_offset, 0.0, +width / 2],
+            [length - sleeper_rail_pad_offset, 0.0, -width / 2],
+            [-sleeper_rail_pad_offset, 0.0, -width / 2],
+            [-sleeper_rail_pad_offset, 0.0, +width / 2]
+        ])
+
+        # Compute rotation matrix to align the local z-axis [0,0,1] with the given direction_vector
+        def normalize(v: np.ndarray) -> np.ndarray:
+            norm = np.linalg.norm(v)
+            if norm < 1e-8:
+                raise ValueError("Zero-length vector provided for rotation.")
+            return v / norm
+
+        target = normalize(np.array(direction_vector))
+        local_x = np.array([0.0, 0.0, 1.0])
+        dot_prod = np.clip(np.dot(local_x, target), -1.0, 1.0)
+        angle = np.arccos(dot_prod) # The inverse of cos so that, if y = cos(x), then x = arccos(y).
+
+        # Use the identity matrix when no rotation is needed.
+        if np.abs(angle) < 1e-8:
+            R = np.eye(3)
+        else:
+            # Determine the rotation axis from the cross product.
+            axis = np.cross(local_x, target)
+            axis = normalize(axis)
+            cos_theta = np.cos(angle)
+            sin_theta = np.sin(angle)
+            ux, uy, uz = axis
+            R = np.array([
+                [cos_theta + ux ** 2 * (1 - cos_theta),
+                 ux * uy * (1 - cos_theta) - uz * sin_theta,
+                 ux * uz * (1 - cos_theta) + uy * sin_theta],
+                [uy * ux * (1 - cos_theta) + uz * sin_theta,
+                 cos_theta + uy ** 2 * (1 - cos_theta),
+                 uy * uz * (1 - cos_theta) - ux * sin_theta],
+                [uz * ux * (1 - cos_theta) - uy * sin_theta,
+                 uz * uy * (1 - cos_theta) + ux * sin_theta,
+                 cos_theta + uz ** 2 * (1 - cos_theta)]
+            ])
+
+        # Rotate the local points.
+        rotated_points = np.matmul(R, points_local.T).T
+
+        # Translate the points to global coordinates.
+        global_coord = np.array(global_coord)
+        points_global = rotated_points + global_coord
+
+        return points_global
 
     def __generate_sleepers(self, sleeper_parameters: Union[NodalConcentrated,
                                                             SoilMaterial], sleeper_dimensions: Sequence[float],
@@ -175,7 +222,7 @@ class Model:
                 # For soil sleepers, create a 3D volume for each sleeper.
             for i, coord in enumerate(sleeper_global_coords):
                 coords_base = self.__generate_sleeper_base_coordinates(coord, sleeper_dimensions,
-                                                                          sleeper_rail_pad_offset)
+                                                                          sleeper_rail_pad_offset, direction_vector)
                 # Assuming extrusion occurs in the second axis (index 1) for the sleeper height.
                 # Ensure the list is initialized with float values
                 extrusions: List[float] = [0.0, 0.0, 0.0]

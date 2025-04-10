@@ -4823,19 +4823,24 @@ class TestModel:
 
     def test_generate_sleeper_base_coordinates_at_origin(self):
         """
-        Test the creation of a sleeper base coordinates at the origin.
+        Test the creation of sleeper base coordinates at the origin when the sleeper is not rotated.
 
-        This test ensures that the function correctly calculates the sleeper base coordinates
-        when the origin is at (0, 0, 0).
+        This test ensures that when the direction vector is [1, 0, 0] (i.e. aligned with the
+        local x-axis), the generated sleeper base coordinates remain as defined in the local system,
+        translated by the global origin.
 
-        Asserts that the result matches the expected output.
         """
         sleeper_rail_pad_offset = 0.5
-        local_coord = [0.0, 0.0, 0.0]
+        global_coord = [0.0, 0.0, 0.0]
         sleeper_dimensions = [2.0, 4.0, 1.0]  # length, width, height
-        expected = np.array([[1.5, 0.0, 2.0], [1.5, 0.0, -2.0], [-0.5, 0.0, -2.0], [-0.5, 0.0, 2.0]])
-        result = Model._Model__generate_sleeper_base_coordinates(local_coord, sleeper_dimensions,
-                                                                 sleeper_rail_pad_offset)
+        direction_vector = [1.0, 0.0, 0.0]  # rotated 90 degrees
+        expected = np.array([[ 2.0 , 0.0,-1.5],
+                             [-2.0 , 0.0,-1.5],
+                             [-2.0 , 0.0,0.5],
+                             [ 2.0 , 0.0,0.5]])
+        result = Model._Model__generate_sleeper_base_coordinates(global_coord, sleeper_dimensions,
+                                                                 sleeper_rail_pad_offset,
+                                                                 direction_vector)
         np.testing.assert_array_almost_equal(result, expected)
 
     def test_generate_sleeper_base_coordinates_nonzero_origin(self):
@@ -4843,16 +4848,22 @@ class TestModel:
         Test the creation of a sleeper base coordinates with a non-zero origin.
 
         This test ensures that the function correctly calculates the sleeper base coordinates
-        when given a non-zero origin.
+        when given a non-zero origin. The sleeper is not rotated.
 
-        Asserts that the result matches the expected output.
         """
         local_coord = [1.0, -1.0, 0.5]
-        sleeper_dimensions = [3.0, 2.0, 0.5]
+        sleeper_dimensions = [3.0, 2.0, 0.5]  # length, width, height
         sleeper_rail_pad_offset = 0.5
-        expected = np.array([[3.5, -1.0, 1.5], [3.5, -1.0, -0.5], [0.5, -1.0, -0.5], [0.5, -1.0, 1.5]])
+        direction_vector = [0.0, 0.0, 1.0]  # no rotation
+
+        expected = np.array([[3.5, -1.0, 1.5],
+                             [3.5, -1.0, -0.5],
+                             [0.5, -1.0, -0.5],
+                             [0.5, -1.0, 1.5]])
+
         result = Model._Model__generate_sleeper_base_coordinates(local_coord, sleeper_dimensions,
-                                                                 sleeper_rail_pad_offset)
+                                                                 sleeper_rail_pad_offset,
+                                                                 direction_vector)
         np.testing.assert_array_almost_equal(result, expected)
 
     def test_generate_sleeper_base_coordinates_with_negative_dimensions(self):
@@ -4871,6 +4882,7 @@ class TestModel:
         sleeper_dimensions = [-2.0, -4.0, 1.0]
         sleeper_rail_pad_offset = 0.5
         expected = np.array([[-0.5, 3.0, 2.0], [-0.5, 3.0, 6.0], [1.5, 3.0, 6.0], [1.5, 3.0, 2.0]])
+        direction_vector = [0.0, 0.0, 1.0]  # no rotation
         result = Model._Model__generate_sleeper_base_coordinates(local_coord, sleeper_dimensions,
-                                                                 sleeper_rail_pad_offset)
+                                                                 sleeper_rail_pad_offset, direction_vector)
         np.testing.assert_array_almost_equal(result, expected)
