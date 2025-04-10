@@ -31,7 +31,7 @@ def test_train_uvec_soil_3d_irr():
     # Define geometry, conditions and material parameters
     # --------------------------------
 
-   # Specify dimension and initiate the model
+    # Specify dimension and initiate the model
     ndim = 3
     model = Model(ndim)
     model.extrusion_length = 50
@@ -118,9 +118,9 @@ def test_train_uvec_soil_3d_irr():
         "wheel_configuration": wheel_configuration,
         "velocity": velocity,
         "irr_parameters": {
-                    "Av": 2.095e-05,
-                    "seed": 14
-                },
+            "Av": 2.095e-05,
+            "seed": 14
+        },
     }
 
     # define the UVEC load

@@ -24,10 +24,9 @@ import os
 DELTA_TIME = 0.5e-3
 
 
-@pytest.mark.parametrize("test_type, input_folder_suffix , expected_folder", [
-    ("normal", "inputs_kratos_normal", "output_normal"),
-    ("joint", "inputs_kratos_joint", "output_joint")
-])
+@pytest.mark.parametrize("test_type, input_folder_suffix , expected_folder",
+                         [("normal", "inputs_kratos_normal", "output_normal"),
+                          ("joint", "inputs_kratos_joint", "output_joint")])
 def test_train_uvec_soil_3d(test_type, input_folder_suffix, expected_folder):
     """
     Test the UVEC on a 3D soil model with and without a joint.
@@ -264,7 +263,8 @@ def test_train_uvec_soil_3d(test_type, input_folder_suffix, expected_folder):
     stem.run_calculation()
 
     if sys.platform == "win32":
-        expected_output_dir = os.path.join("benchmark_tests/test_train_uvec_soil_3d_joint", expected_folder + "_windows")
+        expected_output_dir = os.path.join("benchmark_tests/test_train_uvec_soil_3d_joint",
+                                           expected_folder + "_windows")
     elif sys.platform == "linux":
         expected_output_dir = os.path.join("benchmark_tests/test_train_uvec_soil_3d_joint", expected_folder + "_linux")
     else:
