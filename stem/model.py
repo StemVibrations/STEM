@@ -1,5 +1,4 @@
 import json
-import numpy.typing as npty
 import os
 import numpy as np
 from pathlib import Path
@@ -79,7 +78,7 @@ class Model:
     @staticmethod
     def __generate_sleeper_base_coordinates(global_coord: Sequence[float], sleeper_dimensions: Sequence[float],
                                             sleeper_rail_pad_offset: float,
-                                            direction_vector: Sequence[float]) -> npty.NDArray[np.float64]:
+                                            direction_vector: Sequence[float]) -> Sequence[float]:
         r"""
         Computes the global coordinates of the four base corner points of a sleeper,
         rotated so that its long (x) axis aligns with the given direction vector.
@@ -133,11 +132,8 @@ class Model:
                                  [-sleeper_rail_pad_offset, 0.0, +width / 2]])
 
         # Compute rotation matrix to align the local z-axis [0,0,1] with the given direction_vector
-        def normalize(v: np.ndarray) -> np.ndarray:
-            norm = np.linalg.norm(v)
-            return v / norm
-
-        target = normalize(np.array(direction_vector))
+        norm = np.array(np.linalg.norm(direction_vector), dtype=float)
+        target = direction_vector / norm
         local_x = np.array([0.0, 0.0, 1.0])
         dot_prod = np.clip(np.dot(local_x, target), -1.0, 1.0)
         angle = np.arccos(dot_prod)  # The inverse of cos so that, if y = cos(x), then x = arccos(y).
@@ -148,7 +144,8 @@ class Model:
         else:
             # Determine the rotation axis from the cross product.
             axis = np.cross(local_x, target)
-            axis = normalize(axis)
+            norm = np.array(np.linalg.norm(axis), dtype=float)
+            axis = axis / norm
             cos_theta = np.cos(angle)
             sin_theta = np.sin(angle)
             ux, uy, uz = axis
@@ -169,16 +166,17 @@ class Model:
 
         # Rotate the local points.
         rotated_points = np.matmul(R, points_local.T).T
+        # Ensure the points are in float format.
+        rotated_points = np.array(rotated_points, dtype=float)
 
         # Translate the points to global coordinates.
-        global_coord = np.array(global_coord)
-        points_global = rotated_points + global_coord
+        points_global: Sequence[float] = rotated_points + global_coord
 
         return points_global
 
     def __generate_sleepers(self, sleeper_parameters: Union[NodalConcentrated,
                                                             SoilMaterial], sleeper_dimensions: Sequence[float],
-                            base_sleeper_name: str, sleeper_global_coords: ndarray[Any, Any],
+                            base_sleeper_name: str, sleeper_global_coords: Sequence[Sequence[float]],
                             sleeper_rail_pad_offset: float, direction_vector: Sequence[float]) -> None:
         """
         Generates sleeper geometry based on the type of sleeper parameters.
@@ -197,7 +195,7 @@ class Model:
             - direction_vector (Sequence[float]): direction vector of the track
 
         Returns:
-            None
+            - None
 
         """
         if isinstance(sleeper_parameters, NodalConcentrated):
@@ -248,7 +246,7 @@ class Model:
             - rail_parameters (:class:`stem.structural_material.EulerBeam`): rail parameters
 
         Returns:
-            :class:`stem.model_part.BodyModelPart`: Configured rail model part.
+            - :class:`stem.model_part.BodyModelPart`: Configured rail model part.
         """
         rail_model_part = BodyModelPart(rail_name)
         rail_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_name)
@@ -266,7 +264,7 @@ class Model:
             :class:`stem.soil_material.SoilMaterial`]): sleeper parameters
 
         Returns:
-            :class:`stem.model_part.BodyModelPart`: The configured sleeper model part.
+            - :class:`stem.model_part.BodyModelPart`: The configured sleeper model part.
         """
         model_part = BodyModelPart(name_sleeper)
         model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name_sleeper)
@@ -304,7 +302,7 @@ class Model:
             - rail_name (str): Name of the rail.
 
         Returns:
-            :class:`stem.model_part.ModelPart`: Configured constraint model part.
+            - :class:`stem.model_part.ModelPart`: Configured constraint model part.
         """
         rail_constraint_name = f"constraint_{rail_name}"
         rail_constraint_geometry_ids = self.gmsh_io.geo_data["physical_groups"][rail_name]["geometry_ids"]
