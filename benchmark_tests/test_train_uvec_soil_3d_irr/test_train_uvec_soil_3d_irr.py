@@ -24,7 +24,7 @@ import os
 
 def test_train_uvec_soil_3d_irr():
     """
-    Test the UVEC on a 3D soil model with and without a joint.
+    Test the UVEC on a 3D soil model with irregularities.
     """
     input_folder = "benchmark_tests/test_train_uvec_soil_3d_irr"
 
@@ -243,7 +243,7 @@ def test_train_uvec_soil_3d_irr():
     stem.run_calculation()
 
     if sys.platform == "win32":
-        expected_output_dir = os.path.join("benchmark_tests/test_train_uvec_soil_3d_joint", "output_windows")
+        expected_output_dir = os.path.join("benchmark_tests/test_train_uvec_soil_3d_irr", "output_windows")
     elif sys.platform == "linux":
         expected_output_dir = os.path.join("benchmark_tests/test_train_uvec_soil_3d_irr", "output_linux")
     else:
