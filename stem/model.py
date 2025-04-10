@@ -154,18 +154,20 @@ class Model:
             cos_theta = np.cos(angle)
             sin_theta = np.sin(angle)
             ux, uy, uz = axis
-            R = np.array([[
+            row_1 = np.array([
                 cos_theta + ux**2 * (1 - cos_theta), ux * uy * (1 - cos_theta) - uz * sin_theta,
                 ux * uz * (1 - cos_theta) + uy * sin_theta
-            ],
-                          [
-                              uy * ux * (1 - cos_theta) + uz * sin_theta, cos_theta + uy**2 * (1 - cos_theta),
-                              uy * uz * (1 - cos_theta) - ux * sin_theta
-                          ],
-                          [
-                              uz * ux * (1 - cos_theta) - uy * sin_theta, uz * uy * (1 - cos_theta) + ux * sin_theta,
-                              cos_theta + uz**2 * (1 - cos_theta)
-                          ]])
+            ])
+            row_2 = np.array([
+                uy * ux * (1 - cos_theta) + uz * sin_theta, cos_theta + uy**2 * (1 - cos_theta),
+                uy * uz * (1 - cos_theta) - ux * sin_theta
+            ])
+            row_3 = np.array([
+                uz * ux * (1 - cos_theta) - uy * sin_theta, uz * uy * (1 - cos_theta) + ux * sin_theta,
+                cos_theta + uz**2 * (1 - cos_theta)
+            ])
+            # Create the rotation matrix.
+            R = np.array([row_1, row_2, row_3])
 
         # Rotate the local points.
         rotated_points = np.matmul(R, points_local.T).T
