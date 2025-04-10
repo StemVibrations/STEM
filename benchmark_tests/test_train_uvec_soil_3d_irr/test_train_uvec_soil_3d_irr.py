@@ -13,7 +13,7 @@ from stem.default_materials import DefaultMaterial
 from stem.load import UvecLoad
 from stem.boundary import DisplacementConstraint, AbsorbingBoundary
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
-     LinearNewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
+     LinearNewtonRaphsonStrategy, NewmarkScheme, Cg, StressInitialisationType, SolverSettings, Problem
 from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters
 from stem.stem import Stem
 
@@ -174,7 +174,7 @@ def test_train_uvec_soil_3d_irr():
 
     strategy_type = LinearNewtonRaphsonStrategy()
     scheme_type = NewmarkScheme()
-    linear_solver_settings = Amgcl(tolerance=1e-12)
+    linear_solver_settings = Cg(tolerance=1e-16)
     stress_initialisation_type = StressInitialisationType.NONE
     solver_settings = SolverSettings(analysis_type=analysis_type,
                                      solution_type=solution_type,
