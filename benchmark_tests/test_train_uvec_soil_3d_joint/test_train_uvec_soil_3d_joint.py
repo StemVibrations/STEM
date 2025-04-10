@@ -13,12 +13,13 @@ from stem.default_materials import DefaultMaterial
 from stem.load import UvecLoad
 from stem.boundary import DisplacementConstraint, AbsorbingBoundary
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
-     LinearNewtonRaphsonStrategy, NewmarkScheme, Cg, StressInitialisationType, SolverSettings, Problem
+     LinearNewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
 from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters
 from stem.stem import Stem
 
 from benchmark_tests.utils import assert_files_equal
 from tests.utils import TestUtils
+import os
 
 DELTA_TIME = 0.5e-3
 
@@ -194,7 +195,7 @@ def test_train_uvec_soil_3d(test_type, input_folder_suffix, expected_folder):
 
     strategy_type = LinearNewtonRaphsonStrategy()
     scheme_type = NewmarkScheme()
-    linear_solver_settings = Cg()
+    linear_solver_settings = Amgcl()
     stress_initialisation_type = StressInitialisationType.NONE
     solver_settings = SolverSettings(analysis_type=analysis_type,
                                      solution_type=solution_type,
@@ -290,3 +291,10 @@ def test_train_uvec_soil_3d(test_type, input_folder_suffix, expected_folder):
     TestUtils.assert_dictionary_almost_equal(json_stage_2, expected_json_stage_2)
 
     rmtree(input_folder)
+
+    # remove stage folders
+    folder = "benchmark_tests/test_train_uvec_soil_3d_joint"
+    files = os.listdir(folder)
+    for f in files:
+        if f.endswith(".json") or f.endswith(".rest") or f.endswith(".mdpa"):
+            os.remove(os.path.join(folder, f))
