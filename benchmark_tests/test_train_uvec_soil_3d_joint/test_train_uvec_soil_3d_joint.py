@@ -140,8 +140,8 @@ def test_train_uvec_soil_3d(test_type, input_folder_suffix, expected_folder):
         distance_joint = 35.75
         uvec_parameters["joint_parameters"] = {
             "location_joint": distance_joint,  # joint location [m]
-            "depth_joint": 0.01,  # depth of the joint [m]
-            "width_joint": 0.25  # width of the joint [m]
+            "depth_joint": 0.005,  # depth of the joint [m]
+            "width_joint": 0.5  # width of the joint [m]
         }
 
     # define the UVEC load
@@ -290,7 +290,7 @@ def test_train_uvec_soil_3d(test_type, input_folder_suffix, expected_folder):
     TestUtils.assert_dictionary_almost_equal(json_stage_1, expected_json_stage_1)
     TestUtils.assert_dictionary_almost_equal(json_stage_2, expected_json_stage_2)
 
-    rmtree(input_folder)
+    # rmtree(input_folder)
 
     # remove stage folders
     folder = "benchmark_tests/test_train_uvec_soil_3d_joint"
