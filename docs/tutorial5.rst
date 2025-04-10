@@ -490,7 +490,7 @@ Once the calculation is finished, the results can be visualised using Paraview, 
 
 This figure shows the results for the three nodes that were defined in the model.
 The figure compares the results of the model with rail joint and without rail joint.
-The analysis for this results have been obtained with an element size of 0.25m, time step of 5e-4 s and a
+The analysis for this results have been obtained with an element size of 0.25m, time step of 5e-4s and a
 duration of 5e-3s for stage 1 and 0.5s for stage 2.
 
 .. image:: _static/time_history_rail_joint.png
