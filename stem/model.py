@@ -174,7 +174,7 @@ class Model:
                 self.gmsh_io.generate_geometry(connection_geo_settings, "")
                 # For soil sleepers, create a 3D volume for each sleeper.
             for i, coord in enumerate(sleeper_global_coords):
-                coords_volume = Model.__generate_sleeper_base_coordinates(coord, sleeper_dimensions,
+                coords_base = self.__generate_sleeper_base_coordinates(coord, sleeper_dimensions,
                                                                           sleeper_rail_pad_offset)
                 # Assuming extrusion occurs in the second axis (index 1) for the sleeper height.
                 # Ensure the list is initialized with float values
