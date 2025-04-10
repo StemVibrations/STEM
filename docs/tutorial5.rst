@@ -6,7 +6,7 @@ STEM tutorials
 Train model (UVEC) with rail joint and static initialisation
 ------------------------------------------------------------
 This tutorial shows step by step guide on how to set up a train model on top of track on an embankment with
- two soil layers underneath, in a 3D model, on a railway track with a rail joint.
+two soil layers underneath, in a 3D model, on a railway track with a rail joint.
 The UVEC (User defined VEhiCle model) is a model used to represent a train as dynamic loads on the system.
 
 The calculation is performed in two stages.
