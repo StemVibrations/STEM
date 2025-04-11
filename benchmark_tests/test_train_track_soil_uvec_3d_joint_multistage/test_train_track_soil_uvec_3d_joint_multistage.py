@@ -25,11 +25,11 @@ import os
 @pytest.mark.parametrize("test_type, input_folder_suffix , expected_folder",
                          [("normal", "inputs_kratos_normal", "output_normal"),
                           ("joint", "inputs_kratos_joint", "output_joint")])
-def test_train_uvec_soil_3d(test_type, input_folder_suffix, expected_folder):
+def test_train_track_soil_uvec_3d_joint_multistage(test_type, input_folder_suffix, expected_folder):
     """
     Test the UVEC on a 3D soil model with and without a joint.
     """
-    input_folder = os.path.join("benchmark_tests/test_train_uvec_soil_3d_joint", input_folder_suffix)
+    input_folder = os.path.join("benchmark_tests/test_train_track_soil_uvec_3d_joint_multistage", input_folder_suffix)
 
     # Define geometry, conditions and material parameters
     # --------------------------------
@@ -259,10 +259,11 @@ def test_train_uvec_soil_3d(test_type, input_folder_suffix, expected_folder):
     stem.run_calculation()
 
     if sys.platform == "win32":
-        expected_output_dir = os.path.join("benchmark_tests/test_train_uvec_soil_3d_joint",
+        expected_output_dir = os.path.join("benchmark_tests/test_train_track_soil_uvec_3d_joint_multistage",
                                            expected_folder + "_windows")
     elif sys.platform == "linux":
-        expected_output_dir = os.path.join("benchmark_tests/test_train_uvec_soil_3d_joint", expected_folder + "_linux")
+        expected_output_dir = os.path.join("benchmark_tests/test_train_track_soil_uvec_3d_joint_multistage",
+                                           expected_folder + "_linux")
     else:
         raise Exception("Unknown platform")
 
@@ -292,7 +293,7 @@ def test_train_uvec_soil_3d(test_type, input_folder_suffix, expected_folder):
     rmtree(input_folder)
 
     # remove stage folders
-    folder = "benchmark_tests/test_train_uvec_soil_3d_joint"
+    folder = "benchmark_tests/test_train_track_soil_uvec_3d_joint_multistage"
     files = os.listdir(folder)
     for f in files:
         if f.endswith(".json") or f.endswith(".rest") or f.endswith(".mdpa"):
