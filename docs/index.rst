@@ -71,6 +71,9 @@ Tutorials
 
 * :ref:`tutorial4`
 
+* :ref:`tutorial5`
+
+
 STEM interface definitions
 ==========================
 STEM has interface definitions to interact with the model, and allow the extension of the model and the use

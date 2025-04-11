@@ -7,7 +7,7 @@ from stem.load import GravityLoad
 from stem.table import Table
 from stem.boundary import DisplacementConstraint
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, \
-    StressInitialisationType, SolverSettings, Problem, NewtonRaphsonStrategy, LinearNewtonRaphsonStrategy
+    StressInitialisationType, SolverSettings, Problem, NewtonRaphsonStrategy, Amgcl, LinearNewtonRaphsonStrategy
 from stem.output import NodalOutput, VtkOutputParameters, Output, JsonOutputParameters
 from stem.stem import Stem
 from stem.utils import Utils
@@ -113,6 +113,7 @@ def test_stem():
                                      are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
                                      strategy_type=LinearNewtonRaphsonStrategy(),
+                                     linear_solver_settings=Amgcl(tolerance=1e-6),
                                      rayleigh_k=6e-6,
                                      rayleigh_m=0.02)
 

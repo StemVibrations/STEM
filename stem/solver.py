@@ -434,13 +434,13 @@ class Amgcl(LinearSolverSettingsABC):
     Attributes:
         - scaling (bool): if true, the system matrix will be scaled before solving the linear system of equations.\
             Default value is False.
-        - tolerance (float): tolerance for the linear solver convergence criteria. Default value is 1e-6.
+        - tolerance (float): tolerance for the linear solver convergence criteria. Default value is 1e-12.
         - max_iteration (int): maximum number of iterations for the linear solver. Default value is 1000.
         - krylov_type (str): type of the Krylov solver. Default value is "cg", other options are "gmres" and "bicgstab".
 
     """
     scaling: bool = False
-    tolerance: float = 1e-6
+    tolerance: float = 1e-12
     max_iteration: int = 1000
     krylov_type: str = "cg"
 
@@ -467,12 +467,12 @@ class Cg(LinearSolverSettingsABC):
     Attributes:
         - scaling (bool): if true, the system matrix will be scaled before solving the linear system of equations.\
             Default value is False.
-        - tolerance (float): tolerance for the linear solver convergence criteria. Default value is 1e-6.
+        - tolerance (float): tolerance for the linear solver convergence criteria. Default value is 1e-12.
         - max_iteration (int): maximum number of iterations for the linear solver. Default value is 1000.
 
     """
     scaling: bool = False
-    tolerance: float = 1e-6
+    tolerance: float = 1e-12
     max_iteration: int = 1000
 
     @property
