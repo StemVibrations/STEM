@@ -138,10 +138,11 @@ length is 50 m in the z-direction.
 
 .. code-block:: python
 
+    extrusion_length = 50
     soil1_coordinates = [(0.0, 0.0, 0.0), (5.0, 0.0, 0.0), (5.0, 1.0, 0.0), (0.0, 1.0, 0.0)]
     soil2_coordinates = [(0.0, 1.0, 0.0), (5.0, 1.0, 0.0), (5.0, 2.0, 0.0), (0.0, 2.0, 0.0)]
     embankment_coordinates = [(0.0, 2.0, 0.0), (3.0, 2.0, 0.0), (1.5, 3.0, 0.0), (0.75, 3.0, 0.0), (0, 3.0, 0.0)]
-    model.extrusion_length = 50
+    model.extrusion_length = extrusion_length
 
     # END CODE BLOCK
 
@@ -302,12 +303,12 @@ surface-dimension, "2".
                                                             is_fixed=[True, False, True], value=[0, 0, 0])
     absorbing_boundaries_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=40.0)
 
-    model.add_boundary_condition_on_plane([(0, 0, 0), (0, 0, 50), (5, 0, 0)], no_displacement_parameters,"base_fixed")
-    model.add_boundary_condition_on_plane([(0, 0, 0), (0, 0, 50), (0, 3, 0)], roller_displacement_parameters, "sides_roller")
+    model.add_boundary_condition_on_plane([(0, 0, 0), (0, 0, extrusion_length), (5, 0, 0)], no_displacement_parameters,"base_fixed")
+    model.add_boundary_condition_on_plane([(0, 0, 0), (0, 0, extrusion_length), (0, 3, 0)], roller_displacement_parameters, "sides_roller")
     #
     model.add_boundary_condition_on_plane([(0, 0, 0), (5, 0, 0), (5, 3, 0)],absorbing_boundaries_parameters,"abs")
-    model.add_boundary_condition_on_plane([(0, 0, 50), (5, 0, 50), (5, 3, 50)],absorbing_boundaries_parameters,"abs")
-    model.add_boundary_condition_on_plane([(5, 0, 0), (5, 3, 0), (5, 0, 50)], absorbing_boundaries_parameters, "abs")
+    model.add_boundary_condition_on_plane([(0, 0, extrusion_length), (5, 0, extrusion_length), (5, 3, extrusion_length)],absorbing_boundaries_parameters,"abs")
+    model.add_boundary_condition_on_plane([(5, 0, 0), (5, 3, 0), (5, 0, extrusion_length)], absorbing_boundaries_parameters, "abs")
 
     # END CODE BLOCK
 
@@ -324,7 +325,9 @@ The analysis type is set to "MECHANICAL" and the solution type is set to "QUASI_
 Then the start time is set to 0.0 second and the end time is set to 1e-2 second. This is enought to perform the static
 initialisation of the model. The time step size is set to 0.001 second.
 Since the problem is linear elastic, Linear-Newton-Raphson is used as a solving strategy.
-Because the problem is quasi-static the time integration method is Euler-Backward.
+The Newmark scheme is used for the time integration.
+Because the problem is quasi-static in reality the integration method falls into Euler-Backward, but this is taken care
+of in STEM. The user can proceed with the Newmark scheme, which is convenient for the next stage that it is dynamic.
 Stresses are not initialised since the "stress_initialisation_type" is set to "NONE".
 Since the problem is linear elastic, the stiffness matrix is constant and the mass and
 damping matrices are constant, defining the matrices as constant will speed up the computation. Because
@@ -492,6 +495,8 @@ This figure shows the results for the three nodes that were defined in the model
 The figure compares the results of the model with rail joint and without rail joint.
 The analysis for this results have been obtained with an element size of 0.25m, time step of 5e-4s and a
 duration of 5e-3s for stage 1 and 0.5s for stage 2.
+For the sake of a quick tutorial, the element size and time step in this tutorial are set to large values.
+
 
 .. image:: _static/time_history_rail_joint.png
     :alt: Comparison of the results
