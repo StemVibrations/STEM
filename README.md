@@ -29,12 +29,13 @@ To install the STEM, follow the following steps:
 pip install STEM-Vibrations
 ```
 
-Further details about the installation can be found [here](https://stemvibrations.readthedocs.io/latest/installation.html#).
+Further details about the installation can be found [here](https://stemvibrations.readthedocs.io/v1.2/installation.html#).
 
 ## Usage
 
-To use STEM please refer to the tutorials available [here](https://stemvibrations.readthedocs.io/latest/#tutorials).
+To use STEM please refer to the tutorials available [here](https://stemvibrations.readthedocs.io/v1.2/#tutorials).
 
 ## License
 
 This project is licensed under the BSD 3-Clause License - see the [LICENSE](LICENSE) file for details.
+
