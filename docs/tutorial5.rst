@@ -203,7 +203,7 @@ of the joint, the hinge parameters and the name of the hinge.
 
 .. code-block:: python
 
-    # calculate hinge rotational stiffness based on fixity factor
+    # set hinge rotation stiffness
     distance_joint = 35.75
     hinge_stiffness_y = 37.8e7
     hinge_stiffness_z = 37.8e7
