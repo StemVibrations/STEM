@@ -22,11 +22,11 @@ from tests.utils import TestUtils
 import os
 
 
-def test_train_uvec_soil_3d_irr():
+def test_train_track_soil_uvec_3d_irr_multistage():
     """
-    Test the UVEC on a 3D soil model with irregularities.
+    Test the UVEC on a 3D soil model with railway track with irregularities.
     """
-    input_folder = "benchmark_tests/test_train_uvec_soil_3d_irr"
+    input_folder = "benchmark_tests/test_train_track_soil_uvec_3d_irr_multistage"
 
     # Define geometry, conditions and material parameters
     # --------------------------------
@@ -243,9 +243,9 @@ def test_train_uvec_soil_3d_irr():
     stem.run_calculation()
 
     if sys.platform == "win32":
-        expected_output_dir = os.path.join("benchmark_tests/test_train_uvec_soil_3d_irr", "output_windows")
+        expected_output_dir = os.path.join(input_folder, "output_windows")
     elif sys.platform == "linux":
-        expected_output_dir = os.path.join("benchmark_tests/test_train_uvec_soil_3d_irr", "output_linux")
+        expected_output_dir = os.path.join(input_folder, "output_linux")
     else:
         raise Exception("Unknown platform")
 
