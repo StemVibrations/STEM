@@ -503,7 +503,6 @@ For the sake of a quick tutorial, the element size and time step in this tutoria
 
 
 This animation shows the vertical velocity of the model with rail joint.
-It is clear when the train crosses the rail joint, the velocity increases significantly.
 
 .. image:: _static/field_rail_joint.gif
    :alt: Vertical velocity
