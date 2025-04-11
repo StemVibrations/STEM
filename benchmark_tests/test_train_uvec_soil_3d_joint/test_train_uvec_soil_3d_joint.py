@@ -37,7 +37,7 @@ def test_train_uvec_soil_3d(test_type, input_folder_suffix, expected_folder):
     # Specify dimension and initiate the model
     ndim = 3
     model = Model(ndim)
-    model.extrusion_length = 50
+    model.extrusion_length = 40
 
     # Specify materials: 3 Layers
     solid_density_1 = 2650
@@ -162,19 +162,19 @@ def test_train_uvec_soil_3d(test_type, input_folder_suffix, expected_folder):
     absorbing_boundaries_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=40.0)
 
     # add the boundary conditions to the model
-    model.add_boundary_condition_on_plane([(0, 0, 0), (0, 0, 50), (5, 0, 0)], no_displacement_parameters, "base_fixed")
-    model.add_boundary_condition_on_plane([(0, 0, 0), (0, 0, 50), (0, 3, 0)], roller_displacement_parameters,
+    model.add_boundary_condition_on_plane([(0, 0, 0), (0, 0, 40), (5, 0, 0)], no_displacement_parameters, "base_fixed")
+    model.add_boundary_condition_on_plane([(0, 0, 0), (0, 0, 40), (0, 3, 0)], roller_displacement_parameters,
                                           "sides_roller")
     model.add_boundary_condition_on_plane([(0, 0, 0), (5, 0, 0), (5, 3, 0)], absorbing_boundaries_parameters, "abs")
-    model.add_boundary_condition_on_plane([(0, 0, 50), (5, 0, 50), (5, 3, 50)], absorbing_boundaries_parameters, "abs")
-    model.add_boundary_condition_on_plane([(5, 0, 0), (5, 3, 0), (5, 0, 50)], absorbing_boundaries_parameters, "abs")
+    model.add_boundary_condition_on_plane([(0, 0, 40), (5, 0, 40), (5, 3, 40)], absorbing_boundaries_parameters, "abs")
+    model.add_boundary_condition_on_plane([(5, 0, 0), (5, 3, 0), (5, 0, 40)], absorbing_boundaries_parameters, "abs")
 
     # coarse mesh
     model.set_mesh_size(element_size=2)
 
     # analysis parameters
     end_time = 0.01
-    delta_time = 0.001
+    delta_time = 0.002
     analysis_type = AnalysisType.MECHANICAL
     solution_type = SolutionType.QUASI_STATIC
 
@@ -219,7 +219,7 @@ def test_train_uvec_soil_3d(test_type, input_folder_suffix, expected_folder):
                               output_dir="output",
                               output_name="vtk_output",
                               output_parameters=VtkOutputParameters(file_format="ascii",
-                                                                    output_interval=100,
+                                                                    output_interval=50,
                                                                     nodal_results=nodal_results,
                                                                     gauss_point_results=gauss_point_results,
                                                                     output_control_type="step"))
@@ -243,7 +243,7 @@ def test_train_uvec_soil_3d(test_type, input_folder_suffix, expected_folder):
     # # write the files and run the calculation
     stem = Stem(model, input_folder)
 
-    delta_time_stage_2 = 0.001
+    delta_time_stage_2 = 0.002
     duration_stage_2 = 0.5
     velocity = 40
     stage2 = stem.create_new_stage(delta_time_stage_2, duration_stage_2)
