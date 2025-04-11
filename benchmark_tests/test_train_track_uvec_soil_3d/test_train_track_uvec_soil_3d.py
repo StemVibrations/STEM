@@ -19,7 +19,7 @@ from benchmark_tests.utils import assert_files_equal
 from tests.utils import TestUtils
 
 
-def test_train_uvec_soil_3d():
+def test_train_track_uvec_soil_3d():
     # Define geometry, conditions and material parameters
     # --------------------------------
 
@@ -202,7 +202,7 @@ def test_train_uvec_soil_3d():
                                                  gauss_point_results=gauss_point_results))
 
     # write the files and run the calculation
-    input_folder = "benchmark_tests/test_train_uvec_soil_3d/inputs_kratos"
+    input_folder = "benchmark_tests/test_train_track_uvec_soil_3d/inputs_kratos"
     stem = Stem(model, input_folder)
 
     stem.write_all_input_files()
@@ -210,9 +210,9 @@ def test_train_uvec_soil_3d():
     stem.run_calculation()
 
     if sys.platform == "win32":
-        expected_output_dir = "benchmark_tests/test_train_uvec_soil_3d/output_windows"
+        expected_output_dir = "benchmark_tests/test_train_track_uvec_soil_3d/output_windows"
     elif sys.platform == "linux":
-        expected_output_dir = "benchmark_tests/test_train_uvec_soil_3d/output_linux"
+        expected_output_dir = "benchmark_tests/test_train_track_uvec_soil_3d/output_linux"
     else:
         raise Exception("Unknown platform")
     # compare VTK files
