@@ -20,6 +20,9 @@ from tests.utils import TestUtils
 
 
 def test_train_track_uvec_soil_3d():
+    """
+    Test the UVEC on a 3D soil model.
+    """
     # Define geometry, conditions and material parameters
     # --------------------------------
 
