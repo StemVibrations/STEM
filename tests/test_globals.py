@@ -63,7 +63,7 @@ class TestGlobalsStem:
         assert ELEMENT_DATA["TRIANGLE_6N"]["ndim"] == 2
         assert ELEMENT_DATA["TRIANGLE_6N"]["order"] == 2
         assert ELEMENT_DATA["TRIANGLE_6N"]["n_vertices"] == 3
-        assert ELEMENT_DATA["TRIANGLE_6N"]["reversed_order"] == [2, 1, 0, 5, 4, 3]
+        assert ELEMENT_DATA["TRIANGLE_6N"]["reversed_order"] == [2, 1, 0, 4, 3, 5]
         assert ELEMENT_DATA["TRIANGLE_6N"]["edges"] == [[1, 2, 3], [1, 2, 4], [2, 0, 5]]
 
     def test_quad4n(self):
@@ -103,7 +103,7 @@ class TestGlobalsStem:
         assert ELEMENT_DATA["TETRAHEDRON_10N"]["ndim"] == 3
         assert ELEMENT_DATA["TETRAHEDRON_10N"]["order"] == 2
         assert ELEMENT_DATA["TETRAHEDRON_10N"]["n_vertices"] == 4
-        assert ELEMENT_DATA["TETRAHEDRON_10N"]["reversed_order"] == [1, 0, 2, 3, 4, 6, 5, 9, 8, 7]
+        assert ELEMENT_DATA["TETRAHEDRON_10N"]["reversed_order"] == [1, 0, 2, 3, 4, 6, 5, 8, 7, 9]
         assert ELEMENT_DATA["TETRAHEDRON_10N"]["edges"] == [[0, 1, 4], [1, 2, 5], [2, 0, 6], [0, 3, 7], [1, 3, 8],
                                                             [2, 3, 9]]
 
