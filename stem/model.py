@@ -1,7 +1,7 @@
 import json
 import os
 from pathlib import Path
-from typing import Sequence, Tuple, get_args, Set, Optional, List, Dict, Any, Union
+from typing import Sequence, Tuple, get_args, Set, Optional, List, Dict, Any, Union, OrderedDict
 
 from gmsh_utils import gmsh_IO
 import numpy as np
@@ -56,6 +56,7 @@ class Model:
         self.output_settings: List[Output] = []
         self.extrusion_length: Optional[float] = None
         self.groups: Dict[str, Any] = {}
+        self.interfaces: Dict[str, Any] = {}
 
     def __del__(self):
         """
@@ -1145,9 +1146,99 @@ class Model:
 
         """
         self.__initialise_fields()
-
         self.__exclude_non_output_nodes()
         self.__adjust_mesh_spring_dampers()
+        self.__adjust_interface_elements()
+
+
+
+
+
+    def __adjust_interface_elements(self):
+        if self.ndim == 2:
+            n_interface_nodes = 4
+            element_type_gmsh = "QUADRANGLE_4N"
+        else:
+            n_interface_nodes = 8
+            element_type_gmsh = "HEXAHEDRON_8N"
+
+        for name, interface_data in self.interfaces.items():
+            stable_parts = interface_data["part_1"]
+            changing_parts = interface_data["part_2"]
+            indexes_changing_parts = [self.body_model_parts.index(part) for part in changing_parts]
+            material_interface = interface_data["material"]
+            # TODO : The element creation would be best to be moved in gmsh io or in a utils file
+            nodes_stable_parts = [node for part in stable_parts for node in part.mesh.nodes]
+            nodes_changing_parts = [node for part in changing_parts for node in part.mesh.nodes]
+            common_nodes = set(nodes_stable_parts).intersection(set(nodes_changing_parts))
+            max_node_id = self.__get_maximum_node_id()
+            map_new_node_ids = {node_id: max_node_id + i + 1 for i, node_id in enumerate(common_nodes)}
+            max_element_id = self.__get_maximum_element_id()
+            # extract elements from the stable parts that contain the common nodes
+            node_to_elements_changing_parts = {}
+            for index_body_model_part, part in zip(indexes_changing_parts, changing_parts):
+                node_to_elements_changing_part = part.mesh.find_elements_connected_to_nodes()
+                node_to_elements_changing_parts = {map_new_node_ids[node_id]:node_to_elements_changing_part[node_id] for node_id in common_nodes}
+                # change nodes ids
+                # Create a new dictionary to hold the updated nodes
+                new_nodes = {}
+                # Copy all nodes, updating IDs where needed
+                for node_id, node in part.mesh.nodes.items():
+                    if node_id in map_new_node_ids:
+                        new_id = map_new_node_ids[node_id]
+                        node.id = new_id
+                        new_nodes[new_id] = node
+                    else:
+                        # Keep unchanged nodes as they are
+                        new_nodes[node_id] = node
+                # Replace the original nodes dictionary with our new one
+                part.mesh.nodes = new_nodes
+                # change elements
+                for node_id, elements in node_to_elements_changing_parts.items():
+                    for element_id in elements:
+                        element = part.mesh.elements[element_id]
+                        # replace the node id of the element in the original model part
+                        if node_id in list(part.mesh.nodes.keys()):
+                            part.mesh.elements[element_id] = Element(id=element_id,
+                                                                     element_type=element.element_type,
+                                                                     node_ids=[map_new_node_ids[node_id] if node_id in map_new_node_ids else node_id for node_id in element.node_ids])
+                # set part in the body model parts
+                self.body_model_parts[index_body_model_part] = part
+            # set the interface elements
+            interface_body_model_part = BodyModelPart(name)
+            interface_body_model_part.material = material_interface
+            # create mesh object
+            new_mesh = Mesh(ndim=self.ndim)
+            all_nodes = self.get_all_nodes()
+            new_mesh.nodes = {node_id: all_nodes[node_id] for node_id in list(common_nodes) + list(map_new_node_ids.values())}
+            sorted_nodes = sorted(
+                new_mesh.nodes.values(),  # Get the Node objects
+                key=lambda node: (node.coordinates[0], node.coordinates[1], node.coordinates[2])  # Sort by x, y, z
+            )
+            # Elements are created from the sorted nodes by grouping them in n_interface_nodes and
+            # stepping through the sorted list n_interface_nodes / 2 at a time
+            interface_elements = {}
+            total_nodes = len(sorted_nodes)
+            step_size = n_interface_nodes // 2
+            for i in range(0, total_nodes - n_interface_nodes + 1, step_size):
+                # Get the next n_interface_nodes nodes
+                nodes_for_element = sorted_nodes[i:i + n_interface_nodes]
+                # Create a node dictionary for ordering the new element
+                nodes_for_element_dict = {node.id: node for node in nodes_for_element}
+                # Create a new element with the node ids
+                nodes_ids_for_element = self.get_quadratic_order_nodes(nodes_for_element_dict, stable_parts, changing_parts)
+                id_new_element = max_element_id + len(interface_elements) + 1
+                interface_elements[id_new_element] = Element(id=id_new_element,
+                                                  element_type=element_type_gmsh,
+                                                  node_ids=nodes_ids_for_element)
+            # add the interface elements to the mesh
+            new_mesh.elements = interface_elements
+            # the order of the nodes should be clockwise
+            interface_body_model_part.mesh = new_mesh
+            self.body_model_parts.append(interface_body_model_part)
+            # TODO check conditions on these nodes
+
+
 
     def __initialise_fields(self):
         """
@@ -1240,6 +1331,20 @@ class Model:
             max_element_id = max(max_element_id, max(mesh_element_info.keys()))
 
         return int(max_element_id)
+
+    def __get_maximum_node_id(self) -> int:
+        """
+        Returns the maximum node id within the mesh from the mesh data
+
+        Returns:
+            - int: the maximum node id
+
+        """
+        max_node_id = 0
+        for mesh_node_info in self.gmsh_io.mesh_data["nodes"].keys():
+            max_node_id = max(max_node_id, mesh_node_info)
+
+        return int(max_node_id)
 
     def __get_line_string_end_nodes(self, model_part: ModelPart) -> List[List[int]]:
         """
@@ -1934,6 +2039,36 @@ class Model:
                 # write back the json file
                 with open(json_file_path, "w") as outfile:
                     json.dump(new_json, outfile, indent=2)
+
+    def set_interface_between_model_parts(self, part_1_name: Sequence[str], part_2_name: Sequence[str], material: Material):
+        """
+        Set the interface between two model parts.
+
+        Args:
+            - part_1_name (str): The name of the first model part.
+            - part_2_name (str): The name of the second model part.
+            - material (:class:`stem.model_part.Material`): The material to be used for the interface.
+
+        Raises:
+            - ValueError: If the model part names are not found.
+
+        """
+        # check if the model parts exist
+        part_1 = [self.get_model_part_by_name(name) for name in part_1_name]
+        part_2 = [self.get_model_part_by_name(name) for name in part_2_name]
+
+        if part_1 is None:
+            raise ValueError(f"Model part `{part_1_name}` not found.")
+        if part_2 is None:
+            raise ValueError(f"Model part `{part_2_name}` not found.")
+
+        interface_name = f"interface_{part_1_name}_{part_2_name}"
+        # save the values so that the interface can be set at the post mesh step
+        self.interfaces[interface_name] = {
+            "part_1": part_1,
+            "part_2": part_2,
+            "material": material
+        }
 
     def finalise(self, input_folder: str):
         """

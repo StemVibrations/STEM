@@ -311,6 +311,51 @@ class KratosMaterialIO:
 
         return soil_material_dict
 
+    def __create_interface_material_dict(self, material: Interface) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the interface material parameters. The interface material parameters are based
+        on the material type. The material parameters are added to the dictionary.
+
+        Args:
+            - material (:class:`stem.soil_material.Interface`): Material object.
+
+        Returns:
+            - Dict[str, Any]: dictionary containing the interface material parameters
+        """
+        interface_material_dict: Dict[str, Any] = dict(constitutive_law={"name": ""}, Variables={})
+
+        dimension_int = 2 if self.ndim == 2 else 3
+
+        # add material parameters to dictionary based on material type.
+        if isinstance(material.constitutive_law, LinearElasticSoil):
+            interface_material_dict.update(self.__create_linear_elastic_soil_dict(material.constitutive_law))
+            interface_material_dict["constitutive_law"]["name"] = f"LinearElastic{dimension_int}DInterfaceLaw"
+        elif isinstance(material.constitutive_law, SmallStrainUmatLaw):
+            interface_material_dict.update(self.__create_umat_soil_dict(material.constitutive_law))
+            interface_material_dict["constitutive_law"]["name"] = f"SmallStrainUMAT{dimension_int}DInterfaceLaw"
+        elif isinstance(material.constitutive_law, SmallStrainUdsmLaw):
+            interface_material_dict.update(self.__create_udsm_soil_dict(material.constitutive_law))
+            interface_material_dict["constitutive_law"]["name"] = f"SmallStrainUDSM{dimension_int}DInterfaceLaw"
+
+        self.__add_soil_formulation_parameters_to_material_dict(interface_material_dict["Variables"], material)
+
+        # get retention parameters
+        retention_law = material.retention_parameters.__class__.__name__
+        retention_parameters: Dict[str, Any] = deepcopy(material.retention_parameters.__dict__)
+
+        # add retention parameters to dictionary
+        interface_material_dict["Variables"]["RETENTION_LAW"] = retention_law
+        interface_material_dict["Variables"].update(retention_parameters)
+
+        # add fluid parameters to dictionary
+        fluid_parameters: Dict[str, Any] = deepcopy(material.fluid_properties.__dict__)
+        fluid_parameters["DENSITY_WATER"] = fluid_parameters.pop("DENSITY_FLUID")
+
+        interface_material_dict["Variables"].update(fluid_parameters)
+
+
+        return interface_material_dict
+
     def __create_euler_beam_dict(self, material_parameters: StructuralParametersABC) -> Dict[str, Any]:
         """
         Creates a dictionary containing the euler beam parameters
@@ -410,6 +455,8 @@ class KratosMaterialIO:
             material_dict["Material"].update(self.__create_soil_material_dict(material))
         elif isinstance(material, StructuralMaterial):
             material_dict["Material"].update(self.__create_structural_material_dict(material))
+        elif isinstance(material, Interface):
+            material_dict["Material"].update(self.__create_interface_material_dict(material))
         else:
             raise ValueError("Material parameters are not of either SoilMaterial or StructuralMaterial type.")
         return material_dict

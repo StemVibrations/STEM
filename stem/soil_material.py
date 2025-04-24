@@ -134,6 +134,37 @@ class TwoPhaseSoil(SoilFormulationParametersABC):
             if self.PERMEABILITY_ZX is None:
                 raise ValueError("The permeability in the zx-direction (PERMEABILITY_ZX) is not defined.")
 
+@dataclass
+class TwoPhaseSoilInterface(TwoPhaseSoil):
+    """
+    Class containing the material parameters for a two phase soil material with interface
+
+    Inheritance:
+        - :class:`TwoPhaseSoil`
+
+    Attributes:
+        - TRANSVERSAL_PERMEABILITY (float): The transversal permeability [m^2].
+        - MINIMUM_JOINT_WIDTH (float): The minimum joint width [m].
+    """
+    TRANSVERSAL_PERMEABILITY: float = 1.0e-13
+    MINIMUM_JOINT_WIDTH: float = 0.001
+
+
+@dataclass
+class OnePhaseSoilInterface(OnePhaseSoil):
+    """
+    Class containing the material parameters for a two phase soil material with interface
+
+    Inheritance:
+        - :class:`TwoPhaseSoil`
+
+    Attributes:
+        - TRANSVERSAL_PERMEABILITY (float): The transversal permeability [m^2].
+        - MINIMUM_JOINT_WIDTH (float): The minimum joint width [m].
+    """
+    TRANSVERSAL_PERMEABILITY: float = 1.0e-13
+    MINIMUM_JOINT_WIDTH: float = 0.001
+
 
 @dataclass
 class LinearElasticSoil(SoilConstitutiveLawABC):
@@ -328,3 +359,58 @@ class SoilMaterial:
             raise ValueError(f"Property {property_name} is not one of the parameters of the soil material")
 
         return property_value
+
+
+
+@dataclass
+class Interface:
+    """
+    Class containing the parameters for an interface material
+
+    Attributes:
+        - name (str): The name to describe the interface material.
+        - shear_modulus (float): The shear modulus of the interface [Pa].
+        - normal_stiffness (float): The normal stiffness of the interface [Pa/m].
+        - friction_angle (float): The friction angle of the interface [degrees].
+        - dilatancy_angle (float): The dilatancy angle of the interface [degrees].
+    """
+    name: str
+    constitutive_law: SoilConstitutiveLawABC
+    soil_formulation: SoilFormulationParametersABC
+    retention_parameters: RetentionLawABC
+    fluid_properties: FluidProperties = field(default_factory=FluidProperties)
+
+    @staticmethod
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> str:
+        """
+        Function to get the element name based on the number of dimensions, the number of nodes and the analysis type.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model.
+            - n_nodes_element (int): The number of nodes per element.
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type.
+
+        Raises:
+            - ValueError: If the analysis type is not implemented yet for nodal concentrated elements.
+
+        Returns:
+            - element_name (str): The name of the element.
+
+        """
+
+        available_node_dim_combinations = {
+            2: [4],
+            3: [6, 8],
+        }
+        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations, "Soil")
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+
+            # for higher order elements, pore pressure is calculated on a lower order than displacements
+            if (n_dim_model == 2) or (n_dim_model == 3) :
+                element_name = f"UPwSmallStrainInterfaceElement{n_dim_model}D{n_nodes_element}N"
+            else:
+                raise ValueError(f"Analysis type {analysis_type} is not implemented yet for soil material.")
+
+        else:
+            raise ValueError(f"Analysis type {analysis_type} is not implemented yet for soil material.")
+        return element_name
