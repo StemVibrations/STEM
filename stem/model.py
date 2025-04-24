@@ -934,6 +934,7 @@ class Model:
 
         # validation of input coordinates
         Utils.validate_coordinates(coordinates)
+        output_parameters._output_coordinates = coordinates
 
         gmsh_input = {part_name: {"coordinates": coordinates, "ndim": 1}}
 
@@ -985,9 +986,8 @@ class Model:
                     raise ValueError("process model part has not been meshed yet!")
 
                 # retrieve the node ids close to the geometry points (smaller than eps meters)
-                filtered_node_ids = Utils.find_node_ids_close_to_geometry_nodes(mesh=model_part.mesh,
-                                                                                geometry=model_part.geometry,
-                                                                                eps=eps)
+                filtered_node_ids = Utils.find_node_ids_close_to_coordinates(
+                    mesh=model_part.mesh, coordinates=model_part.parameters._output_coordinates, eps=eps)
 
                 new_mesh = Mesh(ndim=model_part.mesh.ndim)
                 new_mesh.nodes = {node_id: model_part.mesh.nodes[node_id] for node_id in filtered_node_ids}
@@ -1270,8 +1270,8 @@ class Model:
         end_nodes = self.__find_end_nodes_of_line_strings(model_part.mesh)
         # find the node ids corresponding to the geometry points
         node_ids_at_geometry_points = set(
-            int(node_id) for node_id in Utils.find_node_ids_close_to_geometry_nodes(
-                mesh=model_part.mesh, geometry=model_part.geometry, eps=1e-06))
+            int(node_id) for node_id in Utils.find_node_ids_close_to_coordinates(
+                mesh=model_part.mesh, coordinates=model_part.geometry.get_all_coordinates(), eps=1e-06))
         element_ids_search_space = set(model_part.mesh.elements.keys())
         node_ids_search_space = set(model_part.mesh.nodes.keys())
 

@@ -201,7 +201,11 @@ def detect_tensor_outputs(requested_outputs: Sequence[Union[GaussPointOutput, st
 class OutputParametersABC(ABC):
     """
     Abstract class for the definition of user output parameters (GiD, VTK, json).
+
+    Attributes:
+        - _output_coordinates (Sequence[Sequence[float]]): list of coordinates where the output is requested.
     """
+    _output_coordinates: Sequence[Sequence[float]] = field(default_factory=lambda: [], init=False)
 
 
 @dataclass

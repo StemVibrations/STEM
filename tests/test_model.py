@@ -1542,6 +1542,52 @@ class TestModel:
         # No element outputs, so the element attribute of the mesh must be an empty dictionary
         assert output_model_part.mesh.elements == {}
 
+    def test_output_over_2_surfaces_2d(self, create_default_2d_soil_material: SoilMaterial, create_default_outputs):
+        """
+        Tests if the output coordinates are correctly generated when output is requested over a line which passes
+        2 surfaces
+        """
+
+        # define layer coordinates
+        ndim = 2
+        layer1_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+        layer2_coordinates = [(0, 1, 0), (1, 1, 0), (1, 2, 0), (0, 2, 0)]
+
+        # define soil materials
+        soil_material1 = create_default_2d_soil_material
+        soil_material1.name = "soil1"
+
+        # create model
+        model = Model(ndim)
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
+        model.add_soil_layer_by_coordinates(layer2_coordinates, soil_material1, "layer2")
+
+        # Define output coordinates passing through 2 surfaces
+        output_coordinates = [(0.5, 0, 0), (0.5, 1.5, 0), (0.5, 2, 0)]
+
+        # add output settings
+        model.add_output_settings_by_coordinates(output_coordinates,
+                                                 part_name="nodal_accelerations",
+                                                 output_name="json_nodal_accelerations",
+                                                 output_dir="dir_test",
+                                                 output_parameters=JsonOutputParameters(
+                                                     output_interval=100, nodal_results=[NodalOutput.ACCELERATION]))
+        model.generate_mesh()
+
+        output_part = model.get_model_part_by_name("nodal_accelerations")
+
+        # check if the output mesh nodes are equal to the input coordinates
+        unique_node_ids = []
+        assert len(output_part.mesh.nodes) == len(output_coordinates)
+        for (node_id, node), actual_output_coordinates in zip(output_part.mesh.nodes.items(), output_coordinates):
+            assert node_id not in unique_node_ids
+
+            # check that output node coordinates are equal to the input coordinates
+            npt.assert_almost_equal(actual_output_coordinates, node.coordinates)
+            unique_node_ids.append(node.id)
+
     def test_generate_mesh_with_only_a_body_model_part_3d(self, create_default_3d_soil_material: SoilMaterial):
         """
         Test if the mesh is generated correctly in 3D if there is only one body model part.

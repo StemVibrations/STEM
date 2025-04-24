@@ -673,7 +673,7 @@ class TestUtilsStem:
         assert Utils.replace_extensions(filename2, ".json") == desired_filename
         assert Utils.replace_extensions(filename3, ".json") == desired_filename
 
-    def test_find_nodes_close_to_geometry_points(self):
+    def test_find_nodes_close_to_coordinates(self):
         """
         Tests that nodes close to given geometry points are correctly identified.
 
@@ -693,7 +693,8 @@ class TestUtilsStem:
             5: Node(id=5, coordinates=[5, 0, 0])
         }
         expected_ids = [1, 3, 5]
-        actual_ids = Utils.find_node_ids_close_to_geometry_nodes(mesh=mesh, geometry=geometry)
+        coordinates = geometry.get_all_coordinates()
+        actual_ids = Utils.find_node_ids_close_to_coordinates(mesh=mesh, coordinates=coordinates)
 
         np.testing.assert_equal(actual=actual_ids, desired=expected_ids)
 

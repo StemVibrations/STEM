@@ -547,14 +547,14 @@ class Utils:
             return str(path_obj).replace(extensions, new_extension)
 
     @staticmethod
-    def find_node_ids_close_to_geometry_nodes(mesh: 'Mesh', geometry: 'Geometry', eps: float = 1e-6) \
+    def find_node_ids_close_to_coordinates(mesh: 'Mesh', coordinates: Sequence[Sequence[float]], eps: float = 1e-6) \
             -> npty.NDArray[np.uint64]:
         """
         Searches the nodes in the mesh close to the point of a given geometry.
 
         Args:
             - mesh (:class:`stem.mesh.Mesh`): mesh object for which the node ids are required to be computed.
-            - geometry (:class:`stem.geometry.Geometry`): geometry containing the points of interest.
+            - coordinates: (Sequence[Sequence[float]]): all coordinates of interest in an N*3 array.
             - eps (float): tolerance for searching close nodes.
 
         Returns:
@@ -563,17 +563,13 @@ class Utils:
         """
         # retrieve ids and coordinates of the nodes
         node_ids = list(mesh.nodes.keys())
-        coordinates = np.stack([node.coordinates for node in mesh.nodes.values()])
-
-        # compute pairwise distances between the geometry nodes (actual outputs and subset of the mesh nodes) and the
-        # mesh nodes
-        output_coordinates = np.stack([np.array(point.coordinates) for point in geometry.points.values()], dtype=float)
+        node_coordinates = np.stack([node.coordinates for node in mesh.nodes.values()])
 
         # set up the tree for fast querying
-        tree = cKDTree(coordinates)
+        tree = cKDTree(node_coordinates)
 
         # find the ids of the nodes in the model that are close to the specified coordinates.
-        _, close_indices = tree.query(output_coordinates, k=1, distance_upper_bound=eps)
+        _, close_indices = tree.query(coordinates, k=1, distance_upper_bound=eps)
 
         close_node_ids: npty.NDArray[np.uint64] = np.array(node_ids, dtype=np.uint64)[close_indices]
 

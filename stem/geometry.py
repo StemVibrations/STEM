@@ -693,3 +693,12 @@ class Geometry:
         centre_of_mass /= surface_area
 
         return centre_of_mass
+
+    def get_all_coordinates(self) -> npty.NDArray[np.float64]:
+        """
+        Returns all coordinates of the points in the geometry.
+
+        Returns:
+            - npty.NDArray[np.float64]: A 2D array of shape (n_points, 3) containing the coordinates of the points.
+        """
+        return np.array([point.coordinates for point in self.points.values()], dtype=np.float64)

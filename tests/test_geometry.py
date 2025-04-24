@@ -540,3 +540,21 @@ class TestGeometry:
 
         # Assert that the centre of mass is calculated correctly
         npt.assert_array_almost_equal(centre_of_mass, np.array([0.5, 0.5, 0.5]))
+
+    def test_get_all_coordinates(self):
+        """
+        Test the function that returns all coordinates of points in the geometry.
+
+        """
+        points = {1: Point.create([0, 0, 0], 1), 2: Point.create([1, 1, 1], 2), 3: Point.create([2, 2, 2], 3)}
+        geometry = Geometry(points=points)
+        coordinates = geometry.get_all_coordinates()
+        npt.assert_array_almost_equal(coordinates, np.array([[0, 0, 0], [1, 1, 1], [2, 2, 2]]))
+
+    def test_get_all_coordinates_without_points(self):
+        """
+        Test the function that returns all coordinates of points in the geometry when no points are present.
+        """
+        geometry = Geometry(points={})
+        coordinates = geometry.get_all_coordinates()
+        npt.assert_array_almost_equal(coordinates, np.empty(0))
