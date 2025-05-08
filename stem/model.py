@@ -20,6 +20,7 @@ from stem.soil_material import *
 from stem.solver import Problem, StressInitialisationType
 from stem.structural_material import *
 from stem.utils import Utils
+from stem.utils_interface import UtilsInterface
 from stem.water_processes import WaterProcessParametersABC, UniformWaterPressure
 
 
@@ -1150,10 +1151,6 @@ class Model:
         self.__adjust_mesh_spring_dampers()
         self.__adjust_interface_elements()
 
-
-
-
-
     def __adjust_interface_elements(self):
         if self.ndim == 2:
             n_interface_nodes = 4
@@ -1161,6 +1158,8 @@ class Model:
         else:
             n_interface_nodes = 8
             element_type_gmsh = "HEXAHEDRON_8N"
+            # TODO raise error with not implemented for 3D models
+            raise NotImplementedError("Interface elements are not implemented for 3D models.")
 
         for name, interface_data in self.interfaces.items():
             stable_parts = interface_data["part_1"]
@@ -1226,11 +1225,16 @@ class Model:
                 # Create a node dictionary for ordering the new element
                 nodes_for_element_dict = {node.id: node for node in nodes_for_element}
                 # Create a new element with the node ids
-                nodes_ids_for_element = self.get_quadratic_order_nodes(nodes_for_element_dict, stable_parts, changing_parts)
-                id_new_element = max_element_id + len(interface_elements) + 1
-                interface_elements[id_new_element] = Element(id=id_new_element,
-                                                  element_type=element_type_gmsh,
-                                                  node_ids=nodes_ids_for_element)
+                if element_type_gmsh == "QUADRANGLE_4N":
+                    nodes_ids_for_element = UtilsInterface.get_quadratic_order_nodes(nodes_stable_parts, nodes_for_element)
+                    id_new_element = max_element_id + len(interface_elements) + 1
+                    interface_elements[id_new_element] = Element(id=id_new_element,
+                                                      element_type=element_type_gmsh,
+                                                       node_ids=nodes_ids_for_element)
+                elif element_type_gmsh == "HEXAHEDRON_8N":
+                    raise NotImplementedError("Interface elements are not implemented for 3D models.")
+                else:
+                    raise ValueError(f"Element type is not supported.")
             # add the interface elements to the mesh
             new_mesh.elements = interface_elements
             # the order of the nodes should be clockwise

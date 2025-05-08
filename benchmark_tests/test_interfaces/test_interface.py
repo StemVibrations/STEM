@@ -27,25 +27,25 @@ def test_interface():
     retention_parameters1 = SaturatedBelowPhreaticLevelLaw()
     material1 = SoilMaterial("soil", soil_formulation1, constitutive_law1, retention_parameters1)
     # Specify the coordinates for the column: x:1m x y:10m
-    layer1_coordinates = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+    layer1_coordinates = [(1.0, 0.0, 0), (9.0, 0.0, 0), (9.0, 5.0, 0), (1.0, 5.0, 0)]
 
     # Create the soil layer
     model.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil_block")
 
     # add another material on top of the first one
-    layer2_coordinates = [(0.4, 1, 0), (0.4, 1.2, 0), (0.6, 1.2, 0), (0.6, 1, 0)]
+    layer2_coordinates = [(3.0, 5.0, 0), (7.0, 5.0, 0), (7.0, 7.0, 0), (3.0, 7.0, 0)]
     model.add_soil_layer_by_coordinates(layer2_coordinates, material1, "soil_block_2")
 
-
-    variables = OnePhaseSoilInterface(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
-    interface_material = Interface(name="interface", constitutive_law=constitutive_law1, soil_formulation=variables,retention_parameters=retention_parameters1)
+    constitutive_law2 = LinearElasticSoil(YOUNG_MODULUS=50e6, POISSON_RATIO=POISSON_RATIO)
+    variables = OnePhaseSoilInterface(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY, MINIMUM_JOINT_WIDTH=0.001)
+    interface_material = Interface(name="interface", constitutive_law=constitutive_law2, soil_formulation=variables,retention_parameters=retention_parameters1)
 
     model.set_interface_between_model_parts(["soil_block"], ["soil_block_2"], interface_material)
 
 
     # Boundary conditions and Loads
-    load_parameters = PointLoad(value=[1, 0, 0], active=[True, True, True])
-    model.add_load_by_coordinates([[0.4, 1.1, 0]], load_parameters, "load")
+    load_parameters = PointLoad(value=[100, 0, 0], active=[True, True, True])
+    model.add_load_by_coordinates([[3.0, 6.0, 0]], load_parameters, "load")
 
     # show the model
     #model.show_geometry(show_line_ids=True)
