@@ -1170,6 +1170,11 @@ class Model:
         self.__post_mesh()
 
     def __split_3n_line_elements(self, changed_lines):
+        """
+        Splits the 3n line elements into 2n line elements when required. Not all second order element types are
+        supported in Kratos. Therefore, the second order line elements are split into first order elements.
+
+        """
         for name, group in self.gmsh_io.mesh_data["physical_groups"].items():
             if group["ndim"] == 1:
                 # find the elements that are in the changed lines
