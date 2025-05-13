@@ -479,7 +479,7 @@ class KratosIO:
                 if element_type.startswith("LINE"):
                     raise ValueError(f"Model part {model_part.name} has higher and lower order line elements assigned."
                                      f"\n most likely this happened due to that it was placed only partly on an unsupported"
-                                     f"\n higher order element (Beam or SpringDamper). To solve this, spit the model part into "
+                                     f"\n higher order element (Beam or SpringDamper). To solve this, split the model part into "
                                      f"\n a part which is placed on the higher order element and one which is placed on "
                                      f"\n the lower order element.")
                 else:

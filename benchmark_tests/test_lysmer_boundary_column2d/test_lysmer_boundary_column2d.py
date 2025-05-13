@@ -9,15 +9,19 @@ from stem.boundary import AbsorbingBoundary
 from stem.boundary import DisplacementConstraint
 from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
                          StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy)
+from stem.globals import ELEMENT_DATA
+
 from stem.output import NodalOutput, VtkOutputParameters
 from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
 from shutil import rmtree
 
-@pytest.mark.parametrize("mesh_order, case_name", [
-    (1, "quad4n"),  # 4 noded quads
-    (2, "quad8n")])  # 8 noded elements
-def test_stem(mesh_order, case_name):
+@pytest.mark.parametrize("element_type", [
+    ("QUADRANGLE_4N"),  # 4 noded quads
+    # ("QUADRANGLE_8N"), # 8 noded elements todo run test when wheels are available
+    ("TRIANGLE_3N")])#, # 3 noded elements
+    # ("TRIANGLE_6N")])  # 6 noded elements todo run test when wheels are available
+def test_stem(element_type):
     # Define geometry, conditions and material parameters
     # --------------------------------
 
@@ -100,7 +104,7 @@ def test_stem(mesh_order, case_name):
                                      rayleigh_m=0.1)
 
     # Set up problem data
-    problem = Problem(problem_name="test_lysmer_boundary_column2d_quad",
+    problem = Problem(problem_name="test_lysmer_boundary_column2d",
                       number_of_threads=1,
                       settings=solver_settings)
     model.project_parameters = problem
@@ -113,8 +117,8 @@ def test_stem(mesh_order, case_name):
     gauss_point_results = []
 
     # Define the output process
-    model.add_output_settings(output_parameters=VtkOutputParameters(file_format="binary",
-                                                                    output_interval=1,
+    model.add_output_settings(output_parameters=VtkOutputParameters(file_format="ascii",
+                                                                    output_interval=5,
                                                                     nodal_results=nodal_results,
                                                                     gauss_point_results=gauss_point_results,
                                                                     output_control_type="step"),
@@ -123,14 +127,15 @@ def test_stem(mesh_order, case_name):
                               output_name="vtk_output")
 
     # Define the kratos input folder
-    input_folder = f"benchmark_tests/test_lysmer_boundary_column2d_quad/{case_name}"
+    input_folder = f"benchmark_tests/test_lysmer_boundary_column2d/{element_type}/inputs_kratos"
 
     # Write KRATOS input files
     # --------------------------------
-    # set structured mesh constraint surface
-    model.mesh_settings.set_structured_mesh_constraint_surface(1,[2,11,1])
+    # set structured mesh constraint surface for quadrangle elements
+    if element_type.startswith("QUADRANGLE"):
+        model.mesh_settings.set_structured_mesh_constraint_surface(1,[2,11,1])
 
-    model.mesh_settings.element_order = mesh_order
+    model.mesh_settings.element_order = ELEMENT_DATA[element_type]["order"]
     stem = Stem(model, input_folder)
     stem.write_all_input_files()
 
@@ -139,7 +144,7 @@ def test_stem(mesh_order, case_name):
     stem.run_calculation()
 
     result = assert_files_equal(
-        f"benchmark_tests/test_lysmer_boundary_column2d_quad/{case_name}_output/output_vtk_porous_computational_model_part",
+        f"benchmark_tests/test_lysmer_boundary_column2d/{element_type}/_output/output_vtk_porous_computational_model_part",
         os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
 
     assert result is True
