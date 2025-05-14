@@ -1,6 +1,8 @@
 import os
 import sys
 
+import pytest
+
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
 from stem.model import Model
 from stem.model_part import BodyModelPart
@@ -10,15 +12,17 @@ from stem.boundary import RotationConstraint
 from stem.boundary import DisplacementConstraint
 from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
                          StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy,
-                         NewtonRaphsonStrategy)
+                         NewtonRaphsonStrategy, Cg)
 from stem.output import NodalOutput, VtkOutputParameters, Output
 from stem.stem import Stem
 
 from benchmark_tests.utils import assert_files_equal
 from shutil import rmtree
 
-
-def test_stem():
+@pytest.mark.parametrize("element_order", [
+    (1),
+    (2)])
+def test_stem(element_order):
     # Define geometry, conditions and material parameters
     # --------------------------------
 
@@ -113,6 +117,7 @@ def test_stem():
                                      are_mass_and_damping_constant=False,
                                      convergence_criteria=convergence_criterion,
                                      strategy_type=LinearNewtonRaphsonStrategy(),
+                                     linear_solver_settings=Cg(),
                                      rayleigh_k=0.001,
                                      rayleigh_m=0.1)
 
@@ -136,10 +141,11 @@ def test_stem():
                               output_dir="output",
                               output_name="vtk_output")
 
-    input_folder = "benchmark_tests/test_moving_load_on_beam_on_soil_3D/inputs_kratos"
+    input_folder = f"benchmark_tests/test_moving_load_on_beam_on_soil_3D/order_{element_order}/inputs_kratos"
 
     # Write KRATOS input files
     # --------------------------------
+    model.mesh_settings.element_order = element_order
     stem = Stem(model, input_folder)
     stem.write_all_input_files()
 
@@ -148,9 +154,9 @@ def test_stem():
     stem.run_calculation()
 
     if sys.platform == "win32":
-        expected_output_dir = "benchmark_tests/test_moving_load_on_beam_on_soil_3D/output_windows/output_vtk_full_model"
+        expected_output_dir = f"benchmark_tests/test_moving_load_on_beam_on_soil_3D/output_windows/order_{element_order}/output_vtk_full_model"
     elif sys.platform == "linux":
-        expected_output_dir = "benchmark_tests/test_moving_load_on_beam_on_soil_3D/output_linux/output_vtk_full_model"
+        expected_output_dir = f"benchmark_tests/test_moving_load_on_beam_on_soil_3D/output_linux/order_{element_order}/output_vtk_full_model"
     else:
         raise Exception("Unknown platform")
 
