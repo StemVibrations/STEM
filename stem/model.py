@@ -2,6 +2,7 @@ import json
 import os
 from pathlib import Path
 from typing import Sequence, Tuple, get_args, Set, Optional, List, Dict, Any, Union, OrderedDict
+import copy
 
 from gmsh_utils import gmsh_IO
 import numpy as np
@@ -1157,11 +1158,13 @@ class Model:
             Creates interface elements and updates node IDs accordingly.
 
             """
-            # Get interface configuration based on dimensions
+            # Check if interfaces are defined
             n_interface_nodes, element_type_gmsh = self.__get_interface_config()
 
             # Process each defined interface
             for name, interface_data in self.interfaces.items():
+                if self.ndim == 3:
+                    raise NotImplementedError("3D interface elements are not supported yet.")
                 # Extract interface components
                 stable_parts = interface_data["part_1"]
                 changing_parts = interface_data["part_2"]
@@ -1172,7 +1175,7 @@ class Model:
                 nodes_changing_parts = [node for part in changing_parts for node in part.mesh.nodes]
 
                 # Find common nodes and create new node ID mapping
-                common_nodes = {node for node in nodes_stable_parts if node in nodes_changing_parts}
+                common_nodes = [node for node in nodes_stable_parts if node in nodes_changing_parts]
                 max_node_id = self.__get_maximum_node_id()
                 map_new_node_ids = {node_id: max_node_id + idx + 1 for idx, node_id in enumerate(common_nodes)}
 
@@ -1198,7 +1201,7 @@ class Model:
         if self.ndim == 2:
             return 4, "QUADRANGLE_4N"
         else:
-            raise NotImplementedError("Interface elements are not implemented for 3D models.")
+            return 8, "HEXAHEDRON_8N"
 
 
     def __update_changing_parts(self, changing_parts: List[BodyModelPart], indexes_changing_parts: List[int], common_nodes: Dict[int, Node], map_new_node_ids: Dict[int, int]):
@@ -1244,6 +1247,8 @@ class Model:
         new_nodes = {}
         # Copy all nodes, updating IDs where needed
         for node_id, node in nodes.items():
+            # deep copy the node
+            node = copy.deepcopy(node)
             if node_id in map_new_node_ids:
                 new_id = map_new_node_ids[node_id]
                 node.id = new_id

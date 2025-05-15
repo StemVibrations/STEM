@@ -4386,8 +4386,12 @@ class TestInterfaceFunctionality:
         model = model_setup['model']
         # Test 3D configuration (should raise NotImplementedError)
         model.ndim = 3
-        with pytest.raises(NotImplementedError):
-            model._Model__get_interface_config()
+
+        # Test 2D configuration
+        n_nodes, element_type = model._Model__get_interface_config()
+        assert n_nodes == 8
+        assert element_type == "HEXAHEDRON_8N"
+
 
         # Reset to 2D for other tests
         model.ndim = 2
@@ -4569,6 +4573,11 @@ class TestInterfaceFunctionality:
         
         """
         model = model_setup['model']
+        model.interfaces["interface_part_1_part_2"] = {
+            "part_1": [model.body_model_parts[0]],
+            "part_2": [model.body_model_parts[1]],
+            "material": model_setup['interface_material'],
+        }
 
         # Set model to 3D
         model.ndim = 3
