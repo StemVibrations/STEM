@@ -262,3 +262,107 @@ class TestKratosMaterialIO:
 
         # compare json files using custom dictionary comparison
         TestUtils.assert_dictionary_almost_equal(expected_material_parameters_json, test_dict)
+
+    def test_write_interface_material_dict_2d(self):
+        """
+        Test writing a material list to json. In this test, the material list contains interface materials.
+        """
+        ndim =2     # Linear elastic drained soil with a Density of 2700, a Young's modulus of 50e6,
+        # a Poisson ratio of 0.3 & a Porosity of 0.3 is specified.
+        DENSITY_SOLID = 2700
+        POROSITY = 0.3
+        YOUNG_MODULUS = 50e6
+        POISSON_RATIO = 0.3
+        constitutive_law = LinearElasticSoil(YOUNG_MODULUS=YOUNG_MODULUS, POISSON_RATIO=POISSON_RATIO)
+        # UMAT formulation
+        constitutive_law_umat = SmallStrainUmatLaw(
+            UMAT_PARAMETERS=[1, 5.6, False],
+            UMAT_NAME="test_name",
+            IS_FORTRAN_UMAT=False,
+            STATE_VARIABLES=[],
+        )
+        # udsm formulation
+        constitutive_law_udsm = SmallStrainUdsmLaw(
+            UDSM_PARAMETERS=[1, 5.6, False],
+            UDSM_NUMBER=2,
+            UDSM_NAME="test_name_UDSM",
+            IS_FORTRAN_UDSM=True,
+        )
+
+        soil_formulation_one_phase = OnePhaseSoilInterface(ndim,
+                                          IS_DRAINED=True,
+                                          DENSITY_SOLID=DENSITY_SOLID,
+                                          POROSITY=POROSITY,
+                                          MINIMUM_JOINT_WIDTH=0.001)
+        soil_formulation_two_phase = TwoPhaseSoilInterface(
+            ndim,
+            DENSITY_SOLID=DENSITY_SOLID,
+            POROSITY=POROSITY,
+            PERMEABILITY_XX=1e-15,
+            PERMEABILITY_YY=1e-15,
+            PERMEABILITY_XY=2,
+            MINIMUM_JOINT_WIDTH=0.001
+        )
+        retention_parameters = SaturatedBelowPhreaticLevelLaw()
+        # Define interface material parameters
+        interface_material_parameters = Interface(
+            name="test_interface_material_one_phase_linear_elastic",
+            constitutive_law=constitutive_law,
+            soil_formulation=soil_formulation_one_phase,
+            retention_parameters=retention_parameters,
+        )
+        interface_material_parameters_umat = Interface(
+            name="test_interface_material_one_phase_umat",
+            constitutive_law=constitutive_law_umat,
+            soil_formulation=soil_formulation_one_phase,
+            retention_parameters=retention_parameters,
+        )
+        interface_material_parameters_udsm = Interface(
+            name="test_interface_material_one_phase_udsm",
+            constitutive_law=constitutive_law_udsm,
+            soil_formulation=soil_formulation_one_phase,
+            retention_parameters=retention_parameters,
+        )
+        interface_material_parameters_two_phase = Interface(
+            name="test_interface_material_two_phase_linear_elastic",
+            constitutive_law=constitutive_law,
+            soil_formulation=soil_formulation_two_phase,
+            retention_parameters=retention_parameters,
+        )
+        interface_material_parameters_two_phase_umat = Interface(
+            name="test_interface_material_two_phase_umat",
+            constitutive_law=constitutive_law_umat,
+            soil_formulation=soil_formulation_two_phase,
+            retention_parameters=retention_parameters,
+        )
+        interface_material_parameters_two_phase_udsm = Interface(
+            name="test_interface_material_two_phase_udsm",
+            constitutive_law=constitutive_law_udsm,
+            soil_formulation=soil_formulation_two_phase,
+            retention_parameters=retention_parameters,
+        )
+
+        all_materials = {
+            "test_interface_material_one_phase_linear_elastic": interface_material_parameters,
+            "test_interface_material_one_phase_umat": interface_material_parameters_umat,
+            "test_interface_material_one_phase_udsm": interface_material_parameters_udsm,
+            "test_interface_material_two_phase_linear_elastic": interface_material_parameters_two_phase,
+            "test_interface_material_two_phase_umat": interface_material_parameters_two_phase_umat,
+            "test_interface_material_two_phase_udsm": interface_material_parameters_two_phase_udsm,
+        }
+        
+        material_io = KratosMaterialIO(ndim=ndim, domain="PorousDomain")
+        test_dict = {"properties": []}
+        for ix, (part_name, material_parameters) in enumerate(all_materials.items()):
+            test_dict["properties"].append(
+                material_io.create_material_dict(
+                    part_name=part_name,
+                    material=material_parameters,
+                    material_id=ix + 1,
+                ))
+
+        expected_material_parameters_json = json.load(open("tests/test_data/expected_interface_parameters.json"))
+        # compare json files using custom dictionary comparison
+        TestUtils.assert_dictionary_almost_equal(expected_material_parameters_json, test_dict)
+ 
+
