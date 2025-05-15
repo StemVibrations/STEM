@@ -4427,7 +4427,7 @@ class TestInterfaceFunctionality:
         updated_element = model.body_model_parts[1].mesh.elements[2]
         expected_node_ids = [100, 101, 4]  # Updated from [2, 5, 6, 3]
         assert updated_element.node_ids == expected_node_ids
-    
+
     def test_create_interface_elements_HEXAHEDRON_8N(self, model_setup: Dict[str, Any]):
         """
         Test creating interface elements from nodes for 3D model HEXAHEDRON_8N 
@@ -4451,7 +4451,7 @@ class TestInterfaceFunctionality:
         # test raises NotImplementedError
         with pytest.raises(NotImplementedError, match="Interface elements are not implemented for 3D models."):
             model._Model__create_interface_elements(test_nodes, 4, "HEXAHEDRON_8N", nodes_stable_parts)
-    
+
     def test_create_interface_elements_TRIANGLE_3N(self, model_setup: Dict[str, Any]):
         """
         Test creating interface elements from nodes for 2D model TRIANGLE_3N that
@@ -4475,7 +4475,7 @@ class TestInterfaceFunctionality:
 
         with pytest.raises(ValueError, match="Element type TRIANGLE_3N is not supported."):
             model._Model__create_interface_elements(test_nodes, 4, "TRIANGLE_3N", nodes_stable_parts)
-        
+
     def test_create_interface_elements(self, model_setup: Dict[str, Any]):
         """
         Test creating interface elements from nodes
@@ -4621,7 +4621,6 @@ class TestInterfaceFunctionality:
         with pytest.raises(NotImplementedError):
             model._Model__adjust_interface_elements()
 
-
     def test_update_changing_parts_without_mesh(self, model_setup):
         """
         
@@ -4647,8 +4646,7 @@ class TestInterfaceFunctionality:
 
         # check that error is raised
         with pytest.raises(ValueError, match="Part `changing_part` has no mesh. Please generate the mesh first."):
-            model._Model__update_changing_parts([changing_part], indexes_changing_parts, common_nodes,
-                                                map_new_node_ids)
+            model._Model__update_changing_parts([changing_part], indexes_changing_parts, common_nodes, map_new_node_ids)
 
     def test_set_interface_success(self, model_setup: Dict[str, Any]):
         """

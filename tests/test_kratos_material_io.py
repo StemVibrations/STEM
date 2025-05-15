@@ -267,7 +267,7 @@ class TestKratosMaterialIO:
         """
         Test writing a material list to json. In this test, the material list contains interface materials.
         """
-        ndim =2     # Linear elastic drained soil with a Density of 2700, a Young's modulus of 50e6,
+        ndim = 2  # Linear elastic drained soil with a Density of 2700, a Young's modulus of 50e6,
         # a Poisson ratio of 0.3 & a Porosity of 0.3 is specified.
         DENSITY_SOLID = 2700
         POROSITY = 0.3
@@ -290,19 +290,17 @@ class TestKratosMaterialIO:
         )
 
         soil_formulation_one_phase = OnePhaseSoilInterface(ndim,
-                                          IS_DRAINED=True,
-                                          DENSITY_SOLID=DENSITY_SOLID,
-                                          POROSITY=POROSITY,
-                                          MINIMUM_JOINT_WIDTH=0.001)
-        soil_formulation_two_phase = TwoPhaseSoilInterface(
-            ndim,
-            DENSITY_SOLID=DENSITY_SOLID,
-            POROSITY=POROSITY,
-            PERMEABILITY_XX=1e-15,
-            PERMEABILITY_YY=1e-15,
-            PERMEABILITY_XY=2,
-            MINIMUM_JOINT_WIDTH=0.001
-        )
+                                                           IS_DRAINED=True,
+                                                           DENSITY_SOLID=DENSITY_SOLID,
+                                                           POROSITY=POROSITY,
+                                                           MINIMUM_JOINT_WIDTH=0.001)
+        soil_formulation_two_phase = TwoPhaseSoilInterface(ndim,
+                                                           DENSITY_SOLID=DENSITY_SOLID,
+                                                           POROSITY=POROSITY,
+                                                           PERMEABILITY_XX=1e-15,
+                                                           PERMEABILITY_YY=1e-15,
+                                                           PERMEABILITY_XY=2,
+                                                           MINIMUM_JOINT_WIDTH=0.001)
         retention_parameters = SaturatedBelowPhreaticLevelLaw()
         # Define interface material parameters
         interface_material_parameters = Interface(
@@ -350,7 +348,7 @@ class TestKratosMaterialIO:
             "test_interface_material_two_phase_umat": interface_material_parameters_two_phase_umat,
             "test_interface_material_two_phase_udsm": interface_material_parameters_two_phase_udsm,
         }
-        
+
         material_io = KratosMaterialIO(ndim=ndim, domain="PorousDomain")
         test_dict = {"properties": []}
         for ix, (part_name, material_parameters) in enumerate(all_materials.items()):
@@ -364,5 +362,3 @@ class TestKratosMaterialIO:
         expected_material_parameters_json = json.load(open("tests/test_data/expected_interface_parameters.json"))
         # compare json files using custom dictionary comparison
         TestUtils.assert_dictionary_almost_equal(expected_material_parameters_json, test_dict)
- 
-
