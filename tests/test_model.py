@@ -4572,3 +4572,32 @@ class TestInterfaceFunctionality:
         # Try to adjust interface elements
         with pytest.raises(NotImplementedError):
             model._Model__adjust_interface_elements()
+
+
+    def test_update_changing_parts_without_mesh(self, model_setup):
+        """
+        
+        Test updating changing parts with new node IDs, but without a mesh in the changing part.
+        Error should be raised.
+        
+        Parameters:
+            - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.  
+        """
+        model = model_setup['model']
+        # remove mesh from changing part
+        model.body_model_parts[1].mesh = None
+        changing_part = model_setup['changing_part']
+
+        # Create common nodes set (nodes 2 and 3)
+        common_nodes = {2, 3}
+
+        # Create mapping
+        map_new_node_ids = {2: 100, 3: 101}
+
+        # Get index of changing part
+        indexes_changing_parts = [1]  # Index 1 in model.body_model_parts
+
+        # check that error is raised
+        with pytest.raises(ValueError, match="Part `changing_part` has no mesh. Please generate the mesh first."):
+            model._Model__update_changing_parts([changing_part], indexes_changing_parts, common_nodes,
+                                                map_new_node_ids)
