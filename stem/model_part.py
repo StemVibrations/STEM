@@ -5,7 +5,7 @@ from stem.boundary import BoundaryParametersABC
 from stem.water_processes import WaterProcessParametersABC
 from stem.load import LoadParametersABC, MovingLoad, UvecLoad
 from stem.output import OutputParametersABC
-from stem.soil_material import SoilMaterial
+from stem.soil_material import SoilMaterial, Interface
 from stem.structural_material import StructuralMaterial
 
 from stem.geometry import Geometry
@@ -25,10 +25,11 @@ TypeAlias:
         :class:`stem.output.OutputParametersABC`]
 """
 
-Material = Union[SoilMaterial, StructuralMaterial]
+Material = Union[SoilMaterial, StructuralMaterial, Interface]
 """
 TypeAlias:
-    - Material: Union[:class:`stem.soil_material.SoilMaterial`, :class:`stem.structural_material.StructuralMaterial`]
+    - Material: Union[:class:`stem.soil_material.SoilMaterial`, :class:`stem.structural_material.StructuralMaterial`, \
+        :class:`stem.soil_material.Interface`]
 """
 
 MovingLoadTypes = (MovingLoad, UvecLoad)

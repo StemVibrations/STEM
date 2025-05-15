@@ -190,14 +190,15 @@ class KratosMaterialIO:
         return material_dict
 
     def __add_soil_formulation_parameters_to_material_dict(self, variables_dict: Dict[str, Any],
-                                                           soil_parameters: SoilMaterial):
+                                                           soil_parameters: Union[SoilMaterial, Interface]) -> None:
         """
         Adds the soil type parameters to the material dictionary. The soil type parameters are different for one phase
         and two phase soil. The correct parameters are added to the material dictionary based on the soil type.
 
         Args:
             - variables_dict (Dict[str, Any]): dictionary containing the material parameters
-            - soil_parameters (:class:`stem.soil_material.SoilMaterial`): soil material object
+            - soil_parameters (:class:`stem.soil_material.SoilMaterial` or \
+                :class:`stem.soil_material.Interface`): soil material object
 
         Returns:
         """
@@ -353,7 +354,6 @@ class KratosMaterialIO:
 
         interface_material_dict["Variables"].update(fluid_parameters)
 
-
         return interface_material_dict
 
     def __create_euler_beam_dict(self, material_parameters: StructuralParametersABC) -> Dict[str, Any]:
@@ -422,7 +422,7 @@ class KratosMaterialIO:
 
         return structural_material_dict
 
-    def create_material_dict(self, part_name: str, material: Union[SoilMaterial, StructuralMaterial],
+    def create_material_dict(self, part_name: str, material: Union[SoilMaterial, StructuralMaterial, Interface],
                              material_id: int) -> Dict[str, Any]:
         """
         Creates a dictionary containing the material parameters
@@ -430,11 +430,12 @@ class KratosMaterialIO:
         Args:
             - part_name (str): name of the body model part for the material
             - material (Union[:class:`stem.soil_material.SoilMaterial`, \
-                              :class:`stem.soil_material.StructuralMaterial`]): material object
+                              :class:`stem.soil_material.StructuralMaterial`, \
+                              :class:`stem.soil_material.Interface`]): material object
             - material_id (int): material id
 
         Raises:
-            - ValueError: if material is not of either SoilMaterial or StructuralMaterial type
+            - ValueError: if material is not of either SoilMaterial, Interface or StructuralMaterial type
 
         Returns:
             - Dict[str, Any]: dictionary containing the material parameters

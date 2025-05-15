@@ -24,7 +24,7 @@ class TestUtilsInterface:
         Expect node ordering [5, 6, 7, 8].
         """
         nodes_stable_parts = [5, 6]
-        nodes_for_element =  [
+        nodes_for_element = [
             Node(id=5, coordinates=[1.0, 0.0, 0.0]),
             Node(id=6, coordinates=[1.0, 1.0, 0.0]),
             Node(id=7, coordinates=[1.0, 1.0, 0.0]),
@@ -32,7 +32,6 @@ class TestUtilsInterface:
         ]
         order = UtilsInterface.get_quadratic_order_nodes(nodes_stable_parts, nodes_for_element)
         assert order == [5, 6, 7, 8]
-
 
     def test_horizontal_interface_2d(self):
         """
@@ -53,7 +52,7 @@ class TestUtilsInterface:
         Expect node ordering [1, 6, 3, 8].
         """
         nodes_stable_parts = [1, 6]
-        nodes_for_element =  [
+        nodes_for_element = [
             Node(id=8, coordinates=[0.0, 1.0, 0.0]),
             Node(id=3, coordinates=[1.0, 1.0, 0.0]),
             Node(id=6, coordinates=[1.0, 1.0, 0.0]),
@@ -61,7 +60,6 @@ class TestUtilsInterface:
         ]
         order = UtilsInterface.get_quadratic_order_nodes(nodes_stable_parts, nodes_for_element)
         assert order == [6, 1, 8, 3]
-
 
     def test_with_angle(self):
         """
@@ -76,6 +74,5 @@ class TestUtilsInterface:
             Node(id=3, coordinates=[0.7, 0.7, 0.0]),
             Node(id=8, coordinates=[0.7, 0.7, 0.0]),
         ]
-        order = UtilsInterface.get_quadratic_order_nodes(nodes_stable_parts, nodes)    
+        order = UtilsInterface.get_quadratic_order_nodes(nodes_stable_parts, nodes)
         assert order == [7, 3, 8, 4]
-

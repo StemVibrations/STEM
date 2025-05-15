@@ -760,6 +760,3 @@ class Utils:
                 if not isinstance(i, NUMBER_TYPES) or np.isnan(i) or np.isinf(i):
                     raise ValueError(f"Coordinates should be a sequence of sequence of real numbers, "
                                      f"but {i} was given.")
-
-
-
