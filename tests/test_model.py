@@ -4241,3 +4241,339 @@ class TestModel:
         model.ndim = 2
         with pytest.raises(NotImplementedError, match="Hinges can only be applied in 3D models"):
             model.add_hinge_on_beam(beam_material.name, [(-0.2, 0.0, 0.0)], hinge_parameters, "hinge_5")
+
+
+@pytest.fixture
+def model_setup():
+    """Set up test data for all test methods"""
+    # Define test coordinates
+    coords = [
+        [0.0, 0.0, 0.0],  # Node 1
+        [1.0, 0.0, 0.0],  # Node 2
+        [1.0, 1.0, 0.0],  # Node 3
+        [2.0, 2.0, 0.0],  # Node 4
+    ]
+    
+    # Create nodes
+    nodes = {
+        i+1: Node(i+1, coords[i]) for i in range(len(coords))
+    }
+    
+    # Create elements
+    elements = {
+        1: Element(1, "TRIANGLE_3N", [1, 2, 3]),  # Element in stable part
+        2: Element(2, "TRIANGLE_3N", [2, 3,4])   # Element in changing part with nodes 2 and 3 in common
+    }
+    
+    # Create stable part
+    stable_part = BodyModelPart("stable_part")
+    stable_part.mesh = Mesh(2)
+    stable_part.mesh.nodes = {1: nodes[1], 2: nodes[2], 3: nodes[3]}
+    stable_part.mesh.elements = {1: elements[1]}
+    
+    # Create changing part
+    changing_part = BodyModelPart("changing_part")
+    changing_part.mesh = Mesh(2)
+    changing_part.mesh.nodes = {2: nodes[2], 3: nodes[3], 4: nodes[4]}
+    changing_part.mesh.elements = {2: elements[2]}
+
+    
+    # Create model instance for testing
+    model = Model(2)  # Assuming 2D model for this test
+    model.body_model_parts = [stable_part, changing_part]
+
+    constitutive_law = LinearElasticSoil(YOUNG_MODULUS=50e6, POISSON_RATIO=0.2)
+    variables = OnePhaseSoilInterface(2, IS_DRAINED=True, DENSITY_SOLID=2000, POROSITY=0.3, MINIMUM_JOINT_WIDTH=0.001)
+    retention_parameters = SaturatedBelowPhreaticLevelLaw()
+    interface_material = Interface(name="interface", constitutive_law=constitutive_law, soil_formulation=variables,retention_parameters=retention_parameters)
+    
+    model.gmsh_io.mesh_data["elements"] = {"TRIANGLE_3N": elements}
+    model.gmsh_io.mesh_data["nodes"] = nodes
+    # Return all needed objects for tests
+    return {
+        'model': model,
+        'nodes': nodes,
+        'elements': elements,
+        'coords': coords,
+        'stable_part': stable_part,
+        'changing_part': changing_part,
+        'interface_material': interface_material
+    }
+
+class TestInterfaceFunctionality:
+    def test_update_node_ids(self, model_setup: Dict[str, Any]):
+        """
+        Test updating node IDs with a mapping
+
+        Parameters:
+            - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.
+        """
+        # Create a mapping for node IDs 2 and 3 (common nodes)
+        map_new_node_ids = {2: 100, 3: 101}
+
+        # Test the static method directly
+        original_nodes = {k: v for k, v in model_setup['changing_part'].mesh.nodes.items()}
+        updated_nodes = Model._Model__update_node_ids(original_nodes, map_new_node_ids)
+
+        # Verify that nodes 2 and 3 have been updated in the result
+        assert 100 in updated_nodes
+        assert 101 in updated_nodes
+        assert 2 not in updated_nodes
+        assert 3 not in updated_nodes
+
+        # Verify that node 4 remains unchanged
+        assert 4 in updated_nodes
+
+        # Verify that the node objects have their IDs updated
+        assert updated_nodes[100].id == 100
+        assert updated_nodes[101].id == 101
+
+        # Verify coordinates are preserved
+        assert updated_nodes[100].coordinates == model_setup['coords'][1]  # Node 2 coordinates
+        assert updated_nodes[101].coordinates == model_setup['coords'][2]  # Node 3 coordinates
+
+
+    def test_update_elements_with_new_node_ids(self, model_setup: Dict[str, Any]):
+        """
+        Test updating elements with new node IDs
+        
+        Parameters:
+            - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.
+        """
+        # Create a mapping for node IDs 2 and 3 (common nodes)
+        map_new_node_ids = {2: 100, 3: 101}
+
+        # Create node_to_elements mapping
+        node_to_elements = {
+            100: [2],  # Element 2 is connected to node 2 (now 100)
+            101: [2]   # Element 2 is connected to node 3 (now 101)
+        }
+
+        # Original elements
+        original_elements = {k: v for k, v in model_setup['changing_part'].mesh.elements.items()}
+
+        # Test the static method
+        updated_elements = Model._Model__update_elements_with_new_node_ids(
+            original_elements, node_to_elements, map_new_node_ids
+        )
+
+        # Verify element 2 now references the new node IDs
+        assert updated_elements[2].node_ids == [100, 101, 4]
+
+
+    def test_get_interface_config_2d(self, model_setup: Dict[str, Any]):
+        """
+        Test getting interface configuration based on dimensions and element type for 2D model
+        
+        Parameters:
+            - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.        
+        """
+        model = model_setup['model']
+
+        # Test 2D configuration
+        n_nodes, element_type = model._Model__get_interface_config()
+        assert n_nodes == 4
+        assert element_type == "QUADRANGLE_4N"
+
+
+    def test_get_interface_config_3d(self, model_setup: Dict[str, Any]):
+        """
+        Test getting interface configuration based on dimensions and element type for 3D model
+
+        Parameters:
+            - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.
+        """
+        model = model_setup['model']
+        # Test 3D configuration (should raise NotImplementedError)
+        model.ndim = 3
+        with pytest.raises(NotImplementedError):
+            model._Model__get_interface_config()
+
+        # Reset to 2D for other tests
+        model.ndim = 2
+
+
+    def test_update_changing_parts(self, model_setup):
+        """
+        
+        Test updating changing parts with new node IDs
+        
+        Parameters:
+            - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.  
+        """
+        model = model_setup['model']
+        changing_part = model_setup['changing_part']
+
+        # Create common nodes set (nodes 2 and 3)
+        common_nodes = {2, 3}
+
+        # Create mapping
+        map_new_node_ids = {2: 100, 3: 101}
+
+        # Get index of changing part
+        indexes_changing_parts = [1]  # Index 1 in model.body_model_parts
+
+        # Update changing parts
+        model._Model__update_changing_parts(
+            [changing_part], indexes_changing_parts, common_nodes, map_new_node_ids
+        )
+
+        # Verify nodes in changing part have been updated
+        updated_nodes = model.body_model_parts[1].mesh.nodes
+        assert 100 in updated_nodes
+        assert 101 in updated_nodes
+        assert 2 not in updated_nodes
+        assert 3 not in updated_nodes
+
+        # Verify element node IDs have been updated
+        updated_element = model.body_model_parts[1].mesh.elements[2]
+        expected_node_ids = [100, 101, 4]  # Updated from [2, 5, 6, 3]
+        assert updated_element.node_ids == expected_node_ids
+
+
+    def test_create_interface_elements(self, model_setup: Dict[str, Any]):
+        """
+        Test creating interface elements from nodes
+        
+        Parameters:
+            - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.
+        """
+        model = model_setup['model']
+
+        # Set up test data
+        test_nodes = {
+            3: Node(3, [1.0, 0.0, 0.0]),
+            5: Node(5, [1.0, 0.0, 0.0]),  # Mapped from node 2
+            6: Node(6, [1.0, 1.0, 0.0]),  # Mapped from node 3
+            2: Node(2, [1.0, 1.0, 0.0])
+        }
+
+        # Nodes from stable parts
+        nodes_stable_parts = [3, 2]
+
+        # Test creating interface elements
+        interface_elements = model._Model__create_interface_elements(
+            test_nodes, 4, "QUADRANGLE_4N", nodes_stable_parts
+        )
+
+        # Verify an element was created
+        assert len(interface_elements) == 1
+
+        # Get the created element
+        element_id = list(interface_elements.keys())[0]
+        created_element = interface_elements[element_id]
+
+        # Verify element properties
+        assert created_element.element_type == "QUADRANGLE_4N"
+
+        # Verify node order (should follow stable-changing-stable-changing pattern)
+        node_ids = created_element.node_ids
+        assert node_ids == [3, 2, 6, 5]
+
+
+    def test_create_interface_body_model_part(self, model_setup: Dict[str, Any]):
+        """
+        Test creating an interface body model part
+
+        Parameters:
+            - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.        
+        """
+        model = model_setup['model']
+
+        # Nodes from stable parts
+        nodes_stable_parts = [3, 2]
+        common_nodes = [2, 3]
+        map_new_node_ids = {2: 6, 3: 5}
+        nodes_stable_parts = [1, 2, 3]
+        n_interface_nodes = 4
+        element_type_gmsh = "QUADRANGLE_4N"
+        # add the new nodes to the model
+        model.body_model_parts[1].mesh.nodes[5] = Node(5, [1.0, 0.0, 0.0])
+        model.body_model_parts[1].mesh.nodes[6] = Node(6, [1.0, 1.0, 0.0])
+        # pop the nodes from the changing part
+        model.body_model_parts[1].mesh.nodes.pop(2)
+        model.body_model_parts[1].mesh.nodes.pop(3)
+
+        # Create interface body model part
+        interface_part = model._Model__create_interface_body_model_part(
+            "test_interface", model_setup['interface_material'], common_nodes, map_new_node_ids,
+            n_interface_nodes, element_type_gmsh, nodes_stable_parts
+        )
+
+        # Verify basic properties
+        assert interface_part.name == "test_interface"
+        assert interface_part.material == model_setup['interface_material']
+
+        # Verify nodes in the mesh
+        mesh_nodes = interface_part.mesh.nodes
+        assert len(mesh_nodes) == 4  # 2 original + 2 mapped nodes
+        assert 2 in mesh_nodes
+        assert 3 in mesh_nodes
+        assert 5 in mesh_nodes
+        assert 6 in mesh_nodes
+
+        # Verify elements were created
+        assert len(interface_part.mesh.elements) > 0
+
+
+    def test_adjust_interface_elements(self, model_setup: Dict[str, Any]):
+        """
+        Test the full interface element adjustment process
+
+        Parameters:
+            - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.        
+        """
+        model = model_setup['model']
+        model.interfaces["interface_part_1_part_2"] = {
+            "part_1": [model.body_model_parts[0]],
+            "part_2": [model.body_model_parts[1]],
+            "material": model_setup['interface_material'],
+        }
+
+        # Get original state
+        original_node_count = sum(len(part.mesh.nodes) for part in model.body_model_parts)
+        original_element_count = sum(len(part.mesh.elements) for part in model.body_model_parts)
+        original_part_count = len(model.body_model_parts)
+
+        # Run the adjustment method
+        model._Model__adjust_interface_elements()
+
+        # Verify a new body model part was added
+        assert len(model.body_model_parts) == original_part_count + 1
+
+        # Check the interface part
+        interface_part = model.body_model_parts[-1]
+        assert interface_part.name == "interface_part_1_part_2"
+        assert interface_part.material.name == "interface"
+
+        # Verify node mapping in changing part
+        changing_part = model.body_model_parts[1]
+        assert 2 not in changing_part.mesh.nodes
+        assert 3 not in changing_part.mesh.nodes
+
+
+        # Verify elements in interface part were created
+        assert len(interface_part.mesh.elements) > 0
+
+        # Verify total element count increased
+        new_element_count = sum(len(part.mesh.elements) for part in model.body_model_parts)
+        assert new_element_count > original_element_count
+
+
+    def test_3d_interface_elements_not_implemented(self, model_setup: Dict[str, Any]):
+        """
+        Test that 3D interface elements raise NotImplementedError
+
+        Parameters:
+            - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.            
+        
+        """
+        model = model_setup['model']
+
+        # Set model to 3D
+        model.ndim = 3
+
+        # Try to adjust interface elements
+        with pytest.raises(NotImplementedError):
+            model._Model__adjust_interface_elements()
+
