@@ -4253,31 +4253,28 @@ def model_setup():
         [1.0, 1.0, 0.0],  # Node 3
         [2.0, 2.0, 0.0],  # Node 4
     ]
-    
+
     # Create nodes
-    nodes = {
-        i+1: Node(i+1, coords[i]) for i in range(len(coords))
-    }
-    
+    nodes = {i + 1: Node(i + 1, coords[i]) for i in range(len(coords))}
+
     # Create elements
     elements = {
         1: Element(1, "TRIANGLE_3N", [1, 2, 3]),  # Element in stable part
-        2: Element(2, "TRIANGLE_3N", [2, 3,4])   # Element in changing part with nodes 2 and 3 in common
+        2: Element(2, "TRIANGLE_3N", [2, 3, 4])  # Element in changing part with nodes 2 and 3 in common
     }
-    
+
     # Create stable part
     stable_part = BodyModelPart("stable_part")
     stable_part.mesh = Mesh(2)
     stable_part.mesh.nodes = {1: nodes[1], 2: nodes[2], 3: nodes[3]}
     stable_part.mesh.elements = {1: elements[1]}
-    
+
     # Create changing part
     changing_part = BodyModelPart("changing_part")
     changing_part.mesh = Mesh(2)
     changing_part.mesh.nodes = {2: nodes[2], 3: nodes[3], 4: nodes[4]}
     changing_part.mesh.elements = {2: elements[2]}
 
-    
     # Create model instance for testing
     model = Model(2)  # Assuming 2D model for this test
     model.body_model_parts = [stable_part, changing_part]
@@ -4285,8 +4282,11 @@ def model_setup():
     constitutive_law = LinearElasticSoil(YOUNG_MODULUS=50e6, POISSON_RATIO=0.2)
     variables = OnePhaseSoilInterface(2, IS_DRAINED=True, DENSITY_SOLID=2000, POROSITY=0.3, MINIMUM_JOINT_WIDTH=0.001)
     retention_parameters = SaturatedBelowPhreaticLevelLaw()
-    interface_material = Interface(name="interface", constitutive_law=constitutive_law, soil_formulation=variables,retention_parameters=retention_parameters)
-    
+    interface_material = Interface(name="interface",
+                                   constitutive_law=constitutive_law,
+                                   soil_formulation=variables,
+                                   retention_parameters=retention_parameters)
+
     model.gmsh_io.mesh_data["elements"] = {"TRIANGLE_3N": elements}
     model.gmsh_io.mesh_data["nodes"] = nodes
     # Return all needed objects for tests
@@ -4300,7 +4300,9 @@ def model_setup():
         'interface_material': interface_material
     }
 
+
 class TestInterfaceFunctionality:
+
     def test_update_node_ids(self, model_setup: Dict[str, Any]):
         """
         Test updating node IDs with a mapping
@@ -4332,7 +4334,6 @@ class TestInterfaceFunctionality:
         assert updated_nodes[100].coordinates == model_setup['coords'][1]  # Node 2 coordinates
         assert updated_nodes[101].coordinates == model_setup['coords'][2]  # Node 3 coordinates
 
-
     def test_update_elements_with_new_node_ids(self, model_setup: Dict[str, Any]):
         """
         Test updating elements with new node IDs
@@ -4346,20 +4347,18 @@ class TestInterfaceFunctionality:
         # Create node_to_elements mapping
         node_to_elements = {
             100: [2],  # Element 2 is connected to node 2 (now 100)
-            101: [2]   # Element 2 is connected to node 3 (now 101)
+            101: [2]  # Element 2 is connected to node 3 (now 101)
         }
 
         # Original elements
         original_elements = {k: v for k, v in model_setup['changing_part'].mesh.elements.items()}
 
         # Test the static method
-        updated_elements = Model._Model__update_elements_with_new_node_ids(
-            original_elements, node_to_elements, map_new_node_ids
-        )
+        updated_elements = Model._Model__update_elements_with_new_node_ids(original_elements, node_to_elements,
+                                                                           map_new_node_ids)
 
         # Verify element 2 now references the new node IDs
         assert updated_elements[2].node_ids == [100, 101, 4]
-
 
     def test_get_interface_config_2d(self, model_setup: Dict[str, Any]):
         """
@@ -4374,7 +4373,6 @@ class TestInterfaceFunctionality:
         n_nodes, element_type = model._Model__get_interface_config()
         assert n_nodes == 4
         assert element_type == "QUADRANGLE_4N"
-
 
     def test_get_interface_config_3d(self, model_setup: Dict[str, Any]):
         """
@@ -4392,10 +4390,8 @@ class TestInterfaceFunctionality:
         assert n_nodes == 8
         assert element_type == "HEXAHEDRON_8N"
 
-
         # Reset to 2D for other tests
         model.ndim = 2
-
 
     def test_update_changing_parts(self, model_setup):
         """
@@ -4418,9 +4414,7 @@ class TestInterfaceFunctionality:
         indexes_changing_parts = [1]  # Index 1 in model.body_model_parts
 
         # Update changing parts
-        model._Model__update_changing_parts(
-            [changing_part], indexes_changing_parts, common_nodes, map_new_node_ids
-        )
+        model._Model__update_changing_parts([changing_part], indexes_changing_parts, common_nodes, map_new_node_ids)
 
         # Verify nodes in changing part have been updated
         updated_nodes = model.body_model_parts[1].mesh.nodes
@@ -4433,7 +4427,6 @@ class TestInterfaceFunctionality:
         updated_element = model.body_model_parts[1].mesh.elements[2]
         expected_node_ids = [100, 101, 4]  # Updated from [2, 5, 6, 3]
         assert updated_element.node_ids == expected_node_ids
-
 
     def test_create_interface_elements(self, model_setup: Dict[str, Any]):
         """
@@ -4456,9 +4449,7 @@ class TestInterfaceFunctionality:
         nodes_stable_parts = [3, 2]
 
         # Test creating interface elements
-        interface_elements = model._Model__create_interface_elements(
-            test_nodes, 4, "QUADRANGLE_4N", nodes_stable_parts
-        )
+        interface_elements = model._Model__create_interface_elements(test_nodes, 4, "QUADRANGLE_4N", nodes_stable_parts)
 
         # Verify an element was created
         assert len(interface_elements) == 1
@@ -4473,7 +4464,6 @@ class TestInterfaceFunctionality:
         # Verify node order (should follow stable-changing-stable-changing pattern)
         node_ids = created_element.node_ids
         assert node_ids == [3, 2, 6, 5]
-
 
     def test_create_interface_body_model_part(self, model_setup: Dict[str, Any]):
         """
@@ -4499,10 +4489,10 @@ class TestInterfaceFunctionality:
         model.body_model_parts[1].mesh.nodes.pop(3)
 
         # Create interface body model part
-        interface_part = model._Model__create_interface_body_model_part(
-            "test_interface", model_setup['interface_material'], common_nodes, map_new_node_ids,
-            n_interface_nodes, element_type_gmsh, nodes_stable_parts
-        )
+        interface_part = model._Model__create_interface_body_model_part("test_interface",
+                                                                        model_setup['interface_material'], common_nodes,
+                                                                        map_new_node_ids, n_interface_nodes,
+                                                                        element_type_gmsh, nodes_stable_parts)
 
         # Verify basic properties
         assert interface_part.name == "test_interface"
@@ -4518,7 +4508,6 @@ class TestInterfaceFunctionality:
 
         # Verify elements were created
         assert len(interface_part.mesh.elements) > 0
-
 
     def test_adjust_interface_elements(self, model_setup: Dict[str, Any]):
         """
@@ -4555,14 +4544,12 @@ class TestInterfaceFunctionality:
         assert 2 not in changing_part.mesh.nodes
         assert 3 not in changing_part.mesh.nodes
 
-
         # Verify elements in interface part were created
         assert len(interface_part.mesh.elements) > 0
 
         # Verify total element count increased
         new_element_count = sum(len(part.mesh.elements) for part in model.body_model_parts)
         assert new_element_count > original_element_count
-
 
     def test_3d_interface_elements_not_implemented(self, model_setup: Dict[str, Any]):
         """
@@ -4585,4 +4572,3 @@ class TestInterfaceFunctionality:
         # Try to adjust interface elements
         with pytest.raises(NotImplementedError):
             model._Model__adjust_interface_elements()
-
