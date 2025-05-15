@@ -4427,7 +4427,55 @@ class TestInterfaceFunctionality:
         updated_element = model.body_model_parts[1].mesh.elements[2]
         expected_node_ids = [100, 101, 4]  # Updated from [2, 5, 6, 3]
         assert updated_element.node_ids == expected_node_ids
+    
+    def test_create_interface_elements_HEXAHEDRON_8N(self, model_setup: Dict[str, Any]):
+        """
+        Test creating interface elements from nodes for 3D model HEXAHEDRON_8N 
+        raises NotImplementedError
+        
+        Parameters:
+            - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.
+        """
+        model = model_setup['model']
 
+        # Set up test data
+        test_nodes = {
+            3: Node(3, [1.0, 0.0, 0.0]),
+            5: Node(5, [1.0, 0.0, 0.0]),  # Mapped from node 2
+            6: Node(6, [1.0, 1.0, 0.0]),  # Mapped from node 3
+            2: Node(2, [1.0, 1.0, 0.0])
+        }
+
+        # Nodes from stable parts
+        nodes_stable_parts = [3, 2]
+        # test raises NotImplementedError
+        with pytest.raises(NotImplementedError, match="Interface elements are not implemented for 3D models."):
+            model._Model__create_interface_elements(test_nodes, 4, "HEXAHEDRON_8N", nodes_stable_parts)
+    
+    def test_create_interface_elements_TRIANGLE_3N(self, model_setup: Dict[str, Any]):
+        """
+        Test creating interface elements from nodes for 2D model TRIANGLE_3N that
+        raise ValueError
+        
+        Parameters:
+            - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.
+        """
+        model = model_setup['model']
+
+        # Set up test data
+        test_nodes = {
+            3: Node(3, [1.0, 0.0, 0.0]),
+            5: Node(5, [1.0, 0.0, 0.0]),  # Mapped from node 2
+            6: Node(6, [1.0, 1.0, 0.0]),  # Mapped from node 3
+            2: Node(2, [1.0, 1.0, 0.0])
+        }
+
+        # Nodes from stable parts
+        nodes_stable_parts = [3, 2]
+
+        with pytest.raises(ValueError, match="Element type TRIANGLE_3N is not supported."):
+            model._Model__create_interface_elements(test_nodes, 4, "TRIANGLE_3N", nodes_stable_parts)
+        
     def test_create_interface_elements(self, model_setup: Dict[str, Any]):
         """
         Test creating interface elements from nodes
@@ -4601,3 +4649,57 @@ class TestInterfaceFunctionality:
         with pytest.raises(ValueError, match="Part `changing_part` has no mesh. Please generate the mesh first."):
             model._Model__update_changing_parts([changing_part], indexes_changing_parts, common_nodes,
                                                 map_new_node_ids)
+
+    def test_set_interface_success(self, model_setup: Dict[str, Any]):
+        """
+        Test setting an interface between two valid model parts.
+        """
+        model = model_setup['model']
+        part_1_name = ["part_1"]
+        part_2_name = ["part_2"]
+        material = model_setup['interface_material']
+
+        # Mock the model parts
+        model.get_model_part_by_name = lambda name: name if name in part_1_name + part_2_name else None
+
+        # Call the method
+        model.set_interface_between_model_parts(part_1_name, part_2_name, material)
+
+        # Verify the interface was set
+        interface_name = "interface_part_1_part_2"
+        assert interface_name in model.interfaces
+        assert model.interfaces[interface_name]["part_1"] == part_1_name
+        assert model.interfaces[interface_name]["part_2"] == part_2_name
+        assert model.interfaces[interface_name]["material"] == material
+
+    def test_set_interface_part_1_not_found(self, model_setup: Dict[str, Any]):
+        """
+        Test setting an interface raises ValueError when part_1_name is not found.
+        """
+        model = model_setup['model']
+        part_1_name = ["nonexistent_part_1"]
+        part_2_name = ["part_2"]
+        material = model_setup['interface_material']
+
+        # Mock the model parts
+        model.get_model_part_by_name = lambda name: name if name in part_2_name else None
+
+        # Verify the error is raised
+        with pytest.raises(ValueError, match="Model part nonexistent_part_1 not found."):
+            model.set_interface_between_model_parts(part_1_name, part_2_name, material)
+
+    def test_set_interface_part_2_not_found(self, model_setup: Dict[str, Any]):
+        """
+        Test setting an interface raises ValueError when part_2_name is not found.
+        """
+        model = model_setup['model']
+        part_1_name = ["part_1"]
+        part_2_name = ["nonexistent_part_2"]
+        material = model_setup['interface_material']
+
+        # Mock the model parts
+        model.get_model_part_by_name = lambda name: name if name in part_1_name else None
+
+        # Verify the error is raised
+        with pytest.raises(ValueError, match="Model part nonexistent_part_2 not found."):
+            model.set_interface_between_model_parts(part_1_name, part_2_name, material)

@@ -2177,10 +2177,12 @@ class Model:
         part_1 = [self.get_model_part_by_name(name) for name in part_1_name]
         part_2 = [self.get_model_part_by_name(name) for name in part_2_name]
 
-        if part_1 is None:
-            raise ValueError(f"Model part `{part_1_name}` not found.")
-        if part_2 is None:
-            raise ValueError(f"Model part `{part_2_name}` not found.")
+        if part_1 == len(part_1_name) * [None]:
+            string_part_1_name = " ".join(part_1_name)
+            raise ValueError(f"Model part {string_part_1_name} not found.")
+        if part_2 == len(part_1_name) * [None]:
+            string_part_2_name = " ".join(part_2_name)
+            raise ValueError(f"Model part {string_part_2_name} not found.")
 
         # name should be flat and unique
         part_1_name = "_".join(part_1_name).replace(" ", "_").replace("-", "_")

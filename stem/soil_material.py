@@ -404,13 +404,8 @@ class Interface:
         }
         Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations, "Soil")
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
-
             # for higher order elements, pore pressure is calculated on a lower order than displacements
-            if (n_dim_model == 2) or (n_dim_model == 3):
-                element_name = f"UPwSmallStrainInterfaceElement{n_dim_model}D{n_nodes_element}N"
-            else:
-                raise ValueError(f"Analysis type {analysis_type} is not implemented yet for soil material.")
-
+            element_name = f"UPwSmallStrainInterfaceElement{n_dim_model}D{n_nodes_element}N"
         else:
             raise ValueError(f"Analysis type {analysis_type} is not implemented yet for soil material.")
         return element_name
