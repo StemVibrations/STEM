@@ -1,0 +1,19 @@
+Er zijn 3 sonderingen bij Holten (te vinden op SharePoint):
+1. GD231254-SW01
+2. GD231254-SW02
+3. GD231254-SW03
+
+We hebben daarvan de sondeerlengte (m), de conusweerstand (Mpa) en de lokale wrijving (Mpa).
+Die zijn als data string toegevoegd in de .py bestanden
+
+Het begin van de sonderingen geeft een conusweerstand van 0 MPa en een lokale wrijving van 0 Mpa.
+Deze zijn eruit gehaald handmatig.
+
+Het betreft vooral zand.
+De voorkeur is sondering 2 en 3 toe te passen, aangezien die meer informatie bevatten
+(die gaan tot 15 meter i.p.v 10 meter).
+
+
+
+
+
