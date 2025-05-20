@@ -17,6 +17,25 @@ Het betreft vooral zand.
 De voorkeur is sondering 2 en 3 toe te passen, aangezien die meer informatie bevatten
 (die gaan tot 15 meter i.p.v 10 meter).
 
+De golfsnelheid is bepaald met:
+"""implements the estimation of the shear wave velocity, page 50 of
+           P.K. Robertson and K.L. Cabal, Guide to Cone Penetration testing, 6th edition, 2015
+
+           parameters
+           ----------
+           qt : 1D np.array
+                       corrected cone resistance [MPa]
+           Ic : 1D np.array
+                       soil behaviour type index (based on Qtn) [-]
+           sigmav : vertical total stress [kPa]
+           Pa : optional
+                       atmospheric pressure in [MPa], default 0.101325
+
+           returns
+           -------
+           the shear wave velocity, Vs [m/s]
+        """
+
 
 
 
