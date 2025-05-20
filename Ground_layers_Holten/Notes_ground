@@ -9,6 +9,10 @@ Die zijn als data string toegevoegd in de .py bestanden
 Het begin van de sonderingen geeft een conusweerstand van 0 MPa en een lokale wrijving van 0 Mpa.
 Deze zijn eruit gehaald handmatig.
 
+Daarnaast zijn de laatste waarde met een conusweerstand van 1,0000e-006 MPa eruit gehaald. Deze zorgden voor onrealistische waarden.
+
+De 3 sonderingen zijn smaen bekeken in GD231254-SW
+
 Het betreft vooral zand.
 De voorkeur is sondering 2 en 3 toe te passen, aangezien die meer informatie bevatten
 (die gaan tot 15 meter i.p.v 10 meter).

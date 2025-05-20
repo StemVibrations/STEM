@@ -1,7 +1,7 @@
 from CPT import CPT
 import numpy as np
+import matplotlib.pyplot as plt
 
-# Data verwerking sonderingen Holten
 data_str = """ 
 5,7000e-001	2,4067e-002	2,6001e-003
 5,8000e-001	5,3600e-002	2,9779e-003
@@ -970,19 +970,6 @@ data_str = """
 1,0210e+001	2,4680e+001	1,1710e-001
 1,0220e+001	2,5576e+001	1,4177e-001
 1,0230e+001	2,6405e+001	1,3793e-001
-1,0240e+001	2,7232e+001	1,0000e-006
-1,0250e+001	2,8044e+001	1,0000e-006
-1,0260e+001	2,8848e+001	1,0000e-006
-1,0270e+001	2,9653e+001	1,0000e-006
-1,0280e+001	3,0442e+001	1,0000e-006
-1,0290e+001	3,1267e+001	1,0000e-006
-1,0300e+001	3,2015e+001	1,0000e-006
-1,0310e+001	3,2756e+001	1,0000e-006
-1,0320e+001	3,3454e+001	1,0000e-006
-1,0330e+001	3,4144e+001	1,0000e-006
-1,0340e+001	2,9552e+001	1,0000e-006
-1,0350e+001	3,5616e+001	1,0000e-006
-1,0360e+001	3,5967e+001	1,0000e-006
 """ # ~ 0.6 till 10 m
 data_str = data_str.replace(',', '.')
 data = np.genfromtxt(data_str.splitlines())
@@ -991,9 +978,22 @@ qc = data[:, 1]
 fs = data[:, 2]
 u2 = np.zeros_like(depth)
 
-CN = CPT(depth, qc, fs, u2, ground_water_table=10, gamma_predrill=18.0,  gamma_water=9.81, a=0.8)
+CN = CPT(depth, qc, fs, u2, ground_water_table=10, gamma_predrill=18.0, gamma_water=9.81, a=0.8)
 Vs_values = CN.Vs
-print("Shear Wave Velocity (Vs):", Vs_values)
+
+for d, vs in zip(depth, Vs_values):
+    print(f"Depth: {d:.2f} m → Vs: {vs:.2f} m/s")
+
+plt.figure(figsize=(6, 8))
+plt.plot(Vs_values, depth, color='blue', linewidth=2)
+plt.gca().invert_yaxis()  # Diepte loopt naar beneden
+plt.xlabel("Shear Wave Velocity Vs (m/s)")
+plt.ylabel("Depth (m)")
+plt.title("Shear Wave Velocity vs Depth")
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
 CN.plot_layer_identification_4()
 CN.layer_print_properties()
 
