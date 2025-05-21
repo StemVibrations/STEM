@@ -3866,23 +3866,34 @@ def process_data(data_str):
 depths = []
 Vs_all = []
 unit_weight_all = []
+Youngs_modulus_all = []
 labels = ['GD231254-SW01', 'GD231254-SW02', 'GD231254-SW03']
-colors = ['blue', 'green', 'red']
+colors = ['blue', 'red', 'grey']
 
 for data_str in [data_str_1, data_str_2, data_str_3]:
     depth, qc, fs, u2 = process_data(data_str)
     CN = CPT(depth, qc, fs, u2, ground_water_table=1, gamma_predrill=18.0, gamma_water=9.81, a=0.8)
     Vs_values = CN.Vs
-    unit_weight_values = CN.unitweight
+    unit_weight_values = CN.unitweight * 1000 / 9.81
+    Youngs_values = CN.E
     depths.append(depth)
     Vs_all.append(Vs_values)
+    Youngs_modulus_all.append(Youngs_values)
     unit_weight_all.append(unit_weight_values)
 
-fig, axs = plt.subplots(1, 2, figsize=(12, 8), sharey=True)
+fig, axs = plt.subplots(1, 3, figsize=(18, 8), sharey=True)
+
+# Gedefinieerde grenslagen (in meters)
+layer_boundaries = [1, 4, 6, 8.5, 10, 12]
+
+# Voeg horizontale lijnen toe aan beide subplots
+for y in layer_boundaries:
+    axs[0].axhline(y=y, color='black', linestyle='--', linewidth=1)
+    axs[1].axhline(y=y, color='black', linestyle='--', linewidth=1)
 
 # Plot 1: Shear Wave Velocity
 for depth, Vs_values, color, label in zip(depths, Vs_all, colors, labels):
-    axs[0].plot(Vs_values, depth, color=color, linewidth=2, label=label)
+    axs[0].plot(Vs_values, depth, color=color, linewidth=1.5, label=label)
 axs[0].set_xlabel("Shear Wave Velocity Vs (m/s)")
 axs[0].set_ylabel("Depth (m)")
 axs[0].set_title("Shear Wave Velocity vs Depth")
@@ -3892,14 +3903,32 @@ axs[0].set_ylim(15, 0)  # Flip y-axis manually
 
 # Plot 2: Soil Unit Weight
 for depth, unit_weight_values, color, label in zip(depths, unit_weight_all, colors, labels):
-    axs[1].plot(unit_weight_values, depth, color=color, linewidth=2, label=label)
+    axs[1].plot(unit_weight_values, depth, color=color, linewidth=1.5, label=label)
 axs[1].set_xlabel("Soil Density (kg/m³)")
 axs[1].set_title("Soil Density vs Depth")
 axs[1].grid(True)
 axs[1].legend()
 axs[1].set_ylim(15, 0)  # Flip y-axis manually
 
+# Plot 3: Young's Modulus Em
+for depth, Youngs_values, color, label in zip(depths, Youngs_modulus_all, colors, labels):
+    axs[2].plot(Youngs_values, depth, color=color, linewidth=1.5, label=label)
+axs[2].set_xlabel("Young's Modulus Em (MPa)")
+axs[2].set_title("Young's Modulus vs Depth")
+axs[2].grid(True)
+axs[2].legend()
+axs[2].set_ylim(15, 0)  # Flip y-axis manually
+
+# Horizontale lijnen op beide subplots
+layer_depths = [1, 4, 6, 8.5, 10, 12]
+for y in layer_depths:
+    for ax in axs:
+        ax.axhline(y=y, color='black', linestyle='--', linewidth=1)
+        ax.text(ax.get_xlim()[1], y, f"depth={y} m", va='center', ha='right',
+                fontsize=8, color='black', backgroundcolor='white')
+
+
 plt.tight_layout()
-# plt.savefig(r"C:\Users\ritfeldis\Documents\Python\STEM\Ground_layers_Holten\plot_grondlagen.png")
+plt.savefig(r"C:\Users\ritfeldis\Documents\Python\STEM\Ground_layers_Holten\plot_grondlagen.png")
 plt.show()
 
