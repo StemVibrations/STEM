@@ -3913,7 +3913,7 @@ axs[1].set_ylim(15, 0)  # Flip y-axis manually
 # Plot 3: Young's Modulus Em
 for depth, Youngs_values, color, label in zip(depths, Youngs_modulus_all, colors, labels):
     axs[2].plot(Youngs_values, depth, color=color, linewidth=1.5, label=label)
-axs[2].set_xlabel("Young's Modulus Em (MPa)")
+axs[2].set_xlabel("Young's Modulus E (MPa)")
 axs[2].set_title("Young's Modulus vs Depth")
 axs[2].grid(True)
 axs[2].legend()
