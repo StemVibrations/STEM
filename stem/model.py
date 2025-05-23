@@ -164,10 +164,11 @@ class Model:
         constraint_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_constraint_name)
 
         # add displacement_constraint in the non-vertical directions
-        constraint_model_part.parameters = DisplacementConstraint(active=[True, True, True],
-                                                                  is_fixed=[True, True, True],
+        is_constraint = [True, True, True]
+        is_constraint[VERTICAL_AXIS] = False
+        constraint_model_part.parameters = DisplacementConstraint(active=is_constraint,
+                                                                  is_fixed=is_constraint,
                                                                   value=[0, 0, 0])
-        constraint_model_part.parameters.is_fixed[VERTICAL_AXIS] = False
 
         self.body_model_parts.append(rail_model_part)
         self.body_model_parts.append(sleeper_model_part)
