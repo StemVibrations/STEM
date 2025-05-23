@@ -11,9 +11,6 @@ from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
 from shutil import rmtree
 
-import pytest
-
-# @pytest.mark.skip(reason="newton raphson strategy is broken in kratos")
 def test_stem():
     """
     Test STEM: 2D block with distributed loading with multistage
