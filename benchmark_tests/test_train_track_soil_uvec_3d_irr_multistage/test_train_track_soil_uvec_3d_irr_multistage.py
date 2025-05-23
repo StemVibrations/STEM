@@ -138,7 +138,7 @@ def test_train_track_soil_uvec_3d_irr_multistage():
     no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
                                                         is_fixed=[True, True, True],
                                                         value=[0, 0, 0])
-    roller_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+    roller_displacement_parameters = DisplacementConstraint(active=[True, False, True],
                                                             is_fixed=[True, False, True],
                                                             value=[0, 0, 0])
     absorbing_boundaries_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=40.0)
