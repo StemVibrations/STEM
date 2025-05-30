@@ -4307,7 +4307,7 @@ class TestInterfaceFunctionality:
         """
         Test updating node IDs with a mapping
 
-        Parameters:
+        Args:
             - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.
         """
         # Create a mapping for node IDs 2 and 3 (common nodes)
@@ -4338,7 +4338,7 @@ class TestInterfaceFunctionality:
         """
         Test updating elements with new node IDs
         
-        Parameters:
+        Args:
             - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.
         """
         # Create a mapping for node IDs 2 and 3 (common nodes)
@@ -4364,7 +4364,7 @@ class TestInterfaceFunctionality:
         """
         Test getting interface configuration based on dimensions and element type for 2D model
         
-        Parameters:
+        Args:
             - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.        
         """
         model = model_setup['model']
@@ -4378,7 +4378,7 @@ class TestInterfaceFunctionality:
         """
         Test getting interface configuration based on dimensions and element type for 3D model
 
-        Parameters:
+        Args:
             - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.
         """
         model = model_setup['model']
@@ -4398,7 +4398,7 @@ class TestInterfaceFunctionality:
         
         Test updating changing parts with new node IDs
         
-        Parameters:
+        Args:
             - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.  
         """
         model = model_setup['model']
@@ -4433,7 +4433,7 @@ class TestInterfaceFunctionality:
         Test creating interface elements from nodes for 3D model HEXAHEDRON_8N 
         raises NotImplementedError
         
-        Parameters:
+        Args:
             - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.
         """
         model = model_setup['model']
@@ -4457,7 +4457,7 @@ class TestInterfaceFunctionality:
         Test creating interface elements from nodes for 2D model TRIANGLE_3N that
         raise ValueError
         
-        Parameters:
+        Args:
             - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.
         """
         model = model_setup['model']
@@ -4480,7 +4480,7 @@ class TestInterfaceFunctionality:
         """
         Test creating interface elements from nodes
         
-        Parameters:
+        Args:
             - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.
         """
         model = model_setup['model']
@@ -4517,7 +4517,7 @@ class TestInterfaceFunctionality:
         """
         Test creating an interface body model part
 
-        Parameters:
+        Args:
             - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.        
         """
         model = model_setup['model']
@@ -4561,7 +4561,7 @@ class TestInterfaceFunctionality:
         """
         Test the full interface element adjustment process
 
-        Parameters:
+        Args:
             - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.        
         """
         model = model_setup['model']
@@ -4603,7 +4603,7 @@ class TestInterfaceFunctionality:
         """
         Test that 3D interface elements raise NotImplementedError
 
-        Parameters:
+        Args:
             - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.            
         
         """
@@ -4627,7 +4627,7 @@ class TestInterfaceFunctionality:
         Test updating changing parts with new node IDs, but without a mesh in the changing part.
         Error should be raised.
         
-        Parameters:
+        Args:
             - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.  
         """
         model = model_setup['model']
@@ -4651,6 +4651,10 @@ class TestInterfaceFunctionality:
     def test_set_interface_success(self, model_setup: Dict[str, Any]):
         """
         Test setting an interface between two valid model parts.
+
+        Args:
+            - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.
+
         """
         model = model_setup['model']
         part_1_name = ["part_1"]
@@ -4673,6 +4677,9 @@ class TestInterfaceFunctionality:
     def test_set_interface_part_1_not_found(self, model_setup: Dict[str, Any]):
         """
         Test setting an interface raises ValueError when part_1_name is not found.
+
+        Args:
+            - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.
         """
         model = model_setup['model']
         part_1_name = ["nonexistent_part_1"]
@@ -4701,3 +4708,66 @@ class TestInterfaceFunctionality:
         # Verify the error is raised
         with pytest.raises(ValueError, match="Model part nonexistent_part_2 not found."):
             model.set_interface_between_model_parts(part_1_name, part_2_name, material)
+
+    def test_update_process_model_parts_success(self, model_setup: Dict[str, Any]):
+        """
+        Test updating process model parts with new node IDs.
+
+        Args:
+            - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.
+        """
+        model = model_setup['model']
+        # Create a mapping for node IDs 2 and 3 (common nodes)
+        map_new_node_ids = {2: 100, 3: 101}
+
+        # let's add a point load in the process model part
+        point_load = PointLoad(value=[1000, 0, 0], active=[True, True, True])
+        load_coordinates = [(1.0, 0.0, 0.0), (0.0, 0.0, 0.0)]  # Coordinates for the load
+        model.add_load_by_coordinates(load_coordinates, point_load, "load")
+        # add the mesh manually to the process model part
+        nodes = {
+            2: Node(2, [1.0, 0.0, 0.0]),
+            1: Node(1, [0.0, 0.0, 0.0]),  # This will be updated to 101
+        }
+        elements = {3: Element(3, "POINT_1N", [2]), 4: Element(4, "POINT_1N", [1])}
+        # Create a dummy mesh and assign nodes and elements
+        mesh = Mesh(ndim=0)
+        mesh.nodes = nodes
+        mesh.elements = elements
+        model.process_model_parts[0].mesh = mesh
+
+        # Prepare a mapping to update node id 2 to 10.
+        map_new_node_ids = {2: 10}
+
+        # Call the private update method using name mangling.
+        model._Model__update_process_model_parts_for_interfaces(map_new_node_ids)
+
+        # Retrieve the updated process model part.
+        updated_mp = model.process_model_parts[0]
+        updated_nodes = updated_mp.mesh.nodes
+        updated_element = updated_mp.mesh.elements
+
+        # Check that the node with id 2 is updated to 10
+        assert 10 in updated_nodes.keys(), "Updated node id 10 should be in the nodes dictionary."
+        # The other node identifiers remain unchanged.
+        assert 1 in updated_nodes.keys()
+        # Check that the element node_ids are updated (2 replaced by 10)
+        assert list(updated_element.keys()) == [3, 4]
+        assert updated_element[3].node_ids == [10]
+        assert updated_element[4].node_ids == [1]
+
+    def test_update_process_model_parts_raises_error_if_no_mesh(self):
+        """
+        Test that updating process model parts raises ValueError if the mesh is None.
+        """
+        # Create a model instance
+        model = Model(ndim=2)
+        # Create a process model part that does not have a mesh (mesh is None)
+        mp = ModelPart("no_mesh")
+        mp.mesh = None
+        model.process_model_parts.append(mp)
+
+        # Prepare a mapping (can be arbitrary)
+        map_new_node_ids = {1: 100}
+        with pytest.raises(ValueError, match="has no mesh. Please generate the mesh first."):
+            model._Model__update_process_model_parts_for_interfaces(map_new_node_ids)

@@ -4,7 +4,7 @@ import json
 from stem.model import Model
 from stem.structural_material import EulerBeam, ElasticSpringDamper, NodalConcentrated
 from stem.boundary import DisplacementConstraint
-from stem.load import LineLoad
+from stem.load import LineLoad, PointLoad
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, \
     LinearNewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem, Cg
 from stem.output import NodalOutput, Output, VtkOutputParameters, JsonOutputParameters
@@ -34,8 +34,10 @@ def test_interface():
 
     """
     # Set up the settings for the tests
-    names = ["interface_high_stiffness_roller", "interface_low_stiffness_roller",
-             "interface_high_stiffness_no_roller", "interface_low_stiffness_no_roller"]
+    names = [
+        "interface_high_stiffness_roller", "interface_low_stiffness_roller", "interface_high_stiffness_no_roller",
+        "interface_low_stiffness_no_roller"
+    ]
     output_dir = "benchmark_tests/test_interfaces/output"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -86,6 +88,9 @@ def test_interface():
         line_load = LineLoad(active=[True, False, False], value=[100, 0, 0])
         model.add_load_by_coordinates(load_coordinates, line_load, "load")
 
+        point_load = PointLoad(active=[True, False, False], value=[100, 0, 0])
+        model.add_load_by_coordinates([(1.0, 1.0, 0)], point_load, "point_load")
+
         # show the model
         #model.show_geometry(show_line_ids=True)
 
@@ -94,7 +99,9 @@ def test_interface():
                                                             is_fixed=[True, True, True],
                                                             value=[0, 0, 0])
 
-        sym_parameters = DisplacementConstraint(active=[True, False, True], is_fixed=[True, False, False], value=[0, 0, 0])
+        sym_parameters = DisplacementConstraint(active=[True, False, True],
+                                                is_fixed=[True, False, False],
+                                                value=[0, 0, 0])
 
         # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
         model.add_boundary_condition_by_geometry_ids(1, [5], no_displacement_parameters, "base_fixed")
@@ -151,13 +158,13 @@ def test_interface():
                                                                           output_control_type="step"))
         model.output_settings.append(vtk_output_process)
 
-        model.add_output_settings_by_coordinates( 
-            coordinates=[(1.5, 2.0, 0), (1.5, 0.75, 0)],
-            output_parameters=JsonOutputParameters(output_interval=0.5,
-                                                   nodal_results=nodal_results,
-                                                   gauss_point_results=gauss_point_results),
-            part_name="calculated_output",
-            output_dir=output_dir),
+        model.add_output_settings_by_coordinates(coordinates=[(1.5, 2.0, 0), (1.5, 0.75, 0)],
+                                                 output_parameters=JsonOutputParameters(
+                                                     output_interval=0.5,
+                                                     nodal_results=nodal_results,
+                                                     gauss_point_results=gauss_point_results),
+                                                 part_name="calculated_output",
+                                                 output_dir=output_dir),
         # Set mesh size
         # --------------------------------
         model.set_mesh_size(element_size=0.25)
@@ -176,20 +183,27 @@ def test_interface():
             results[name] = None
     # Check the results
     # For each case, check the displacements in the bottom layer are as expected
-    assert results["interface_high_stiffness_roller"] is not None, "Output file for high stiffness roller case not found"
+    assert results[
+        "interface_high_stiffness_roller"] is not None, "Output file for high stiffness roller case not found"
     assert results["interface_low_stiffness_roller"] is not None, "Output file for low stiffness roller case not found"
-    assert results["interface_high_stiffness_no_roller"] is not None, "Output file for high stiffness no roller case not found"
-    assert results["interface_low_stiffness_no_roller"] is not None, "Output file for low stiffness no roller case not found"
+    assert results[
+        "interface_high_stiffness_no_roller"] is not None, "Output file for high stiffness no roller case not found"
+    assert results[
+        "interface_low_stiffness_no_roller"] is not None, "Output file for low stiffness no roller case not found"
 
     # Collect the displacements from the results top nodes
-    top_node_disp_high_stiffness_roller_x = results['interface_high_stiffness_roller']['NODE_7']['DISPLACEMENT_X'][0] 
+    top_node_disp_high_stiffness_roller_x = results['interface_high_stiffness_roller']['NODE_7']['DISPLACEMENT_X'][0]
     top_node_disp_low_stiffness_roller_x = results['interface_low_stiffness_roller']['NODE_7']['DISPLACEMENT_X'][0]
-    top_node_disp_high_stiffness_no_roller_x = results['interface_high_stiffness_no_roller']['NODE_7']['DISPLACEMENT_X'][0]
-    top_node_disp_low_stiffness_no_roller_x = results['interface_low_stiffness_no_roller']['NODE_7']['DISPLACEMENT_X'][0]
+    top_node_disp_high_stiffness_no_roller_x = results['interface_high_stiffness_no_roller']['NODE_7'][
+        'DISPLACEMENT_X'][0]
+    top_node_disp_low_stiffness_no_roller_x = results['interface_low_stiffness_no_roller']['NODE_7']['DISPLACEMENT_X'][
+        0]
     bottom_node_disp_high_stiffness_roller_x = results['interface_high_stiffness_roller']['NODE_8']['DISPLACEMENT_X'][0]
     bottom_node_disp_low_stiffness_roller_x = results['interface_low_stiffness_roller']['NODE_8']['DISPLACEMENT_X'][0]
-    bottom_node_disp_high_stiffness_no_roller_x = results['interface_high_stiffness_no_roller']['NODE_8']['DISPLACEMENT_X'][0]
-    bottom_node_disp_low_stiffness_no_roller_x = results['interface_low_stiffness_no_roller']['NODE_8']['DISPLACEMENT_X'][0]
+    bottom_node_disp_high_stiffness_no_roller_x = results['interface_high_stiffness_no_roller']['NODE_8'][
+        'DISPLACEMENT_X'][0]
+    bottom_node_disp_low_stiffness_no_roller_x = results['interface_low_stiffness_no_roller']['NODE_8'][
+        'DISPLACEMENT_X'][0]
 
     # top node displaces more than bottom node in all cases
     assert top_node_disp_high_stiffness_roller_x > bottom_node_disp_high_stiffness_roller_x

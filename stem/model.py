@@ -1183,7 +1183,6 @@ class Model:
                                                                                 element_type_gmsh, nodes_stable_parts)
             self.body_model_parts.append(interface_body_model_part)
 
-
     def __get_interface_config(self) -> Tuple[int, str]:
         """
         Get the interface configuration based on the model dimensions.
@@ -1210,7 +1209,7 @@ class Model:
         for index_body_model_part, part in zip(indexes_changing_parts, changing_parts):
             new_part = copy.deepcopy(part)
             # check that the part has a mesh
-            if part.mesh is None:
+            if new_part.mesh is None or part.mesh is None:
                 raise ValueError(f"Part `{part.name}` has no mesh. Please generate the mesh first.")
             # Find elements connected to nodes that need updating
             node_to_elements_changing_part = part.mesh.find_elements_connected_to_nodes()
@@ -1219,36 +1218,41 @@ class Model:
                 if node_id in list(node_to_elements_changing_part.keys()):
                     node_to_elements_changing_parts[map_new_node_ids[node_id]] = node_to_elements_changing_part[node_id]
             # Update node IDs in the mesh
-            new_part.mesh.nodes = self.__class__.__update_node_ids(new_part.mesh.nodes, map_new_node_ids)
+            new_part.mesh.nodes = self.__update_node_ids(new_part.mesh.nodes, map_new_node_ids)
 
             # Update elements with new node IDs
-            new_part.mesh.elements = self.__class__.__update_elements_with_new_node_ids(new_part.mesh.elements,
-                                                                                    node_to_elements_changing_parts,
-                                                                                    map_new_node_ids)
+            new_part.mesh.elements = self.__update_elements_with_new_node_ids(new_part.mesh.elements,
+                                                                              node_to_elements_changing_parts,
+                                                                              map_new_node_ids)
 
             # Update the body model part
             self.body_model_parts[index_body_model_part] = new_part
-            # Update the process model parts nodes and elements
-            for index, process_model_part in enumerate(self.process_model_parts):
-                process_model_part_new = copy.deepcopy(process_model_part)
-                node_to_elements: Dict[int, List[int]] = {node_id: [] for node_id in process_model_part.mesh.nodes.keys()}
-                for element_id, element in process_model_part.mesh.elements.items():
-                    for node_id in element.node_ids:
-                        node_to_elements[node_id].append(element_id)
-                # check that the elements are in the changing parts
-                process_model_part_new = copy.deepcopy(process_model_part)
-                # Update the process model part with the new nodes and elements
-                process_model_part_new.mesh.nodes = self.__class__.__update_node_ids(process_model_part.mesh.nodes,
-                                                                                 map_new_node_ids)
-                # let's collect the elements of the process model part that are in the chan
-                process_model_part_new.mesh.elements = self.__class__.__update_elements_with_new_node_ids(
-                    process_model_part.mesh.elements, node_to_elements, map_new_node_ids)
-                # Update the process model part in the list
-                self.process_model_parts[index] = process_model_part_new
-     
+            self.__update_process_model_parts_for_interfaces(map_new_node_ids)
 
-
-
+    def __update_process_model_parts_for_interfaces(self, map_new_node_ids: Dict[int, int]):
+        """
+        Update the process model parts with new node IDs after interface creation.
+        Args:
+            - map_new_node_ids (Dict[int, int]): Mapping from old node IDs to new node IDs
+        """
+        # Update the process model parts nodes and elements
+        for index, process_model_part in enumerate(self.process_model_parts):
+            process_model_part_new = copy.deepcopy(process_model_part)
+            if process_model_part.mesh is None or process_model_part_new.mesh is None:
+                raise ValueError(f"Process model part `{process_model_part.name}` has no mesh. "
+                                 "Please generate the mesh first.")
+            node_to_elements: Dict[int, List[int]] = {node_id: [] for node_id in process_model_part.mesh.nodes.keys()}
+            for element_id, element in process_model_part.mesh.elements.items():
+                for node_id in element.node_ids:
+                    node_to_elements[node_id].append(element_id)
+            # check that the elements are in the changing parts
+            # Update the process model part with the new nodes and elements
+            process_model_part_new.mesh.nodes = self.__update_node_ids(process_model_part.mesh.nodes, map_new_node_ids)
+            # let's collect the elements of the process model part that are in the chan
+            process_model_part_new.mesh.elements = self.__update_elements_with_new_node_ids(
+                process_model_part.mesh.elements, node_to_elements, map_new_node_ids)
+            # Update the process model part in the list
+            self.process_model_parts[index] = process_model_part_new
 
     @staticmethod
     def __update_node_ids(nodes: Dict[int, Node], map_new_node_ids: Dict[int, int]) -> Dict[int, Node]:
