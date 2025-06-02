@@ -5,6 +5,7 @@ import os
 
 
 class OneDimWavePropagation:
+
     def __init__(self, nb_cycles=10, nb_terms=250):
         """
         Analytical solution for the wave propagation on an elastic solid of finite length, when subjected to an pressure.
@@ -72,15 +73,15 @@ class OneDimWavePropagation:
                 for k in range(1, self.nb_fourier_terms):
                     # Fourier terms
                     lambda_k = (2 * k - 1) * np.pi / (2 * self.L)
-                    summation += (-1) ** k / (2 * k - 1) ** 2 * np.sin(lambda_k * x) * np.cos(lambda_k * self.c * t)
-                    summation_p += (-1) ** k * lambda_k / (2 * k - 1) ** 2 * np.cos(lambda_k * x) * np.cos(
+                    summation += (-1)**k / (2 * k - 1)**2 * np.sin(lambda_k * x) * np.cos(lambda_k * self.c * t)
+                    summation_p += (-1)**k * lambda_k / (2 * k - 1)**2 * np.cos(lambda_k * x) * np.cos(
                         lambda_k * self.c * t)
-                    summation_v -= (-1) ** k * lambda_k * self.c / (2 * k - 1) ** 2 * np.sin(lambda_k * x) * np.sin(
+                    summation_v -= (-1)**k * lambda_k * self.c / (2 * k - 1)**2 * np.sin(lambda_k * x) * np.sin(
                         lambda_k * self.c * t)
 
-                self.u[id_x, id_t] = self.p0 / self.K * (x + 8 * self.L / np.pi ** 2 * summation)
-                self.p[id_x, id_t] = self.p0 / self.K * (1 + 8 * self.L / np.pi ** 2 * summation_p) * self.K
-                self.v[id_x, id_t] = self.p0 / self.K * (8 * self.L / np.pi ** 2 * summation_v)
+                self.u[id_x, id_t] = self.p0 / self.K * (x + 8 * self.L / np.pi**2 * summation)
+                self.p[id_x, id_t] = self.p0 / self.K * (1 + 8 * self.L / np.pi**2 * summation_p) * self.K
+                self.v[id_x, id_t] = self.p0 / self.K * (8 * self.L / np.pi**2 * summation_v)
 
         return
 
@@ -91,9 +92,7 @@ class OneDimWavePropagation:
         :param output: path to write json file (default "./results.json")
         """
         # create dictionary for results
-        self.result = {"time": self.time.tolist(),
-                       "v": self.v.tolist(),
-                       "u": self.u.tolist()}
+        self.result = {"time": self.time.tolist(), "v": self.v.tolist(), "u": self.u.tolist()}
 
         # dump results
         with open(output, "w") as f:

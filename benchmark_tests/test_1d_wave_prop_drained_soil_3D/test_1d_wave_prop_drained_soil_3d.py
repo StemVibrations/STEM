@@ -44,8 +44,7 @@ def test_stem():
     model.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil_column")
 
     # Boundary conditions and Loads
-    load_coordinates = [(0.0, 10.0, 0), (1.0, 10.0, 0),
-                        (1.0, 10.0, 1), (0.0, 10.0, 1)]
+    load_coordinates = [(0.0, 10.0, 0), (1.0, 10.0, 0), (1.0, 10.0, 1), (0.0, 10.0, 1)]
     # Add table for the load in the mdpa file
     t = (0.0, 0.0025, 1)
     values = (0.0, -1000.0, -1000.0)
@@ -59,8 +58,7 @@ def test_stem():
                                                         is_fixed=[True, True, True],
                                                         value=[0, 0, 0])
 
-    sym_parameters = DisplacementConstraint(active=[True, False, True],
-                                            is_fixed=[True, False, True], value=[0, 0, 0])
+    sym_parameters = DisplacementConstraint(active=[True, False, True], is_fixed=[True, False, True], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(2, [2], no_displacement_parameters, "base_fixed")
@@ -150,7 +148,7 @@ def test_stem():
         YOUNG_MODULUS = 50e6
         POISSON_RATIO = 0.3
 
-        density = (1 - POROSITY) * DENSITY_SOLID #+ POROSITY * 1000  # Density of the soil
+        density = (1 - POROSITY) * DENSITY_SOLID  #+ POROSITY * 1000  # Density of the soil
         M_modulus = (YOUNG_MODULUS * (1 - POISSON_RATIO)) / ((1 + POISSON_RATIO) * (1 - 2 * POISSON_RATIO))
         p.properties(density, M_modulus, -1000, 10, int(100))
         p.solution()
@@ -158,8 +156,12 @@ def test_stem():
 
         import matplotlib.pyplot as plt
         _, ax = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
-        ax[0].plot(calculated_data_stage1["TIME"], calculated_data_stage1["NODE_9"]["DISPLACEMENT_Y"], label="numerical")
-        ax[0].plot(calculated_data_stage1["TIME"], calculated_data_stage1["NODE_10"]["DISPLACEMENT_Y"], label="numerical")
+        ax[0].plot(calculated_data_stage1["TIME"],
+                   calculated_data_stage1["NODE_9"]["DISPLACEMENT_Y"],
+                   label="numerical")
+        ax[0].plot(calculated_data_stage1["TIME"],
+                   calculated_data_stage1["NODE_10"]["DISPLACEMENT_Y"],
+                   label="numerical")
         ax[0].plot(p.time, p.u[50, :], marker='o', markersize=2, label="analytical")
         ax[0].set_xlabel("Time (s)")
         ax[0].set_ylabel("Displacement (m)")
