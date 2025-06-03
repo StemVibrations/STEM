@@ -10,8 +10,8 @@ class OneDimWavePropagation:
         """
         Analytical solution for the wave propagation on an elastic solid of finite length, when subjected to an pressure.
 
-        Calculation of the solution of the wave equation is based on the analytical solution:
-        Churchill, R.V. Operational Mathematics. 3rd edition. McGraw-Hill Book Company. 1972. pp: 253-257.
+        Calculation of the solution of the wave equation is based on the analytical solution :cite:`Churchill_1972`
+        using Fourier series expansion.
         """
         self.L = []  # Length of the solid column.
         self.k = []  # Bulk modulus

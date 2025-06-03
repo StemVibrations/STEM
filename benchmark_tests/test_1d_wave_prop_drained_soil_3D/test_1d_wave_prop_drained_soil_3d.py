@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+from shutil import rmtree
 
 from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
@@ -12,7 +13,6 @@ from stem.solver import (AnalysisType, SolutionType, TimeIntegration, Displaceme
 from stem.output import NodalOutput, VtkOutputParameters, Output, JsonOutputParameters
 from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
-from shutil import rmtree
 
 SHOW_RESULTS = False
 
@@ -150,7 +150,7 @@ def test_stem():
         YOUNG_MODULUS = 50e6
         POISSON_RATIO = 0.3
 
-        density = (1 - POROSITY) * DENSITY_SOLID  #+ POROSITY * 1000  # Density of the soil
+        density = (1 - POROSITY) * DENSITY_SOLID  # Density of the soil
         M_modulus = (YOUNG_MODULUS * (1 - POISSON_RATIO)) / ((1 + POISSON_RATIO) * (1 - 2 * POISSON_RATIO))
         p.properties(density, M_modulus, -1000, 10, int(100))
         p.solution()
