@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 
 from stem.model import Model
@@ -177,7 +178,14 @@ def test_stem():
         ax[1].legend()
         plt.show()
 
-    result = assert_files_equal("benchmark_tests/test_1d_wave_prop_drained_soil_3D/output_/output_vtk_full_model",
+    if sys.platform == "win32":
+        expected_output_dir = "benchmark_tests/test_1d_wave_prop_drained_soil_3D/output_windows/output_vtk_full_model"
+    elif sys.platform == "linux":
+        expected_output_dir = "benchmark_tests/test_1d_wave_prop_drained_soil_3D/output_linux/output_vtk_full_model"
+    else:
+        raise Exception("Unknown platform")
+
+    result = assert_files_equal(expected_output_dir,
                                 os.path.join(input_folder, "output/output_vtk_full_model"))
 
     assert result is True
