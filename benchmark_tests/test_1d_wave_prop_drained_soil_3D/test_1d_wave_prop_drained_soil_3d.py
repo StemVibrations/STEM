@@ -141,6 +141,7 @@ def test_stem():
         with open(os.path.join(input_folder, "output/calculated_output.json")) as f:
             calculated_data_stage1 = json.load(f)
 
+        import matplotlib.pyplot as plt
         from benchmark_tests.analytical_solutions.analytical_wave_prop import OneDimWavePropagation
         p = OneDimWavePropagation(nb_terms=50, nb_cycles=10)
 
@@ -155,7 +156,6 @@ def test_stem():
         p.solution()
         p.write_results()
 
-        import matplotlib.pyplot as plt
         _, ax = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
         ax[0].plot(calculated_data_stage1["TIME"],
                    calculated_data_stage1["NODE_9"]["DISPLACEMENT_Y"],
@@ -185,8 +185,7 @@ def test_stem():
     else:
         raise Exception("Unknown platform")
 
-    result = assert_files_equal(expected_output_dir,
-                                os.path.join(input_folder, "output/output_vtk_full_model"))
+    result = assert_files_equal(expected_output_dir, os.path.join(input_folder, "output/output_vtk_full_model"))
 
     assert result is True
     rmtree(input_folder)

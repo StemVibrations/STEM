@@ -1,5 +1,6 @@
 repos:
-  - repo: local
+  - repo: https://github.com/google/yapf
+    rev: v0.43.0
     hooks:
       - id: yapf
         name: yapf
@@ -7,15 +8,21 @@ repos:
         entry: yapf
         args: [-i]
         types: [python]
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.16.0
+    hooks:
       - id: mypy
         name: mypy
+        args: [--config-file=pyproject.toml]
+        files: "^stem/"
         language: python
         entry: mypy
-        files: "^stem/"
-        args: [ --config-file, "pyproject.toml" ]
         types: [python]
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.2.0
+    hooks:
       - id: flake8
         name: flake8
+        files: "^stem/"
         language: python
         entry: flake8
-        files: "^stem/"
