@@ -136,6 +136,38 @@ class TwoPhaseSoil(SoilFormulationParametersABC):
 
 
 @dataclass
+class TwoPhaseSoilInterface(TwoPhaseSoil):
+    """
+    Class containing the material parameters for a two phase soil material with interface
+
+    Inheritance:
+        - :class:`TwoPhaseSoil`
+
+    Attributes:
+        - TRANSVERSAL_PERMEABILITY (float): The transversal permeability [m^2].
+        - MINIMUM_JOINT_WIDTH (float): The minimum joint width [m].
+    """
+    TRANSVERSAL_PERMEABILITY: float = 1.0e-13
+    MINIMUM_JOINT_WIDTH: float = 0.001
+
+
+@dataclass
+class OnePhaseSoilInterface(OnePhaseSoil):
+    """
+    Class containing the material parameters for a two phase soil material with interface
+
+    Inheritance:
+        - :class:`TwoPhaseSoil`
+
+    Attributes:
+        - TRANSVERSAL_PERMEABILITY (float): The transversal permeability [m^2].
+        - MINIMUM_JOINT_WIDTH (float): The minimum joint width [m].
+    """
+    TRANSVERSAL_PERMEABILITY: float = 1.0e-13
+    MINIMUM_JOINT_WIDTH: float = 0.001
+
+
+@dataclass
 class LinearElasticSoil(SoilConstitutiveLawABC):
     """
     Class containing the material parameters for a 2D linear elastic material
@@ -298,6 +330,84 @@ class SoilMaterial:
         else:
             raise ValueError(f"Analysis type {analysis_type} is not implemented yet for soil material.")
 
+        return element_name
+
+    def get_property_in_material(self, property_name: str) -> Any:
+        """
+        Function to retrieve the requested property for the soil material. The function is capital sensitive!
+
+        Args:
+            - property_name (str): The desired soil property name.
+
+        Raises:
+            - ValueError: If the property is not in not available in the soil material.
+
+        Returns:
+            - Any : The value of the soil property.
+
+        """
+
+        all_properties = {}
+
+        all_properties.update(self.soil_formulation.__dict__)
+        all_properties.update(self.constitutive_law.__dict__)
+        all_properties.update(self.retention_parameters.__dict__)
+        all_properties.update(self.fluid_properties.__dict__)
+
+        property_value = all_properties.get(property_name)
+
+        if property_value is None:
+            raise ValueError(f"Property {property_name} is not one of the parameters of the soil material")
+
+        return property_value
+
+
+@dataclass
+class Interface:
+    """
+    Class containing the parameters for an interface material
+
+    Attributes:
+        - name (str): The name to describe the interface material.
+        - shear_modulus (float): The shear modulus of the interface [Pa].
+        - normal_stiffness (float): The normal stiffness of the interface [Pa/m].
+        - friction_angle (float): The friction angle of the interface [degrees].
+        - dilatancy_angle (float): The dilatancy angle of the interface [degrees].
+    """
+    name: str
+    constitutive_law: SoilConstitutiveLawABC
+    soil_formulation: SoilFormulationParametersABC
+    retention_parameters: RetentionLawABC
+    fluid_properties: FluidProperties = field(default_factory=FluidProperties)
+
+    @staticmethod
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> str:
+        """
+        Function to get the element name based on the number of dimensions, the number of nodes and the analysis type.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model.
+            - n_nodes_element (int): The number of nodes per element.
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type.
+
+        Raises:
+            - ValueError: If the analysis type is not implemented yet for nodal concentrated elements.
+
+        Returns:
+            - element_name (str): The name of the element.
+
+        """
+
+        available_node_dim_combinations = {
+            2: [4],
+            3: [6, 8],
+        }
+        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations, "Soil")
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+            # for higher order elements, pore pressure is calculated on a lower order than displacements
+            element_name = f"UPwSmallStrainInterfaceElement{n_dim_model}D{n_nodes_element}N"
+        else:
+            raise ValueError(f"Analysis type {analysis_type} is not implemented yet for soil material.")
         return element_name
 
     def get_property_in_material(self, property_name: str) -> Any:
