@@ -17,7 +17,7 @@ class LoadType:
 
 class Pekeris:
     r"""
-    Based on Verruijt: An Introduction to Soil Dynamics (Chapter 13: Section 13.2).
+    Based on :cite:`Verruijt_2010` (Chapter 13: Section 13.2).
 
     The solution is found for normalised variables: tau = (c_s * t / r)  and u_bar = P / (2 * pi * G * r),
     where:
