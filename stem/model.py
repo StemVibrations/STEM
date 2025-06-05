@@ -81,7 +81,7 @@ class Model:
                                             direction_vector: Sequence[float]) -> Sequence[float]:
         r"""
         Computes the global coordinates of the four base corner points of a sleeper,
-        rotated so that its long (x) axis aligns with the given direction vector.
+        rotated so that its long (x) axis is perpendicular to the given direction vector.
 
         The sleeper is defined in its local coordinate system with the origin at (0, 0, 0):
           - The x-axis (sleeper length) is originally along [1, 0, 0]
