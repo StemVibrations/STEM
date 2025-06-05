@@ -1,12 +1,17 @@
-import pytest
+import os
+import sys
+from shutil import rmtree
 import numpy as np
 
+import pytest
+
+from benchmark_tests.utils import assert_files_equal
+
 from stem.model import Model
-from stem.structural_material import EulerBeam, ElasticSpringDamper, NodalConcentrated
+from stem.structural_material import EulerBeam, ElasticSpringDamper
 from stem.boundary import DisplacementConstraint
 from stem.load import PointLoad
-from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, \
-    NewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
+from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, StressInitialisationType, SolverSettings, Problem, NewtonRaphsonStrategy
 from stem.output import NodalOutput, Output, VtkOutputParameters
 from stem.soil_material import SoilMaterial, OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
 from stem.stem import Stem
@@ -113,14 +118,15 @@ def test_moving_load_on_track():
     solution_type = SolutionType.QUASI_STATIC
     # Set up start and end time of calculation, time step and etc
     time_integration = TimeIntegration(start_time=0.0,
-                                       end_time=0.5,
-                                       delta_time=0.01,
+                                       end_time=1,
+                                       delta_time=1,
                                        reduction_factor=1.0,
                                        increase_factor=1.0,
                                        max_delta_time_factor=1000)
-    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-0,
-                                                            displacement_absolute_tolerance=1.0e-0)
+    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-9,
+                                                            displacement_absolute_tolerance=1.0e-12)
     stress_initialisation_type = StressInitialisationType.NONE
+    strategy = NewtonRaphsonStrategy()
     solver_settings = SolverSettings(analysis_type=analysis_type,
                                      solution_type=solution_type,
                                      stress_initialisation_type=stress_initialisation_type,
@@ -128,13 +134,13 @@ def test_moving_load_on_track():
                                      is_stiffness_matrix_constant=True,
                                      are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
-                                     rayleigh_k=0.01,
-                                     rayleigh_m=0.0001)
+                                     strategy_type=strategy,
+                                     rayleigh_k=0.0,
+                                     rayleigh_m=0.0)
 
     # Set up problem data
     problem = Problem(problem_name="test_extended_beam", number_of_threads=4, settings=solver_settings)
     model.project_parameters = problem
-    model.show_geometry(show_surface_ids=True, show_point_ids=False)
 
     # Define the results to be written to the output file
 
@@ -154,7 +160,7 @@ def test_moving_load_on_track():
     vtk_output_process = Output(part_name="porous_computational_model_part",
                                 output_name="vtk_output",
                                 output_dir="output",
-                                output_parameters=VtkOutputParameters(file_format="binary",
+                                output_parameters=VtkOutputParameters(file_format="ascii",
                                                                       output_interval=1,
                                                                       nodal_results=nodal_results,
                                                                       gauss_point_results=gauss_point_results,
@@ -171,3 +177,16 @@ def test_moving_load_on_track():
     # Run Kratos calculation
     # --------------------------------
     stem.run_calculation()
+
+    if sys.platform == "win32":
+        expected_output_dir = "benchmark_tests/test_volume_sleepers/output_windows/output_vtk_porous_computational_model_part"
+    elif sys.platform == "linux":
+        expected_output_dir = "benchmark_tests/test_volume_sleepers/output_linux/output_vtk_porous_computational_model_part"
+    else:
+        raise Exception("Unknown platform")
+
+    result = assert_files_equal(expected_output_dir,
+                                os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
+
+    assert result is True
+    #rmtree(input_folder)

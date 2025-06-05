@@ -10,6 +10,7 @@ OUT_OF_PLANE_AXIS_2D = 2  # [0, 1, 2] = [x, y, z]
 # time step to subtract to the actual desired time step
 # Kratos provides the first time step following the desired one
 TIME_STEP_PRECISION = 1e-08  # s
+GEOMETRY_PRECISION = 1e-08  # m
 
 # yapf: disable
 #: Element data for supported element types in STEM. The data contains the following information: \
