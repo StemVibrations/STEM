@@ -1,14 +1,20 @@
 import json
 import os
+import numpy as np
 from pathlib import Path
+from numpy import ndarray
 from typing import Sequence, Tuple, get_args, Set, Optional, List, Dict, Any, Union
 
 from gmsh_utils import gmsh_IO
-import numpy as np
 
 from stem.additional_processes import ParameterFieldParameters, HingeParameters
 from stem.field_generator import RandomFieldGenerator
-from stem.globals import ELEMENT_DATA, OUT_OF_PLANE_AXIS_2D, VERTICAL_AXIS, GRAVITY_VALUE
+from stem.globals import (
+    ELEMENT_DATA,
+    OUT_OF_PLANE_AXIS_2D,
+    VERTICAL_AXIS,
+    GRAVITY_VALUE,
+)
 from stem.load import *
 from stem.boundary import *
 from stem.geometry import Geometry, Point
@@ -74,32 +80,317 @@ class Model:
         """
         return self.body_model_parts + self.process_model_parts
 
-    def generate_straight_track(self, sleeper_distance: float, n_sleepers: int, rail_parameters: EulerBeam,
-                                sleeper_parameters: NodalConcentrated, rail_pad_parameters: ElasticSpringDamper,
-                                rail_pad_thickness: float, origin_point: Sequence[float],
-                                direction_vector: Sequence[float], name: str):
+    @staticmethod
+    def __generate_sleeper_base_coordinates(
+        global_coord: Sequence[float],
+        sleeper_dimensions: Sequence[float],
+        sleeper_rail_pad_offset: float,
+        direction_vector: Sequence[float],
+    ) -> Sequence[float]:
+        r"""
+        Computes the global coordinates of the four base corner points of a sleeper,
+        rotated so that its long (x) axis is perpendicular to the given direction vector.
+
+        The sleeper is defined in its local coordinate system with the origin at (0, 0, 0):
+          - The x-axis (sleeper length) is originally along [1, 0, 0]
+          - The z-axis (sleeper width) is along [0, 0, 1]
+
+        Local base corners (relative to the origin) are defined as:
+            B: [ length - rail_pad_offset,    0, +width/2 ]
+            C: [ length - rail_pad_offset,    0, -width/2 ]
+            D: [ -rail_pad_offset,            0, -width/2 ]
+            E: [ -rail_pad_offset,            0, +width/2 ]
+
+        These local coordinates are then rotated so that the local z-axis aligns with the provided
+        direction_vector (using Rodrigues' rotation formula) and finally translated by global_coord.
+
+        Essentially the direction vector and the local z-axis define an angle $theta$.
+        This angle is used together with the normalized axis of rotation ($u = (u_x, u_x, u_y)$)
+        to define the rotational matrix https://en.wikipedia.org/wiki/Rotation_matrix.
+
+        $$
+        R = \begin{pmatrix}
+        \cos\theta + u_x^2 (1-\cos\theta) & u_x u_y (1-\cos\theta) - u_z \sin\theta &
+        u_x u_z (1-\cos\theta) + u_y \sin\theta \\
+        u_y u_x (1-\cos\theta) + u_z \sin\theta & \cos\theta + u_y^2 (1-\cos\theta) &
+        u_y u_z (1-\cos\theta) - u_x \sin\theta \\
+        u_z u_x (1-\cos\theta) - u_y \sin\theta & u_z u_y (1-\cos\theta) + u_x \sin\theta &
+        \cos\theta + u_z^2 (1-\cos\theta)
+        \end{pmatrix}.
+        $$
+
+        Finally, the rotated points are given by $R \cdot P + global\_coord$, where $P$ are the local coordinates.
+
+        Args:
+            - global_coord (Sequence[float]): Global coordinate of the sleeper origin.
+            - sleeper_dimensions (Sequence[float]): Sleeper dimensions [length, width, height].
+            - sleeper_rail_pad_offset (float): Offset from the local origin to the rail pad along x.
+            - direction_vector (Sequence[float]): Global direction in which the sleeper's length should point.
+
+        Returns:
+            - np.ndarray: An array (shape (4, 3)) of the global coordinates for the sleeper's four base corners.
+        """
+        # Unpack dimensions; height is not used here.
+        length, width, height = sleeper_dimensions
+
+        # Define the sleeper's local base coordinates (with local origin = [0,0,0])
+        points_local = np.array([
+            [length - sleeper_rail_pad_offset, 0.0, +width / 2],
+            [length - sleeper_rail_pad_offset, 0.0, -width / 2],
+            [-sleeper_rail_pad_offset, 0.0, -width / 2],
+            [-sleeper_rail_pad_offset, 0.0, +width / 2],
+        ])
+
+        R = Utils.compute_rotational_matrix(direction_vector)
+
+        # Rotate the local points.
+        rotated_points = points_local.dot(R.T)
+        # Ensure the points are in float format.
+        rotated_points = np.array(rotated_points, dtype=float)
+
+        # Translate the points to global coordinates.
+        points_global: Sequence[float] = rotated_points + global_coord
+
+        return points_global
+
+    def __generate_sleepers(
+        self,
+        sleeper_parameters: Union[NodalConcentrated, SoilMaterial],
+        sleeper_dimensions: Sequence[float],
+        base_sleeper_name: str,
+        sleeper_global_coords: Sequence[Sequence[float]],
+        sleeper_rail_pad_offset: float,
+        direction_vector: Sequence[float],
+    ) -> None:
+        """
+        Generates sleeper geometry based on the type of sleeper parameters.
+        Note that for the SoilMaterial sleepers, the function assumes tha there are no elevation changes in the track.
+
+        For NodalConcentrated sleepers, creates point-based geometries.
+        For SoilMaterial sleepers, creates 3D volumes.
+
+        Args:
+            - sleeper_parameters (Union[:class:`stem.structural_material.NodalConcentrated`,
+            :class:`stem.soil_material.SoilMaterial`]): sleeper parameters
+            - sleeper_dimensions (Sequence[float]): Dimensions for the sleeper if applicable.
+            - base_sleeper_name (str): Base name for sleepers.
+            - sleeper_global_coords (np.ndarray): Global coordinates for sleeper placement.
+            - sleeper_rail_pad_offset (float): Offset between the sleeper end and the rail pad location.
+            - direction_vector (Sequence[float]): direction vector of the track
+
+        Returns:
+            - None
+
+        """
+        if isinstance(sleeper_parameters, NodalConcentrated):
+            connection_geo_settings = {"": {"coordinates": sleeper_global_coords, "ndim": 1}}
+            self.gmsh_io.generate_geometry(connection_geo_settings, "")
+            # For nodal sleepers, create a connection line and a point geometry for the sleeper.
+            sleeper_geo_settings = {base_sleeper_name: {"coordinates": sleeper_global_coords, "ndim": 0}}
+            self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
+        elif isinstance(sleeper_parameters, SoilMaterial):
+            # if no soil is present then this can be skipped
+            if len(self.body_model_parts) > 0:
+                # select the start and end points of the sleepers
+                # Get the start and end points of the sleepers
+                start_point = sleeper_global_coords[0]
+                end_point = sleeper_global_coords[-1]
+                min_coords, max_coords = self.get_bounding_box_soil()
+                identity_vector = np.array([1, 1, 1])
+                # extend the start and end points in the direction of the track so that they are outside the soil domain
+                extension_start_point = (start_point * (identity_vector - np.array(direction_vector)) +
+                                         np.array(direction_vector) * min_coords)
+                extension_end_point = (end_point * (identity_vector - np.array(direction_vector)) +
+                                       np.array(direction_vector) * max_coords)
+                connection_geo_settings = {
+                    "": {
+                        "coordinates": [extension_start_point, extension_end_point],
+                        "ndim": 1,
+                    }
+                }
+                self.gmsh_io.generate_geometry(connection_geo_settings, "")
+                # For soil sleepers, create a 3D volume for each sleeper.
+            for i, coord in enumerate(sleeper_global_coords):
+                coords_base = self.__generate_sleeper_base_coordinates(coord, sleeper_dimensions,
+                                                                       sleeper_rail_pad_offset, direction_vector)
+                # Ensure the list is initialized with float values
+                extrusions: List[float] = [0.0, 0.0, 0.0]
+                extrusions[VERTICAL_AXIS] = sleeper_dimensions[2]  # Ensure this is a float
+                sleeper_geo_settings = {
+                    base_sleeper_name: {
+                        "coordinates": coords_base,
+                        "ndim": 3,
+                        "extrusion_length": extrusions,
+                    }
+                }
+                self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
+
+    def __create_rail_model_part(self, rail_name: str, rail_parameters: EulerBeam) -> BodyModelPart:
+        """
+        Creates the model part for the rail.
+
+        Args:
+            - rail_name (str): Name of the rail.
+            - rail_parameters (:class:`stem.structural_material.EulerBeam`): rail parameters
+
+        Returns:
+            - :class:`stem.model_part.BodyModelPart`: Configured rail model part.
+        """
+        rail_model_part = BodyModelPart(rail_name)
+        rail_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_name)
+        rail_model_part.material = StructuralMaterial(name=rail_name, material_parameters=rail_parameters)
+        return rail_model_part
+
+    def __create_sleeper_model_parts(
+        self,
+        name_sleeper: str,
+        sleeper_parameters: Union[NodalConcentrated, SoilMaterial],
+    ) -> BodyModelPart:
+        """
+        Creates model parts for each sleeper.
+
+        Args:
+            - name_sleeper (str): List of sleeper names.
+            - sleeper_parameters (Union[:class:`stem.structural_material.NodalConcentrated`,
+            :class:`stem.soil_material.SoilMaterial`]): sleeper parameters
+
+        Returns:
+            - :class:`stem.model_part.BodyModelPart`: The configured sleeper model part.
+        """
+        model_part = BodyModelPart(name_sleeper)
+        model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, name_sleeper)
+        if isinstance(sleeper_parameters, NodalConcentrated):
+            model_part.material = StructuralMaterial(name=name_sleeper, material_parameters=sleeper_parameters)
+        elif isinstance(sleeper_parameters, SoilMaterial):
+            model_part.material = sleeper_parameters
+        return model_part
+
+    def __create_rail_pads_model_part(self, rail_pads_name: str,
+                                      rail_pad_parameters: ElasticSpringDamper) -> BodyModelPart:
+        """
+        Creates the model part for the rail pads.
+
+        Args:
+            - rail_pads_name (str): Name for the rail pads.
+            - rail_pad_parameters (:class:`stem.structural_material.ElasticSpringDamper`): Material and geometric
+            parameters for the rail pads.
+
+        Returns:
+            :class:`stem.model_part.BodyModelPart`: Configured rail pads model part.
+        """
+        rail_pads_model_part = BodyModelPart(rail_pads_name)
+        rail_pads_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_pads_name)
+        rail_pads_model_part.material = StructuralMaterial(name=rail_pads_name, material_parameters=rail_pad_parameters)
+        return rail_pads_model_part
+
+    def __create_rail_constraint_model_part(self, rail_name: str) -> ModelPart:
+        """
+        Creates the displacement constraint model part for the rail.
+
+        This constraint prevents movement in non-vertical directions.
+
+        Args:
+            - rail_name (str): Name of the rail.
+
+        Returns:
+            - :class:`stem.model_part.ModelPart`: Configured constraint model part.
+        """
+        rail_constraint_name = f"constraint_{rail_name}"
+        rail_constraint_geometry_ids = self.gmsh_io.geo_data["physical_groups"][rail_name]["geometry_ids"]
+        self.gmsh_io.add_physical_group(rail_constraint_name, 1, rail_constraint_geometry_ids)
+
+        constraint_model_part = ModelPart(rail_constraint_name)
+        constraint_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_constraint_name)
+        constraint_model_part.parameters = DisplacementConstraint(active=[True, True, True],
+                                                                  is_fixed=[True, True, True],
+                                                                  value=[0, 0, 0])
+        # Allow vertical movement.
+        constraint_model_part.parameters.is_fixed[VERTICAL_AXIS] = False
+        return constraint_model_part
+
+    def __create_rail_no_rotation_model_part(self, rail_name: str, rail_global_coords: ndarray[Any, Any]) -> ModelPart:
+        """
+        Creates a model part that prevents rotation at the rail ends preventing torsion.
+
+        Args:
+            - rail_name (str): Name of the rail.
+            - rail_global_coords (np.ndarray): Global coordinates of the rail.
+
+        Returns:
+            - :class:`stem.model_part.ModelPart`: Configured no-rotation constraint model part.
+        """
+        rotation_constraint_name = f"rotation_constraint_{rail_name}"
+        no_rotation_model_part = ModelPart(rotation_constraint_name)
+        no_rotation_constraint = RotationConstraint(active=[True, True, True],
+                                                    is_fixed=[True, True, True],
+                                                    value=[0, 0, 0])
+        no_rotation_model_part.parameters = no_rotation_constraint
+
+        no_rotation_geo_settings: Dict[str, Any] = {
+            rotation_constraint_name: {
+                "coordinates": [rail_global_coords[0], rail_global_coords[-1]],
+                "ndim": 0,
+            }
+        }
+        self.gmsh_io.generate_geometry(no_rotation_geo_settings, "")
+        no_rotation_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rotation_constraint_name)
+        return no_rotation_model_part
+
+    def generate_straight_track(
+        self,
+        sleeper_distance: float,
+        n_sleepers: int,
+        rail_parameters: EulerBeam,
+        sleeper_parameters: Union[NodalConcentrated, SoilMaterial],
+        rail_pad_parameters: ElasticSpringDamper,
+        rail_pad_thickness: float,
+        origin_point: Sequence[float],
+        direction_vector: Sequence[float],
+        name: str,
+        sleeper_rail_pad_offset: float = 0.0,
+        sleeper_dimensions: Optional[Sequence[float]] = None,
+    ):
         """
         Generates a track geometry. With rail, rail-pads and sleepers as mass elements. Sleepers are placed at the
         bottom of the track with a distance of sleeper_distance between them. The sleepers are connected to the rail
         with rail-pads with a thickness of rail_pad_thickness. The track is generated in the direction of the
         direction_vector starting from the origin_point. The track can only move in the vertical direction.
 
+        Sleepers can be modelled as NodalConcentrated or SoilMaterial, so as  mass points or volume elements.
+        If the sleepers are modelled as SoilMaterial, the dimensions of the sleepers must be provided and the offset
+        between the sleeper end and the rail pad location.
+
+        The sleeper dimensions must be provided in the format [length, width, height], where the length is defined
+        as half the sleeper length, as symmetry is assumed and only half the sleeper is modelled
+
         Args:
             - sleeper_distance (float): distance between sleepers
             - n_sleepers (int): number of sleepers
             - rail_parameters (:class:`stem.structural_material.EulerBeam`): rail parameters
-            - sleeper_parameters (:class:`stem.structural_material.NodalConcentrated`): sleeper parameters
+            - sleeper_parameters (Union[:class:`stem.structural_material.NodalConcentrated`,
+            :class:`stem.soil_material.SoilMaterial`]): sleeper parameters
             - rail_pad_parameters (:class:`stem.structural_material.ElasticSpringDamper`): rail pad parameters
             - rail_pad_thickness (float): thickness of the rail pad
             - origin_point (Sequence[float]): origin point of the track
             - direction_vector (Sequence[float]): direction vector of the track
             - name (str): name of the track
+            - sleeper_rail_pad_offset  (float): offset between the sleeper end and the rail pad location
+            - sleeper_dimensions (Sequence[float]): dimensions of the sleepers  to be modelled
+            with the format [length, width, height]
         """
 
         rail_name = f"{name}"
 
         sleeper_name = f"sleeper_{name}"
         rail_pads_name = f"rail_pads_{name}"
+
+        if isinstance(sleeper_parameters, SoilMaterial):
+            if sleeper_dimensions is None:
+                raise ValueError("If sleeper parameters are SoilMaterial, dimensions must be a list of "
+                                 "length, width, height.")
+        else:
+            if sleeper_dimensions is None:
+                sleeper_dimensions = [0.0, 0.0, 0.0]
 
         normalized_direction_vector = np.array(direction_vector) / np.linalg.norm(direction_vector)
 
@@ -108,23 +399,22 @@ class Model:
         sleeper_local_coords = np.copy(rail_local_distance)
 
         # set global rail geometry
-        rail_global_coords = rail_local_distance[:, None].dot(normalized_direction_vector[None, :]) + origin_point
+        rail_global_coords = (rail_local_distance[:, None].dot(normalized_direction_vector[None, :]) + origin_point)
         rail_global_coords[:, VERTICAL_AXIS] += rail_pad_thickness
+        rail_global_coords[:, VERTICAL_AXIS] += sleeper_dimensions[2]
         rail_geo_settings = {rail_name: {"coordinates": rail_global_coords, "ndim": 1}}
 
-        # set sleepers geometry
-        sleeper_global_coords = sleeper_local_coords[:, None].dot(normalized_direction_vector[None, :]) + origin_point
-        connection_geo_settings = {"": {"coordinates": sleeper_global_coords, "ndim": 1}}
+        sleeper_global_coords = (sleeper_local_coords[:, None].dot(normalized_direction_vector[None, :]) + origin_point)
+        # Generate sleeper geometry based on the type of sleeper parameters
 
-        sleeper_geo_settings = {sleeper_name: {"coordinates": sleeper_global_coords, "ndim": 0}}
-
-        # firstly create lines for the connection between the track and the foundation
-
-        self.gmsh_io.generate_geometry(connection_geo_settings, "")
-
-        # add the sleepers to the track
-        self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
-
+        self.__generate_sleepers(
+            sleeper_parameters,
+            sleeper_dimensions,
+            sleeper_name,
+            sleeper_global_coords,
+            sleeper_rail_pad_offset,
+            direction_vector,
+        )
         # add the rail geometry
         self.gmsh_io.generate_geometry(rail_geo_settings, "")
 
@@ -134,76 +424,47 @@ class Model:
 
         sleeper_model_part = BodyModelPart(sleeper_name)
         sleeper_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, sleeper_name)
+        if isinstance(sleeper_parameters, NodalConcentrated):
+            sleeper_model_part.material = StructuralMaterial(name=sleeper_name, material_parameters=sleeper_parameters)
+        elif isinstance(sleeper_parameters, SoilMaterial):
+            sleeper_model_part.material = sleeper_parameters
 
         # create rail pad geometries
-        rail_pad_line_ids_aux = [
-            self.gmsh_io.make_geometry_1d((top_coordinates, bot_coordinates))
-            for top_coordinates, bot_coordinates in zip(rail_global_coords, sleeper_global_coords)
-        ]
-
+        rail_pad_line_ids_aux = []
+        for top_coordinates, bot_coordinates in zip(rail_global_coords, sleeper_global_coords):
+            bot_coordinates[VERTICAL_AXIS] += sleeper_dimensions[2]
+            rail_pad_line_ids_aux.append(self.gmsh_io.make_geometry_1d((top_coordinates, bot_coordinates)))
         rail_pad_line_ids = [ids[0] for ids in rail_pad_line_ids_aux]
 
         self.gmsh_io.add_physical_group(rail_pads_name, 1, rail_pad_line_ids)
 
-        # create rail, sleeper, and rail_pad body model parts
-        sleeper_model_part.material = StructuralMaterial(name=sleeper_name, material_parameters=sleeper_parameters)
-
-        rail_pads_model_part = BodyModelPart(rail_pads_name)
-        rail_pads_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_pads_name)
-        rail_pads_model_part.material = StructuralMaterial(name=rail_pads_name, material_parameters=rail_pad_parameters)
-
-        # add physical group to gmsh
-        rail_constraint_name = f"constraint_{rail_name}"
-        rail_constraint_geometry_ids = self.gmsh_io.geo_data["physical_groups"][rail_name]["geometry_ids"]
-        self.gmsh_io.add_physical_group(f"constraint_{rail_name}", 1, rail_constraint_geometry_ids)
-
-        # create model part
-        constraint_model_part = ModelPart(rail_constraint_name)
-
-        # retrieve geometry from gmsh and add to model part
-        constraint_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_constraint_name)
-
-        # add displacement_constraint in the non-vertical directions
-        constraint_model_part.parameters = DisplacementConstraint(active=[True, True, True],
-                                                                  is_fixed=[True, True, True],
-                                                                  value=[0, 0, 0])
-        constraint_model_part.parameters.is_fixed[VERTICAL_AXIS] = False
+        # Create and add model parts
+        rail_model_part = self.__create_rail_model_part(rail_name, rail_parameters)
+        sleeper_model_part = self.__create_sleeper_model_parts(sleeper_name, sleeper_parameters)
+        rail_pads_model_part = self.__create_rail_pads_model_part(rail_pads_name, rail_pad_parameters)
+        constraint_model_part = self.__create_rail_constraint_model_part(rail_name)
+        no_rotation_model_part = self.__create_rail_no_rotation_model_part(rail_name, rail_global_coords)
 
         self.body_model_parts.append(rail_model_part)
         self.body_model_parts.append(sleeper_model_part)
         self.body_model_parts.append(rail_pads_model_part)
-
         self.process_model_parts.append(constraint_model_part)
-
-        # add no rotation constraint at the rail ends for a more realistic boundary in 2D and 3D and to prevent torsion
-        # in 3D
-        rotation_constraint_name = f"rotation_constraint_{rail_name}"
-
-        no_rotation_model_part = ModelPart(rotation_constraint_name)
-        no_rotation_constraint = RotationConstraint(active=[True, True, True],
-                                                    is_fixed=[True, True, True],
-                                                    value=[0, 0, 0])
-        no_rotation_model_part.parameters = no_rotation_constraint
-
-        # add constraint geometries to both edges of the rail
-        no_rotation_geo_settings = {
-            rotation_constraint_name: {
-                "coordinates": [rail_global_coords[0], rail_global_coords[-1]],
-                "ndim": 0
-            }
-        }
-        self.gmsh_io.generate_geometry(no_rotation_geo_settings, "")
-
-        no_rotation_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rotation_constraint_name)
-
         self.process_model_parts.append(no_rotation_model_part)
 
-    def generate_extended_straight_track(self, sleeper_distance: float, n_sleepers: int, rail_parameters: EulerBeam,
-                                         sleeper_parameters: NodalConcentrated,
-                                         rail_pad_parameters: ElasticSpringDamper, rail_pad_thickness: float,
-                                         origin_point: Sequence[float], soil_equivalent_parameters: ElasticSpringDamper,
-                                         length_soil_equivalent_element: float, direction_vector: Sequence[float],
-                                         name: str):
+    def generate_extended_straight_track(
+        self,
+        sleeper_distance: float,
+        n_sleepers: int,
+        rail_parameters: EulerBeam,
+        sleeper_parameters: NodalConcentrated,
+        rail_pad_parameters: ElasticSpringDamper,
+        rail_pad_thickness: float,
+        origin_point: Sequence[float],
+        soil_equivalent_parameters: ElasticSpringDamper,
+        length_soil_equivalent_element: float,
+        direction_vector: Sequence[float],
+        name: str,
+    ):
         """
         Generates a track geometry. With rail, rail-pads and sleepers as mass elements. Sleepers are placed at the
         bottom of the track with a distance of sleeper_distance between them. The sleepers are connected to the rail
@@ -227,12 +488,25 @@ class Model:
             - direction_vector (Sequence[float]): direction vector of the track
             - name (str): name of the track
         """
-        self.generate_straight_track(sleeper_distance, n_sleepers, rail_parameters, sleeper_parameters,
-                                     rail_pad_parameters, rail_pad_thickness, origin_point, direction_vector, name)
+        self.generate_straight_track(
+            sleeper_distance,
+            n_sleepers,
+            rail_parameters,
+            sleeper_parameters,
+            rail_pad_parameters,
+            rail_pad_thickness,
+            origin_point,
+            direction_vector,
+            name,
+        )
         self.__generate_extended_rail_part(soil_equivalent_parameters, name, length_soil_equivalent_element)
 
-    def __generate_extended_rail_part(self, soil_equivalent_parameters: ElasticSpringDamper, name: str,
-                                      length_soil_equivalent_element: float):
+    def __generate_extended_rail_part(
+        self,
+        soil_equivalent_parameters: ElasticSpringDamper,
+        name: str,
+        length_soil_equivalent_element: float,
+    ):
         """
         Generates the soil equivalent elements outside the 2D or 3D soil domain. The soil equivalent elements are
         spring-damper elements that represents the soil below the rail in vertical direction. The soil equivalent
@@ -274,15 +548,19 @@ class Model:
                                                            material_parameters=soil_equivalent_parameters)
         self.body_model_parts.append(soil_equivalent_part)
         # add constraint to the soil equivalent as a new model part
-        constraint_horizontal_soil_equivalent_name = f"constraint_horizontal_{soil_equivalent_name}"
+        constraint_horizontal_soil_equivalent_name = (f"constraint_horizontal_{soil_equivalent_name}")
         # can only move in the vertical direction
         constraint_list = [True, True, True]
         constraint_list[VERTICAL_AXIS] = False
         constraint_parameters = DisplacementConstraint(active=constraint_list,
                                                        is_fixed=constraint_list,
                                                        value=[0, 0, 0])
-        self.add_boundary_condition_by_geometry_ids(0, points_outside_ids, constraint_parameters,
-                                                    constraint_horizontal_soil_equivalent_name)
+        self.add_boundary_condition_by_geometry_ids(
+            0,
+            points_outside_ids,
+            constraint_parameters,
+            constraint_horizontal_soil_equivalent_name,
+        )
 
         # add bottom points fixed
         constraint_model_soil_equivalent_name = f"constraint_{soil_equivalent_name}"
@@ -290,11 +568,11 @@ class Model:
         constraint_model_soil_equivalent = DisplacementConstraint(active=[True, True, True],
                                                                   is_fixed=[True, True, True],
                                                                   value=[0, 0, 0])
-        constraint_model_soil_equivalent_part.parameters = constraint_model_soil_equivalent
+        constraint_model_soil_equivalent_part.parameters = (constraint_model_soil_equivalent)
         constraint_model_soil_equivalent_part_settings = {
             constraint_model_soil_equivalent_name: {
                 "coordinates": soil_equivalent_bottom,
-                "ndim": 0
+                "ndim": 0,
             }
         }
         self.gmsh_io.generate_geometry(constraint_model_soil_equivalent_part_settings, "")
@@ -332,14 +610,13 @@ class Model:
             if model_part.geometry is None:
                 raise ValueError(f"Model part {model_part_name} has no geometry.")
             for point_id, point in model_part.geometry.points.items():
-
                 # check if point is within the bounding box of the soil model parts
                 x_is_in = min_coords[0] <= point.coordinates[0] <= max_coords[0]
                 y_is_in = min_coords[1] <= point.coordinates[1] <= max_coords[1]
                 is_inside = x_is_in and y_is_in
                 if self.ndim == 3:
                     z_is_in = min_coords[2] <= point.coordinates[2] <= max_coords[2]
-                    is_inside = (is_inside and z_is_in)
+                    is_inside = is_inside and z_is_in
                 if not is_inside:
                     points_outside_geometry.append(point)
             return points_outside_geometry
@@ -433,8 +710,8 @@ class Model:
             "extrusion_parameters": {
                 "reference_coordinate": reference_coordinate,
                 "length": extrusion_length,
-                "direction_vector": direction_vector
-            }
+                "direction_vector": direction_vector,
+            },
         }
 
     def add_model_part_to_group(self, group_name: str, part_name: str):
@@ -457,11 +734,13 @@ class Model:
 
         self.groups[group_name]["model_part_names"].append(part_name)
 
-    def add_soil_layer_by_coordinates(self,
-                                      coordinates: Sequence[Sequence[float]],
-                                      material_parameters: Union[SoilMaterial, StructuralMaterial],
-                                      name: str,
-                                      group_name: Optional[str] = None):
+    def add_soil_layer_by_coordinates(
+        self,
+        coordinates: Sequence[Sequence[float]],
+        material_parameters: Union[SoilMaterial, StructuralMaterial],
+        name: str,
+        group_name: Optional[str] = None,
+    ):
         """
         Adds a soil layer to the model by giving a sequence of 3D coordinates.
         The coordinates have to belong to the same plane.
@@ -498,13 +777,11 @@ class Model:
 
         # check if extrusion length is specified in 3D
         if self.ndim == 3:
-
             if self.extrusion_length is None and group_name is None:
                 raise ValueError("For 3D models either the extrusion length or the group name for the extrusion must be"
                                  " specified.")
 
             elif group_name is not None:
-
                 # retrieve information about group
                 extrusion_parameters = self.groups[group_name]["extrusion_parameters"]
                 # normalise the direction vector and scale it by the extrusion length
@@ -520,7 +797,6 @@ class Model:
                                      f"does not lay on the same plane as soil layer: {name}")
 
             elif self.extrusion_length is not None:
-
                 extrusion_vector = [0, 0, 0]
                 extrusion_vector[OUT_OF_PLANE_AXIS_2D] = self.extrusion_length
                 gmsh_input[name]["extrusion_length"] = extrusion_vector
@@ -585,8 +861,12 @@ class Model:
 
         self.process_model_parts.append(model_part)
 
-    def add_load_by_coordinates(self, coordinates: Sequence[Sequence[float]], load_parameters: LoadParametersABC,
-                                name: str):
+    def add_load_by_coordinates(
+        self,
+        coordinates: Sequence[Sequence[float]],
+        load_parameters: LoadParametersABC,
+        name: str,
+    ):
         """
         Adds a load to the model by giving a sequence of 3D coordinates. For a 2D model, the third coordinate is
         ignored.
@@ -613,9 +893,9 @@ class Model:
         elif isinstance(load_parameters, SurfaceLoad):
             gmsh_input = {name: {"coordinates": coordinates, "ndim": 2}}
         else:
-            raise ValueError(f'Invalid load_parameters ({load_parameters.__class__.__name__}) object'
-                             f' provided for the load {name}. Expected one of PointLoad, MovingLoad,'
-                             f' LineLoad or SurfaceLoad.')
+            raise ValueError(f"Invalid load_parameters ({load_parameters.__class__.__name__}) object"
+                             f" provided for the load {name}. Expected one of PointLoad, MovingLoad,"
+                             f" LineLoad or SurfaceLoad.")
 
         self.gmsh_io.generate_geometry(gmsh_input, "")
 
@@ -654,7 +934,10 @@ class Model:
             raise ValueError(f"Load parameter provided is not supported: `{load_parameters.__class__.__name__}`.")
 
         # Get the geometry of the matching model part
-        geometry = next((bmp.geometry for bmp in self.body_model_parts if bmp.name == model_part_name), None)
+        geometry = next(
+            (bmp.geometry for bmp in self.body_model_parts if bmp.name == model_part_name),
+            None,
+        )
         if geometry is None:
             raise ValueError(f"Geometry in model part with name `{model_part_name}` not found.")
 
@@ -675,8 +958,13 @@ class Model:
 
         self.process_model_parts.append(model_part)
 
-    def add_boundary_condition_by_geometry_ids(self, ndim_boundary: int, geometry_ids: Sequence[int],
-                                               boundary_parameters: BoundaryParametersABC, name: str):
+    def add_boundary_condition_by_geometry_ids(
+        self,
+        ndim_boundary: int,
+        geometry_ids: Sequence[int],
+        boundary_parameters: BoundaryParametersABC,
+        name: str,
+    ):
         """
         Add a boundary condition to the model by giving the geometry ids of the boundary condition.
 
@@ -704,8 +992,12 @@ class Model:
 
         self.process_model_parts.append(model_part)
 
-    def add_boundary_condition_on_plane(self, plane_vertices: Sequence[Sequence[float]],
-                                        boundary_parameters: BoundaryParametersABC, name: str):
+    def add_boundary_condition_on_plane(
+        self,
+        plane_vertices: Sequence[Sequence[float]],
+        boundary_parameters: BoundaryParametersABC,
+        name: str,
+    ):
         """
         Adds a boundary condition to the model by giving a sequence of 3D coordinates. The boundary condition is added
         to all the surfaces which fall within the plane.
@@ -743,7 +1035,7 @@ class Model:
 
         model_part_exists = False
         for existing_part in self.process_model_parts:
-            if existing_part.name == name and existing_part.parameters == model_part.parameters:
+            if (existing_part.name == name and existing_part.parameters == model_part.parameters):
                 # extra geometry ids are added to the geometry of an existing model part
                 model_part_exists = True
                 existing_part.geometry = model_part.geometry
@@ -751,8 +1043,12 @@ class Model:
         if not model_part_exists:
             self.process_model_parts.append(model_part)
 
-    def add_boundary_condition_on_polygon(self, polygon_coordinates: Sequence[Sequence[float]],
-                                          boundary_parameters: BoundaryParametersABC, name: str):
+    def add_boundary_condition_on_polygon(
+        self,
+        polygon_coordinates: Sequence[Sequence[float]],
+        boundary_parameters: BoundaryParametersABC,
+        name: str,
+    ):
         """
         Adds a boundary condition to the model by giving a sequence of 3D coordinates. The boundary condition is added
         to all the surfaces which fall within the polygon. A surface is considered to be within the polygon if all its
@@ -785,8 +1081,13 @@ class Model:
 
         self.process_model_parts.append(model_part)
 
-    def add_hinge_on_beam(self, beam_model_part_name: str, hinge_coordinates: Sequence[Sequence[float]],
-                          hinge_parameters: HingeParameters, hinge_model_part_name: str):
+    def add_hinge_on_beam(
+        self,
+        beam_model_part_name: str,
+        hinge_coordinates: Sequence[Sequence[float]],
+        hinge_parameters: HingeParameters,
+        hinge_model_part_name: str,
+    ):
         """
         Adds a hinge to the model by giving the name of the beam model part where the hinge has to be applied.
 
@@ -803,7 +1104,7 @@ class Model:
             - ValueError: if the beam model part does not have a beam material.
             - NotImplementedError: if the hinge is applied in a 2D model.
             - ValueError: if the hinge points are not part of the beam model part.
-            """
+        """
 
         gmsh_input = {hinge_model_part_name: {"coordinates": hinge_coordinates, "ndim": 0}}
         self.gmsh_io.generate_geometry(gmsh_input, "")
@@ -826,9 +1127,9 @@ class Model:
             raise ValueError(f"Model part `{beam_model_part_name}` has no geometry.")
 
         # validate if the hinge is applied on a 3D beam model part
-        if not isinstance(beam_model_part, BodyModelPart) or not isinstance(
-                beam_model_part.material, StructuralMaterial) or not isinstance(
-                    beam_model_part.material.material_parameters, EulerBeam):
+        if (not isinstance(beam_model_part, BodyModelPart)
+                or not isinstance(beam_model_part.material, StructuralMaterial)
+                or not isinstance(beam_model_part.material.material_parameters, EulerBeam)):
             raise ValueError("Hinges can only be applied to beam model parts")
 
         if self.ndim != 3:
@@ -840,11 +1141,13 @@ class Model:
 
         self.process_model_parts.append(model_part)
 
-    def add_output_settings(self,
-                            output_parameters: OutputParametersABC,
-                            part_name: Optional[str] = None,
-                            output_dir: str = "./",
-                            output_name: Optional[str] = None):
+    def add_output_settings(
+        self,
+        output_parameters: OutputParametersABC,
+        part_name: Optional[str] = None,
+        output_dir: str = "./",
+        output_name: Optional[str] = None,
+    ):
         """
         Adds an output to the model, including the output folder, the name of the output file (if applicable) and the
         part of interest to output.
@@ -883,17 +1186,21 @@ class Model:
             raise ValueError("Model part for which output needs to be requested doesn't exist.")
 
         self.output_settings.append(
-            Output(output_parameters=output_parameters,
-                   part_name=part_name,
-                   output_dir=output_dir,
-                   output_name=output_name))
+            Output(
+                output_parameters=output_parameters,
+                part_name=part_name,
+                output_dir=output_dir,
+                output_name=output_name,
+            ))
 
-    def add_output_settings_by_coordinates(self,
-                                           coordinates: Sequence[Sequence[float]],
-                                           output_parameters: OutputParametersABC,
-                                           part_name: str,
-                                           output_dir: str = "./",
-                                           output_name: Optional[str] = None):
+    def add_output_settings_by_coordinates(
+        self,
+        coordinates: Sequence[Sequence[float]],
+        output_parameters: OutputParametersABC,
+        part_name: str,
+        output_dir: str = "./",
+        output_name: Optional[str] = None,
+    ):
         """
         Sets coordinates where the output is to be defined.
         The coordinates have to be laying on an existing geometry surface.
@@ -949,10 +1256,12 @@ class Model:
         self.process_model_parts.append(model_part)
 
         # add output to the output list
-        self.add_output_settings(output_parameters=output_parameters,
-                                 part_name=part_name,
-                                 output_dir=output_dir,
-                                 output_name=output_name)
+        self.add_output_settings(
+            output_parameters=output_parameters,
+            part_name=part_name,
+            output_dir=output_dir,
+            output_name=output_name,
+        )
 
     def __exclude_non_output_nodes(self, eps: float = 1e-06):
         """
@@ -970,11 +1279,9 @@ class Model:
         """
 
         for model_part in self.process_model_parts:
-
             # adjust the mesh of output model parts. Exclude element, and keep only the nodes of corresponding to the
             # output locations.
             if isinstance(model_part.parameters, OutputParametersABC):
-
                 if model_part.parameters is None:
                     raise ValueError("The model part doesn't have parameters.")
 
@@ -994,7 +1301,7 @@ class Model:
                 new_mesh.elements = {}
                 model_part.mesh = new_mesh
 
-                self.gmsh_io.mesh_data["physical_groups"][model_part.name]["node_ids"] = (list(new_mesh.nodes.keys()))
+                self.gmsh_io.mesh_data["physical_groups"][model_part.name]["node_ids"] = list(new_mesh.nodes.keys())
 
     def add_field(self, part_name: str, field_parameters: ParameterFieldParameters):
         """
@@ -1036,16 +1343,16 @@ class Model:
             if field_parameters.function_type == "json_file":
                 if isinstance(field_parameters.field_generator, RandomFieldGenerator):
                     if field_parameters.field_generator.mean_value is None:
-
                         # Get the property of the material, this is the mean value of the random field.
                         # Checks also if the material of the body model part contains the desired parameter
-                        mean_value_material = target_part.material.get_property_in_material(property_name=property_name)
+                        mean_value_material = (target_part.material.get_property_in_material(
+                            property_name=property_name))
 
                         if isinstance(mean_value_material, bool) or not isinstance(mean_value_material, (float, int)):
                             raise ValueError("The property for which a random field needs to be generated, "
                                              f"`{property_name}` is not a numeric value.")
 
-                        field_parameters.field_generator.mean_value = mean_value_material
+                        field_parameters.field_generator.mean_value = (mean_value_material)
 
                 if field_parameters.field_file_names[i] == "":
                     field_parameters.field_file_names[i] = new_part_name + ".json"
@@ -1091,11 +1398,13 @@ class Model:
         """
         self.mesh_settings.element_size = element_size
 
-    def generate_mesh(self,
-                      save_file: bool = False,
-                      mesh_output_dir: str = "./",
-                      mesh_name: str = "mesh_file",
-                      open_gmsh_gui: bool = False):
+    def generate_mesh(
+        self,
+        save_file: bool = False,
+        mesh_output_dir: str = "./",
+        mesh_name: str = "mesh_file",
+        open_gmsh_gui: bool = False,
+    ):
         """
         Generate the mesh for the whole model.
 
@@ -1108,13 +1417,15 @@ class Model:
         """
 
         # generate mesh
-        self.gmsh_io.generate_mesh(self.ndim,
-                                   element_size=self.mesh_settings.element_size,
-                                   order=self.mesh_settings.element_order,
-                                   save_file=save_file,
-                                   mesh_output_dir=mesh_output_dir,
-                                   mesh_name=mesh_name,
-                                   open_gmsh_gui=open_gmsh_gui)
+        self.gmsh_io.generate_mesh(
+            self.ndim,
+            element_size=self.mesh_settings.element_size,
+            order=self.mesh_settings.element_order,
+            save_file=save_file,
+            mesh_output_dir=mesh_output_dir,
+            mesh_name=mesh_name,
+            open_gmsh_gui=open_gmsh_gui,
+        )
 
         # add the mesh to each model part
         for model_part in self.all_model_parts:
@@ -1123,12 +1434,11 @@ class Model:
         # per process model part, check if the condition elements are applied to a body model part and set the
         # node ordering of the condition elements to match the body elements
         for process_model_part in self.process_model_parts:
-
             # only check if the process model part is a condition element
             if isinstance(process_model_part.parameters,
                           (LineLoad, MovingLoad, UvecLoad, SurfaceLoad, AbsorbingBoundary)):
                 # match the condition elements with the body elements on which the conditions are applied
-                matched_elements = self.__find_matching_body_elements_for_process_model_part(process_model_part)
+                matched_elements = (self.__find_matching_body_elements_for_process_model_part(process_model_part))
 
                 # check the ordering of the nodes of the conditions. If it does not match flip the order.
                 self.__check_ordering_process_model_part(matched_elements, process_model_part)
@@ -1159,9 +1469,7 @@ class Model:
         """
 
         for model_part in self.process_model_parts:
-
             if isinstance(model_part.parameters, ParameterFieldParameters):
-
                 # initialise the fields for the json output files. Tiny expressions don't require it.
                 if model_part.parameters.function_type == "json_file":
                     if model_part.parameters.field_generator is None:
@@ -1190,10 +1498,8 @@ class Model:
 
         # retrieve connectivities and cluster into individual spring-damper elements
         for mp in self.body_model_parts:
-
-            if (isinstance(mp.material, StructuralMaterial)
-                    and isinstance(mp.material.material_parameters, ElasticSpringDamper)):
-
+            if isinstance(mp.material, StructuralMaterial) and isinstance(mp.material.material_parameters,
+                                                                          ElasticSpringDamper):
                 # assert mesh is initialised
                 if mp.mesh is None:
                     raise ValueError("Mesh not yet initialised. Please generate the mesh using Model.generate_mesh().")
@@ -1204,26 +1510,28 @@ class Model:
                 new_mesh = Mesh(ndim=1)
 
                 # loop over each spring-damper sequence
-                for (start_node_id, end_node_id) in spring_node_ids:
+                for start_node_id, end_node_id in spring_node_ids:
                     # add the existing nodes to the new mesh
                     new_mesh.nodes[start_node_id] = mp.mesh.nodes[start_node_id]
                     new_mesh.nodes[end_node_id] = mp.mesh.nodes[end_node_id]
 
                     # create new 2n line element
-                    new_mesh.elements[new_element_id] = Element(id=new_element_id,
-                                                                element_type="LINE_2N",
-                                                                node_ids=[start_node_id, end_node_id])
+                    new_mesh.elements[new_element_id] = Element(
+                        id=new_element_id,
+                        element_type="LINE_2N",
+                        node_ids=[start_node_id, end_node_id],
+                    )
 
                     # increment the element id
                     new_element_id += 1
 
                 # add the new mesh to the mesh data
                 self.gmsh_io.mesh_data["physical_groups"][mp.name]["node_ids"] = sorted(list(new_mesh.nodes.keys()))
-                self.gmsh_io.mesh_data["physical_groups"][mp.name]["element_ids"] = \
-                    sorted(list(new_mesh.elements.keys()))
+                self.gmsh_io.mesh_data["physical_groups"][mp.name]["element_ids"] = (sorted(
+                    list(new_mesh.elements.keys())))
 
                 for element_id, element in new_mesh.elements.items():
-                    self.gmsh_io.mesh_data["elements"]["LINE_2N"][element_id] = element.node_ids
+                    self.gmsh_io.mesh_data["elements"]["LINE_2N"][element_id] = (element.node_ids)
 
                 mp.mesh = new_mesh
 
@@ -1284,26 +1592,27 @@ class Model:
         # initialise a set for end-point we have already encountered in the clustering algorithm
         completed_points = set()
         for end_node in end_nodes:
-
             # only consider the end nodes that are not already in the completed_points list
             if end_node not in completed_points:
-
                 # remove the end node from the list containing the node ids
                 node_ids_search_space.remove(end_node)
                 first_node_id = None
 
                 # if the point is not the end of the cluster, continue until you find the end of the cluster and include
                 # all the line strings
-                while first_node_id not in end_nodes and len(element_ids_search_space) > 0:
-
+                while (first_node_id not in end_nodes and len(element_ids_search_space) > 0):
                     # first point is the end node
                     if first_node_id is None:
                         first_node_id = end_node
 
-                    second_node_id = self.__find_next_node_along_line_elements(first_node_id, element_ids_search_space,
-                                                                               node_ids_search_space, node_to_elements,
-                                                                               model_part.mesh.elements,
-                                                                               node_ids_at_geometry_points)
+                    second_node_id = self.__find_next_node_along_line_elements(
+                        first_node_id,
+                        element_ids_search_space,
+                        node_ids_search_space,
+                        node_to_elements,
+                        model_part.mesh.elements,
+                        node_ids_at_geometry_points,
+                    )
 
                     # add the end nodes to the list (start node, end node)
                     line_node_ids.append([first_node_id, second_node_id])
@@ -1331,9 +1640,14 @@ class Model:
         return end_nodes
 
     @staticmethod
-    def __find_next_node_along_line_elements(start_node_id: int, remaining_element_ids: Set[int],
-                                             remaining_node_ids: Set[int], node_to_elements: Dict[int, List[int]],
-                                             line_elements: Dict[int, Element], target_node_ids: Set[int]) -> int:
+    def __find_next_node_along_line_elements(
+        start_node_id: int,
+        remaining_element_ids: Set[int],
+        remaining_node_ids: Set[int],
+        node_to_elements: Dict[int, List[int]],
+        line_elements: Dict[int, Element],
+        target_node_ids: Set[int],
+    ) -> int:
         """
         Finds the next node along line element. The remaining_element_ids and remaining_node_ids keeps track of
         the direction of the previous searches and orients the search on a unique direction.
@@ -1367,9 +1681,8 @@ class Model:
         # start the search for the connected node
         max_iterations = len(remaining_element_ids)
         for _ in range(max_iterations):
-
             # find the element(s) connected to the node that have not yet been searched for.
-            elements_connected = set(node_to_elements[next_node]) & remaining_element_ids
+            elements_connected = (set(node_to_elements[next_node]) & remaining_element_ids)
 
             # check if there is a fork in the mesh, which is not allowed
             if len(elements_connected) > 1:
@@ -1394,8 +1707,8 @@ class Model:
 
         raise ValueError("Next node along the line cannot be found. As it is not included in the search space")
 
-    def __find_matching_body_elements_for_process_model_part(self, process_model_part: ModelPart) \
-            -> List[Tuple[Element, Element]]:
+    def __find_matching_body_elements_for_process_model_part(
+            self, process_model_part: ModelPart) -> List[Tuple[Element, Element]]:
         """
         For a process model part, tries finds the matching body elements on which the condition elements are applied.
 
@@ -1421,13 +1734,15 @@ class Model:
 
         # loop over the body model parts (bmp) to match the elements of the process model part
         for body_model_part in self.body_model_parts:
-
             # validation step for body model part
             if body_model_part.mesh is None:
                 raise ValueError(f"Mesh of body model part: {body_model_part.name} is not yet initialised.")
 
             # find which nodes within the body model part are connected to which elements
-            for node_id, element_ids in body_model_part.mesh.find_elements_connected_to_nodes().items():
+            for (
+                    node_id,
+                    element_ids,
+            ) in body_model_part.mesh.find_elements_connected_to_nodes().items():
                 nodes_to_elements_body.setdefault(node_id, element_ids).extend(element_ids)
 
             all_body_elements.update(body_model_part.mesh.elements)
@@ -1436,7 +1751,6 @@ class Model:
         process_elements = process_model_part.mesh.elements
         matched_elements = []
         for process_element_id in process_elements:
-
             # check if all nodes of the process element are present in the body elements
             if not all(node_id in nodes_to_elements_body for node_id in process_elements[process_element_id].node_ids):
                 break
@@ -1452,22 +1766,27 @@ class Model:
             # if there are common elements, add the process element and the first connected body element to the
             # matched_elements list
             if len(common_elements) > 0:
-                matched_elements.append(
-                    (process_model_part.mesh.elements[process_element_id], all_body_elements[common_elements[0]]))
+                matched_elements.append((
+                    process_model_part.mesh.elements[process_element_id],
+                    all_body_elements[common_elements[0]],
+                ))
 
         # if not all process elements are matched, raise an error
         if len(matched_elements) < len(process_elements):
             # find which process elements are not matched
             matched_process_elements = set(pe.id for pe, _ in matched_elements)
-            unmatched_process_elements = set(process_model_part.mesh.elements.keys()) - matched_process_elements
+            unmatched_process_elements = (set(process_model_part.mesh.elements.keys()) - matched_process_elements)
 
             raise ValueError(f"Condition elements: {list(unmatched_process_elements)} do not have a corresponding "
                              f"body element.")
 
         return matched_elements
 
-    def __check_ordering_process_model_part(self, matched_elements: List[Tuple[Element, Element]],
-                                            process_model_part: ModelPart):
+    def __check_ordering_process_model_part(
+        self,
+        matched_elements: List[Tuple[Element, Element]],
+        process_model_part: ModelPart,
+    ):
         """
         Check if the node ordering of the process element matches the node ordering of the neighbouring body element.
         If not, flip the node ordering of the process element.
@@ -1489,23 +1808,20 @@ class Model:
         # loop over the matched elements
         elements_to_flip = []
 
-        for (process_element, body_element) in matched_elements:
-
+        for process_element, body_element in matched_elements:
             # element info such as order, number of edges, element types etc.
             process_el_info = ELEMENT_DATA[process_element.element_type]
             body_el_info = ELEMENT_DATA[body_element.element_type]
 
             if process_el_info["ndim"] == 1:
-
                 # get all line edges of the body element and check if the process element is defined on one of them
                 # if the nodes are equal, but the node order isn't, flip the node order of the process element
                 body_line_edges = Utils.get_element_edges(body_element)
                 for edge in body_line_edges:
-                    if set(edge) == set(process_element.node_ids) and list(edge) != process_element.node_ids:
+                    if (set(edge) == set(process_element.node_ids) and list(edge) != process_element.node_ids):
                         elements_to_flip.append(process_element)
 
             elif body_el_info["ndim"] == 3 and process_el_info["ndim"] == 2:
-
                 # check if the normal of the condition element is not defined outwards of the body element
                 if not Utils.is_volume_edge_defined_outwards(process_element, body_element,
                                                              self.gmsh_io.mesh_data["nodes"]):
@@ -1513,7 +1829,6 @@ class Model:
 
         # flip condition elements if required
         if len(elements_to_flip) > 0:
-
             # flip elements, it is required that all elements in the array are of the same type
             Utils.flip_node_order(elements_to_flip)
 
@@ -1646,13 +1961,15 @@ class Model:
 
         self.__validate_model_part_names()
 
-    def show_geometry(self,
-                      show_volume_ids: bool = False,
-                      show_surface_ids: bool = False,
-                      show_line_ids: bool = False,
-                      show_point_ids: bool = False,
-                      file_name: str = "tmp_geometry_file.html",
-                      auto_open: bool = True):
+    def show_geometry(
+        self,
+        show_volume_ids: bool = False,
+        show_surface_ids: bool = False,
+        show_line_ids: bool = False,
+        show_point_ids: bool = False,
+        file_name: str = "tmp_geometry_file.html",
+        auto_open: bool = True,
+    ):
         """
         Show the 2D or 3D geometry in a plot.
 
@@ -1673,8 +1990,14 @@ class Model:
         if self.geometry is None:
             raise ValueError("Geometry must be set before showing the geometry")
 
-        fig = PlotUtils.create_geometry_figure(self.ndim, self.geometry, show_volume_ids, show_surface_ids,
-                                               show_line_ids, show_point_ids)
+        fig = PlotUtils.create_geometry_figure(
+            self.ndim,
+            self.geometry,
+            show_volume_ids,
+            show_surface_ids,
+            show_line_ids,
+            show_point_ids,
+        )
 
         fig.write_html(file_name, auto_open=auto_open)
 
@@ -1717,7 +2040,6 @@ class Model:
         geometry_ids = []
 
         for body_model_part in self.body_model_parts:
-
             # if body model part has geometry, add the geometry ids to the list
             if body_model_part.geometry is not None:
                 if self.ndim == 2:
@@ -1771,12 +2093,17 @@ class Model:
         if group_name not in self.gmsh_io.geo_data["physical_groups"]:
             raise ValueError(f"Group name `{group_name}` not found.")
 
-        self.gmsh_io.geo_data["physical_groups"][group_name]["element_size"] = element_size
+        self.gmsh_io.geo_data["physical_groups"][group_name]["element_size"] = (element_size)
 
         self.gmsh_io.generate_geo_from_geo_data()
 
-    def split_model_part(self, from_model_part_name: str, to_model_part_name: str, geometry_ids: List[int],
-                         new_parameters: Union[Material, ProcessParameters]):
+    def split_model_part(
+        self,
+        from_model_part_name: str,
+        to_model_part_name: str,
+        geometry_ids: List[int],
+        new_parameters: Union[Material, ProcessParameters],
+    ):
         """
         Move the geometry from one model part to another.
 
@@ -1805,7 +2132,6 @@ class Model:
 
         # create new body model part if from_model_part is a body model part
         if isinstance(from_model_part, BodyModelPart) and isinstance(new_parameters, get_args(Material)):
-
             # check if the new parameters are of the same type as the existing material
             if not isinstance(new_parameters, from_model_part.material.__class__):
                 raise ValueError("New parameters must have the same material type as in the original "
@@ -1819,7 +2145,6 @@ class Model:
 
         # create new process model part if from_model_part is a process model part
         elif isinstance(from_model_part, ModelPart) and isinstance(new_parameters, get_args(ProcessParameters)):
-
             # check if the new parameters are of the same type as the existing process parameters
             if not isinstance(new_parameters, from_model_part.parameters.__class__):
                 raise ValueError("New parameters must have the same process parameter type as in the original "
@@ -1836,8 +2161,9 @@ class Model:
         existing_geometry_ids = self.gmsh_io.geo_data["physical_groups"][from_model_part_name]["geometry_ids"]
 
         # remove the geometry from gmsh physical groups
-        self.gmsh_io.geo_data["physical_groups"][from_model_part_name]["geometry_ids"] = \
-            [id for id in existing_geometry_ids if id not in geometry_ids]
+        self.gmsh_io.geo_data["physical_groups"][from_model_part_name]["geometry_ids"] = [
+            id for id in existing_geometry_ids if id not in geometry_ids
+        ]
 
         # update the geometry in the from-model part
         updated_from_geometry = Geometry.create_geometry_from_gmsh_group(self.gmsh_io.geo_data, from_model_part_name)
@@ -1851,7 +2177,7 @@ class Model:
         self.gmsh_io.geo_data["physical_groups"][to_model_part_name] = {
             "geometry_ids": geometry_ids,
             "ndim": ndim,
-            "id": max_existing_group_id + 1
+            "id": max_existing_group_id + 1,
         }
 
         # create new geometry and add to new model part
@@ -1881,10 +2207,8 @@ class Model:
 
         # reorder json file nodes based on the order of the desired output
         for output_settings in self.output_settings:
-
             # output settings contain info on the output directory
-            if isinstance(output_settings.output_parameters, JsonOutputParameters) and output_settings is not None:
-
+            if (isinstance(output_settings.output_parameters, JsonOutputParameters) and output_settings is not None):
                 if output_settings.part_name is None:
                     raise ValueError("The output model part has no part name specified.")
 
@@ -1929,7 +2253,7 @@ class Model:
                 for node_id, node in output_model_part.mesh.nodes.items():
                     node_key = f"NODE_{node_id}"
                     # reassign the corresponding nodal outputs including the nodal coordinates at the top
-                    new_json[node_key] = {'COORDINATES': node.coordinates} | json_data_tmp[node_key]
+                    new_json[node_key] = {"COORDINATES": node.coordinates} | json_data_tmp[node_key]
 
                 # write back the json file
                 with open(json_file_path, "w") as outfile:
