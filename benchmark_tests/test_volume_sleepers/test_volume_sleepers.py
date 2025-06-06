@@ -157,8 +157,8 @@ def test_moving_load_on_track():
     # Set up start and end time of calculation, time step and etc
     time_integration = TimeIntegration(
         start_time=0.0,
-        end_time=1,
-        delta_time=1,
+        end_time=1.00,
+        delta_time=1.00,
         reduction_factor=1.0,
         increase_factor=1.0,
         max_delta_time_factor=1000,
@@ -205,8 +205,8 @@ def test_moving_load_on_track():
         output_dir="output",
         output_parameters=VtkOutputParameters(
             file_format="ascii",
-            output_interval=1.00,
-            output_control_type="time",
+            output_interval=1,
+            output_control_type="step",
             nodal_results=nodal_results,
             gauss_point_results=gauss_point_results,
         ),
