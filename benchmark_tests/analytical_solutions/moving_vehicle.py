@@ -6,7 +6,7 @@ class TwoDofVehicle:
     Computes the displacement of a two DOF vehicle crossing a simple supported beam.
     Displacement computed at middle spam. Solution assuming only first mode.
 
-    Based on Biggs "Introduction do Structural Dynamics", pp pg 322
+    Based on :cite:`Biggs_1964` Section 8.5, pg 322-325.
     """
 
     def __init__(self, t_step=0.001):

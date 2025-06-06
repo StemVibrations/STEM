@@ -7,7 +7,7 @@ from stem.load import LineLoad
 from stem.table import Table
 from stem.boundary import DisplacementConstraint
 from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
-                         StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy)
+                         StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy, Amgcl)
 from stem.output import NodalOutput, VtkOutputParameters, Output, JsonOutputParameters
 from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
@@ -93,6 +93,7 @@ def test_stem():
                                      time_integration=time_integration,
                                      is_stiffness_matrix_constant=True,
                                      are_mass_and_damping_constant=True,
+                                     linear_solver_settings=Amgcl(tolerance=1e-6),
                                      convergence_criteria=convergence_criterion,
                                      strategy_type=LinearNewtonRaphsonStrategy(),
                                      rayleigh_k=6e-6,

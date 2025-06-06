@@ -3,11 +3,12 @@ STEM tutorials
 
 .. _tutorial3:
 
-Train model (UVEC) on track and embankment in 3D
-------------------------------------------------
+Train model (UVEC) on track and embankment in 3D with irregularities
+--------------------------------------------------------------------
 This tutorial shows step by step guide on how to set up a train model
 on top of track on an embankment with two soil layers underneath, in a 3D model.
-The UVEC (User defined VEhiCle model) is a model used to represent a train as dynamic loads on the system.
+The UVEC (User defined VEhiCle model) is a model used to represent a train as dynamic loads on the system, and
+the irregularities in the contact between the wheel and the rail are modelled using the UVEC.
 
 In order to use the UVEC you need to import the UVEC package, together with all the remaining packages.
 
@@ -170,9 +171,9 @@ Generating the train track
 
 STEM provides two options to generate a straight track, with two different ways to model the sleepers:
 
-1. A straight track with rails, sleepers and rail pads. This track placed on top of the 2D or 3D geometry.
-1. A straight track with rails, sleepers, rail pads and an extension of the track outside the 2D or 3D geometry.
-  This extension is placed on 1D elements which simulate the 2D or 3D soil behaviour.
+1. A straight track with rails, sleepers and rail pads. This track is placed on top of the 2D or 3D geometry.
+
+2. A straight track with rails, sleepers, rail pads and an extension of the track outside the 2D or 3D geometry. This extension is placed on 1D elements which simulate the soil behaviour.
 
 **Option 1: Straight track with rails, sleepers and rail pads**
 
@@ -344,7 +345,34 @@ UVEC model. The UVEC load is added on top of the previously defined track with t
 of the load is set to "train_load". The user can also define a custom made UVEC model. In order to achieve this, it
 needs to provide the `uvec_file` and `uvec_function_name` as parameters in the UvecLoad class. The `uvec_file` is the
 path to the UVEC model file and the `uvec_function_name` is the name of the function in the UVEC model file.
-The UVEC model file should be copied to the input files directory.
+The `static_initialisation` parameter is set to False, which means that the UVEC model is not statically initialised,
+but rather dynamically initialised. It is important to choose the right initialisation method in accordance to the
+desired solver (quasi-static or dynamic).
+To apply irregularities to the UVEC model, the user can define the `irr_parameters` key with parameters `Av` and `seed`.
+The `Av` parameter is the amplitude of the irregularities and the `seed` parameter is used for reproducibility of the
+random process. The irregularities are modelled following :cite:`Zhang_2001`, and the parameter `Av` can be estimated
+based on the track quality :cite:`Lei_Noda_2002`.
+In case that irregularities are not required, the `irr_parameters` key must be omitted.
+
+.. table:: Track quality classification and corresponding Av values
+    :widths: 50 50
+
+    +-----------------+------------------------+
+    | Line grade      | Av Value (m² rad / m)  |
+    +=================+========================+
+    | 1 (very poor)   | 1.2107e-4              |
+    +-----------------+------------------------+
+    | 2               | 1.0181e-4              |
+    +-----------------+------------------------+
+    | 3               | 0.6816e-4              |
+    +-----------------+------------------------+
+    | 4               | 0.5376e-4              |
+    +-----------------+------------------------+
+    | 5               | 0.2095e-4              |
+    +-----------------+------------------------+
+    | 6 (very good)   | 0.0339e-4              |
+    +-----------------+------------------------+
+
 
 A schematisation of the UVEC model as defined in this tutorial, is shown below.
 
@@ -354,6 +382,8 @@ Below the uvec parameters are defined.
 
 .. code-block:: python
 
+    wheel_configuration = [0.0, 2.5, 19.9, 22.4] # distances of the wheels from the origin point [m]
+    velocity = 40  # velocity of the UVEC [m/s]
     # define uvec parameters
     uvec_parameters = {"n_carts": 1, # number of carts [-]
                        "cart_inertia": (1128.8e3) / 2, # inertia of the cart [kgm2]
@@ -371,11 +401,17 @@ Below the uvec parameters are defined.
                        "contact_coefficient": 9.1e-7, # Hertzian contact coefficient between the wheel and the rail [N/m]
                        "contact_power": 1.0, # Hertzian contact power between the wheel and the rail [-]
                        "static_initialisation": False, # True if the analysis of the UVEC is static
+                       "wheel_configuration": wheel_configuration, # initial position of the wheels [m]
+                       "velocity": velocity, # velocity of the UVEC [m/s]
+                       "irr_parameters": {
+                                "Av": 2.095e-05,
+                                "seed": 14
+                                },
                        }
 
     # define the UVEC load
-    uvec_load = UvecLoad(direction=[1, 1, 1], velocity=40, origin=[0.75, 3+rail_pad_thickness, 5],
-                         wheel_configuration=[0.0, 2.5, 19.9, 22.4],
+    uvec_load = UvecLoad(direction=[1, 1, 1], velocity=velocity, origin=[0.75, 3+rail_pad_thickness, 5],
+                         wheel_configuration=wheel_configuration,
                          uvec_model=uvec,
                          uvec_parameters=uvec_parameters)
 
