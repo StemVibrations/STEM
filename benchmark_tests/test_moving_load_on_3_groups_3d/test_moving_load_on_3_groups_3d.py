@@ -76,7 +76,7 @@ def test_stem():
     no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
                                                         is_fixed=[True, True, True],
                                                         value=[0, 0, 0])
-    roller_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+    roller_displacement_parameters = DisplacementConstraint(active=[True, False, True],
                                                             is_fixed=[True, False, True],
                                                             value=[0, 0, 0])
 
@@ -132,7 +132,7 @@ def test_stem():
     # Define the results to be written to the output file
 
     # Nodal results
-    nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.TOTAL_DISPLACEMENT]
+    nodal_results = [NodalOutput.DISPLACEMENT]
     # Gauss point results
     gauss_point_results = []
 

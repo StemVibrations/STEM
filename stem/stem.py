@@ -4,6 +4,11 @@ from pathlib import Path
 from typing import List, Dict
 import warnings
 
+#todo remove this before merge
+import sys
+sys.path.append(r"C:\software_development\Kratos\bin\Release\libs")
+sys.path.append(r"C:\software_development\Kratos\bin\Release")
+
 import KratosMultiphysics
 from KratosMultiphysics.StemApplication.geomechanics_analysis import StemGeoMechanicsAnalysis
 
@@ -190,8 +195,8 @@ class Stem:
         simulation.Run()
 
         # save the uvec data for the next stage if it is present
-        if hasattr(simulation._GetSolver().solver, 'uvec_data'):
-            self.__last_uvec_data = simulation._GetSolver().solver.uvec_data
+        if hasattr(simulation._GetSolver().solving_strategy, 'uvec_data'):
+            self.__last_uvec_data = simulation._GetSolver().solving_strategy.uvec_data
 
         # make sure the simulation is deleted, else bad memory allocation may occur when serializing the kratos model
         del simulation

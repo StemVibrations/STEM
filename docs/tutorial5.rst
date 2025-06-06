@@ -299,7 +299,7 @@ surface-dimension, "2".
     # define BC
     no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
                                                         is_fixed=[True, True, True], value=[0, 0, 0])
-    roller_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+    roller_displacement_parameters = DisplacementConstraint(active=[True, False, True],
                                                             is_fixed=[True, False, True], value=[0, 0, 0])
     absorbing_boundaries_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=40.0)
 
