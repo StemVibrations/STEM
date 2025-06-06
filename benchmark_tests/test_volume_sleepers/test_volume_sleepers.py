@@ -205,10 +205,10 @@ def test_moving_load_on_track():
         output_dir="output",
         output_parameters=VtkOutputParameters(
             file_format="ascii",
-            output_interval=1.01,
+            output_interval=1.00,
+            output_control_type="time",
             nodal_results=nodal_results,
             gauss_point_results=gauss_point_results,
-            output_control_type="step",
         ),
     )
     model.output_settings = [vtk_output_process]
