@@ -43,16 +43,10 @@ def test_moving_load_on_track():
     POROSITY = 0.3
     YOUNG_MODULUS = 25e6
     POISSON_RATIO = 0.25
-    soil_formulation1 = OnePhaseSoil(
-        ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY
-    )
-    constitutive_law1 = LinearElasticSoil(
-        YOUNG_MODULUS=YOUNG_MODULUS, POISSON_RATIO=POISSON_RATIO
-    )
+    soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
+    constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=YOUNG_MODULUS, POISSON_RATIO=POISSON_RATIO)
     retention_parameters1 = SaturatedBelowPhreaticLevelLaw()
-    material1 = SoilMaterial(
-        "soil_1", soil_formulation1, constitutive_law1, retention_parameters1
-    )
+    material1 = SoilMaterial("soil_1", soil_formulation1, constitutive_law1, retention_parameters1)
     # Specify the coordinates for the column: x:5m x y:1m
     layer1_coordinates = [
         (0.0, 0.0, -5.0),
@@ -66,16 +60,10 @@ def test_moving_load_on_track():
     POROSITY = 0.3
     YOUNG_MODULUS = 13e6
     POISSON_RATIO = 0.3
-    soil_formulation2 = OnePhaseSoil(
-        ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY
-    )
-    constitutive_law2 = LinearElasticSoil(
-        YOUNG_MODULUS=YOUNG_MODULUS, POISSON_RATIO=POISSON_RATIO
-    )
+    soil_formulation2 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
+    constitutive_law2 = LinearElasticSoil(YOUNG_MODULUS=YOUNG_MODULUS, POISSON_RATIO=POISSON_RATIO)
     retention_parameters2 = SaturatedBelowPhreaticLevelLaw()
-    material2 = SoilMaterial(
-        "soil_2", soil_formulation2, constitutive_law2, retention_parameters2
-    )
+    material2 = SoilMaterial("soil_2", soil_formulation2, constitutive_law2, retention_parameters2)
     # Specify the coordinates for the column: x:5m x y:1m
     layer2_coordinates = [
         (0.0, 1.0, -5.0),
@@ -104,9 +92,7 @@ def test_moving_load_on_track():
         NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0],
     )
 
-    soil_formulation = OnePhaseSoil(
-        ndim, IS_DRAINED=True, DENSITY_SOLID=2400, POROSITY=0.1
-    )
+    soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2400, POROSITY=0.1)
     constitutive_law = LinearElasticSoil(YOUNG_MODULUS=30e9, POISSON_RATIO=0.2)
     sleeper_parameters = SoilMaterial(
         name="concrete",
@@ -149,17 +135,15 @@ def test_moving_load_on_track():
     )
 
     # Define boundary conditions
-    no_displacement_parameters = DisplacementConstraint(
-        active=[True, True, True], is_fixed=[True, True, True], value=[0, 0, 0]
-    )
-    roller_displacement_parameters = DisplacementConstraint(
-        active=[True, True, True], is_fixed=[True, False, True], value=[0, 0, 0]
-    )
+    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+                                                        is_fixed=[True, True, True],
+                                                        value=[0, 0, 0])
+    roller_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+                                                            is_fixed=[True, False, True],
+                                                            value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
-    model.add_boundary_condition_by_geometry_ids(
-        2, [1], no_displacement_parameters, "base_fixed"
-    )
+    model.add_boundary_condition_by_geometry_ids(2, [1], no_displacement_parameters, "base_fixed")
     model.add_boundary_condition_by_geometry_ids(
         2,
         [2, 6, 5, 4, 444, 468, 469, 467],
@@ -179,9 +163,8 @@ def test_moving_load_on_track():
         increase_factor=1.0,
         max_delta_time_factor=1000,
     )
-    convergence_criterion = DisplacementConvergenceCriteria(
-        displacement_relative_tolerance=1.0e-9, displacement_absolute_tolerance=1.0e-12
-    )
+    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-9,
+                                                            displacement_absolute_tolerance=1.0e-12)
     stress_initialisation_type = StressInitialisationType.NONE
     strategy = NewtonRaphsonStrategy()
     solver_settings = SolverSettings(
@@ -198,9 +181,7 @@ def test_moving_load_on_track():
     )
 
     # Set up problem data
-    problem = Problem(
-        problem_name="test_extended_beam", number_of_threads=4, settings=solver_settings
-    )
+    problem = Problem(problem_name="test_extended_beam", number_of_threads=4, settings=solver_settings)
     model.project_parameters = problem
 
     # Define the results to be written to the output file
