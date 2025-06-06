@@ -237,4 +237,4 @@ def test_moving_load_on_track():
     )
 
     assert result is True
-    # rmtree(input_folder)
+    rmtree(input_folder)
