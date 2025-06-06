@@ -4242,26 +4242,43 @@ class TestModel:
         with pytest.raises(NotImplementedError, match="Hinges can only be applied in 3D models"):
             model.add_hinge_on_beam(beam_material.name, [(-0.2, 0.0, 0.0)], hinge_parameters, "hinge_5")
 
-    def test_split_second_order_elements_with_beam_and_load(self, create_default_3d_beam,create_default_moving_load_parameters):
-
-
-
+    def test_split_second_order_elements_with_beam_and_load(self, create_default_3d_beam,
+                                                            create_default_moving_load_parameters):
 
         model = Model(3)
 
         # pre-set gmsh mesh data of all parts
-        model.gmsh_io._GmshIO__mesh_data = {'elements': {'LINE_3N': {1: [1, 2, 3]}, 'POINT_1N': {2: [1], 3: [2]}},
-                                            'ndim': 1,
-                                            'nodes': {1: [0.0, 0.0, 0.0], 2: [1.0, 0.0, 0.0], 3: [0.5, 0.0, 0.0]},
-                                            'physical_groups': {
-                                                'beam': {'element_ids': [1],
-                                                         'element_type': 'LINE_3N',
-                                                         'ndim': 1,
-                                                         'node_ids': [1, 2, 3]},
-                                                'load':{'element_ids': [1],
-                                                        'element_type': 'LINE_3N',
-                                                        'ndim': 1,
-                                                        'node_ids': [1, 2, 3]}}}
+        model.gmsh_io._GmshIO__mesh_data = {
+            'elements': {
+                'LINE_3N': {
+                    1: [1, 2, 3]
+                },
+                'POINT_1N': {
+                    2: [1],
+                    3: [2]
+                }
+            },
+            'ndim': 1,
+            'nodes': {
+                1: [0.0, 0.0, 0.0],
+                2: [1.0, 0.0, 0.0],
+                3: [0.5, 0.0, 0.0]
+            },
+            'physical_groups': {
+                'beam': {
+                    'element_ids': [1],
+                    'element_type': 'LINE_3N',
+                    'ndim': 1,
+                    'node_ids': [1, 2, 3]
+                },
+                'load': {
+                    'element_ids': [1],
+                    'element_type': 'LINE_3N',
+                    'ndim': 1,
+                    'node_ids': [1, 2, 3]
+                }
+            }
+        }
 
         beam_material = create_default_3d_beam
         # Specify the coordinates for the beam: x:1m x y:0m
@@ -4279,7 +4296,6 @@ class TestModel:
         # set the geometry of the body model part
         body_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, beam_material.name)
         model.body_model_parts.append(body_model_part)
-
 
         body_model_part.mesh = Mesh.create_mesh_from_gmsh_group(model.gmsh_io.mesh_data, beam_material.name)
 
@@ -4300,23 +4316,51 @@ class TestModel:
         model._Model__split_second_order_elements()
 
         expected_gmsh_mesh = {
-            'elements': {'LINE_2N': {4: [1, 3], 5: [3, 2]}},
+            'elements': {
+                'LINE_2N': {
+                    4: [1, 3],
+                    5: [3, 2]
+                }
+            },
             'ndim': 1,
-            'nodes': {1: [0.0, 0.0, 0.0], 2: [1.0, 0.0, 0.0], 3: [0.5, 0.0, 0.0]},
-            'physical_groups': {'beam': {'element_ids': [4, 5], 'element_type': 'LINE_2N', 'ndim': 1, 'node_ids': [1, 2, 3]},
-                                'load': {'element_ids': [4, 5], 'element_type': 'LINE_2N', 'ndim': 1, 'node_ids': [1, 2, 3]}}}
+            'nodes': {
+                1: [0.0, 0.0, 0.0],
+                2: [1.0, 0.0, 0.0],
+                3: [0.5, 0.0, 0.0]
+            },
+            'physical_groups': {
+                'beam': {
+                    'element_ids': [4, 5],
+                    'element_type': 'LINE_2N',
+                    'ndim': 1,
+                    'node_ids': [1, 2, 3]
+                },
+                'load': {
+                    'element_ids': [4, 5],
+                    'element_type': 'LINE_2N',
+                    'ndim': 1,
+                    'node_ids': [1, 2, 3]
+                }
+            }
+        }
 
         expected_model_part_mesh = Mesh(1)
-        expected_model_part_mesh.nodes = {1: Node(1, [0.0, 0.0, 0.0]), 2: Node(2, [1.0, 0.0, 0.0]), 3: Node(3, [0.5, 0.0, 0.0])}
+        expected_model_part_mesh.nodes = {
+            1: Node(1, [0.0, 0.0, 0.0]),
+            2: Node(2, [1.0, 0.0, 0.0]),
+            3: Node(3, [0.5, 0.0, 0.0])
+        }
         expected_model_part_mesh.elements = {4: Element(4, "LINE_2N", [1, 3]), 5: Element(5, "LINE_2N", [3, 2])}
 
         # both the beam and the load should have the same 1st order mesh
-        TestUtils.assert_dictionary_almost_equal(expected_gmsh_mesh,model.gmsh_io.mesh_data)
+        TestUtils.assert_dictionary_almost_equal(expected_gmsh_mesh, model.gmsh_io.mesh_data)
 
         assert expected_model_part_mesh == model.body_model_parts[0].mesh
         assert expected_model_part_mesh == model.process_model_parts[0].mesh
 
-    def test_split_second_order_elements_with_beam_load_and_soil(self,create_default_3d_beam, create_default_moving_load_parameters, create_default_2d_soil_material):
+    def test_split_second_order_elements_with_beam_load_and_soil(self, create_default_3d_beam,
+                                                                 create_default_moving_load_parameters,
+                                                                 create_default_2d_soil_material):
 
         # set dim of beam to 2D
         beam_parameters = create_default_3d_beam
@@ -4325,26 +4369,54 @@ class TestModel:
         model = Model(2)
 
         # pre-set gmsh mesh data of all parts
-        model.gmsh_io._GmshIO__mesh_data = {'elements': {'LINE_3N': {1: [1, 2, 3], 2: [2,4,5]},
-                                                         "TRIANGLE_6N": {3: [1, 2, 6, 3,8,7], 4: [2,4,9, 5,10,11], 5: [2,9,6,11,12,8]}},
-                                            'ndim': 1,
-                                            'nodes': {1: [0.0, 0.0, 0.0], 2: [1.0, 0.0, 0.0], 3: [0.5, 0.0, 0.0],
-                                                      4: [2.0, 0.0, 0.0], 5: [1.5, 0.0, 0.0], 6: [0.0, -1.0, 0.0], 7: [0.0, -0.5,0.0], 8: [0.5, -0.5, 0.0],
-                                                      9: [2.0,-1.0,0.0], 10: [2.0, -0.5, 0.0], 11: [1.5, -0.5, 0.0],
-                                                      12:[1.0,-1.0,0.0] },
-                                            'physical_groups': {
-                                                'beam': {'element_ids': [1],
-                                                         'element_type': 'LINE_3N',
-                                                         'ndim': 1,
-                                                         'node_ids': [1, 2, 3]},
-                                                'load': {'element_ids': [1,2],
-                                                         'element_type': 'LINE_3N',
-                                                         'ndim': 1,
-                                                         'node_ids': [1, 2, 3,4,5]},
-                                                'soil': {'element_ids': [3,4,5],
-                                                         'element_type': 'TRIANGLE_6N',
-                                                         'ndim': 2,
-                                                         'node_ids': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}}}
+        model.gmsh_io._GmshIO__mesh_data = {
+            'elements': {
+                'LINE_3N': {
+                    1: [1, 2, 3],
+                    2: [2, 4, 5]
+                },
+                "TRIANGLE_6N": {
+                    3: [1, 2, 6, 3, 8, 7],
+                    4: [2, 4, 9, 5, 10, 11],
+                    5: [2, 9, 6, 11, 12, 8]
+                }
+            },
+            'ndim': 1,
+            'nodes': {
+                1: [0.0, 0.0, 0.0],
+                2: [1.0, 0.0, 0.0],
+                3: [0.5, 0.0, 0.0],
+                4: [2.0, 0.0, 0.0],
+                5: [1.5, 0.0, 0.0],
+                6: [0.0, -1.0, 0.0],
+                7: [0.0, -0.5, 0.0],
+                8: [0.5, -0.5, 0.0],
+                9: [2.0, -1.0, 0.0],
+                10: [2.0, -0.5, 0.0],
+                11: [1.5, -0.5, 0.0],
+                12: [1.0, -1.0, 0.0]
+            },
+            'physical_groups': {
+                'beam': {
+                    'element_ids': [1],
+                    'element_type': 'LINE_3N',
+                    'ndim': 1,
+                    'node_ids': [1, 2, 3]
+                },
+                'load': {
+                    'element_ids': [1, 2],
+                    'element_type': 'LINE_3N',
+                    'ndim': 1,
+                    'node_ids': [1, 2, 3, 4, 5]
+                },
+                'soil': {
+                    'element_ids': [3, 4, 5],
+                    'element_type': 'TRIANGLE_6N',
+                    'ndim': 2,
+                    'node_ids': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                }
+            }
+        }
 
         beam_material = create_default_3d_beam
         # Specify the coordinates for the beam: x:1m x y:0m
@@ -4379,12 +4451,8 @@ class TestModel:
         # set the mesh of the soil model part
         soil_model_part.mesh = Mesh.create_mesh_from_gmsh_group(model.gmsh_io.mesh_data, soil_material.name)
 
-
-
         # add load on top of beam
         load_parameters = create_default_moving_load_parameters
-
-
 
         load_model_part = ModelPart("load")
         load_model_part.parameters = load_parameters
@@ -4400,4 +4468,4 @@ class TestModel:
         # perform test
         model._Model__split_second_order_elements()
 
-        a=1+1
+        a = 1 + 1

@@ -51,9 +51,11 @@ class MeshSettings:
 
         self.__element_order: int = element_order
 
-        self.__constraints: Dict[str, Any] = {"transfinite_curve":{},
-                                              "transfinite_surface":{},
-                                              "transfinite_volume":{}}
+        self.__constraints: Dict[str, Any] = {
+            "transfinite_curve": {},
+            "transfinite_surface": {},
+            "transfinite_volume": {}
+        }
 
     @property
     def constraints(self) -> Dict[str, Any]:
@@ -362,7 +364,7 @@ class Mesh:
         for element_id, element in self.elements.items():
             for node_id in element.node_ids:
                 if node_id == 110:
-                    a=1+1
+                    a = 1 + 1
                 node_to_elements[node_id].append(element_id)
 
         return node_to_elements

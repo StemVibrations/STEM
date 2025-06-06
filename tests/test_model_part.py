@@ -201,9 +201,9 @@ class TestModelPart:
         assert (absorbing_boundary_part.get_element_name(3, 4,
                                                          AnalysisType.MECHANICAL) == "UPwLysmerAbsorbingCondition3D4N")
         assert (absorbing_boundary_part.get_element_name(3, 6,
-                                                            AnalysisType.MECHANICAL) == "UPwLysmerAbsorbingCondition3D6N")
+                                                         AnalysisType.MECHANICAL) == "UPwLysmerAbsorbingCondition3D6N")
         assert (absorbing_boundary_part.get_element_name(3, 8,
-                                                            AnalysisType.MECHANICAL) == "UPwLysmerAbsorbingCondition3D8N")
+                                                         AnalysisType.MECHANICAL) == "UPwLysmerAbsorbingCondition3D8N")
 
         # wrong absorbing_boundary input
         with pytest.raises(ValueError,

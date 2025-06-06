@@ -18,9 +18,7 @@ from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
 
 
-@pytest.mark.parametrize("element_order", [
-    (1),
-    (2)])
+@pytest.mark.parametrize("element_order", [(1), (2)])
 def test_stem(element_order):
     # Define geometry, conditions and material parameters
     # --------------------------------
@@ -162,7 +160,8 @@ def test_stem(element_order):
     # --------------------------------
     stem.run_calculation()
 
-    assert assert_files_equal(f"benchmark_tests/test_moving_load_on_beam_on_soil/order_{element_order}/_output/output_vtk_full_model",
-                              os.path.join(input_folder, "output/output_vtk_full_model"))
+    assert assert_files_equal(
+        f"benchmark_tests/test_moving_load_on_beam_on_soil/order_{element_order}/_output/output_vtk_full_model",
+        os.path.join(input_folder, "output/output_vtk_full_model"))
 
     rmtree(input_folder)

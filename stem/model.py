@@ -1012,15 +1012,15 @@ class Model:
                 np.array(self.gmsh_io.mesh_data["elements"]["HEXAHEDRON_20N"][key])[gmsh_to_kratos_indices].tolist()
 
     def __set_mesh_constraints(self):
-        if len(self.mesh_settings.constraints["transfinite_volume"])>0:
+        if len(self.mesh_settings.constraints["transfinite_volume"]) > 0:
             for key, value in self.mesh_settings.constraints["transfinite_volume"].items():
                 self.gmsh_io.set_structured_mesh_constraints_volume(value, key)
 
-        if len(self.mesh_settings.constraints["transfinite_surface"])>0:
+        if len(self.mesh_settings.constraints["transfinite_surface"]) > 0:
             for key, value in self.mesh_settings.constraints["transfinite_surface"].items():
                 self.gmsh_io.set_structured_mesh_constraints_surface(value, key)
 
-        if len(self.mesh_settings.constraints["transfinite_curve"])>0:
+        if len(self.mesh_settings.constraints["transfinite_curve"]) > 0:
             for key, value in self.mesh_settings.constraints["transfinite_curve"].items():
                 self.gmsh_io.geo_data["constraints"]["transfinite_curve"][key] = {"n_points": value}
 
@@ -1213,7 +1213,8 @@ class Model:
                 if isinstance(model_part.material.material_parameters, types_to_be_split):
 
                     # check if the first element in the model part is a second order line element
-                    if len( model_part.mesh.elements)>0 and next(iter(model_part.mesh.elements.values())).element_type != "LINE_3N":
+                    if len(model_part.mesh.elements) > 0 and next(iter(
+                            model_part.mesh.elements.values())).element_type != "LINE_3N":
                         # the elements are not second order line elements and are not to be split
                         continue
 
@@ -1224,11 +1225,10 @@ class Model:
 
                     for element_id, element in model_part.mesh.elements.items():
                         # define the new element ids of the split elements, and remember on which line the split occurred
-                        changed_lines[element_id] = [new_element_id, new_element_id+1]
+                        changed_lines[element_id] = [new_element_id, new_element_id + 1]
 
                         node_ids = element.node_ids
-                        new_connectivities = [[node_ids[0], node_ids[2]],
-                                              [node_ids[2], node_ids[1]]]
+                        new_connectivities = [[node_ids[0], node_ids[2]], [node_ids[2], node_ids[1]]]
 
                         for connectivities in new_connectivities:
                             # new_elements[new_element_id] = Element(new_element_id, "LINE_2N", connectivities)
@@ -1238,7 +1238,6 @@ class Model:
         # make sure that not only the elements are split, but also line conditions that are applied to the elements
         if changed_lines != {}:
             self.__split_3n_line_elements(changed_lines)
-
 
     def __post_mesh(self):
         """
@@ -1438,7 +1437,7 @@ class Model:
         """
 
         # if the mesh is higher order, convert it to linear mesh in order to find the end nodes
-        if self.mesh_settings.element_order >1:
+        if self.mesh_settings.element_order > 1:
             linear_mesh = deepcopy(mesh)
 
             # remove middle nodes of line elements in case of higher order meshes
@@ -1450,7 +1449,6 @@ class Model:
             nodes_to_elements = mesh.find_elements_connected_to_nodes()
 
         end_nodes = set(node_id for node_id, elements in nodes_to_elements.items() if len(elements) == 1)
-
 
         return end_nodes
 

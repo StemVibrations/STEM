@@ -477,15 +477,15 @@ class KratosIO:
         if len(element_part_type) > 1:
             for element_type in element_part_type:
                 if element_type.startswith("LINE"):
-                    raise ValueError(f"Model part {model_part.name} has higher and lower order line elements assigned."
-                                     f"\n most likely this happened due to that it was placed only partly on an unsupported"
-                                     f"\n higher order element (Beam or SpringDamper). To solve this, split the model part into "
-                                     f"\n a part which is placed on the higher order element and one which is placed on "
-                                     f"\n the lower order element.")
+                    raise ValueError(
+                        f"Model part {model_part.name} has higher and lower order line elements assigned."
+                        f"\n most likely this happened due to that it was placed only partly on an unsupported"
+                        f"\n higher order element (Beam or SpringDamper). To solve this, split the model part into "
+                        f"\n a part which is placed on the higher order element and one which is placed on "
+                        f"\n the lower order element.")
                 else:
                     raise ValueError(f"Model part {model_part.name} has more than 1 element type assigned."
                                      f"\n{element_part_type}. Error.")
-
 
         # get number of nodes per element
         n_nodes_element = len(next(iter(model_part.mesh.elements.values())).node_ids)
