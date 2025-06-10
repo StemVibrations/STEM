@@ -9,7 +9,12 @@ import numpy as np
 
 from stem.additional_processes import ParameterFieldParameters, HingeParameters
 from stem.field_generator import RandomFieldGenerator
-from stem.globals import ELEMENT_DATA, OUT_OF_PLANE_AXIS_2D, VERTICAL_AXIS, GRAVITY_VALUE
+from stem.globals import (
+    ELEMENT_DATA,
+    OUT_OF_PLANE_AXIS_2D,
+    VERTICAL_AXIS,
+    GRAVITY_VALUE,
+)
 from stem.load import *
 from stem.boundary import *
 from stem.geometry import Geometry, Point
@@ -77,10 +82,18 @@ class Model:
         """
         return self.body_model_parts + self.process_model_parts
 
-    def generate_straight_track(self, sleeper_distance: float, n_sleepers: int, rail_parameters: EulerBeam,
-                                sleeper_parameters: NodalConcentrated, rail_pad_parameters: ElasticSpringDamper,
-                                rail_pad_thickness: float, origin_point: Sequence[float],
-                                direction_vector: Sequence[float], name: str):
+    def generate_straight_track(
+        self,
+        sleeper_distance: float,
+        n_sleepers: int,
+        rail_parameters: EulerBeam,
+        sleeper_parameters: NodalConcentrated,
+        rail_pad_parameters: ElasticSpringDamper,
+        rail_pad_thickness: float,
+        origin_point: Sequence[float],
+        direction_vector: Sequence[float],
+        name: str,
+    ):
         """
         Generates a track geometry. With rail, rail-pads and sleepers as mass elements. Sleepers are placed at the
         bottom of the track with a distance of sleeper_distance between them. The sleepers are connected to the rail
@@ -111,12 +124,12 @@ class Model:
         sleeper_local_coords = np.copy(rail_local_distance)
 
         # set global rail geometry
-        rail_global_coords = rail_local_distance[:, None].dot(normalized_direction_vector[None, :]) + origin_point
+        rail_global_coords = (rail_local_distance[:, None].dot(normalized_direction_vector[None, :]) + origin_point)
         rail_global_coords[:, VERTICAL_AXIS] += rail_pad_thickness
         rail_geo_settings = {rail_name: {"coordinates": rail_global_coords, "ndim": 1}}
 
         # set sleepers geometry
-        sleeper_global_coords = sleeper_local_coords[:, None].dot(normalized_direction_vector[None, :]) + origin_point
+        sleeper_global_coords = (sleeper_local_coords[:, None].dot(normalized_direction_vector[None, :]) + origin_point)
         connection_geo_settings = {"": {"coordinates": sleeper_global_coords, "ndim": 1}}
 
         sleeper_geo_settings = {sleeper_name: {"coordinates": sleeper_global_coords, "ndim": 0}}
@@ -192,7 +205,7 @@ class Model:
         no_rotation_geo_settings = {
             rotation_constraint_name: {
                 "coordinates": [rail_global_coords[0], rail_global_coords[-1]],
-                "ndim": 0
+                "ndim": 0,
             }
         }
         self.gmsh_io.generate_geometry(no_rotation_geo_settings, "")
@@ -201,12 +214,20 @@ class Model:
 
         self.process_model_parts.append(no_rotation_model_part)
 
-    def generate_extended_straight_track(self, sleeper_distance: float, n_sleepers: int, rail_parameters: EulerBeam,
-                                         sleeper_parameters: NodalConcentrated,
-                                         rail_pad_parameters: ElasticSpringDamper, rail_pad_thickness: float,
-                                         origin_point: Sequence[float], soil_equivalent_parameters: ElasticSpringDamper,
-                                         length_soil_equivalent_element: float, direction_vector: Sequence[float],
-                                         name: str):
+    def generate_extended_straight_track(
+        self,
+        sleeper_distance: float,
+        n_sleepers: int,
+        rail_parameters: EulerBeam,
+        sleeper_parameters: NodalConcentrated,
+        rail_pad_parameters: ElasticSpringDamper,
+        rail_pad_thickness: float,
+        origin_point: Sequence[float],
+        soil_equivalent_parameters: ElasticSpringDamper,
+        length_soil_equivalent_element: float,
+        direction_vector: Sequence[float],
+        name: str,
+    ):
         """
         Generates a track geometry. With rail, rail-pads and sleepers as mass elements. Sleepers are placed at the
         bottom of the track with a distance of sleeper_distance between them. The sleepers are connected to the rail
@@ -230,12 +251,25 @@ class Model:
             - direction_vector (Sequence[float]): direction vector of the track
             - name (str): name of the track
         """
-        self.generate_straight_track(sleeper_distance, n_sleepers, rail_parameters, sleeper_parameters,
-                                     rail_pad_parameters, rail_pad_thickness, origin_point, direction_vector, name)
+        self.generate_straight_track(
+            sleeper_distance,
+            n_sleepers,
+            rail_parameters,
+            sleeper_parameters,
+            rail_pad_parameters,
+            rail_pad_thickness,
+            origin_point,
+            direction_vector,
+            name,
+        )
         self.__generate_extended_rail_part(soil_equivalent_parameters, name, length_soil_equivalent_element)
 
-    def __generate_extended_rail_part(self, soil_equivalent_parameters: ElasticSpringDamper, name: str,
-                                      length_soil_equivalent_element: float):
+    def __generate_extended_rail_part(
+        self,
+        soil_equivalent_parameters: ElasticSpringDamper,
+        name: str,
+        length_soil_equivalent_element: float,
+    ):
         """
         Generates the soil equivalent elements outside the 2D or 3D soil domain. The soil equivalent elements are
         spring-damper elements that represents the soil below the rail in vertical direction. The soil equivalent
@@ -277,15 +311,19 @@ class Model:
                                                            material_parameters=soil_equivalent_parameters)
         self.body_model_parts.append(soil_equivalent_part)
         # add constraint to the soil equivalent as a new model part
-        constraint_horizontal_soil_equivalent_name = f"constraint_horizontal_{soil_equivalent_name}"
+        constraint_horizontal_soil_equivalent_name = (f"constraint_horizontal_{soil_equivalent_name}")
         # can only move in the vertical direction
         constraint_list = [True, True, True]
         constraint_list[VERTICAL_AXIS] = False
         constraint_parameters = DisplacementConstraint(active=constraint_list,
                                                        is_fixed=constraint_list,
                                                        value=[0, 0, 0])
-        self.add_boundary_condition_by_geometry_ids(0, points_outside_ids, constraint_parameters,
-                                                    constraint_horizontal_soil_equivalent_name)
+        self.add_boundary_condition_by_geometry_ids(
+            0,
+            points_outside_ids,
+            constraint_parameters,
+            constraint_horizontal_soil_equivalent_name,
+        )
 
         # add bottom points fixed
         constraint_model_soil_equivalent_name = f"constraint_{soil_equivalent_name}"
@@ -293,11 +331,11 @@ class Model:
         constraint_model_soil_equivalent = DisplacementConstraint(active=[True, True, True],
                                                                   is_fixed=[True, True, True],
                                                                   value=[0, 0, 0])
-        constraint_model_soil_equivalent_part.parameters = constraint_model_soil_equivalent
+        constraint_model_soil_equivalent_part.parameters = (constraint_model_soil_equivalent)
         constraint_model_soil_equivalent_part_settings = {
             constraint_model_soil_equivalent_name: {
                 "coordinates": soil_equivalent_bottom,
-                "ndim": 0
+                "ndim": 0,
             }
         }
         self.gmsh_io.generate_geometry(constraint_model_soil_equivalent_part_settings, "")
@@ -335,14 +373,13 @@ class Model:
             if model_part.geometry is None:
                 raise ValueError(f"Model part {model_part_name} has no geometry.")
             for point_id, point in model_part.geometry.points.items():
-
                 # check if point is within the bounding box of the soil model parts
                 x_is_in = min_coords[0] <= point.coordinates[0] <= max_coords[0]
                 y_is_in = min_coords[1] <= point.coordinates[1] <= max_coords[1]
                 is_inside = x_is_in and y_is_in
                 if self.ndim == 3:
                     z_is_in = min_coords[2] <= point.coordinates[2] <= max_coords[2]
-                    is_inside = (is_inside and z_is_in)
+                    is_inside = is_inside and z_is_in
                 if not is_inside:
                     points_outside_geometry.append(point)
             return points_outside_geometry
@@ -436,8 +473,8 @@ class Model:
             "extrusion_parameters": {
                 "reference_coordinate": reference_coordinate,
                 "length": extrusion_length,
-                "direction_vector": direction_vector
-            }
+                "direction_vector": direction_vector,
+            },
         }
 
     def add_model_part_to_group(self, group_name: str, part_name: str):
@@ -460,11 +497,13 @@ class Model:
 
         self.groups[group_name]["model_part_names"].append(part_name)
 
-    def add_soil_layer_by_coordinates(self,
-                                      coordinates: Sequence[Sequence[float]],
-                                      material_parameters: Union[SoilMaterial, StructuralMaterial],
-                                      name: str,
-                                      group_name: Optional[str] = None):
+    def add_soil_layer_by_coordinates(
+        self,
+        coordinates: Sequence[Sequence[float]],
+        material_parameters: Union[SoilMaterial, StructuralMaterial],
+        name: str,
+        group_name: Optional[str] = None,
+    ):
         """
         Adds a soil layer to the model by giving a sequence of 3D coordinates.
         The coordinates have to belong to the same plane.
@@ -501,13 +540,11 @@ class Model:
 
         # check if extrusion length is specified in 3D
         if self.ndim == 3:
-
             if self.extrusion_length is None and group_name is None:
                 raise ValueError("For 3D models either the extrusion length or the group name for the extrusion must be"
                                  " specified.")
 
             elif group_name is not None:
-
                 # retrieve information about group
                 extrusion_parameters = self.groups[group_name]["extrusion_parameters"]
                 # normalise the direction vector and scale it by the extrusion length
@@ -523,7 +560,6 @@ class Model:
                                      f"does not lay on the same plane as soil layer: {name}")
 
             elif self.extrusion_length is not None:
-
                 extrusion_vector = [0, 0, 0]
                 extrusion_vector[OUT_OF_PLANE_AXIS_2D] = self.extrusion_length
                 gmsh_input[name]["extrusion_length"] = extrusion_vector
@@ -588,8 +624,12 @@ class Model:
 
         self.process_model_parts.append(model_part)
 
-    def add_load_by_coordinates(self, coordinates: Sequence[Sequence[float]], load_parameters: LoadParametersABC,
-                                name: str):
+    def add_load_by_coordinates(
+        self,
+        coordinates: Sequence[Sequence[float]],
+        load_parameters: LoadParametersABC,
+        name: str,
+    ):
         """
         Adds a load to the model by giving a sequence of 3D coordinates. For a 2D model, the third coordinate is
         ignored.
@@ -616,9 +656,9 @@ class Model:
         elif isinstance(load_parameters, SurfaceLoad):
             gmsh_input = {name: {"coordinates": coordinates, "ndim": 2}}
         else:
-            raise ValueError(f'Invalid load_parameters ({load_parameters.__class__.__name__}) object'
-                             f' provided for the load {name}. Expected one of PointLoad, MovingLoad,'
-                             f' LineLoad or SurfaceLoad.')
+            raise ValueError(f"Invalid load_parameters ({load_parameters.__class__.__name__}) object"
+                             f" provided for the load {name}. Expected one of PointLoad, MovingLoad,"
+                             f" LineLoad or SurfaceLoad.")
 
         self.gmsh_io.generate_geometry(gmsh_input, "")
 
@@ -657,7 +697,10 @@ class Model:
             raise ValueError(f"Load parameter provided is not supported: `{load_parameters.__class__.__name__}`.")
 
         # Get the geometry of the matching model part
-        geometry = next((bmp.geometry for bmp in self.body_model_parts if bmp.name == model_part_name), None)
+        geometry = next(
+            (bmp.geometry for bmp in self.body_model_parts if bmp.name == model_part_name),
+            None,
+        )
         if geometry is None:
             raise ValueError(f"Geometry in model part with name `{model_part_name}` not found.")
 
@@ -678,8 +721,13 @@ class Model:
 
         self.process_model_parts.append(model_part)
 
-    def add_boundary_condition_by_geometry_ids(self, ndim_boundary: int, geometry_ids: Sequence[int],
-                                               boundary_parameters: BoundaryParametersABC, name: str):
+    def add_boundary_condition_by_geometry_ids(
+        self,
+        ndim_boundary: int,
+        geometry_ids: Sequence[int],
+        boundary_parameters: BoundaryParametersABC,
+        name: str,
+    ):
         """
         Add a boundary condition to the model by giving the geometry ids of the boundary condition.
 
@@ -707,8 +755,12 @@ class Model:
 
         self.process_model_parts.append(model_part)
 
-    def add_boundary_condition_on_plane(self, plane_vertices: Sequence[Sequence[float]],
-                                        boundary_parameters: BoundaryParametersABC, name: str):
+    def add_boundary_condition_on_plane(
+        self,
+        plane_vertices: Sequence[Sequence[float]],
+        boundary_parameters: BoundaryParametersABC,
+        name: str,
+    ):
         """
         Adds a boundary condition to the model by giving a sequence of 3D coordinates. The boundary condition is added
         to all the surfaces which fall within the plane.
@@ -746,7 +798,7 @@ class Model:
 
         model_part_exists = False
         for existing_part in self.process_model_parts:
-            if existing_part.name == name and existing_part.parameters == model_part.parameters:
+            if (existing_part.name == name and existing_part.parameters == model_part.parameters):
                 # extra geometry ids are added to the geometry of an existing model part
                 model_part_exists = True
                 existing_part.geometry = model_part.geometry
@@ -754,8 +806,12 @@ class Model:
         if not model_part_exists:
             self.process_model_parts.append(model_part)
 
-    def add_boundary_condition_on_polygon(self, polygon_coordinates: Sequence[Sequence[float]],
-                                          boundary_parameters: BoundaryParametersABC, name: str):
+    def add_boundary_condition_on_polygon(
+        self,
+        polygon_coordinates: Sequence[Sequence[float]],
+        boundary_parameters: BoundaryParametersABC,
+        name: str,
+    ):
         """
         Adds a boundary condition to the model by giving a sequence of 3D coordinates. The boundary condition is added
         to all the surfaces which fall within the polygon. A surface is considered to be within the polygon if all its
@@ -788,8 +844,13 @@ class Model:
 
         self.process_model_parts.append(model_part)
 
-    def add_hinge_on_beam(self, beam_model_part_name: str, hinge_coordinates: Sequence[Sequence[float]],
-                          hinge_parameters: HingeParameters, hinge_model_part_name: str):
+    def add_hinge_on_beam(
+        self,
+        beam_model_part_name: str,
+        hinge_coordinates: Sequence[Sequence[float]],
+        hinge_parameters: HingeParameters,
+        hinge_model_part_name: str,
+    ):
         """
         Adds a hinge to the model by giving the name of the beam model part where the hinge has to be applied.
 
@@ -806,7 +867,7 @@ class Model:
             - ValueError: if the beam model part does not have a beam material.
             - NotImplementedError: if the hinge is applied in a 2D model.
             - ValueError: if the hinge points are not part of the beam model part.
-            """
+        """
 
         gmsh_input = {hinge_model_part_name: {"coordinates": hinge_coordinates, "ndim": 0}}
         self.gmsh_io.generate_geometry(gmsh_input, "")
@@ -829,9 +890,9 @@ class Model:
             raise ValueError(f"Model part `{beam_model_part_name}` has no geometry.")
 
         # validate if the hinge is applied on a 3D beam model part
-        if not isinstance(beam_model_part, BodyModelPart) or not isinstance(
-                beam_model_part.material, StructuralMaterial) or not isinstance(
-                    beam_model_part.material.material_parameters, EulerBeam):
+        if (not isinstance(beam_model_part, BodyModelPart)
+                or not isinstance(beam_model_part.material, StructuralMaterial)
+                or not isinstance(beam_model_part.material.material_parameters, EulerBeam)):
             raise ValueError("Hinges can only be applied to beam model parts")
 
         if self.ndim != 3:
@@ -843,11 +904,13 @@ class Model:
 
         self.process_model_parts.append(model_part)
 
-    def add_output_settings(self,
-                            output_parameters: OutputParametersABC,
-                            part_name: Optional[str] = None,
-                            output_dir: str = "./",
-                            output_name: Optional[str] = None):
+    def add_output_settings(
+        self,
+        output_parameters: OutputParametersABC,
+        part_name: Optional[str] = None,
+        output_dir: str = "./",
+        output_name: Optional[str] = None,
+    ):
         """
         Adds an output to the model, including the output folder, the name of the output file (if applicable) and the
         part of interest to output.
@@ -886,17 +949,21 @@ class Model:
             raise ValueError("Model part for which output needs to be requested doesn't exist.")
 
         self.output_settings.append(
-            Output(output_parameters=output_parameters,
-                   part_name=part_name,
-                   output_dir=output_dir,
-                   output_name=output_name))
+            Output(
+                output_parameters=output_parameters,
+                part_name=part_name,
+                output_dir=output_dir,
+                output_name=output_name,
+            ))
 
-    def add_output_settings_by_coordinates(self,
-                                           coordinates: Sequence[Sequence[float]],
-                                           output_parameters: OutputParametersABC,
-                                           part_name: str,
-                                           output_dir: str = "./",
-                                           output_name: Optional[str] = None):
+    def add_output_settings_by_coordinates(
+        self,
+        coordinates: Sequence[Sequence[float]],
+        output_parameters: OutputParametersABC,
+        part_name: str,
+        output_dir: str = "./",
+        output_name: Optional[str] = None,
+    ):
         """
         Sets coordinates where the output is to be defined.
         The coordinates have to be laying on an existing geometry surface.
@@ -952,10 +1019,12 @@ class Model:
         self.process_model_parts.append(model_part)
 
         # add output to the output list
-        self.add_output_settings(output_parameters=output_parameters,
-                                 part_name=part_name,
-                                 output_dir=output_dir,
-                                 output_name=output_name)
+        self.add_output_settings(
+            output_parameters=output_parameters,
+            part_name=part_name,
+            output_dir=output_dir,
+            output_name=output_name,
+        )
 
     def __exclude_non_output_nodes(self, eps: float = 1e-06):
         """
@@ -973,11 +1042,9 @@ class Model:
         """
 
         for model_part in self.process_model_parts:
-
             # adjust the mesh of output model parts. Exclude element, and keep only the nodes of corresponding to the
             # output locations.
             if isinstance(model_part.parameters, OutputParametersABC):
-
                 if model_part.parameters is None:
                     raise ValueError("The model part doesn't have parameters.")
 
@@ -997,7 +1064,7 @@ class Model:
                 new_mesh.elements = {}
                 model_part.mesh = new_mesh
 
-                self.gmsh_io.mesh_data["physical_groups"][model_part.name]["node_ids"] = (list(new_mesh.nodes.keys()))
+                self.gmsh_io.mesh_data["physical_groups"][model_part.name]["node_ids"] = list(new_mesh.nodes.keys())
 
     def add_field(self, part_name: str, field_parameters: ParameterFieldParameters):
         """
@@ -1039,16 +1106,16 @@ class Model:
             if field_parameters.function_type == "json_file":
                 if isinstance(field_parameters.field_generator, RandomFieldGenerator):
                     if field_parameters.field_generator.mean_value is None:
-
                         # Get the property of the material, this is the mean value of the random field.
                         # Checks also if the material of the body model part contains the desired parameter
-                        mean_value_material = target_part.material.get_property_in_material(property_name=property_name)
+                        mean_value_material = (target_part.material.get_property_in_material(
+                            property_name=property_name))
 
                         if isinstance(mean_value_material, bool) or not isinstance(mean_value_material, (float, int)):
                             raise ValueError("The property for which a random field needs to be generated, "
                                              f"`{property_name}` is not a numeric value.")
 
-                        field_parameters.field_generator.mean_value = mean_value_material
+                        field_parameters.field_generator.mean_value = (mean_value_material)
 
                 if field_parameters.field_file_names[i] == "":
                     field_parameters.field_file_names[i] = new_part_name + ".json"
@@ -1094,11 +1161,13 @@ class Model:
         """
         self.mesh_settings.element_size = element_size
 
-    def generate_mesh(self,
-                      save_file: bool = False,
-                      mesh_output_dir: str = "./",
-                      mesh_name: str = "mesh_file",
-                      open_gmsh_gui: bool = False):
+    def generate_mesh(
+        self,
+        save_file: bool = False,
+        mesh_output_dir: str = "./",
+        mesh_name: str = "mesh_file",
+        open_gmsh_gui: bool = False,
+    ):
         """
         Generate the mesh for the whole model.
 
@@ -1111,13 +1180,15 @@ class Model:
         """
 
         # generate mesh
-        self.gmsh_io.generate_mesh(self.ndim,
-                                   element_size=self.mesh_settings.element_size,
-                                   order=self.mesh_settings.element_order,
-                                   save_file=save_file,
-                                   mesh_output_dir=mesh_output_dir,
-                                   mesh_name=mesh_name,
-                                   open_gmsh_gui=open_gmsh_gui)
+        self.gmsh_io.generate_mesh(
+            self.ndim,
+            element_size=self.mesh_settings.element_size,
+            order=self.mesh_settings.element_order,
+            save_file=save_file,
+            mesh_output_dir=mesh_output_dir,
+            mesh_name=mesh_name,
+            open_gmsh_gui=open_gmsh_gui,
+        )
 
         # add the mesh to each model part
         for model_part in self.all_model_parts:
@@ -1126,12 +1197,13 @@ class Model:
         # per process model part, check if the condition elements are applied to a body model part and set the
         # node ordering of the condition elements to match the body elements
         for process_model_part in self.process_model_parts:
-
             # only check if the process model part is a condition element
-            if isinstance(process_model_part.parameters,
-                          (LineLoad, MovingLoad, UvecLoad, SurfaceLoad, AbsorbingBoundary)):
+            if isinstance(
+                    process_model_part.parameters,
+                (LineLoad, MovingLoad, UvecLoad, SurfaceLoad, AbsorbingBoundary),
+            ):
                 # match the condition elements with the body elements on which the conditions are applied
-                matched_elements = self.__find_matching_body_elements_for_process_model_part(process_model_part)
+                matched_elements = (self.__find_matching_body_elements_for_process_model_part(process_model_part))
 
                 # check the ordering of the nodes of the conditions. If it does not match flip the order.
                 self.__check_ordering_process_model_part(matched_elements, process_model_part)
@@ -1164,23 +1236,35 @@ class Model:
             if self.ndim == 3:
                 raise NotImplementedError("3D interface elements are not supported yet.")
             # Extract interface components
-            stable_parts = interface_data["part_1"]
-            changing_parts = interface_data["part_2"]
+            interface_part_1 = interface_data["interface_part_1"]
+            interface_part_2 = interface_data["interface_part_2"]
             material_interface: Interface = interface_data["material"]
-            # Prepare node collections
-            nodes_stable_parts = [node for part in stable_parts for node in part.mesh.nodes]
-            nodes_changing_parts = [node for part in changing_parts for node in part.mesh.nodes]
-            # Find common nodes and create new node ID mapping
-            common_nodes = [node for node in nodes_stable_parts if node in nodes_changing_parts]
+            # Prepare node collections in sets
+            node_ids_part_1 = {node for part in interface_part_1 for node in part.mesh.nodes.keys()}
+            node_ids_part_2 = {node for part in interface_part_2 for node in part.mesh.nodes.keys()}
+            # Intersection is exactly the “common nodes”
+            common_node_ids = node_ids_part_1.intersection(node_ids_part_2)
+            # Mapping of old node IDs to new node IDs via a dictionary
             max_node_id = self.__get_maximum_node_id()
-            map_new_node_ids = {node_id: max_node_id + idx + 1 for idx, node_id in enumerate(common_nodes)}
+            old_to_new_node_id_map = {node_id: max_node_id + idx + 1 for idx, node_id in enumerate(common_node_ids)}
             # Update changing parts with new node IDs
-            indexes_changing_parts = [self.body_model_parts.index(part) for part in changing_parts]
-            self.__update_changing_parts(changing_parts, indexes_changing_parts, common_nodes, map_new_node_ids)
+            indexes_changing_parts = [self.body_model_parts.index(part) for part in interface_part_2]
+            self.__update_changing_parts(
+                interface_part_2,
+                indexes_changing_parts,
+                common_node_ids,
+                old_to_new_node_id_map,
+            )
             # Create and add interface body model part
-            interface_body_model_part = self.__create_interface_body_model_part(name, material_interface, common_nodes,
-                                                                                map_new_node_ids, n_interface_nodes,
-                                                                                element_type_gmsh, nodes_stable_parts)
+            interface_body_model_part = self.__create_interface_body_model_part(
+                name,
+                material_interface,
+                common_node_ids,
+                old_to_new_node_id_map,
+                n_interface_nodes,
+                element_type_gmsh,
+                node_ids_part_1,
+            )
             self.body_model_parts.append(interface_body_model_part)
 
     def __get_interface_config(self) -> Tuple[int, str]:
@@ -1188,57 +1272,90 @@ class Model:
         Get the interface configuration based on the model dimensions.
 
         Returns:
-            - tuple: Number of interface nodes and the GMSH element type
+            - Tuple[int,str]: Number of interface nodes and the GMSH element type
         """
         if self.ndim == 2:
             return 4, "QUADRANGLE_4N"
         else:
             return 8, "HEXAHEDRON_8N"
 
-    def __update_changing_parts(self, changing_parts: List[BodyModelPart], indexes_changing_parts: List[int],
-                                common_nodes: List[int], map_new_node_ids: Dict[int, int]):
+    def __update_changing_parts(
+        self,
+        interface_parts_2: List[BodyModelPart],
+        indexes_inferface_parts_2: List[int],
+        common_node_ids: List[int],
+        old_to_new_node_id_map: Dict[int, int],
+    ):
         """
         Updates the changing parts with new node IDs both mesh and elements are updated.
 
         Args:
-            - changing_parts (List[str]): List of names changing parts to be updated
-            - indexes_changing_parts (List[int]): List of indexes of changing parts
-            - common_nodes (List[int]): Common nodes between stable and changing parts
-            - map_new_node_ids (Dict[int, int]): Mapping from old node IDs to new node IDs
+            - interface_parts_2 (List[str]): List of names parts which nodes should be updated
+            - indexes_inferface_parts_2 (List[int]): List of indexes of changing parts
+            - common_node_ids (List[int]): Common node ids between stable and changing parts
+            - old_to_new_node_id_map (Dict[int, int]): A dictionaty of ids, mapping from old node IDs to new node IDs
         """
-        for index_body_model_part, part in zip(indexes_changing_parts, changing_parts):
-            new_part = copy.deepcopy(part)
+        for index_updating_body_model_part, updating_body_model_part in zip(indexes_inferface_parts_2,
+                                                                            interface_parts_2):
             # check that the part has a mesh
-            if new_part.mesh is None or part.mesh is None:
-                raise ValueError(f"Part `{part.name}` has no mesh. Please generate the mesh first.")
+            if updating_body_model_part.mesh is None:
+                raise ValueError(f"Part `{updating_body_model_part.name}` has no mesh. Please generate the mesh first.")
             # Find elements connected to nodes that need updating
-            node_to_elements_changing_part = part.mesh.find_elements_connected_to_nodes()
-            node_to_elements_changing_parts = {}
-            for node_id in common_nodes:
-                if node_id in list(node_to_elements_changing_part.keys()):
-                    node_to_elements_changing_parts[map_new_node_ids[node_id]] = node_to_elements_changing_part[node_id]
+            node_to_connected_elements = (updating_body_model_part.mesh.find_elements_connected_to_nodes())
+            new_node_id_to_connected_elements = {}
+            for node_id in common_node_ids:
+                if node_id in node_to_connected_elements.keys():
+                    new_node_id_to_connected_elements[
+                        old_to_new_node_id_map[node_id]] = node_to_connected_elements[node_id]
             # Update node IDs in the mesh
-            new_part.mesh.nodes = self.__update_node_ids(new_part.mesh.nodes, map_new_node_ids)
+            updating_body_model_part.mesh.nodes = self.__update_node_ids(updating_body_model_part.mesh.nodes,
+                                                                         old_to_new_node_id_map)
 
             # Update elements with new node IDs
-            new_part.mesh.elements = self.__update_elements_with_new_node_ids(new_part.mesh.elements,
-                                                                              node_to_elements_changing_parts,
-                                                                              map_new_node_ids)
+            updating_body_model_part.mesh.elements = (self.__update_elements_with_new_node_ids(
+                updating_body_model_part.mesh.elements,
+                new_node_id_to_connected_elements,
+                old_to_new_node_id_map,
+            ))
 
             # Update the body model part
-            self.body_model_parts[index_body_model_part] = new_part
-            self.__update_process_model_parts_for_interfaces(map_new_node_ids)
+            self.body_model_parts[index_updating_body_model_part] = (updating_body_model_part)
+            self.__update_process_model_parts_for_interfaces(old_to_new_node_id_map)
+            # Update the gmsh_io mesh data
 
-    def __update_process_model_parts_for_interfaces(self, map_new_node_ids: Dict[int, int]):
+            # nodes new ones with the coordinates
+            new_mesh = copy.deepcopy(self.gmsh_io.mesh_data["nodes"])
+            for node_id, node_coordinates in self.gmsh_io.mesh_data["nodes"].items():
+                if node_id in old_to_new_node_id_map:
+                    # add a new node to the dictionary
+                    new_mesh[old_to_new_node_id_map[node_id]] = node_coordinates
+            self.gmsh_io.mesh_data["nodes"] = new_mesh
+            # change the node ids in the elements of the gmsh_io mesh data
+            # get the element types to update
+            element_type_map = {elem.id: elem.element_type for elem in updating_body_model_part.mesh.elements.values()}
+            for (
+                    node_id_to_update,
+                    element_ids_to_update,
+            ) in new_node_id_to_connected_elements.items():
+                for element_id in element_ids_to_update:
+                    etype = element_type_map[element_id]
+                    element = self.gmsh_io.mesh_data["elements"][etype][element_id]
+                    # remap node IDs
+                    updated_node_ids = [old_to_new_node_id_map.get(nid, nid) for nid in element]
+                    self.gmsh_io.mesh_data["elements"][etype][element_id] = (updated_node_ids)
+            # Finally, update the nodes in the physical group in the gmsh_io mesh data
+            self.gmsh_io.mesh_data["physical_groups"][updating_body_model_part.name]["node_ids"] = list(
+                updating_body_model_part.mesh.nodes.keys())
+
+    def __update_process_model_parts_for_interfaces(self, old_to_new_node_id_map: Dict[int, int]):
         """
         Update the process model parts with new node IDs after interface creation.
         Args:
-            - map_new_node_ids (Dict[int, int]): Mapping from old node IDs to new node IDs
+            - old_to_new_node_id_map (Dict[int, int]): Mapping from old node IDs to new node IDs
         """
         # Update the process model parts nodes and elements
         for index, process_model_part in enumerate(self.process_model_parts):
-            process_model_part_new = copy.deepcopy(process_model_part)
-            if process_model_part.mesh is None or process_model_part_new.mesh is None:
+            if process_model_part.mesh is None:
                 raise ValueError(f"Process model part `{process_model_part.name}` has no mesh. "
                                  "Please generate the mesh first.")
             node_to_elements: Dict[int, List[int]] = {node_id: [] for node_id in process_model_part.mesh.nodes.keys()}
@@ -1247,12 +1364,34 @@ class Model:
                     node_to_elements[node_id].append(element_id)
             # check that the elements are in the changing parts
             # Update the process model part with the new nodes and elements
-            process_model_part_new.mesh.nodes = self.__update_node_ids(process_model_part.mesh.nodes, map_new_node_ids)
+            process_model_part.mesh.nodes = self.__update_node_ids(process_model_part.mesh.nodes,
+                                                                   old_to_new_node_id_map)
             # let's collect the elements of the process model part that are in the chan
-            process_model_part_new.mesh.elements = self.__update_elements_with_new_node_ids(
-                process_model_part.mesh.elements, node_to_elements, map_new_node_ids)
+            process_model_part.mesh.elements = self.__update_elements_with_new_node_ids(
+                process_model_part.mesh.elements,
+                node_to_elements,
+                old_to_new_node_id_map,
+            )
             # Update the process model part in the list
-            self.process_model_parts[index] = process_model_part_new
+            self.process_model_parts[index] = process_model_part
+            # get the process model part from the gmsh_io mesh data
+            process_part_gmsh_io = self.gmsh_io.mesh_data["physical_groups"].get(process_model_part.name, None)
+            if process_part_gmsh_io is not None:
+                # update the nodes in the gmsh_io mesh data
+                self.gmsh_io.mesh_data["physical_groups"][process_model_part.name]["node_ids"] = list(
+                    process_model_part.mesh.nodes.keys())
+            # also update the elements in the gmsh_io mesh data
+            element_type_map = {elem.id: elem.element_type for elem in process_model_part.mesh.elements.values()}
+            for node_id_to_update, element_ids_to_update in node_to_elements.items():
+                for element_id in element_ids_to_update:
+                    etype = element_type_map[element_id]
+                    element = self.gmsh_io.mesh_data["elements"][etype][element_id]
+                    # remap node IDs
+                    updated = [old_to_new_node_id_map.get(nid, nid) for nid in element]
+                    self.gmsh_io.mesh_data["elements"][etype][element_id] = updated
+            # Finally, update the nodes in the physical group in the gmsh_io mesh data
+            self.gmsh_io.mesh_data["physical_groups"][process_model_part.name]["node_ids"] = list(
+                process_model_part.mesh.nodes.keys())
 
     @staticmethod
     def __update_node_ids(nodes: Dict[int, Node], map_new_node_ids: Dict[int, int]) -> Dict[int, Node]:
@@ -1271,43 +1410,50 @@ class Model:
         for node_id, node in nodes.items():
             # deep copy the node
             node = copy.deepcopy(node)
-            if node_id in map_new_node_ids:
-                new_id = map_new_node_ids[node_id]
-                node.id = new_id
-                new_nodes[new_id] = node
-            else:
-                # Keep unchanged nodes as they are
-                new_nodes[node_id] = node
+            new_id = map_new_node_ids.get(node_id, node_id)
+            node.id = new_id
+            new_nodes[new_id] = node
         return new_nodes
 
     @staticmethod
-    def __update_elements_with_new_node_ids(elements: Dict[int, Element],
-                                            node_to_elements_changing_parts: Dict[int, List[int]],
-                                            map_new_node_ids: Dict[int, int]) -> Dict[int, Element]:
+    def __update_elements_with_new_node_ids(
+        elements: Dict[int, Element],
+        node_id_to_element_ids_map: Dict[int, List[int]],
+        map_new_node_ids: Dict[int, int],
+    ) -> Dict[int, Element]:
         """
         Update elements with new node IDs.
 
         Args:
             - elements (Dict[int, Element]): Dictionary of elements to be checked and updated
-            - node_to_elements_changing_parts (Dict[int, List[int]]): Mapping of node IDs to elements that need updating
+            - node_id_to_element_ids_map (Dict[int, List[int]]): Mapping of node IDs to elements that need updating
             - map_new_node_ids (Dict[int, int]): Mapping from old node IDs to new node IDs
 
         Returns:
             - Dict[int, Element]: Updated dictionary of elements with new node IDs
 
         """
-        for node_id, element_ids in node_to_elements_changing_parts.items():
+        for node_id, element_ids in node_id_to_element_ids_map.items():
             for element_id in element_ids:
                 element = elements[element_id]
                 # Replace the node IDs in the element
-                elements[element_id] = Element(id=element_id,
-                                               element_type=element.element_type,
-                                               node_ids=[map_new_node_ids.get(nid, nid) for nid in element.node_ids])
+                elements[element_id] = Element(
+                    id=element_id,
+                    element_type=element.element_type,
+                    node_ids=[map_new_node_ids.get(nid, nid) for nid in element.node_ids],
+                )
         return elements
 
-    def __create_interface_body_model_part(self, name: str, material: Interface, common_nodes: List[int],
-                                           map_new_node_ids: Dict[int, int], n_interface_nodes: int,
-                                           element_type_gmsh: str, nodes_stable_parts: List[int]) -> BodyModelPart:
+    def __create_interface_body_model_part(
+        self,
+        name: str,
+        material: Interface,
+        common_nodes: Set[int],
+        map_new_node_ids: Dict[int, int],
+        n_interface_nodes: int,
+        element_type_gmsh: str,
+        nodes_stable_parts: List[int],
+    ) -> BodyModelPart:
         """
         Create an interface body model part with interface elements.
 
@@ -1321,7 +1467,7 @@ class Model:
             - nodes_stable_parts (List[int]): List of nodes from stable parts
 
         Returns:
-            BodyModelPart: Created interface body model part
+            BodyModelPart (:class:`stem.model_part.BodyModelPart`): Created interface body model part
         """
         # Create body model part
         interface_body_model_part = BodyModelPart(name)
@@ -1337,52 +1483,95 @@ class Model:
 
         # Create interface elements
         interface_elements = self.__create_interface_elements(new_mesh.nodes, n_interface_nodes, element_type_gmsh,
-                                                              nodes_stable_parts)
+                                                              nodes_stable_parts, map_new_node_ids)
 
         new_mesh.elements = interface_elements
         interface_body_model_part.mesh = new_mesh
 
+        # Add elements to the gmsh_io mesh data as a new element type
+        elements_gmsh_io_format = {element_id: element.node_ids for element_id, element in interface_elements.items()}
+        if element_type_gmsh not in self.gmsh_io.mesh_data["elements"]:
+            self.gmsh_io.mesh_data["elements"][element_type_gmsh] = (elements_gmsh_io_format)
+        else:
+            self.gmsh_io.mesh_data["elements"][element_type_gmsh].update(elements_gmsh_io_format)
+        # Add physical group for the interface body model part
+        nodes_id_list = sorted(list(new_mesh.nodes.keys()))
+        element_ids_list = sorted(list(interface_elements.keys()))
+        self.gmsh_io.mesh_data["physical_groups"][name] = {
+            "node_ids": nodes_id_list,
+            "element_ids": element_ids_list,
+            "ndim": self.ndim,
+            "element_type": element_type_gmsh,
+        }
         return interface_body_model_part
 
-    def __create_interface_elements(self, nodes: Dict[int, Node], n_interface_nodes: int, element_type_gmsh: str,
-                                    nodes_stable_parts: List[int]) -> Dict[int, Element]:
+    def __create_interface_elements(
+        self,
+        interface_nodes_all_parts: Dict[int, Node],
+        n_interface_nodes: int,
+        element_type_gmsh: str,
+        node_ids_part_1: List[int],
+        map_old_to_new_node_ids: Dict[int, int],
+    ) -> Dict[int, Element]:
         """
         Create interface elements from the provided nodes.
 
         Args:
-            - nodes (Dict[int, Node]): Dictionary of nodes to create interface elements from
+            - interface_nodes_all_parts (Dict[int, Node]): Dictionary of all interface nodes from stable and changing parts
             - n_interface_nodes: Number of nodes per interface element
             - element_type_gmsh: Type of GMSH element
-            - nodes_stable_parts: List of nodes from stable parts
+            - node_ids_part_1: List of nodes from stable parts
+            - map_old_to_new_node_ids (Dict[int, int]): Mapping from old node IDs to new node IDs
 
         Returns:
             - Dict[int, Element]: Dictionary of created interface elements with their IDs
         """
-        # Sort nodes by coordinates
-        sorted_nodes = sorted(nodes.values(),
-                              key=lambda node: (node.coordinates[0], node.coordinates[1], node.coordinates[2]))
+        if element_type_gmsh == "QUADRANGLE_4N":
+            # Get node_ids of part 2
+            node_ids_part_2 = {
+                node_id: interface_nodes_all_parts[node_id]
+                for node_id in interface_nodes_all_parts.keys() if node_id not in node_ids_part_1
+            }
+            # Sort nodes by coordinates
+            elements_body_model_part_2 = []
+            for body_part in self.body_model_parts:
+                if body_part.mesh is not None:
+                    # Collect all elements from the body parts that have at least two nodes included in the nodes list
+                    elements_body_model_part_2.extend([
+                        elem for elem in body_part.mesh.elements.values()
+                        if len(set(elem.node_ids).intersection(node_ids_part_2.keys())) >= 2
+                    ])
+            # Create mapping from new to old node IDs
+            map_new_to_old_node_ids = {v: k for k, v in map_old_to_new_node_ids.items()}
 
-        # Create elements
-        interface_elements: Dict[int, Element] = {}
-        total_nodes = len(sorted_nodes)
-        step_size = n_interface_nodes // 2
-        max_element_id = self.__get_maximum_element_id()
-
-        for i in range(0, total_nodes - n_interface_nodes + 1, step_size):
-            # Get the next n_interface_nodes nodes
-            nodes_for_element = sorted_nodes[i:i + n_interface_nodes]
-
-            # Create a new element with the node IDs
-            if element_type_gmsh == "QUADRANGLE_4N":
-                nodes_ids_for_element = UtilsInterface.get_quadratic_order_nodes(nodes_stable_parts, nodes_for_element)
+            # Create elements
+            interface_elements: Dict[int, Element] = {}
+            max_element_id = self.__get_maximum_element_id()
+            # loop through the elements and create interface elements
+            for element_body_part_2 in elements_body_model_part_2:
+                # get the node IDs of the element that are in inter
+                nodes_for_element_part_2 = [
+                    node_id for node_id in element_body_part_2.node_ids if node_id in interface_nodes_all_parts.keys()
+                ]
+                # get the node IDs of the element in the stable part
+                nodes_for_element_part_1 = [map_new_to_old_node_ids[node_id] for node_id in nodes_for_element_part_2]
+                # create one list with the Node
+                nodes_for_element = [
+                    interface_nodes_all_parts[node_id]
+                    for node_id in nodes_for_element_part_1 + nodes_for_element_part_2
+                ]
+                # Create a new element with the node IDs
+                nodes_ids_for_element = UtilsInterface.get_quadrangle_order_nodes(node_ids_part_1, nodes_for_element)
                 id_new_element = max_element_id + len(interface_elements) + 1
-                interface_elements[id_new_element] = Element(id=id_new_element,
-                                                             element_type=element_type_gmsh,
-                                                             node_ids=nodes_ids_for_element)
-            elif element_type_gmsh == "HEXAHEDRON_8N":
-                raise NotImplementedError("Interface elements are not implemented for 3D models.")
-            else:
-                raise ValueError(f"Element type {element_type_gmsh} is not supported.")
+                interface_elements[id_new_element] = Element(
+                    id=id_new_element,
+                    element_type=element_type_gmsh,
+                    node_ids=nodes_ids_for_element,
+                )
+        elif element_type_gmsh == "HEXAHEDRON_8N":
+            raise NotImplementedError("Interface elements are not implemented for 3D models.")
+        else:
+            raise ValueError(f"Element type {element_type_gmsh} is not supported.")
 
         return interface_elements
 
@@ -1396,9 +1585,7 @@ class Model:
         """
 
         for model_part in self.process_model_parts:
-
             if isinstance(model_part.parameters, ParameterFieldParameters):
-
                 # initialise the fields for the json output files. Tiny expressions don't require it.
                 if model_part.parameters.function_type == "json_file":
                     if model_part.parameters.field_generator is None:
@@ -1427,10 +1614,8 @@ class Model:
 
         # retrieve connectivities and cluster into individual spring-damper elements
         for mp in self.body_model_parts:
-
-            if (isinstance(mp.material, StructuralMaterial)
-                    and isinstance(mp.material.material_parameters, ElasticSpringDamper)):
-
+            if isinstance(mp.material, StructuralMaterial) and isinstance(mp.material.material_parameters,
+                                                                          ElasticSpringDamper):
                 # assert mesh is initialised
                 if mp.mesh is None:
                     raise ValueError("Mesh not yet initialised. Please generate the mesh using Model.generate_mesh().")
@@ -1441,26 +1626,28 @@ class Model:
                 new_mesh = Mesh(ndim=1)
 
                 # loop over each spring-damper sequence
-                for (start_node_id, end_node_id) in spring_node_ids:
+                for start_node_id, end_node_id in spring_node_ids:
                     # add the existing nodes to the new mesh
                     new_mesh.nodes[start_node_id] = mp.mesh.nodes[start_node_id]
                     new_mesh.nodes[end_node_id] = mp.mesh.nodes[end_node_id]
 
                     # create new 2n line element
-                    new_mesh.elements[new_element_id] = Element(id=new_element_id,
-                                                                element_type="LINE_2N",
-                                                                node_ids=[start_node_id, end_node_id])
+                    new_mesh.elements[new_element_id] = Element(
+                        id=new_element_id,
+                        element_type="LINE_2N",
+                        node_ids=[start_node_id, end_node_id],
+                    )
 
                     # increment the element id
                     new_element_id += 1
 
                 # add the new mesh to the mesh data
                 self.gmsh_io.mesh_data["physical_groups"][mp.name]["node_ids"] = sorted(list(new_mesh.nodes.keys()))
-                self.gmsh_io.mesh_data["physical_groups"][mp.name]["element_ids"] = \
-                    sorted(list(new_mesh.elements.keys()))
+                self.gmsh_io.mesh_data["physical_groups"][mp.name]["element_ids"] = (sorted(
+                    list(new_mesh.elements.keys())))
 
                 for element_id, element in new_mesh.elements.items():
-                    self.gmsh_io.mesh_data["elements"]["LINE_2N"][element_id] = element.node_ids
+                    self.gmsh_io.mesh_data["elements"]["LINE_2N"][element_id] = (element.node_ids)
 
                 mp.mesh = new_mesh
 
@@ -1487,8 +1674,8 @@ class Model:
 
         """
         max_node_id = 0
-        for mesh_node_info in self.gmsh_io.mesh_data["nodes"].keys():
-            max_node_id = max(max_node_id, mesh_node_info)
+        for mesh_node_id in self.gmsh_io.mesh_data["nodes"].keys():
+            max_node_id = max(max_node_id, mesh_node_id)
 
         return int(max_node_id)
 
@@ -1535,26 +1722,27 @@ class Model:
         # initialise a set for end-point we have already encountered in the clustering algorithm
         completed_points = set()
         for end_node in end_nodes:
-
             # only consider the end nodes that are not already in the completed_points list
             if end_node not in completed_points:
-
                 # remove the end node from the list containing the node ids
                 node_ids_search_space.remove(end_node)
                 first_node_id = None
 
                 # if the point is not the end of the cluster, continue until you find the end of the cluster and include
                 # all the line strings
-                while first_node_id not in end_nodes and len(element_ids_search_space) > 0:
-
+                while (first_node_id not in end_nodes and len(element_ids_search_space) > 0):
                     # first point is the end node
                     if first_node_id is None:
                         first_node_id = end_node
 
-                    second_node_id = self.__find_next_node_along_line_elements(first_node_id, element_ids_search_space,
-                                                                               node_ids_search_space, node_to_elements,
-                                                                               model_part.mesh.elements,
-                                                                               node_ids_at_geometry_points)
+                    second_node_id = self.__find_next_node_along_line_elements(
+                        first_node_id,
+                        element_ids_search_space,
+                        node_ids_search_space,
+                        node_to_elements,
+                        model_part.mesh.elements,
+                        node_ids_at_geometry_points,
+                    )
 
                     # add the end nodes to the list (start node, end node)
                     line_node_ids.append([first_node_id, second_node_id])
@@ -1582,9 +1770,14 @@ class Model:
         return end_nodes
 
     @staticmethod
-    def __find_next_node_along_line_elements(start_node_id: int, remaining_element_ids: Set[int],
-                                             remaining_node_ids: Set[int], node_to_elements: Dict[int, List[int]],
-                                             line_elements: Dict[int, Element], target_node_ids: Set[int]) -> int:
+    def __find_next_node_along_line_elements(
+        start_node_id: int,
+        remaining_element_ids: Set[int],
+        remaining_node_ids: Set[int],
+        node_to_elements: Dict[int, List[int]],
+        line_elements: Dict[int, Element],
+        target_node_ids: Set[int],
+    ) -> int:
         """
         Finds the next node along line element. The remaining_element_ids and remaining_node_ids keeps track of
         the direction of the previous searches and orients the search on a unique direction.
@@ -1618,9 +1811,8 @@ class Model:
         # start the search for the connected node
         max_iterations = len(remaining_element_ids)
         for _ in range(max_iterations):
-
             # find the element(s) connected to the node that have not yet been searched for.
-            elements_connected = set(node_to_elements[next_node]) & remaining_element_ids
+            elements_connected = (set(node_to_elements[next_node]) & remaining_element_ids)
 
             # check if there is a fork in the mesh, which is not allowed
             if len(elements_connected) > 1:
@@ -1645,8 +1837,8 @@ class Model:
 
         raise ValueError("Next node along the line cannot be found. As it is not included in the search space")
 
-    def __find_matching_body_elements_for_process_model_part(self, process_model_part: ModelPart) \
-            -> List[Tuple[Element, Element]]:
+    def __find_matching_body_elements_for_process_model_part(
+            self, process_model_part: ModelPart) -> List[Tuple[Element, Element]]:
         """
         For a process model part, tries finds the matching body elements on which the condition elements are applied.
 
@@ -1672,13 +1864,15 @@ class Model:
 
         # loop over the body model parts (bmp) to match the elements of the process model part
         for body_model_part in self.body_model_parts:
-
             # validation step for body model part
             if body_model_part.mesh is None:
                 raise ValueError(f"Mesh of body model part: {body_model_part.name} is not yet initialised.")
 
             # find which nodes within the body model part are connected to which elements
-            for node_id, element_ids in body_model_part.mesh.find_elements_connected_to_nodes().items():
+            for (
+                    node_id,
+                    element_ids,
+            ) in body_model_part.mesh.find_elements_connected_to_nodes().items():
                 nodes_to_elements_body.setdefault(node_id, element_ids).extend(element_ids)
 
             all_body_elements.update(body_model_part.mesh.elements)
@@ -1687,7 +1881,6 @@ class Model:
         process_elements = process_model_part.mesh.elements
         matched_elements = []
         for process_element_id in process_elements:
-
             # check if all nodes of the process element are present in the body elements
             if not all(node_id in nodes_to_elements_body for node_id in process_elements[process_element_id].node_ids):
                 break
@@ -1703,22 +1896,27 @@ class Model:
             # if there are common elements, add the process element and the first connected body element to the
             # matched_elements list
             if len(common_elements) > 0:
-                matched_elements.append(
-                    (process_model_part.mesh.elements[process_element_id], all_body_elements[common_elements[0]]))
+                matched_elements.append((
+                    process_model_part.mesh.elements[process_element_id],
+                    all_body_elements[common_elements[0]],
+                ))
 
         # if not all process elements are matched, raise an error
         if len(matched_elements) < len(process_elements):
             # find which process elements are not matched
             matched_process_elements = set(pe.id for pe, _ in matched_elements)
-            unmatched_process_elements = set(process_model_part.mesh.elements.keys()) - matched_process_elements
+            unmatched_process_elements = (set(process_model_part.mesh.elements.keys()) - matched_process_elements)
 
             raise ValueError(f"Condition elements: {list(unmatched_process_elements)} do not have a corresponding "
                              f"body element.")
 
         return matched_elements
 
-    def __check_ordering_process_model_part(self, matched_elements: List[Tuple[Element, Element]],
-                                            process_model_part: ModelPart):
+    def __check_ordering_process_model_part(
+        self,
+        matched_elements: List[Tuple[Element, Element]],
+        process_model_part: ModelPart,
+    ):
         """
         Check if the node ordering of the process element matches the node ordering of the neighbouring body element.
         If not, flip the node ordering of the process element.
@@ -1740,23 +1938,20 @@ class Model:
         # loop over the matched elements
         elements_to_flip = []
 
-        for (process_element, body_element) in matched_elements:
-
+        for process_element, body_element in matched_elements:
             # element info such as order, number of edges, element types etc.
             process_el_info = ELEMENT_DATA[process_element.element_type]
             body_el_info = ELEMENT_DATA[body_element.element_type]
 
             if process_el_info["ndim"] == 1:
-
                 # get all line edges of the body element and check if the process element is defined on one of them
                 # if the nodes are equal, but the node order isn't, flip the node order of the process element
                 body_line_edges = Utils.get_element_edges(body_element)
                 for edge in body_line_edges:
-                    if set(edge) == set(process_element.node_ids) and list(edge) != process_element.node_ids:
+                    if (set(edge) == set(process_element.node_ids) and list(edge) != process_element.node_ids):
                         elements_to_flip.append(process_element)
 
             elif body_el_info["ndim"] == 3 and process_el_info["ndim"] == 2:
-
                 # check if the normal of the condition element is not defined outwards of the body element
                 if not Utils.is_volume_edge_defined_outwards(process_element, body_element,
                                                              self.gmsh_io.mesh_data["nodes"]):
@@ -1764,7 +1959,6 @@ class Model:
 
         # flip condition elements if required
         if len(elements_to_flip) > 0:
-
             # flip elements, it is required that all elements in the array are of the same type
             Utils.flip_node_order(elements_to_flip)
 
@@ -1897,13 +2091,15 @@ class Model:
 
         self.__validate_model_part_names()
 
-    def show_geometry(self,
-                      show_volume_ids: bool = False,
-                      show_surface_ids: bool = False,
-                      show_line_ids: bool = False,
-                      show_point_ids: bool = False,
-                      file_name: str = "tmp_geometry_file.html",
-                      auto_open: bool = True):
+    def show_geometry(
+        self,
+        show_volume_ids: bool = False,
+        show_surface_ids: bool = False,
+        show_line_ids: bool = False,
+        show_point_ids: bool = False,
+        file_name: str = "tmp_geometry_file.html",
+        auto_open: bool = True,
+    ):
         """
         Show the 2D or 3D geometry in a plot.
 
@@ -1924,8 +2120,14 @@ class Model:
         if self.geometry is None:
             raise ValueError("Geometry must be set before showing the geometry")
 
-        fig = PlotUtils.create_geometry_figure(self.ndim, self.geometry, show_volume_ids, show_surface_ids,
-                                               show_line_ids, show_point_ids)
+        fig = PlotUtils.create_geometry_figure(
+            self.ndim,
+            self.geometry,
+            show_volume_ids,
+            show_surface_ids,
+            show_line_ids,
+            show_point_ids,
+        )
 
         fig.write_html(file_name, auto_open=auto_open)
 
@@ -1968,7 +2170,6 @@ class Model:
         geometry_ids = []
 
         for body_model_part in self.body_model_parts:
-
             # if body model part has geometry, add the geometry ids to the list
             if body_model_part.geometry is not None:
                 if self.ndim == 2:
@@ -2022,12 +2223,17 @@ class Model:
         if group_name not in self.gmsh_io.geo_data["physical_groups"]:
             raise ValueError(f"Group name `{group_name}` not found.")
 
-        self.gmsh_io.geo_data["physical_groups"][group_name]["element_size"] = element_size
+        self.gmsh_io.geo_data["physical_groups"][group_name]["element_size"] = (element_size)
 
         self.gmsh_io.generate_geo_from_geo_data()
 
-    def split_model_part(self, from_model_part_name: str, to_model_part_name: str, geometry_ids: List[int],
-                         new_parameters: Union[Material, ProcessParameters]):
+    def split_model_part(
+        self,
+        from_model_part_name: str,
+        to_model_part_name: str,
+        geometry_ids: List[int],
+        new_parameters: Union[Material, ProcessParameters],
+    ):
         """
         Move the geometry from one model part to another.
 
@@ -2056,7 +2262,6 @@ class Model:
 
         # create new body model part if from_model_part is a body model part
         if isinstance(from_model_part, BodyModelPart) and isinstance(new_parameters, get_args(Material)):
-
             # check if the new parameters are of the same type as the existing material
             if not isinstance(new_parameters, from_model_part.material.__class__):
                 raise ValueError("New parameters must have the same material type as in the original "
@@ -2070,7 +2275,6 @@ class Model:
 
         # create new process model part if from_model_part is a process model part
         elif isinstance(from_model_part, ModelPart) and isinstance(new_parameters, get_args(ProcessParameters)):
-
             # check if the new parameters are of the same type as the existing process parameters
             if not isinstance(new_parameters, from_model_part.parameters.__class__):
                 raise ValueError("New parameters must have the same process parameter type as in the original "
@@ -2087,8 +2291,9 @@ class Model:
         existing_geometry_ids = self.gmsh_io.geo_data["physical_groups"][from_model_part_name]["geometry_ids"]
 
         # remove the geometry from gmsh physical groups
-        self.gmsh_io.geo_data["physical_groups"][from_model_part_name]["geometry_ids"] = \
-            [id for id in existing_geometry_ids if id not in geometry_ids]
+        self.gmsh_io.geo_data["physical_groups"][from_model_part_name]["geometry_ids"] = [
+            id for id in existing_geometry_ids if id not in geometry_ids
+        ]
 
         # update the geometry in the from-model part
         updated_from_geometry = Geometry.create_geometry_from_gmsh_group(self.gmsh_io.geo_data, from_model_part_name)
@@ -2102,7 +2307,7 @@ class Model:
         self.gmsh_io.geo_data["physical_groups"][to_model_part_name] = {
             "geometry_ids": geometry_ids,
             "ndim": ndim,
-            "id": max_existing_group_id + 1
+            "id": max_existing_group_id + 1,
         }
 
         # create new geometry and add to new model part
@@ -2132,10 +2337,8 @@ class Model:
 
         # reorder json file nodes based on the order of the desired output
         for output_settings in self.output_settings:
-
             # output settings contain info on the output directory
-            if isinstance(output_settings.output_parameters, JsonOutputParameters) and output_settings is not None:
-
+            if (isinstance(output_settings.output_parameters, JsonOutputParameters) and output_settings is not None):
                 if output_settings.part_name is None:
                     raise ValueError("The output model part has no part name specified.")
 
@@ -2180,20 +2383,26 @@ class Model:
                 for node_id, node in output_model_part.mesh.nodes.items():
                     node_key = f"NODE_{node_id}"
                     # reassign the corresponding nodal outputs including the nodal coordinates at the top
-                    new_json[node_key] = {'COORDINATES': node.coordinates} | json_data_tmp[node_key]
+                    new_json[node_key] = {"COORDINATES": node.coordinates} | json_data_tmp[node_key]
 
                 # write back the json file
                 with open(json_file_path, "w") as outfile:
                     json.dump(new_json, outfile, indent=2)
 
-    def set_interface_between_model_parts(self, part_1_name: Sequence[str], part_2_name: Sequence[str],
-                                          material: Material):
+    def set_interface_between_model_parts(
+        self,
+        interface_part_1_name: Sequence[str],
+        interface_part_2_name: Sequence[str],
+        material: Material,
+    ):
         """
         Set the interface between two model parts.
 
         Args:
-            - part_1_name (str): The name of the first model part.
-            - part_2_name (str): The name of the second model part.
+            - interface_part_1_name (str): The name of the first model part, the nodes of this part will not be changed
+            when the interface is set.
+            - interface_part_2_name (str): The name of the second model part, the nodes of this part will be changed
+            when the interface is set.
             - material (:class:`stem.model_part.Material`): The material to be used for the interface.
 
         Raises:
@@ -2201,22 +2410,23 @@ class Model:
 
         """
         # check if the model parts exist
-        part_1 = [self.get_model_part_by_name(name) for name in part_1_name]
-        part_2 = [self.get_model_part_by_name(name) for name in part_2_name]
+        interface_part_1 = [self.get_model_part_by_name(name) for name in interface_part_1_name]
+        interface_part_2 = [self.get_model_part_by_name(name) for name in interface_part_2_name]
 
-        if part_1 == len(part_1_name) * [None]:
-            string_part_1_name = " ".join(part_1_name)
-            raise ValueError(f"Model part {string_part_1_name} not found.")
-        if part_2 == len(part_1_name) * [None]:
-            string_part_2_name = " ".join(part_2_name)
-            raise ValueError(f"Model part {string_part_2_name} not found.")
+        if np.any([part is None for part in interface_part_1 + interface_part_2]):
+            raise ValueError("One or more model parts for the interface are not found. "
+                             "Please check the model part names.")
 
         # name should be flat and unique
-        part_1_name = "_".join(part_1_name).replace(" ", "_").replace("-", "_")
-        part_2_name = "_".join(part_2_name).replace(" ", "_").replace("-", "_")
-        interface_name = f"interface_{part_1_name}_{part_2_name}"
+        interface_part_1_name = ("_".join(interface_part_1_name).replace(" ", "_").replace("-", "_"))
+        interface_part_2_name = ("_".join(interface_part_2_name).replace(" ", "_").replace("-", "_"))
+        interface_name = f"interface_{interface_part_1_name}_{interface_part_2_name}"
         # save the values so that the interface can be set at the post mesh step
-        self.interfaces[interface_name] = {"part_1": part_1, "part_2": part_2, "material": material}
+        self.interfaces[interface_name] = {
+            "interface_part_1": interface_part_1,
+            "interface_part_2": interface_part_2,
+            "material": material,
+        }
 
     def finalise(self, input_folder: str):
         """

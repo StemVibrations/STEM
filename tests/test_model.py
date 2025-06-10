@@ -4287,8 +4287,22 @@ def model_setup():
                                    soil_formulation=variables,
                                    retention_parameters=retention_parameters)
 
-    model.gmsh_io.mesh_data["elements"] = {"TRIANGLE_3N": elements}
-    model.gmsh_io.mesh_data["nodes"] = nodes
+    model.gmsh_io.mesh_data["nodes"] = {k: v.coordinates for k, v in nodes.items()}
+    model.gmsh_io.mesh_data["elements"] = {"TRIANGLE_3N": {k: v.node_ids for k, v in elements.items()}}
+    model.gmsh_io.mesh_data['physical_groups'] = {}
+    model.gmsh_io.mesh_data['physical_groups'][stable_part.name] = {
+        "node_ids": list(stable_part.mesh.nodes.keys()),
+        "element_ids": list(stable_part.mesh.elements.keys()),
+        "ndim": 2,
+        "element_type": "TRIANGLE_3N"
+    }
+    model.gmsh_io.mesh_data['physical_groups'][changing_part.name] = {
+        "node_ids": list(changing_part.mesh.nodes.keys()),
+        "element_ids": list(changing_part.mesh.elements.keys()),
+        "ndim": 2,
+        "element_type": "TRIANGLE_3N"
+    }
+
     # Return all needed objects for tests
     return {
         'model': model,
@@ -4446,11 +4460,14 @@ class TestInterfaceFunctionality:
             2: Node(2, [1.0, 1.0, 0.0])
         }
 
+        map_new_node_ids = {2: 5, 3: 6}
+
         # Nodes from stable parts
         nodes_stable_parts = [3, 2]
         # test raises NotImplementedError
         with pytest.raises(NotImplementedError, match="Interface elements are not implemented for 3D models."):
-            model._Model__create_interface_elements(test_nodes, 4, "HEXAHEDRON_8N", nodes_stable_parts)
+            model._Model__create_interface_elements(test_nodes, 4, "HEXAHEDRON_8N", nodes_stable_parts,
+                                                    map_new_node_ids)
 
     def test_create_interface_elements_TRIANGLE_3N(self, model_setup: Dict[str, Any]):
         """
@@ -4470,11 +4487,14 @@ class TestInterfaceFunctionality:
             2: Node(2, [1.0, 1.0, 0.0])
         }
 
+        # Mapped node IDs
+        map_new_node_ids = {2: 5, 3: 6}
+
         # Nodes from stable parts
         nodes_stable_parts = [3, 2]
 
         with pytest.raises(ValueError, match="Element type TRIANGLE_3N is not supported."):
-            model._Model__create_interface_elements(test_nodes, 4, "TRIANGLE_3N", nodes_stable_parts)
+            model._Model__create_interface_elements(test_nodes, 4, "TRIANGLE_3N", nodes_stable_parts, map_new_node_ids)
 
     def test_create_interface_elements(self, model_setup: Dict[str, Any]):
         """
@@ -4490,14 +4510,26 @@ class TestInterfaceFunctionality:
             3: Node(3, [1.0, 0.0, 0.0]),
             5: Node(5, [1.0, 0.0, 0.0]),  # Mapped from node 2
             6: Node(6, [1.0, 1.0, 0.0]),  # Mapped from node 3
-            2: Node(2, [1.0, 1.0, 0.0])
+            2: Node(2, [1.0, 1.0, 0.0]),
         }
 
         # Nodes from stable parts
         nodes_stable_parts = [3, 2]
 
+        # Mapped node IDs
+        map_new_node_ids = {2: 5, 3: 6}
+
+        # the element nodes are arleady changed in the changing part
+        model.body_model_parts[1].mesh.nodes[5] = Node(5, [1.0, 0.0, 0.0])
+        model.body_model_parts[1].mesh.nodes[6] = Node(6, [1.0, 1.0, 0.0])
+        model.body_model_parts[1].mesh.nodes.pop(2)
+        model.body_model_parts[1].mesh.nodes.pop(3)
+        # also update the elements in the changing part
+        model.body_model_parts[1].mesh.elements[2] = Element(2, "TRIANGLE_3N", [5, 6, 4])
+
         # Test creating interface elements
-        interface_elements = model._Model__create_interface_elements(test_nodes, 4, "QUADRANGLE_4N", nodes_stable_parts)
+        interface_elements = model._Model__create_interface_elements(test_nodes, 4, "QUADRANGLE_4N", nodes_stable_parts,
+                                                                     map_new_node_ids)
 
         # Verify an element was created
         assert len(interface_elements) == 1
@@ -4511,7 +4543,7 @@ class TestInterfaceFunctionality:
 
         # Verify node order (should follow stable-changing-stable-changing pattern)
         node_ids = created_element.node_ids
-        assert node_ids == [3, 2, 6, 5]
+        assert node_ids == [2, 3, 5, 6]
 
     def test_create_interface_body_model_part(self, model_setup: Dict[str, Any]):
         """
@@ -4535,6 +4567,8 @@ class TestInterfaceFunctionality:
         # pop the nodes from the changing part
         model.body_model_parts[1].mesh.nodes.pop(2)
         model.body_model_parts[1].mesh.nodes.pop(3)
+        # also update the elements in the changing part
+        model.body_model_parts[1].mesh.elements[2] = Element(2, "TRIANGLE_3N", [5, 6, 4])
 
         # Create interface body model part
         interface_part = model._Model__create_interface_body_model_part("test_interface",
@@ -4566,8 +4600,8 @@ class TestInterfaceFunctionality:
         """
         model = model_setup['model']
         model.interfaces["interface_part_1_part_2"] = {
-            "part_1": [model.body_model_parts[0]],
-            "part_2": [model.body_model_parts[1]],
+            "interface_part_1": [model.body_model_parts[0]],
+            "interface_part_2": [model.body_model_parts[1]],
             "material": model_setup['interface_material'],
         }
 
@@ -4657,8 +4691,8 @@ class TestInterfaceFunctionality:
 
         """
         model = model_setup['model']
-        part_1_name = ["part_1"]
-        part_2_name = ["part_2"]
+        part_1_name = ["interface_part_1"]
+        part_2_name = ["interface_part_2"]
         material = model_setup['interface_material']
 
         # Mock the model parts
@@ -4668,10 +4702,10 @@ class TestInterfaceFunctionality:
         model.set_interface_between_model_parts(part_1_name, part_2_name, material)
 
         # Verify the interface was set
-        interface_name = "interface_part_1_part_2"
+        interface_name = "interface_interface_part_1_interface_part_2"
         assert interface_name in model.interfaces
-        assert model.interfaces[interface_name]["part_1"] == part_1_name
-        assert model.interfaces[interface_name]["part_2"] == part_2_name
+        assert model.interfaces[interface_name]["interface_part_1"] == part_1_name
+        assert model.interfaces[interface_name]["interface_part_2"] == part_2_name
         assert model.interfaces[interface_name]["material"] == material
 
     def test_set_interface_part_1_not_found(self, model_setup: Dict[str, Any]):
@@ -4690,7 +4724,9 @@ class TestInterfaceFunctionality:
         model.get_model_part_by_name = lambda name: name if name in part_2_name else None
 
         # Verify the error is raised
-        with pytest.raises(ValueError, match="Model part nonexistent_part_1 not found."):
+        with pytest.raises(
+                ValueError,
+                match="One or more model parts for the interface are not found. Please check the model part names."):
             model.set_interface_between_model_parts(part_1_name, part_2_name, material)
 
     def test_set_interface_part_2_not_found(self, model_setup: Dict[str, Any]):
@@ -4706,7 +4742,9 @@ class TestInterfaceFunctionality:
         model.get_model_part_by_name = lambda name: name if name in part_1_name else None
 
         # Verify the error is raised
-        with pytest.raises(ValueError, match="Model part nonexistent_part_2 not found."):
+        with pytest.raises(
+                ValueError,
+                match="One or more model parts for the interface are not found. Please check the model part names."):
             model.set_interface_between_model_parts(part_1_name, part_2_name, material)
 
     def test_update_process_model_parts_success(self, model_setup: Dict[str, Any]):
@@ -4735,6 +4773,15 @@ class TestInterfaceFunctionality:
         mesh.nodes = nodes
         mesh.elements = elements
         model.process_model_parts[0].mesh = mesh
+        # also add to gmsh_io POINT_1N in the elements
+        model.gmsh_io.mesh_data["elements"]["POINT_1N"] = {3: [2], 4: [1]}
+        # also in the physical groups
+        model.gmsh_io.mesh_data['physical_groups'][model.process_model_parts[0].name] = {
+            "node_ids": list(nodes.keys()),
+            "element_ids": list(elements.keys()),
+            "ndim": 0,
+            "element_type": "POINT_1N"
+        }
 
         # Prepare a mapping to update node id 2 to 10.
         map_new_node_ids = {2: 10}

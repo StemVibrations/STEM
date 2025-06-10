@@ -10,7 +10,7 @@ class UtilsInterface:
     """
 
     @staticmethod
-    def get_quadratic_order_nodes(nodes_stable_parts: List[int], nodes_for_element: List[Node]) -> List[int]:
+    def get_quadrangle_order_nodes(node_ids_part_1: List[int], nodes_for_element: List[Node]) -> List[int]:
         """
         Order 4 interface nodes using the following order:
         1. Start with the initial nodes that belong to the stable parts so the ones that are not changed
@@ -31,7 +31,7 @@ class UtilsInterface:
           0-----------1
 
         Args:
-            - nodes_stable_parts (List[int]): list of stable nodes ids
+            - node_ids_part_1 (List[int]): list of stable nodes ids
             - nodes_for_element (List[Node]): list of nodes for the element to be ordered
         Returns:
             - List[int]: ordered node ids in the order [bottom-left, bottom-right, top-right, top-left]
@@ -39,7 +39,7 @@ class UtilsInterface:
         # Create a new element with the node ids
         # Step 1: Get the nodes from the initial element so the ones that are in the stable parts and
         # in the nodes_for_element_dict
-        initial_nodes = {node.id: node for node in nodes_for_element if node.id in nodes_stable_parts}
+        initial_nodes = {node.id: node for node in nodes_for_element if node.id in node_ids_part_1}
         # Step 2: The next element is the one that has the same coordinates as the last node of the initial nodes
         equal_node = {
             node.id: node
