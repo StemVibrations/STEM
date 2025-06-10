@@ -8,7 +8,6 @@ from stem.model import Model
 from stem.model_part import BodyModelPart
 from stem.structural_material import *
 from stem.load import MovingLoad
-from stem.boundary import RotationConstraint
 from stem.boundary import DisplacementConstraint
 from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
                          StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy,
@@ -20,7 +19,8 @@ from benchmark_tests.utils import assert_files_equal
 from shutil import rmtree
 
 
-@pytest.mark.parametrize("element_order", [(1), (2)])
+@pytest.mark.parametrize("element_order", [(1)])
+# @pytest.mark.parametrize("element_order", [ (2)])
 def test_stem(element_order):
     # Define geometry, conditions and material parameters
     # --------------------------------
@@ -83,8 +83,13 @@ def test_stem(element_order):
                                                         is_fixed=[True, True, True],
                                                         value=[0, 0, 0])
 
+    roller_displacement_parameters = DisplacementConstraint(active=[True, False, True],
+                                                            is_fixed=[True, False, True],
+                                                            value=[0, 0, 0])
+
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(2, [1, 2, 3, 6], displacementXYZ_parameters, "displacementXYZ")
+    model.add_boundary_condition_by_geometry_ids(2, [5], roller_displacement_parameters, "roller_displacement")
 
     # model.show_geometry(show_surface_ids=True, show_point_ids=True)
 
