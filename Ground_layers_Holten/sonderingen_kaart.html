@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_f0b5f1fc798edc596ae18882150dff20 {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+</head>
+<body>
+    
+    
+<div style="
+    position: fixed; 
+    bottom: 50px; left: 50px; width: 200px; height: 110px; 
+    background-color: white; 
+    border:2px solid grey; z-index:9999; font-size:14px;
+    padding: 10px;
+">
+<b>Legenda</b><br>
+<span style="color:blue;">&#9679;</span> CPT<br>
+<span style="color:red;">&#9679;</span> Station Holten<br>
+<span style="color:green;">&#9679;</span> Measurement location </div>
+    
+            <div class="folium-map" id="map_f0b5f1fc798edc596ae18882150dff20" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_f0b5f1fc798edc596ae18882150dff20 = L.map(
+                "map_f0b5f1fc798edc596ae18882150dff20",
+                {
+                    center: [52.29231056652575, 6.461382775318615],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 17,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_d92e46f06b3d1b8c55a55a3a8a80bf4e = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 19,
+  "maxNativeZoom": 19,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_d92e46f06b3d1b8c55a55a3a8a80bf4e.addTo(map_f0b5f1fc798edc596ae18882150dff20);
+        
+    
+            var marker_b51357d4fe0e9899efef14a27cb2361b = L.marker(
+                [52.29225038776853, 6.461210189354036],
+                {
+}
+            ).addTo(map_f0b5f1fc798edc596ae18882150dff20);
+        
+    
+            var icon_a50c1c7b94963171ead2eebdef98907b = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_d3398a39d7c21157db7877fa036fa514 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_7c8ed110144a933580ffb23be90f4ae1 = $(`<div id="html_7c8ed110144a933580ffb23be90f4ae1" style="width: 100.0%; height: 100.0%;">GD231254-SW01</div>`)[0];
+                popup_d3398a39d7c21157db7877fa036fa514.setContent(html_7c8ed110144a933580ffb23be90f4ae1);
+            
+        
+
+        marker_b51357d4fe0e9899efef14a27cb2361b.bindPopup(popup_d3398a39d7c21157db7877fa036fa514)
+        ;
+
+        
+    
+    
+                marker_b51357d4fe0e9899efef14a27cb2361b.setIcon(icon_a50c1c7b94963171ead2eebdef98907b);
+            
+    
+            var marker_e3513c515c11c7b743e40149a5308108 = L.marker(
+                [52.29231899019494, 6.461408656089006],
+                {
+}
+            ).addTo(map_f0b5f1fc798edc596ae18882150dff20);
+        
+    
+            var icon_a96a09adbf67e89cbd63318e50501613 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_ec8bb59ebe148a290e014ab5c00f4e6d = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_c36760f930d143c3171b5aa34d6a4d93 = $(`<div id="html_c36760f930d143c3171b5aa34d6a4d93" style="width: 100.0%; height: 100.0%;">GD231254-SW02</div>`)[0];
+                popup_ec8bb59ebe148a290e014ab5c00f4e6d.setContent(html_c36760f930d143c3171b5aa34d6a4d93);
+            
+        
+
+        marker_e3513c515c11c7b743e40149a5308108.bindPopup(popup_ec8bb59ebe148a290e014ab5c00f4e6d)
+        ;
+
+        
+    
+    
+                marker_e3513c515c11c7b743e40149a5308108.setIcon(icon_a96a09adbf67e89cbd63318e50501613);
+            
+    
+            var marker_8df85d4835719ec27a03b270a387d8bd = L.marker(
+                [52.292362321613794, 6.461529480512803],
+                {
+}
+            ).addTo(map_f0b5f1fc798edc596ae18882150dff20);
+        
+    
+            var icon_a044612f212a070149e73307db7713cd = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_20d11e26fd5e16c07378e6d9d37c4077 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_d90834d88d465c3230fb6ed22118e195 = $(`<div id="html_d90834d88d465c3230fb6ed22118e195" style="width: 100.0%; height: 100.0%;">GD231254-SW03</div>`)[0];
+                popup_20d11e26fd5e16c07378e6d9d37c4077.setContent(html_d90834d88d465c3230fb6ed22118e195);
+            
+        
+
+        marker_8df85d4835719ec27a03b270a387d8bd.bindPopup(popup_20d11e26fd5e16c07378e6d9d37c4077)
+        ;
+
+        
+    
+    
+                marker_8df85d4835719ec27a03b270a387d8bd.setIcon(icon_a044612f212a070149e73307db7713cd);
+            
+    
+            var marker_e4dc8f3164be6231c256b0624ddda322 = L.marker(
+                [52.284120442802376, 6.421428606616156],
+                {
+}
+            ).addTo(map_f0b5f1fc798edc596ae18882150dff20);
+        
+    
+            var icon_e04e4b36569cd0210cf0ca256497bf5b = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "train",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_82a76c14d02e6ba05394b20362acf32b = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_fc8784be490789af4823951fbaeb769a = $(`<div id="html_fc8784be490789af4823951fbaeb769a" style="width: 100.0%; height: 100.0%;">Station Holten</div>`)[0];
+                popup_82a76c14d02e6ba05394b20362acf32b.setContent(html_fc8784be490789af4823951fbaeb769a);
+            
+        
+
+        marker_e4dc8f3164be6231c256b0624ddda322.bindPopup(popup_82a76c14d02e6ba05394b20362acf32b)
+        ;
+
+        
+    
+    
+                marker_e4dc8f3164be6231c256b0624ddda322.setIcon(icon_e04e4b36569cd0210cf0ca256497bf5b);
+            
+    
+            var marker_c858ac80f29cec68a9c9d05e60d62177 = L.marker(
+                [52.292304045111955, 6.4613005675311035],
+                {
+}
+            ).addTo(map_f0b5f1fc798edc596ae18882150dff20);
+        
+    
+            var icon_13f3fbf49a171d49cccde782072dfe39 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "star",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_69d1f81830aa14a67d734ca576baa46a = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_20e7048d7275e2b22816b1364d48d3f2 = $(`<div id="html_20e7048d7275e2b22816b1364d48d3f2" style="width: 100.0%; height: 100.0%;">Meetlocatie 024 KM 21,605</div>`)[0];
+                popup_69d1f81830aa14a67d734ca576baa46a.setContent(html_20e7048d7275e2b22816b1364d48d3f2);
+            
+        
+
+        marker_c858ac80f29cec68a9c9d05e60d62177.bindPopup(popup_69d1f81830aa14a67d734ca576baa46a)
+        ;
+
+        
+    
+    
+                marker_c858ac80f29cec68a9c9d05e60d62177.setIcon(icon_13f3fbf49a171d49cccde782072dfe39);
+            
+</script>
+</html>
