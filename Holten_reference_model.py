@@ -22,7 +22,7 @@ poisson_ratio_l5 = 0.25
 soil_formulation_l5 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_l5, POROSITY=porosity_l5)
 constitutive_law_l5 = LinearElasticSoil(YOUNG_MODULUS=young_modulus_l5, POISSON_RATIO=poisson_ratio_l5)
 retention_parameters_l5 = SaturatedBelowPhreaticLevelLaw()
-material_soil_l5 = SoilMaterial("soil_l4", soil_formulation_l5, constitutive_law_l5, retention_parameters_l5)
+material_soil_l5 = SoilMaterial("soil_l5", soil_formulation_l5, constitutive_law_l5, retention_parameters_l5)
 
 solid_density_l4 = 1850
 porosity_l4 = 0.3
@@ -60,10 +60,10 @@ constitutive_law_l1 = LinearElasticSoil(YOUNG_MODULUS=young_modulus_l1, POISSON_
 retention_parameters_l1 = SaturatedBelowPhreaticLevelLaw()
 material_soil_l1 = SoilMaterial("soil_l1", soil_formulation_l1, constitutive_law_l1, retention_parameters_l1)
 
-solid_density_ballast = 1800
+solid_density_ballast = 2000
 porosity_ballast = 0.3
 young_modulus_ballast = 100e6
-poisson_ratio_ballast = 0.15
+poisson_ratio_ballast = 0.25
 soil_formulation_ballast = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_ballast, POROSITY=porosity_ballast)
 constitutive_law_ballast = LinearElasticSoil(YOUNG_MODULUS=young_modulus_ballast, POISSON_RATIO=poisson_ratio_ballast)
 retention_parameters_ballast = SaturatedBelowPhreaticLevelLaw()
@@ -84,7 +84,7 @@ soil_l4_coordinates = [(0.0, 5.77, 0.0), (10.0, 5.77, 0.0), (10.0, 7.27, 0.0), (
 soil_l3_coordinates = [(0.0, 7.27, 0.0), (10.0, 7.27, 0.0), (10.0, 9.77, 0.0), (0.0, 9.77, 0.0)]
 soil_l2_coordinates = [(0.0, 9.77, 0.0), (10.0, 9.77, 0.0), (10.0, 11.77, 0.0), (0.0, 11.77, 0.0)]
 soil_l1_coordinates = [(0.0, 11.77, 0.0), (10.0, 11.77, 0.0), (10.0, 14.77, 0.0), (0.0, 14.77, 0.0)]
-ballast_coordinates = [(0.0, 14.77, 0.0), (10.0, 14.77, 0.0), (10.0, 15.07, 0.0), (0.75, 15.07, 0.0), (0, 15.07, 0.0)] #Change, not the entire lenght.
+ballast_coordinates = [(0.0, 14.77, 0.0), (10.0, 14.77, 0.0), (10.0, 15.07, 0.0), (0.75, 15.07, 0.0), (0, 15.07, 0.0)] # Change to 1 meter max.
 model.extrusion_length = extrusion_length
 
 model.add_soil_layer_by_coordinates(soil_l5_coordinates, material_soil_l5, "soil_layer_5")
@@ -158,7 +158,7 @@ model.set_element_size_of_group(element_size=0.31, group_name="soil_layer_4")
 model.set_element_size_of_group(element_size=0.43, group_name="soil_layer_3")
 model.set_element_size_of_group(element_size=0.35, group_name="soil_layer_2")
 model.set_element_size_of_group(element_size=0.43, group_name="soil_layer_1")
-model.set_element_size_of_group(element_size=0.24, group_name="ballast_layer")
+model.set_element_size_of_group(element_size=0.39, group_name="ballast_layer")
 
 # settings run
 end_time = 0.1
