@@ -3867,7 +3867,7 @@ depths = []
 Vs_all = []
 unit_weight_all = []
 Youngs_modulus_all = []
-labels = ['GD231254-SW01', 'GD231254-SW02', 'GD231254-SW03']
+labels = ['CPT_1', 'CPT_2', 'CPT_3']
 colors = ['blue', 'red', 'grey']
 
 for data_str in [data_str_1, data_str_2, data_str_3]:
@@ -3894,9 +3894,9 @@ for y in layer_boundaries:
 # Plot 1: Shear Wave Velocity
 for depth, Vs_values, color, label in zip(depths, Vs_all, colors, labels):
     axs[0].plot(Vs_values, depth, color=color, linewidth=1.5, label=label)
-axs[0].set_xlabel("Shear Wave Velocity Vs (m/s)")
-axs[0].set_ylabel("Depth (m)")
-axs[0].set_title("Shear Wave Velocity vs Depth")
+axs[0].set_xlabel("Shear Wave Velocity Vs (m/s)", fontsize=12)
+axs[0].set_ylabel("Depth (m)", fontsize=12)
+#axs[0].set_title("Shear Wave Velocity vs Depth")
 axs[0].grid(True)
 axs[0].legend()
 axs[0].set_ylim(15, 0)  # Flip y-axis manually
@@ -3904,8 +3904,8 @@ axs[0].set_ylim(15, 0)  # Flip y-axis manually
 # Plot 2: Soil Unit Weight
 for depth, unit_weight_values, color, label in zip(depths, unit_weight_all, colors, labels):
     axs[1].plot(unit_weight_values, depth, color=color, linewidth=1.5, label=label)
-axs[1].set_xlabel("Soil Density (kg/m³)")
-axs[1].set_title("Soil Density vs Depth")
+axs[1].set_xlabel("Soil Density (kg/m³)", fontsize=12)
+#axs[1].set_title("Soil Density vs Depth")
 axs[1].grid(True)
 axs[1].legend()
 axs[1].set_ylim(15, 0)  # Flip y-axis manually
@@ -3913,8 +3913,8 @@ axs[1].set_ylim(15, 0)  # Flip y-axis manually
 # Plot 3: Young's Modulus Em
 for depth, Youngs_values, color, label in zip(depths, Youngs_modulus_all, colors, labels):
     axs[2].plot(Youngs_values, depth, color=color, linewidth=1.5, label=label)
-axs[2].set_xlabel("Young's Modulus E (MPa)")
-axs[2].set_title("Young's Modulus vs Depth")
+axs[2].set_xlabel("Young's Modulus E (MPa)", fontsize=12)
+#axs[2].set_title("Young's Modulus vs Depth")
 axs[2].grid(True)
 axs[2].legend()
 axs[2].set_ylim(15, 0)  # Flip y-axis manually
@@ -3923,9 +3923,9 @@ axs[2].set_ylim(15, 0)  # Flip y-axis manually
 layer_depths = [1, 4, 6, 8.5, 10, 12]
 for y in layer_depths:
     for ax in axs:
-        ax.axhline(y=y, color='black', linestyle='--', linewidth=1)
+        ax.axhline(y=y, color='black', linestyle='--', linewidth=1.5)
         ax.text(ax.get_xlim()[1], y, f"depth={y} m", va='center', ha='right',
-                fontsize=8, color='black', backgroundcolor='white')
+                fontsize=12, color='black', backgroundcolor='white')
 
 
 plt.tight_layout()

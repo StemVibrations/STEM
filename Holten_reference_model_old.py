@@ -14,65 +14,50 @@ from stem.stem import Stem
 ndim = 3
 model = Model(ndim)
 
-# Ballast bed
-solid_density_ballast = 2100
-porosity_ballast = 0.3
-young_modulus_ballast = 125e6
-poisson_ratio_ballast = 0.25
-soil_formulation_ballast = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_ballast, POROSITY=porosity_ballast)
-constitutive_law_ballast = LinearElasticSoil(YOUNG_MODULUS=young_modulus_ballast, POISSON_RATIO=poisson_ratio_ballast)
-retention_parameters_ballast = SaturatedBelowPhreaticLevelLaw()
-material_ballast = SoilMaterial("baanlichaam", soil_formulation_ballast, constitutive_law_ballast, retention_parameters_ballast)
+solid_density_onderste = 2100
+porosity_onderste = 0.3
+young_modulus_onderste = 50e6
+poisson_ratio_onderste = 0.35
+soil_formulation_onderste = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_onderste, POROSITY=porosity_onderste)
+constitutive_law_onderste = LinearElasticSoil(YOUNG_MODULUS=young_modulus_onderste, POISSON_RATIO=poisson_ratio_onderste)
+retention_parameters_onderste = SaturatedBelowPhreaticLevelLaw()
+material_soil_onderste = SoilMaterial("soil_onderste", soil_formulation_onderste, constitutive_law_onderste, retention_parameters_onderste)
 
-# Laag 1
-solid_density_laag_1 = 2100
-porosity_laag_1 = 0.3
-young_modulus_laag_1 = 125e6
-poisson_ratio_laag_1 = 0.25
-soil_formulation_laag_1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_laag_1, POROSITY=porosity_laag_1)
-constitutive_law_laag_1 = LinearElasticSoil(YOUNG_MODULUS=young_modulus_laag_1, POISSON_RATIO=poisson_ratio_laag_1)
-retention_parameters_laag_1 = SaturatedBelowPhreaticLevelLaw()
-material_laag_1 = SoilMaterial("baanlichaam", soil_formulation_laag_1, constitutive_law_laag_1, retention_parameters_laag_1)
+solid_density_complexsat = 2050
+porosity_complexsat = 0.3
+young_modulus_complexsat = 40e6
+poisson_ratio_complexsat = 0.3
+soil_formulation_complexsat = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_complexsat, POROSITY=porosity_complexsat)
+constitutive_law_complexsat = LinearElasticSoil(YOUNG_MODULUS=young_modulus_complexsat, POISSON_RATIO=poisson_ratio_complexsat)
+retention_parameters_complexsat = SaturatedBelowPhreaticLevelLaw()
+material_soil_complexsat = SoilMaterial("soil_complexsat", soil_formulation_complexsat, constitutive_law_complexsat, retention_parameters_complexsat)
 
-# Laag 2
-solid_density_laag_2 = 2100
-porosity_laag_2 = 0.3
-young_modulus_laag_2 = 125e6
-poisson_ratio_laag_2 = 0.25
-soil_formulation_laag_2 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_laag_2, POROSITY=porosity_laag_2)
-constitutive_law_laag_2 = LinearElasticSoil(YOUNG_MODULUS=young_modulus_laag_2, POISSON_RATIO=poisson_ratio_laag_2)
-retention_parameters_laag_2 = SaturatedBelowPhreaticLevelLaw()
-material_laag_2 = SoilMaterial("baanlichaam", soil_formulation_laag_2, constitutive_law_laag_2, retention_parameters_laag_2)
+solid_density_complexunsat = 1800
+porosity_complexunsat = 0.3
+young_modulus_complexunsat = 50e6
+poisson_ratio_complexunsat = 0.25
+soil_formulation_complexunsat = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_complexunsat, POROSITY=porosity_complexunsat)
+constitutive_law_complexunsat = LinearElasticSoil(YOUNG_MODULUS=young_modulus_complexunsat, POISSON_RATIO=poisson_ratio_complexunsat)
+retention_parameters_complexunsat = SaturatedBelowPhreaticLevelLaw()
+material_soil_complexunsat = SoilMaterial("soil_complexunsat", soil_formulation_complexunsat, constitutive_law_complexunsat, retention_parameters_complexunsat)
 
-# Laag 3
-solid_density_laag_3 = 2100
-porosity_laag_3 = 0.3
-young_modulus_laag_3 = 125e6
-poisson_ratio_laag_3 = 0.25
-soil_formulation_laag_3 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_laag_3, POROSITY=porosity_laag_3)
-constitutive_law_laag_3 = LinearElasticSoil(YOUNG_MODULUS=young_modulus_laag_3, POISSON_RATIO=poisson_ratio_laag_3)
-retention_parameters_laag_3 = SaturatedBelowPhreaticLevelLaw()
-material_laag_3 = SoilMaterial("baanlichaam", soil_formulation_laag_3, constitutive_law_laag_3, retention_parameters_laag_3)
+solid_density_boxtel = 1700
+porosity_boxtel = 0.3
+young_modulus_boxtel = 25e6
+poisson_ratio_boxtel = 0.25
+soil_formulation_boxtel = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_boxtel, POROSITY=porosity_boxtel)
+constitutive_law_boxtel = LinearElasticSoil(YOUNG_MODULUS=young_modulus_boxtel, POISSON_RATIO=poisson_ratio_boxtel)
+retention_parameters_boxtel = SaturatedBelowPhreaticLevelLaw()
+material_soil_boxtel = SoilMaterial("soil_boxtel", soil_formulation_boxtel, constitutive_law_boxtel, retention_parameters_boxtel)
 
-# Laag 4
-solid_density_laag_4 = 2100
-porosity_laag_4 = 0.3
-young_modulus_laag_4 = 125e6
-poisson_ratio_laag_4 = 0.25
-soil_formulation_laag_4 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_laag_4, POROSITY=porosity_laag_4)
-constitutive_law_laag_4 = LinearElasticSoil(YOUNG_MODULUS=young_modulus_laag_4, POISSON_RATIO=poisson_ratio_laag_4)
-retention_parameters_laag_4 = SaturatedBelowPhreaticLevelLaw()
-material_laag_4 = SoilMaterial("baanlichaam", soil_formulation_laag_4, constitutive_law_laag_4, retention_parameters_laag_4)
-
-# Laag 5
-solid_density_laag_5 = 2100
-porosity_laag_5 = 0.3
-young_modulus_laag_5 = 125e6
-poisson_ratio_laag_5 = 0.25
-soil_formulation_laag_5 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_laag_5, POROSITY=porosity_laag_5)
-constitutive_law_laag_5= LinearElasticSoil(YOUNG_MODULUS=young_modulus_laag_5, POISSON_RATIO=poisson_ratio_laag_5)
-retention_parameters_laag_5 = SaturatedBelowPhreaticLevelLaw()
-material_laag_5 = SoilMaterial("baanlichaam", soil_formulation_laag_5, constitutive_law_laag_5, retention_parameters_laag_5)
+solid_density_baanlichaam = 2000
+porosity_baanlichaam = 0.3
+young_modulus_baanlichaam = 80e6
+poisson_ratio_baanlichaam = 0.15
+soil_formulation_baanlichaam = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_baanlichaam, POROSITY=porosity_baanlichaam)
+constitutive_law_baanlichaam = LinearElasticSoil(YOUNG_MODULUS=young_modulus_baanlichaam, POISSON_RATIO=poisson_ratio_baanlichaam)
+retention_parameters_baanlichaam = SaturatedBelowPhreaticLevelLaw()
+material_baanlichaam = SoilMaterial("baanlichaam", soil_formulation_baanlichaam, constitutive_law_baanlichaam, retention_parameters_baanlichaam)
 
 rail_parameters = DefaultMaterial.Rail_54E1_3D.value.material_parameters
 rail_pad_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[0, 750e6, 0],
@@ -83,16 +68,7 @@ sleeper_parameters = NodalConcentrated(NODAL_DISPLACEMENT_STIFFNESS=[0, 0, 0],
                                        NODAL_MASS=140,
                                        NODAL_DAMPING_COEFFICIENT=[0, 0, 0])
 
-extrusion_length = 50 # Hoe lang de track is waarover de trein gaat
-
-# coordinaten grondlagen
-ballast_coordinates = [(0.0, 14.77, 0.0), (10.0, 14.77, 0.0), (10.0, 15.07, 0.0), (0.75, 15.07, 0.0), (0, 15.07, 0.0)]
-laag_1_coordinates = [(0.0, 11.77, 0.0), (10.0, 11.77, 0.0), (10.0, 14.77, 0.0), (0.0, 14.77, 0.0)]
-laag_2_coordinates = [(0.0, 9.77, 0.0), (10.0, 9.77, 0.0), (10.0, 11.77, 0.0), (0.0, 11.77, 0.0)]
-laag_3_coordinates = [(0.0, 7.27, 0.0), (10.0, 7.27, 0.0), (10.0, 9.77, 0.0), (0.0, 9.77, 0.0)]
-laag_4_coordinates = [(0.0, 7.27, 0.0), (10.0, 7.27, 0.0), (10.0, 9.77, 0.0), (0.0, 9.77, 0.0)]
-
-
+extrusion_length = 50
 soil_onderste_coordinates = [(0.0, -7.0, 0.0), (10.0, -7.0, 0.0), (10.0, -2.0, 0.0), (0.0, -2.0, 0.0)] #onderste laag
 soil_complexsat_coordinates = [(0.0, -2.0, 0.0), (10.0, -2.0, 0.0), (10.0, 8.0, 0.0), (0.0, 8.0, 0.0)] #2 laag
 soil_complexunsat_coordinates = [(0.0, 8.0, 0.0), (10.0, 8.0, 0.0), (10.0, 18.0, 0.0), (0.0, 18.0, 0.0)] #3 laag
@@ -249,5 +225,5 @@ stage2.get_model_part_by_name("train_load").parameters.uvec_parameters["static_i
 
 stem.add_calculation_stage(stage2)
 stem.write_all_input_files()
-stem.run_calculation() # Duration 2.5 hours....
+stem.run_calculation()
 

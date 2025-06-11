@@ -14,50 +14,60 @@ from stem.stem import Stem
 ndim = 3
 model = Model(ndim)
 
-solid_density_onderste = 2100
-porosity_onderste = 0.3
-young_modulus_onderste = 50e6
-poisson_ratio_onderste = 0.35
-soil_formulation_onderste = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_onderste, POROSITY=porosity_onderste)
-constitutive_law_onderste = LinearElasticSoil(YOUNG_MODULUS=young_modulus_onderste, POISSON_RATIO=poisson_ratio_onderste)
-retention_parameters_onderste = SaturatedBelowPhreaticLevelLaw()
-material_soil_onderste = SoilMaterial("soil_onderste", soil_formulation_onderste, constitutive_law_onderste, retention_parameters_onderste)
+# ground
+solid_density_l5 = 1850
+porosity_l5 = 0.3
+young_modulus_l5 = 80e6
+poisson_ratio_l5 = 0.25
+soil_formulation_l5 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_l5, POROSITY=porosity_l5)
+constitutive_law_l5 = LinearElasticSoil(YOUNG_MODULUS=young_modulus_l5, POISSON_RATIO=poisson_ratio_l5)
+retention_parameters_l5 = SaturatedBelowPhreaticLevelLaw()
+material_soil_l5 = SoilMaterial("soil_l4", soil_formulation_l5, constitutive_law_l5, retention_parameters_l5)
 
-solid_density_complexsat = 2050
-porosity_complexsat = 0.3
-young_modulus_complexsat = 40e6
-poisson_ratio_complexsat = 0.3
-soil_formulation_complexsat = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_complexsat, POROSITY=porosity_complexsat)
-constitutive_law_complexsat = LinearElasticSoil(YOUNG_MODULUS=young_modulus_complexsat, POISSON_RATIO=poisson_ratio_complexsat)
-retention_parameters_complexsat = SaturatedBelowPhreaticLevelLaw()
-material_soil_complexsat = SoilMaterial("soil_complexsat", soil_formulation_complexsat, constitutive_law_complexsat, retention_parameters_complexsat)
+solid_density_l4 = 1850
+porosity_l4 = 0.3
+young_modulus_l4 = 80e6
+poisson_ratio_l4 = 0.25
+soil_formulation_l4 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_l4, POROSITY=porosity_l4)
+constitutive_law_l4 = LinearElasticSoil(YOUNG_MODULUS=young_modulus_l4, POISSON_RATIO=poisson_ratio_l4)
+retention_parameters_l4 = SaturatedBelowPhreaticLevelLaw()
+material_soil_l4 = SoilMaterial("soil_l4", soil_formulation_l4, constitutive_law_l4, retention_parameters_l4)
 
-solid_density_complexunsat = 1800
-porosity_complexunsat = 0.3
-young_modulus_complexunsat = 50e6
-poisson_ratio_complexunsat = 0.25
-soil_formulation_complexunsat = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_complexunsat, POROSITY=porosity_complexunsat)
-constitutive_law_complexunsat = LinearElasticSoil(YOUNG_MODULUS=young_modulus_complexunsat, POISSON_RATIO=poisson_ratio_complexunsat)
-retention_parameters_complexunsat = SaturatedBelowPhreaticLevelLaw()
-material_soil_complexunsat = SoilMaterial("soil_complexunsat", soil_formulation_complexunsat, constitutive_law_complexunsat, retention_parameters_complexunsat)
+solid_density_l3 = 2050
+porosity_l3 = 0.3
+young_modulus_l3 = 150e6
+poisson_ratio_l3 = 0.25
+soil_formulation_l3 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_l3, POROSITY=porosity_l3)
+constitutive_law_l3 = LinearElasticSoil(YOUNG_MODULUS=young_modulus_l3, POISSON_RATIO=poisson_ratio_l3)
+retention_parameters_l3 = SaturatedBelowPhreaticLevelLaw()
+material_soil_l3 = SoilMaterial("soil_l3", soil_formulation_l3, constitutive_law_l3, retention_parameters_l3)
 
-solid_density_boxtel = 1700
-porosity_boxtel = 0.3
-young_modulus_boxtel = 25e6
-poisson_ratio_boxtel = 0.25
-soil_formulation_boxtel = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_boxtel, POROSITY=porosity_boxtel)
-constitutive_law_boxtel = LinearElasticSoil(YOUNG_MODULUS=young_modulus_boxtel, POISSON_RATIO=poisson_ratio_boxtel)
-retention_parameters_boxtel = SaturatedBelowPhreaticLevelLaw()
-material_soil_boxtel = SoilMaterial("soil_boxtel", soil_formulation_boxtel, constitutive_law_boxtel, retention_parameters_boxtel)
+solid_density_l2 = 1900
+porosity_l2 = 0.3
+young_modulus_l2 = 100e6
+poisson_ratio_l2 = 0.25
+soil_formulation_l2 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_l2, POROSITY=porosity_l2)
+constitutive_law_l2 = LinearElasticSoil(YOUNG_MODULUS=young_modulus_l2, POISSON_RATIO=poisson_ratio_l2)
+retention_parameters_l2 = SaturatedBelowPhreaticLevelLaw()
+material_soil_l2 = SoilMaterial("soil_l2", soil_formulation_l2, constitutive_law_l2, retention_parameters_l2)
 
-solid_density_baanlichaam = 2000
-porosity_baanlichaam = 0.3
-young_modulus_baanlichaam = 80e6
-poisson_ratio_baanlichaam = 0.15
-soil_formulation_baanlichaam = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_baanlichaam, POROSITY=porosity_baanlichaam)
-constitutive_law_baanlichaam = LinearElasticSoil(YOUNG_MODULUS=young_modulus_baanlichaam, POISSON_RATIO=poisson_ratio_baanlichaam)
-retention_parameters_baanlichaam = SaturatedBelowPhreaticLevelLaw()
-material_baanlichaam = SoilMaterial("baanlichaam", soil_formulation_baanlichaam, constitutive_law_baanlichaam, retention_parameters_baanlichaam)
+solid_density_l1 = 2100
+porosity_l1 = 0.3
+young_modulus_l1 = 125e6
+poisson_ratio_l1 = 0.25
+soil_formulation_l1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_l1, POROSITY=porosity_l1)
+constitutive_law_l1 = LinearElasticSoil(YOUNG_MODULUS=young_modulus_l1, POISSON_RATIO=poisson_ratio_l1)
+retention_parameters_l1 = SaturatedBelowPhreaticLevelLaw()
+material_soil_l1 = SoilMaterial("soil_l1", soil_formulation_l1, constitutive_law_l1, retention_parameters_l1)
+
+solid_density_ballast = 1800
+porosity_ballast = 0.3
+young_modulus_ballast = 100e6
+poisson_ratio_ballast = 0.15
+soil_formulation_ballast = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_ballast, POROSITY=porosity_ballast)
+constitutive_law_ballast = LinearElasticSoil(YOUNG_MODULUS=young_modulus_ballast, POISSON_RATIO=poisson_ratio_ballast)
+retention_parameters_ballast = SaturatedBelowPhreaticLevelLaw()
+material_ballast = SoilMaterial("ballast", soil_formulation_ballast, constitutive_law_ballast, retention_parameters_ballast)
 
 rail_parameters = DefaultMaterial.Rail_54E1_3D.value.material_parameters
 rail_pad_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[0, 750e6, 0],
@@ -69,20 +79,23 @@ sleeper_parameters = NodalConcentrated(NODAL_DISPLACEMENT_STIFFNESS=[0, 0, 0],
                                        NODAL_DAMPING_COEFFICIENT=[0, 0, 0])
 
 extrusion_length = 50
-soil_onderste_coordinates = [(0.0, -7.0, 0.0), (10.0, -7.0, 0.0), (10.0, -2.0, 0.0), (0.0, -2.0, 0.0)] #onderste laag
-soil_complexsat_coordinates = [(0.0, -2.0, 0.0), (10.0, -2.0, 0.0), (10.0, 8.0, 0.0), (0.0, 8.0, 0.0)] #2 laag
-soil_complexunsat_coordinates = [(0.0, 8.0, 0.0), (10.0, 8.0, 0.0), (10.0, 18.0, 0.0), (0.0, 18.0, 0.0)] #3 laag
-soil_boxtel_coordinates = [(0.0, 18.0, 0.0), (10.0, 18.0, 0.0), (10.0, 19.4, 0.0), (0.0, 19.4, 0.0)] #middelste laag
-baanlichaam_coordinates = [(0.0, 19.4, 0.0), (10.0, 19.4, 0.0), (10.0, 20.0, 0.0), (0.75, 20.0, 0.0), (0, 20.0, 0.0)] #bovenste laag
+soil_l5_coordinates = [(0.0, 3.77, 0.0), (10.0, 3.77, 0.0), (10.0, 5.77, 0.0), (0.0, 5.77, 0.0)]
+soil_l4_coordinates = [(0.0, 5.77, 0.0), (10.0, 5.77, 0.0), (10.0, 7.27, 0.0), (0.0, 7.27, 0.0)]
+soil_l3_coordinates = [(0.0, 7.27, 0.0), (10.0, 7.27, 0.0), (10.0, 9.77, 0.0), (0.0, 9.77, 0.0)]
+soil_l2_coordinates = [(0.0, 9.77, 0.0), (10.0, 9.77, 0.0), (10.0, 11.77, 0.0), (0.0, 11.77, 0.0)]
+soil_l1_coordinates = [(0.0, 11.77, 0.0), (10.0, 11.77, 0.0), (10.0, 14.77, 0.0), (0.0, 14.77, 0.0)]
+ballast_coordinates = [(0.0, 14.77, 0.0), (10.0, 14.77, 0.0), (10.0, 15.07, 0.0), (0.75, 15.07, 0.0), (0, 15.07, 0.0)] #Change, not the entire lenght.
 model.extrusion_length = extrusion_length
 
-model.add_soil_layer_by_coordinates(soil_onderste_coordinates, material_soil_onderste, "soil_layer_onderste")
-model.add_soil_layer_by_coordinates(soil_complexsat_coordinates, material_soil_complexsat, "soil_layer_complexsat")
-model.add_soil_layer_by_coordinates(soil_complexunsat_coordinates, material_soil_complexunsat, "soil_layer_complexunsat")
-model.add_soil_layer_by_coordinates(soil_boxtel_coordinates, material_soil_boxtel, "soil_layer_boxtel")
-model.add_soil_layer_by_coordinates(baanlichaam_coordinates, material_baanlichaam, "baanlichaam_layer")
+model.add_soil_layer_by_coordinates(soil_l5_coordinates, material_soil_l5, "soil_layer_5")
+model.add_soil_layer_by_coordinates(soil_l4_coordinates, material_soil_l4, "soil_layer_4")
+model.add_soil_layer_by_coordinates(soil_l3_coordinates, material_soil_l3, "soil_layer_3")
+model.add_soil_layer_by_coordinates(soil_l2_coordinates, material_soil_l2, "soil_layer_2")
+model.add_soil_layer_by_coordinates(soil_l1_coordinates, material_soil_l1, "soil_layer_1")
+model.add_soil_layer_by_coordinates(ballast_coordinates, material_ballast, "ballast_layer")
 
-origin_point = [0.75, 20.0, 0] # [x, y = hoogte, z]
+# rails
+origin_point = [0.75, 15.07, 0]
 direction_vector = [0, 0, 1]
 number_of_sleepers = 101
 sleeper_spacing = 0.5
@@ -93,9 +106,10 @@ model.generate_straight_track(sleeper_spacing, number_of_sleepers, rail_paramete
                               rail_pad_thickness, origin_point,
                               direction_vector, "rail_track")
 
+# train
 wheel_configuration=[0.0, 2.5, 19.9, 22.4] # wheel configuration [m]
 velocity = 0 # velocity of the UVEC [m/s]
-# treinsnelheid / 1/2 (bij ovale vorm) omtrek = frequentie
+
 uvec_parameters = {"n_carts": 1, # number of carts [-]
                    "cart_inertia": (1128.8e3) / 2, # inertia of the cart [kgm2]
                    "cart_mass": (50e3) / 2, # mass of the cart [kg]
@@ -116,19 +130,17 @@ uvec_parameters = {"n_carts": 1, # number of carts [-]
                    "velocity": velocity,
                    }
 
-# define the UVEC load
-uvec_load = UvecLoad(direction=[1, 1, 1], velocity=velocity, origin=[0.75, 20+rail_pad_thickness, 0], #die 20 is ook y directie
+uvec_load = UvecLoad(direction=[1, 1, 1], velocity=velocity, origin=[0.75, 15.07+rail_pad_thickness, 0], #die 20 is ook y directie
                      wheel_configuration=wheel_configuration,
                      uvec_model=uvec,
                      uvec_parameters=uvec_parameters)
 
-# add the load on the tracks
 model.add_load_on_line_model_part("rail_track", uvec_load, "train_load")
 
-# show model
-model.show_geometry(show_surface_ids=True)
+#model.show_geometry(show_surface_ids=True)
+model.show_geometry()
 
-# define BC
+# boundary conditions
 no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
                                                     is_fixed=[True, True, True], value=[0, 0, 0])
 roller_displacement_parameters = DisplacementConstraint(active=[True, True, True],
@@ -136,17 +148,19 @@ roller_displacement_parameters = DisplacementConstraint(active=[True, True, True
 absorbing_boundaries_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=40.0)
 
 model.add_boundary_condition_by_geometry_ids(2, [1], no_displacement_parameters, "base_fixed")
-model.add_boundary_condition_by_geometry_ids(2, [4, 9, 14, 19, 25], roller_displacement_parameters, "sides_roller")
-model.add_boundary_condition_by_geometry_ids(2, [2, 5, 6, 7, 10, 11, 12, 15, 17, 20, 21, 22, 25, 26, 27], absorbing_boundaries_parameters, "abs")
+model.add_boundary_condition_by_geometry_ids(2, [4, 9, 14, 19, 24, 30], roller_displacement_parameters, "sides_roller")
+model.add_boundary_condition_by_geometry_ids(2, [2, 5, 6, 7, 10, 11, 12, 15, 16, 17, 20, 21, 22, 25, 26, 27, 31, 32], absorbing_boundaries_parameters, "abs")
 
+# mesh
 model.set_mesh_size(element_size=1.0)
-# 30 Hz
-model.set_element_size_of_group(element_size=0.55, group_name="baanlichaam_layer")
-model.set_element_size_of_group(element_size=0.32, group_name="soil_layer_boxtel")
-model.set_element_size_of_group(element_size=0.44, group_name="soil_layer_complexunsat")
-model.set_element_size_of_group(element_size=0.36, group_name="soil_layer_complexsat")
-model.set_element_size_of_group(element_size=0.39, group_name="baanlichaam_layer")
+model.set_element_size_of_group(element_size=0.43, group_name="soil_layer_5")
+model.set_element_size_of_group(element_size=0.31, group_name="soil_layer_4")
+model.set_element_size_of_group(element_size=0.43, group_name="soil_layer_3")
+model.set_element_size_of_group(element_size=0.35, group_name="soil_layer_2")
+model.set_element_size_of_group(element_size=0.43, group_name="soil_layer_1")
+model.set_element_size_of_group(element_size=0.24, group_name="ballast_layer")
 
+# settings run
 end_time = 0.1
 delta_time = 5e-3
 analysis_type = AnalysisType.MECHANICAL
@@ -190,10 +204,11 @@ model.add_output_settings(
         output_control_type="step"
     )
 )
-# De locaties waar de metingen zijn gedaan (nog aanpassen) (make a sketch were the starting positions are.
+
 desired_output_points = [
-                         (0.75, 20, 25),
-                         (0.75, 20 + rail_pad_thickness, 25)
+                         (2.20, 15.07, 25),
+                         (4.00, 15.07, 25),
+                         (8.00, 15.07, 25)
                          ]
 
 model.add_output_settings_by_coordinates(
@@ -211,7 +226,7 @@ model.add_output_settings_by_coordinates(
 input_files_dir = "Holten_rm"
 stem = Stem(model, input_files_dir)
 delta_time_stage_2 = 1e-3
-duration_stage_2 = 0.5
+duration_stage_2 = 1
 stage2 = stem.create_new_stage(delta_time_stage_2, duration_stage_2)
 
 velocity = 40
@@ -225,5 +240,5 @@ stage2.get_model_part_by_name("train_load").parameters.uvec_parameters["static_i
 
 stem.add_calculation_stage(stage2)
 stem.write_all_input_files()
-stem.run_calculation() # Duration 2.5 hours....
+stem.run_calculation()
 

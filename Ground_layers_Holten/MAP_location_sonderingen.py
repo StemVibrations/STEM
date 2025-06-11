@@ -73,9 +73,9 @@ legend_html = """
     padding: 10px;
 ">
 <b>Legenda</b><br>
-<span style="color:blue;">&#9679;</span> Sonderingen<br>
+<span style="color:blue;">&#9679;</span> CPT<br>
 <span style="color:red;">&#9679;</span> Station Holten<br>
-<span style="color:green;">&#9679;</span> Meetlocatie </div>
+<span style="color:green;">&#9679;</span> Measurement location </div>
 """
 
 m.get_root().html.add_child(folium.Element(legend_html))
