@@ -5,11 +5,13 @@ from stem.load import LineLoad
 from stem.table import Table
 from stem.boundary import DisplacementConstraint
 from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
-                         StressInitialisationType, SolverSettings, Problem, NewtonRaphsonStrategy, LinearNewtonRaphsonStrategy)
+                         StressInitialisationType, SolverSettings, Problem, NewtonRaphsonStrategy,
+                         LinearNewtonRaphsonStrategy)
 from stem.output import NodalOutput, VtkOutputParameters
 from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
 from shutil import rmtree
+
 
 def test_stem():
     """

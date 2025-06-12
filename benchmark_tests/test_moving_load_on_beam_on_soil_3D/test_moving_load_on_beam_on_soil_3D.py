@@ -19,8 +19,7 @@ from benchmark_tests.utils import assert_files_equal
 from shutil import rmtree
 
 
-@pytest.mark.parametrize("element_order", [(1)])
-# @pytest.mark.parametrize("element_order", [ (2)])
+@pytest.mark.parametrize("element_order", [(1), (2)])
 def test_stem(element_order):
     # Define geometry, conditions and material parameters
     # --------------------------------
