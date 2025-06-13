@@ -224,7 +224,7 @@ class AbsorbingBoundary(BoundaryParametersABC):
 
         available_node_dim_combinations = {
             2: [2, 3],
-            3: [3, 4],
+            3: [3, 4, 6, 8],
         }
         Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations,
                                              "Absorbing boundary")
