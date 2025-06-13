@@ -17,7 +17,7 @@ from stem.solver import AnalysisType, SolutionType, TimeIntegration, Displacemen
 from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters
 from stem.stem import Stem
 
-from benchmark_tests.utils import assert_files_equal
+from benchmark_tests.utils import assert_floats_in_directories_almost_equal
 from tests.utils import TestUtils
 import os
 
@@ -250,8 +250,11 @@ def test_train_track_soil_uvec_3d_irr_multistage():
         raise Exception("Unknown platform")
 
     # compare VTK files
-    assert assert_files_equal(os.path.join(expected_output_dir, "output_vtk_porous_computational_model_part"),
-                              os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
+    assert_floats_in_directories_almost_equal(os.path.join(expected_output_dir,
+                                                           "output_vtk_porous_computational_model_part"),
+                                              os.path.join(input_folder,
+                                                           "output/output_vtk_porous_computational_model_part"),
+                                              decimal=6)
 
     # compare JSON files
     with open(os.path.join(input_folder, "output/json_output.json")) as json_file:

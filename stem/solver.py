@@ -215,9 +215,21 @@ class BackwardEulerScheme(SchemeABC):
 
 @dataclass
 class StaticScheme(SchemeABC):
+    """
+    Class containing information about the static scheme
+
+    Inheritance:
+        - :class:`SchemeABC`
+    """
 
     @property
-    def scheme_type(self):
+    def scheme_type(self) -> str:
+        """
+        Property for returning the type of the static scheme
+
+        Returns:
+            - str: The type of the static scheme
+        """
         return "static"
 
 

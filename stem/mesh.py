@@ -363,8 +363,6 @@ class Mesh:
 
         for element_id, element in self.elements.items():
             for node_id in element.node_ids:
-                if node_id == 110:
-                    a = 1 + 1
                 node_to_elements[node_id].append(element_id)
 
         return node_to_elements

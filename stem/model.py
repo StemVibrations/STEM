@@ -1002,14 +1002,14 @@ class Model:
         if "TETRAHEDRON_10N" in self.gmsh_io.mesh_data["elements"]:
             gmsh_to_kratos_indices = ELEMENT_DATA["TETRAHEDRON_10N"]["gmsh_to_kratos_order"]
             for key, value in self.gmsh_io.mesh_data["elements"]["TETRAHEDRON_10N"].items():
-                self.gmsh_io.mesh_data["elements"]["TETRAHEDRON_10N"][key] = \
-                np.array(self.gmsh_io.mesh_data["elements"]["TETRAHEDRON_10N"][key])[gmsh_to_kratos_indices].tolist()
+                self.gmsh_io.mesh_data["elements"]["TETRAHEDRON_10N"][key] = np.array(
+                    self.gmsh_io.mesh_data["elements"]["TETRAHEDRON_10N"][key])[gmsh_to_kratos_indices].tolist()
 
         if "HEXAHEDRON_20N" in self.gmsh_io.mesh_data["elements"]:
             gmsh_to_kratos_indices = ELEMENT_DATA["HEXAHEDRON_20N"]["gmsh_to_kratos_order"]
             for key, value in self.gmsh_io.mesh_data["elements"]["HEXAHEDRON_20N"].items():
-                self.gmsh_io.mesh_data["elements"]["HEXAHEDRON_20N"][key] = \
-                np.array(self.gmsh_io.mesh_data["elements"]["HEXAHEDRON_20N"][key])[gmsh_to_kratos_indices].tolist()
+                self.gmsh_io.mesh_data["elements"]["HEXAHEDRON_20N"][key] = np.array(
+                    self.gmsh_io.mesh_data["elements"]["HEXAHEDRON_20N"][key])[gmsh_to_kratos_indices].tolist()
 
     def __set_mesh_constraints(self):
         if len(self.mesh_settings.constraints["transfinite_volume"]) > 0:
@@ -1175,6 +1175,10 @@ class Model:
         Splits the 3n line elements into 2n line elements when required. Not all second order element types are
         supported in Kratos. Therefore, the second order line elements are split into first order elements.
 
+        Raises:
+            - ValueError: if the model part with the given name is not found.
+            - ValueError: if the mesh is not initialised.
+
         """
         for name, group in self.gmsh_io.mesh_data["physical_groups"].items():
             if group["ndim"] == 1:
@@ -1191,7 +1195,13 @@ class Model:
                     group["element_ids"].extend(new_element_ids)
 
                     line_model_part = self.get_model_part_by_name(name)
+                    if line_model_part is None:
+                        raise ValueError(f"Model part with name `{name}` not found.")
                     mesh_model_part = line_model_part.mesh
+
+                    if mesh_model_part is None:
+                        raise ValueError(
+                            "Mesh not yet initialised. Please generate the mesh using Model.generate_mesh().")
 
                     # update the mesh data with the new elements
                     mesh_model_part.elements.pop(old_id, None)
@@ -1202,8 +1212,11 @@ class Model:
 
     def __split_second_order_elements(self):
         """
-        Splits second order line elements into first order elements when required. Not all second order element types are
-        supported in Kratos. Therefore, the second order line elements are split into first order elements.
+        Splits second order line elements into first order elements when required. Not all second order element types
+        are supported in Kratos. Therefore, the second order line elements are split into first order elements.
+
+        Raises:
+            - ValueError: if the mesh is not initialised.
 
         """
         changed_lines = {}
@@ -1211,6 +1224,11 @@ class Model:
             if isinstance(model_part.material, StructuralMaterial):
                 types_to_be_split = (ElasticSpringDamper, EulerBeam)
                 if isinstance(model_part.material.material_parameters, types_to_be_split):
+
+                    # check if the model part has a mesh
+                    if model_part.mesh is None:
+                        raise ValueError(
+                            "Mesh not yet initialised. Please generate the mesh using Model.generate_mesh().")
 
                     # check if the first element in the model part is a second order line element
                     if len(model_part.mesh.elements) > 0 and next(iter(
@@ -1224,7 +1242,8 @@ class Model:
                     self.gmsh_io.mesh_data["elements"].setdefault("LINE_2N", {})
 
                     for element_id, element in model_part.mesh.elements.items():
-                        # define the new element ids of the split elements, and remember on which line the split occurred
+                        # define the new element ids of the split elements, and remember on which line the split
+                        # occurred
                         changed_lines[element_id] = [new_element_id, new_element_id + 1]
 
                         node_ids = element.node_ids
@@ -1329,7 +1348,7 @@ class Model:
 
                 for element_id, element in new_mesh.elements.items():
                     if self.mesh_settings.element_order > 1:
-                        #add LINE_2N key to the mesh data dictionary
+                        # add LINE_2N key to the mesh data dictionary
                         if "LINE_2N" not in self.gmsh_io.mesh_data["elements"]:
                             self.gmsh_io.mesh_data["elements"]["LINE_2N"] = {}
 
@@ -1471,6 +1490,7 @@ class Model:
         Raises:
             - ValueError: if not all elements are line elements.
             - ValueError: if there is a fork in the mesh, the algorithm cannot find the next node.
+            - ValueError: if the next node along the line cannot be found, as it is not included in the search space.
             - ValueError: if number of interation in the while loop are exceeded and something went wrong in the
                 algorithm.
 
@@ -1498,7 +1518,7 @@ class Model:
                 raise ValueError(f"There is a fork in the mesh at elements: {elements_connected}, the next node along "
                                  f"the line cannot be found.")
             if len(elements_connected) == 0:
-                raise ValueError(f"Next node along the line cannot be found. As it is not included in the search space")
+                raise ValueError("Next node along the line cannot be found. As it is not included in the search space")
 
             next_element_id = elements_connected.pop()
 

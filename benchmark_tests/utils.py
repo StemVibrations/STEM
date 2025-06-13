@@ -22,8 +22,9 @@ def assert_floats_in_files_almost_equal(exact_file_name: str, test_file_name: st
         test = fi.read()
 
     # get all floats from files
-    all_floats_exact = np.array(re.findall(r'[\d]*[.][\d]+', exact), float)
-    all_floats_test = np.array(re.findall(r'[\d]*[.][\d]+', test), float)
+    float_pattern = r'[-+]?\d*\.\d+(?:[eE][-+]?\d+)?'
+    all_floats_exact = np.array(re.findall(float_pattern, exact), float)
+    all_floats_test = np.array(re.findall(float_pattern, test), float)
 
     # check if number of floats is equal
     assert len(all_floats_exact) == len(all_floats_test)

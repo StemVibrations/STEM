@@ -16,11 +16,8 @@ from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
 from shutil import rmtree
 
-@pytest.mark.parametrize("element_type", [
-    ("QUADRANGLE_4N"),  # 4 noded quads
-    # ("QUADRANGLE_8N"), # 8 noded elements todo run test when wheels are available
-    ("TRIANGLE_3N")])#, # 3 noded elements
-    # ("TRIANGLE_6N")])  # 6 noded elements todo run test when wheels are available
+
+@pytest.mark.parametrize("element_type", [("QUADRANGLE_4N"), ("QUADRANGLE_8N"), ("TRIANGLE_3N"), ("TRIANGLE_6N")])
 def test_stem(element_type):
     # Define geometry, conditions and material parameters
     # --------------------------------
@@ -104,9 +101,7 @@ def test_stem(element_type):
                                      rayleigh_m=0.1)
 
     # Set up problem data
-    problem = Problem(problem_name="test_lysmer_boundary_column2d",
-                      number_of_threads=1,
-                      settings=solver_settings)
+    problem = Problem(problem_name="test_lysmer_boundary_column2d", number_of_threads=1, settings=solver_settings)
     model.project_parameters = problem
 
     # Define the results to be written to the output file
@@ -133,7 +128,7 @@ def test_stem(element_type):
     # --------------------------------
     # set structured mesh constraint surface for quadrangle elements
     if element_type.startswith("QUADRANGLE"):
-        model.mesh_settings.set_structured_mesh_constraint_surface(1,[2,11,1])
+        model.mesh_settings.set_structured_mesh_constraint_surface(1, [2, 11, 1])
 
     model.mesh_settings.element_order = ELEMENT_DATA[element_type]["order"]
     stem = Stem(model, input_folder)
