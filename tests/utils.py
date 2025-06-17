@@ -33,12 +33,19 @@ class TestUtils:
         if actual.shape != desired.shape:
             raise AssertionError(f"Shapes do not match: {actual.shape} != {desired.shape}")
 
-        diff = np.abs(actual - desired)
-        allowed_error = np.maximum(rtol * np.abs(desired), atol)
+        if actual.dtype == bool or desired.dtype == bool:
+            diff = np.logical_xor(actual, desired)
+            if np.any(diff):
+                raise AssertionError(f"\nActual:   {actual}\nDesired:  {desired}\n"
+                                     f"Mismatch: {diff}")
 
-        if not np.all(diff <= allowed_error):
-            raise AssertionError(f"\nActual:   {actual}\nDesired:  {desired}\n"
-                                 f"Diff:     {diff}\nAllowed:  {allowed_error}")
+        else:
+            diff = np.abs(actual - desired)
+            allowed_error = np.maximum(rtol * np.abs(desired), atol)
+
+            if not np.all(diff <= allowed_error):
+                raise AssertionError(f"\nActual:   {actual}\nDesired:  {desired}\n"
+                                     f"Diff:     {diff}\nAllowed:  {allowed_error}")
 
     @staticmethod
     def create_default_soil_material(ndim: int):
