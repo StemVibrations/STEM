@@ -1198,10 +1198,8 @@ class Model:
         # node ordering of the condition elements to match the body elements
         for process_model_part in self.process_model_parts:
             # only check if the process model part is a condition element
-            if isinstance(
-                    process_model_part.parameters,
-                (LineLoad, MovingLoad, UvecLoad, SurfaceLoad, AbsorbingBoundary),
-            ):
+            if isinstance(process_model_part.parameters,
+                          (LineLoad, MovingLoad, UvecLoad, SurfaceLoad, AbsorbingBoundary)):
                 # match the condition elements with the body elements on which the conditions are applied
                 matched_elements = (self.__find_matching_body_elements_for_process_model_part(process_model_part))
 
@@ -1238,7 +1236,7 @@ class Model:
             # Extract interface components
             interface_part_1 = interface_data["interface_part_1"]
             interface_part_2 = interface_data["interface_part_2"]
-            material_interface: Interface = interface_data["material"]
+            material_interface: InterfaceMaterial = interface_data["material"]
             # Prepare node collections in sets
             node_ids_part_1 = {node for part in interface_part_1 for node in part.mesh.nodes.keys()}
             node_ids_part_2 = {node for part in interface_part_2 for node in part.mesh.nodes.keys()}
@@ -1283,7 +1281,7 @@ class Model:
         self,
         interface_parts_2: List[BodyModelPart],
         indexes_inferface_parts_2: List[int],
-        common_node_ids: List[int],
+        common_node_ids: Set[int],
         old_to_new_node_id_map: Dict[int, int],
     ):
         """
@@ -1292,7 +1290,7 @@ class Model:
         Args:
             - interface_parts_2 (List[str]): List of names parts which nodes should be updated
             - indexes_inferface_parts_2 (List[int]): List of indexes of changing parts
-            - common_node_ids (List[int]): Common node ids between stable and changing parts
+            - common_node_ids (Set[int]): Common node ids between stable and changing parts
             - old_to_new_node_id_map (Dict[int, int]): A dictionaty of ids, mapping from old node IDs to new node IDs
         """
         for index_updating_body_model_part, updating_body_model_part in zip(indexes_inferface_parts_2,
@@ -1447,12 +1445,12 @@ class Model:
     def __create_interface_body_model_part(
         self,
         name: str,
-        material: Interface,
+        material: InterfaceMaterial,
         common_nodes: Set[int],
         map_new_node_ids: Dict[int, int],
         n_interface_nodes: int,
         element_type_gmsh: str,
-        nodes_stable_parts: List[int],
+        nodes_stable_parts: Set[int],
     ) -> BodyModelPart:
         """
         Create an interface body model part with interface elements.
@@ -1464,7 +1462,7 @@ class Model:
             - map_new_node_ids (Dict[int, int]): Mapping from old node IDs to new node IDs
             - n_interface_nodes (int): Number of nodes per interface element
             - element_type_gmsh (str): Type of GMSH element (e.g., "QUADRANGLE_4N")
-            - nodes_stable_parts (List[int]): List of nodes from stable parts
+            - nodes_stable_parts (Set[int]): List of nodes from stable parts
 
         Returns:
             BodyModelPart (:class:`stem.model_part.BodyModelPart`): Created interface body model part
@@ -1482,8 +1480,12 @@ class Model:
         }
 
         # Create interface elements
-        interface_elements = self.__create_interface_elements(new_mesh.nodes, n_interface_nodes, element_type_gmsh,
-                                                              nodes_stable_parts, map_new_node_ids)
+        interface_elements = self.__create_interface_elements(
+            new_mesh.nodes,
+            element_type_gmsh,
+            nodes_stable_parts,
+            map_new_node_ids,
+        )
 
         new_mesh.elements = interface_elements
         interface_body_model_part.mesh = new_mesh
@@ -1508,19 +1510,18 @@ class Model:
     def __create_interface_elements(
         self,
         interface_nodes_all_parts: Dict[int, Node],
-        n_interface_nodes: int,
         element_type_gmsh: str,
-        node_ids_part_1: List[int],
+        node_ids_part_1: Set[int],
         map_old_to_new_node_ids: Dict[int, int],
     ) -> Dict[int, Element]:
         """
         Create interface elements from the provided nodes.
 
         Args:
-            - interface_nodes_all_parts (Dict[int, Node]): Dictionary of all interface nodes from stable and changing parts
-            - n_interface_nodes: Number of nodes per interface element
-            - element_type_gmsh: Type of GMSH element
-            - node_ids_part_1: List of nodes from stable parts
+            - interface_nodes_all_parts (Dict[int, Node]): Dictionary of all interface nodes
+            from stable and changing parts
+            - element_type_gmsh (str): Type of GMSH element
+            - node_ids_part_1 (Set[int]): Set of nodes from stable parts
             - map_old_to_new_node_ids (Dict[int, int]): Mapping from old node IDs to new node IDs
 
         Returns:
@@ -1561,7 +1562,7 @@ class Model:
                     for node_id in nodes_for_element_part_1 + nodes_for_element_part_2
                 ]
                 # Create a new element with the node IDs
-                nodes_ids_for_element = UtilsInterface.get_quadrangle_order_nodes(node_ids_part_1, nodes_for_element)
+                nodes_ids_for_element = UtilsInterface.get_quad4_node_order(node_ids_part_1, nodes_for_element)
                 id_new_element = max_element_id + len(interface_elements) + 1
                 interface_elements[id_new_element] = Element(
                     id=id_new_element,

@@ -64,7 +64,9 @@ class KratosMaterialIO:
         return material_dict
 
     @staticmethod
-    def __create_elastic_spring_damper_dict(material: StructuralParametersABC) -> Dict[str, Any]:
+    def __create_elastic_spring_damper_dict(
+        material: StructuralParametersABC,
+    ) -> Dict[str, Any]:
         """
         Creates a dictionary containing the material parameters for an elastic spring damper material. The
         NODAL_DAMPING_COEFFICIENT and NODAL_ROTATIONAL_DAMPING_COEFFICIENT keys are moved to the NODAL_DAMPING_RATIO
@@ -86,7 +88,9 @@ class KratosMaterialIO:
         return material_dict
 
     @staticmethod
-    def __create_nodal_concentrated_dict(material: StructuralParametersABC) -> Dict[str, Any]:
+    def __create_nodal_concentrated_dict(
+        material: StructuralParametersABC,
+    ) -> Dict[str, Any]:
         """
         Creates a dictionary containing the material parameters for a nodal concentrated material. The
         NODAL_DAMPING_COEFFICIENT key is moved to the NODAL_DAMPING_RATIO key, as this can be recognized by Kratos.
@@ -118,9 +122,14 @@ class KratosMaterialIO:
         """
 
         # initialize material dictionary
-        material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""}, "Variables": deepcopy(material.__dict__)}
+        material_dict: Dict[str, Any] = {
+            "constitutive_law": {
+                "name": ""
+            },
+            "Variables": deepcopy(material.__dict__),
+        }
         if self.ndim == 2:
-            material_dict["constitutive_law"]["name"] = "GeoLinearElasticPlaneStrain2DLaw"
+            material_dict["constitutive_law"]["name"] = ("GeoLinearElasticPlaneStrain2DLaw")
 
         elif self.ndim == 3:
             material_dict["constitutive_law"]["name"] = "LinearElastic3DLaw"
@@ -147,11 +156,11 @@ class KratosMaterialIO:
             "constitutive_law": {
                 "name": ""
             },
-            "Variables": self.__create_umat_material_dict(material)
+            "Variables": self.__create_umat_material_dict(material),
         }
 
         if self.ndim == 2:
-            material_dict["constitutive_law"]["name"] = "SmallStrainUMAT2DPlaneStrainLaw"
+            material_dict["constitutive_law"]["name"] = ("SmallStrainUMAT2DPlaneStrainLaw")
         elif self.ndim == 3:
             material_dict["constitutive_law"]["name"] = "SmallStrainUMAT3DLaw"
         else:
@@ -177,11 +186,11 @@ class KratosMaterialIO:
             "constitutive_law": {
                 "name": ""
             },
-            "Variables": self.__create_udsm_material_dict(material)
+            "Variables": self.__create_udsm_material_dict(material),
         }
 
         if self.ndim == 2:
-            material_dict["constitutive_law"]["name"] = "SmallStrainUDSM2DPlaneStrainLaw"
+            material_dict["constitutive_law"]["name"] = ("SmallStrainUDSM2DPlaneStrainLaw")
         elif self.ndim == 3:
             material_dict["constitutive_law"]["name"] = "SmallStrainUDSM3DLaw"
         else:
@@ -189,8 +198,11 @@ class KratosMaterialIO:
 
         return material_dict
 
-    def __add_soil_formulation_parameters_to_material_dict(self, variables_dict: Dict[str, Any],
-                                                           soil_parameters: Union[SoilMaterial, Interface]) -> None:
+    def __add_soil_formulation_parameters_to_material_dict(
+        self,
+        variables_dict: Dict[str, Any],
+        soil_parameters: Union[SoilMaterial, InterfaceMaterial],
+    ) -> None:
         """
         Adds the soil type parameters to the material dictionary. The soil type parameters are different for one phase
         and two phase soil. The correct parameters are added to the material dictionary based on the soil type.
@@ -204,12 +216,12 @@ class KratosMaterialIO:
         """
 
         if isinstance(soil_parameters.soil_formulation, OnePhaseSoil):
-            one_phase_soil_parameters_dict = self.__create_one_phase_soil_parameters_dict(
-                soil_parameters.soil_formulation)
+            one_phase_soil_parameters_dict = (self.__create_one_phase_soil_parameters_dict(
+                soil_parameters.soil_formulation))
             variables_dict.update(one_phase_soil_parameters_dict)
         elif isinstance(soil_parameters.soil_formulation, TwoPhaseSoil):
-            two_phase_soil_parameters_dict = self.__create_two_phase_soil_parameters_dict(
-                soil_parameters.soil_formulation)
+            two_phase_soil_parameters_dict = (self.__create_two_phase_soil_parameters_dict(
+                soil_parameters.soil_formulation))
             variables_dict.update(two_phase_soil_parameters_dict)
 
         # Remove ndim as this is not a material parameter
@@ -217,7 +229,9 @@ class KratosMaterialIO:
             variables_dict.pop("ndim")
 
     @staticmethod
-    def __create_one_phase_soil_parameters_dict(soil_parameters: OnePhaseSoil) -> Dict[str, Any]:
+    def __create_one_phase_soil_parameters_dict(
+        soil_parameters: OnePhaseSoil,
+    ) -> Dict[str, Any]:
         """
         Creates a dictionary containing the single phase soil parameters. For one phase soil, the permeability is set to
         near zero. Biot coefficient is added if it is not None.
@@ -247,8 +261,9 @@ class KratosMaterialIO:
         return soil_parameters_dict
 
     @staticmethod
-    def __create_two_phase_soil_parameters_dict(two_phase_soil_parameters: TwoPhaseSoil) \
-            -> Dict[str, Any]:
+    def __create_two_phase_soil_parameters_dict(
+        two_phase_soil_parameters: TwoPhaseSoil,
+    ) -> Dict[str, Any]:
         """
         Creates a dictionary containing the two phase soil parameters. For two phase soil, permeability is taken into
         account and undrained behaviour is taken into account. Biot coefficient is added if it is not None.
@@ -263,8 +278,8 @@ class KratosMaterialIO:
         two_phase_soil_parameters_dict = deepcopy(two_phase_soil_parameters.__dict__)
         two_phase_soil_parameters_dict["IGNORE_UNDRAINED"] = False
 
-        two_phase_soil_parameters_dict["RAYLEIGH_ALPHA"] = two_phase_soil_parameters_dict.pop("RAYLEIGH_M")
-        two_phase_soil_parameters_dict["RAYLEIGH_BETA"] = two_phase_soil_parameters_dict.pop("RAYLEIGH_K")
+        two_phase_soil_parameters_dict["RAYLEIGH_ALPHA"] = (two_phase_soil_parameters_dict.pop("RAYLEIGH_M"))
+        two_phase_soil_parameters_dict["RAYLEIGH_BETA"] = (two_phase_soil_parameters_dict.pop("RAYLEIGH_K"))
 
         # Create a new dictionary without None values
         two_phase_soil_parameters_dict = {k: v for k, v in two_phase_soil_parameters_dict.items() if v is not None}
@@ -284,7 +299,12 @@ class KratosMaterialIO:
             - Dict[str, Any]: dictionary containing the soil material parameters
         """
 
-        soil_material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""}, "Variables": {}}
+        soil_material_dict: Dict[str, Any] = {
+            "constitutive_law": {
+                "name": ""
+            },
+            "Variables": {},
+        }
 
         # add material parameters to dictionary based on material type.
         if isinstance(material.constitutive_law, LinearElasticSoil):
@@ -295,6 +315,8 @@ class KratosMaterialIO:
             soil_material_dict.update(self.__create_udsm_soil_dict(material.constitutive_law))
 
         self.__add_soil_formulation_parameters_to_material_dict(soil_material_dict["Variables"], material)
+
+        # Add TRANSVERSAL_PERMEABILITY as 1.0e-13
 
         # get retention parameters
         retention_law = material.retention_parameters.__class__.__name__
@@ -312,7 +334,7 @@ class KratosMaterialIO:
 
         return soil_material_dict
 
-    def __create_interface_material_dict(self, material: Interface) -> Dict[str, Any]:
+    def __create_interface_material_dict(self, material: InterfaceMaterial) -> Dict[str, Any]:
         """
         Creates a dictionary containing the interface material parameters. The interface material parameters are based
         on the material type. The material parameters are added to the dictionary.
@@ -330,13 +352,13 @@ class KratosMaterialIO:
         # add material parameters to dictionary based on material type.
         if isinstance(material.constitutive_law, LinearElasticSoil):
             interface_material_dict.update(self.__create_linear_elastic_soil_dict(material.constitutive_law))
-            interface_material_dict["constitutive_law"]["name"] = f"LinearElastic{dimension_int}DInterfaceLaw"
+            interface_material_dict["constitutive_law"]["name"] = (f"LinearElastic{dimension_int}DInterfaceLaw")
         elif isinstance(material.constitutive_law, SmallStrainUmatLaw):
             interface_material_dict.update(self.__create_umat_soil_dict(material.constitutive_law))
-            interface_material_dict["constitutive_law"]["name"] = f"SmallStrainUMAT{dimension_int}DInterfaceLaw"
+            interface_material_dict["constitutive_law"]["name"] = (f"SmallStrainUMAT{dimension_int}DInterfaceLaw")
         elif isinstance(material.constitutive_law, SmallStrainUdsmLaw):
             interface_material_dict.update(self.__create_udsm_soil_dict(material.constitutive_law))
-            interface_material_dict["constitutive_law"]["name"] = f"SmallStrainUDSM{dimension_int}DInterfaceLaw"
+            interface_material_dict["constitutive_law"]["name"] = (f"SmallStrainUDSM{dimension_int}DInterfaceLaw")
 
         self.__add_soil_formulation_parameters_to_material_dict(interface_material_dict["Variables"], material)
 
@@ -385,15 +407,15 @@ class KratosMaterialIO:
             "constitutive_law": {
                 "name": ""
             },
-            "Variables": material_parameters_dict
+            "Variables": material_parameters_dict,
         }
 
         # add constitutive law name to dictionary based on dimension
         if self.ndim == 2:
-            euler_beam_parameters_dict["constitutive_law"]["name"] = "LinearElastic2DBeamLaw"
+            euler_beam_parameters_dict["constitutive_law"]["name"] = ("LinearElastic2DBeamLaw")
         elif self.ndim == 3:
-            euler_beam_parameters_dict["constitutive_law"]["name"] = \
-                "KratosMultiphysics.StructuralMechanicsApplication.BeamConstitutiveLaw"
+            euler_beam_parameters_dict["constitutive_law"]["name"] = (
+                "KratosMultiphysics.StructuralMechanicsApplication.BeamConstitutiveLaw")
 
         return euler_beam_parameters_dict
 
@@ -415,15 +437,20 @@ class KratosMaterialIO:
         if isinstance(material.material_parameters, EulerBeam):
             structural_material_dict.update(self.__create_euler_beam_dict(material.material_parameters))
         elif isinstance(material.material_parameters, ElasticSpringDamper):
-            structural_material_dict["Variables"] = self.__create_elastic_spring_damper_dict(
-                material.material_parameters)
+            structural_material_dict["Variables"] = (self.__create_elastic_spring_damper_dict(
+                material.material_parameters))
         elif isinstance(material.material_parameters, NodalConcentrated):
-            structural_material_dict["Variables"] = self.__create_nodal_concentrated_dict(material.material_parameters)
+            structural_material_dict["Variables"] = (self.__create_nodal_concentrated_dict(
+                material.material_parameters))
 
         return structural_material_dict
 
-    def create_material_dict(self, part_name: str, material: Union[SoilMaterial, StructuralMaterial, Interface],
-                             material_id: int) -> Dict[str, Any]:
+    def create_material_dict(
+        self,
+        part_name: str,
+        material: Union[SoilMaterial, StructuralMaterial, InterfaceMaterial],
+        material_id: int,
+    ) -> Dict[str, Any]:
         """
         Creates a dictionary containing the material parameters
 
@@ -448,7 +475,7 @@ class KratosMaterialIO:
             "Material": {
                 "Variables": {}
             },
-            "Tables": {}
+            "Tables": {},
         }
 
         # add material parameters to dictionary based on material type.
@@ -456,7 +483,7 @@ class KratosMaterialIO:
             material_dict["Material"].update(self.__create_soil_material_dict(material))
         elif isinstance(material, StructuralMaterial):
             material_dict["Material"].update(self.__create_structural_material_dict(material))
-        elif isinstance(material, Interface):
+        elif isinstance(material, InterfaceMaterial):
             material_dict["Material"].update(self.__create_interface_material_dict(material))
         else:
             raise ValueError("Material parameters are not of either SoilMaterial or StructuralMaterial type.")

@@ -12,43 +12,49 @@ class TestSoilMaterial:
         """
 
         # create 3d two phase soil without zz permeability, which is not allowed
-        pytest.raises(ValueError,
-                      TwoPhaseSoil,
-                      ndim=3,
-                      DENSITY_SOLID=2650,
-                      POROSITY=0.3,
-                      BULK_MODULUS_SOLID=1E9,
-                      PERMEABILITY_XX=1E-15,
-                      PERMEABILITY_YY=1E-15,
-                      PERMEABILITY_XY=1,
-                      PERMEABILITY_ZX=2,
-                      PERMEABILITY_YZ=3)
+        pytest.raises(
+            ValueError,
+            TwoPhaseSoil,
+            ndim=3,
+            DENSITY_SOLID=2650,
+            POROSITY=0.3,
+            BULK_MODULUS_SOLID=1e9,
+            PERMEABILITY_XX=1e-15,
+            PERMEABILITY_YY=1e-15,
+            PERMEABILITY_XY=1,
+            PERMEABILITY_ZX=2,
+            PERMEABILITY_YZ=3,
+        )
 
         # create 3d two phase soil without yz permeability, which is not allowed
-        pytest.raises(ValueError,
-                      TwoPhaseSoil,
-                      ndim=3,
-                      DENSITY_SOLID=2650,
-                      POROSITY=0.3,
-                      BULK_MODULUS_SOLID=1E9,
-                      PERMEABILITY_XX=1E-15,
-                      PERMEABILITY_YY=1E-15,
-                      PERMEABILITY_ZX=1,
-                      PERMEABILITY_ZZ=2,
-                      PERMEABILITY_YZ=None)
+        pytest.raises(
+            ValueError,
+            TwoPhaseSoil,
+            ndim=3,
+            DENSITY_SOLID=2650,
+            POROSITY=0.3,
+            BULK_MODULUS_SOLID=1e9,
+            PERMEABILITY_XX=1e-15,
+            PERMEABILITY_YY=1e-15,
+            PERMEABILITY_ZX=1,
+            PERMEABILITY_ZZ=2,
+            PERMEABILITY_YZ=None,
+        )
 
         # create 3d two phase soil without zx permeability, which is not allowed
-        pytest.raises(ValueError,
-                      TwoPhaseSoil,
-                      ndim=3,
-                      DENSITY_SOLID=2650,
-                      POROSITY=0.3,
-                      BULK_MODULUS_SOLID=1E9,
-                      PERMEABILITY_XX=1E-15,
-                      PERMEABILITY_YY=1E-15,
-                      PERMEABILITY_XY=1,
-                      PERMEABILITY_ZX=None,
-                      PERMEABILITY_ZZ=3)
+        pytest.raises(
+            ValueError,
+            TwoPhaseSoil,
+            ndim=3,
+            DENSITY_SOLID=2650,
+            POROSITY=0.3,
+            BULK_MODULUS_SOLID=1e9,
+            PERMEABILITY_XX=1e-15,
+            PERMEABILITY_YY=1e-15,
+            PERMEABILITY_XY=1,
+            PERMEABILITY_ZX=None,
+            PERMEABILITY_ZZ=3,
+        )
 
     def test_get_property_in_soil_material(self):
         """
@@ -57,16 +63,18 @@ class TestSoilMaterial:
         ndim = 2
         soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
         constitutive_law = LinearElasticSoil(YOUNG_MODULUS=100e6, POISSON_RATIO=0.3)
-        soil_material = SoilMaterial(name="soil",
-                                     soil_formulation=soil_formulation,
-                                     constitutive_law=constitutive_law,
-                                     retention_parameters=SaturatedBelowPhreaticLevelLaw())
+        soil_material = SoilMaterial(
+            name="soil",
+            soil_formulation=soil_formulation,
+            constitutive_law=constitutive_law,
+            retention_parameters=SaturatedBelowPhreaticLevelLaw(),
+        )
 
         assert soil_material.get_property_in_material("YOUNG_MODULUS") == 100e6
         assert soil_material.get_property_in_material("POISSON_RATIO") == 0.3
         assert soil_material.get_property_in_material("POROSITY") == 0.3
 
-        msg = "Property YOUNGS_MODULUS is not one of the parameters of the soil material"
+        msg = ("Property YOUNGS_MODULUS is not one of the parameters of the soil material")
         with pytest.raises(ValueError, match=msg):
             soil_material.get_property_in_material("YOUNGS_MODULUS")
 
@@ -79,7 +87,7 @@ class TestSoilMaterial:
         analysis_type = AnalysisType.MECHANICAL
 
         # Valid case
-        element_name = Interface.get_element_name(ndim, n_nodes_element, analysis_type)
+        element_name = InterfaceMaterial.get_element_name(ndim, n_nodes_element, analysis_type)
         assert element_name == "UPwSmallStrainInterfaceElement2D4N"
 
     def test_get_element_name_3d_8N(self):
@@ -91,7 +99,7 @@ class TestSoilMaterial:
         # Higher order element
         ndim = 3
         n_nodes_element = 8
-        element_name = Interface.get_element_name(ndim, n_nodes_element, analysis_type)
+        element_name = InterfaceMaterial.get_element_name(ndim, n_nodes_element, analysis_type)
         assert element_name == "UPwSmallStrainInterfaceElement3D8N"
 
     def test_get_element_name_3d_6N(self):
@@ -103,7 +111,7 @@ class TestSoilMaterial:
         # Lower order element
         ndim = 3
         n_nodes_element = 6
-        element_name = Interface.get_element_name(ndim, n_nodes_element, analysis_type)
+        element_name = InterfaceMaterial.get_element_name(ndim, n_nodes_element, analysis_type)
         assert element_name == "UPwSmallStrainInterfaceElement3D6N"
 
     def test_get_element_name_unaivailable_analysis_type_for_soil_material(self):
@@ -115,9 +123,11 @@ class TestSoilMaterial:
 
         # Invalid analysis type
         invalid_analysis_type = AnalysisType.GROUNDWATER_FLOW
-        with pytest.raises(ValueError,
-                           match=f"Analysis type {invalid_analysis_type} is not implemented yet for soil material."):
-            Interface.get_element_name(ndim, n_nodes_element, invalid_analysis_type)
+        with pytest.raises(
+                ValueError,
+                match=f"Analysis type {invalid_analysis_type} is not implemented yet for soil material.",
+        ):
+            InterfaceMaterial.get_element_name(ndim, n_nodes_element, invalid_analysis_type)
 
     def test_get_element_name_invalid(self):
         """
@@ -128,9 +138,11 @@ class TestSoilMaterial:
 
         # Invalid analysis type
         invalid_analysis_type = "INVALID_TYPE"
-        with pytest.raises(ValueError,
-                           match=f"Analysis type {invalid_analysis_type} is not implemented yet for soil material."):
-            Interface.get_element_name(ndim, n_nodes_element, invalid_analysis_type)
+        with pytest.raises(
+                ValueError,
+                match=f"Analysis type {invalid_analysis_type} is not implemented yet for soil material.",
+        ):
+            InterfaceMaterial.get_element_name(ndim, n_nodes_element, invalid_analysis_type)
 
     def test_get_property_in_material(self):
         """
@@ -143,25 +155,27 @@ class TestSoilMaterial:
         YOUNG_MODULUS = 50e6
         POISSON_RATIO = 0.3
         constitutive_law = LinearElasticSoil(YOUNG_MODULUS=YOUNG_MODULUS, POISSON_RATIO=POISSON_RATIO)
-        soil_formulation_one_phase = OnePhaseSoilInterface(ndim,
-                                                           IS_DRAINED=True,
-                                                           DENSITY_SOLID=DENSITY_SOLID,
-                                                           POROSITY=POROSITY,
-                                                           MINIMUM_JOINT_WIDTH=0.001)
+        soil_formulation_one_phase = OnePhaseSoilInterface(
+            ndim,
+            IS_DRAINED=True,
+            DENSITY_SOLID=DENSITY_SOLID,
+            POROSITY=POROSITY,
+            MINIMUM_JOINT_WIDTH=0.001,
+        )
         retention_parameters = SaturatedBelowPhreaticLevelLaw()
         # Define interface material parameters
-        interface_material_parameters = Interface(
+        interface_material_parameters = InterfaceMaterial(
             name="test_interface_material_one_phase_linear_elastic",
             constitutive_law=constitutive_law,
             soil_formulation=soil_formulation_one_phase,
             retention_parameters=retention_parameters,
         )
         # get the property in the material
-        assert interface_material_parameters.get_property_in_material("YOUNG_MODULUS") == YOUNG_MODULUS
-        assert interface_material_parameters.get_property_in_material("POISSON_RATIO") == POISSON_RATIO
-        assert interface_material_parameters.get_property_in_material("DENSITY_SOLID") == DENSITY_SOLID
-        assert interface_material_parameters.get_property_in_material("POROSITY") == POROSITY
-        assert interface_material_parameters.get_property_in_material("MINIMUM_JOINT_WIDTH") == 0.001
+        assert (interface_material_parameters.get_property_in_material("YOUNG_MODULUS") == YOUNG_MODULUS)
+        assert (interface_material_parameters.get_property_in_material("POISSON_RATIO") == POISSON_RATIO)
+        assert (interface_material_parameters.get_property_in_material("DENSITY_SOLID") == DENSITY_SOLID)
+        assert (interface_material_parameters.get_property_in_material("POROSITY") == POROSITY)
+        assert (interface_material_parameters.get_property_in_material("MINIMUM_JOINT_WIDTH") == 0.001)
 
     def test_get_property_in_material_property_not_in_material(self):
         """
@@ -171,20 +185,24 @@ class TestSoilMaterial:
         DENSITY_SOLID = 2700
         POROSITY = 0.3
         constitutive_law = LinearElasticSoil(YOUNG_MODULUS=50e6, POISSON_RATIO=0.3)
-        soil_formulation_one_phase = OnePhaseSoilInterface(ndim,
-                                                           IS_DRAINED=True,
-                                                           DENSITY_SOLID=DENSITY_SOLID,
-                                                           POROSITY=POROSITY,
-                                                           MINIMUM_JOINT_WIDTH=0.001)
+        soil_formulation_one_phase = OnePhaseSoilInterface(
+            ndim,
+            IS_DRAINED=True,
+            DENSITY_SOLID=DENSITY_SOLID,
+            POROSITY=POROSITY,
+            MINIMUM_JOINT_WIDTH=0.001,
+        )
         retention_parameters = SaturatedBelowPhreaticLevelLaw()
         # Define interface material parameters
-        interface_material_parameters = Interface(
+        interface_material_parameters = InterfaceMaterial(
             name="test_interface_material_one_phase_linear_elastic",
             constitutive_law=constitutive_law,
             soil_formulation=soil_formulation_one_phase,
             retention_parameters=retention_parameters,
         )
         # get the property in the material
-        with pytest.raises(ValueError,
-                           match="Property INVALID_PROPERTY is not one of the parameters of the soil material"):
+        with pytest.raises(
+                ValueError,
+                match="Property INVALID_PROPERTY is not one of the parameters of the soil material",
+        ):
             interface_material_parameters.get_property_in_material("INVALID_PROPERTY")

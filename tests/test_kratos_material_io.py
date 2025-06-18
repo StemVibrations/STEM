@@ -225,8 +225,10 @@ class TestKratosMaterialIO:
 
         # Create structural materials
         beam_material = StructuralMaterial(name="test_beam_material", material_parameters=beam_material_parameters)
-        beam_material_rayleigh = StructuralMaterial(name="test_beam_material_rayleigh",
-                                                    material_parameters=beam_material_parameters_rayleigh)
+        beam_material_rayleigh = StructuralMaterial(
+            name="test_beam_material_rayleigh",
+            material_parameters=beam_material_parameters_rayleigh,
+        )
 
         spring_damper_material = StructuralMaterial(
             name="test_spring_damper_material",
@@ -289,51 +291,37 @@ class TestKratosMaterialIO:
             IS_FORTRAN_UDSM=True,
         )
 
-        soil_formulation_one_phase = OnePhaseSoilInterface(ndim,
-                                                           IS_DRAINED=True,
-                                                           DENSITY_SOLID=DENSITY_SOLID,
-                                                           POROSITY=POROSITY,
-                                                           MINIMUM_JOINT_WIDTH=0.001)
-        soil_formulation_two_phase = TwoPhaseSoilInterface(ndim,
-                                                           DENSITY_SOLID=DENSITY_SOLID,
-                                                           POROSITY=POROSITY,
-                                                           PERMEABILITY_XX=1e-15,
-                                                           PERMEABILITY_YY=1e-15,
-                                                           PERMEABILITY_XY=2,
-                                                           MINIMUM_JOINT_WIDTH=0.001)
+        soil_formulation_one_phase = OnePhaseSoilInterface(
+            ndim,
+            IS_DRAINED=True,
+            DENSITY_SOLID=DENSITY_SOLID,
+            POROSITY=POROSITY,
+            MINIMUM_JOINT_WIDTH=0.001,
+        )
+        soil_formulation_two_phase = TwoPhaseSoilInterface(
+            ndim,
+            DENSITY_SOLID=DENSITY_SOLID,
+            POROSITY=POROSITY,
+            PERMEABILITY_XX=1e-15,
+            PERMEABILITY_YY=1e-15,
+            PERMEABILITY_XY=2,
+            MINIMUM_JOINT_WIDTH=0.001,
+        )
         retention_parameters = SaturatedBelowPhreaticLevelLaw()
         # Define interface material parameters
-        interface_material_parameters = Interface(
+        interface_material_parameters = InterfaceMaterial(
             name="test_interface_material_one_phase_linear_elastic",
             constitutive_law=constitutive_law,
             soil_formulation=soil_formulation_one_phase,
             retention_parameters=retention_parameters,
         )
-        interface_material_parameters_umat = Interface(
+        interface_material_parameters_umat = InterfaceMaterial(
             name="test_interface_material_one_phase_umat",
             constitutive_law=constitutive_law_umat,
             soil_formulation=soil_formulation_one_phase,
             retention_parameters=retention_parameters,
         )
-        interface_material_parameters_udsm = Interface(
-            name="test_interface_material_one_phase_udsm",
-            constitutive_law=constitutive_law_udsm,
-            soil_formulation=soil_formulation_one_phase,
-            retention_parameters=retention_parameters,
-        )
-        interface_material_parameters_two_phase = Interface(
-            name="test_interface_material_two_phase_linear_elastic",
-            constitutive_law=constitutive_law,
-            soil_formulation=soil_formulation_two_phase,
-            retention_parameters=retention_parameters,
-        )
-        interface_material_parameters_two_phase_umat = Interface(
-            name="test_interface_material_two_phase_umat",
-            constitutive_law=constitutive_law_umat,
-            soil_formulation=soil_formulation_two_phase,
-            retention_parameters=retention_parameters,
-        )
-        interface_material_parameters_two_phase_udsm = Interface(
+        interface_material_parameters_two_phase_udsm = InterfaceMaterial(
             name="test_interface_material_two_phase_udsm",
             constitutive_law=constitutive_law_udsm,
             soil_formulation=soil_formulation_two_phase,
@@ -343,9 +331,6 @@ class TestKratosMaterialIO:
         all_materials = {
             "test_interface_material_one_phase_linear_elastic": interface_material_parameters,
             "test_interface_material_one_phase_umat": interface_material_parameters_umat,
-            "test_interface_material_one_phase_udsm": interface_material_parameters_udsm,
-            "test_interface_material_two_phase_linear_elastic": interface_material_parameters_two_phase,
-            "test_interface_material_two_phase_umat": interface_material_parameters_two_phase_umat,
             "test_interface_material_two_phase_udsm": interface_material_parameters_two_phase_udsm,
         }
 

@@ -14,6 +14,7 @@ class SoilFormulationParametersABC(ABC):
     Attributes:
         - ndim (int): The number of dimensions of the soil formulation (2 or 3)
     """
+
     ndim: int
 
 
@@ -22,6 +23,7 @@ class SoilConstitutiveLawABC(ABC):
     """
     Abstract base class for soil constitutive laws
     """
+
     pass
 
 
@@ -30,6 +32,7 @@ class RetentionLawABC(ABC):
     """
     Abstract class containing the parameters for a retention law. This class is created for type checking purposes.
     """
+
     pass
 
 
@@ -43,6 +46,7 @@ class FluidProperties:
         - DYNAMIC_VISCOSITY (float): The dynamic viscosity of fluid [Pa s].
         - BULK_MODULUS_FLUID (float): The bulk modulus of fluid [Pa].
     """
+
     DENSITY_FLUID: float = 1000
     DYNAMIC_VISCOSITY: float = 1.3e-3
     BULK_MODULUS_FLUID: float = 2e9
@@ -65,6 +69,7 @@ class OnePhaseSoil(SoilFormulationParametersABC):
         - RAYLEIGH_M (Optional[float]): Mass proportional Rayleigh damping parameter [-].
         - RAYLEIGH_K (Optional[float]): Stiffness proportional Rayleigh damping parameter [-].
     """
+
     IS_DRAINED: bool
     DENSITY_SOLID: float
     POROSITY: float
@@ -97,6 +102,7 @@ class TwoPhaseSoil(SoilFormulationParametersABC):
         - PERMEABILITY_ZX (Optional[float]): The permeability in the zx-direction [m^2].
         - PERMEABILITY_ZZ (Optional[float]): The permeability in the z-direction [m^2].
     """
+
     DENSITY_SOLID: float
     POROSITY: float
     PERMEABILITY_XX: float
@@ -147,6 +153,7 @@ class TwoPhaseSoilInterface(TwoPhaseSoil):
         - TRANSVERSAL_PERMEABILITY (float): The transversal permeability [m^2].
         - MINIMUM_JOINT_WIDTH (float): The minimum joint width [m].
     """
+
     TRANSVERSAL_PERMEABILITY: float = 1.0e-13
     MINIMUM_JOINT_WIDTH: float = 0.001
 
@@ -157,13 +164,12 @@ class OnePhaseSoilInterface(OnePhaseSoil):
     Class containing the material parameters for a two phase soil material with interface
 
     Inheritance:
-        - :class:`TwoPhaseSoil`
+        - :class:`OnePhaseSoil`
 
     Attributes:
-        - TRANSVERSAL_PERMEABILITY (float): The transversal permeability [m^2].
         - MINIMUM_JOINT_WIDTH (float): The minimum joint width [m].
     """
-    TRANSVERSAL_PERMEABILITY: float = 1.0e-13
+
     MINIMUM_JOINT_WIDTH: float = 0.001
 
 
@@ -179,6 +185,7 @@ class LinearElasticSoil(SoilConstitutiveLawABC):
         - YOUNG_MODULUS (float): The Young's modulus [Pa].
         - POISSON_RATIO (float): The Poisson's ratio [-].
     """
+
     YOUNG_MODULUS: float
     POISSON_RATIO: float
 
@@ -197,6 +204,7 @@ class SmallStrainUmatLaw(SoilConstitutiveLawABC):
         - UMAT_PARAMETERS (list): The parameters of the umat.
         - STATE_VARIABLES (list): The state variables of the umat.
     """
+
     UMAT_NAME: str
     IS_FORTRAN_UMAT: bool
     UMAT_PARAMETERS: List[Any]
@@ -217,6 +225,7 @@ class SmallStrainUdsmLaw(SoilConstitutiveLawABC):
         - IS_FORTRAN_UDSM (bool): A boolean to indicate whether the udsm is written in Fortran.
         - UDSM_PARAMETERS (list): The parameters of the udsm.
     """
+
     UDSM_NAME: str
     UDSM_NUMBER: int
     IS_FORTRAN_UDSM: bool
@@ -235,6 +244,7 @@ class SaturatedBelowPhreaticLevelLaw(RetentionLawABC):
         - SATURATED_SATURATION (float): The saturation ratio below phreatic level [-].
         - RESIDUAL_SATURATION (float): The residual saturation ratio [-].
     """
+
     SATURATED_SATURATION: float = 1.0
     RESIDUAL_SATURATION: float = 1e-10
 
@@ -250,6 +260,7 @@ class SaturatedLaw(RetentionLawABC):
     Attributes:
         - SATURATED_SATURATION (float): The saturation ratio [-].
     """
+
     SATURATED_SATURATION: float = 1.0
 
 
@@ -269,6 +280,7 @@ class VanGenuchtenLaw(RetentionLawABC):
         - RESIDUAL_SATURATION (float): The minumum saturation ratio [-].
         - MINIMUM_RELATIVE_PERMEABILITY (float): The minimum relative permeability [-].
     """
+
     VAN_GENUCHTEN_AIR_ENTRY_PRESSURE: float
     VAN_GENUCHTEN_GN: float
     VAN_GENUCHTEN_GL: float
@@ -289,6 +301,7 @@ class SoilMaterial:
         - retention_parameters (:class:`RetentionLawABC`): The retention law parameters.
         - fluid_properties (:class:`FluidProperties`): The fluid properties.
     """
+
     name: str
     soil_formulation: SoilFormulationParametersABC
     constitutive_law: SoilConstitutiveLawABC
@@ -319,11 +332,10 @@ class SoilMaterial:
         }
         Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations, "Soil")
 
-        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
-
+        if (analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL):
             # for higher order elements, pore pressure is calculated on a lower order than displacements
             if (n_dim_model == 2 and n_nodes_element > 4) or (n_dim_model == 3 and n_nodes_element > 8):
-                element_name = f"SmallStrainUPwDiffOrderElement{n_dim_model}D{n_nodes_element}N"
+                element_name = (f"SmallStrainUPwDiffOrderElement{n_dim_model}D{n_nodes_element}N")
             else:
                 element_name = f"UPwSmallStrainElement{n_dim_model}D{n_nodes_element}N"
 
@@ -363,7 +375,7 @@ class SoilMaterial:
 
 
 @dataclass
-class Interface:
+class InterfaceMaterial:
     """
     Class containing the parameters for an interface material
 
@@ -374,6 +386,7 @@ class Interface:
         - friction_angle (float): The friction angle of the interface [degrees].
         - dilatancy_angle (float): The dilatancy angle of the interface [degrees].
     """
+
     name: str
     constitutive_law: SoilConstitutiveLawABC
     soil_formulation: SoilFormulationParametersABC
@@ -403,9 +416,9 @@ class Interface:
             3: [6, 8],
         }
         Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations, "Soil")
-        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+        if (analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL):
             # for higher order elements, pore pressure is calculated on a lower order than displacements
-            element_name = f"UPwSmallStrainInterfaceElement{n_dim_model}D{n_nodes_element}N"
+            element_name = (f"UPwSmallStrainInterfaceElement{n_dim_model}D{n_nodes_element}N")
         else:
             raise ValueError(f"Analysis type {analysis_type} is not implemented yet for soil material.")
         return element_name

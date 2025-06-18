@@ -5,7 +5,7 @@ from stem.boundary import BoundaryParametersABC
 from stem.water_processes import WaterProcessParametersABC
 from stem.load import LoadParametersABC, MovingLoad, UvecLoad
 from stem.output import OutputParametersABC
-from stem.soil_material import SoilMaterial, Interface
+from stem.soil_material import SoilMaterial, InterfaceMaterial
 from stem.structural_material import StructuralMaterial
 
 from stem.geometry import Geometry
@@ -14,8 +14,13 @@ from stem.solver import AnalysisType
 from stem.utils import Utils
 
 # define type aliases
-ProcessParameters = Union[LoadParametersABC, BoundaryParametersABC, AdditionalProcessesParametersABC,
-                          WaterProcessParametersABC, OutputParametersABC]
+ProcessParameters = Union[
+    LoadParametersABC,
+    BoundaryParametersABC,
+    AdditionalProcessesParametersABC,
+    WaterProcessParametersABC,
+    OutputParametersABC,
+]
 """
 TypeAlias:
     - ProcessParameters: Union[:class:`stem.load.LoadParametersABC`, \
@@ -25,7 +30,7 @@ TypeAlias:
         :class:`stem.output.OutputParametersABC`]
 """
 
-Material = Union[SoilMaterial, StructuralMaterial, Interface]
+Material = Union[SoilMaterial, StructuralMaterial, InterfaceMaterial]
 """
 TypeAlias:
     - Material: Union[:class:`stem.soil_material.SoilMaterial`, :class:`stem.structural_material.StructuralMaterial`, \
