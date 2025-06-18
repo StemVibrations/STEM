@@ -343,7 +343,8 @@ class TestKratosMaterialIO:
                     material=material_parameters,
                     material_id=ix + 1,
                 ))
-
+        # write json file
+        json.dump(test_dict, open("tests/test_data/test_interface_material_parameters.json", "w"), indent=4)
         expected_material_parameters_json = json.load(open("tests/test_data/expected_interface_parameters.json"))
         # compare json files using custom dictionary comparison
         TestUtils.assert_dictionary_almost_equal(expected_material_parameters_json, test_dict)
