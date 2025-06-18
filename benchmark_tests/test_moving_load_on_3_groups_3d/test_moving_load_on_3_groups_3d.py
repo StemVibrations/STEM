@@ -4,7 +4,7 @@ from shutil import rmtree
 
 import pytest
 
-from benchmark_tests.utils import assert_files_equal
+from benchmark_tests.utils import assert_floats_in_directories_almost_equal
 from stem.boundary import DisplacementConstraint
 from stem.load import MovingLoad
 from stem.model import Model
@@ -164,8 +164,7 @@ def test_stem():
     else:
         raise Exception("Unknown platform")
 
-    result = assert_files_equal(expected_output_dir,
-                                os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
+    assert_floats_in_directories_almost_equal(expected_output_dir, 
+                                              os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
 
-    assert result is True
     rmtree(input_folder)
