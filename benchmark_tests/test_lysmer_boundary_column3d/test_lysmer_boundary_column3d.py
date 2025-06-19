@@ -12,16 +12,13 @@ from stem.solver import (AnalysisType, SolutionType, TimeIntegration, Displaceme
                          StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy)
 from stem.output import NodalOutput, VtkOutputParameters
 from stem.stem import Stem
-from globals import ELEMENT_DATA
+from stem.globals import ELEMENT_DATA
 
 from benchmark_tests.utils import assert_files_equal
 
 
-@pytest.mark.parametrize("element_type", [
-    ("TETRAHEDRON_4N"),
-    # ("TETRAHEDRON_10N"),
-    ("HEXAHEDRON_8N")])#,
-    # ("HEXAHEDRON_20N")])
+@pytest.mark.parametrize("element_type", [("TETRAHEDRON_4N"), ("TETRAHEDRON_10N"), ("HEXAHEDRON_8N"),
+                                          ("HEXAHEDRON_20N")])
 def test_stem(element_type):
     # Define geometry, conditions and material parameters
     # --------------------------------
@@ -29,7 +26,7 @@ def test_stem(element_type):
     # Specify dimension and initiate the model
     ndim = 3
     model = Model(ndim)
-    model.extrusion_length=1
+    model.extrusion_length = 1
 
     # Specify material model
     # Linear elastic drained soil with a Density of 2650, a Young's modulus of 10.0e7,
@@ -50,7 +47,7 @@ def test_stem(element_type):
     model.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil")
 
     # Boundary conditions and Loads
-    load_coordinates = [(0.0, 10.0, 0), (1.0, 10.0, 0), (1,10,1), (0,10,1)]
+    load_coordinates = [(0.0, 10.0, 0), (1.0, 10.0, 0), (1, 10, 1), (0, 10, 1)]
 
     # Add line load
     surface_load = SurfaceLoad(active=[False, True, False], value=[0, -10, 0])
@@ -64,10 +61,9 @@ def test_stem(element_type):
                                                      is_fixed=[True, False, True],
                                                      value=[0, 0, 0])
 
-
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(2, [2], absorbing_boundaries_parameters, "abs")
-    model.add_boundary_condition_by_geometry_ids(2, [1,3,5,6], displacement_parameters, "sides")
+    model.add_boundary_condition_by_geometry_ids(2, [1, 3, 5, 6], displacement_parameters, "sides")
 
     # Synchronize geometry
     model.synchronise_geometry()
@@ -107,9 +103,7 @@ def test_stem(element_type):
                                      rayleigh_m=0.1)
 
     # Set up problem data
-    problem = Problem(problem_name="test_lysmer_boundary_column3d",
-                      number_of_threads=1,
-                      settings=solver_settings)
+    problem = Problem(problem_name="test_lysmer_boundary_column3d", number_of_threads=1, settings=solver_settings)
     model.project_parameters = problem
 
     # Define the results to be written to the output file
@@ -136,7 +130,7 @@ def test_stem(element_type):
     # --------------------------------
     # set structured mesh constraint surface
     if element_type.startswith("HEXAHEDRON"):
-        model.mesh_settings.set_structured_mesh_constraint_volume(1,[2,11,2])
+        model.mesh_settings.set_structured_mesh_constraint_volume(1, [2, 11, 2])
 
     model.mesh_settings.element_order = ELEMENT_DATA[element_type]["order"]
     stem = Stem(model, input_folder)
@@ -146,9 +140,9 @@ def test_stem(element_type):
     # --------------------------------
     stem.run_calculation()
 
-    # result = assert_files_equal(
-    #     f"benchmark_tests/test_lysmer_boundary_column3d_hex/{element_type}/_output/output_vtk_porous_computational_model_part",
-    #     os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
-    #
-    # assert result is True
-    # rmtree(input_folder)
+    result = assert_files_equal(
+        f"benchmark_tests/test_lysmer_boundary_column3d/{element_type}/_output/output_vtk_porous_computational_model_part",
+        os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
+
+    assert result is True
+    rmtree(input_folder)
