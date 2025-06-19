@@ -152,9 +152,8 @@ def test_stem(element_type):
     else:
         expected_output_dir = f"benchmark_tests/test_lysmer_boundary_column3d/{element_type}/_output/output_vtk_porous_computational_model_part"
 
-    result = assert_files_equal(
-        expected_output_dir,
-        os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
+    result = assert_files_equal(expected_output_dir,
+                                os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
 
     assert result is True
     rmtree(input_folder)
