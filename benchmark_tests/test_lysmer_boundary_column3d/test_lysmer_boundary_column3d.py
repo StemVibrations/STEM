@@ -1,3 +1,4 @@
+import sys
 import os
 from shutil import rmtree
 
@@ -140,8 +141,19 @@ def test_stem(element_type):
     # --------------------------------
     stem.run_calculation()
 
+    # Check output files
+    if element_type.startswith("TETRAHEDRON"):
+        if sys.platform == "win32":
+            expected_output_dir = f"benchmark_tests/test_lysmer_boundary_column3d/{element_type}/_output_windows/output_vtk_porous_computational_model_part"
+        elif sys.platform == "linux":
+            expected_output_dir = f"benchmark_tests/test_lysmer_boundary_column3d/{element_type}/_output_linux/output_vtk_porous_computational_model_part"
+        else:
+            raise Exception("Unknown platform")
+    else:
+        expected_output_dir = f"benchmark_tests/test_lysmer_boundary_column3d/{element_type}/_output/output_vtk_porous_computational_model_part"
+
     result = assert_files_equal(
-        f"benchmark_tests/test_lysmer_boundary_column3d/{element_type}/_output/output_vtk_porous_computational_model_part",
+        expected_output_dir,
         os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
 
     assert result is True
