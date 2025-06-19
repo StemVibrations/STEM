@@ -181,7 +181,7 @@ def test_moving_load_on_extended_track():
     else:
         raise Exception("Unknown platform")
 
-    assert_floats_in_directories_almost_equal(expected_output_dir, 
-                                              os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
+    assert_floats_in_directories_almost_equal(
+        expected_output_dir, os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
 
     rmtree(input_folder)
