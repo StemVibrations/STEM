@@ -58,13 +58,6 @@ class Model:
         self.extrusion_length: Optional[float] = None
         self.groups: Dict[str, Any] = {}
 
-    def __del__(self):
-        """
-        Destructor of the Model class. Finalizes the gmsh_io instance.
-
-        """
-        self.gmsh_io.finalize_gmsh()
-
     @property
     def all_model_parts(self) -> List[ModelPart]:
         """
@@ -992,7 +985,7 @@ class Model:
                                                                                 eps=eps)
 
                 new_mesh = Mesh(ndim=model_part.mesh.ndim)
-                new_mesh.nodes = {node_id: model_part.mesh.nodes[node_id] for node_id in filtered_node_ids}
+                new_mesh.nodes = {int(node_id): model_part.mesh.nodes[int(node_id)] for node_id in filtered_node_ids}
                 new_mesh.elements = {}
                 model_part.mesh = new_mesh
 
@@ -1643,7 +1636,7 @@ class Model:
                 # if the nodes are equal, but the node order isn't, flip the node order of the process element
                 body_line_edges = Utils.get_element_edges(body_element)
                 for edge in body_line_edges:
-                    if set(edge) == set(process_element.node_ids) and list(edge) != process_element.node_ids:
+                    if set(edge) == set(process_element.node_ids) and edge != process_element.node_ids:
                         elements_to_flip.append(process_element)
 
             elif body_el_info["ndim"] == 3 and process_el_info["ndim"] == 2:
