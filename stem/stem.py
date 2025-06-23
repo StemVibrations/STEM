@@ -4,6 +4,12 @@ from pathlib import Path
 from typing import List, Dict
 import warnings
 
+# # todo remove this before merge
+# import sys
+#
+# sys.path.append(r"C:\software_development\Kratos\bin\Release\libs")
+# sys.path.append(r"C:\software_development\Kratos\bin\Release")
+
 import KratosMultiphysics
 from KratosMultiphysics.StemApplication.geomechanics_analysis import StemGeoMechanicsAnalysis
 
@@ -146,9 +152,9 @@ class Stem:
                 # validate settings
                 stage.project_parameters.settings.validate_settings()
 
-                mesh_name = stage.project_parameters.problem_name + f"_stage_{stage_nr+1}.mdpa"
-                project_settings_file_name = f"ProjectParameters_stage_{stage_nr+1}.json"
-                material_settings_file_name = f"MaterialParameters_stage_{stage_nr+1}.json"
+                mesh_name = stage.project_parameters.problem_name + f"_stage_{stage_nr + 1}.mdpa"
+                project_settings_file_name = f"ProjectParameters_stage_{stage_nr + 1}.json"
+                material_settings_file_name = f"MaterialParameters_stage_{stage_nr + 1}.json"
                 self.kratos_io.project_folder = self.input_files_dir
                 self.kratos_io.write_input_files_for_kratos(stage,
                                                             mesh_name,
@@ -190,8 +196,8 @@ class Stem:
         simulation.Run()
 
         # save the uvec data for the next stage if it is present
-        if hasattr(simulation._GetSolver().solver, 'uvec_data'):
-            self.__last_uvec_data = simulation._GetSolver().solver.uvec_data
+        if hasattr(simulation._GetSolver().solving_strategy, 'uvec_data'):
+            self.__last_uvec_data = simulation._GetSolver().solving_strategy.uvec_data
 
         # make sure the simulation is deleted, else bad memory allocation may occur when serializing the kratos model
         del simulation
@@ -276,8 +282,8 @@ class Stem:
         """
 
         if not path.exists() or not os.listdir(path):
-            warnings.warn(f"No output vtk files were written for part: '{part_name}' for stage {stage_index+1}. As the "
-                          f"output interval is greater than the amount of time steps in the stage.")
+            warnings.warn(f"No output vtk files were written for part: '{part_name}' for stage {stage_index + 1}. As "
+                          f"the output interval is greater than the amount of time steps in the stage.")
             return False
         return True
 

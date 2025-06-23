@@ -20,6 +20,7 @@ from stem.field_generator import RandomFieldGenerator
 from stem.load import LineLoad, SurfaceLoad, MovingLoad
 from stem.model import Model
 from stem.model_part import *
+from stem.mesh import Mesh, Node, Element
 from stem.output import NodalOutput, GaussPointOutput, VtkOutputParameters, Output, JsonOutputParameters
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
 from stem.structural_material import ElasticSpringDamper, NodalConcentrated, EulerBeam
@@ -1131,3 +1132,34 @@ class TestKratosModelIO:
 
         assert os.path.exists(absolute_path_json_output)
         rmtree(absolute_path_json_output)
+
+    def test_map_gmsh_element_to_kratos_with_different_line_elements_in_model_part(self):
+        """
+        Test that an error is raised when a model part contains both higher order and lower order line elements.
+
+        """
+
+        kratos_io = KratosIO(ndim=2)
+
+        # create a model with a model part containing both LINE_2N and LINE_3N elements
+        model_part = ModelPart("load")
+        model_part.mesh = Mesh(1)
+        model_part.mesh.nodes = {
+            1: Node(1, [0.0, 0.0, 0.0]),
+            2: Node(2, [1.0, 0.0, 0.0]),
+            3: Node(3, [0.5, 1.0, 0.0]),
+            4: Node(4, [2.0, 0.0, 0.0])
+        }
+        model_part.mesh.elements = {1: Element(1, "LINE_3N", [1, 2, 3]), 2: Element(2, "LINE_2N", [2, 4])}
+
+        # map the GMSH element to Kratos elements and expect a ValueError as the model part contains both LINE_2N and
+        # LINE_3N elements.
+        with pytest.raises(
+                ValueError,
+                match=re.escape(
+                    f"Model part load has higher and lower order line elements assigned."
+                    f"\n most likely this happened due to that it was placed only partly on an unsupported"
+                    f"\n higher order element (Beam or SpringDamper). To solve this, split the model part into "
+                    f"\n a part which is placed on the higher order element and one which is placed on "
+                    f"\n the lower order element.")):
+            kratos_io._KratosIO__map_gmsh_element_to_kratos(Model(ndim=2), model_part)

@@ -239,7 +239,7 @@ class Utils:
         return list({id(obj): obj for obj in input_sequence}.values())
 
     @staticmethod
-    def get_element_edges(element: 'Element') -> npty.NDArray[np.int64]:
+    def get_element_edges(element: 'Element') -> List[List[int]]:
         """
         Gets the nodal connectivities of the line edges of elements
 
@@ -247,7 +247,7 @@ class Utils:
             - element (:class:`stem.mesh.Element`): element object
 
         Returns:
-            - npty.NDArray[np.int64]: nodal connectivities of the line edges of the element
+            - List[List[int]]: nodal connectivities of the line edges of the element
 
         """
 
@@ -255,7 +255,10 @@ class Utils:
         node_ids: npty.NDArray[np.int64] = np.array(element.node_ids,
                                                     dtype=int)[ELEMENT_DATA[element.element_type]["edges"]]
 
-        return node_ids
+        assert node_ids.ndim == 2, "Node ids should be a 2D array."
+        node_ids_list: List[List[int]] = node_ids.tolist()
+
+        return node_ids_list
 
     @staticmethod
     def flip_node_order(elements: Sequence['Element']):
@@ -755,8 +758,5 @@ class Utils:
             raise ValueError(f"Coordinates should be 3D but {coordinates.shape[1]} coordinates were given.")
 
         # check if coordinates are real numbers
-        for coordinate in coordinates:
-            for i in coordinate:
-                if not isinstance(i, NUMBER_TYPES) or np.isnan(i) or np.isinf(i):
-                    raise ValueError(f"Coordinates should be a sequence of sequence of real numbers, "
-                                     f"but {i} was given.")
+        if not np.isfinite(coordinates).all():
+            raise ValueError("Coordinates must be real numbers (not NaN or inf).")

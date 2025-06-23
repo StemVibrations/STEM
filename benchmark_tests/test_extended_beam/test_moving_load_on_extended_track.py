@@ -12,10 +12,10 @@ from stem.structural_material import EulerBeam, ElasticSpringDamper, NodalConcen
 from stem.boundary import DisplacementConstraint
 from stem.load import MovingLoad
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, \
-    NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy
+    NewmarkScheme, StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy, Cg
 from stem.output import NodalOutput, Output, VtkOutputParameters, JsonOutputParameters
 from stem.stem import Stem
-from benchmark_tests.utils import assert_files_equal
+from benchmark_tests.utils import assert_floats_in_directories_almost_equal
 
 
 def test_moving_load_on_extended_track():
@@ -82,7 +82,7 @@ def test_moving_load_on_extended_track():
     no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
                                                         is_fixed=[True, True, True],
                                                         value=[0, 0, 0])
-    roller_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+    roller_displacement_parameters = DisplacementConstraint(active=[True, False, True],
                                                             is_fixed=[True, False, True],
                                                             value=[0, 0, 0])
 
@@ -111,6 +111,7 @@ def test_moving_load_on_extended_track():
                                      are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
                                      strategy_type=LinearNewtonRaphsonStrategy(),
+                                     linear_solver_settings=Cg(tolerance=1e-16),
                                      rayleigh_k=0.01,
                                      rayleigh_m=0.0001)
 
@@ -121,10 +122,7 @@ def test_moving_load_on_extended_track():
     # Define the results to be written to the output file
 
     # Nodal results
-    nodal_results = [
-        NodalOutput.DISPLACEMENT, NodalOutput.TOTAL_DISPLACEMENT, NodalOutput.DISPLACEMENT_X,
-        NodalOutput.DISPLACEMENT_Y, NodalOutput.DISPLACEMENT_Z
-    ]
+    nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY]
     # Gauss point results
     gauss_point_results = []
 
@@ -183,8 +181,7 @@ def test_moving_load_on_extended_track():
     else:
         raise Exception("Unknown platform")
 
-    result = assert_files_equal(expected_output_dir,
-                                os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
+    assert_floats_in_directories_almost_equal(
+        expected_output_dir, os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
 
-    assert result is True
     rmtree(input_folder)

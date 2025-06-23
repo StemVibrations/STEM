@@ -280,7 +280,7 @@ class TestUtilsStem:
             [2, 1, 4, 3],
             [2, 1, 4, 3, 5, 8, 7, 6],
             [3, 2, 1],
-            [3, 2, 1, 9, 6, 5],
+            [3, 2, 1, 6, 5, 9],
             [2, 1],
             [2, 1, 5],
         ]
@@ -792,15 +792,11 @@ class TestUtilsStem:
             Utils.validate_coordinates([0.0, 0.0, 0.0])
 
         # test for nan numbers
-        with pytest.raises(ValueError,
-                           match=f"Coordinates should be a sequence of sequence of real numbers, "
-                           f"but nan was given."):
+        with pytest.raises(ValueError, match=re.escape("Coordinates must be real numbers (not NaN or inf).")):
             Utils.validate_coordinates([(0.0, 0.0, 0.0), (0.0, np.nan, 0.0)])
 
         # test for inf numbers
-        with pytest.raises(ValueError,
-                           match=f"Coordinates should be a sequence of sequence of real numbers, "
-                           f"but inf was given."):
+        with pytest.raises(ValueError, match=re.escape("Coordinates must be real numbers (not NaN or inf).")):
             Utils.validate_coordinates([(0.0, 0.0, 0.0), (0.0, np.inf, 0.0)])
 
         # test for complex numbers, different error messages for different python versions and operating systems

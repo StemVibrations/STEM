@@ -11,7 +11,7 @@ from stem.solver import (AnalysisType, SolutionType, TimeIntegration, Displaceme
                          LinearNewtonRaphsonStrategy, Amgcl)
 from stem.output import NodalOutput, VtkOutputParameters, Output, JsonOutputParameters
 from stem.stem import Stem
-from benchmark_tests.utils import assert_files_equal
+from benchmark_tests.utils import assert_floats_in_directories_almost_equal
 
 SHOW_RESULTS = False
 
@@ -57,7 +57,7 @@ def test_stem():
                                                         is_fixed=[True, True, True],
                                                         value=[0, 0, 0])
 
-    sym_parameters = DisplacementConstraint(active=[True, False, True], is_fixed=[True, False, False], value=[0, 0, 0])
+    sym_parameters = DisplacementConstraint(active=[True, False, True], is_fixed=[True, False, True], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "base_fixed")
@@ -188,7 +188,9 @@ def test_stem():
         # Show the plot
         plt.show()
 
-    assert assert_files_equal("benchmark_tests/test_1d_wave_prop_drained_soil_unloading/output_/output_vtk_full_model",
-                              os.path.join(input_folder, "output/output_vtk_full_model"))
+    assert_floats_in_directories_almost_equal(
+        "benchmark_tests/test_1d_wave_prop_drained_soil_unloading/output_/output_vtk_full_model",
+        os.path.join(input_folder, "output/output_vtk_full_model"),
+        decimal=12)
 
     rmtree(input_folder)
