@@ -4361,6 +4361,9 @@ class TestModel:
     def test_split_second_order_elements_with_beam_load_and_soil(self, create_default_3d_beam,
                                                                  create_default_moving_load_parameters,
                                                                  create_default_2d_soil_material):
+        """
+
+        """
 
         # set dim of beam to 2D
         beam_parameters = create_default_3d_beam
@@ -4376,9 +4379,9 @@ class TestModel:
                     2: [2, 4, 5]
                 },
                 "TRIANGLE_6N": {
-                    3: [1, 2, 6, 3, 8, 7],
-                    4: [2, 4, 9, 5, 10, 11],
-                    5: [2, 9, 6, 11, 12, 8]
+                    3: [6, 2, 1, 8, 3, 7],
+                    4: [9, 4, 2, 10, 5, 11],
+                    5: [6, 9, 2, 12, 11, 8]
                 }
             },
             'ndim': 1,
@@ -4418,54 +4421,108 @@ class TestModel:
             }
         }
 
-        beam_material = create_default_3d_beam
-        # Specify the coordinates for the beam: x:1m x y:0m
-        beam_coordinates = [(0.0, 0, 0), (1.0, 0, 0)]
-        # Create the beam
-        gmsh_input = {beam_material.name: {"coordinates": beam_coordinates, "ndim": 1}}
-
-        # check if extrusion length is specified in 3D
-        model.gmsh_io.generate_geometry(gmsh_input, "")
-        #
         # create body model part
-        body_model_part = BodyModelPart(beam_material.name)
-        body_model_part.material = beam_material
+        beam_model_part = BodyModelPart(beam_parameters.name)
+        beam_model_part.material = beam_parameters
 
-        # set the geometry of the body model part
-        body_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, beam_material.name)
-        model.body_model_parts.append(body_model_part)
+        beam_model_part.mesh = Mesh.create_mesh_from_gmsh_group(model.gmsh_io.mesh_data, beam_model_part.name)
 
-        body_model_part.mesh = Mesh.create_mesh_from_gmsh_group(model.gmsh_io.mesh_data, beam_material.name)
+        model.body_model_parts.append(beam_model_part)
 
-        soil_material = create_default_2d_soil_material
-        soil_coordinates = [(0, 0, 0), (2, 0, 0), (2, -1, 0), (0, -1, 0)]
-        gmsh_input = {soil_material.name: {"coordinates": soil_coordinates, "ndim": 2}}
-        model.gmsh_io.generate_geometry(gmsh_input, "")
-
-        # create soil model part
-        soil_model_part = BodyModelPart(soil_material.name)
-        soil_model_part.material = soil_material
-        # set the geometry of the soil model part
-        soil_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, soil_material.name)
-        model.body_model_parts.append(soil_model_part)
-        # set the mesh of the soil model part
-        soil_model_part.mesh = Mesh.create_mesh_from_gmsh_group(model.gmsh_io.mesh_data, soil_material.name)
-
-        # add load on top of beam
+        # create load model part
         load_parameters = create_default_moving_load_parameters
-
         load_model_part = ModelPart("load")
         load_model_part.parameters = load_parameters
 
-        gmsh_input = {load_model_part.name: {"coordinates": [(0.0, 0.0, 0.0), (2.0, 0.0, 0.0)], "ndim": 1}}
-        model.gmsh_io.generate_geometry(gmsh_input, "")
-        load_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, load_model_part.name)
+        load_model_part.mesh = Mesh.create_mesh_from_gmsh_group(model.gmsh_io.mesh_data, load_model_part.name)
+
         model.process_model_parts.append(load_model_part)
 
-        # set the mesh of the load model part
-        load_model_part.mesh = Mesh.create_mesh_from_gmsh_group(model.gmsh_io.mesh_data, load_model_part.name)
+        # create soil model part
+        soil_model_part = BodyModelPart(create_default_2d_soil_material.name)
+        soil_model_part.material = create_default_2d_soil_material
+        soil_model_part.mesh = Mesh.create_mesh_from_gmsh_group(model.gmsh_io.mesh_data, soil_model_part.name)
+
+        model.body_model_parts.append(soil_model_part)
 
         # perform test
         model._Model__split_second_order_elements()
 
-        a = 1 + 1
+        # expected beam mesh is a split of the original LINE_3N element into two LINE_2N elements
+        expected_beam_mesh = Mesh(1)
+        expected_beam_mesh.nodes = {
+            1: Node(1, [0.0, 0.0, 0.0]),
+            2: Node(2, [1.0, 0.0, 0.0]),
+            3: Node(3, [0.5, 0.0, 0.0])
+        }
+        expected_beam_mesh.elements = {6: Element(6, "LINE_2N", [1, 3]), 7: Element(7, "LINE_2N", [3, 2])}
+
+        # expected load mesh is at the location of the beam, a split of the original LINE_3N element into two LINE_2N elements
+        # and the second LINE_3N element is kept as it is
+        expected_load_mesh = Mesh(1)
+        expected_load_mesh.nodes = {
+            1: Node(1, [0.0, 0.0, 0.0]),
+            2: Node(2, [1.0, 0.0, 0.0]),
+            3: Node(3, [0.5, 0.0, 0.0]),
+            4: Node(4, [2.0, 0.0, 0.0]),
+            5: Node(5, [1.5, 0.0, 0.0])
+        }
+        expected_load_mesh.elements = {
+            2: Element(2, "LINE_3N", [2, 4, 5]),
+            6: Element(6, "LINE_2N", [1, 3]),
+            7: Element(7, "LINE_2N", [3, 2])
+        }
+
+        # expected soil mesh is kept as it is
+        expected_soil_mesh = Mesh(2)
+        expected_soil_mesh.nodes = {
+            1: Node(1, [0.0, 0.0, 0.0]),
+            2: Node(2, [1.0, 0.0, 0.0]),
+            3: Node(3, [0.5, 0.0, 0.0]),
+            4: Node(4, [2.0, 0.0, 0.0]),
+            5: Node(5, [1.5, 0.0, 0.0]),
+            6: Node(6, [0.0, -1.0, 0.0]),
+            7: Node(7, [0.0, -0.5, 0.0]),
+            8: Node(8, [0.5, -0.5, 0.0]),
+            9: Node(9, [2.0, -1.0, 0.0]),
+            10: Node(10, [2.0, -0.5, 0.0]),
+            11: Node(11, [1.5, -0.5, 0.0]),
+            12: Node(12, [1.0, -1.0, 0.0])
+        }
+        expected_soil_mesh.elements = {
+            3: Element(3, "TRIANGLE_6N", [6, 2, 1, 8, 3, 7]),
+            4: Element(4, "TRIANGLE_6N", [9, 4, 2, 10, 5, 11]),
+            5: Element(5, "TRIANGLE_6N", [6, 9, 2, 12, 11, 8])
+        }
+
+        # check if the meshes are split correctly
+        assert expected_beam_mesh == model.body_model_parts[0].mesh
+        assert expected_load_mesh == model.process_model_parts[0].mesh
+        assert expected_soil_mesh == model.body_model_parts[1].mesh
+
+    def test_reorder_gmsh_to_kratos_order(self):
+        """
+        Tests if the GMSH mesh data is reordered to match the Kratos order for tetrahedron and hexahedron elements.
+        """
+
+        model = Model(2)
+
+        # set gmsh mesh data manually
+        model.gmsh_io.mesh_data["elements"] = {
+            "TETRAHEDRON_10N": {
+                1: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+            },
+            "HEXAHEDRON_20N": {
+                2: [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
+            }
+        }
+
+        # perform the reordering
+        model._Model__reorder_gmsh_to_kratos_order()
+
+        expected_tetrahedron = {1: [1, 2, 3, 4, 5, 6, 7, 8, 10, 9]}
+        expected_hexahedron = {2: [11, 12, 13, 14, 15, 16, 17, 18, 19, 22, 24, 20, 21, 23, 25, 26, 27, 29, 30, 28]}
+
+        # Check if the elements are reordered correctly
+        assert model.gmsh_io.mesh_data["elements"]["TETRAHEDRON_10N"] == expected_tetrahedron
+        assert model.gmsh_io.mesh_data["elements"]["HEXAHEDRON_20N"] == expected_hexahedron
