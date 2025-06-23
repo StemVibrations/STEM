@@ -992,12 +992,20 @@ class Model:
                 self.gmsh_io.mesh_data["physical_groups"][model_part.name]["node_ids"] = (list(new_mesh.nodes.keys()))
 
     def __reorder_gmsh_to_kratos_order(self):
+        """
+        Reorder the GMSH elements to match the Kratos order. This is necessary because GMSH and Kratos have
+        different orders for the nodes in the elements. Reordering is required for TETRAHEDRON_10N and HEXAHEDRON_20N
+
+        """
+
+        # reorder TETRAHEDRON_10N
         if "TETRAHEDRON_10N" in self.gmsh_io.mesh_data["elements"]:
             gmsh_to_kratos_indices = ELEMENT_DATA["TETRAHEDRON_10N"]["gmsh_to_kratos_order"]
             for key, value in self.gmsh_io.mesh_data["elements"]["TETRAHEDRON_10N"].items():
                 self.gmsh_io.mesh_data["elements"]["TETRAHEDRON_10N"][key] = np.array(
                     self.gmsh_io.mesh_data["elements"]["TETRAHEDRON_10N"][key])[gmsh_to_kratos_indices].tolist()
 
+        # reorder HEXAHEDRON_20N
         if "HEXAHEDRON_20N" in self.gmsh_io.mesh_data["elements"]:
             gmsh_to_kratos_indices = ELEMENT_DATA["HEXAHEDRON_20N"]["gmsh_to_kratos_order"]
             for key, value in self.gmsh_io.mesh_data["elements"]["HEXAHEDRON_20N"].items():
@@ -1005,6 +1013,10 @@ class Model:
                     self.gmsh_io.mesh_data["elements"]["HEXAHEDRON_20N"][key])[gmsh_to_kratos_indices].tolist()
 
     def __set_mesh_constraints(self):
+        """
+        Set the mesh constraints for the structured mesh. The constraints are defined in the mesh_settings
+        and are applied to the gmsh_io instance.
+        """
         if len(self.mesh_settings.constraints["transfinite_volume"]) > 0:
             for key, value in self.mesh_settings.constraints["transfinite_volume"].items():
                 self.gmsh_io.set_structured_mesh_constraints_volume(value, key)
@@ -1014,6 +1026,12 @@ class Model:
                 self.gmsh_io.set_structured_mesh_constraints_surface(value, key)
 
         if len(self.mesh_settings.constraints["transfinite_curve"]) > 0:
+
+            # make sure that the transfinite_curve key is present in the geo_data constraints
+            if "transfinite_curve" not in self.gmsh_io.geo_data["constraints"]:
+                self.gmsh_io.geo_data["constraints"]["transfinite_curve"] = {}
+
+            # set the transfinite curve constraints dictionary
             for key, value in self.mesh_settings.constraints["transfinite_curve"].items():
                 self.gmsh_io.geo_data["constraints"]["transfinite_curve"][key] = {"n_points": value}
 
