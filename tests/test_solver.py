@@ -88,7 +88,7 @@ class TestSolverSettings:
         solver_settings.validate_settings()
 
         # check if settings are updated
-        assert isinstance(solver_settings.scheme, BackwardEulerScheme)
+        assert isinstance(solver_settings.scheme, StaticScheme)
         assert not solver_settings.are_mass_and_damping_constant
 
         # set solution type to dynamic and remove Rayleigh damping parameter
