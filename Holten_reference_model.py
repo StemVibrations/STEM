@@ -229,7 +229,7 @@ delta_time_stage_2 = 1e-3
 duration_stage_2 = 1
 stage2 = stem.create_new_stage(delta_time_stage_2, duration_stage_2)
 
-velocity = 40
+velocity = 40 # Look at it into Holten
 stage2.project_parameters.settings.solution_type = SolutionType.DYNAMIC
 stage2.project_parameters.settings.strategy_type = LinearNewtonRaphsonStrategy()
 stage2.project_parameters.settings.rayleigh_k = 0.0002
