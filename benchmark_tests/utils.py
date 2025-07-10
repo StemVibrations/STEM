@@ -76,8 +76,8 @@ def assert_files_equal(exact_folder: str, test_folder: str) -> bool:
         with open(os.path.join(test_folder, file)) as fi:
             test = fi.read()
 
-        # check if files are equal
-        if exact == test:
-            return True
+        # check if files are not equal
+        if exact != test:
+            return False
 
-    return False
+    return True
