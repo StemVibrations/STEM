@@ -1,4 +1,5 @@
 import pytest
+import plotly.graph_objects as go
 
 from stem.utils_interface import UtilsInterface
 from stem.mesh import Node
@@ -76,3 +77,63 @@ class TestUtilsInterface:
         ]
         order = UtilsInterface.get_quad4_node_order(nodes_stable_parts, nodes)
         assert order == [7, 3, 8, 4]
+
+    def test_vertical_interface_3d(self):
+        """
+        Test vertical interface in 3D.
+        """
+        # Stable part nodes (bottom triangle of the wedge)
+        nodes_stable_parts = {1, 2, 3}
+        # All nodes for the interface element
+        nodes_for_element = [
+            Node(id=1, coordinates=[0.0, 0.0, 0.0]),
+            Node(id=2, coordinates=[1.0, 0.0, 0.0]),
+            Node(id=3, coordinates=[0.0, 1.0, 0.0]),
+            Node(id=4, coordinates=[0.0, 0.0, 0.0]),
+            Node(id=5, coordinates=[1.0, 0.0, 0.0]),
+            Node(id=6, coordinates=[0.0, 1.0, 0.0]),
+        ]
+        # Expected order: stable nodes first, then corresponding nodes from the other part
+        expected_order = [1, 2, 3, 4, 5, 6]
+        order = UtilsInterface.get_hexa6_node_order(nodes_stable_parts, nodes_for_element)
+        assert sorted(order) == sorted(expected_order)
+
+    def test_horizontal_interface_3d(self):
+        """
+        Test horizontal interface in 3D.
+        """
+        # Stable part nodes
+        nodes_stable_parts = {1, 2, 4}
+        # All nodes for the interface element
+        nodes_for_element = [
+            Node(id=1, coordinates=[0.0, 0.0, 0.0]),
+            Node(id=2, coordinates=[1.0, 0.0, 0.0]),
+            Node(id=3, coordinates=[0.0, 0.0, 0.0]),
+            Node(id=4, coordinates=[0.0, 1.0, 0.0]),
+            Node(id=5, coordinates=[1.0, 0.0, 0.0]),
+            Node(id=6, coordinates=[0.0, 1.0, 0.0]),
+        ]
+        # Expected order: stable nodes first, then corresponding nodes from the other part
+        expected_order = [1, 2, 4, 3, 5, 6]
+        order = UtilsInterface.get_hexa6_node_order(nodes_stable_parts, nodes_for_element)
+        assert sorted(order) == sorted(expected_order)
+
+    def test_angled_interface_3d(self):
+        """
+        Test angled interface in 3D.
+        """
+        # Stable part nodes
+        nodes_stable_parts = {1, 2, 5}
+        # All nodes for the interface element
+        nodes_for_element = [
+            Node(id=1, coordinates=[0.0, 0.0, 0.0]),
+            Node(id=2, coordinates=[1.0, 0.0, 0.0]),
+            Node(id=3, coordinates=[0.0, 0.0, 0.0]),
+            Node(id=4, coordinates=[1.0, 0.0, 0.0]),
+            Node(id=5, coordinates=[0.5, 1.0, 0.0]),
+            Node(id=6, coordinates=[0.5, 1.0, 0.0]),
+        ]
+        # Expected order: stable nodes first, then corresponding nodes from the other part
+        expected_order = [1, 2, 5, 3, 4, 6]
+        order = UtilsInterface.get_hexa6_node_order(nodes_stable_parts, nodes_for_element)
+        assert sorted(order) == sorted(expected_order)

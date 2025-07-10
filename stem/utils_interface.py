@@ -55,3 +55,47 @@ class UtilsInterface:
                 break
         quad4_node_collection[last_node.id] = last_node
         return list(quad4_node_collection.keys())
+
+    @staticmethod
+    def get_hexa6_node_order(node_ids_part_1: Set[int],
+                             nodes_for_element: List[Node]) -> List[int]:  # TODO this is a prism
+        """
+        Order the nodes of a 6-noded interface element.
+
+        The ordering logic is as follows:
+        1.  Separate the nodes into two groups: one for the "primary" side of the
+            interface (defined by `node_ids_part_1`) and one for the "secondary" side.
+        2.  For each primary node, find the corresponding secondary node that has the
+            same coordinates.
+        3.  The final ordered list of node IDs consists of the ordered primary
+            nodes followed by their corresponding secondary nodes.
+
+        This ensures a consistent node ordering required for the interface element,
+        e.g., [primary1, primary2, primary3, secondary1, secondary2, secondary3].
+
+        Args:
+            node_ids_part_1: A set of node IDs belonging to the primary side of the interface.
+            nodes_for_element: A list of all `Node` objects for the element.
+
+        Returns:
+            A list of node IDs in the correct order.
+        """
+
+        # Separate nodes into primary and secondary groups
+        primary_nodes = [node for node in nodes_for_element if node.id in node_ids_part_1]
+        secondary_nodes_all = [node for node in nodes_for_element if node.id not in node_ids_part_1]
+
+        # Create a dictionary for quick lookup of secondary nodes by coordinate
+        secondary_node_map = {tuple(np.round(node.coordinates, 5)): node for node in secondary_nodes_all}
+
+        # Find the corresponding secondary node for each primary node
+        ordered_secondary_nodes = []
+        for primary_node in primary_nodes:
+            coord_key = tuple(np.round(primary_node.coordinates, 5))
+            if coord_key in secondary_node_map:
+                ordered_secondary_nodes.append(secondary_node_map[coord_key])
+
+        # Combine primary and secondary nodes into the final ordered list
+        ordered_nodes = primary_nodes + ordered_secondary_nodes
+
+        return [node.id for node in ordered_nodes]

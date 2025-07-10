@@ -112,8 +112,9 @@ def test_interface():
             soil_formulation=variables,
             retention_parameters=retention_parameters1,
         )
-
-        model.set_interface_between_model_parts(["soil_block"], ["soil_block_2"], interface_material)
+        connections_dictionary = {"side_rollers": [True, False]}
+        model.set_interface_between_model_parts(["soil_block"], ["soil_block_2"], interface_material,
+                                                connections_dictionary)
         # model.show_geometry(show_line_ids=True)
         # Boundary conditions and Loads
         load_coordinates = [(1.0, 1.0, 0), (1.0, 2.0, 0)]
@@ -121,9 +122,6 @@ def test_interface():
         # Add line load
         line_load = LineLoad(active=[True, False, False], value=[100, 0, 0])
         model.add_load_by_coordinates(load_coordinates, line_load, "load")
-
-        point_load = PointLoad(active=[True, False, False], value=[100, 0, 0])
-        model.add_load_by_coordinates([(1.0, 1.0, 0)], point_load, "point_load")
 
         # show the model
         # model.show_geometry(show_line_ids=True)
