@@ -1,6 +1,6 @@
 import UVEC.uvec_ten_dof_vehicle_2D as uvec
 from stem.model import Model
-#from stem.additional_processes import HingeParameters
+# from stem.additional_processes import HingeParameters
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
 from stem.structural_material import ElasticSpringDamper, NodalConcentrated
 from stem.default_materials import DefaultMaterial
@@ -60,10 +60,19 @@ constitutive_law_l1 = LinearElasticSoil(YOUNG_MODULUS=young_modulus_l1, POISSON_
 retention_parameters_l1 = SaturatedBelowPhreaticLevelLaw()
 material_soil_l1 = SoilMaterial("soil_l1", soil_formulation_l1, constitutive_law_l1, retention_parameters_l1)
 
-solid_density_ballast = 2000
+# solid_density_subballast = 2100
+# porosity_subballast = 0.3
+# young_modulus_subballast = 161.7e6
+# poisson_ratio_subballast = 0.3
+# soil_formulation_subballast = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_subballast, POROSITY=porosity_subballast)
+# constitutive_law_subballast = LinearElasticSoil(YOUNG_MODULUS=young_modulus_subballast, POISSON_RATIO=poisson_ratio_subballast)
+# retention_parameters_subballast = SaturatedBelowPhreaticLevelLaw()
+# material_subballast = SoilMaterial("ballast", soil_formulation_subballast, constitutive_law_subballast, retention_parameters_subballast)
+
+solid_density_ballast = 1800
 porosity_ballast = 0.3
-young_modulus_ballast = 100e6
-poisson_ratio_ballast = 0.25
+young_modulus_ballast = 67.5e6
+poisson_ratio_ballast = 0.20
 soil_formulation_ballast = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_ballast, POROSITY=porosity_ballast)
 constitutive_law_ballast = LinearElasticSoil(YOUNG_MODULUS=young_modulus_ballast, POISSON_RATIO=poisson_ratio_ballast)
 retention_parameters_ballast = SaturatedBelowPhreaticLevelLaw()
@@ -84,7 +93,8 @@ soil_l4_coordinates = [(0.0, 5.77, 0.0), (10.0, 5.77, 0.0), (10.0, 7.27, 0.0), (
 soil_l3_coordinates = [(0.0, 7.27, 0.0), (10.0, 7.27, 0.0), (10.0, 9.77, 0.0), (0.0, 9.77, 0.0)]
 soil_l2_coordinates = [(0.0, 9.77, 0.0), (10.0, 9.77, 0.0), (10.0, 11.77, 0.0), (0.0, 11.77, 0.0)]
 soil_l1_coordinates = [(0.0, 11.77, 0.0), (10.0, 11.77, 0.0), (10.0, 14.77, 0.0), (0.0, 14.77, 0.0)]
-ballast_coordinates = [(0.0, 14.77, 0.0), (10.0, 14.77, 0.0), (10.0, 15.07, 0.0), (0.75, 15.07, 0.0), (0, 15.07, 0.0)] # Change to 1 meter max.
+# subballast_coordinates = [(0.0, 14.77, 0.0), (10.0, 14.77, 0.0), (10.0, 15.77, 0.0), (0.0, 15.77, 0.0)]
+ballast_coordinates = [(0.0, 14.77, 0.0), (2.5, 14.77, 0.0), (1.5, 15.07, 0.0), (0.75, 15.07, 0.0), (0, 15.07, 0.0)]
 model.extrusion_length = extrusion_length
 
 model.add_soil_layer_by_coordinates(soil_l5_coordinates, material_soil_l5, "soil_layer_5")
@@ -92,6 +102,7 @@ model.add_soil_layer_by_coordinates(soil_l4_coordinates, material_soil_l4, "soil
 model.add_soil_layer_by_coordinates(soil_l3_coordinates, material_soil_l3, "soil_layer_3")
 model.add_soil_layer_by_coordinates(soil_l2_coordinates, material_soil_l2, "soil_layer_2")
 model.add_soil_layer_by_coordinates(soil_l1_coordinates, material_soil_l1, "soil_layer_1")
+# model.add_soil_layer_by_coordinates(subballast_coordinates, material_subballast, "subballast_layer")
 model.add_soil_layer_by_coordinates(ballast_coordinates, material_ballast, "ballast_layer")
 
 # rails
@@ -158,7 +169,8 @@ model.set_element_size_of_group(element_size=0.31, group_name="soil_layer_4")
 model.set_element_size_of_group(element_size=0.43, group_name="soil_layer_3")
 model.set_element_size_of_group(element_size=0.35, group_name="soil_layer_2")
 model.set_element_size_of_group(element_size=0.43, group_name="soil_layer_1")
-model.set_element_size_of_group(element_size=0.39, group_name="ballast_layer")
+# model.set_element_size_of_group(element_size=0.27, group_name="subballast_layer")
+model.set_element_size_of_group(element_size=0.20, group_name="ballast_layer")
 
 # settings run
 end_time = 0.1
@@ -226,7 +238,7 @@ model.add_output_settings_by_coordinates(
 input_files_dir = "Holten_rm"
 stem = Stem(model, input_files_dir)
 delta_time_stage_2 = 1e-3
-duration_stage_2 = 1
+duration_stage_2 = 1 # 1 second of dynamical calculation
 stage2 = stem.create_new_stage(delta_time_stage_2, duration_stage_2)
 
 velocity = 40 # Look at it into Holten

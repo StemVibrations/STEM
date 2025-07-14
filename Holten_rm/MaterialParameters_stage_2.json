@@ -155,8 +155,8 @@
             "properties_id": 6,
             "Material": {
                 "Variables": {
-                    "YOUNG_MODULUS": 100000000.0,
-                    "POISSON_RATIO": 0.15,
+                    "YOUNG_MODULUS": 67500000.0,
+                    "POISSON_RATIO": 0.2,
                     "DENSITY_SOLID": 1800,
                     "POROSITY": 0.3,
                     "BULK_MODULUS_SOLID": 50000000000.0,
