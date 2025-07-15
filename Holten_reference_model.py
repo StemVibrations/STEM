@@ -87,7 +87,7 @@ sleeper_parameters = NodalConcentrated(NODAL_DISPLACEMENT_STIFFNESS=[0, 0, 0],
                                        NODAL_MASS=140,
                                        NODAL_DAMPING_COEFFICIENT=[0, 0, 0])
 
-extrusion_length = 50
+extrusion_length = 70
 soil_l5_coordinates = [(0.0, 3.77, 0.0), (10.0, 3.77, 0.0), (10.0, 5.77, 0.0), (0.0, 5.77, 0.0)]
 soil_l4_coordinates = [(0.0, 5.77, 0.0), (10.0, 5.77, 0.0), (10.0, 7.27, 0.0), (0.0, 7.27, 0.0)]
 soil_l3_coordinates = [(0.0, 7.27, 0.0), (10.0, 7.27, 0.0), (10.0, 9.77, 0.0), (0.0, 9.77, 0.0)]
@@ -108,7 +108,7 @@ model.add_soil_layer_by_coordinates(ballast_coordinates, material_ballast, "ball
 # rails
 origin_point = [0.75, 15.07, 0]
 direction_vector = [0, 0, 1]
-number_of_sleepers = 101
+number_of_sleepers = 141
 sleeper_spacing = 0.5
 rail_pad_thickness = 0.025
 
@@ -141,7 +141,7 @@ uvec_parameters = {"n_carts": 1, # number of carts [-]
                    "velocity": velocity,
                    }
 
-uvec_load = UvecLoad(direction=[1, 1, 1], velocity=velocity, origin=[0.75, 15.07+rail_pad_thickness, 0], #die 20 is ook y directie
+uvec_load = UvecLoad(direction=[1, 1, 1], velocity=velocity, origin=[0.75, 15.07+rail_pad_thickness, 5], #die 20 is ook y directie
                      wheel_configuration=wheel_configuration,
                      uvec_model=uvec,
                      uvec_parameters=uvec_parameters)
@@ -218,9 +218,9 @@ model.add_output_settings(
 )
 
 desired_output_points = [
-                         (2.20, 15.07, 25),
-                         (4.00, 15.07, 25),
-                         (8.00, 15.07, 25)
+                         (2.20, 14.77, 25), # need to change, in the slope!
+                         (4.00, 14.77, 25),
+                         (8.00, 14.77, 25)
                          ]
 
 model.add_output_settings_by_coordinates(
