@@ -16,7 +16,7 @@ model = Model(ndim)
 
 # ground
 solid_density_l5 = 1850
-porosity_l5 = 0.3
+porosity_l5 = 0.25
 young_modulus_l5 = 80e6
 poisson_ratio_l5 = 0.25
 soil_formulation_l5 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_l5, POROSITY=porosity_l5)
@@ -25,7 +25,7 @@ retention_parameters_l5 = SaturatedBelowPhreaticLevelLaw()
 material_soil_l5 = SoilMaterial("soil_l5", soil_formulation_l5, constitutive_law_l5, retention_parameters_l5)
 
 solid_density_l4 = 1850
-porosity_l4 = 0.3
+porosity_l4 = 0.25
 young_modulus_l4 = 80e6
 poisson_ratio_l4 = 0.25
 soil_formulation_l4 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_l4, POROSITY=porosity_l4)
@@ -34,7 +34,7 @@ retention_parameters_l4 = SaturatedBelowPhreaticLevelLaw()
 material_soil_l4 = SoilMaterial("soil_l4", soil_formulation_l4, constitutive_law_l4, retention_parameters_l4)
 
 solid_density_l3 = 2050
-porosity_l3 = 0.3
+porosity_l3 = 0.25
 young_modulus_l3 = 150e6
 poisson_ratio_l3 = 0.25
 soil_formulation_l3 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_l3, POROSITY=porosity_l3)
@@ -43,7 +43,7 @@ retention_parameters_l3 = SaturatedBelowPhreaticLevelLaw()
 material_soil_l3 = SoilMaterial("soil_l3", soil_formulation_l3, constitutive_law_l3, retention_parameters_l3)
 
 solid_density_l2 = 1900
-porosity_l2 = 0.3
+porosity_l2 = 0.25
 young_modulus_l2 = 100e6
 poisson_ratio_l2 = 0.25
 soil_formulation_l2 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_l2, POROSITY=porosity_l2)
@@ -52,7 +52,7 @@ retention_parameters_l2 = SaturatedBelowPhreaticLevelLaw()
 material_soil_l2 = SoilMaterial("soil_l2", soil_formulation_l2, constitutive_law_l2, retention_parameters_l2)
 
 solid_density_l1 = 2100
-porosity_l1 = 0.3
+porosity_l1 = 0.25
 young_modulus_l1 = 125e6
 poisson_ratio_l1 = 0.25
 soil_formulation_l1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_l1, POROSITY=porosity_l1)
@@ -60,14 +60,24 @@ constitutive_law_l1 = LinearElasticSoil(YOUNG_MODULUS=young_modulus_l1, POISSON_
 retention_parameters_l1 = SaturatedBelowPhreaticLevelLaw()
 material_soil_l1 = SoilMaterial("soil_l1", soil_formulation_l1, constitutive_law_l1, retention_parameters_l1)
 
-solid_density_ballast = 1800
+# ballast van Deltares
+solid_density_ballast = 1850
 porosity_ballast = 0.3
-young_modulus_ballast = 67.5e6
+young_modulus_ballast = 150e6
 poisson_ratio_ballast = 0.20
 soil_formulation_ballast = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_ballast, POROSITY=porosity_ballast)
 constitutive_law_ballast = LinearElasticSoil(YOUNG_MODULUS=young_modulus_ballast, POISSON_RATIO=poisson_ratio_ballast)
 retention_parameters_ballast = SaturatedBelowPhreaticLevelLaw()
 material_ballast = SoilMaterial("ballast", soil_formulation_ballast, constitutive_law_ballast, retention_parameters_ballast)
+
+# solid_density_ballast = 1800
+# porosity_ballast = 0.3
+# young_modulus_ballast = 67.5e6
+# poisson_ratio_ballast = 0.20
+# soil_formulation_ballast = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_ballast, POROSITY=porosity_ballast)
+# constitutive_law_ballast = LinearElasticSoil(YOUNG_MODULUS=young_modulus_ballast, POISSON_RATIO=poisson_ratio_ballast)
+# retention_parameters_ballast = SaturatedBelowPhreaticLevelLaw()
+# material_ballast = SoilMaterial("ballast", soil_formulation_ballast, constitutive_law_ballast, retention_parameters_ballast)
 
 rail_parameters = DefaultMaterial.Rail_54E1_3D.value.material_parameters
 rail_pad_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[0, 750e6, 0],
@@ -170,7 +180,7 @@ uvec_load = UvecLoad(direction=[1, 1, 1], velocity=velocity, origin=[0.75, 15.07
 # add the load on the tracks
 model.add_load_on_line_model_part("rail_track", uvec_load, "train_load")
 
-#model.show_geometry(show_surface_ids=True)
+# model.show_geometry(show_surface_ids=True)
 model.show_geometry()
 
 # boundary conditions
@@ -184,15 +194,15 @@ model.add_boundary_condition_by_geometry_ids(2, [1], no_displacement_parameters,
 model.add_boundary_condition_by_geometry_ids(2, [4, 9, 14, 19, 24, 30], roller_displacement_parameters, "sides_roller")
 model.add_boundary_condition_by_geometry_ids(2, [2, 5, 6, 7, 10, 11, 12, 15, 16, 17, 20, 21, 22, 25, 26, 27, 31, 32], absorbing_boundaries_parameters, "abs")
 
-# mesh
+# mesh voor max 100 Hz
 model.set_mesh_size(element_size=1.0)
-model.set_element_size_of_group(element_size=0.43, group_name="soil_layer_5")
-model.set_element_size_of_group(element_size=0.31, group_name="soil_layer_4")
-model.set_element_size_of_group(element_size=0.43, group_name="soil_layer_3")
-model.set_element_size_of_group(element_size=0.35, group_name="soil_layer_2")
-model.set_element_size_of_group(element_size=0.43, group_name="soil_layer_1")
-# model.set_element_size_of_group(element_size=0.27, group_name="subballast_layer")
-model.set_element_size_of_group(element_size=0.20, group_name="ballast_layer")
+model.set_element_size_of_group(element_size=0.34, group_name="soil_layer_5")
+model.set_element_size_of_group(element_size=0.25, group_name="soil_layer_4")
+model.set_element_size_of_group(element_size=0.34, group_name="soil_layer_3")
+model.set_element_size_of_group(element_size=0.28, group_name="soil_layer_2")
+model.set_element_size_of_group(element_size=0.34, group_name="soil_layer_1")
+# ballast van Deltares
+model.set_element_size_of_group(element_size=0.30, group_name="ballast_layer")
 
 # settings run
 end_time = 1e-1
@@ -240,12 +250,12 @@ model.add_output_settings(
 )
 
 desired_output_points = [
-                         (2.50, 14.77, 25),
-                         (4.00, 14.77, 25),
-                         (8.00, 14.77, 25),
-                         (2.50, 14.77, 35),
-                         (4.00, 14.77, 35),
-                         (8.00, 14.77, 35)
+                         # (2.50, 14.77, 25),
+                         # (4.00, 14.77, 25),
+                         # (8.00, 14.77, 25),
+                         (2.50, 14.77, 36),
+                         (4.00, 14.77, 36),
+                         (8.00, 14.77, 36)
                          ]
 
 model.add_output_settings_by_coordinates( # fijne stappen
