@@ -75,16 +75,10 @@ def test_interface_3d():
         POROSITY = 0.0
         YOUNG_MODULUS = 1e6
         POISSON_RATIO = 0.3
-        soil_formulation1 = OnePhaseSoil(
-            ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY
-        )
-        constitutive_law1 = LinearElasticSoil(
-            YOUNG_MODULUS=YOUNG_MODULUS, POISSON_RATIO=POISSON_RATIO
-        )
+        soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
+        constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=YOUNG_MODULUS, POISSON_RATIO=POISSON_RATIO)
         retention_parameters1 = SaturatedBelowPhreaticLevelLaw()
-        material1 = SoilMaterial(
-            "soil", soil_formulation1, constitutive_law1, retention_parameters1
-        )
+        material1 = SoilMaterial("soil", soil_formulation1, constitutive_law1, retention_parameters1)
         # Specify the coordinates for the column: x:1m x y:10m
         layer1_coordinates = [
             (1.0, 0.0, 0),
@@ -104,9 +98,7 @@ def test_interface_3d():
             (1.0, 2.0, 0),
         ]
         model.add_soil_layer_by_coordinates(layer2_coordinates, material1, "soil_block_2")
-        constitutive_law2 = LinearElasticSoil(
-            YOUNG_MODULUS=interface_stiffness, POISSON_RATIO=POISSON_RATIO
-        )
+        constitutive_law2 = LinearElasticSoil(YOUNG_MODULUS=interface_stiffness, POISSON_RATIO=POISSON_RATIO)
 
         # model.show_geometry(show_surface_ids=True)
         variables = OnePhaseSoilInterface(
@@ -153,22 +145,18 @@ def test_interface_3d():
         # model.show_geometry(show_surface_ids=True)
 
         # Define boundary conditions
-        no_displacement_parameters = DisplacementConstraint(
-            active=[True, True, True], is_fixed=[True, True, True], value=[0, 0, 0]
-        )
+        no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+                                                            is_fixed=[True, True, True],
+                                                            value=[0, 0, 0])
 
-        sym_parameters = DisplacementConstraint(
-            active=[True, False, True], is_fixed=[True, False, False], value=[0, 0, 0]
-        )
+        sym_parameters = DisplacementConstraint(active=[True, False, True],
+                                                is_fixed=[True, False, False],
+                                                value=[0, 0, 0])
 
         # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
-        model.add_boundary_condition_by_geometry_ids(
-            2, [7], no_displacement_parameters, "base_fixed"
-        )
+        model.add_boundary_condition_by_geometry_ids(2, [7], no_displacement_parameters, "base_fixed")
         if roller:
-            model.add_boundary_condition_by_geometry_ids(
-                2, [11, 9, 10, 8], sym_parameters, "side_rollers"
-            )
+            model.add_boundary_condition_by_geometry_ids(2, [11, 9, 10, 8], sym_parameters, "side_rollers")
 
         # Set up solver settings
         analysis_type = AnalysisType.MECHANICAL
@@ -230,18 +218,16 @@ def test_interface_3d():
         )
         model.output_settings.append(vtk_output_process)
 
-        (
-            model.add_output_settings_by_coordinates(
-                coordinates=[(1.5, 2.0, 0), (1.5, 0.75, 0)],
-                output_parameters=JsonOutputParameters(
-                    output_interval=0.5,
-                    nodal_results=nodal_results,
-                    gauss_point_results=gauss_point_results,
-                ),
-                part_name="calculated_output",
-                output_dir=output_dir,
+        (model.add_output_settings_by_coordinates(
+            coordinates=[(1.5, 2.0, 0), (1.5, 0.75, 0)],
+            output_parameters=JsonOutputParameters(
+                output_interval=0.5,
+                nodal_results=nodal_results,
+                gauss_point_results=gauss_point_results,
             ),
-        )
+            part_name="calculated_output",
+            output_dir=output_dir,
+        ), )
         # Set mesh size
         # --------------------------------
         model.set_mesh_size(element_size=4)
@@ -261,62 +247,37 @@ def test_interface_3d():
     # Check the results
     # For each case, check the displacements in the bottom layer are as expected
     assert results["interface_high_stiffness_roller"] is not None, (
-        "Output file for high stiffness roller case not found"
-    )
+        "Output file for high stiffness roller case not found")
     assert results["interface_low_stiffness_roller"] is not None, (
-        "Output file for low stiffness roller case not found"
-    )
+        "Output file for low stiffness roller case not found")
     assert results["interface_high_stiffness_no_roller"] is not None, (
-        "Output file for high stiffness no roller case not found"
-    )
+        "Output file for high stiffness no roller case not found")
     assert results["interface_low_stiffness_no_roller"] is not None, (
-        "Output file for low stiffness no roller case not found"
-    )
+        "Output file for low stiffness no roller case not found")
 
     # Collect the displacements from the results top nodes
     top_node_disp_high_stiffness_roller_x = abs(
-        results["interface_high_stiffness_roller"]["NODE_13"]["DISPLACEMENT_X"][0]
-    )
+        results["interface_high_stiffness_roller"]["NODE_13"]["DISPLACEMENT_X"][0])
     top_node_disp_low_stiffness_roller_x = abs(
-        results["interface_low_stiffness_roller"]["NODE_13"]["DISPLACEMENT_X"][0]
-    )
+        results["interface_low_stiffness_roller"]["NODE_13"]["DISPLACEMENT_X"][0])
     top_node_disp_high_stiffness_no_roller_x = abs(
-        results["interface_high_stiffness_no_roller"]["NODE_13"]["DISPLACEMENT_X"][0]
-    )
+        results["interface_high_stiffness_no_roller"]["NODE_13"]["DISPLACEMENT_X"][0])
     top_node_disp_low_stiffness_no_roller_x = abs(
-        results["interface_low_stiffness_no_roller"]["NODE_13"]["DISPLACEMENT_X"][0]
-    )
+        results["interface_low_stiffness_no_roller"]["NODE_13"]["DISPLACEMENT_X"][0])
     bottom_node_disp_high_stiffness_roller_x = abs(
-        results["interface_high_stiffness_roller"]["NODE_15"]["DISPLACEMENT_X"][0]
-    )
+        results["interface_high_stiffness_roller"]["NODE_15"]["DISPLACEMENT_X"][0])
     bottom_node_disp_low_stiffness_roller_x = abs(
-        results["interface_low_stiffness_roller"]["NODE_15"]["DISPLACEMENT_X"][0]
-    )
+        results["interface_low_stiffness_roller"]["NODE_15"]["DISPLACEMENT_X"][0])
     bottom_node_disp_high_stiffness_no_roller_x = abs(
-        results["interface_high_stiffness_no_roller"]["NODE_15"]["DISPLACEMENT_X"][0]
-    )
+        results["interface_high_stiffness_no_roller"]["NODE_15"]["DISPLACEMENT_X"][0])
     bottom_node_disp_low_stiffness_no_roller_x = abs(
-        results["interface_low_stiffness_no_roller"]["NODE_15"]["DISPLACEMENT_X"][0]
-    )
+        results["interface_low_stiffness_no_roller"]["NODE_15"]["DISPLACEMENT_X"][0])
 
     # top node displaces more than bottom node in all cases
-    assert (
-        top_node_disp_high_stiffness_roller_x > bottom_node_disp_high_stiffness_roller_x
-    )
-    assert (
-        top_node_disp_low_stiffness_roller_x > bottom_node_disp_low_stiffness_roller_x
-    )
-    assert (
-        top_node_disp_high_stiffness_no_roller_x
-        > bottom_node_disp_high_stiffness_no_roller_x
-    )
-    assert (
-        top_node_disp_low_stiffness_no_roller_x
-        > bottom_node_disp_low_stiffness_no_roller_x
-    )
+    assert (top_node_disp_high_stiffness_roller_x > bottom_node_disp_high_stiffness_roller_x)
+    assert (top_node_disp_low_stiffness_roller_x > bottom_node_disp_low_stiffness_roller_x)
+    assert (top_node_disp_high_stiffness_no_roller_x > bottom_node_disp_high_stiffness_no_roller_x)
+    assert (top_node_disp_low_stiffness_no_roller_x > bottom_node_disp_low_stiffness_no_roller_x)
     # check that the displacements in the top are higher for the low stiffness cases
     assert top_node_disp_high_stiffness_roller_x < top_node_disp_low_stiffness_roller_x
-    assert (
-        top_node_disp_high_stiffness_no_roller_x
-        < top_node_disp_low_stiffness_no_roller_x
-    )
+    assert (top_node_disp_high_stiffness_no_roller_x < top_node_disp_low_stiffness_no_roller_x)
