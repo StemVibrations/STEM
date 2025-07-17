@@ -17,3 +17,7 @@ plt.legend()
 plt.tight_layout()
 plt.savefig(r"C:\Users\ritfeldis\Documents\Python\STEM\railuneveness_example.png")
 plt.show()
+
+# plaatje van de spectrum zoals het schalkwijk in het rapport bij input parameters.
+
+#

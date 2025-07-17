@@ -60,15 +60,6 @@ constitutive_law_l1 = LinearElasticSoil(YOUNG_MODULUS=young_modulus_l1, POISSON_
 retention_parameters_l1 = SaturatedBelowPhreaticLevelLaw()
 material_soil_l1 = SoilMaterial("soil_l1", soil_formulation_l1, constitutive_law_l1, retention_parameters_l1)
 
-# solid_density_subballast = 2100
-# porosity_subballast = 0.3
-# young_modulus_subballast = 161.7e6
-# poisson_ratio_subballast = 0.3
-# soil_formulation_subballast = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_subballast, POROSITY=porosity_subballast)
-# constitutive_law_subballast = LinearElasticSoil(YOUNG_MODULUS=young_modulus_subballast, POISSON_RATIO=poisson_ratio_subballast)
-# retention_parameters_subballast = SaturatedBelowPhreaticLevelLaw()
-# material_subballast = SoilMaterial("ballast", soil_formulation_subballast, constitutive_law_subballast, retention_parameters_subballast)
-
 solid_density_ballast = 1800
 porosity_ballast = 0.3
 young_modulus_ballast = 67.5e6
@@ -87,7 +78,7 @@ sleeper_parameters = NodalConcentrated(NODAL_DISPLACEMENT_STIFFNESS=[0, 0, 0],
                                        NODAL_MASS=140,
                                        NODAL_DAMPING_COEFFICIENT=[0, 0, 0])
 
-extrusion_length = 70
+extrusion_length = 72
 soil_l5_coordinates = [(0.0, 3.77, 0.0), (10.0, 3.77, 0.0), (10.0, 5.77, 0.0), (0.0, 5.77, 0.0)]
 soil_l4_coordinates = [(0.0, 5.77, 0.0), (10.0, 5.77, 0.0), (10.0, 7.27, 0.0), (0.0, 7.27, 0.0)]
 soil_l3_coordinates = [(0.0, 7.27, 0.0), (10.0, 7.27, 0.0), (10.0, 9.77, 0.0), (0.0, 9.77, 0.0)]
@@ -105,11 +96,26 @@ model.add_soil_layer_by_coordinates(soil_l1_coordinates, material_soil_l1, "soil
 # model.add_soil_layer_by_coordinates(subballast_coordinates, material_subballast, "subballast_layer")
 model.add_soil_layer_by_coordinates(ballast_coordinates, material_ballast, "ballast_layer")
 
+# create track with extension outside the 3D soil domain
+rail_parameters = DefaultMaterial.Rail_54E1_3D.value.material_parameters
+rail_pad_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[0, 750e6, 0],
+                                          NODAL_ROTATIONAL_STIFFNESS=[0, 0, 0],
+                                          NODAL_DAMPING_COEFFICIENT=[0, 750e3, 0],
+                                          NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0])
+
+sleeper_parameters = NodalConcentrated(NODAL_DISPLACEMENT_STIFFNESS=[0, 0, 0],
+                                       NODAL_MASS=140,
+                                       NODAL_DAMPING_COEFFICIENT=[0, 0, 0])
+
+soil_equivalent_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[0, 110e6, 0],
+                                                 NODAL_ROTATIONAL_STIFFNESS=[0, 0, 0],
+                                                 NODAL_DAMPING_COEFFICIENT=[0, 110e3, 0],
+                                                 NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0])
 # rails
 origin_point = [0.75, 15.07, 0]
 direction_vector = [0, 0, 1]
-number_of_sleepers = 141
-sleeper_spacing = 0.5
+number_of_sleepers = 121
+sleeper_spacing = 0.6
 rail_pad_thickness = 0.025
 
 model.generate_straight_track(sleeper_spacing, number_of_sleepers, rail_parameters,
@@ -118,9 +124,9 @@ model.generate_straight_track(sleeper_spacing, number_of_sleepers, rail_paramete
                               direction_vector, "rail_track")
 
 # train
+# define uvec parameters
 wheel_configuration=[0.0, 2.5, 19.9, 22.4] # wheel configuration [m]
 velocity = 0 # velocity of the UVEC [m/s]
-
 uvec_parameters = {"n_carts": 1, # number of carts [-]
                    "cart_inertia": (1128.8e3) / 2, # inertia of the cart [kgm2]
                    "cart_mass": (50e3) / 2, # mass of the cart [kg]
@@ -141,11 +147,13 @@ uvec_parameters = {"n_carts": 1, # number of carts [-]
                    "velocity": velocity,
                    }
 
-uvec_load = UvecLoad(direction=[1, 1, 1], velocity=velocity, origin=[0.75, 15.07+rail_pad_thickness, 5], #die 20 is ook y directie
+# define the UVEC load
+uvec_load = UvecLoad(direction=[1, 1, 1], velocity=velocity, origin=[0.75, 15.07+rail_pad_thickness, 0],
                      wheel_configuration=wheel_configuration,
                      uvec_model=uvec,
                      uvec_parameters=uvec_parameters)
 
+# add the load on the tracks
 model.add_load_on_line_model_part("rail_track", uvec_load, "train_load")
 
 #model.show_geometry(show_surface_ids=True)
@@ -173,8 +181,8 @@ model.set_element_size_of_group(element_size=0.43, group_name="soil_layer_1")
 model.set_element_size_of_group(element_size=0.20, group_name="ballast_layer")
 
 # settings run
-end_time = 0.1
-delta_time = 5e-3
+end_time = 1e-1
+delta_time = 1e-2
 analysis_type = AnalysisType.MECHANICAL
 solution_type = SolutionType.QUASI_STATIC
 
@@ -203,7 +211,7 @@ model.project_parameters = problem
 nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY, NodalOutput.ACCELERATION]
 gauss_point_results = []
 
-results_dir = "results"
+results_dir = "results" # reduceert
 model.add_output_settings(
     part_name="porous_computational_model_part",
     output_dir=results_dir,
@@ -218,30 +226,34 @@ model.add_output_settings(
 )
 
 desired_output_points = [
-                         (2.20, 14.77, 25), # need to change, in the slope!
+                         (2.50, 14.77, 25),
                          (4.00, 14.77, 25),
-                         (8.00, 14.77, 25)
+                         (8.00, 14.77, 25),
+                         (2.50, 14.77, 35),
+                         (4.00, 14.77, 35),
+                         (8.00, 14.77, 35)
                          ]
 
-model.add_output_settings_by_coordinates(
+model.add_output_settings_by_coordinates( # fijne stappen
     part_name="subset_outputs",
     output_dir=results_dir,
     output_name="json_output",
     coordinates=desired_output_points,
     output_parameters=JsonOutputParameters(
-        output_interval=delta_time,
+        output_interval=1e-3,
         nodal_results=nodal_results,
         gauss_point_results=gauss_point_results
     )
 )
 
-input_files_dir = "Holten_rm"
+input_files_dir = "Holten_rm_test2"
 stem = Stem(model, input_files_dir)
+
 delta_time_stage_2 = 1e-3
-duration_stage_2 = 1 # 1 second of dynamical calculation
+duration_stage_2 = 1
 stage2 = stem.create_new_stage(delta_time_stage_2, duration_stage_2)
 
-velocity = 40 # Look at it into Holten
+velocity = 40
 stage2.project_parameters.settings.solution_type = SolutionType.DYNAMIC
 stage2.project_parameters.settings.strategy_type = LinearNewtonRaphsonStrategy()
 stage2.project_parameters.settings.rayleigh_k = 0.0002
