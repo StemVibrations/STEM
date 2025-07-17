@@ -250,9 +250,6 @@ model.add_output_settings(
 )
 
 desired_output_points = [
-                         # (2.50, 14.77, 25),
-                         # (4.00, 14.77, 25),
-                         # (8.00, 14.77, 25),
                          (2.50, 14.77, 36),
                          (4.00, 14.77, 36),
                          (8.00, 14.77, 36)
@@ -274,7 +271,7 @@ input_files_dir = "Holten_rm_test2"
 stem = Stem(model, input_files_dir)
 
 delta_time_stage_2 = 1e-3
-duration_stage_2 = 1
+duration_stage_2 = 2.75
 stage2 = stem.create_new_stage(delta_time_stage_2, duration_stage_2)
 
 velocity = 40
