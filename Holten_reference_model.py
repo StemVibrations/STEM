@@ -111,17 +111,31 @@ soil_equivalent_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[0
                                                  NODAL_ROTATIONAL_STIFFNESS=[0, 0, 0],
                                                  NODAL_DAMPING_COEFFICIENT=[0, 110e3, 0],
                                                  NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0])
+
 # rails
 origin_point = [0.75, 15.07, 0]
 direction_vector = [0, 0, 1]
-number_of_sleepers = 121
+number_of_sleepers = 241
 sleeper_spacing = 0.6
 rail_pad_thickness = 0.025
 
-model.generate_straight_track(sleeper_spacing, number_of_sleepers, rail_parameters,
-                              sleeper_parameters, rail_pad_parameters,
-                              rail_pad_thickness, origin_point,
-                              direction_vector, "rail_track")
+# create a straight track with rails, sleepers, rail pads and a 1D soil extension
+model.generate_extended_straight_track(sleeper_distance=sleeper_spacing,
+                                       n_sleepers=number_of_sleepers,
+                                       rail_parameters=rail_parameters,
+                                       sleeper_parameters=sleeper_parameters,
+                                       rail_pad_parameters=rail_pad_parameters,
+                                       rail_pad_thickness=rail_pad_thickness,
+                                       origin_point=[0.75, 15.07, -36],
+                                       soil_equivalent_parameters=soil_equivalent_parameters,
+                                       length_soil_equivalent_element=11.3,
+                                       direction_vector=[0, 0, 1],
+                                       name="rail_track")
+
+# model.generate_straight_track(sleeper_spacing, number_of_sleepers, rail_parameters,
+#                               sleeper_parameters, rail_pad_parameters,
+#                               rail_pad_thickness, origin_point,
+#                               direction_vector, "rail_track")
 
 # train
 # define uvec parameters
