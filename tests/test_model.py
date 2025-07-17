@@ -5421,6 +5421,49 @@ class TestInterfaceFunctionality:
         node_ids = created_element.node_ids
         assert node_ids == [2, 3, 5, 6]
 
+    def test_create_interface_elements_skips_part_without_mesh(self, model_setup: Dict[str, Any]):
+        """
+        Test that __create_interface_elements correctly skips a body model part
+        if its mesh is None.
+
+        Args:
+            - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.
+        """
+        model = model_setup["model"]
+
+        # Create a new body model part without a mesh and add it to the model
+        part_without_mesh = BodyModelPart("no_mesh_part")
+        part_without_mesh.mesh = None
+        model.body_model_parts.append(part_without_mesh)
+
+        # Set up test data similar to test_create_interface_elements
+        test_nodes = {
+            3: Node(3, [1.0, 0.0, 0.0]),
+            5: Node(5, [1.0, 0.0, 0.0]),
+            6: Node(6, [1.0, 1.0, 0.0]),
+            2: Node(2, [1.0, 1.0, 0.0]),
+        }
+        nodes_stable_parts = {2, 3}
+        map_new_node_ids = {2: 5, 3: 6}
+
+        # Modify the changing part to have the correct nodes and elements for the interface
+        changing_part = model.body_model_parts[1]
+        changing_part.mesh.nodes[5] = Node(5, [1.0, 0.0, 0.0])
+        changing_part.mesh.nodes[6] = Node(6, [1.0, 1.0, 0.0])
+        changing_part.mesh.nodes.pop(2)
+        changing_part.mesh.nodes.pop(3)
+        changing_part.mesh.elements[2] = Element(2, "TRIANGLE_3N", [5, 6, 4])
+
+        # Call the method. It should run without error, skipping the part with no mesh.
+        interface_elements = model._Model__create_interface_elements(test_nodes, "QUADRANGLE_4N", nodes_stable_parts,
+                                                                     map_new_node_ids)
+
+        # Verify that an interface element was still created from the valid parts
+        assert len(interface_elements) == 1
+        created_element = list(interface_elements.values())[0]
+        assert created_element.element_type == "QUADRANGLE_4N"
+        assert created_element.node_ids == [2, 3, 5, 6]
+
     def test_create_interface_elements_3d(self, model_setup_3d: Dict[str, Any]):
         """
         Test creating interface elements from nodes for 3D model raises NotImplementedError
@@ -5503,6 +5546,67 @@ class TestInterfaceFunctionality:
             element_type_gmsh,
             nodes_stable_parts,
         )
+
+        # Verify basic properties
+        assert interface_part.name == "test_interface"
+        assert interface_part.material == model_setup["interface_material"]
+
+        # Verify nodes in the mesh
+        mesh_nodes = interface_part.mesh.nodes
+        assert len(mesh_nodes) == 4  # 2 original + 2 mapped nodes
+        assert 2 in mesh_nodes
+        assert 3 in mesh_nodes
+        assert 5 in mesh_nodes
+        assert 6 in mesh_nodes
+
+        # Verify elements were created
+        assert len(interface_part.mesh.elements) > 0
+
+    def test_create_interface_body_model_part_2d_update(self, model_setup: Dict[str, Any]):
+        """
+        Test creating an interface body model part when the element type already exists in mesh_data.
+        This specifically targets the .update() call for elements in gmsh_io.
+
+        Args:
+            - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.
+        """
+        model = model_setup["model"]
+
+        # Nodes from stable parts
+        nodes_stable_parts = [3, 2]
+        common_nodes = [2, 3]
+        map_new_node_ids = {2: 6, 3: 5}
+        nodes_stable_parts = [1, 2, 3]
+        n_interface_nodes = 4
+        element_type_gmsh = "QUADRANGLE_4N"
+        # add the new nodes to the model
+        model.body_model_parts[1].mesh.nodes[5] = Node(5, [1.0, 0.0, 0.0])
+        model.body_model_parts[1].mesh.nodes[6] = Node(6, [1.0, 1.0, 0.0])
+        # pop the nodes from the changing part
+        model.body_model_parts[1].mesh.nodes.pop(2)
+        model.body_model_parts[1].mesh.nodes.pop(3)
+        # also update the elements in the changing part
+        model.body_model_parts[1].mesh.elements[2] = Element(2, "TRIANGLE_3N", [5, 6, 4])
+
+        # Pre-populate mesh_data with the element type and a dummy element to ensure the 'else' block is hit
+        dummy_element_id = 999
+        model.gmsh_io.mesh_data["elements"][element_type_gmsh] = {dummy_element_id: [9, 9, 9, 9]}
+
+        # Create interface body model part
+        interface_part = model._Model__create_interface_body_model_part(
+            "test_interface",
+            model_setup["interface_material"],
+            common_nodes,
+            map_new_node_ids,
+            n_interface_nodes,
+            element_type_gmsh,
+            nodes_stable_parts,
+        )
+
+        # Verify that the new interface elements were added and the dummy element is still there
+        gmsh_elements = model.gmsh_io.mesh_data["elements"][element_type_gmsh]
+        assert dummy_element_id in gmsh_elements
+        assert len(gmsh_elements) > 1  # Dummy element + new interface elements
 
         # Verify basic properties
         assert interface_part.name == "test_interface"
@@ -6228,7 +6332,7 @@ class TestInterfaceFunctionality:
         assert list(updated_nodes.keys()) == [7, 8]
         assert updated_mp.mesh.elements[1].node_ids == [8, 7]
 
-    def test_update_process_model_parts_raises_error_if_no_mesh(self):
+    def test_update_process_model_parts_raises_error_if_no_mesh_process_part(self):
         """
         Test that updating process model parts raises ValueError if the mesh is None.
         """
@@ -6241,5 +6345,35 @@ class TestInterfaceFunctionality:
 
         # Prepare a mapping (can be arbitrary)
         map_new_node_ids = {1: 100}
-        with pytest.raises(ValueError, match="has no mesh. Please generate the mesh first."):
+        with pytest.raises(ValueError,
+                           match="Process model part `no_mesh` has no mesh. Please generate the mesh first."):
             model._Model__update_process_model_parts_for_interfaces(map_new_node_ids, None, {})
+
+    def test_update_process_model_parts_raises_error_if_no_mesh_body_model_part(self, model_setup: Dict[str, Any]):
+        """
+        Test that updating process model parts raises ValueError if the mesh is None.
+
+        Args:
+            - model_setup (Dict[str, Any]): Dictionary containing the model and other test data.
+        """
+        # Create a model instance
+        model = model_setup["model"]
+
+        # Prepare a mapping (can be arbitrary)
+        map_new_node_ids = {1: 100}
+
+        updating_body_model_part = model.body_model_parts[1]
+        # remove mesh from the body model part
+        updating_body_model_part.mesh = None
+
+        # create a process model part that has a mesh
+        process_model_part = ModelPart("process_model_part_with_mesh")
+        process_model_part.mesh = model.body_model_parts[0].mesh
+
+        # add the process model part to the model
+        model.process_model_parts.append(process_model_part)
+
+        with pytest.raises(
+                ValueError,
+                match="Updating body model part `changing_part` has no mesh. Please generate the mesh first."):
+            model._Model__update_process_model_parts_for_interfaces(map_new_node_ids, updating_body_model_part, {})

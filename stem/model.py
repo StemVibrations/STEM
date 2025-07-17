@@ -1608,13 +1608,13 @@ class Model:
         node_ids_part_2 = {nid for nid in interface_nodes_all_parts if nid not in node_ids_part_1}
 
         # 3) collect all body-part elements with enough overlap in part-2
-        elems_p2: List[Element] = []
-        for bp in self.body_model_parts:
-            if bp.mesh is None:
+        body_part_elements_with_overlap: List[Element] = []
+        for model_body_part in self.body_model_parts:
+            if model_body_part.mesh is None:
                 continue
-            for elem in bp.mesh.elements.values():
+            for elem in model_body_part.mesh.elements.values():
                 if len(set(elem.node_ids) & node_ids_part_2) >= min_shared:
-                    elems_p2.append(elem)
+                    body_part_elements_with_overlap.append(elem)
 
         # 4) invert old→new map for part-1 lookup
         map_new_to_old = {new: old for old, new in map_old_to_new_node_ids.items()}
@@ -1622,15 +1622,17 @@ class Model:
         # 5) build interface elements
         interface_elements: Dict[int, Element] = {}
         next_id_base = self.__get_maximum_element_id()
-        for i, elem_p2 in enumerate(elems_p2, start=1):
+        for i, part_two_element in enumerate(body_part_elements_with_overlap, start=1):
             # a) pick out the shared nodes in part-2
-            shared_p2 = [nid for nid in elem_p2.node_ids if nid in interface_nodes_all_parts]
+            shared_node_ids_part_2 = [nid for nid in part_two_element.node_ids if nid in interface_nodes_all_parts]
             # b) map them back to part-1 node IDs
-            shared_p1 = [map_new_to_old[nid] for nid in shared_p2]
+            part_1_shared_node_ids = [map_new_to_old[nid] for nid in shared_node_ids_part_2]
             # c) grab actual Node objects in the correct sequence
-            nodes_seq = [interface_nodes_all_parts[nid] for nid in (*shared_p1, *shared_p2)]
+            interface_node_sequence = [
+                interface_nodes_all_parts[nid] for nid in (*part_1_shared_node_ids, *shared_node_ids_part_2)
+            ]
             # d) ask the utility to give us the properly ordered node IDs
-            ordered_ids = order_fn(node_ids_part_1, nodes_seq)
+            ordered_ids = order_fn(node_ids_part_1, interface_node_sequence)
 
             # e) assign a fresh element ID
             new_elem_id = next_id_base + len(interface_elements) + 1
