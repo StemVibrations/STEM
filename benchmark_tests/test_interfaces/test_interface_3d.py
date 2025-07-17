@@ -48,16 +48,10 @@ def test_interface_3d():
     POROSITY = 0.0
     YOUNG_MODULUS = 1e6
     POISSON_RATIO = 0.3
-    soil_formulation1 = OnePhaseSoil(
-        ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY
-    )
-    constitutive_law1 = LinearElasticSoil(
-        YOUNG_MODULUS=YOUNG_MODULUS, POISSON_RATIO=POISSON_RATIO
-    )
+    soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
+    constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=YOUNG_MODULUS, POISSON_RATIO=POISSON_RATIO)
     retention_parameters1 = SaturatedBelowPhreaticLevelLaw()
-    material1 = SoilMaterial(
-        "soil", soil_formulation1, constitutive_law1, retention_parameters1
-    )
+    material1 = SoilMaterial("soil", soil_formulation1, constitutive_law1, retention_parameters1)
     # Specify the coordinates for the column: x:1m x y:10m
     layer1_coordinates = [
         (1.0, 0.0, 0),
@@ -77,9 +71,7 @@ def test_interface_3d():
         (1.0, 2.0, 0),
     ]
     model.add_soil_layer_by_coordinates(layer2_coordinates, material1, "soil_block_2")
-    constitutive_law2 = LinearElasticSoil(
-        YOUNG_MODULUS=interface_stiffness, POISSON_RATIO=POISSON_RATIO
-    )
+    constitutive_law2 = LinearElasticSoil(YOUNG_MODULUS=interface_stiffness, POISSON_RATIO=POISSON_RATIO)
 
     # model.show_geometry(show_surface_ids=True)
     variables = OnePhaseSoilInterface(
@@ -100,9 +92,8 @@ def test_interface_3d():
         'surface_load': [False, True],  # Load applied to soil_block_2
         'side_rollers': [True, False],
     }
-    model.set_interface_between_model_parts(
-        ["soil_block"], ["soil_block_2"], interface_material, connected_process_definition
-    )
+    model.set_interface_between_model_parts(["soil_block"], ["soil_block_2"], interface_material,
+                                            connected_process_definition)
     # Boundary conditions and Loads
     # Boundary conditions and Loads
     load_coordinates = [
@@ -118,22 +109,16 @@ def test_interface_3d():
     # model.show_geometry(show_surface_ids=True)
 
     # Define boundary conditions
-    no_displacement_parameters = DisplacementConstraint(
-        active=[True, True, True], is_fixed=[True, True, True], value=[0, 0, 0]
-    )
+    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+                                                        is_fixed=[True, True, True],
+                                                        value=[0, 0, 0])
 
-    sym_parameters = DisplacementConstraint(
-        active=[True, False, True], is_fixed=[True, False, False], value=[0, 0, 0]
-    )
+    sym_parameters = DisplacementConstraint(active=[True, False, True], is_fixed=[True, False, False], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
-    model.add_boundary_condition_by_geometry_ids(
-        2, [7], no_displacement_parameters, "base_fixed"
-    )
+    model.add_boundary_condition_by_geometry_ids(2, [7], no_displacement_parameters, "base_fixed")
     if roller:
-        model.add_boundary_condition_by_geometry_ids(
-            2, [11, 9, 10, 8], sym_parameters, "side_rollers"
-        )
+        model.add_boundary_condition_by_geometry_ids(2, [11, 9, 10, 8], sym_parameters, "side_rollers")
 
     # Set up solver settings
     analysis_type = AnalysisType.MECHANICAL
@@ -195,18 +180,16 @@ def test_interface_3d():
     )
     model.output_settings.append(vtk_output_process)
 
-    (
-        model.add_output_settings_by_coordinates(
-            coordinates=[(1.5, 2.0, 0), (1.5, 0.75, 0)],
-            output_parameters=JsonOutputParameters(
-                output_interval=0.5,
-                nodal_results=nodal_results,
-                gauss_point_results=gauss_point_results,
-            ),
-            part_name="calculated_output",
-            output_dir=output_dir,
+    (model.add_output_settings_by_coordinates(
+        coordinates=[(1.5, 2.0, 0), (1.5, 0.75, 0)],
+        output_parameters=JsonOutputParameters(
+            output_interval=0.5,
+            nodal_results=nodal_results,
+            gauss_point_results=gauss_point_results,
         ),
-    )
+        part_name="calculated_output",
+        output_dir=output_dir,
+    ), )
     # Set mesh size
     # --------------------------------
     model.set_mesh_size(element_size=4)

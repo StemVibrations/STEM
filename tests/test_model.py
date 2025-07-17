@@ -5675,7 +5675,8 @@ class TestInterfaceFunctionality:
                 ValueError,
                 match="Part `changing_part` has no mesh. Please generate the mesh first.",
         ):
-            model._Model__update_changing_parts([changing_part], indexes_changing_parts, common_nodes, map_new_node_ids, {})
+            model._Model__update_changing_parts([changing_part], indexes_changing_parts, common_nodes, map_new_node_ids,
+                                                {})
 
     def test_set_interface_success(self, model_setup: Dict[str, Any]):
         """
