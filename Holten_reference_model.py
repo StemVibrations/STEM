@@ -172,7 +172,7 @@ uvec_parameters = {"n_carts": 1, # number of carts [-]
                    }
 
 # define the UVEC load
-uvec_load = UvecLoad(direction=[1, 1, 1], velocity=velocity, origin=[0.75, 15.07+rail_pad_thickness, 0],
+uvec_load = UvecLoad(direction=[1, 1, 1], velocity=velocity, origin=[0.75, 15.07+rail_pad_thickness, 1],
                      wheel_configuration=wheel_configuration,
                      uvec_model=uvec,
                      uvec_parameters=uvec_parameters)
