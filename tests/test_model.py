@@ -4569,7 +4569,7 @@ class TestModel:
         model.mesh_settings.constraints["transfinite_volume"][1] = [2, 3, 4]
 
         # perform test
-        model._Model__set_mesh_constraints()
+        model._Model__set_mesh_constraints_for_structured_mesh()
 
         # expected constraints dictionary for the volume
         expected_constraint_dict = {
@@ -4680,7 +4680,7 @@ class TestModel:
         model.mesh_settings.constraints["transfinite_surface"][1] = [2, 3, 4]
 
         # perform test
-        model._Model__set_mesh_constraints()
+        model._Model__set_mesh_constraints_for_structured_mesh()
 
         # expected constraints dictionary for the surface
         expected_constraint_dict = {
@@ -4741,7 +4741,7 @@ class TestModel:
         model.mesh_settings.constraints["transfinite_curve"][1] = 2
 
         # perform test
-        model._Model__set_mesh_constraints()
+        model._Model__set_mesh_constraints_for_structured_mesh()
 
         # expected constraints dictionary for the curve
         expected_constraint_dict = {'transfinite_curve': {1: {'n_points': 2}}}
