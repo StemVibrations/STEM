@@ -4,12 +4,6 @@ from pathlib import Path
 from typing import List, Dict
 import warnings
 
-# # todo remove this before merge
-# import sys
-#
-# sys.path.append(r"C:\software_development\Kratos\bin\Release\libs")
-# sys.path.append(r"C:\software_development\Kratos\bin\Release")
-
 import KratosMultiphysics
 from KratosMultiphysics.StemApplication.geomechanics_analysis import StemGeoMechanicsAnalysis
 

@@ -255,7 +255,9 @@ class Utils:
         node_ids: npty.NDArray[np.int64] = np.array(element.node_ids,
                                                     dtype=int)[ELEMENT_DATA[element.element_type]["edges"]]
 
-        assert node_ids.ndim == 2, "Node ids should be a 2D array."
+        if node_ids.ndim != 2:
+            raise ValueError("Node ids should be a 2D array.")
+
         node_ids_list: List[List[int]] = node_ids.tolist()
 
         return node_ids_list
@@ -738,12 +740,12 @@ class Utils:
         Validates the coordinates in input.
 
         Args:
-            - coordinates (Sequence[Sequence[float]]): The coordinates of the load.
+            - coordinates (Union[Sequence[Sequence[float]], npty.NDArray[np.float64]]): The coordinates of the load.
 
         Raises:
-            - ValueError: if coordinates is not a sequence real numbers.
-            - ValueError: if coordinates is not convertible to a 2D array (i.e. a sequence of sequences)
-            - ValueError: if the number of elements (number of coordinates) is not 3.
+            - ValueError: if coordinates is not a 2D array
+            - ValueError: if the coordinates are not 3D.
+            - ValueError: if the coordinates are not real numbers (i.e. contain NaN or inf).
 
         """
 

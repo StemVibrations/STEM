@@ -1012,7 +1012,7 @@ class Model:
                 self.gmsh_io.mesh_data["elements"]["HEXAHEDRON_20N"][key] = np.array(
                     self.gmsh_io.mesh_data["elements"]["HEXAHEDRON_20N"][key])[gmsh_to_kratos_indices].tolist()
 
-    def __set_mesh_constraints(self):
+    def __set_mesh_constraints_for_structured_mesh(self):
         """
         Set the mesh constraints for the structured mesh. The constraints are defined in the mesh_settings
         and are applied to the gmsh_io instance.
@@ -1147,7 +1147,7 @@ class Model:
         """
 
         # set constraints for a structured mesh
-        self.__set_mesh_constraints()
+        self.__set_mesh_constraints_for_structured_mesh()
 
         # generate mesh
         self.gmsh_io.generate_mesh(self.ndim,
@@ -1181,10 +1181,14 @@ class Model:
         # perform post mesh operations
         self.__post_mesh()
 
-    def __split_3n_line_elements(self, changed_lines):
+    def __split_3n_line_elements(self, changed_lines: Dict[int, List[int]]):
         """
         Splits the 3n line elements into 2n line elements when required. Not all second order element types are
         supported in Kratos. Therefore, the second order line elements are split into first order elements.
+
+        Args:
+            - changed_lines (Dict[int, List[int]]): A dictionary where the keys are the old element ids and the values
+                are lists of new element ids that replace the old element ids.
 
         Raises:
             - ValueError: if the model part with the given name is not found.
