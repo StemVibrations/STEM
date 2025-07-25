@@ -1237,6 +1237,10 @@ class Model:
         changed_lines = {}
         for model_part in self.body_model_parts:
             if isinstance(model_part.material, StructuralMaterial):
+
+                # IMPORTANT: the ElasticSpringDamper is split here, but the material properties are not updated. This
+                # is wrong! However, later on in the calculation, all ElasticSpringDamper elements on a straight line
+                # in a model part are combined, such that the original materials properties are correct.
                 types_to_be_split = (ElasticSpringDamper, EulerBeam)
                 if isinstance(model_part.material.material_parameters, types_to_be_split):
 
