@@ -271,7 +271,7 @@ input_files_dir = "Holten_rm_test2"
 stem = Stem(model, input_files_dir)
 
 delta_time_stage_2 = 1e-3
-duration_stage_2 = 2.75
+duration_stage_2 = 1
 stage2 = stem.create_new_stage(delta_time_stage_2, duration_stage_2)
 
 velocity = 40
