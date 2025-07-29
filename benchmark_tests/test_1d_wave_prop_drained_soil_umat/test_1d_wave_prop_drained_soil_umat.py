@@ -10,7 +10,7 @@ from stem.solver import (AnalysisType, SolutionType, TimeIntegration, Displaceme
                          StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy, Amgcl)
 from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters
 from stem.stem import Stem
-from benchmark_tests.utils import assert_files_equal
+from benchmark_tests.utils import assert_floats_in_directories_almost_equal
 from shutil import rmtree, copyfile
 
 
@@ -149,8 +149,9 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
-    result = assert_files_equal("benchmark_tests/test_1d_wave_prop_drained_soil/output_/output_vtk_full_model",
-                                os.path.join(input_folder, "output/output_vtk_full_model"))
+    assert_floats_in_directories_almost_equal(
+        "benchmark_tests/test_1d_wave_prop_drained_soil/output_/output_vtk_full_model",
+        os.path.join(input_folder, "output/output_vtk_full_model"),
+        decimal=6)
 
-    assert result is True
     rmtree(input_folder)

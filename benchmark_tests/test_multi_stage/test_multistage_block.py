@@ -5,7 +5,8 @@ from stem.load import LineLoad
 from stem.table import Table
 from stem.boundary import DisplacementConstraint
 from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
-                         StressInitialisationType, SolverSettings, Problem, NewtonRaphsonStrategy)
+                         StressInitialisationType, SolverSettings, Problem, NewtonRaphsonStrategy,
+                         LinearNewtonRaphsonStrategy)
 from stem.output import NodalOutput, VtkOutputParameters
 from stem.stem import Stem
 from benchmark_tests.utils import assert_files_equal
@@ -58,7 +59,7 @@ def test_stem():
                                                         is_fixed=[True, True, True],
                                                         value=[0, 0, 0])
 
-    sym_parameters = DisplacementConstraint(active=[True, False, True], is_fixed=[True, False, False], value=[0, 0, 0])
+    sym_parameters = DisplacementConstraint(active=[True, False, False], is_fixed=[True, False, False], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model_stage_1.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "base_fixed")

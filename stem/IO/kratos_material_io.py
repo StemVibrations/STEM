@@ -40,7 +40,6 @@ class KratosMaterialIO:
 
         material_dict["UDSM_NAME"] = material_dict.pop("UMAT_NAME")
         material_dict["IS_FORTRAN_UDSM"] = material_dict.pop("IS_FORTRAN_UMAT")
-        material_dict["NUMBER_OF_UMAT_PARAMETERS"] = len(material_dict["UMAT_PARAMETERS"])
 
         return material_dict
 
@@ -123,7 +122,7 @@ class KratosMaterialIO:
             material_dict["constitutive_law"]["name"] = "GeoLinearElasticPlaneStrain2DLaw"
 
         elif self.ndim == 3:
-            material_dict["constitutive_law"]["name"] = "LinearElastic3DLaw"
+            material_dict["constitutive_law"]["name"] = "GeoIncrementalLinearElastic3DLaw"
         else:
             raise ValueError("Dimension not supported")
 
@@ -236,6 +235,7 @@ class KratosMaterialIO:
         soil_parameters_dict["PERMEABILITY_XY"] = 0
         soil_parameters_dict["PERMEABILITY_YZ"] = 0
         soil_parameters_dict["PERMEABILITY_ZX"] = 0
+        soil_parameters_dict["MINIMUM_RELATIVE_PERMEABILITY"] = 0.0
 
         soil_parameters_dict["RAYLEIGH_ALPHA"] = soil_parameters_dict.pop("RAYLEIGH_M")
         soil_parameters_dict["RAYLEIGH_BETA"] = soil_parameters_dict.pop("RAYLEIGH_K")

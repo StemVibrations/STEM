@@ -1,4 +1,7 @@
 import os
+from shutil import rmtree
+
+import pytest
 
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
 from stem.model import Model
@@ -13,10 +16,10 @@ from stem.output import NodalOutput, VtkOutputParameters, Output
 from stem.stem import Stem
 
 from benchmark_tests.utils import assert_files_equal
-from shutil import rmtree
 
 
-def test_stem():
+@pytest.mark.parametrize("element_order", [(1), (2)])
+def test_stem(element_order):
     # Define geometry, conditions and material parameters
     # --------------------------------
 
@@ -144,10 +147,12 @@ def test_stem():
                               output_dir="output",
                               output_name="vtk_output")
 
-    input_folder = "benchmark_tests/test_moving_load_on_beam_on_soil/inputs_kratos"
+    input_folder = f"benchmark_tests/test_moving_load_on_beam_on_soil/order_{element_order}/inputs_kratos"
 
     # Write KRATOS input files
     # --------------------------------
+
+    model.mesh_settings.element_order = element_order
     stem = Stem(model, input_folder)
     stem.write_all_input_files()
 
@@ -155,7 +160,8 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
-    assert assert_files_equal("benchmark_tests/test_moving_load_on_beam_on_soil/output_/output_vtk_full_model",
-                              os.path.join(input_folder, "output/output_vtk_full_model"))
+    assert assert_files_equal(
+        f"benchmark_tests/test_moving_load_on_beam_on_soil/order_{element_order}/_output/output_vtk_full_model",
+        os.path.join(input_folder, "output/output_vtk_full_model"))
 
     rmtree(input_folder)
