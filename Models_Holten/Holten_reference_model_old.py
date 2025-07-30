@@ -208,7 +208,7 @@ model.add_output_settings_by_coordinates(
     )
 )
 
-input_files_dir = "Holten_rm"
+input_files_dir = "../Holten_rm"
 stem = Stem(model, input_files_dir)
 delta_time_stage_2 = 1e-3
 duration_stage_2 = 0.5

@@ -1,4 +1,4 @@
-input_files_dir = "stiff_files_dir"
+input_files_dir = "Holten_dir_t1"
 
 results_dir = "output"
 
@@ -18,89 +18,31 @@ import UVEC.uvec_ten_dof_vehicle_2D as uvec
 ndim = 3
 model = Model(ndim)
 model.extrusion_length = 90
-
 bottom_coordinate = -10.0
-max_x_coordinate = 50.0
+max_x_coordinate = 30
 
-
-# Define all parameters for all materials
 soil_formulation_1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=1850, POROSITY=0.0)
 constitutive_law_1 = LinearElasticSoil(YOUNG_MODULUS=150e6, POISSON_RATIO=0.2)
 material_ballast = SoilMaterial("ballast", soil_formulation_1, constitutive_law_1, SaturatedBelowPhreaticLevelLaw())
 
-
-# # fill in PPS parameters
-# soil_formulation_pps = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=None, POROSITY=None)
-# constitutive_law_pps = LinearElasticSoil(YOUNG_MODULUS=None, POISSON_RATIO=None)
-# material_pps = SoilMaterial("pps", soil_formulation_pps, constitutive_law_pps, SaturatedBelowPhreaticLevelLaw())
-
-# set the undrained Poisson ratio to almost 0.5 in order to prevent volumetric strains and simulate undrained behaviour
 poisson_ratio_undrained = 0.495
 
 soil_formulation_sand = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=1900, POROSITY=0.0)
 constitutive_law_sand = LinearElasticSoil(YOUNG_MODULUS=200e6, POISSON_RATIO=poisson_ratio_undrained)
 material_sand = SoilMaterial("sand", soil_formulation_sand, constitutive_law_sand, SaturatedBelowPhreaticLevelLaw())
 
-
-# fill in concrete parameters
-# soil_formulation_concrete = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2350, POROSITY=0.0)
-# constitutive_law_concrete = LinearElasticSoil(YOUNG_MODULUS=25e9, POISSON_RATIO=0.2)
-# material_concrete = SoilMaterial("concrete", soil_formulation_concrete, constitutive_law_concrete, SaturatedBelowPhreaticLevelLaw())
-
-# fill in styrofoam parameters
-soil_formulation_styrofoam = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=32, POROSITY=0.0)
-constitutive_law_styrofoam = LinearElasticSoil(YOUNG_MODULUS=5e6, POISSON_RATIO=poisson_ratio_undrained)
-material_styrofoam = SoilMaterial("styrofoam", soil_formulation_styrofoam, constitutive_law_styrofoam, SaturatedBelowPhreaticLevelLaw())
-
-
 thickness_ballast = 0.4
 surface_level = 0.7
 
 top_ballast = surface_level + thickness_ballast
-
 ballast_coordinates = [(0.0, top_ballast, 0.0), (1.5, top_ballast, 0.0),
                        (2.5, surface_level, 0.0), (0.0, surface_level, 0.0)]
 
-
-thickness_foundation_top = 0.5
-foundation_coordinates_top = [(0.0, surface_level, 0.0), (2.5, surface_level, 0.0),
-                              (2.5, surface_level-thickness_foundation_top, 0.0),
-                              (0.0, surface_level-thickness_foundation_top, 0.0)]
-
-thickness_foundation_bottom = 0.5
-foundation_coordinates_bottom = [(0.0, surface_level-thickness_foundation_top, 0.0),
-                                 (2.5, surface_level-thickness_foundation_top, 0.0),
-                                 (2.5, surface_level-thickness_foundation_top-thickness_foundation_bottom, 0.0),
-                                 (0.0, surface_level-thickness_foundation_top-thickness_foundation_bottom, 0.0)]
-
-x_coord_deep_wall = 12.5
-thickness_deep_wall = 1.0
-layer_1_boundary_depth = -5.0
-layer_2_boundary_depth = -6.0
-length_deep_wall = 7.7
-
-
-deep_wall_part_coordinates = [(x_coord_deep_wall, surface_level, 0.0), (x_coord_deep_wall, -length_deep_wall, 0.0),
-                              (x_coord_deep_wall+thickness_deep_wall, -length_deep_wall, 0.0),
-                              (x_coord_deep_wall+thickness_deep_wall, surface_level, 0.0)]
-
-
-
-
-soil_1_coordinates = [(0.0, surface_level-thickness_foundation_bottom-thickness_foundation_top, 0.0),
-                             (2.5, surface_level-thickness_foundation_bottom-thickness_foundation_top, 0.0),
-                             (2.5, surface_level-thickness_foundation_top, 0.0),
-                             (2.5, surface_level, 0.0)] + deep_wall_part_coordinates +  [(max_x_coordinate, surface_level, 0.0),
+soil_1_coordinates = [(0.0, surface_level, 0.0), (max_x_coordinate, surface_level, 0.0),
                              (max_x_coordinate,bottom_coordinate,0.0), (0.0, bottom_coordinate, 0.0)]
 
-
 model.add_soil_layer_by_coordinates(ballast_coordinates, material_ballast, "ballast")
-
-model.add_soil_layer_by_coordinates(foundation_coordinates_top, material_sand, "foundation_top")
-model.add_soil_layer_by_coordinates(foundation_coordinates_bottom, material_sand, "foundation_bot")
-
 model.add_soil_layer_by_coordinates(soil_1_coordinates, material_sand, "soil_layer_1")
-model.add_soil_layer_by_coordinates(deep_wall_part_coordinates, material_sand, "deep_wall")
 
 
 # create track with extension outside the 3D soil domain
@@ -120,7 +62,8 @@ soil_equivalent_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[0
                                                  NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0])
 
 sleeper_distance =0.6
-n_sleepers = 334
+n_sleepers = 501
+# 105 meters 1D elements - 90 meter soil - 105 meters 1D elements
 rail_pad_thickness = 0.025
 
 # create a straight track with rails, sleepers, rail pads and a 1D soil extension
@@ -130,15 +73,23 @@ model.generate_extended_straight_track(sleeper_distance=sleeper_distance,
                                        sleeper_parameters=sleeper_parameters,
                                        rail_pad_parameters=rail_pad_parameters,
                                        rail_pad_thickness=rail_pad_thickness,
-                                       origin_point=[0.7, top_ballast, -45],
+                                       origin_point=[0.7, top_ballast, -105],
                                        soil_equivalent_parameters=soil_equivalent_parameters,
                                        length_soil_equivalent_element=2,
                                        direction_vector=[0, 0, 1],
                                        name="rail_track_1")
 
 # define uvec parameters
-wheel_configuration = [0, 2.5, 19.9, 22.4, 26.6, 29.1, 46.5, 49] # distances of the wheels from the origin point [m]
-uvec_parameters = {"n_carts": 2, # number of carts [-]
+# wheel_configuration = [0, 2.5, 19.9, 22.4, 26.6, 29.1, 46.5, 49]
+wheel_configuration = [
+    0, 2.5, 19.9, 22.4,         # Cart 1
+    26.6, 29.1, 46.5, 49,       # Cart 2
+    53.2, 55.7, 73.1, 75.6,     # Cart 3
+    79.8, 82.3, 99.7, 102.2     # Cart 4
+]
+
+# distances of the wheels from the origin point [m]
+uvec_parameters = {"n_carts": 4, # number of carts [-]
                    "cart_inertia": (1128.8e3) / 2, # inertia of the cart [kgm2]
                    "cart_mass": (50e3) / 2, # mass of the cart [kg]
                    "cart_stiffness": 2708e3, # stiffness between the cart and bogies [N/m]
@@ -161,7 +112,7 @@ uvec_parameters = {"n_carts": 2, # number of carts [-]
                             "seed": 14
                             },
                    }
-uvec_load = UvecLoad(direction=[1,1,1], velocity = 0.0, origin=[0.7, top_ballast + rail_pad_thickness, -43],
+uvec_load = UvecLoad(direction=[1,1,1], velocity = 0.0, origin=[0.7, top_ballast + rail_pad_thickness, -103],
                      wheel_configuration=wheel_configuration, uvec_model= uvec, uvec_parameters=uvec_parameters)
 # uvec_load = MovingLoad(load=[0,-10000,0],direction=[1,1,1], velocity = 0.0, origin=[0.7, top_ballast + rail_pad_thickness, 45])
 
@@ -189,37 +140,14 @@ model.add_boundary_condition_on_plane([(0,0,model.extrusion_length), (1,0,model.
 model.add_boundary_condition_on_plane([(max_x_coordinate,0,0), (max_x_coordinate,1,0), (max_x_coordinate,0,1)],
                                       absorbing_boundaries_parameters, "abs")
 
-
-# aux code to calculate the required element size and time step for proper integration
-# import numpy as np
-# E = 200e6
-# nu = 0.495
-#
-# M = E *(1 - nu)/(1 + nu)/(1 - 2*nu)
-# rho = 1900
-# vp = np.sqrt(M/rho)
-# f = 100
-#
-# lambda_ = vp/f
-#
-# required_el_size = lambda_ / 10
-# required_dt = required_el_size/vp
-
 model.set_element_size_of_group(0.3,"ballast")
-# model.set_element_size_of_group(0.5, "embankment")
-model.set_element_size_of_group(0.75, "foundation_top")
-model.set_element_size_of_group(0.75, "foundation_bot")
-
-model.set_element_size_of_group(0.75, "deep_wall")
-
-
-model.set_mesh_size(element_size=1.3)
+model.set_mesh_size(element_size=1.8) # tot 100 Hz te zien
 
 
 # define at which points the json output should be written
 delta_time = 0.0005
 json_output_parameters = JsonOutputParameters(delta_time-1e-10, [NodalOutput.VELOCITY],[])
-model.add_output_settings_by_coordinates([(x_coord_deep_wall+thickness_deep_wall, surface_level, 45.0), (25, surface_level, 45.0), (max_x_coordinate,surface_level,45)],
+model.add_output_settings_by_coordinates([(2.5, surface_level, 45.0), (4, surface_level, 45.0), (8, surface_level, 45.0), (10, surface_level, 45), (23, surface_level, 45)],
                                          json_output_parameters, "json_output")
 
 # set time integration parameters
@@ -281,6 +209,7 @@ stage2.project_parameters.settings.rayleigh_k = 7.86e-5
 stage2.project_parameters.settings.rayleigh_m = 0.248
 
 # change the uvec parameters for the second stage
+# verander de snelheid in witteveen + bos, veff,max, geeft jitse aan me. 
 velocity = 38.9 - 1e-5 # 140 km/h minus a small value to prevent numerical issues (solved in upcoming version)
 stage2.get_model_part_by_name("uvec_load").parameters.velocity = velocity
 stage2.get_model_part_by_name("uvec_load").parameters.uvec_parameters["velocity"] = velocity
