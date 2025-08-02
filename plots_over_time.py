@@ -25,9 +25,9 @@ quasi_mask = time_quasi <= end_time
 # Node keys ophalen en sorteren
 node_keys = sorted([key for key in data_dyn if key.startswith("NODE_") and key in data_quasi])
 
-# Colormap voor onbeperkt aantal kleuren
-cmap = plt.get_cmap('tab20', len(node_keys))
-node_kleuren = {key: cmap(i) for i, key in enumerate(node_keys)}
+# # Colormap voor onbeperkt aantal kleuren
+# cmap = plt.get_cmap('tab20', len(node_keys))
+# node_kleuren = {key: cmap(i) for i, key in enumerate(node_keys)}
 
 # Outputmap
 output_dir = r"C:\Users\ritfeldis\Documents\Python\STEM\output_node_plots"
@@ -46,11 +46,11 @@ for i, node_key in enumerate(node_keys):
         time_combined = np.arange(N) * dt
         freqs = rfftfreq(N, d=dt)
         amp_spectrum = np.abs(rfft(velocity_combined)) / N
-        kleur = node_kleuren[node_key]
+        # kleur = node_kleuren[node_key]
 
         # Individuele plots
         fig, (ax_time, ax_amp) = plt.subplots(2, 1, figsize=(14, 10), sharex=False)
-        ax_time.plot(time_combined, velocity_combined, label=node_key, color=kleur)
+        ax_time.plot(time_combined, velocity_combined, label=node_key)
         ax_time.axvline(x=end_time, color='gray', linestyle='--', label="Einde quasi-static")
         ax_time.set_title(f"Velocity Y over Time – {node_key}")
         ax_time.set_xlabel("Time [s]")
@@ -58,7 +58,7 @@ for i, node_key in enumerate(node_keys):
         ax_time.grid(True)
         ax_time.legend()
 
-        ax_amp.plot(freqs, amp_spectrum, label=node_key, color=kleur)
+        ax_amp.plot(freqs, amp_spectrum, label=node_key)
         ax_amp.set_title(f"Amplitude Spectrum – {node_key}")
         ax_amp.set_xlabel("Frequency [Hz]")
         ax_amp.set_ylabel("Amplitude [unit]")
@@ -75,8 +75,8 @@ for i, node_key in enumerate(node_keys):
         print(f"{node_key}: individuele plot opgeslagen")
 
         # Toevoegen aan gecombineerde figuren
-        ax_time_all.plot(time_combined, velocity_combined, label=node_key, color=kleur)
-        ax_amp_all.plot(freqs, amp_spectrum, label=node_key, color=kleur)
+        ax_time_all.plot(time_combined, velocity_combined, label=node_key)
+        ax_amp_all.plot(freqs, amp_spectrum, label=node_key)
 
     except Exception as e:
         print(f"Fout bij {node_key}: {e}")
