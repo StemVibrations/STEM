@@ -239,7 +239,7 @@ class Utils:
         return list({id(obj): obj for obj in input_sequence}.values())
 
     @staticmethod
-    def get_element_edges(element: 'Element') -> npty.NDArray[np.int64]:
+    def get_element_edges(element: 'Element') -> List[List[int]]:
         """
         Gets the nodal connectivities of the line edges of elements
 
@@ -247,7 +247,7 @@ class Utils:
             - element (:class:`stem.mesh.Element`): element object
 
         Returns:
-            - npty.NDArray[np.int64]: nodal connectivities of the line edges of the element
+            - List[List[int]]: nodal connectivities of the line edges of the element
 
         """
 
@@ -255,7 +255,12 @@ class Utils:
         node_ids: npty.NDArray[np.int64] = np.array(element.node_ids,
                                                     dtype=int)[ELEMENT_DATA[element.element_type]["edges"]]
 
-        return node_ids
+        if node_ids.ndim != 2:
+            raise ValueError("Node ids should be a 2D array.")
+
+        node_ids_list: List[List[int]] = node_ids.tolist()
+
+        return node_ids_list
 
     @staticmethod
     def flip_node_order(elements: Sequence['Element']):
@@ -735,12 +740,12 @@ class Utils:
         Validates the coordinates in input.
 
         Args:
-            - coordinates (Sequence[Sequence[float]]): The coordinates of the load.
+            - coordinates (Union[Sequence[Sequence[float]], npty.NDArray[np.float64]]): The coordinates of the load.
 
         Raises:
-            - ValueError: if coordinates is not a sequence real numbers.
-            - ValueError: if coordinates is not convertible to a 2D array (i.e. a sequence of sequences)
-            - ValueError: if the number of elements (number of coordinates) is not 3.
+            - ValueError: if coordinates is not a 2D array
+            - ValueError: if the coordinates are not 3D.
+            - ValueError: if the coordinates are not real numbers (i.e. contain NaN or inf).
 
         """
 

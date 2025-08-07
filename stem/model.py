@@ -1220,7 +1220,7 @@ class Model:
                                                                                 eps=eps)
 
                 new_mesh = Mesh(ndim=model_part.mesh.ndim)
-                new_mesh.nodes = {node_id: model_part.mesh.nodes[node_id] for node_id in filtered_node_ids}
+                new_mesh.nodes = {int(node_id): model_part.mesh.nodes[int(node_id)] for node_id in filtered_node_ids}
                 new_mesh.elements = {}
                 model_part.mesh = new_mesh
 
@@ -1687,7 +1687,7 @@ class Model:
                 completed_points.add(first_node_id)
         return line_node_ids
 
-    def __find_end_nodes_of_line_strings(self,mesh: Mesh) -> Set[int]:
+    def __find_end_nodes_of_line_strings(self, mesh: Mesh) -> Set[int]:
         """
         Finds the nodes at the end of linestrings.
 
