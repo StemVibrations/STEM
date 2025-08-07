@@ -4886,3 +4886,510 @@ class TestModel:
         result = Model._Model__generate_sleeper_base_coordinates(local_coord, sleeper_dimensions,
                                                                  sleeper_rail_pad_offset, direction_vector)
         np.testing.assert_array_almost_equal(result, expected)
+
+    def test_split_second_order_elements_with_beam_and_load(self, create_default_3d_beam: StructuralMaterial,
+                                                            create_default_moving_load_parameters: MovingLoad):
+        """
+        Test if second order elements are split correctly when a beam and a load are present in the model.
+
+        Args:
+            - create_default_3d_beam (:class:`stem.structural_material.StructuralMaterial`): default beam material
+            - create_default_moving_load_parameters (:class:`stem.load.MovingLoad`): default moving load parameters
+
+        """
+
+        model = Model(3)
+
+        # pre-set gmsh mesh data of all parts
+        model.gmsh_io._GmshIO__mesh_data = {
+            'elements': {
+                'LINE_3N': {
+                    1: [1, 2, 3]
+                },
+                'POINT_1N': {
+                    2: [1],
+                    3: [2]
+                }
+            },
+            'ndim': 1,
+            'nodes': {
+                1: [0.0, 0.0, 0.0],
+                2: [1.0, 0.0, 0.0],
+                3: [0.5, 0.0, 0.0]
+            },
+            'physical_groups': {
+                'beam': {
+                    'element_ids': [1],
+                    'element_type': 'LINE_3N',
+                    'ndim': 1,
+                    'node_ids': [1, 2, 3]
+                },
+                'load': {
+                    'element_ids': [1],
+                    'element_type': 'LINE_3N',
+                    'ndim': 1,
+                    'node_ids': [1, 2, 3]
+                }
+            }
+        }
+
+        beam_material = create_default_3d_beam
+        # Specify the coordinates for the beam: x:1m x y:0m
+        beam_coordinates = [(0, 0, 0), (1, 0, 0)]
+        # Create the beam
+        gmsh_input = {beam_material.name: {"coordinates": beam_coordinates, "ndim": 1}}
+
+        # check if extrusion length is specified in 3D
+        model.gmsh_io.generate_geometry(gmsh_input, "")
+        #
+        # create body model part
+        body_model_part = BodyModelPart(beam_material.name)
+        body_model_part.material = beam_material
+
+        # set the geometry of the body model part
+        body_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, beam_material.name)
+        model.body_model_parts.append(body_model_part)
+
+        body_model_part.mesh = Mesh.create_mesh_from_gmsh_group(model.gmsh_io.mesh_data, beam_material.name)
+
+        # add load on top of beam
+        load_parameters = create_default_moving_load_parameters
+
+        load_model_part = ModelPart("load")
+        load_model_part.parameters = load_parameters
+        model.gmsh_io.add_physical_group("load", 1, [1])
+
+        load_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, load_model_part.name)
+        model.process_model_parts.append(load_model_part)
+
+        # set the mesh of the load model part
+        load_model_part.mesh = Mesh.create_mesh_from_gmsh_group(model.gmsh_io.mesh_data, load_model_part.name)
+
+        # perform test
+        model._Model__split_second_order_elements()
+
+        expected_gmsh_mesh = {
+            'elements': {
+                'LINE_2N': {
+                    4: [1, 3],
+                    5: [3, 2]
+                }
+            },
+            'ndim': 1,
+            'nodes': {
+                1: [0.0, 0.0, 0.0],
+                2: [1.0, 0.0, 0.0],
+                3: [0.5, 0.0, 0.0]
+            },
+            'physical_groups': {
+                'beam': {
+                    'element_ids': [4, 5],
+                    'element_type': 'LINE_2N',
+                    'ndim': 1,
+                    'node_ids': [1, 2, 3]
+                },
+                'load': {
+                    'element_ids': [4, 5],
+                    'element_type': 'LINE_2N',
+                    'ndim': 1,
+                    'node_ids': [1, 2, 3]
+                }
+            }
+        }
+
+        expected_model_part_mesh = Mesh(1)
+        expected_model_part_mesh.nodes = {
+            1: Node(1, [0.0, 0.0, 0.0]),
+            2: Node(2, [1.0, 0.0, 0.0]),
+            3: Node(3, [0.5, 0.0, 0.0])
+        }
+        expected_model_part_mesh.elements = {4: Element(4, "LINE_2N", [1, 3]), 5: Element(5, "LINE_2N", [3, 2])}
+
+        # both the beam and the load should have the same 1st order mesh
+        TestUtils.assert_dictionary_almost_equal(expected_gmsh_mesh, model.gmsh_io.mesh_data)
+
+        assert expected_model_part_mesh == model.body_model_parts[0].mesh
+        assert expected_model_part_mesh == model.process_model_parts[0].mesh
+
+    def test_split_second_order_elements_with_beam_load_and_soil(self, create_default_3d_beam: StructuralMaterial,
+                                                                 create_default_moving_load_parameters: MovingLoad,
+                                                                 create_default_2d_soil_material: SoilMaterial):
+        """
+        Test if second order elements are split correctly when a beam, a load and a soil are present in the model.
+
+        Args:
+            - create_default_3d_beam (:class:`stem.structural_material.StructuralMaterial`): default beam material
+            - create_default_moving_load_parameters (:class:`stem.load.MovingLoad`): default moving load parameters
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): default 2D soil material
+        """
+
+        # set dim of beam to 2D
+        beam_parameters = create_default_3d_beam
+        beam_parameters.ndim = 2
+
+        model = Model(2)
+
+        # pre-set gmsh mesh data of all parts
+        model.gmsh_io._GmshIO__mesh_data = {
+            'elements': {
+                'LINE_3N': {
+                    1: [1, 2, 3],
+                    2: [2, 4, 5]
+                },
+                "TRIANGLE_6N": {
+                    3: [6, 2, 1, 8, 3, 7],
+                    4: [9, 4, 2, 10, 5, 11],
+                    5: [6, 9, 2, 12, 11, 8]
+                }
+            },
+            'ndim': 1,
+            'nodes': {
+                1: [0.0, 0.0, 0.0],
+                2: [1.0, 0.0, 0.0],
+                3: [0.5, 0.0, 0.0],
+                4: [2.0, 0.0, 0.0],
+                5: [1.5, 0.0, 0.0],
+                6: [0.0, -1.0, 0.0],
+                7: [0.0, -0.5, 0.0],
+                8: [0.5, -0.5, 0.0],
+                9: [2.0, -1.0, 0.0],
+                10: [2.0, -0.5, 0.0],
+                11: [1.5, -0.5, 0.0],
+                12: [1.0, -1.0, 0.0]
+            },
+            'physical_groups': {
+                'beam': {
+                    'element_ids': [1],
+                    'element_type': 'LINE_3N',
+                    'ndim': 1,
+                    'node_ids': [1, 2, 3]
+                },
+                'load': {
+                    'element_ids': [1, 2],
+                    'element_type': 'LINE_3N',
+                    'ndim': 1,
+                    'node_ids': [1, 2, 3, 4, 5]
+                },
+                'soil': {
+                    'element_ids': [3, 4, 5],
+                    'element_type': 'TRIANGLE_6N',
+                    'ndim': 2,
+                    'node_ids': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                }
+            }
+        }
+
+        # create beam body model part
+        beam_model_part = BodyModelPart(beam_parameters.name)
+        beam_model_part.material = beam_parameters
+        beam_model_part.mesh = Mesh.create_mesh_from_gmsh_group(model.gmsh_io.mesh_data, beam_model_part.name)
+        model.body_model_parts.append(beam_model_part)
+
+        # create load process model part
+        load_parameters = create_default_moving_load_parameters
+        load_model_part = ModelPart("load")
+        load_model_part.parameters = load_parameters
+        load_model_part.mesh = Mesh.create_mesh_from_gmsh_group(model.gmsh_io.mesh_data, load_model_part.name)
+        model.process_model_parts.append(load_model_part)
+
+        # create soil body model part
+        soil_model_part = BodyModelPart(create_default_2d_soil_material.name)
+        soil_model_part.material = create_default_2d_soil_material
+        soil_model_part.mesh = Mesh.create_mesh_from_gmsh_group(model.gmsh_io.mesh_data, soil_model_part.name)
+
+        model.body_model_parts.append(soil_model_part)
+
+        # perform test
+        model._Model__split_second_order_elements()
+
+        # expected beam mesh is a split of the original LINE_3N element into two LINE_2N elements
+        expected_beam_mesh = Mesh(1)
+        expected_beam_mesh.nodes = {
+            1: Node(1, [0.0, 0.0, 0.0]),
+            2: Node(2, [1.0, 0.0, 0.0]),
+            3: Node(3, [0.5, 0.0, 0.0])
+        }
+        expected_beam_mesh.elements = {6: Element(6, "LINE_2N", [1, 3]), 7: Element(7, "LINE_2N", [3, 2])}
+
+        # expected load mesh is at the location of the beam, a split of the original LINE_3N element into two LINE_2N elements
+        # and the second LINE_3N element is kept as it is
+        expected_load_mesh = Mesh(1)
+        expected_load_mesh.nodes = {
+            1: Node(1, [0.0, 0.0, 0.0]),
+            2: Node(2, [1.0, 0.0, 0.0]),
+            3: Node(3, [0.5, 0.0, 0.0]),
+            4: Node(4, [2.0, 0.0, 0.0]),
+            5: Node(5, [1.5, 0.0, 0.0])
+        }
+        expected_load_mesh.elements = {
+            2: Element(2, "LINE_3N", [2, 4, 5]),
+            6: Element(6, "LINE_2N", [1, 3]),
+            7: Element(7, "LINE_2N", [3, 2])
+        }
+
+        # expected soil mesh is kept as it is
+        expected_soil_mesh = Mesh(2)
+        expected_soil_mesh.nodes = {
+            1: Node(1, [0.0, 0.0, 0.0]),
+            2: Node(2, [1.0, 0.0, 0.0]),
+            3: Node(3, [0.5, 0.0, 0.0]),
+            4: Node(4, [2.0, 0.0, 0.0]),
+            5: Node(5, [1.5, 0.0, 0.0]),
+            6: Node(6, [0.0, -1.0, 0.0]),
+            7: Node(7, [0.0, -0.5, 0.0]),
+            8: Node(8, [0.5, -0.5, 0.0]),
+            9: Node(9, [2.0, -1.0, 0.0]),
+            10: Node(10, [2.0, -0.5, 0.0]),
+            11: Node(11, [1.5, -0.5, 0.0]),
+            12: Node(12, [1.0, -1.0, 0.0])
+        }
+        expected_soil_mesh.elements = {
+            3: Element(3, "TRIANGLE_6N", [6, 2, 1, 8, 3, 7]),
+            4: Element(4, "TRIANGLE_6N", [9, 4, 2, 10, 5, 11]),
+            5: Element(5, "TRIANGLE_6N", [6, 9, 2, 12, 11, 8])
+        }
+
+        # check if the meshes are split correctly
+        assert expected_beam_mesh == model.body_model_parts[0].mesh
+        assert expected_load_mesh == model.process_model_parts[0].mesh
+        assert expected_soil_mesh == model.body_model_parts[1].mesh
+
+    def test_reorder_gmsh_to_kratos_order(self):
+        """
+        Tests if the GMSH mesh data is reordered to match the Kratos order for tetrahedron and hexahedron elements.
+        """
+
+        model = Model(2)
+
+        # set gmsh mesh data manually
+        model.gmsh_io.mesh_data["elements"] = {
+            "TETRAHEDRON_10N": {
+                1: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+            },
+            "HEXAHEDRON_20N": {
+                2: [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
+            }
+        }
+
+        # perform the reordering
+        model._Model__reorder_gmsh_to_kratos_order()
+
+        expected_tetrahedron = {1: [1, 2, 3, 4, 5, 6, 7, 8, 10, 9]}
+        expected_hexahedron = {2: [11, 12, 13, 14, 15, 16, 17, 18, 19, 22, 24, 20, 21, 23, 25, 26, 27, 29, 30, 28]}
+
+        # Check if the elements are reordered correctly
+        assert model.gmsh_io.mesh_data["elements"]["TETRAHEDRON_10N"] == expected_tetrahedron
+        assert model.gmsh_io.mesh_data["elements"]["HEXAHEDRON_20N"] == expected_hexahedron
+
+    def test_set_mesh_constraints_volume(self, expected_geometry_single_layer_3D: Geometry):
+        """
+        Tests if the mesh constraints for a volume are set correctly.
+
+        Args:
+            expected_geometry_single_layer_3D (:class:`stem.geometry.Geometry`): A 3D block geometry.
+
+        """
+
+        model = Model(3)
+
+        # transform stem geometry to gmsh geo data
+        model.gmsh_io.geo_data["points"] = {
+            key: value.coordinates
+            for key, value in expected_geometry_single_layer_3D.points.items()
+        }
+        model.gmsh_io.geo_data["lines"] = {
+            key: value.point_ids
+            for key, value in expected_geometry_single_layer_3D.lines.items()
+        }
+        model.gmsh_io.geo_data["surfaces"] = {
+            key: value.line_ids
+            for key, value in expected_geometry_single_layer_3D.surfaces.items()
+        }
+        model.gmsh_io.geo_data["volumes"] = {
+            key: value.surface_ids
+            for key, value in expected_geometry_single_layer_3D.volumes.items()
+        }
+
+        # set constraints for volume
+        model.mesh_settings.constraints["transfinite_volume"][1] = [2, 3, 4]
+
+        # perform test
+        model._Model__set_mesh_constraints_for_structured_mesh()
+
+        # expected constraints dictionary for the volume
+        expected_constraint_dict = {
+            'transfinite_curve': {
+                1: {
+                    'n_points': 2
+                },
+                2: {
+                    'n_points': 3
+                },
+                3: {
+                    'n_points': 2
+                },
+                4: {
+                    'n_points': 3
+                },
+                5: {
+                    'n_points': 4
+                },
+                6: {
+                    'n_points': 4
+                },
+                7: {
+                    'n_points': 2
+                },
+                8: {
+                    'n_points': 4
+                },
+                9: {
+                    'n_points': 3
+                },
+                10: {
+                    'n_points': 4
+                },
+                11: {
+                    'n_points': 2
+                },
+                12: {
+                    'n_points': 3
+                }
+            },
+            'transfinite_surface': {
+                1: {
+                    'corner_node_ids': [1, 2, 3, 4],
+                    'n_points': [2, 3, 4]
+                },
+                2: {
+                    'corner_node_ids': [1, 5, 6, 2],
+                    'n_points': [2, 3, 4]
+                },
+                3: {
+                    'corner_node_ids': [2, 6, 7, 3],
+                    'n_points': [2, 3, 4]
+                },
+                4: {
+                    'corner_node_ids': [3, 7, 8, 4],
+                    'n_points': [2, 3, 4]
+                },
+                5: {
+                    'corner_node_ids': [4, 8, 5, 1],
+                    'n_points': [2, 3, 4]
+                },
+                6: {
+                    'corner_node_ids': [5, 6, 7, 8],
+                    'n_points': [2, 3, 4]
+                }
+            },
+            'transfinite_volume': {
+                1: {
+                    'corner_node_ids': [1, 2, 3, 4, 5, 6, 7, 8],
+                    'n_points': [2, 3, 4]
+                }
+            }
+        }
+
+        # assert that the constraints dictionary is set correctly
+        assert model.gmsh_io.geo_data["constraints"] == expected_constraint_dict
+
+    def test_set_mesh_constraints_surface(self, expected_geometry_single_layer_3D: Geometry):
+        """
+        Tests if the mesh constraints for a surface are set correctly.
+
+        Args:
+            expected_geometry_single_layer_3D (:class:`stem.geometry.Geometry`): A 3D block geometry.
+        """
+
+        model = Model(3)
+
+        # transform stem geometry to gmsh geo data
+        model.gmsh_io.geo_data["points"] = {
+            key: value.coordinates
+            for key, value in expected_geometry_single_layer_3D.points.items()
+        }
+        model.gmsh_io.geo_data["lines"] = {
+            key: value.point_ids
+            for key, value in expected_geometry_single_layer_3D.lines.items()
+        }
+        model.gmsh_io.geo_data["surfaces"] = {
+            key: value.line_ids
+            for key, value in expected_geometry_single_layer_3D.surfaces.items()
+        }
+        model.gmsh_io.geo_data["volumes"] = {
+            key: value.surface_ids
+            for key, value in expected_geometry_single_layer_3D.volumes.items()
+        }
+
+        # set constraints for surface in the settings
+        model.mesh_settings.constraints["transfinite_surface"][1] = [2, 3, 4]
+
+        # perform test
+        model._Model__set_mesh_constraints_for_structured_mesh()
+
+        # expected constraints dictionary for the surface
+        expected_constraint_dict = {
+            'transfinite_curve': {
+                1: {
+                    'n_points': 2
+                },
+                2: {
+                    'n_points': 3
+                },
+                3: {
+                    'n_points': 2
+                },
+                4: {
+                    'n_points': 3
+                }
+            },
+            'transfinite_surface': {
+                1: {
+                    'corner_node_ids': [1, 2, 3, 4],
+                    'n_points': [2, 3, 4]
+                }
+            }
+        }
+
+        # assert that the constraints dictionary is set correctly
+        assert model.gmsh_io.geo_data["constraints"] == expected_constraint_dict
+
+    def test_set_mesh_constraints_curve(self, expected_geometry_single_layer_3D: Geometry):
+        """
+        Tests if the mesh constraints for a curve are set correctly.
+
+        Args:
+            expected_geometry_single_layer_3D (:class:`stem.geometry.Geometry`): A 3D block geometry.
+        """
+
+        model = Model(3)
+
+        # transform stem geometry to gmsh geo data
+        model.gmsh_io.geo_data["points"] = {
+            key: value.coordinates
+            for key, value in expected_geometry_single_layer_3D.points.items()
+        }
+        model.gmsh_io.geo_data["lines"] = {
+            key: value.point_ids
+            for key, value in expected_geometry_single_layer_3D.lines.items()
+        }
+        model.gmsh_io.geo_data["surfaces"] = {
+            key: value.line_ids
+            for key, value in expected_geometry_single_layer_3D.surfaces.items()
+        }
+        model.gmsh_io.geo_data["volumes"] = {
+            key: value.surface_ids
+            for key, value in expected_geometry_single_layer_3D.volumes.items()
+        }
+
+        # set constraints for a curve in the settings
+        model.mesh_settings.constraints["transfinite_curve"][1] = 2
+
+        # perform test
+        model._Model__set_mesh_constraints_for_structured_mesh()
+
+        # expected constraints dictionary for the curve
+        expected_constraint_dict = {'transfinite_curve': {1: {'n_points': 2}}}
+
+        # assert that the constraints dictionary is set correctly
+        assert model.gmsh_io.geo_data["constraints"] == expected_constraint_dict

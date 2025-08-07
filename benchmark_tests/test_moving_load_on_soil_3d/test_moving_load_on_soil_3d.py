@@ -96,7 +96,7 @@ def test_stem():
     # Define the results to be written to the output file
 
     # Nodal results
-    nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.TOTAL_DISPLACEMENT]
+    nodal_results = [NodalOutput.DISPLACEMENT]
     # Gauss point results
     gauss_point_results = []
 

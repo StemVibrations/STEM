@@ -213,6 +213,26 @@ class BackwardEulerScheme(SchemeABC):
         return "backward_euler"
 
 
+@dataclass
+class StaticScheme(SchemeABC):
+    """
+    Class containing information about the static scheme
+
+    Inheritance:
+        - :class:`SchemeABC`
+    """
+
+    @property
+    def scheme_type(self) -> str:
+        """
+        Property for returning the type of the static scheme
+
+        Returns:
+            - str: The type of the static scheme
+        """
+        return "static"
+
+
 class SolutionType(Enum):
     """
     Enum class containing the solution types
@@ -628,7 +648,7 @@ class SolverSettings:
         elif self.solution_type == SolutionType.QUASI_STATIC:
             Warning("In quasi-static analysis, the time integration scheme is set to Backward Euler. And the strategy "
                     "type is set to Newton-Raphson")
-            self.scheme = BackwardEulerScheme()
+            self.scheme = StaticScheme()
             self.strategy_type = NewtonRaphsonStrategy()
 
             # todo remove this once updated in Kratos

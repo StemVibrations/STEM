@@ -20,3 +20,7 @@ no_implicit_reexport = true
 
 [tool.black]
 force-exclude = '\.py$'
+
+[tool.ruff]
+exclude = ["**/*.py"]
+select = []
