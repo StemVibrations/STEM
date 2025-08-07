@@ -1,6 +1,7 @@
 from typing import Dict, Any
 from pathlib import Path
 
+import numpy as np
 import numpy.testing as npt
 from stem.geometry import Geometry
 from stem.soil_material import SoilMaterial, OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
@@ -9,6 +10,42 @@ from stem.solver import (AnalysisType, SolutionType, TimeIntegration, Displaceme
 
 
 class TestUtils:
+
+    @staticmethod
+    def assert_allclose(actual: Any, desired: Any, atol: float = 1e-22, rtol: float = 1e-7):
+        """
+        Checks whether two arrays are (almost) equal. This method compares values with the maximum of the absolute
+        tolerance and the relative tolerance * the absolute value of the expected value.
+
+        Args:
+            - actual (Any): Expected value.
+            - desired (Any): Actual value.
+            - atol (float): Absolute tolerance for comparing numerical values. Default is 1e-22.
+            - rtol (float): Relative tolerance for comparing numerical values. Default is 1e-7.
+
+        Raises:
+            - AssertionError: If the actual and desired shapes do not match
+            - AssertionError: If the actual and desired values are not equal within the specified tolerances.
+        """
+        actual = np.asanyarray(actual)
+        desired = np.asanyarray(desired)
+
+        if actual.shape != desired.shape:
+            raise AssertionError(f"Shapes do not match: {actual.shape} != {desired.shape}")
+
+        if actual.dtype == bool or desired.dtype == bool:
+            diff = np.logical_xor(actual, desired)
+            if np.any(diff):
+                raise AssertionError(f"\nActual:   {actual}\nDesired:  {desired}\n"
+                                     f"Mismatch: {diff}")
+
+        else:
+            diff = np.abs(actual - desired)
+            allowed_error = np.maximum(rtol * np.abs(desired), atol)
+
+            if not np.all(diff <= allowed_error):
+                raise AssertionError(f"\nActual:   {actual}\nDesired:  {desired}\n"
+                                     f"Diff:     {diff}\nAllowed:  {allowed_error}")
 
     @staticmethod
     def create_default_soil_material(ndim: int):
@@ -70,7 +107,7 @@ class TestUtils:
     @staticmethod
     def assert_dictionary_almost_equal(expected: Dict[Any, Any],
                                        actual: Dict[Any, Any],
-                                       abs_tolerance: float = 0.0,
+                                       abs_tolerance: float = 1 - 22,
                                        rel_tolerance: float = 1e-7):
         """
         Checks whether two dictionaries are equal.
@@ -104,13 +141,13 @@ class TestUtils:
                     elif isinstance(v_i, str):
                         assert v_i == actual_i
                     else:
-                        npt.assert_allclose(v_i, actual_i, atol=abs_tolerance, rtol=rel_tolerance)
+                        TestUtils.assert_allclose(v_i, actual_i, atol=abs_tolerance, rtol=rel_tolerance)
 
             else:
                 if v is None:
                     assert actual[k] is None
                 else:
-                    npt.assert_allclose(v, actual[k], atol=abs_tolerance, rtol=rel_tolerance)
+                    TestUtils.assert_allclose(v, actual[k], atol=abs_tolerance, rtol=rel_tolerance)
 
     @staticmethod
     def assert_almost_equal_geometries(expected_geometry: Geometry, actual_geometry: Geometry):
