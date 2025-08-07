@@ -59,7 +59,6 @@ class Model:
         self.extrusion_length: Optional[float] = None
         self.groups: Dict[str, Any] = {}
 
-
     @property
     def all_model_parts(self) -> List[ModelPart]:
         """
@@ -1219,7 +1218,6 @@ class Model:
                 model_part.mesh = new_mesh
 
                 self.gmsh_io.mesh_data["physical_groups"][model_part.name]["node_ids"] = (list(new_mesh.nodes.keys()))
-
 
     def __reorder_gmsh_to_kratos_order(self):
         """
