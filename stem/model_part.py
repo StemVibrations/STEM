@@ -14,13 +14,8 @@ from stem.solver import AnalysisType
 from stem.utils import Utils
 
 # define type aliases
-ProcessParameters = Union[
-    LoadParametersABC,
-    BoundaryParametersABC,
-    AdditionalProcessesParametersABC,
-    WaterProcessParametersABC,
-    OutputParametersABC,
-]
+ProcessParameters = Union[LoadParametersABC, BoundaryParametersABC, AdditionalProcessesParametersABC,
+                          WaterProcessParametersABC, OutputParametersABC]
 """
 TypeAlias:
     - ProcessParameters: Union[:class:`stem.load.LoadParametersABC`, \

@@ -14,7 +14,6 @@ class SoilFormulationParametersABC(ABC):
     Attributes:
         - ndim (int): The number of dimensions of the soil formulation (2 or 3)
     """
-
     ndim: int
 
 
@@ -23,7 +22,6 @@ class SoilConstitutiveLawABC(ABC):
     """
     Abstract base class for soil constitutive laws
     """
-
     pass
 
 
@@ -32,7 +30,6 @@ class RetentionLawABC(ABC):
     """
     Abstract class containing the parameters for a retention law. This class is created for type checking purposes.
     """
-
     pass
 
 
@@ -46,7 +43,6 @@ class FluidProperties:
         - DYNAMIC_VISCOSITY (float): The dynamic viscosity of fluid [Pa s].
         - BULK_MODULUS_FLUID (float): The bulk modulus of fluid [Pa].
     """
-
     DENSITY_FLUID: float = 1000
     DYNAMIC_VISCOSITY: float = 1.3e-3
     BULK_MODULUS_FLUID: float = 2e9
@@ -69,7 +65,6 @@ class OnePhaseSoil(SoilFormulationParametersABC):
         - RAYLEIGH_M (Optional[float]): Mass proportional Rayleigh damping parameter [-].
         - RAYLEIGH_K (Optional[float]): Stiffness proportional Rayleigh damping parameter [-].
     """
-
     IS_DRAINED: bool
     DENSITY_SOLID: float
     POROSITY: float
@@ -102,7 +97,6 @@ class TwoPhaseSoil(SoilFormulationParametersABC):
         - PERMEABILITY_ZX (Optional[float]): The permeability in the zx-direction [m^2].
         - PERMEABILITY_ZZ (Optional[float]): The permeability in the z-direction [m^2].
     """
-
     DENSITY_SOLID: float
     POROSITY: float
     PERMEABILITY_XX: float
@@ -153,7 +147,6 @@ class TwoPhaseSoilInterface(TwoPhaseSoil):
         - TRANSVERSAL_PERMEABILITY (float): The transversal permeability [m^2].
         - MINIMUM_JOINT_WIDTH (float): The minimum joint width [m].
     """
-
     TRANSVERSAL_PERMEABILITY: float = 1.0e-13
     MINIMUM_JOINT_WIDTH: float = 0.001
 
@@ -169,7 +162,6 @@ class OnePhaseSoilInterface(OnePhaseSoil):
     Attributes:
         - MINIMUM_JOINT_WIDTH (float): The minimum joint width [m].
     """
-
     MINIMUM_JOINT_WIDTH: float = 0.001
 
 
@@ -185,7 +177,6 @@ class LinearElasticSoil(SoilConstitutiveLawABC):
         - YOUNG_MODULUS (float): The Young's modulus [Pa].
         - POISSON_RATIO (float): The Poisson's ratio [-].
     """
-
     YOUNG_MODULUS: float
     POISSON_RATIO: float
 
@@ -204,7 +195,6 @@ class SmallStrainUmatLaw(SoilConstitutiveLawABC):
         - UMAT_PARAMETERS (list): The parameters of the umat.
         - STATE_VARIABLES (list): The state variables of the umat.
     """
-
     UMAT_NAME: str
     IS_FORTRAN_UMAT: bool
     UMAT_PARAMETERS: List[Any]
@@ -225,7 +215,6 @@ class SmallStrainUdsmLaw(SoilConstitutiveLawABC):
         - IS_FORTRAN_UDSM (bool): A boolean to indicate whether the udsm is written in Fortran.
         - UDSM_PARAMETERS (list): The parameters of the udsm.
     """
-
     UDSM_NAME: str
     UDSM_NUMBER: int
     IS_FORTRAN_UDSM: bool
@@ -244,7 +233,6 @@ class SaturatedBelowPhreaticLevelLaw(RetentionLawABC):
         - SATURATED_SATURATION (float): The saturation ratio below phreatic level [-].
         - RESIDUAL_SATURATION (float): The residual saturation ratio [-].
     """
-
     SATURATED_SATURATION: float = 1.0
     RESIDUAL_SATURATION: float = 1e-10
 
@@ -260,7 +248,6 @@ class SaturatedLaw(RetentionLawABC):
     Attributes:
         - SATURATED_SATURATION (float): The saturation ratio [-].
     """
-
     SATURATED_SATURATION: float = 1.0
 
 
@@ -280,7 +267,6 @@ class VanGenuchtenLaw(RetentionLawABC):
         - RESIDUAL_SATURATION (float): The minumum saturation ratio [-].
         - MINIMUM_RELATIVE_PERMEABILITY (float): The minimum relative permeability [-].
     """
-
     VAN_GENUCHTEN_AIR_ENTRY_PRESSURE: float
     VAN_GENUCHTEN_GN: float
     VAN_GENUCHTEN_GL: float
@@ -301,7 +287,6 @@ class SoilMaterial:
         - retention_parameters (:class:`RetentionLawABC`): The retention law parameters.
         - fluid_properties (:class:`FluidProperties`): The fluid properties.
     """
-
     name: str
     soil_formulation: SoilFormulationParametersABC
     constitutive_law: SoilConstitutiveLawABC
@@ -386,7 +371,6 @@ class InterfaceMaterial:
         - friction_angle (float): The friction angle of the interface [degrees].
         - dilatancy_angle (float): The dilatancy angle of the interface [degrees].
     """
-
     name: str
     constitutive_law: SoilConstitutiveLawABC
     soil_formulation: SoilFormulationParametersABC

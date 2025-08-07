@@ -225,10 +225,8 @@ class TestKratosMaterialIO:
 
         # Create structural materials
         beam_material = StructuralMaterial(name="test_beam_material", material_parameters=beam_material_parameters)
-        beam_material_rayleigh = StructuralMaterial(
-            name="test_beam_material_rayleigh",
-            material_parameters=beam_material_parameters_rayleigh,
-        )
+        beam_material_rayleigh = StructuralMaterial(name="test_beam_material_rayleigh",
+                                                    material_parameters=beam_material_parameters_rayleigh)
 
         spring_damper_material = StructuralMaterial(
             name="test_spring_damper_material",
