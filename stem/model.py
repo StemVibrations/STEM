@@ -59,12 +59,6 @@ class Model:
         self.extrusion_length: Optional[float] = None
         self.groups: Dict[str, Any] = {}
 
-    def __del__(self):
-        """
-        Destructor of the Model class. Finalizes the gmsh_io instance.
-
-        """
-        self.gmsh_io.finalize_gmsh()
 
     @property
     def all_model_parts(self) -> List[ModelPart]:
