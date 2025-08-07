@@ -1,5 +1,6 @@
 import json
 import os
+from copy import deepcopy
 import numpy as np
 from pathlib import Path
 from numpy import ndarray
@@ -1225,6 +1226,50 @@ class Model:
 
                 self.gmsh_io.mesh_data["physical_groups"][model_part.name]["node_ids"] = (list(new_mesh.nodes.keys()))
 
+
+    def __reorder_gmsh_to_kratos_order(self):
+        """
+        Reorder the GMSH elements to match the Kratos order. This is necessary because GMSH and Kratos have
+        different orders for the nodes in the elements. Reordering is required for TETRAHEDRON_10N and HEXAHEDRON_20N
+        """
+
+        # reorder TETRAHEDRON_10N
+        if "TETRAHEDRON_10N" in self.gmsh_io.mesh_data["elements"]:
+            gmsh_to_kratos_indices = ELEMENT_DATA["TETRAHEDRON_10N"]["gmsh_to_kratos_order"]
+            for key, value in self.gmsh_io.mesh_data["elements"]["TETRAHEDRON_10N"].items():
+                self.gmsh_io.mesh_data["elements"]["TETRAHEDRON_10N"][key] = np.array(
+                    self.gmsh_io.mesh_data["elements"]["TETRAHEDRON_10N"][key])[gmsh_to_kratos_indices].tolist()
+
+        # reorder HEXAHEDRON_20N
+        if "HEXAHEDRON_20N" in self.gmsh_io.mesh_data["elements"]:
+            gmsh_to_kratos_indices = ELEMENT_DATA["HEXAHEDRON_20N"]["gmsh_to_kratos_order"]
+            for key, value in self.gmsh_io.mesh_data["elements"]["HEXAHEDRON_20N"].items():
+                self.gmsh_io.mesh_data["elements"]["HEXAHEDRON_20N"][key] = np.array(
+                    self.gmsh_io.mesh_data["elements"]["HEXAHEDRON_20N"][key])[gmsh_to_kratos_indices].tolist()
+
+    def __set_mesh_constraints_for_structured_mesh(self):
+        """
+        Set the mesh constraints for the structured mesh. The constraints are defined in the mesh_settings
+        and are applied to the gmsh_io instance.
+        """
+        if len(self.mesh_settings.constraints["transfinite_volume"]) > 0:
+            for key, value in self.mesh_settings.constraints["transfinite_volume"].items():
+                self.gmsh_io.set_structured_mesh_constraints_volume(value, key)
+
+        if len(self.mesh_settings.constraints["transfinite_surface"]) > 0:
+            for key, value in self.mesh_settings.constraints["transfinite_surface"].items():
+                self.gmsh_io.set_structured_mesh_constraints_surface(value, key)
+
+        if len(self.mesh_settings.constraints["transfinite_curve"]) > 0:
+
+            # make sure that the transfinite_curve key is present in the geo_data constraints
+            if "transfinite_curve" not in self.gmsh_io.geo_data["constraints"]:
+                self.gmsh_io.geo_data["constraints"]["transfinite_curve"] = {}
+
+            # set the transfinite curve constraints dictionary
+            for key, value in self.mesh_settings.constraints["transfinite_curve"].items():
+                self.gmsh_io.geo_data["constraints"]["transfinite_curve"][key] = {"n_points": value}
+
     def add_field(self, part_name: str, field_parameters: ParameterFieldParameters):
         """
         Add a parameter field to a given model part (specified by the part_name input). if the `mean_value` attribute
@@ -1336,6 +1381,9 @@ class Model:
 
         """
 
+        # set constraints for a structured mesh
+        self.__set_mesh_constraints_for_structured_mesh()
+
         # generate mesh
         self.gmsh_io.generate_mesh(self.ndim,
                                    element_size=self.mesh_settings.element_size,
@@ -1345,25 +1393,115 @@ class Model:
                                    mesh_name=mesh_name,
                                    open_gmsh_gui=open_gmsh_gui)
 
+        # reorder gmsh format to Kratos format
+        self.__reorder_gmsh_to_kratos_order()
+
         # add the mesh to each model part
         for model_part in self.all_model_parts:
             model_part.mesh = Mesh.create_mesh_from_gmsh_group(self.gmsh_io.mesh_data, model_part.name)
-
         # per process model part, check if the condition elements are applied to a body model part and set the
         # node ordering of the condition elements to match the body elements
         for process_model_part in self.process_model_parts:
-
             # only check if the process model part is a condition element
             if isinstance(process_model_part.parameters,
                           (LineLoad, MovingLoad, UvecLoad, SurfaceLoad, AbsorbingBoundary)):
                 # match the condition elements with the body elements on which the conditions are applied
                 matched_elements = self.__find_matching_body_elements_for_process_model_part(process_model_part)
-
                 # check the ordering of the nodes of the conditions. If it does not match flip the order.
                 self.__check_ordering_process_model_part(matched_elements, process_model_part)
-
         # perform post mesh operations
         self.__post_mesh()
+
+    def __split_3n_line_elements(self, changed_lines: Dict[int, List[int]]):
+        """
+        Splits the 3n line elements into 2n line elements when required. Not all second order element types are
+        supported in Kratos. Therefore, the second order line elements are split into first order elements.
+        Args:
+            - changed_lines (Dict[int, List[int]]): A dictionary where the keys are the old element ids and the values
+                are lists of new element ids that replace the old element ids.
+        Raises:
+            - ValueError: if the model part with the given name is not found.
+            - ValueError: if the mesh is not initialised.
+        """
+        for name, group in self.gmsh_io.mesh_data["physical_groups"].items():
+            if group["ndim"] == 1:
+                # find the elements that are in the changed lines
+                affected_elements = set(group["element_ids"]) & set(changed_lines.keys())
+
+                if len(affected_elements) > 0:
+                    group["element_type"] = "LINE_2N"
+
+                for old_id in affected_elements:
+                    # change the element ids in the gmsh physical group
+                    new_element_ids = changed_lines[old_id]
+                    group["element_ids"].remove(old_id)
+                    group["element_ids"].extend(new_element_ids)
+
+                    line_model_part = self.get_model_part_by_name(name)
+                    if line_model_part is None:
+                        raise ValueError(f"Model part with name `{name}` not found.")
+                    mesh_model_part = line_model_part.mesh
+
+                    if mesh_model_part is None:
+                        raise ValueError(
+                            "Mesh not yet initialised. Please generate the mesh using Model.generate_mesh().")
+
+                    # update the mesh data with the new elements
+                    mesh_model_part.elements.pop(old_id, None)
+                    for new_element_id in new_element_ids:
+                        new_element = Element(new_element_id, "LINE_2N",
+                                              self.gmsh_io.mesh_data["elements"]["LINE_2N"][new_element_id])
+                        mesh_model_part.elements[new_element_id] = new_element
+
+    def __split_second_order_elements(self):
+        """
+        Splits second order line elements into first order elements when required. Not all second order element types
+        are supported in Kratos. Therefore, the second order line elements are split into first order elements.
+        Raises:
+            - ValueError: if the mesh is not initialised.
+        """
+        changed_lines = {}
+        for model_part in self.body_model_parts:
+            if isinstance(model_part.material, StructuralMaterial):
+
+                # IMPORTANT: the ElasticSpringDamper is split here, but the material properties are not updated. This
+                # is wrong! However, later on in the calculation, all ElasticSpringDamper elements on a straight line
+                # in a model part are combined, such that the original materials properties are correct.
+                types_to_be_split = (ElasticSpringDamper, EulerBeam)
+                if isinstance(model_part.material.material_parameters, types_to_be_split):
+
+                    # check if the model part has a mesh
+                    if model_part.mesh is None:
+                        raise ValueError(
+                            "Mesh not yet initialised. Please generate the mesh using Model.generate_mesh().")
+
+                    # check if the first element in the model part is a second order line element
+                    if len(model_part.mesh.elements) > 0 and next(iter(
+                            model_part.mesh.elements.values())).element_type != "LINE_3N":
+                        # the elements are not second order line elements and are not to be split
+                        continue
+
+                    # get the new element id which is the maximum current element id + 1
+                    new_element_id = self.__get_maximum_element_id() + 1
+
+                    self.gmsh_io.mesh_data["elements"].setdefault("LINE_2N", {})
+
+                    for element_id, element in model_part.mesh.elements.items():
+                        # define the new element ids of the split elements, and remember on which line the split
+                        # occurred
+                        changed_lines[element_id] = [new_element_id, new_element_id + 1]
+
+                        node_ids = element.node_ids
+                        new_connectivities = [[node_ids[0], node_ids[2]], [node_ids[2], node_ids[1]]]
+
+                        for connectivities in new_connectivities:
+                            # new_elements[new_element_id] = Element(new_element_id, "LINE_2N", connectivities)
+                            self.gmsh_io.mesh_data["elements"]["LINE_2N"][new_element_id] = connectivities
+                            new_element_id += 1
+
+        # make sure that not only the elements are split, but also line conditions that are applied to the elements
+        if changed_lines != {}:
+            self.__split_3n_line_elements(changed_lines)
 
     def __post_mesh(self):
         """
@@ -1373,6 +1511,8 @@ class Model:
             - adjust the elements for the spring damper parts.
 
         """
+        if self.mesh_settings.element_order == 2:
+            self.__split_second_order_elements()
         self.__initialise_fields()
 
         self.__exclude_non_output_nodes()
@@ -1452,6 +1592,10 @@ class Model:
                     sorted(list(new_mesh.elements.keys()))
 
                 for element_id, element in new_mesh.elements.items():
+                    if self.mesh_settings.element_order > 1:
+                        # add LINE_2N key to the mesh data dictionary
+                        if "LINE_2N" not in self.gmsh_io.mesh_data["elements"]:
+                            self.gmsh_io.mesh_data["elements"]["LINE_2N"] = {}
                     self.gmsh_io.mesh_data["elements"]["LINE_2N"][element_id] = element.node_ids
 
                 mp.mesh = new_mesh
@@ -1543,8 +1687,7 @@ class Model:
                 completed_points.add(first_node_id)
         return line_node_ids
 
-    @staticmethod
-    def __find_end_nodes_of_line_strings(mesh: Mesh) -> Set[int]:
+    def __find_end_nodes_of_line_strings(self,mesh: Mesh) -> Set[int]:
         """
         Finds the nodes at the end of linestrings.
 
@@ -1555,7 +1698,17 @@ class Model:
             - end_nodes (Set[int]): End node ids of linestring clusters.
 
         """
-        nodes_to_elements = mesh.find_elements_connected_to_nodes()
+        # if the mesh is higher order, convert it to linear mesh in order to find the end nodes
+        if self.mesh_settings.element_order > 1:
+            linear_mesh = deepcopy(mesh)
+
+            # remove middle nodes of line elements in case of higher order meshes
+            for id, element in linear_mesh.elements.items():
+                linear_mesh.elements[id].node_ids = element.node_ids[:2]
+
+            nodes_to_elements = linear_mesh.find_elements_connected_to_nodes()
+        else:
+            nodes_to_elements = mesh.find_elements_connected_to_nodes()
         end_nodes = set(node_id for node_id, elements in nodes_to_elements.items() if len(elements) == 1)
         return end_nodes
 
@@ -1733,7 +1886,7 @@ class Model:
                 # if the nodes are equal, but the node order isn't, flip the node order of the process element
                 body_line_edges = Utils.get_element_edges(body_element)
                 for edge in body_line_edges:
-                    if set(edge) == set(process_element.node_ids) and list(edge) != process_element.node_ids:
+                    if set(edge) == set(process_element.node_ids) and edge != process_element.node_ids:
                         elements_to_flip.append(process_element)
 
             elif body_el_info["ndim"] == 3 and process_el_info["ndim"] == 2:
