@@ -25,12 +25,8 @@ class Utils:
     """
 
     @staticmethod
-    def check_ndim_nnodes_combinations(
-        n_dim: int,
-        n_nodes_element: Optional[int],
-        available_combinations: Dict[int, List[Any]],
-        class_name: str,
-    ):
+    def check_ndim_nnodes_combinations(n_dim: int, n_nodes_element: Optional[int],
+                                       available_combinations: Dict[int, List[Any]], class_name: str):
         """
         Check if the combination of number of global dimensions and number of nodes per element is supported.
 
@@ -105,12 +101,10 @@ class Utils:
             raise ValueError("Dimension of the points should be 2D or 3D.")
 
     @staticmethod
-    def is_collinear(
-        point: Sequence[float],
-        start_point: Sequence[float],
-        end_point: Sequence[float],
-        a_tol: float = 1e-06,
-    ) -> bool:
+    def is_collinear(point: Sequence[float],
+                     start_point: Sequence[float],
+                     end_point: Sequence[float],
+                     a_tol: float = 1e-06) -> bool:
         """
         Check if point is aligned with the other two on a line. Points must have the same dimension (2D or 3D)
 
@@ -141,8 +135,8 @@ class Utils:
         return is_collinear
 
     @staticmethod
-    def is_point_between_points(point: Sequence[float], start_point: Sequence[float],
-                                end_point: Sequence[float]) -> bool:
+    def is_point_between_points(point: Sequence[float], start_point: Sequence[float], end_point: Sequence[float]) \
+            -> bool:
         """
         Check if point is between the other two. Points must have the same dimension (2D or 3D).
 
@@ -183,9 +177,7 @@ class Utils:
         return isinstance(seq, Sequence) and not isinstance(seq, str)
 
     @staticmethod
-    def chain_sequence(
-        sequences: Sequence[Sequence[Any]],
-    ) -> Generator[Sequence[Any], Sequence[Any], None]:
+    def chain_sequence(sequences: Sequence[Sequence[Any]]) -> Generator[Sequence[Any], Sequence[Any], None]:
         """
         Chains sequences together
 
@@ -247,7 +239,7 @@ class Utils:
         return list({id(obj): obj for obj in input_sequence}.values())
 
     @staticmethod
-    def get_element_edges(element: 'Element') -> List[List[int]]:
+    def get_element_edges(element: 'Element') -> npty.NDArray[np.int64]:
         """
         Gets the nodal connectivities of the line edges of elements
 
@@ -255,7 +247,7 @@ class Utils:
             - element (:class:`stem.mesh.Element`): element object
 
         Returns:
-            - List[List[int]]: nodal connectivities of the line edges of the element
+            - npty.NDArray[np.int64]: nodal connectivities of the line edges of the element
 
         """
 
@@ -263,15 +255,10 @@ class Utils:
         node_ids: npty.NDArray[np.int64] = np.array(element.node_ids,
                                                     dtype=int)[ELEMENT_DATA[element.element_type]["edges"]]
 
-        if node_ids.ndim != 2:
-            raise ValueError("Node ids should be a 2D array.")
-
-        node_ids_list: List[List[int]] = node_ids.tolist()
-
-        return node_ids_list
+        return node_ids
 
     @staticmethod
-    def flip_node_order(elements: Sequence["Element"]):
+    def flip_node_order(elements: Sequence['Element']):
         """
         Flips the node order of the elements, where all elements should be of the same type.
 
@@ -305,11 +292,8 @@ class Utils:
             elements[i].node_ids = list(element_connectivity)
 
     @staticmethod
-    def is_volume_edge_defined_outwards(
-        edge_element: "Element",
-        body_element: "Element",
-        nodes: Dict[int, Sequence[float]],
-    ) -> bool:
+    def is_volume_edge_defined_outwards(edge_element: 'Element', body_element: 'Element',
+                                        nodes: Dict[int, Sequence[float]]) -> bool:
         """
         Checks if the normal vector of the edge element is pointing outwards of the body element.
 
@@ -345,10 +329,8 @@ class Utils:
         # calculate normal vector of edge element
         coordinates_edge = np.array([nodes[node_id] for node_id in edge_element.node_ids[:edge_el_info["n_vertices"]]])
 
-        normal_vector_edge = np.cross(
-            coordinates_edge[1, :] - coordinates_edge[0, :],
-            coordinates_edge[2, :] - coordinates_edge[0, :],
-        )
+        normal_vector_edge = np.cross(coordinates_edge[1, :] - coordinates_edge[0, :],
+                                      coordinates_edge[2, :] - coordinates_edge[0, :])
 
         # calculate centroid of neighbouring body element
         body_vertices_ids = body_element.node_ids[:body_el_info["n_vertices"]]
@@ -367,13 +349,8 @@ class Utils:
         return is_outwards
 
     @staticmethod
-    def create_sigmoid_tiny_expr(
-        start_time: float,
-        dt_slope: float,
-        initial_value: float,
-        final_value: float,
-        is_half_function: bool,
-    ) -> str:
+    def create_sigmoid_tiny_expr(start_time: float, dt_slope: float, initial_value: float, final_value: float,
+                                 is_half_function: bool) -> str:
         """
         Creates a tiny expression with variable time for a sigmoid function. For more information on tiny expressions,
         see: https://github.com/codeplea/tinyexpr
@@ -391,6 +368,7 @@ class Utils:
 
         # only return half the sigmoid function, where the slope always contains the same sign
         if is_half_function:
+
             # calculate beta
             beta = 6 / dt_slope
 
@@ -405,14 +383,12 @@ class Utils:
                     f"+ {initial_value}")
 
     @staticmethod
-    def create_box_tiny_expr(
-        transition_parameter: float,
-        start_peak: float,
-        end_peak: float,
-        peak_value: float,
-        base_value: float,
-        variable: str = "x",
-    ) -> str:
+    def create_box_tiny_expr(transition_parameter: float,
+                             start_peak: float,
+                             end_peak: float,
+                             peak_value: float,
+                             base_value: float,
+                             variable: str = "x") -> str:
         """
         Creates a tiny expression for a hyperbolic approximation of the box function. For more information on tiny
         expressions, see: https://github.com/codeplea/tinyexpr
@@ -452,7 +428,7 @@ class Utils:
         return tiny_expr
 
     @staticmethod
-    def check_lines_geometry_are_path(geometry: Optional["Geometry"]) -> bool:
+    def check_lines_geometry_are_path(geometry: Optional['Geometry']) -> bool:
         """
 
         Checks if lines are connected forming a path without:
@@ -491,6 +467,7 @@ class Utils:
 
         # if 2 or more lines check for branching points/loops and discontinuities
         if len(geometry.lines) > 1:
+
             # find which lines are connected to which point
             lines_to_point: Dict[int, List[int]] = {point_id: [] for point_id in geometry.points.keys()}
             for line_id, line in geometry.lines.items():
@@ -499,6 +476,7 @@ class Utils:
 
             # check if the lines are connected without branches
             for line_ids in lines_to_point.values():
+
                 # if more than 2 lines are connected to the point a branching point or loop is found
                 if len(line_ids) > 2:
                     return False
@@ -531,17 +509,13 @@ class Utils:
 
         for ix in range(len(coordinates)):
             # check origin is collinear to the edges of the line
-            collinear_check = Utils.is_collinear(
-                point=origin,
-                start_point=coordinates[ix][0],
-                end_point=coordinates[ix][1],
-            )
+            collinear_check = Utils.is_collinear(point=origin,
+                                                 start_point=coordinates[ix][0],
+                                                 end_point=coordinates[ix][1])
             # check origin is between the edges of the line (edges included)
-            is_between_check = Utils.is_point_between_points(
-                point=origin,
-                start_point=coordinates[ix][0],
-                end_point=coordinates[ix][1],
-            )
+            is_between_check = Utils.is_point_between_points(point=origin,
+                                                             start_point=coordinates[ix][0],
+                                                             end_point=coordinates[ix][1])
             # check if point complies
             is_on_line = collinear_check and is_between_check
             # exit at the first success of the test (point in the line) and return True
@@ -573,9 +547,8 @@ class Utils:
             return str(path_obj).replace(extensions, new_extension)
 
     @staticmethod
-    def find_node_ids_close_to_geometry_nodes(mesh: "Mesh",
-                                              geometry: "Geometry",
-                                              eps: float = 1e-6) -> npty.NDArray[np.uint64]:
+    def find_node_ids_close_to_geometry_nodes(mesh: 'Mesh', geometry: 'Geometry', eps: float = 1e-6) \
+            -> npty.NDArray[np.uint64]:
         """
         Searches the nodes in the mesh close to the point of a given geometry.
 
@@ -594,10 +567,7 @@ class Utils:
 
         # compute pairwise distances between the geometry nodes (actual outputs and subset of the mesh nodes) and the
         # mesh nodes
-        output_coordinates = np.stack(
-            [np.array(point.coordinates) for point in geometry.points.values()],
-            dtype=float,
-        )
+        output_coordinates = np.stack([np.array(point.coordinates) for point in geometry.points.values()], dtype=float)
 
         # set up the tree for fast querying
         tree = cKDTree(coordinates)
@@ -642,11 +612,9 @@ class Utils:
         return None
 
     @staticmethod
-    def is_point_coplanar_to_polygon(
-        point: Sequence[float],
-        polygon_points: Sequence[Sequence[float]],
-        a_tol: float = 1e-06,
-    ) -> bool:
+    def is_point_coplanar_to_polygon(point: Sequence[float],
+                                     polygon_points: Sequence[Sequence[float]],
+                                     a_tol: float = 1e-06) -> bool:
         """
         Checks whether a point is coplanar to a list of points defining a polygon
 
@@ -745,6 +713,7 @@ class Utils:
 
         # Check if all other points lie on the plane
         for point in polygon_points:
+
             point_array = np.array(point)
             # Calculate the vector from p1 to the current point
             vector_to_point = point_array - p1
@@ -761,19 +730,17 @@ class Utils:
         return True
 
     @staticmethod
-    def validate_coordinates(
-        coordinates: Union[Sequence[Sequence[float]], npty.NDArray[np.float64]],
-    ):
+    def validate_coordinates(coordinates: Union[Sequence[Sequence[float]], npty.NDArray[np.float64]]):
         """
         Validates the coordinates in input.
 
         Args:
-            - coordinates (Union[Sequence[Sequence[float]], npty.NDArray[np.float64]]): The coordinates of the load.
+            - coordinates (Sequence[Sequence[float]]): The coordinates of the load.
 
         Raises:
-            - ValueError: if coordinates is not a 2D array
-            - ValueError: if the coordinates are not 3D.
-            - ValueError: if the coordinates are not real numbers (i.e. contain NaN or inf).
+            - ValueError: if coordinates is not a sequence real numbers.
+            - ValueError: if coordinates is not convertible to a 2D array (i.e. a sequence of sequences)
+            - ValueError: if the number of elements (number of coordinates) is not 3.
 
         """
 
