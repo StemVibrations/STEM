@@ -788,11 +788,6 @@ class Utils:
             raise ValueError(f"Coordinates should be 3D but {coordinates.shape[1]} coordinates were given.")
 
         # check if coordinates are real numbers
-        for coordinate in coordinates:
-            for i in coordinate:
-                if not isinstance(i, NUMBER_TYPES) or np.isnan(i) or np.isinf(i):
-                    raise ValueError(f"Coordinates should be a sequence of sequence of real numbers, "
-                                     f"but {i} was given.")
         if not np.isfinite(coordinates).all():
             raise ValueError("Coordinates must be real numbers (not NaN or inf).")
 
