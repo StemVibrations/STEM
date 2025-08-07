@@ -94,7 +94,7 @@ def test_stem():
                                                             displacement_absolute_tolerance=1.0e-9)
     stress_initialisation_type = StressInitialisationType.NONE
 
-    linear_solver = Amgcl(krylov_type="gmres")
+    linear_solver = Amgcl(krylov_type="gmres", tolerance=1e-6)
     solver_settings = SolverSettings(analysis_type=analysis_type,
                                      solution_type=solution_type,
                                      stress_initialisation_type=stress_initialisation_type,

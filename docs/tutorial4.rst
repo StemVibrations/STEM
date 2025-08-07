@@ -1,3 +1,5 @@
+STEM tutorials
+==============
 
 .. _tutorial4:
 
@@ -215,7 +217,7 @@ the boundary conditions are applied to planes defined by 3 points.
     # add the boundary conditions to the model
     model.add_boundary_condition_on_plane([(0,0,0), (0,0,1), (1,0,0)],no_displacement_parameters,"base_fixed")
     model.add_boundary_condition_on_plane([(0,0,0), (0,1,0), (0,0,1)], roller_displacement_parameters, "sides_roller")
-    #
+
     model.add_boundary_condition_on_plane([(0,0,0), (1,0,0), (0,1,0)],absorbing_boundaries_parameters,"abs")
     model.add_boundary_condition_on_plane([(0,0,8), (1,0,8), (0,1,8)],absorbing_boundaries_parameters,"abs")
     model.add_boundary_condition_on_plane([(5,0,0), (5,1,0), (5,0,1)], absorbing_boundaries_parameters, "abs")
@@ -362,3 +364,4 @@ The calculation is then ran by calling the run_calculation function within the s
 .. seealso::
 
     - Previous: :ref:`tutorial3`
+    - Next: :ref:`tutorial5`

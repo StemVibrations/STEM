@@ -68,14 +68,18 @@ class TestUtils:
         return Problem(problem_name="test", number_of_threads=2, settings=solver_settings)
 
     @staticmethod
-    def assert_dictionary_almost_equal(expected: Dict[Any, Any], actual: Dict[Any, Any]):
+    def assert_dictionary_almost_equal(expected: Dict[Any, Any],
+                                       actual: Dict[Any, Any],
+                                       abs_tolerance: float = 0.0,
+                                       rel_tolerance: float = 1e-7):
         """
         Checks whether two dictionaries are equal.
 
         Args:
             - expected: Expected dictionary.
             - actual: Actual dictionary.
-
+            - abs_tolerance (float): Absolute tolerance for comparing numerical values. Default is 0.0.
+            - rel_tolerance (float): Relative tolerance for comparing numerical values. Default is 1e-7.
         """
 
         for k, v in expected.items():
@@ -83,24 +87,30 @@ class TestUtils:
             assert k in actual
 
             if isinstance(v, dict):
-                TestUtils.assert_dictionary_almost_equal(v, actual[k])
+                TestUtils.assert_dictionary_almost_equal(v,
+                                                         actual[k],
+                                                         abs_tolerance=abs_tolerance,
+                                                         rel_tolerance=rel_tolerance)
             elif isinstance(v, str):
                 assert v == actual[k]
             elif isinstance(v, list):
                 assert len(v) == len(actual[k])
                 for v_i, actual_i in zip(v, actual[k]):
                     if isinstance(v_i, dict):
-                        TestUtils.assert_dictionary_almost_equal(v_i, actual_i)
+                        TestUtils.assert_dictionary_almost_equal(v_i,
+                                                                 actual_i,
+                                                                 abs_tolerance=abs_tolerance,
+                                                                 rel_tolerance=rel_tolerance)
                     elif isinstance(v_i, str):
                         assert v_i == actual_i
                     else:
-                        npt.assert_allclose(v_i, actual_i)
+                        npt.assert_allclose(v_i, actual_i, atol=abs_tolerance, rtol=rel_tolerance)
 
             else:
                 if v is None:
                     assert actual[k] is None
                 else:
-                    npt.assert_allclose(v, actual[k])
+                    npt.assert_allclose(v, actual[k], atol=abs_tolerance, rtol=rel_tolerance)
 
     @staticmethod
     def assert_almost_equal_geometries(expected_geometry: Geometry, actual_geometry: Geometry):
