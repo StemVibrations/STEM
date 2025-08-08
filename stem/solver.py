@@ -536,6 +536,40 @@ class Lu(LinearSolverSettingsABC):
 
 
 @dataclass
+class SparseCg(LinearSolverSettingsABC):
+    """
+    Class containing information about the Eigen library implementation of conjugate gradient iterative linear solver
+    settings. Compared to the :class:`Cg` class, this class uses the Eigen library's conjugate gradient solver, which
+    is optimized for sparse matrices and can be more efficient for large systems.
+
+    Inheritance:
+        - :class:`LinearSolverSettingsABC`
+
+    Attributes:
+        - scaling (bool): if true, the system matrix will be scaled before solving the linear system of equations.\
+            Default value is False.
+        - tolerance (float): tolerance for the linear solver convergence criteria. Default value is 1e-12.
+        - max_iteration (int): maximum number of iterations for the linear solver. Default value is 1000.
+
+    """
+    scaling: bool = False
+    tolerance: float = 1e-12
+    max_iteration: int = 1000
+
+    @property
+    def solver_type(self):
+        """
+        Property that returns the solver type name of the Eigen library implementation of conjugate gradient iterative
+        linear solver settings
+
+        Returns:
+            - str: solver type name
+
+        """
+        return "LinearSolversApplication.sparse_cg"
+
+
+@dataclass
 class TimeIntegration:
     """
     Class containing information about the time integration
