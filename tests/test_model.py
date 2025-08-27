@@ -4804,7 +4804,7 @@ class TestModel:
                 "coordinates": [(0, 0, 0), (0, 2, 0), (0, 2, 1), (0, 0, 1)],
                 "ndim": 1
             }}, "")
-        constraint_params = DisplacementConstraint([True, True, True], [True, False, True], [0.0, 0.0, 0.0])
+        constraint_params = DisplacementConstraint([True, False, True], [True, False, True], [0.0, 0.0, 0.0])
         constraint_part = model._Model__create_rail_constraint_model_part(rail_name)
         assert constraint_part.geometry is not None
         assert constraint_part.name == "constraint_" + rail_name
