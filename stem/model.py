@@ -279,11 +279,12 @@ class Model:
 
         constraint_model_part = ModelPart(rail_constraint_name)
         constraint_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_constraint_name)
-        constraint_model_part.parameters = DisplacementConstraint(active=[True, True, True],
-                                                                  is_fixed=[True, True, True],
+        # add displacement_constraint in the non-vertical directions
+        is_constraint = [True, True, True]
+        is_constraint[VERTICAL_AXIS] = False
+        constraint_model_part.parameters = DisplacementConstraint(active=is_constraint,
+                                                                  is_fixed=is_constraint,
                                                                   value=[0, 0, 0])
-        # Allow vertical movement.
-        constraint_model_part.parameters.is_fixed[VERTICAL_AXIS] = False
         return constraint_model_part
 
     def __create_rail_no_rotation_model_part(self, rail_name: str, rail_global_coords: ndarray[Any, Any]) -> ModelPart:
@@ -387,17 +388,6 @@ class Model:
                                  sleeper_rail_pad_offset, direction_vector)
         # add the rail geometry
         self.gmsh_io.generate_geometry(rail_geo_settings, "")
-
-        rail_model_part = BodyModelPart(rail_name)
-        rail_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, rail_name)
-        rail_model_part.material = StructuralMaterial(name=rail_name, material_parameters=rail_parameters)
-
-        sleeper_model_part = BodyModelPart(sleeper_name)
-        sleeper_model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, sleeper_name)
-        if isinstance(sleeper_parameters, NodalConcentrated):
-            sleeper_model_part.material = StructuralMaterial(name=sleeper_name, material_parameters=sleeper_parameters)
-        elif isinstance(sleeper_parameters, SoilMaterial):
-            sleeper_model_part.material = sleeper_parameters
 
         # create rail pad geometries
         rail_pad_line_ids_aux = []
@@ -1223,6 +1213,7 @@ class Model:
         """
         Reorder the GMSH elements to match the Kratos order. This is necessary because GMSH and Kratos have
         different orders for the nodes in the elements. Reordering is required for TETRAHEDRON_10N and HEXAHEDRON_20N
+
         """
 
         # reorder TETRAHEDRON_10N
@@ -1391,16 +1382,20 @@ class Model:
         # add the mesh to each model part
         for model_part in self.all_model_parts:
             model_part.mesh = Mesh.create_mesh_from_gmsh_group(self.gmsh_io.mesh_data, model_part.name)
+
         # per process model part, check if the condition elements are applied to a body model part and set the
         # node ordering of the condition elements to match the body elements
         for process_model_part in self.process_model_parts:
+
             # only check if the process model part is a condition element
             if isinstance(process_model_part.parameters,
                           (LineLoad, MovingLoad, UvecLoad, SurfaceLoad, AbsorbingBoundary)):
                 # match the condition elements with the body elements on which the conditions are applied
                 matched_elements = self.__find_matching_body_elements_for_process_model_part(process_model_part)
+
                 # check the ordering of the nodes of the conditions. If it does not match flip the order.
                 self.__check_ordering_process_model_part(matched_elements, process_model_part)
+
         # perform post mesh operations
         self.__post_mesh()
 
@@ -1408,12 +1403,15 @@ class Model:
         """
         Splits the 3n line elements into 2n line elements when required. Not all second order element types are
         supported in Kratos. Therefore, the second order line elements are split into first order elements.
+
         Args:
             - changed_lines (Dict[int, List[int]]): A dictionary where the keys are the old element ids and the values
                 are lists of new element ids that replace the old element ids.
+
         Raises:
             - ValueError: if the model part with the given name is not found.
             - ValueError: if the mesh is not initialised.
+
         """
         for name, group in self.gmsh_io.mesh_data["physical_groups"].items():
             if group["ndim"] == 1:
@@ -1449,8 +1447,10 @@ class Model:
         """
         Splits second order line elements into first order elements when required. Not all second order element types
         are supported in Kratos. Therefore, the second order line elements are split into first order elements.
+
         Raises:
             - ValueError: if the mesh is not initialised.
+
         """
         changed_lines = {}
         for model_part in self.body_model_parts:
@@ -1503,10 +1503,10 @@ class Model:
             - adjust the elements for the spring damper parts.
 
         """
+
         if self.mesh_settings.element_order == 2:
             self.__split_second_order_elements()
         self.__initialise_fields()
-
         self.__exclude_non_output_nodes()
         self.__adjust_mesh_spring_dampers()
 
@@ -1588,6 +1588,7 @@ class Model:
                         # add LINE_2N key to the mesh data dictionary
                         if "LINE_2N" not in self.gmsh_io.mesh_data["elements"]:
                             self.gmsh_io.mesh_data["elements"]["LINE_2N"] = {}
+
                     self.gmsh_io.mesh_data["elements"]["LINE_2N"][element_id] = element.node_ids
 
                 mp.mesh = new_mesh
@@ -1690,6 +1691,7 @@ class Model:
             - end_nodes (Set[int]): End node ids of linestring clusters.
 
         """
+
         # if the mesh is higher order, convert it to linear mesh in order to find the end nodes
         if self.mesh_settings.element_order > 1:
             linear_mesh = deepcopy(mesh)
@@ -1701,7 +1703,9 @@ class Model:
             nodes_to_elements = linear_mesh.find_elements_connected_to_nodes()
         else:
             nodes_to_elements = mesh.find_elements_connected_to_nodes()
+
         end_nodes = set(node_id for node_id, elements in nodes_to_elements.items() if len(elements) == 1)
+
         return end_nodes
 
     @staticmethod
@@ -1859,13 +1863,11 @@ class Model:
             - ValueError: if mesh is not initialised yet.
 
         """
-
         if process_model_part.mesh is None:
             raise ValueError(f"Mesh of process model part: {process_model_part.name} is not yet initialised.")
 
         # loop over the matched elements
         elements_to_flip = []
-
         for (process_element, body_element) in matched_elements:
 
             # element info such as order, number of edges, element types etc.
