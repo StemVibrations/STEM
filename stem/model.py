@@ -130,7 +130,7 @@ class Model:
         R = Utils.compute_rotational_matrix(direction_vector)
 
         # Rotate the local points.
-        rotated_points = np.matmul(R, points_local.T).T
+        rotated_points = points_local.dot(R.T)
         # Ensure the points are in float format.
         rotated_points = np.array(rotated_points, dtype=float)
 

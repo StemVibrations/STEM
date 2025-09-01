@@ -780,8 +780,10 @@ class Utils:
         # Compute rotation matrix to align the local z-axis [0,0,1] with the given direction_vector
         norm = np.array(np.linalg.norm(direction_vector), dtype=float)
         target = direction_vector / norm
-        local_x = np.array([0.0, 0.0, 1.0])
-        dot_prod = np.clip(np.dot(local_x, target), -1.0, 1.0)
+        reference_z_axis = np.array([0.0, 0.0, 1.0])
+        # using np.clip to ensure the dot product is within the valid range
+        # as there could be floating point errors
+        dot_prod = np.clip(np.dot(reference_z_axis, target), -1.0, 1.0)
         angle = np.arccos(dot_prod)  # The inverse of cos so that, if y = cos(x), then x = arccos(y).
 
         # Use the identity matrix when no rotation is needed.
@@ -789,7 +791,7 @@ class Utils:
             R = np.eye(3)
         else:
             # Determine the rotation axis from the cross product.
-            axis = np.cross(local_x, target)
+            axis = np.cross(reference_z_axis, target)
             norm = np.array(np.linalg.norm(axis), dtype=float)
             axis = axis / norm
             cos_theta = np.cos(angle)
