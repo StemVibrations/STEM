@@ -30,19 +30,18 @@ from stem.stem import Stem
 
 DISPLACEMENT_TOLERANCE = 1e-5
 
+
 @pytest.fixture(scope="session")
 def interface_test_results():
     return {}
 
-@pytest.mark.parametrize(
-    "test_name,roller,stiffness",
-    [
-        ("interface_high_stiffness_roller", True, 1e20),
-        ("interface_low_stiffness_roller", True, 1e1),
-        ("interface_high_stiffness_no_roller", False, 1e20),
-        ("interface_low_stiffness_no_roller", False, 1e1),
-    ]
-)
+
+@pytest.mark.parametrize("test_name,roller,stiffness", [
+    ("interface_high_stiffness_roller", True, 1e20),
+    ("interface_low_stiffness_roller", True, 1e1),
+    ("interface_high_stiffness_no_roller", False, 1e20),
+    ("interface_low_stiffness_no_roller", False, 1e1),
+])
 def test_interface_2d(test_name, roller, stiffness, interface_test_results):
     """
     This test creates a simple interface between two soil layers and applies a line load vertically on the top layer.
@@ -134,9 +133,7 @@ def test_interface_2d(test_name, roller, stiffness, interface_test_results):
                                                         is_fixed=[True, True, True],
                                                         value=[0, 0, 0])
 
-    sym_parameters = DisplacementConstraint(active=[True, False, True],
-                                            is_fixed=[True, False, False],
-                                            value=[0, 0, 0])
+    sym_parameters = DisplacementConstraint(active=[True, False, True], is_fixed=[True, False, False], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(1, [5], no_displacement_parameters, "base_fixed")
@@ -235,45 +232,58 @@ def test_interface_2d(test_name, roller, stiffness, interface_test_results):
 def test_interface_2d_comparison(interface_test_results):
     # Collect the displacements from the results top nodes
     displacement_label = "DISPLACEMENT_X"
-    top_node_disp_high_stiffness_roller_horizontal = interface_test_results["interface_high_stiffness_roller"]["NODE_63"][displacement_label][0]
-    top_node_disp_low_stiffness_roller_horizontal = interface_test_results["interface_low_stiffness_roller"]["NODE_63"][displacement_label][0]
-    top_node_disp_high_stiffness_no_roller_horizontal = interface_test_results["interface_high_stiffness_no_roller"]["NODE_63"][
+    top_node_disp_high_stiffness_roller_horizontal = interface_test_results["interface_high_stiffness_roller"][
+        "NODE_63"][displacement_label][0]
+    top_node_disp_low_stiffness_roller_horizontal = interface_test_results["interface_low_stiffness_roller"]["NODE_63"][
         displacement_label][0]
-    top_node_disp_low_stiffness_no_roller_horizontal = interface_test_results["interface_low_stiffness_no_roller"]["NODE_63"][displacement_label][
-        0]
-    bottom_node_disp_high_stiffness_roller_horizontal = interface_test_results["interface_high_stiffness_roller"]["NODE_2"][displacement_label][0]
-    bottom_node_disp_low_stiffness_roller_horizontal = interface_test_results["interface_low_stiffness_roller"]["NODE_2"][displacement_label][0]
-    bottom_node_disp_high_stiffness_no_roller_horizontal = interface_test_results["interface_high_stiffness_no_roller"]["NODE_2"][
-        displacement_label][0]
-    bottom_node_disp_low_stiffness_no_roller_horizontal = interface_test_results["interface_low_stiffness_no_roller"]["NODE_2"][
-        displacement_label][0]
-    
-    # vertical 
-    displacement_label = "DISPLACEMENT_Y"
-    top_node_disp_high_stiffness_roller_vertical = interface_test_results["interface_high_stiffness_roller"]["NODE_63"][displacement_label][0]
-    top_node_disp_low_stiffness_roller_vertical = interface_test_results["interface_low_stiffness_roller"]["NODE_63"][displacement_label][0]
-    top_node_disp_high_stiffness_no_roller_vertical = interface_test_results["interface_high_stiffness_no_roller"]["NODE_63"][
-        displacement_label][0]
-    top_node_disp_low_stiffness_no_roller_vertical = interface_test_results["interface_low_stiffness_no_roller"]["NODE_63"][displacement_label][
-        0]
-    bottom_node_disp_high_stiffness_roller_vertical = interface_test_results["interface_high_stiffness_roller"]["NODE_2"][displacement_label][0]
-    bottom_node_disp_low_stiffness_roller_vertical = interface_test_results["interface_low_stiffness_roller"]["NODE_2"][displacement_label][0]
-    bottom_node_disp_high_stiffness_no_roller_vertical = interface_test_results["interface_high_stiffness_no_roller"]["NODE_2"][
-        displacement_label][0]
-    bottom_node_disp_low_stiffness_no_roller_vertical = interface_test_results["interface_low_stiffness_no_roller"]["NODE_2"][
-        displacement_label][0]
+    top_node_disp_high_stiffness_no_roller_horizontal = interface_test_results["interface_high_stiffness_no_roller"][
+        "NODE_63"][displacement_label][0]
+    top_node_disp_low_stiffness_no_roller_horizontal = interface_test_results["interface_low_stiffness_no_roller"][
+        "NODE_63"][displacement_label][0]
+    bottom_node_disp_high_stiffness_roller_horizontal = interface_test_results["interface_high_stiffness_roller"][
+        "NODE_2"][displacement_label][0]
+    bottom_node_disp_low_stiffness_roller_horizontal = interface_test_results["interface_low_stiffness_roller"][
+        "NODE_2"][displacement_label][0]
+    bottom_node_disp_high_stiffness_no_roller_horizontal = interface_test_results["interface_high_stiffness_no_roller"][
+        "NODE_2"][displacement_label][0]
+    bottom_node_disp_low_stiffness_no_roller_horizontal = interface_test_results["interface_low_stiffness_no_roller"][
+        "NODE_2"][displacement_label][0]
 
-    # We are comparing the top interface nodes and the bottom interface nodes 
+    # vertical
+    displacement_label = "DISPLACEMENT_Y"
+    top_node_disp_high_stiffness_roller_vertical = interface_test_results["interface_high_stiffness_roller"]["NODE_63"][
+        displacement_label][0]
+    top_node_disp_low_stiffness_roller_vertical = interface_test_results["interface_low_stiffness_roller"]["NODE_63"][
+        displacement_label][0]
+    top_node_disp_high_stiffness_no_roller_vertical = interface_test_results["interface_high_stiffness_no_roller"][
+        "NODE_63"][displacement_label][0]
+    top_node_disp_low_stiffness_no_roller_vertical = interface_test_results["interface_low_stiffness_no_roller"][
+        "NODE_63"][displacement_label][0]
+    bottom_node_disp_high_stiffness_roller_vertical = interface_test_results["interface_high_stiffness_roller"][
+        "NODE_2"][displacement_label][0]
+    bottom_node_disp_low_stiffness_roller_vertical = interface_test_results["interface_low_stiffness_roller"]["NODE_2"][
+        displacement_label][0]
+    bottom_node_disp_high_stiffness_no_roller_vertical = interface_test_results["interface_high_stiffness_no_roller"][
+        "NODE_2"][displacement_label][0]
+    bottom_node_disp_low_stiffness_no_roller_vertical = interface_test_results["interface_low_stiffness_no_roller"][
+        "NODE_2"][displacement_label][0]
+
+    # We are comparing the top interface nodes and the bottom interface nodes
 
     # Case 1 and 3 the interface is deactivated so both nodes should have the same displacement
-    assert np.isclose(top_node_disp_high_stiffness_no_roller_vertical, bottom_node_disp_high_stiffness_no_roller_vertical)
+    assert np.isclose(top_node_disp_high_stiffness_no_roller_vertical,
+                      bottom_node_disp_high_stiffness_no_roller_vertical)
     assert np.isclose(top_node_disp_high_stiffness_roller_vertical, bottom_node_disp_high_stiffness_roller_vertical)
-    assert np.isclose(top_node_disp_high_stiffness_no_roller_horizontal, bottom_node_disp_high_stiffness_no_roller_horizontal)
+    assert np.isclose(top_node_disp_high_stiffness_no_roller_horizontal,
+                      bottom_node_disp_high_stiffness_no_roller_horizontal)
     assert np.isclose(top_node_disp_high_stiffness_roller_horizontal, bottom_node_disp_high_stiffness_roller_horizontal)
     # case 2 the interface is activated so both nodes should have different displacement
-    assert not np.isclose(top_node_disp_low_stiffness_roller_horizontal, bottom_node_disp_low_stiffness_roller_horizontal)
-    assert not np.isclose(top_node_disp_low_stiffness_no_roller_horizontal, bottom_node_disp_low_stiffness_no_roller_horizontal)
-    assert not np.isclose(top_node_disp_low_stiffness_no_roller_vertical, bottom_node_disp_low_stiffness_no_roller_vertical)
+    assert not np.isclose(top_node_disp_low_stiffness_roller_horizontal,
+                          bottom_node_disp_low_stiffness_roller_horizontal)
+    assert not np.isclose(top_node_disp_low_stiffness_no_roller_horizontal,
+                          bottom_node_disp_low_stiffness_no_roller_horizontal)
+    assert not np.isclose(top_node_disp_low_stiffness_no_roller_vertical,
+                          bottom_node_disp_low_stiffness_no_roller_vertical)
     assert not np.isclose(top_node_disp_low_stiffness_roller_vertical, bottom_node_disp_low_stiffness_roller_vertical)
     #  with rollers horizontal is 0
     assert np.isclose(bottom_node_disp_low_stiffness_roller_horizontal, 0.0)
