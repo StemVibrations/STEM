@@ -29,7 +29,7 @@ class TestUtilsInterface:
             Node(id=5, coordinates=[1.0, 0.0, 0.0]),
             Node(id=6, coordinates=[1.0, 1.0, 0.0]),
             Node(id=7, coordinates=[1.0, 1.0, 0.0]),
-            Node(id=8, coordinates=[1.0, 0.0, 0.0]),
+            Node(id=8, coordinates=[1.0, 0.0, 0.0])
         ]
         order = UtilsInterface.get_quad4_node_order(nodes_stable_parts, nodes_for_element)
         assert order == [5, 6, 7, 8]
@@ -57,7 +57,7 @@ class TestUtilsInterface:
             Node(id=8, coordinates=[0.0, 1.0, 0.0]),
             Node(id=3, coordinates=[1.0, 1.0, 0.0]),
             Node(id=6, coordinates=[1.0, 1.0, 0.0]),
-            Node(id=1, coordinates=[0.0, 1.0, 0.0]),
+            Node(id=1, coordinates=[0.0, 1.0, 0.0])
         ]
         order = UtilsInterface.get_quad4_node_order(nodes_stable_parts, nodes_for_element)
         assert order == [6, 1, 8, 3]
@@ -73,7 +73,7 @@ class TestUtilsInterface:
             Node(id=7, coordinates=[0.1, 0.6, 0.0]),
             Node(id=4, coordinates=[0.1, 0.6, 0.0]),
             Node(id=3, coordinates=[0.7, 0.7, 0.0]),
-            Node(id=8, coordinates=[0.7, 0.7, 0.0]),
+            Node(id=8, coordinates=[0.7, 0.7, 0.0])
         ]
         order = UtilsInterface.get_quad4_node_order(nodes_stable_parts, nodes)
         assert order == [7, 3, 8, 4]
@@ -91,7 +91,7 @@ class TestUtilsInterface:
             Node(id=3, coordinates=[0.0, 1.0, 0.0]),
             Node(id=4, coordinates=[0.0, 0.0, 0.0]),
             Node(id=5, coordinates=[1.0, 0.0, 0.0]),
-            Node(id=6, coordinates=[0.0, 1.0, 0.0]),
+            Node(id=6, coordinates=[0.0, 1.0, 0.0])
         ]
         # Expected order: stable nodes first, then corresponding nodes from the other part
         expected_order = [1, 2, 3, 4, 5, 6]
@@ -111,7 +111,7 @@ class TestUtilsInterface:
             Node(id=3, coordinates=[0.0, 0.0, 0.0]),
             Node(id=4, coordinates=[0.0, 1.0, 0.0]),
             Node(id=5, coordinates=[1.0, 0.0, 0.0]),
-            Node(id=6, coordinates=[0.0, 1.0, 0.0]),
+            Node(id=6, coordinates=[0.0, 1.0, 0.0])
         ]
         # Expected order: stable nodes first, then corresponding nodes from the other part
         expected_order = [1, 2, 4, 3, 5, 6]
@@ -131,7 +131,7 @@ class TestUtilsInterface:
             Node(id=3, coordinates=[0.0, 0.0, 0.0]),
             Node(id=4, coordinates=[1.0, 0.0, 0.0]),
             Node(id=5, coordinates=[0.5, 1.0, 0.0]),
-            Node(id=6, coordinates=[0.5, 1.0, 0.0]),
+            Node(id=6, coordinates=[0.5, 1.0, 0.0])
         ]
         # Expected order: stable nodes first, then corresponding nodes from the other part
         expected_order = [1, 2, 5, 3, 4, 6]

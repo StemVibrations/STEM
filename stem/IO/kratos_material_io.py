@@ -457,5 +457,6 @@ class KratosMaterialIO:
         elif isinstance(material, InterfaceMaterial):
             material_dict["Material"].update(self.__create_interface_material_dict(material))
         else:
-            raise ValueError("Material parameters are not of either SoilMaterial or StructuralMaterial type.")
+            raise ValueError(
+                "Material parameters are not of either SoilMaterial,StructuralMaterial or InterfaceMaterial type.")
         return material_dict

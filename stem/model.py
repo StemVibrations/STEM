@@ -1764,8 +1764,8 @@ class Model:
 
         """
         max_node_id = 0
-        for mesh_node_info in self.gmsh_io.mesh_data["nodes"].keys():
-            max_node_id = max(max_node_id, mesh_node_info)
+        for mesh_node_id in self.gmsh_io.mesh_data["nodes"].keys():
+            max_node_id = max(max_node_id, mesh_node_id)
 
         return int(max_node_id)
 
