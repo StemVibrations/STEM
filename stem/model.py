@@ -2,8 +2,8 @@ import json
 import os
 from copy import deepcopy
 import numpy as np
+import numpy.typing as npty
 from pathlib import Path
-from numpy import ndarray
 from typing import Sequence, Tuple, get_args, Set, Optional, List, Dict, Any, Union
 
 from gmsh_utils import gmsh_IO
@@ -72,7 +72,7 @@ class Model:
     @staticmethod
     def __generate_sleeper_base_coordinates(global_coord: Sequence[float], sleeper_dimensions: Sequence[float],
                                             sleeper_rail_pad_offset: float,
-                                            direction_vector: Sequence[float]) -> Sequence[float]:
+                                            direction_vector: Sequence[float]) -> npty.NDArray[np.float64]:
         r"""
         Computes the global coordinates of the four base corner points of a sleeper,
         rotated so that its long (x) axis is perpendicular to the given direction vector.
@@ -114,7 +114,8 @@ class Model:
             - direction_vector (Sequence[float]): Global direction in which the sleeper's length should point.
 
         Returns:
-            - np.ndarray: An array (shape (4, 3)) of the global coordinates for the sleeper's four base corners.
+            - npty.NDArray[np.float64]: An array (shape (4, 3)) of the global coordinates for the sleeper's four
+            base corners.
         """
         # Unpack dimensions; height is not used here.
         length, width, height = sleeper_dimensions
@@ -127,7 +128,8 @@ class Model:
             [-sleeper_rail_pad_offset, 0.0, +width / 2],
         ])
 
-        R = Utils.compute_rotational_matrix(direction_vector)
+        # align the local z-axis with the direction vector
+        R = Utils.compute_alignment_rotation_matrix(direction_vector, [0, 0, 1])
 
         # Rotate the local points.
         rotated_points = points_local.dot(R.T)
@@ -135,7 +137,7 @@ class Model:
         rotated_points = np.array(rotated_points, dtype=float)
 
         # Translate the points to global coordinates.
-        points_global: Sequence[float] = rotated_points + global_coord
+        points_global = rotated_points + global_coord
 
         return points_global
 
@@ -287,13 +289,14 @@ class Model:
                                                                   value=[0, 0, 0])
         return constraint_model_part
 
-    def __create_rail_no_rotation_model_part(self, rail_name: str, rail_global_coords: ndarray[Any, Any]) -> ModelPart:
+    def __create_rail_no_rotation_model_part(self, rail_name: str,
+                                             rail_global_coords: npty.NDArray[np.float64]) -> ModelPart:
         """
         Creates a model part that prevents rotation at the rail ends preventing torsion.
 
         Args:
             - rail_name (str): Name of the rail.
-            - rail_global_coords (np.ndarray): Global coordinates of the rail.
+            - rail_global_coords (npty.NDArray[np.float64]): Global coordinates of the rail.
 
         Returns:
             - :class:`stem.model_part.ModelPart`: Configured no-rotation constraint model part.

@@ -13,8 +13,8 @@ from stem.model import *
 from stem.output import NodalOutput, GiDOutputParameters, JsonOutputParameters
 from stem.solver import *
 from stem.boundary import RotationConstraint, DisplacementConstraint
-from tests.utils import TestUtils
 from stem.soil_material import SoilMaterial, OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
+from tests.utils import TestUtils
 
 IS_LINUX = sys.platform == "linux"
 

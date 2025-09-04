@@ -764,26 +764,26 @@ class Utils:
             raise ValueError("Coordinates must be real numbers (not NaN or inf).")
 
     @staticmethod
-    def compute_rotational_matrix(
-        direction_vector: Sequence[float],
-    ) -> npty.NDArray[np.float64]:
+    def compute_alignment_rotation_matrix(direction_vector: Sequence[float],
+                                          alignment_vector: Sequence[float]) -> npty.NDArray[np.float64]:
         """
-        Computes the rotation matrix to align the local z-axis with the given direction vector.
+        Computes a 3x3 rotation matrix to align an aligment vector
+        with a given direction vector.
 
         Args:
             - direction_vector (Sequence[float]): direction vector to align with
+            - alignment_vector (Sequence[float]): vector to be aligned with the direction vector
 
         Returns:
-            - npty.NDArray[np.float64]: rotation matrix to align the local z-axis with the given direction vector
+            - npty.NDArray[np.float64]: rotation matrix to align the alignment vector with the given direction vector
 
         """
-        # Compute rotation matrix to align the local z-axis [0,0,1] with the given direction_vector
+        # Compute rotation matrix to align the alignment_vector with the given direction_vector
         norm = np.array(np.linalg.norm(direction_vector), dtype=float)
         target = direction_vector / norm
-        reference_z_axis = np.array([0.0, 0.0, 1.0])
         # using np.clip to ensure the dot product is within the valid range
         # as there could be floating point errors
-        dot_prod = np.clip(np.dot(reference_z_axis, target), -1.0, 1.0)
+        dot_prod = np.clip(np.dot(alignment_vector, target), -1.0, 1.0)
         angle = np.arccos(dot_prod)  # The inverse of cos so that, if y = cos(x), then x = arccos(y).
 
         # Use the identity matrix when no rotation is needed.
@@ -791,7 +791,7 @@ class Utils:
             R = np.eye(3)
         else:
             # Determine the rotation axis from the cross product.
-            axis = np.cross(reference_z_axis, target)
+            axis = np.cross(alignment_vector, target)
             norm = np.array(np.linalg.norm(axis), dtype=float)
             axis = axis / norm
             cos_theta = np.cos(angle)
