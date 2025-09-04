@@ -29,7 +29,7 @@ Material = Union[SoilMaterial, StructuralMaterial, InterfaceMaterial]
 """
 TypeAlias:
     - Material: Union[:class:`stem.soil_material.SoilMaterial`, :class:`stem.structural_material.StructuralMaterial`, \
-        :class:`stem.soil_material.Interface`]
+        :class:`stem.soil_material.InterfaceMaterial`]
 """
 
 MovingLoadTypes = (MovingLoad, UvecLoad)

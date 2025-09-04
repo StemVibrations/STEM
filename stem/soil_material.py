@@ -320,7 +320,7 @@ class SoilMaterial:
         if (analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL):
             # for higher order elements, pore pressure is calculated on a lower order than displacements
             if (n_dim_model == 2 and n_nodes_element > 4) or (n_dim_model == 3 and n_nodes_element > 8):
-                element_name = (f"SmallStrainUPwDiffOrderElement{n_dim_model}D{n_nodes_element}N")
+                element_name = f"SmallStrainUPwDiffOrderElement{n_dim_model}D{n_nodes_element}N"
             else:
                 element_name = f"UPwSmallStrainElement{n_dim_model}D{n_nodes_element}N"
 
@@ -366,10 +366,12 @@ class InterfaceMaterial:
 
     Attributes:
         - name (str): The name to describe the interface material.
-        - shear_modulus (float): The shear modulus of the interface [Pa].
-        - normal_stiffness (float): The normal stiffness of the interface [Pa/m].
-        - friction_angle (float): The friction angle of the interface [degrees].
-        - dilatancy_angle (float): The dilatancy angle of the interface [degrees].
+        - constitutive_law (:class:`SoilConstitutiveLawABC`): The constitutive law parameters for
+        the interface material.
+        - soil_formulation (:class:`SoilFormulationParametersABC`): The soil formulation parameters
+        for the interface material.
+        - retention_parameters (:class:`RetentionLawABC`): The retention parameters for the interface material.
+        - fluid_properties (:class:`FluidProperties`): The fluid properties for the interface material.
     """
     name: str
     constitutive_law: SoilConstitutiveLawABC
@@ -404,21 +406,21 @@ class InterfaceMaterial:
             # for higher order elements, pore pressure is calculated on a lower order than displacements
             element_name = f"UPwSmallStrainInterfaceElement{n_dim_model}D{n_nodes_element}N"
         else:
-            raise ValueError(f"Analysis type {analysis_type} is not implemented yet for soil material.")
+            raise ValueError(f"Analysis type {analysis_type} is not implemented yet for interface material.")
         return element_name
 
     def get_property_in_material(self, property_name: str) -> Any:
         """
-        Function to retrieve the requested property for the soil material. The function is capital sensitive!
+        Function to retrieve the requested property for the interface material. The function is capital sensitive!
 
         Args:
-            - property_name (str): The desired soil property name.
+            - property_name (str): The desired interface property name.
 
         Raises:
-            - ValueError: If the property is not in not available in the soil material.
+            - ValueError: If the property is not in not available in the interface material.
 
         Returns:
-            - Any : The value of the soil property.
+            - Any : The value of the interface property.
 
         """
 
@@ -432,6 +434,6 @@ class InterfaceMaterial:
         property_value = all_properties.get(property_name)
 
         if property_value is None:
-            raise ValueError(f"Property {property_name} is not one of the parameters of the soil material")
+            raise ValueError(f"Property {property_name} is not one of the parameters of the interface material")
 
         return property_value

@@ -50,7 +50,7 @@ class TestUtilsInterface:
         │          │
         │          │
         2──────────5
-        Expect node ordering [1, 6, 3, 8].
+        Expect node ordering [6, 1, 8, 3].
         """
         nodes_stable_parts = [1, 6]
         nodes_for_element = [
@@ -66,7 +66,7 @@ class TestUtilsInterface:
         """
         Test with angle the interface is not horizontal or vertical.
         The model parts are also not horizontal or vertical.
-        Expect node ordering [4, 3, 8, 7].
+        Expect node ordering [7, 3, 8, 4].
         """
         nodes_stable_parts = [7, 3]
         nodes = [
@@ -95,8 +95,8 @@ class TestUtilsInterface:
         ]
         # Expected order: stable nodes first, then corresponding nodes from the other part
         expected_order = [1, 2, 3, 4, 5, 6]
-        order = UtilsInterface.get_hexa6_node_order(nodes_stable_parts, nodes_for_element)
-        assert sorted(order) == sorted(expected_order)
+        order = UtilsInterface.get_prism6_node_order(nodes_stable_parts, nodes_for_element)
+        assert order == expected_order
 
     def test_horizontal_interface_3d(self):
         """
@@ -115,8 +115,8 @@ class TestUtilsInterface:
         ]
         # Expected order: stable nodes first, then corresponding nodes from the other part
         expected_order = [1, 2, 4, 3, 5, 6]
-        order = UtilsInterface.get_hexa6_node_order(nodes_stable_parts, nodes_for_element)
-        assert sorted(order) == sorted(expected_order)
+        order = UtilsInterface.get_prism6_node_order(nodes_stable_parts, nodes_for_element)
+        assert order == expected_order
 
     def test_angled_interface_3d(self):
         """
@@ -135,5 +135,5 @@ class TestUtilsInterface:
         ]
         # Expected order: stable nodes first, then corresponding nodes from the other part
         expected_order = [1, 2, 5, 3, 4, 6]
-        order = UtilsInterface.get_hexa6_node_order(nodes_stable_parts, nodes_for_element)
-        assert sorted(order) == sorted(expected_order)
+        order = UtilsInterface.get_prism6_node_order(nodes_stable_parts, nodes_for_element)
+        assert order == expected_order

@@ -32,7 +32,7 @@ class UtilsInterface:
 
         Args:
             - node_ids_part_1 (Set[int]): list of stable nodes ids
-            - nodes_for_element (List[Node]): list of nodes for the element to be ordered
+            - nodes_for_element (List[:class:`stem.mesh.Node`]): list of nodes for the element to be ordered
         Returns:
             - List[int]: ordered node ids in the order [bottom-left, bottom-right, top-right, top-left]
         """
@@ -57,8 +57,7 @@ class UtilsInterface:
         return list(quad4_node_collection.keys())
 
     @staticmethod
-    def get_hexa6_node_order(node_ids_part_1: Set[int],
-                             nodes_for_element: List[Node]) -> List[int]:  # TODO this is a prism
+    def get_prism6_node_order(node_ids_part_1: Set[int], nodes_for_element: List[Node]) -> List[int]:
         """
         Order the nodes of a 6-noded interface element.
 
@@ -74,13 +73,12 @@ class UtilsInterface:
         e.g., [primary1, primary2, primary3, secondary1, secondary2, secondary3].
 
         Args:
-            node_ids_part_1: A set of node IDs belonging to the primary side of the interface.
-            nodes_for_element: A list of all `Node` objects for the element.
+            node_ids_part_1 (Set[int]): A set of node IDs belonging to the primary side of the interface.
+            nodes_for_element (List[:class:`stem.mesh.Node`]): A list of all `Node` objects for the element.
 
         Returns:
             A list of node IDs in the correct order.
         """
-
         # Separate nodes into primary and secondary groups
         primary_nodes = [node for node in nodes_for_element if node.id in node_ids_part_1]
         secondary_nodes_all = [node for node in nodes_for_element if node.id not in node_ids_part_1]

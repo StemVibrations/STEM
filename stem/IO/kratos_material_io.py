@@ -196,8 +196,8 @@ class KratosMaterialIO:
 
         Args:
             - variables_dict (Dict[str, Any]): dictionary containing the material parameters
-            - soil_parameters (:class:`stem.soil_material.SoilMaterial` or \
-                :class:`stem.soil_material.Interface`): soil material object
+            - soil_parameters (Union[:class:`stem.soil_material.SoilMaterial`, \
+                :class:`stem.soil_material.InterfaceMaterial`]): soil material object
 
         Returns:
         """
@@ -296,8 +296,6 @@ class KratosMaterialIO:
 
         self.__add_soil_formulation_parameters_to_material_dict(soil_material_dict["Variables"], material)
 
-        # Add TRANSVERSAL_PERMEABILITY as 1.0e-13
-
         # get retention parameters
         retention_law = material.retention_parameters.__class__.__name__
         retention_parameters: Dict[str, Any] = deepcopy(material.retention_parameters.__dict__)
@@ -320,25 +318,23 @@ class KratosMaterialIO:
         on the material type. The material parameters are added to the dictionary.
 
         Args:
-            - material (:class:`stem.soil_material.Interface`): Material object.
+            - material (:class:`stem.soil_material.InterfaceMaterial`): Material object.
 
         Returns:
             - Dict[str, Any]: dictionary containing the interface material parameters
         """
-        interface_material_dict: Dict[str, Any] = dict(constitutive_law={"name": ""}, Variables={})
-
-        dimension_int = 2 if self.ndim == 2 else 3
+        interface_material_dict = {}
 
         # add material parameters to dictionary based on material type.
         if isinstance(material.constitutive_law, LinearElasticSoil):
             interface_material_dict.update(self.__create_linear_elastic_soil_dict(material.constitutive_law))
-            interface_material_dict["constitutive_law"]["name"] = f"LinearElastic{dimension_int}DInterfaceLaw"
+            interface_material_dict["constitutive_law"]["name"] = f"LinearElastic{self.ndim}DInterfaceLaw"
         elif isinstance(material.constitutive_law, SmallStrainUmatLaw):
             interface_material_dict.update(self.__create_umat_soil_dict(material.constitutive_law))
-            interface_material_dict["constitutive_law"]["name"] = f"SmallStrainUMAT{dimension_int}DInterfaceLaw"
+            interface_material_dict["constitutive_law"]["name"] = f"SmallStrainUMAT{self.ndim}DInterfaceLaw"
         elif isinstance(material.constitutive_law, SmallStrainUdsmLaw):
             interface_material_dict.update(self.__create_udsm_soil_dict(material.constitutive_law))
-            interface_material_dict["constitutive_law"]["name"] = f"SmallStrainUDSM{dimension_int}DInterfaceLaw"
+            interface_material_dict["constitutive_law"]["name"] = f"SmallStrainUDSM{self.ndim}DInterfaceLaw"
 
         self.__add_soil_formulation_parameters_to_material_dict(interface_material_dict["Variables"], material)
 
@@ -424,12 +420,8 @@ class KratosMaterialIO:
 
         return structural_material_dict
 
-    def create_material_dict(
-        self,
-        part_name: str,
-        material: Union[SoilMaterial, StructuralMaterial, InterfaceMaterial],
-        material_id: int,
-    ) -> Dict[str, Any]:
+    def create_material_dict(self, part_name: str, material: Union[SoilMaterial, StructuralMaterial, InterfaceMaterial],
+                             material_id: int) -> Dict[str, Any]:
         """
         Creates a dictionary containing the material parameters
 
@@ -437,11 +429,11 @@ class KratosMaterialIO:
             - part_name (str): name of the body model part for the material
             - material (Union[:class:`stem.soil_material.SoilMaterial`, \
                               :class:`stem.soil_material.StructuralMaterial`, \
-                              :class:`stem.soil_material.Interface`]): material object
+                              :class:`stem.soil_material.InterfaceMaterial`]): material object
             - material_id (int): material id
 
         Raises:
-            - ValueError: if material is not of either SoilMaterial, Interface or StructuralMaterial type
+            - ValueError: if material is not of either SoilMaterial, InterfaceMaterial or StructuralMaterial type
 
         Returns:
             - Dict[str, Any]: dictionary containing the material parameters
