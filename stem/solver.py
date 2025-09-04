@@ -489,14 +489,14 @@ class Cg(LinearSolverSettingsABC):
             Default value is False.
         - tolerance (float): tolerance for the linear solver convergence criteria. Default value is 1e-12.
         - max_iteration (int): maximum number of iterations for the linear solver. Default value is 1000.
-        - preconditioner_type (str): type of the preconditioner. Default value is "diagonal", other options are "ilu",\
-            "ilu0" and "none".
+        - preconditioner_type (str): type of the preconditioner. Default value is "diagonal", other options are "ilu0" \
+            and "none".
 
     """
     scaling: bool = False
     tolerance: float = 1e-12
     max_iteration: int = 1000
-    preconditioner_type: str = "diagonal"  # other options are "ilu", "ilu0" and "none"
+    preconditioner_type: str = "diagonal"  # other options are "ilu0" and "none"
 
     @property
     def solver_type(self):
