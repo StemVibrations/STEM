@@ -5,7 +5,7 @@ import numpy as np
 import numpy.typing as npty
 from scipy.spatial import cKDTree
 
-from stem.globals import ELEMENT_DATA
+from stem.globals import ELEMENT_DATA, GEOMETRY_PRECISION
 
 if TYPE_CHECKING:
     from stem.mesh import Element, Mesh
@@ -762,3 +762,56 @@ class Utils:
         # check if coordinates are real numbers
         if not np.isfinite(coordinates).all():
             raise ValueError("Coordinates must be real numbers (not NaN or inf).")
+
+    @staticmethod
+    def compute_rotational_matrix(
+        direction_vector: Sequence[float],
+    ) -> npty.NDArray[np.float64]:
+        """
+        Computes the rotation matrix to align the local z-axis with the given direction vector.
+
+        Args:
+            - direction_vector (Sequence[float]): direction vector to align with
+
+        Returns:
+            - npty.NDArray[np.float64]: rotation matrix to align the local z-axis with the given direction vector
+
+        """
+        # Compute rotation matrix to align the local z-axis [0,0,1] with the given direction_vector
+        norm = np.array(np.linalg.norm(direction_vector), dtype=float)
+        target = direction_vector / norm
+        reference_z_axis = np.array([0.0, 0.0, 1.0])
+        # using np.clip to ensure the dot product is within the valid range
+        # as there could be floating point errors
+        dot_prod = np.clip(np.dot(reference_z_axis, target), -1.0, 1.0)
+        angle = np.arccos(dot_prod)  # The inverse of cos so that, if y = cos(x), then x = arccos(y).
+
+        # Use the identity matrix when no rotation is needed.
+        if np.abs(angle) < GEOMETRY_PRECISION:
+            R = np.eye(3)
+        else:
+            # Determine the rotation axis from the cross product.
+            axis = np.cross(reference_z_axis, target)
+            norm = np.array(np.linalg.norm(axis), dtype=float)
+            axis = axis / norm
+            cos_theta = np.cos(angle)
+            sin_theta = np.sin(angle)
+            ux, uy, uz = axis
+            row_1 = np.array([
+                cos_theta + ux**2 * (1 - cos_theta),
+                ux * uy * (1 - cos_theta) - uz * sin_theta,
+                ux * uz * (1 - cos_theta) + uy * sin_theta,
+            ])
+            row_2 = np.array([
+                uy * ux * (1 - cos_theta) + uz * sin_theta,
+                cos_theta + uy**2 * (1 - cos_theta),
+                uy * uz * (1 - cos_theta) - ux * sin_theta,
+            ])
+            row_3 = np.array([
+                uz * ux * (1 - cos_theta) - uy * sin_theta,
+                uz * uy * (1 - cos_theta) + ux * sin_theta,
+                cos_theta + uz**2 * (1 - cos_theta),
+            ])
+            # Create the rotation matrix.
+            R = np.array([row_1, row_2, row_3])
+        return R
