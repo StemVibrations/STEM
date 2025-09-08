@@ -120,7 +120,7 @@ def test_stem(element_order):
                                      are_mass_and_damping_constant=False,
                                      convergence_criteria=convergence_criterion,
                                      strategy_type=LinearNewtonRaphsonStrategy(),
-                                     linear_solver_settings=Cg(preconditioner_type="none"),
+                                     linear_solver_settings=Cg(),
                                      rayleigh_k=0.001,
                                      rayleigh_m=0.1)
 
