@@ -442,6 +442,12 @@ class LinearSolverSettingsABC(ABC):
         """
         raise Exception("abstract class of linear solver settings is called")
 
+    def validate_settings(self):
+        """
+        Validates the linear solver settings, can be overridden in child classes
+        """
+        pass
+
 
 @dataclass
 class Amgcl(LinearSolverSettingsABC):
@@ -489,11 +495,14 @@ class Cg(LinearSolverSettingsABC):
             Default value is False.
         - tolerance (float): tolerance for the linear solver convergence criteria. Default value is 1e-12.
         - max_iteration (int): maximum number of iterations for the linear solver. Default value is 1000.
+        - preconditioner_type (str): type of the preconditioner. Default value is "diagonal", other options are "ilu0" \
+            and "none".
 
     """
     scaling: bool = False
     tolerance: float = 1e-12
     max_iteration: int = 1000
+    preconditioner_type: str = "diagonal"  # other options are "ilu0" and "none"
 
     @property
     def solver_type(self):
@@ -505,6 +514,18 @@ class Cg(LinearSolverSettingsABC):
 
         """
         return "cg"
+
+    def validate_settings(self):
+        """
+        Validates the cg linear solver settings
+
+        Raises:
+            - ValueError: if the preconditioner type is not valid
+        """
+        valid_preconditioners = ["diagonal", "ilu0", "none"]
+        if self.preconditioner_type not in valid_preconditioners:
+            raise ValueError(
+                f"Invalid preconditioner type: {self.preconditioner_type}. Valid options are: {valid_preconditioners}")
 
 
 @dataclass
@@ -663,10 +684,10 @@ class SolverSettings:
     echo_level: int = 1
     _inititalize_acceleration: bool = False
 
-    def validate_settings(self):
+    def __validate_setting_combinations(self):
         """
-        Validates the solver settings, and changes settings when needed. If the solution type is quasi-static, the time
-        integration scheme is set to Backward Euler.
+        Validates the combinations of the solver settings, and changes settings when needed. If the solution
+        type is quasi-static, the time integration scheme is set to Backward Euler.
 
         Raises:
             - ValueError: if the Rayleigh damping parameters are not provided for dynamic analysis
@@ -689,6 +710,14 @@ class SolverSettings:
             # mass and damping matrices are set to not constant, as they are not used in quasi static analysis. This
             # prevents the calling of the wrong function in the Kratos model
             self.are_mass_and_damping_constant = False
+
+    def validate_settings(self):
+        """
+        Validates all solver settings
+        """
+
+        self.__validate_setting_combinations()
+        self.linear_solver_settings.validate_settings()
 
 
 @dataclass
