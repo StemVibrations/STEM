@@ -4,8 +4,14 @@ from pathlib import Path
 from typing import List, Dict
 import warnings
 
+# todo remove this when kratos is properly installed
+import sys
+
+sys.path.append(r"C:\software_development\KratosFork\bin\Release")
+sys.path.append(r"C:\software_development\KratosFork\bin\Release\libs")
+
 import KratosMultiphysics
-from KratosMultiphysics.StemApplication.geomechanics_analysis import StemGeoMechanicsAnalysis
+from KratosMultiphysics.RailwayApplication.geomechanics_analysis import StemGeoMechanicsAnalysis
 
 from stem.model import Model
 from stem.solver import SolutionType
