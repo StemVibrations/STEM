@@ -3,7 +3,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import List, Dict
 import warnings
-
+# flake8: noqa
 # todo remove this when kratos is properly installed
 import sys
 

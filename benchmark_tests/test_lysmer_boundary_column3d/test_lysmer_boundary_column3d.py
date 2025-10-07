@@ -152,7 +152,7 @@ def test_stem(element_type):
     else:
         expected_output_dir = f"benchmark_tests/test_lysmer_boundary_column3d/{element_type}/_output/output_vtk_porous_computational_model_part"
 
-    assert_floats_in_directories_almost_equal(expected_output_dir,
-                                os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
+    assert_floats_in_directories_almost_equal(
+        expected_output_dir, os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
 
     rmtree(input_folder)
