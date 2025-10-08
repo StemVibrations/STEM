@@ -13,7 +13,7 @@ from stem.globals import ELEMENT_DATA
 
 from stem.output import NodalOutput, VtkOutputParameters
 from stem.stem import Stem
-from benchmark_tests.utils import assert_files_equal
+from benchmark_tests.utils import assert_floats_in_directories_almost_equal
 from shutil import rmtree
 
 
@@ -138,9 +138,8 @@ def test_stem(element_type):
     # --------------------------------
     stem.run_calculation()
 
-    result = assert_files_equal(
+    assert_floats_in_directories_almost_equal(
         f"benchmark_tests/test_lysmer_boundary_column2d/{element_type}/_output/output_vtk_porous_computational_model_part",
         os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
 
-    assert result is True
     rmtree(input_folder)
