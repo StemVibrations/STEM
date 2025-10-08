@@ -6,13 +6,6 @@ import data_reader_prorail
 
 # Signal of a VIRM train, with speed of 133.4 km/h
 
-# The type of train measurements available:
-# "RT SLT": "Passaenger Train SLT"
-# "RT VIRM": "Passaenger Train VIRM"
-# "GT": "Freight Train, mixed"
-# "loc": "Locomotive"
-
-
 path_meetboek = r"C:\Users\ritfeldis\OneDrive - TNO\Team - ProRail - Analyse Trillingspectra\Work\prorail data\VoorProRail\VoorProRail\Meetjournaal trillingsonderzoek Schalkwijk definitief 20190107 DM adjusted.xlsx"
 location_data = r"C:\Users\ritfeldis\OneDrive - TNO\Team - ProRail - Analyse Trillingspectra\Work\prorail data\VoorProRail\VoorProRail\RBX files"
 
@@ -43,15 +36,20 @@ N = len(signal)
 
 window = np.hamming(N)
 
-plt.figure(figsize=(10,4))
-plt.plot(time, signal, label="Raw data")
-plt.plot(time, signal * window, label="With Hamming-window")
-plt.xlabel("Time [s]")
-plt.ylabel("Vz [m/s]")
-plt.legend()
-plt.title(f"Tijdsignaal Passage {passage_id} | {sensor_to_use} | {passage_row[speed_column]:.1f} km/h")
-plt.grid(True)
+# === Eén figuur met twee subplots ===
+fig, (ax_time, ax_fft) = plt.subplots(2, 1, figsize=(12, 8))
 
+# --- Subplot 1: Timesignal ---
+ax_time.plot(time, signal, label="Raw data")
+ax_time.plot(time, signal * window, label="With Hamming-window")
+ax_time.set_xlabel("Time [s]")
+ax_time.set_ylabel("Vy [m/s]")
+ax_time.set_ylim([-0.0015, 0.0015])
+ax_time.set_title(f"Timesignal Passage {passage_id} | {sensor_to_use} | {passage_row[speed_column]:.1f} km/h")
+ax_time.legend()
+ax_time.grid(True)
+
+# --- FFT Berekening ---
 fft_vals_nowin = np.fft.fft(signal)
 fft_freq = np.fft.fftfreq(N, d=1/fs)
 mask = fft_freq >= 0
@@ -60,13 +58,17 @@ amp_nowin = 2/N * np.abs(fft_vals_nowin[mask])
 fft_vals_win = np.fft.fft(signal * window)
 amp_win = 2/N * np.abs(fft_vals_win[mask])
 
-plt.figure(figsize=(10,4))
-plt.plot(fft_freq[mask], amp_nowin, label="Raw data")
-plt.plot(fft_freq[mask], amp_win, label="With Hamming-window")
-plt.xlabel("Frequency [Hz]")
-plt.ylabel("Amplitude [m/s]")
-plt.title(f"Amplitude spectrum Passage {passage_id} | {sensor_to_use}")
-plt.xlim([0, 1000])
-plt.legend()
-plt.grid(True)
+# --- Subplot 2: Amplitude spectrum ---
+ax_fft.plot(fft_freq[mask], amp_nowin, label="Raw data")
+ax_fft.plot(fft_freq[mask], amp_win, label="With Hamming-window")
+ax_fft.set_xlabel("Frequency [Hz]")
+ax_fft.set_ylabel("Amplitude")
+ax_fft.set_xlim([0, 100])
+ax_fft.set_ylim([0, 0.00025])
+ax_fft.set_title(f"Amplitude spectrum Passage {passage_id} | {sensor_to_use}")
+ax_fft.legend()
+ax_fft.grid(True)
+
+plt.tight_layout()
 plt.show()
+

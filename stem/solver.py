@@ -505,6 +505,7 @@ class Cg(LinearSolverSettingsABC):
 
         """
         return "cg"
+        # return "LinearSolversApplication.sparse_cg"
 
 
 @dataclass

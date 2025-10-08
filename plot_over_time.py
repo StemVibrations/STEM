@@ -3,73 +3,77 @@ import numpy as np
 import matplotlib.pyplot as plt
 from numpy.fft import rfft, rfftfreq
 
-# Change the output file to see the results.
-json_dyn_path = r"C:\Users\ritfeldis\Documents\remote\STEM\testruns_holten\stiff_files_dir\json_output_stage_2.json"
+# Path naar JSON
+json_dyn_path = r"C:\Users\ritfeldis\Documents\Python\STEM\Case_Schalkwijk\Model\Results\json_output_N_solver_5_stage_2.json"
+
+# JSON inlezen
 with open(json_dyn_path, 'r') as f:
     data_dyn = json.load(f)
 
+# Tijdvector en sampling
 time_dyn = np.array(data_dyn['TIME'])
-Fs = 1.0 / np.mean(np.diff(time_dyn))
+Fs = 1.0 / np.mean(np.diff(time_dyn))  # sampling frequency
 dt = 1 / Fs
 
-node_keys = sorted([key for key in data_dyn if key.startswith("NODE_")])
+# Selecteer eerste 25 nodes en sorteer op Z-coördinaat
+node_keys = [key for key in data_dyn if key.startswith("NODE_")][:25]
+node_keys.sort(key=lambda k: data_dyn[k]['COORDINATES'][2])  # sorteren op Z
 
-fig_all, (ax_time_all, ax_amp_all) = plt.subplots(2, 1, figsize=(16, 10), sharex=False)
+# === Eén figuur, twee subplots ===
+fig, (ax_time, ax_fft) = plt.subplots(2, 1, figsize=(14, 10))
 
-for i, node_key in enumerate(node_keys):
+# --- Subplot 1: velocity over time ---
+for node_key in node_keys:
     try:
         vel_dyn = np.array(data_dyn[node_key]['VELOCITY_Y'])
         N = len(vel_dyn)
         time_vector = np.arange(N) * dt
+        window = np.hamming(N)
+        coords = data_dyn[node_key]['COORDINATES']
 
-        fft_vals = rfft(vel_dyn)
-        freqs = rfftfreq(N, d=dt)
-        amp_spectrum = np.abs(fft_vals)
-
-        fig, (ax_time, ax_amp) = plt.subplots(2, 1, figsize=(14, 10), sharex=False)
-        ax_time.plot(time_vector, vel_dyn, label=node_key)
-        ax_time.set_title(f"Velocity Y over Time – {node_key}")
-        ax_time.set_xlabel("Time [s]")
-        ax_time.set_ylabel("Velocity Y [m/s]")
-        ax_time.grid(True)
-        ax_time.set_xlim(left=0)
-        ax_time.legend()
-
-        ax_amp.plot(freqs, amp_spectrum, label=node_key)
-        ax_amp.set_title(f"Pure FFT – {node_key}")
-        ax_amp.set_xlabel("Frequency [Hz]")
-        ax_amp.set_ylabel("FFT magnitude")
-        ax_amp.grid(True, linestyle='--', linewidth=0.5)
-        ax_amp.set_xlim(left=0)
-        ticks = np.arange(0, freqs.max() + 100, 100)
-        ax_amp.set_xticks(ticks)
-        ax_amp.legend(fontsize='small')
-
-        plt.tight_layout()
-
-
-        ax_time_all.plot(time_vector, vel_dyn, label=node_key)
-        ax_amp_all.plot(freqs, amp_spectrum, label=node_key)
+        ax_time.plot(time_vector, vel_dyn * window, linestyle="-",
+                     label=f"{node_key} (X={coords[0]:.1f}, Y={coords[1]:.2f}, Z={coords[2]:.1f})")
 
     except Exception as e:
-        print(f"Fout bij {node_key}: {e}")
+        print(f"Error at {node_key}: {e}")
 
-ax_time_all.set_title("Velocity Y over Time – Alle nodes")
-ax_time_all.set_xlabel("Time [s]")
-ax_time_all.set_ylabel("Velocity Y [m/s]")
-ax_time_all.grid(True)
-ax_time_all.legend(fontsize='small', loc='upper right')
-ax_time_all.set_xlim(left=0)
+ax_time.set_title("Timesignal model")
+ax_time.set_xlabel("Time [s]")
+ax_time.set_ylabel("Vy [m/s]")
+ax_time.grid(True)
+ax_time.set_ylim([-0.0015, 0.0015])
+ax_time.legend(fontsize='small', loc='upper right')
 
-ax_amp_all.set_title("Pure FFT – Alle nodes")
-ax_amp_all.set_xlabel("Frequency [Hz]")
-ax_amp_all.set_ylabel("FFT magnitude")
-ax_amp_all.grid(True, linestyle='--', linewidth=0.5)
-max_freq = max(line.get_xdata().max() for line in ax_amp_all.lines)
-ax_amp_all.set_xlim(left=0)
-ax_amp_all.set_xticks(np.arange(0, max_freq + 100, 100))
-ax_amp_all.legend(fontsize='small', loc='upper right')
+# --- Subplot 2: amplitude spectrum ---
+for node_key in node_keys:
+    try:
+        vel_dyn = np.array(data_dyn[node_key]['VELOCITY_Y'])
+        N = len(vel_dyn)
+        window = np.hamming(N)
+        coords = data_dyn[node_key]['COORDINATES']
+
+        fft_vals_win = rfft(vel_dyn * window)
+        freqs = rfftfreq(N, d=dt)
+        amp_win = 2.0/N * np.abs(fft_vals_win)
+
+        ax_fft.plot(freqs, amp_win, linestyle="-",
+                    label=f"{node_key} (X={coords[0]:.1f}, Y={coords[1]:.2f}, Y={coords[2]:.1f})")
+
+    except Exception as e:
+        print(f"Error at {node_key}: {e}")
+
+ax_fft.set_title("Amplitude Spectrum – All nodes (Hamming)")
+ax_fft.set_xlabel("Frequency [Hz]")
+ax_fft.set_ylabel("Amplitude [m/s]")
+ax_fft.grid(True, linestyle='--', linewidth=0.5)
+ax_fft.set_xlim(0, 100)
+ax_fft.set_ylim([0, 0.00025])
+ax_fft.legend(fontsize='small', loc='upper right')
 
 plt.tight_layout()
 plt.show()
+
+
+
+
 
