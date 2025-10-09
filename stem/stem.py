@@ -5,7 +5,7 @@ from typing import List, Dict
 import warnings
 
 import KratosMultiphysics
-from KratosMultiphysics.StemApplication.geomechanics_analysis import StemGeoMechanicsAnalysis
+from KratosMultiphysics.RailwayApplication.geomechanics_analysis import StemGeoMechanicsAnalysis
 
 from stem.model import Model
 from stem.solver import SolutionType

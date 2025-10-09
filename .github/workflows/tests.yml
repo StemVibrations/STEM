@@ -18,6 +18,9 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
+    - name: Enable Git long paths (Windows only)
+      if: runner.os == 'Windows'
+      run: git config --system core.longpaths true
     - name: Install libGLU library on Ubuntu
       run: |
             if [ "$RUNNER_OS" == "Linux" ]; then
@@ -63,6 +66,9 @@ jobs:
         os: [ ubuntu-latest, windows-latest ]
         python-version: ['3.10', '3.11', '3.12' ]
     steps:
+      - name: Enable Git long paths (Windows only)
+        if: runner.os == 'Windows'
+        run: git config --system core.longpaths true
       - name: Install libGLU library on Ubuntu
         run: |
               if [ "$RUNNER_OS" == "Linux" ]; then

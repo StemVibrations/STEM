@@ -133,3 +133,6 @@ class TestSolverSettings:
 
         lu_linear_solver = Lu()
         assert lu_linear_solver.solver_type == "LinearSolversApplication.sparse_lu"
+
+        sparse_cg_solver = SparseCg()
+        assert sparse_cg_solver.solver_type == "LinearSolversApplication.sparse_cg"

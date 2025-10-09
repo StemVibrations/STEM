@@ -5,14 +5,14 @@ import numpy as np
 import numpy.testing as npt
 
 
-def assert_floats_in_files_almost_equal(exact_file_name: str, test_file_name: str, decimal: int = 9):
+def assert_floats_in_files_almost_equal(exact_file_name: str, test_file_name: str, decimal: int = 12):
     r"""
     Compares two files and checks if all floats in the files are almost equal.
 
     Args:
         - exact_file_name (str): The exact file name.
         - test_file_name (str): The test file name.
-        - decimal (float): Desired precision, default is 9.
+        - decimal (float): Desired precision, default is 12.
 
     """
 
