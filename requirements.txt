@@ -3,5 +3,5 @@ scipy==1.13.1
 plotly==5.24.1
 gmsh_utils @ git+https://github.com/StemVibrations/gmsh_utils
 random_fields @ git+https://github.com/StemVibrations/RandomFields
-StemKratos @ git+https://github.com/StemVibrations/Kratos@updated_quasi_static-static
+StemKratos @ git+https://github.com/StemVibrations/Kratos
 UVEC @ git+https://github.com/StemVibrations/vehicle_models
