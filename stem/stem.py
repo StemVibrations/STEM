@@ -3,12 +3,6 @@ from copy import deepcopy
 from pathlib import Path
 from typing import List, Dict
 import warnings
-# flake8: noqa
-# todo remove this when kratos is properly installed
-import sys
-
-sys.path.append(r"C:\software_development\KratosFork\bin\Release")
-sys.path.append(r"C:\software_development\KratosFork\bin\Release\libs")
 
 import KratosMultiphysics
 from KratosMultiphysics.RailwayApplication.geomechanics_analysis import StemGeoMechanicsAnalysis
