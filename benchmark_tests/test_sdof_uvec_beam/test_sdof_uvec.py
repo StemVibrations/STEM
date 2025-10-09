@@ -12,7 +12,7 @@ from stem.stem import Stem
 from shutil import rmtree, copytree
 
 from benchmark_tests.analytical_solutions.moving_vehicle import TwoDofVehicle
-from benchmark_tests.utils import assert_floats_in_directories_almost_equal
+from benchmark_tests.utils import assert_floats_in_directories_almost_equal, assert_floats_in_files_almost_equal
 
 PLOT_RESULTS = False
 
@@ -68,7 +68,7 @@ def test_stem():
         "contact_coefficient": 9.1e-8,
         "contact_power": 1,
         "gravity_axis": 1,
-        "file_name": r"test.txt"
+        "file_name": r"test.csv"
     }
 
     uvec_load = UvecLoad(direction=[1, 1, 0],
@@ -160,8 +160,8 @@ def test_stem():
     if PLOT_RESULTS:
         import matplotlib.pyplot as plt
 
-        # read test.txt file with the numerical solution
-        with open(os.path.join(input_folder, "test.txt"), "r") as f:
+        # read test.csv file with the numerical solution
+        with open(os.path.join(input_folder, "test.csv"), "r") as f:
             test_data = f.read().splitlines()
         test_data = np.array([list(map(float, t.split(";"))) for t in test_data])
 
@@ -203,5 +203,8 @@ def test_stem():
     assert_floats_in_directories_almost_equal("benchmark_tests/test_sdof_uvec_beam/output_/output_vtk_full_model",
                                               os.path.join(input_folder, "output/output_vtk_full_model"),
                                               decimal=3)
+
+    assert_floats_in_files_almost_equal("benchmark_tests/test_sdof_uvec_beam/output_/expected_vehicle_output.csv",
+                                        os.path.join(input_folder, "test.csv"))
 
     rmtree(input_folder)

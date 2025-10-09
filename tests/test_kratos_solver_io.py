@@ -117,7 +117,7 @@ class TestKratosSolverIO:
         test_dict = solver_io.create_settings_dictionary(problem_data, "mesh_test_name", "material_test_name.json",
                                                          model_parts)
 
-        assert test_dict["solver_settings"]["solution_type"] == "quasi_static"
+        assert test_dict["solver_settings"]["solution_type"] == "static"
 
     def test_create_settings_dictionary_with_uvec(self, set_solver_settings: SolverSettings):
         """
