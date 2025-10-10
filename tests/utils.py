@@ -107,7 +107,7 @@ class TestUtils:
     @staticmethod
     def assert_dictionary_almost_equal(expected: Dict[Any, Any],
                                        actual: Dict[Any, Any],
-                                       abs_tolerance: float = 1 - 22,
+                                       abs_tolerance: float = 1e-22,
                                        rel_tolerance: float = 1e-7):
         """
         Checks whether two dictionaries are equal.
