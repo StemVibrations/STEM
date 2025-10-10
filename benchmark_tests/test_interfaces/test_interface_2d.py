@@ -64,9 +64,7 @@ def test_interface_2d(test_name, roller, stiffness, interface_test_results):
     and both horizontal and vertical displacements in the top layer.
 
     """
-    output_dir = "benchmark_tests/test_interfaces/output"
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
+    output_dir = "output2d"
     ndim = 2
     model = Model(ndim)
     # Specify material model
@@ -93,8 +91,8 @@ def test_interface_2d(test_name, roller, stiffness, interface_test_results):
 
     # add another material on top of the first one
     layer2_coordinates = [
-        (1.0, 0.0, 0),
-        (2.0, 0.0, 0),
+        (1.0, 1.0, 0),
+        (2.0, 1.0, 0),
         (2.0, 2.0, 0),
         (1.0, 2.0, 0),
     ]
@@ -133,12 +131,12 @@ def test_interface_2d(test_name, roller, stiffness, interface_test_results):
                                                         is_fixed=[True, True, True],
                                                         value=[0, 0, 0])
 
-    sym_parameters = DisplacementConstraint(active=[True, False, True], is_fixed=[True, False, False], value=[0, 0, 0])
+    sym_parameters = DisplacementConstraint(active=[True, False, True], is_fixed=[True, False, True], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
-    model.add_boundary_condition_by_geometry_ids(1, [5], no_displacement_parameters, "base_fixed")
+    model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "base_fixed")
     if roller:
-        model.add_boundary_condition_by_geometry_ids(1, [7, 6], sym_parameters, "side_rollers")
+        model.add_boundary_condition_by_geometry_ids(1, [2, 4], sym_parameters, "side_rollers")
 
     # Set up solver settings
     analysis_type = AnalysisType.MECHANICAL

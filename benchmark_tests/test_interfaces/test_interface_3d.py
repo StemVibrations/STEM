@@ -66,9 +66,7 @@ def test_interface_3d(test_name, roller, stiffness, interface_test_results_3d):
     so the load is not transferred to the bottom layer. Therefore, we expect no displacements in the bottom layer.
 
     """
-    output_dir = "benchmark_tests/test_interfaces/output_3d"
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
+    output_dir = "output_3d"
 
     ndim = 3
     model = Model(ndim)
@@ -77,7 +75,7 @@ def test_interface_3d(test_name, roller, stiffness, interface_test_results_3d):
     DENSITY_SOLID = 2700
     POROSITY = 0.0
     YOUNG_MODULUS = 1e6
-    POISSON_RATIO = 0.3
+    POISSON_RATIO = 0.1
     soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
     constitutive_law1 = LinearElasticSoil(YOUNG_MODULUS=YOUNG_MODULUS, POISSON_RATIO=POISSON_RATIO)
     retention_parameters1 = SaturatedBelowPhreaticLevelLaw()
@@ -95,8 +93,8 @@ def test_interface_3d(test_name, roller, stiffness, interface_test_results_3d):
 
     # add another material on top of the first one
     layer2_coordinates = [
-        (1.0, 0.0, 0),
-        (2.0, 0.0, 0),
+        (1.0, 1.0, 0),
+        (2.0, 1.0, 0),
         (2.0, 2.0, 0),
         (1.0, 2.0, 0),
     ]
@@ -140,7 +138,7 @@ def test_interface_3d(test_name, roller, stiffness, interface_test_results_3d):
         [2.0, 1.0, 0.0],
         [2.0, 1.0, 1.0],
     ]
-    surface_load = SurfaceLoad(active=[True, True, True], value=[-100, -100, -100])
+    surface_load = SurfaceLoad(active=[True, True, True], value=[-100, 0, 0])
     model.add_load_by_coordinates(load_coordinates, surface_load, "surface_load")
 
     # show the model
@@ -151,12 +149,12 @@ def test_interface_3d(test_name, roller, stiffness, interface_test_results_3d):
                                                         is_fixed=[True, True, True],
                                                         value=[0, 0, 0])
 
-    sym_parameters = DisplacementConstraint(active=[True, False, True], is_fixed=[True, False, False], value=[0, 0, 0])
+    sym_parameters = DisplacementConstraint(active=[True, False, True], is_fixed=[True, False, True], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
-    model.add_boundary_condition_by_geometry_ids(2, [7], no_displacement_parameters, "base_fixed")
+    model.add_boundary_condition_by_geometry_ids(2, [1], no_displacement_parameters, "base_fixed")
     if roller:
-        model.add_boundary_condition_by_geometry_ids(2, [11, 9, 10, 8], sym_parameters, "side_rollers")
+        model.add_boundary_condition_by_geometry_ids(2, [2, 4, 5, 6], sym_parameters, "side_rollers")
 
     # Set up solver settings
     analysis_type = AnalysisType.MECHANICAL
@@ -165,7 +163,7 @@ def test_interface_3d(test_name, roller, stiffness, interface_test_results_3d):
     time_integration = TimeIntegration(
         start_time=0.0,
         end_time=1.0,
-        delta_time=1.00,
+        delta_time=1.0,
         reduction_factor=1.0,
         increase_factor=1.0,
         max_delta_time_factor=1000,
@@ -175,19 +173,15 @@ def test_interface_3d(test_name, roller, stiffness, interface_test_results_3d):
         displacement_absolute_tolerance=1.0e-12,
     )
     stress_initialisation_type = StressInitialisationType.NONE
-    solver_settings = SolverSettings(
-        analysis_type=analysis_type,
-        solution_type=solution_type,
-        stress_initialisation_type=stress_initialisation_type,
-        time_integration=time_integration,
-        is_stiffness_matrix_constant=True,
-        are_mass_and_damping_constant=True,
-        convergence_criteria=convergence_criterion,
-        strategy_type=LinearNewtonRaphsonStrategy(),
-        linear_solver_settings=Cg(),
-        rayleigh_k=0.01,
-        rayleigh_m=0.0001,
-    )
+    solver_settings = SolverSettings(analysis_type=analysis_type,
+                                     solution_type=solution_type,
+                                     stress_initialisation_type=stress_initialisation_type,
+                                     time_integration=time_integration,
+                                     is_stiffness_matrix_constant=True,
+                                     are_mass_and_damping_constant=True,
+                                     convergence_criteria=convergence_criterion,
+                                     strategy_type=LinearNewtonRaphsonStrategy(),
+                                     linear_solver_settings=Cg())
 
     # Set up problem data
     problem = Problem(problem_name=test_name, number_of_threads=4, settings=solver_settings)
@@ -215,20 +209,18 @@ def test_interface_3d(test_name, roller, stiffness, interface_test_results_3d):
     )
     model.output_settings.append(vtk_output_process)
 
-    (model.add_output_settings_by_coordinates(
-        coordinates=[(2.0, 1.0, 0), (1.0, 0.75, 0)],
-        output_parameters=JsonOutputParameters(
-            output_interval=0.5,
-            nodal_results=nodal_results,
-            gauss_point_results=gauss_point_results,
-        ),
-        part_name="calculated_output",
-        output_dir=output_dir,
-    ), )
+    model.add_output_settings_by_coordinates(coordinates=[(2.0, 1.0, 0), (1.0, 0.75, 0)],
+                                             output_parameters=JsonOutputParameters(
+                                                 output_interval=0.5,
+                                                 nodal_results=nodal_results,
+                                                 gauss_point_results=gauss_point_results,
+                                             ),
+                                             part_name="calculated_output",
+                                             output_dir=output_dir)
     # Set mesh size
     # --------------------------------
     model.set_mesh_size(element_size=4)
-    input_folder = "benchmark_tests/test_interfaces_3d/" + test_name
+    input_folder = "benchmark_tests/test_interfaces/" + test_name
     stem = Stem(model, input_folder)
     stem.write_all_input_files()
     stem.run_calculation()

@@ -6204,8 +6204,7 @@ class TestModel:
         interface_part = model._Model__create_interface_body_model_part("test_interface",
                                                                         model_2d_with_interface["interface_material"],
                                                                         common_nodes, map_new_node_ids,
-                                                                        n_interface_nodes, element_type_gmsh,
-                                                                        nodes_stable_parts)
+                                                                        element_type_gmsh, nodes_stable_parts)
 
         # Verify basic properties
         assert interface_part.name == "test_interface"
@@ -6253,8 +6252,7 @@ class TestModel:
         interface_part = model._Model__create_interface_body_model_part("test_interface",
                                                                         model_2d_with_interface["interface_material"],
                                                                         common_nodes, map_new_node_ids,
-                                                                        n_interface_nodes, element_type_gmsh,
-                                                                        nodes_stable_parts)
+                                                                        element_type_gmsh, nodes_stable_parts)
 
         # Verify that the new interface elements were added and the dummy element is still there
         gmsh_elements = model.gmsh_io.mesh_data["elements"][element_type_gmsh]
@@ -6303,7 +6301,7 @@ class TestModel:
         # Create interface body model part
         interface_part = model._Model__create_interface_body_model_part(
             "test_interface", model_setup_3d_with_interface["interface_material"], common_nodes, map_new_node_ids,
-            n_interface_nodes, element_type_gmsh, nodes_stable_parts)
+            element_type_gmsh, nodes_stable_parts)
 
         # Verify basic properties
         assert interface_part.name == "test_interface"
@@ -6559,8 +6557,6 @@ class TestModel:
             - model_setup_large_3d_custom (:class:`stem.model.Model`): Model instance set up for testing.
         """
         model = model_setup_large_3d_custom
-        # Create a mapping for node IDs 2 and 3 (common nodes)
-        map_new_node_ids = {2: 8, 3: 10, 5: 9}
 
         # let's add a surface load in the process model part
         surface_load = SurfaceLoad(value=[1, 0], active=[True, True, True])
@@ -6614,7 +6610,6 @@ class TestModel:
         # Retrieve the updated process model part.
         updated_mp = model.process_model_parts[0]
         updated_nodes = updated_mp.mesh.nodes
-        updated_element = updated_mp.mesh.elements
 
         # Check that the node with id 2 is updated to 10
         assert list(updated_nodes.keys()) == [3, 7, 10, 12, 24]
