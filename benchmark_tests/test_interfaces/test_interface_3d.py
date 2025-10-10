@@ -209,14 +209,14 @@ def test_interface_3d(test_name, roller, stiffness, interface_test_results_3d):
     )
     model.output_settings.append(vtk_output_process)
 
-    model.add_output_settings_by_coordinates(coordinates=[(2.0, 1.0, 0), (1.0, 0.75, 0)],
-                                             output_parameters=JsonOutputParameters(
-                                                 output_interval=0.5,
-                                                 nodal_results=nodal_results,
-                                                 gauss_point_results=gauss_point_results,
-                                             ),
-                                             part_name="calculated_output",
-                                             output_dir=output_dir)
+    # model.add_output_settings_by_coordinates(coordinates=[(2.0, 1.0, 0), (1.0, 0.75, 0)],
+    #                                          output_parameters=JsonOutputParameters(
+    #                                              output_interval=0.5,
+    #                                              nodal_results=nodal_results,
+    #                                              gauss_point_results=gauss_point_results,
+    #                                          ),
+    #                                          part_name="calculated_output",
+    #                                          output_dir=output_dir)
     # Set mesh size
     # --------------------------------
     model.set_mesh_size(element_size=4)
