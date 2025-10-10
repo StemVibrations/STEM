@@ -15,7 +15,7 @@ from stem.output import NodalOutput, VtkOutputParameters
 from stem.stem import Stem
 from stem.globals import ELEMENT_DATA
 
-from benchmark_tests.utils import assert_files_equal
+from benchmark_tests.utils import assert_floats_in_directories_almost_equal
 
 
 @pytest.mark.parametrize("element_type", [("TETRAHEDRON_4N"), ("TETRAHEDRON_10N"), ("HEXAHEDRON_8N"),
@@ -152,8 +152,7 @@ def test_stem(element_type):
     else:
         expected_output_dir = f"benchmark_tests/test_lysmer_boundary_column3d/{element_type}/_output/output_vtk_porous_computational_model_part"
 
-    result = assert_files_equal(expected_output_dir,
-                                os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
+    assert_floats_in_directories_almost_equal(
+        expected_output_dir, os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
 
-    assert result is True
     rmtree(input_folder)

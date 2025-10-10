@@ -36,7 +36,7 @@ class KratosLoadsIO:
         # initialize load dictionary
         load_dict: Dict[str, Any] = {
             "python_module": "set_moving_load_process",
-            "kratos_module": "StemApplication",
+            "kratos_module": "RailwayApplication",
             "process_name": "SetMovingLoadProcess",
             "Parameters": deepcopy(parameters.__dict__),
         }
@@ -76,7 +76,7 @@ class KratosLoadsIO:
         # initialize load dictionary
         load_dict: Dict[str, Any] = {
             "python_module": "set_multiple_moving_loads_process",
-            "kratos_module": "StemApplication",
+            "kratos_module": "RailwayApplication",
             "process_name": "SetMultipleMovingLoadsProcess",
             "Parameters": parameters_dict
         }

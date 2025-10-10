@@ -158,7 +158,7 @@ class KratosSolverIO:
             if solver_settings.stress_initialisation_type == StressInitialisationType.K0_PROCEDURE:
                 return "k0_procedure"
             else:
-                return "quasi_static"
+                return "static"
         elif solver_settings.solution_type == SolutionType.DYNAMIC:
             return "dynamic"
 
