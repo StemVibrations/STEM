@@ -205,6 +205,6 @@ def test_stem():
                                               decimal=3)
 
     assert_floats_in_files_almost_equal("benchmark_tests/test_sdof_uvec_beam/output_/expected_vehicle_output.csv",
-                                        os.path.join(input_folder, "test.csv"))
+                                        os.path.join(input_folder, "test.csv"), decimal=5)
 
     rmtree(input_folder)
