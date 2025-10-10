@@ -231,6 +231,6 @@ def test_train_track_uvec_soil_3d():
     with open(os.path.join(input_folder, "output/json_output.json"), 'r') as f:
         actual_json = json.load(f)
 
-    TestUtils.assert_dictionary_almost_equal(expected_json, actual_json)
+    TestUtils.assert_dictionary_almost_equal(expected_json, actual_json, abs_tolerance=1e-12)
 
     rmtree(input_folder)
