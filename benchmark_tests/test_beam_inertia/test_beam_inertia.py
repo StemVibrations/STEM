@@ -13,9 +13,14 @@ from stem.solver import AnalysisType, SolutionType, TimeIntegration, Displacemen
 from stem.output import NodalOutput, JsonOutputParameters
 from stem.stem import Stem
 
+# Pameter definitions for the beam and load
+BEAM_LENGTH = 25.0
+LOAD_MAGNITUDE = -1000.0
 
-@pytest.mark.parametrize("beam_coordinates,expected_node_coord", [([(0, 0, 0), (0, 0, 25)], [0, 0, 12.5]),
-                                                                  ([(0, 0, 0), (25, 0, 0)], [12.5, 0, 0])])
+
+@pytest.mark.parametrize("beam_coordinates, expected_node_coord",
+                         [([(0, 0, 0), (0, 0, BEAM_LENGTH)], [0, 0, BEAM_LENGTH / 2]),
+                          ([(0, 0, 0), (BEAM_LENGTH, 0, 0)], [BEAM_LENGTH / 2, 0, 0])])
 def test_stem(beam_coordinates, expected_node_coord):
     """
     Test STEM: Point load on beam to test the inertia properties of the beam element.
@@ -52,7 +57,7 @@ def test_stem(beam_coordinates, expected_node_coord):
     model.body_model_parts.append(body_model_part)
 
     # Define loads
-    load = PointLoad(active=[True, True, True], value=[0, -1000, 0])
+    load = PointLoad(active=[True, True, True], value=[0, LOAD_MAGNITUDE, 0])
 
     model.add_load_by_coordinates(node_coordinates, load, "point_load")
 
@@ -119,11 +124,9 @@ def test_stem(beam_coordinates, expected_node_coord):
         calculated_data = json.load(f)
 
     assert calculated_data["NODE_3"]["COORDINATES"] == expected_node_coord
-    np.mean(calculated_data["NODE_3"]["DISPLACEMENT_Y"])
 
-    # rmtree(input_folder)
-    max_disp = -1000 * 25**3 / (48 * YOUNG_MODULUS * I33)
+    max_disp = LOAD_MAGNITUDE * BEAM_LENGTH**3 / (48 * YOUNG_MODULUS * I33)
 
-    all(max_disp - np.array(calculated_data["NODE_3"]["DISPLACEMENT_Y"]) < 1e-12)
+    assert all(max_disp - np.array(calculated_data["NODE_3"]["DISPLACEMENT_Y"]) < 1e-12)
 
     rmtree(input_folder)
