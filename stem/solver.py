@@ -290,9 +290,9 @@ class LinearNewtonRaphsonStrategy(StrategyTypeABC):
         - number_cycles (int): number of allowed cycles of decreasing the time step size until the algorithm is \
             stopped. Default value is 100.
         - initialize_acceleration (bool): if true, the acceleration is re-calculated at the beginning of the stage.\
-            Default value is False. This is important for unloading after a static step in dynamic analysis. \
-            However, the model needs a displacement constraint in each direction, i.e. absorbing boundaries can not be
-            used for all directions.
+            Default value is False. This is important for a changing external force at stage transition in dynamic
+            analysis. However, the model needs a displacement constraint in each direction, i.e. absorbing boundaries
+            can not be used for all directions.
 
     Inheritance:
         - :class:`StrategyTypeABC`
