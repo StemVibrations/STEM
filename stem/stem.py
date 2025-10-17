@@ -133,7 +133,7 @@ class Stem:
         self.__check_if_mesh_between_stages_is_the_same(self.__stages[-2], self.__stages[-1])
 
         # check solver settings new stage
-        self.__check_if_acceleration_should_be_initialised(self.__stages[-2], self.__stages[-1])
+        self.__check_if_acceleration_should_be_initialised(self.__stages[-1])
 
     def write_all_input_files(self):
         """
@@ -362,23 +362,17 @@ class Stem:
                     base_path = Path(output_settings.output_name).parent / Path(output_settings.output_name).stem
                     output_settings.output_name = str(base_path) + stage_identifier + suffix
 
-    def __check_if_acceleration_should_be_initialised(self, previous_stage: Model, current_stage: Model):
+    def __check_if_acceleration_should_be_initialised(self, current_stage: Model):
         """
-        Check if the acceleration should be initialised in the current stage. Acceleration can be initialised when
-        transitioning from quasi static to dynamic.
+        Check if the acceleration can be initialised in the current stage. Acceleration can not be initialised when
+        using the LinearNewtonRaphsonStrategy if there are no displacement constraints in all directions.
 
         Args:
-            - previous_stage (:class:`stem.model.Model`): The previous stage.
             - current_stage (:class:`stem.model.Model`): The current stage.
         """
-        if (current_stage.project_parameters is not None and previous_stage.project_parameters is not None
-                and current_stage.project_parameters.settings is not None
-                and previous_stage.project_parameters.settings is not None):
-            # generally acceleration should not be initialized
-            current_stage.project_parameters.settings._inititalize_acceleration = False
-            # acceleration should be initialized when transitioning from quasi static to dynamic
-            if (previous_stage.project_parameters.settings.solution_type == SolutionType.QUASI_STATIC
-                    and current_stage.project_parameters.settings.solution_type == SolutionType.DYNAMIC):
+        if (current_stage.project_parameters is not None and current_stage.project_parameters.settings is not None):
+
+            if current_stage.project_parameters.settings.solution_type == SolutionType.DYNAMIC:
 
                 # check if the problem is ill conditioned for initializing acceleration
                 if (isinstance(current_stage.project_parameters.settings.strategy_type, LinearNewtonRaphsonStrategy)
@@ -396,3 +390,6 @@ class Stem:
                                          "cannot be initialised within the LinearNewtonRaphsonStrategy")
 
                     current_stage.project_parameters.settings._inititalize_acceleration = True
+
+                else:
+                    current_stage.project_parameters.settings._inititalize_acceleration = False
