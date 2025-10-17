@@ -7,8 +7,9 @@ import warnings
 import KratosMultiphysics
 from KratosMultiphysics.RailwayApplication.geomechanics_analysis import StemGeoMechanicsAnalysis
 
+from stem.boundary import DisplacementConstraint
 from stem.model import Model
-from stem.solver import SolutionType
+from stem.solver import SolutionType, LinearNewtonRaphsonStrategy
 from stem.output import VtkOutputParameters, GiDOutputParameters, JsonOutputParameters
 from stem.IO.kratos_io import KratosIO
 
@@ -363,7 +364,7 @@ class Stem:
 
     def __check_if_acceleration_should_be_initialised(self, previous_stage: Model, current_stage: Model):
         """
-        Check if the acceleration should be initialised in the current stage. Acceleration should be initialised when
+        Check if the acceleration should be initialised in the current stage. Acceleration can be initialised when
         transitioning from quasi static to dynamic.
 
         Args:
@@ -378,4 +379,20 @@ class Stem:
             # acceleration should be initialized when transitioning from quasi static to dynamic
             if (previous_stage.project_parameters.settings.solution_type == SolutionType.QUASI_STATIC
                     and current_stage.project_parameters.settings.solution_type == SolutionType.DYNAMIC):
-                current_stage.project_parameters.settings._inititalize_acceleration = True
+
+                # check if the problem is ill conditioned for initializing acceleration
+                if (isinstance(current_stage.project_parameters.settings.strategy_type, LinearNewtonRaphsonStrategy)
+                        and current_stage.project_parameters.settings.strategy_type.initialize_acceleration):
+
+                    displacement_constraints = [False, False, False]
+                    for model_part in current_stage.process_model_parts:
+                        if isinstance(model_part.parameters, DisplacementConstraint):
+                            displacement_constraints[0] |= model_part.parameters.is_fixed[0]
+                            displacement_constraints[1] |= model_part.parameters.is_fixed[1]
+                            displacement_constraints[2] |= model_part.parameters.is_fixed[2]
+
+                    if not all(displacement_constraints):
+                        raise ValueError("The problem does not have a constraint in all directions, the acceleration "
+                                         "cannot be initialised within the LinearNewtonRaphsonStrategy")
+
+                    current_stage.project_parameters.settings._inititalize_acceleration = True
