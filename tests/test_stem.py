@@ -295,9 +295,6 @@ class TestStem:
         with pytest.raises(Exception, match="Number of process model parts are not the same between stages"):
             stem.validate_latest_stage()
 
-        stem.stages.pop()  # remove the invalid stage for further tests
-        stem.stages[-1]
-
     def test_write_all_input_files(self, create_default_model: Model):
         """
         Test the write_all_input_files method of the Stem class. It checks if the correct methods are called and if the
