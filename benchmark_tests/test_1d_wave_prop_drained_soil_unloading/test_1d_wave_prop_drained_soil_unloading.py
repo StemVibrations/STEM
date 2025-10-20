@@ -136,7 +136,7 @@ def test_stem():
     stage2.get_model_part_by_name("load").parameters.value = [0.0, 0.0, 0.0]
     stage2.project_parameters.settings.solution_type = SolutionType.DYNAMIC
     stage2.output_settings[1].output_parameters.output_interval = delta_time / 100
-    stage2.project_parameters.settings.strategy_type = LinearNewtonRaphsonStrategy()
+    stage2.project_parameters.settings.strategy_type = LinearNewtonRaphsonStrategy(initialize_acceleration=True)
 
     stem.add_calculation_stage(stage2)
 

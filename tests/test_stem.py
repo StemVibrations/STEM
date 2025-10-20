@@ -11,14 +11,14 @@ import pytest
 from gmsh_utils import gmsh_IO
 import UVEC.uvec_ten_dof_vehicle_2D as uvec
 
-from stem.boundary import DisplacementConstraint
+from stem.boundary import DisplacementConstraint, AbsorbingBoundary
 from stem.IO.kratos_io import KratosIO
 from stem.load import LineLoad, UvecLoad
 from stem.model import Model
 from stem.output import GiDOutputParameters, JsonOutputParameters, NodalOutput, VtkOutputParameters
 from stem.soil_material import LinearElasticSoil, OnePhaseSoil, SaturatedBelowPhreaticLevelLaw, SoilMaterial
 from stem.solver import (AnalysisType, DisplacementConvergenceCriteria, Problem, SolutionType, SolverSettings,
-                         StressInitialisationType, TimeIntegration)
+                         StressInitialisationType, TimeIntegration, LinearNewtonRaphsonStrategy)
 from stem.stem import Stem
 from tests.utils import TestUtils
 
@@ -250,10 +250,24 @@ class TestStem:
         assert (stem.stages[0].project_parameters.settings._inititalize_acceleration ==
                 stem.stages[1].project_parameters.settings._inititalize_acceleration == False)
 
-        # set first stage solution type to quasi static, such that acceleration should be initialized in stage 2
+        # set first stage solution type to quasi static, and set initialize_acceleration within
+        # LinearNewtonRaphsonStrategy at the second stace such that acceleration should be initialized in stage 2
         stem.stages[0].project_parameters.settings.solution_type = SolutionType.QUASI_STATIC
+        stem.stages[1].project_parameters.settings.strategy_type = LinearNewtonRaphsonStrategy(
+            initialize_acceleration=True)
         stem.validate_latest_stage()
         assert stem.stages[1].project_parameters.settings._inititalize_acceleration == True
+
+        # change the displacement constraint to an absorbing boundary in the second stage and check if ValueError is
+        # raised
+        stem.stages[1].process_model_parts[1].parameters = AbsorbingBoundary(absorbing_factors=[1, 1],
+                                                                             virtual_thickness=0.01)
+
+        with pytest.raises(ValueError,
+                           match="The problem does not have a constraint in all directions, "
+                           "the acceleration cannot be initialised within the "
+                           "LinearNewtonRaphsonStrategy"):
+            stem.validate_latest_stage()
 
         stage3 = deepcopy(create_default_model)
         stage3.gmsh_io.reset_gmsh_instance()
