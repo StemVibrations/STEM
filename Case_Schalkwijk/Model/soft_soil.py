@@ -1,4 +1,4 @@
-input_files_dir = "soft_files_dir"
+input_files_dir = "Schalkwijk_stem_version_1.2.40"
 results_dir = "output"
 
 from stem.model import Model
@@ -33,8 +33,6 @@ material_embankment = SoilMaterial("embankment",
                                    soil_formulation_embankment,
                                    constitutive_law_embankment,
                                    SaturatedBelowPhreaticLevelLaw())
-
-
 # # fill in PPS parameters
 # soil_formulation_pps = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=None, POROSITY=None)
 # constitutive_law_pps = LinearElasticSoil(YOUNG_MODULUS=None, POISSON_RATIO=None)
@@ -129,10 +127,8 @@ soil_3_coordinates = [(0.0, layer_2_boundary_depth, 0.0), (x_coord_deep_wall, la
 
 model.add_soil_layer_by_coordinates(ballast_coordinates, material_ballast, "ballast")
 model.add_soil_layer_by_coordinates(embankment_coordinates, material_embankment, "embankment")
-
 model.add_soil_layer_by_coordinates(foundation_coordinates_top, material_clay, "foundation_top")
 model.add_soil_layer_by_coordinates(foundation_coordinates_bottom, material_clay, "foundation_bot")
-
 model.add_soil_layer_by_coordinates(soil_1_coordinates_part_1, material_clay, "soil_layer_1_part_1")
 model.add_soil_layer_by_coordinates(soil_1_coordinates_part_2, material_clay, "soil_layer_1_part_2")
 
@@ -247,28 +243,28 @@ model.add_boundary_condition_on_plane([(max_x_coordinate,0,0), (max_x_coordinate
 # required_el_size = lambda_ / 10
 # required_dt = el_size/vp
 
-model.set_element_size_of_group(0.5,"ballast")
-model.set_element_size_of_group(0.25, "embankment") # true value
-# model.set_element_size_of_group(0.5, "embankment")
-model.set_element_size_of_group(0.75, "foundation_top")
-model.set_element_size_of_group(0.75, "foundation_bot")
+# model.set_element_size_of_group(0.5,"ballast")
+# model.set_element_size_of_group(0.25, "embankment") # true value
+# # model.set_element_size_of_group(0.5, "embankment")
+# model.set_element_size_of_group(0.75, "foundation_top")
+# model.set_element_size_of_group(0.75, "foundation_bot")
 
-model.set_element_size_of_group(0.75, "soil_layer_1_part_1")
-model.set_element_size_of_group(0.75, "soil_layer_1_part_2")
-model.set_element_size_of_group(0.75, "deep_wall_part_1")
-model.set_element_size_of_group(0.75, "deep_wall_part_2")
-model.set_element_size_of_group(0.75, "deep_wall_part_3")
+# model.set_element_size_of_group(0.75, "soil_layer_1_part_1")
+# model.set_element_size_of_group(0.75, "soil_layer_1_part_2")
+# model.set_element_size_of_group(0.75, "deep_wall_part_1")
+# model.set_element_size_of_group(0.75, "deep_wall_part_2")
+# model.set_element_size_of_group(0.75, "deep_wall_part_3")
 
-model.set_element_size_of_group(0.5, "ditch")
+# model.set_element_size_of_group(0.5, "ditch")
 
-model.set_mesh_size(element_size=1)
-
+model.set_mesh_size(element_size=2)
+# model.mesh_settings.element_order = 2
 
 # define at which points the json output should be written
 delta_time = 0.0005
 json_output_parameters = JsonOutputParameters(delta_time-1e-10, [NodalOutput.VELOCITY],[])
 model.add_output_settings_by_coordinates([(x_coordinate_end_ditch, surface_level, 45.0), (25, surface_level, 45.0), (max_x_coordinate,surface_level,45)],
-                                         json_output_parameters, "json_output")
+                                         json_output_parameters, "json_output_N_solver_v1.2.4o")
 
 # set time integration parameters
 end_time = 0.002
@@ -286,8 +282,9 @@ solver_settings = SolverSettings(analysis_type=AnalysisType.MECHANICAL,
                                  time_integration=time_integration,
                                  is_stiffness_matrix_constant=False, are_mass_and_damping_constant=False,
                                  convergence_criteria=convergence_criterion,
-                                 strategy_type=NewtonRaphsonStrategy(),
-                                 linear_solver_settings=Cg(scaling=True))
+                                #  strategy_type=NewtonRaphsonStrategy(),
+                                 strategy_type = LinearNewtonRaphsonStrategy(),
+                                 linear_solver_settings=Cg())
 
 # Set up problem data
 problem = Problem(problem_name="soft", number_of_threads=16,
@@ -310,11 +307,11 @@ model.add_output_settings(
 )
 
 # show the geometry, to check if everything is correct
-# model.show_geometry()
+model.show_geometry()
 
 # create the stem object
 stem = Stem(model, input_files_dir)
-
+# Check the fijnheid van de mesh.
 # create a new stage, and set the differences compared to stage 1
 duration_stage_2 = 3.45
 stage2 = stem.create_new_stage(delta_time,duration_stage_2)
