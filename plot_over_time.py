@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from numpy.fft import rfft, rfftfreq
 
 # Path naar JSON
-json_dyn_path = r"C:\Users\ritfeldis\STEM\Schalkwijk_stem_version_1.2.40\json_output_N_solver_v1.2.4o_stage_2.json"
+json_dyn_path = r"C:\Users\ritfeldis\STEM\Schalkwijk_stem_version_1.2.40_quadratic\json_output_N_solver_v1.2.4o_stage_2.json"
 
 # JSON inlezen
 with open(json_dyn_path, 'r') as f:

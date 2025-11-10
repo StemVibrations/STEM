@@ -10,7 +10,7 @@ import data_reader_prorail
 # 1. Load model data (JSON)
 # -------------------------------
 # json_dyn_path = r"C:\Users\ritfeldis\Documents\Python\STEM\Case_Schalkwijk\Model\Results\json__soft_Basic.json"
-json_dyn_path = r"C:\Users\ritfeldis\Documents\Python\STEM\Case_Schalkwijk\Model\Results\json_output_N_solver_5_stage_2.json"
+json_dyn_path = r"C:\Users\ritfeldis\STEM\Schalkwijk_stem_version_1.2.40_quadratic\json_output_N_solver_v1.2.4o_stage_2.json"
 with open(json_dyn_path, 'r') as f:
     data_dyn = json.load(f)
 

@@ -1,0 +1,287 @@
+{
+    "properties": [
+        {
+            "model_part_name": "PorousDomain.ballast",
+            "properties_id": 1,
+            "Material": {
+                "Variables": {
+                    "YOUNG_MODULUS": 150000000.0,
+                    "POISSON_RATIO": 0.2,
+                    "DENSITY_SOLID": 1850,
+                    "POROSITY": 0.0,
+                    "BULK_MODULUS_SOLID": 50000000000.0,
+                    "IGNORE_UNDRAINED": true,
+                    "PERMEABILITY_XX": 1e-30,
+                    "PERMEABILITY_YY": 1e-30,
+                    "PERMEABILITY_ZZ": 1e-30,
+                    "PERMEABILITY_XY": 0,
+                    "PERMEABILITY_YZ": 0,
+                    "PERMEABILITY_ZX": 0,
+                    "MINIMUM_RELATIVE_PERMEABILITY": 0.0,
+                    "RETENTION_LAW": "SaturatedBelowPhreaticLevelLaw",
+                    "SATURATED_SATURATION": 1.0,
+                    "RESIDUAL_SATURATION": 1e-10,
+                    "DYNAMIC_VISCOSITY": 0.0013,
+                    "BULK_MODULUS_FLUID": 2000000000.0,
+                    "DENSITY_WATER": 1000
+                },
+                "constitutive_law": {
+                    "name": "GeoIncrementalLinearElastic3DLaw"
+                }
+            },
+            "Tables": {}
+        },
+        {
+            "model_part_name": "PorousDomain.embankment",
+            "properties_id": 2,
+            "Material": {
+                "Variables": {
+                    "YOUNG_MODULUS": 100000000.0,
+                    "POISSON_RATIO": 0.3,
+                    "DENSITY_SOLID": 1900,
+                    "POROSITY": 0.0,
+                    "BULK_MODULUS_SOLID": 50000000000.0,
+                    "IGNORE_UNDRAINED": true,
+                    "PERMEABILITY_XX": 1e-30,
+                    "PERMEABILITY_YY": 1e-30,
+                    "PERMEABILITY_ZZ": 1e-30,
+                    "PERMEABILITY_XY": 0,
+                    "PERMEABILITY_YZ": 0,
+                    "PERMEABILITY_ZX": 0,
+                    "MINIMUM_RELATIVE_PERMEABILITY": 0.0,
+                    "RETENTION_LAW": "SaturatedBelowPhreaticLevelLaw",
+                    "SATURATED_SATURATION": 1.0,
+                    "RESIDUAL_SATURATION": 1e-10,
+                    "DYNAMIC_VISCOSITY": 0.0013,
+                    "BULK_MODULUS_FLUID": 2000000000.0,
+                    "DENSITY_WATER": 1000
+                },
+                "constitutive_law": {
+                    "name": "GeoIncrementalLinearElastic3DLaw"
+                }
+            },
+            "Tables": {}
+        },
+        {
+            "model_part_name": "PorousDomain.soil_layer_1",
+            "properties_id": 3,
+            "Material": {
+                "Variables": {
+                    "YOUNG_MODULUS": 50000000.0,
+                    "POISSON_RATIO": 0.495,
+                    "DENSITY_SOLID": 1500,
+                    "POROSITY": 0.0,
+                    "BULK_MODULUS_SOLID": 50000000000.0,
+                    "IGNORE_UNDRAINED": true,
+                    "PERMEABILITY_XX": 1e-30,
+                    "PERMEABILITY_YY": 1e-30,
+                    "PERMEABILITY_ZZ": 1e-30,
+                    "PERMEABILITY_XY": 0,
+                    "PERMEABILITY_YZ": 0,
+                    "PERMEABILITY_ZX": 0,
+                    "MINIMUM_RELATIVE_PERMEABILITY": 0.0,
+                    "RETENTION_LAW": "SaturatedBelowPhreaticLevelLaw",
+                    "SATURATED_SATURATION": 1.0,
+                    "RESIDUAL_SATURATION": 1e-10,
+                    "DYNAMIC_VISCOSITY": 0.0013,
+                    "BULK_MODULUS_FLUID": 2000000000.0,
+                    "DENSITY_WATER": 1000
+                },
+                "constitutive_law": {
+                    "name": "GeoIncrementalLinearElastic3DLaw"
+                }
+            },
+            "Tables": {}
+        },
+        {
+            "model_part_name": "PorousDomain.soil_layer_2",
+            "properties_id": 4,
+            "Material": {
+                "Variables": {
+                    "YOUNG_MODULUS": 100000000.0,
+                    "POISSON_RATIO": 0.495,
+                    "DENSITY_SOLID": 1400,
+                    "POROSITY": 0.0,
+                    "BULK_MODULUS_SOLID": 50000000000.0,
+                    "IGNORE_UNDRAINED": true,
+                    "PERMEABILITY_XX": 1e-30,
+                    "PERMEABILITY_YY": 1e-30,
+                    "PERMEABILITY_ZZ": 1e-30,
+                    "PERMEABILITY_XY": 0,
+                    "PERMEABILITY_YZ": 0,
+                    "PERMEABILITY_ZX": 0,
+                    "MINIMUM_RELATIVE_PERMEABILITY": 0.0,
+                    "RETENTION_LAW": "SaturatedBelowPhreaticLevelLaw",
+                    "SATURATED_SATURATION": 1.0,
+                    "RESIDUAL_SATURATION": 1e-10,
+                    "DYNAMIC_VISCOSITY": 0.0013,
+                    "BULK_MODULUS_FLUID": 2000000000.0,
+                    "DENSITY_WATER": 1000
+                },
+                "constitutive_law": {
+                    "name": "GeoIncrementalLinearElastic3DLaw"
+                }
+            },
+            "Tables": {}
+        },
+        {
+            "model_part_name": "PorousDomain.soil_layer_3",
+            "properties_id": 5,
+            "Material": {
+                "Variables": {
+                    "YOUNG_MODULUS": 350000000.0,
+                    "POISSON_RATIO": 0.495,
+                    "DENSITY_SOLID": 2000,
+                    "POROSITY": 0.0,
+                    "BULK_MODULUS_SOLID": 50000000000.0,
+                    "IGNORE_UNDRAINED": true,
+                    "PERMEABILITY_XX": 1e-30,
+                    "PERMEABILITY_YY": 1e-30,
+                    "PERMEABILITY_ZZ": 1e-30,
+                    "PERMEABILITY_XY": 0,
+                    "PERMEABILITY_YZ": 0,
+                    "PERMEABILITY_ZX": 0,
+                    "MINIMUM_RELATIVE_PERMEABILITY": 0.0,
+                    "RETENTION_LAW": "SaturatedBelowPhreaticLevelLaw",
+                    "SATURATED_SATURATION": 1.0,
+                    "RESIDUAL_SATURATION": 1e-10,
+                    "DYNAMIC_VISCOSITY": 0.0013,
+                    "BULK_MODULUS_FLUID": 2000000000.0,
+                    "DENSITY_WATER": 1000
+                },
+                "constitutive_law": {
+                    "name": "GeoIncrementalLinearElastic3DLaw"
+                }
+            },
+            "Tables": {}
+        },
+        {
+            "model_part_name": "PorousDomain.ditch",
+            "properties_id": 6,
+            "Material": {
+                "Variables": {
+                    "YOUNG_MODULUS": 300000.0,
+                    "POISSON_RATIO": 0.495,
+                    "DENSITY_SOLID": 1000,
+                    "POROSITY": 0.0,
+                    "BULK_MODULUS_SOLID": 50000000000.0,
+                    "IGNORE_UNDRAINED": true,
+                    "PERMEABILITY_XX": 1e-30,
+                    "PERMEABILITY_YY": 1e-30,
+                    "PERMEABILITY_ZZ": 1e-30,
+                    "PERMEABILITY_XY": 0,
+                    "PERMEABILITY_YZ": 0,
+                    "PERMEABILITY_ZX": 0,
+                    "MINIMUM_RELATIVE_PERMEABILITY": 0.0,
+                    "RETENTION_LAW": "SaturatedBelowPhreaticLevelLaw",
+                    "SATURATED_SATURATION": 1.0,
+                    "RESIDUAL_SATURATION": 1e-10,
+                    "DYNAMIC_VISCOSITY": 0.0013,
+                    "BULK_MODULUS_FLUID": 2000000000.0,
+                    "DENSITY_WATER": 1000
+                },
+                "constitutive_law": {
+                    "name": "GeoIncrementalLinearElastic3DLaw"
+                }
+            },
+            "Tables": {}
+        },
+        {
+            "model_part_name": "PorousDomain.rail_track_1",
+            "properties_id": 7,
+            "Material": {
+                "Variables": {
+                    "YOUNG_MODULUS": 210000000000.0,
+                    "POISSON_RATIO": 0.3,
+                    "DENSITY": 7850,
+                    "CROSS_AREA": 0.006977,
+                    "I33": 2.3372e-05,
+                    "I22": 2.787e-06,
+                    "TORSIONAL_INERTIA": 2.616e-05
+                },
+                "constitutive_law": {
+                    "name": "KratosMultiphysics.StructuralMechanicsApplication.BeamConstitutiveLaw"
+                }
+            },
+            "Tables": {}
+        },
+        {
+            "model_part_name": "PorousDomain.sleeper_rail_track_1",
+            "properties_id": 8,
+            "Material": {
+                "Variables": {
+                    "NODAL_DISPLACEMENT_STIFFNESS": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "NODAL_MASS": 140,
+                    "NODAL_DAMPING_RATIO": [
+                        0,
+                        0,
+                        0
+                    ]
+                }
+            },
+            "Tables": {}
+        },
+        {
+            "model_part_name": "PorousDomain.rail_pads_rail_track_1",
+            "properties_id": 9,
+            "Material": {
+                "Variables": {
+                    "NODAL_DISPLACEMENT_STIFFNESS": [
+                        0,
+                        750000000.0,
+                        0
+                    ],
+                    "NODAL_ROTATIONAL_STIFFNESS": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "NODAL_DAMPING_RATIO": [
+                        0,
+                        750000.0,
+                        0
+                    ],
+                    "NODAL_ROTATIONAL_DAMPING_RATIO": [
+                        0,
+                        0,
+                        0
+                    ]
+                }
+            },
+            "Tables": {}
+        },
+        {
+            "model_part_name": "PorousDomain.soil_equivalent_rail_track_1",
+            "properties_id": 10,
+            "Material": {
+                "Variables": {
+                    "NODAL_DISPLACEMENT_STIFFNESS": [
+                        0,
+                        71000000.0,
+                        0
+                    ],
+                    "NODAL_ROTATIONAL_STIFFNESS": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "NODAL_DAMPING_RATIO": [
+                        0,
+                        71000.0,
+                        0
+                    ],
+                    "NODAL_ROTATIONAL_DAMPING_RATIO": [
+                        0,
+                        0,
+                        0
+                    ]
+                }
+            },
+            "Tables": {}
+        }
+    ]
+}

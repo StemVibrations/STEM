@@ -1,4 +1,4 @@
-input_files_dir = "Schalkwijk_stem_version_1.2.40"
+input_files_dir = "Schalkwijk_stem_version_1.2.40_quadratic"
 results_dir = "output"
 
 from stem.model import Model
@@ -247,7 +247,7 @@ model.add_boundary_condition_on_plane([(max_x_coordinate,0,0), (max_x_coordinate
 # model.set_element_size_of_group(0.5, "ditch")
 
 model.set_mesh_size(element_size=2)
-# model.mesh_settings.element_order = 2
+model.mesh_settings.element_order = 2
 
 # define at which points the json output should be written
 delta_time = 0.0005
@@ -305,7 +305,7 @@ stem = Stem(model, input_files_dir)
 duration_stage_2 = 3.45
 stage2 = stem.create_new_stage(delta_time,duration_stage_2)
 stage2.project_parameters.settings.solution_type = SolutionType.DYNAMIC
-stage2.project_parameters.settings.linear_solver_settings = Cg(scaling=False)
+stage2.project_parameters.settings.linear_solver_settings = Cg()
 stage2.project_parameters.settings.is_stiffness_matrix_constant = True
 stage2.project_parameters.settings.are_mass_and_damping_constant = True
 stage2.project_parameters.settings.strategy_type = LinearNewtonRaphsonStrategy()
