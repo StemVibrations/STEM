@@ -5,7 +5,7 @@ import numpy as np
 import numpy.typing as npty
 from scipy.spatial import cKDTree
 
-from stem.globals import ELEMENT_DATA, GEOMETRY_PRECISION
+from stem.globals import ELEMENT_DATA
 
 if TYPE_CHECKING:
     from stem.mesh import Element, Mesh
@@ -764,54 +764,40 @@ class Utils:
             raise ValueError("Coordinates must be real numbers (not NaN or inf).")
 
     @staticmethod
-    def compute_rotational_matrix(
-        direction_vector: Sequence[float],
-    ) -> npty.NDArray[np.float64]:
+    def calculated_normal_unit_vector_to_plane(plane_points: Sequence[Sequence[float]]) -> npty.NDArray[np.float64]:
         """
-        Computes the rotation matrix to align the local z-axis with the given direction vector.
+        Calculates the normal unit vector to a plane defined by three points.
 
         Args:
-            - direction_vector (Sequence[float]): direction vector to align with
+            - plane_points (Sequence[Sequence[float]]): three points defining the plane.
+
+        Raises:
+            - ValueError: if less than three points are provided.
+            - ValueError: if the points are collinear.
 
         Returns:
-            - npty.NDArray[np.float64]: rotation matrix to align the local z-axis with the given direction vector
+            - npty.NDArray[np.float64]: normal unit vector to the plane.
 
         """
-        # Compute rotation matrix to align the local z-axis [0,0,1] with the given direction_vector
-        norm = np.array(np.linalg.norm(direction_vector), dtype=float)
-        target = direction_vector / norm
-        reference_z_axis = np.array([0.0, 0.0, 1.0])
-        # using np.clip to ensure the dot product is within the valid range
-        # as there could be floating point errors
-        dot_prod = np.clip(np.dot(reference_z_axis, target), -1.0, 1.0)
-        angle = np.arccos(dot_prod)  # The inverse of cos so that, if y = cos(x), then x = arccos(y).
 
-        # Use the identity matrix when no rotation is needed.
-        if np.abs(angle) < GEOMETRY_PRECISION:
-            R = np.eye(3)
-        else:
-            # Determine the rotation axis from the cross product.
-            axis = np.cross(reference_z_axis, target)
-            norm = np.array(np.linalg.norm(axis), dtype=float)
-            axis = axis / norm
-            cos_theta = np.cos(angle)
-            sin_theta = np.sin(angle)
-            ux, uy, uz = axis
-            row_1 = np.array([
-                cos_theta + ux**2 * (1 - cos_theta),
-                ux * uy * (1 - cos_theta) - uz * sin_theta,
-                ux * uz * (1 - cos_theta) + uy * sin_theta,
-            ])
-            row_2 = np.array([
-                uy * ux * (1 - cos_theta) + uz * sin_theta,
-                cos_theta + uy**2 * (1 - cos_theta),
-                uy * uz * (1 - cos_theta) - ux * sin_theta,
-            ])
-            row_3 = np.array([
-                uz * ux * (1 - cos_theta) - uy * sin_theta,
-                uz * uy * (1 - cos_theta) + ux * sin_theta,
-                cos_theta + uz**2 * (1 - cos_theta),
-            ])
-            # Create the rotation matrix.
-            R = np.array([row_1, row_2, row_3])
-        return R
+        if len(plane_points) < 3:
+            raise ValueError("Less than 3 points are given, cannot define a plane.")
+
+        # Convert points to a NumPy array for easier manipulation
+        p1, p2, p3 = np.array(plane_points[:3], dtype=np.float64)
+
+        # Calculate vectors from p1 to p2 and p1 to p3
+        v1 = p2 - p1
+        v2 = p3 - p1
+
+        # Calculate the normal vector of the plane formed by v1 and v2
+        normal = np.cross(v1, v2)
+
+        norm_normal = np.linalg.norm(normal)
+        if np.isclose(norm_normal, 0.0):
+            raise ValueError("The provided points are collinear, cannot define a plane.")
+
+        # Normalize the normal vector to get the unit normal vector
+        unit_normal = normal / norm_normal
+
+        return unit_normal

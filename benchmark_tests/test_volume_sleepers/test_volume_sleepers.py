@@ -3,10 +3,6 @@ import sys
 from shutil import rmtree
 import numpy as np
 
-import pytest
-
-from benchmark_tests.utils import assert_files_equal
-
 from stem.model import Model
 from stem.structural_material import EulerBeam, ElasticSpringDamper
 from stem.boundary import DisplacementConstraint
@@ -30,11 +26,13 @@ from stem.soil_material import (
 )
 from stem.stem import Stem
 
+from benchmark_tests.utils import assert_floats_in_directories_almost_equal
 
-def test_moving_load_on_track():
+
+def test_point_load_on_track_static():
     ndim = 3
     model = Model(ndim)
-    model.extrusion_length = 19.5
+    model.extrusion_length = 20
 
     # Specify material model
     # Linear elastic drained soil with a Density of 2650, a Young's modulus of 30e6,
@@ -49,10 +47,10 @@ def test_moving_load_on_track():
     material1 = SoilMaterial("soil_1", soil_formulation1, constitutive_law1, retention_parameters1)
     # Specify the coordinates for the column: x:5m x y:1m
     layer1_coordinates = [
-        (0.0, 0.0, -5.0),
-        (3.47, 0.0, -5.0),
-        (3.47, 1.0, -5.0),
-        (0.0, 1.0, -5.0),
+        (0.0, 0.0, 0.0),
+        (3.47, 0.0, 0.0),
+        (3.47, 1.0, 0.0),
+        (0.0, 1.0, 0.0),
     ]
     # Create the soil layer
     model.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil_layer_1")
@@ -66,10 +64,10 @@ def test_moving_load_on_track():
     material2 = SoilMaterial("soil_2", soil_formulation2, constitutive_law2, retention_parameters2)
     # Specify the coordinates for the column: x:5m x y:1m
     layer2_coordinates = [
-        (0.0, 1.0, -5.0),
-        (3.47, 1.0, -5.0),
-        (3.47, 2.5, -5.0),
-        (0.0, 2.5, -5.0),
+        (0.0, 1.0, 0),
+        (3.47, 1.0, 0),
+        (3.47, 2.5, 0),
+        (0.0, 2.5, 0),
     ]
     # Create the soil layer
     model.add_soil_layer_by_coordinates(layer2_coordinates, material2, "soil_layer_2")
@@ -101,35 +99,33 @@ def test_moving_load_on_track():
         retention_parameters=SaturatedBelowPhreaticLevelLaw(),
     )
 
-    origin_point = np.array([2.5, 2.5, -4.5])
+    origin_point = np.array([0.75, 2.5, 0])
     direction_vector = np.array([0, 0, 1])
     # dimensions of the sleeper
     sleeper_height = 0.3
     rail_pad_thickness = 0.02
-    sleeper_length = 2.8 / 2
+    sleeper_length = 2.5 / 2
     sleeper_width = 0.234
     sleeper_distance = 1.0
-    sleeper_dimensions = [sleeper_length, sleeper_width, sleeper_height]
-    offset_sleepers_rail_pads = 0.43
+    sleeper_dimensions = [sleeper_width, sleeper_height, sleeper_length]
+    distance_middle_sleeper_to_rail = origin_point[0]
 
     # create a straight track with rails, sleepers and rail pads
-    model.generate_straight_track(
-        sleeper_distance=sleeper_distance,
-        n_sleepers=20,
-        rail_parameters=rail_parameters,
-        sleeper_parameters=sleeper_parameters,
-        rail_pad_parameters=rail_pad_parameters,
-        rail_pad_thickness=rail_pad_thickness,
-        origin_point=origin_point,
-        direction_vector=direction_vector,
-        sleeper_dimensions=sleeper_dimensions,
-        sleeper_rail_pad_offset=offset_sleepers_rail_pads,
-        name="rail_track_1",
-    )
+    model.generate_straight_track(sleeper_distance=sleeper_distance,
+                                  n_sleepers=21,
+                                  rail_parameters=rail_parameters,
+                                  sleeper_parameters=sleeper_parameters,
+                                  rail_pad_parameters=rail_pad_parameters,
+                                  rail_pad_thickness=rail_pad_thickness,
+                                  origin_point=origin_point,
+                                  direction_vector=direction_vector,
+                                  sleeper_dimensions=sleeper_dimensions,
+                                  name="rail_track_1",
+                                  distance_middle_sleeper_to_rail=distance_middle_sleeper_to_rail)
 
     load = PointLoad(active=[False, True, False], value=[0.0, -10000.0, 0.0])
     model.add_load_by_coordinates(
-        coordinates=[[2.5, 2.5 + sleeper_height + rail_pad_thickness, 5.0]],
+        coordinates=[[0.75, 2.5 + sleeper_height + rail_pad_thickness, 10.0]],
         load_parameters=load,
         name="point_load",
     )
@@ -138,18 +134,24 @@ def test_moving_load_on_track():
     no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
                                                         is_fixed=[True, True, True],
                                                         value=[0, 0, 0])
-    roller_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+    roller_displacement_parameters = DisplacementConstraint(active=[True, False, True],
                                                             is_fixed=[True, False, True],
                                                             value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
+    # model.show_geometry(show_surface_ids=True)
+
     model.add_boundary_condition_by_geometry_ids(2, [1], no_displacement_parameters, "base_fixed")
-    model.add_boundary_condition_by_geometry_ids(
-        2,
-        [2, 6, 5, 4, 444, 468, 469, 467],
-        roller_displacement_parameters,
-        "roller_fixed",
-    )
+
+    model.add_boundary_condition_on_plane([[0, 0, 0], [3.47, 0, 0], [0, 1, 0]], roller_displacement_parameters,
+                                          "roller")
+    model.add_boundary_condition_on_plane([[0, 0, 0], [0, 2.5, 0], [0, 0, model.extrusion_length]],
+                                          roller_displacement_parameters, "roller")
+    model.add_boundary_condition_on_plane([[3.47, 0, 0], [3.47, 2.5, 0], [3.47, 0, model.extrusion_length]],
+                                          roller_displacement_parameters, "roller")
+    model.add_boundary_condition_on_plane(
+        [[0, 0, model.extrusion_length], [3.47, 0, model.extrusion_length], [0, 2.5, model.extrusion_length]],
+        roller_displacement_parameters, "roller")
 
     # Set up solver settings
     analysis_type = AnalysisType.MECHANICAL
@@ -189,9 +191,6 @@ def test_moving_load_on_track():
     # Nodal results
     nodal_results = [
         NodalOutput.DISPLACEMENT,
-        NodalOutput.VELOCITY_X,
-        NodalOutput.VELOCITY_Y,
-        NodalOutput.VELOCITY_Z,
     ]
     # Gauss point results
     # gauss_point_results = [GaussPointOutput.CAUCHY_STRESS_VECTOR,GaussPointOutput.CAUCHY_STRESS_TENSOR ]
@@ -231,10 +230,9 @@ def test_moving_load_on_track():
     else:
         raise Exception("Unknown platform")
 
-    result = assert_files_equal(
+    assert_floats_in_directories_almost_equal(
         expected_output_dir,
         os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"),
     )
 
-    assert result is True
     rmtree(input_folder)

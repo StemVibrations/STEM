@@ -1,16 +1,18 @@
 import json
 import os
 from copy import deepcopy
+
 import numpy as np
 from pathlib import Path
-from numpy import ndarray
+from numpy.typing import NDArray
+
 from typing import Sequence, Tuple, get_args, Set, Optional, List, Dict, Any, Union
 
 from gmsh_utils import gmsh_IO
 
 from stem.additional_processes import ParameterFieldParameters, HingeParameters
 from stem.field_generator import RandomFieldGenerator
-from stem.globals import ELEMENT_DATA, OUT_OF_PLANE_AXIS_2D, VERTICAL_AXIS, GRAVITY_VALUE
+from stem.globals import ELEMENT_DATA, OUT_OF_PLANE_AXIS_2D, VERTICAL_AXIS, GRAVITY_VALUE, GEOMETRY_PRECISION
 from stem.load import *
 from stem.boundary import *
 from stem.geometry import Geometry, Point
@@ -69,83 +71,88 @@ class Model:
         """
         return self.body_model_parts + self.process_model_parts
 
-    @staticmethod
-    def __generate_sleeper_base_coordinates(global_coord: Sequence[float], sleeper_dimensions: Sequence[float],
-                                            sleeper_rail_pad_offset: float,
-                                            direction_vector: Sequence[float]) -> Sequence[float]:
+    def __generate_sleeper_base_coordinates(self, global_coord: Sequence[float], sleeper_dimensions: Sequence[float],
+                                            direction_vector: Sequence[float], sleeper_position: str,
+                                            distance_middle_to_rail: float) -> NDArray[np.float64]:
         r"""
         Computes the global coordinates of the four base corner points of a sleeper,
-        rotated so that its long (x) axis is perpendicular to the given direction vector.
+        rotated so that its length is perpendicular to the given direction vector.
 
-        The sleeper is defined in its local coordinate system with the origin at (0, 0, 0):
-          - The x-axis (sleeper length) is originally along [1, 0, 0]
-          - The z-axis (sleeper width) is along [0, 0, 1]
+        The sleeper is defined in its local coordinate system:
+          - the sleeper width follows the local x-axis
+          - the sleeper length follows the local z-axis
 
         Local base corners (relative to the origin) are defined as:
-            B: [ length - rail_pad_offset,    0, +width/2 ]
-            C: [ length - rail_pad_offset,    0, -width/2 ]
-            D: [ -rail_pad_offset,            0, -width/2 ]
-            E: [ -rail_pad_offset,            0, +width/2 ]
+            B: [-width/2, 0, length - distance_centre_to_railpad]
+            C: [ width/2, 0, length - distance_centre_to_railpad]
+            D: [ width/2, 0, -distance_centre_to_railpad]
+            E: [-width/2, 0, -distance_centre_to_railpad]
 
-        These local coordinates are then rotated so that the local z-axis aligns with the provided
-        direction_vector (using Rodrigues' rotation formula) and finally translated by global_coord.
-
-        Essentially the direction vector and the local z-axis define an angle $theta$.
-        This angle is used together with the normalized axis of rotation ($u = (u_x, u_x, u_y)$)
-        to define the rotational matrix https://en.wikipedia.org/wiki/Rotation_matrix.
-
-        $$
-        R = \begin{pmatrix}
-        \cos\theta + u_x^2 (1-\cos\theta) & u_x u_y (1-\cos\theta) - u_z \sin\theta &
-        u_x u_z (1-\cos\theta) + u_y \sin\theta \\
-        u_y u_x (1-\cos\theta) + u_z \sin\theta & \cos\theta + u_y^2 (1-\cos\theta) &
-        u_y u_z (1-\cos\theta) - u_x \sin\theta \\
-        u_z u_x (1-\cos\theta) - u_y \sin\theta & u_z u_y (1-\cos\theta) + u_x \sin\theta &
-        \cos\theta + u_z^2 (1-\cos\theta)
-        \end{pmatrix}.
-        $$
-
-        Finally, the rotated points are given by $R \cdot P + global\_coord$, where $P$ are the local coordinates.
+        These local coordinates are then rotated and translated so that the sleeper width aligns with the provided
+        direction_vector while not using roll-rotation.
 
         Args:
             - global_coord (Sequence[float]): Global coordinate of the sleeper origin.
-            - sleeper_dimensions (Sequence[float]): Sleeper dimensions [length, width, height].
-            - sleeper_rail_pad_offset (float): Offset from the local origin to the rail pad along x.
-            - direction_vector (Sequence[float]): Global direction in which the sleeper's length should point.
+            - sleeper_dimensions (Sequence[float]): Sleeper dimensions [width, height, length].
+            - direction_vector (Sequence[float]): Global direction in which the sleeper's width should point.
+            - sleeper_position (str): Relative position of the sleeper in the track ('first', 'middle', 'last').
+            - distance_middle_to_rail (float): Distance from the middle of the sleeper to the rail pad location, in
+                the sleeper length direction.
 
         Returns:
-            - np.ndarray: An array (shape (4, 3)) of the global coordinates for the sleeper's four base corners.
+            - NDArray[np.float64]: An array (shape (4, 3)) of the global coordinates for the sleeper's
+                four base corners.
         """
         # Unpack dimensions; height is not used here.
-        length, width, height = sleeper_dimensions
+        width, _, length = sleeper_dimensions
 
-        # Define the sleeper's local base coordinates (with local origin = [0,0,0])
-        points_local = np.array([
-            [length - sleeper_rail_pad_offset, 0.0, +width / 2],
-            [length - sleeper_rail_pad_offset, 0.0, -width / 2],
-            [-sleeper_rail_pad_offset, 0.0, -width / 2],
-            [-sleeper_rail_pad_offset, 0.0, +width / 2],
-        ])
+        if width <= 0 or length <= 0:
+            raise ValueError("Sleeper dimensions must be positive values.")
 
-        R = Utils.compute_rotational_matrix(direction_vector)
+        # Define the sleeper's local base coordinates
+        left_width_coord = 0 if sleeper_position == 'first' else -width / 2
+        right_width_coord = 0 if sleeper_position == 'last' else width / 2
 
-        # Rotate the local points.
-        rotated_points = points_local.dot(R.T)
-        # Ensure the points are in float format.
-        rotated_points = np.array(rotated_points, dtype=float)
+        if self.ndim == 2:
+            points_local = np.array([[left_width_coord, 0.0, 0.0], right_width_coord, 0.0, 0.0])
+        else:
+            points_local = np.array([
+                [left_width_coord, 0.0, 0],
+                [right_width_coord, 0.0, 0],
+                [right_width_coord, 0.0, length],
+                [left_width_coord, 0.0, length],
+            ])
 
-        # Translate the points to global coordinates.
-        points_global: Sequence[float] = rotated_points + global_coord
+            # move local coordinates such that origin is at the rail pad location
+            end_to_rail = length - distance_middle_to_rail
+            points_local[:, 2] = end_to_rail - points_local[:, 2]
 
+        # set up transformation matrix to rotate points to align with direction_vector
+        normalized_direction_vector = np.array(direction_vector) / np.linalg.norm(direction_vector)
+        direction_array = np.array(normalized_direction_vector)
+
+        w = np.array([-direction_array[2], 0, direction_array[0]])
+        v = w / np.linalg.norm(w)
+        transformation_matrix = np.eye(3)
+        transformation_matrix[0, :] = direction_array
+        transformation_matrix[2, :] = v
+
+        # mirror local sleeper points if rotation around vertical axis is negative
+        if transformation_matrix[2, 0] < -GEOMETRY_PRECISION:
+            points_local[:, 2] = -points_local[:, 2]
+            points_local[[0, 1]] = points_local[[1, 0]]
+            points_local[[2, 3]] = points_local[[3, 2]]
+
+        rotated_points = points_local.dot(transformation_matrix)
+        points_global = rotated_points + global_coord
         return points_global
 
-    def __generate_sleepers(self, sleeper_parameters: Union[NodalConcentrated,
-                                                            SoilMaterial], sleeper_dimensions: Sequence[float],
-                            base_sleeper_name: str, sleeper_global_coords: Sequence[Sequence[float]],
-                            sleeper_rail_pad_offset: float, direction_vector: Sequence[float]) -> None:
+    def __generate_and_add_sleepers(self, sleeper_parameters: Union[NodalConcentrated, SoilMaterial],
+                                    sleeper_dimensions: Sequence[float], base_sleeper_name: str,
+                                    sleeper_global_coords: Sequence[Sequence[float]], direction_vector: Sequence[float],
+                                    distance_middle_to_rail: float) -> NDArray[np.float64]:
         """
         Generates sleeper geometry based on the type of sleeper parameters.
-        Note that for the SoilMaterial sleepers, the function assumes tha there are no elevation changes in the track.
 
         For NodalConcentrated sleepers, creates point-based geometries.
         For SoilMaterial sleepers, creates 3D volumes.
@@ -153,58 +160,66 @@ class Model:
         Args:
             - sleeper_parameters (Union[:class:`stem.structural_material.NodalConcentrated`,
             :class:`stem.soil_material.SoilMaterial`]): sleeper parameters
-            - sleeper_dimensions (Sequence[float]): Dimensions for the sleeper if applicable.
-            - base_sleeper_name (str): Base name for sleepers.
-            - sleeper_global_coords (np.ndarray): Global coordinates for sleeper placement.
-            - sleeper_rail_pad_offset (float): Offset between the sleeper end and the rail pad location.
+            - sleeper_dimensions (Sequence[float]): Dimensions for the sleeper volumes [width, height, length].
+            - base_sleeper_name (str): Name for sleepers.
+            - sleeper_global_coords (NDArray[np.float64]): Global coordinates for sleeper placement.
             - direction_vector (Sequence[float]): direction vector of the track
+            - distance_middle_to_rail (float): Distance from the middle of the sleeper to the rail pad location, in
+                the sleeper length direction.
 
         Returns:
-            - None
+            - NDArray[np.float64]: Unit vectors in normal direction to sleeper base at each sleeper location.
 
         """
+
+        normal_unit_vectors = np.zeros((len(sleeper_global_coords), 3))
+        normal_unit_vectors[:, VERTICAL_AXIS] = 1.0
+
+        connection_geo_settings = {"": {"coordinates": sleeper_global_coords, "ndim": 1}}
+        self.gmsh_io.generate_geometry(connection_geo_settings, "")
         if isinstance(sleeper_parameters, NodalConcentrated):
-            connection_geo_settings = {"": {"coordinates": sleeper_global_coords, "ndim": 1}}
-            self.gmsh_io.generate_geometry(connection_geo_settings, "")
+
             # For nodal sleepers, create a connection line and a point geometry for the sleeper.
             sleeper_geo_settings = {base_sleeper_name: {"coordinates": sleeper_global_coords, "ndim": 0}}
             self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
+
         elif isinstance(sleeper_parameters, SoilMaterial):
-            # if no soil is present then this can be skipped
-            if len(self.body_model_parts) > 0:
-                # select the start and end points of the sleepers
-                # Get the start and end points of the sleepers
-                start_point = sleeper_global_coords[0]
-                end_point = sleeper_global_coords[-1]
-                min_coords, max_coords = self.get_bounding_box_soil()
-                identity_vector = np.array([1, 1, 1])
-                # extend the start and end points in the direction of the track so that they are outside the soil domain
-                extension_start_point = (start_point * (identity_vector - np.array(direction_vector)) +
-                                         np.array(direction_vector) * min_coords)
-                extension_end_point = (end_point * (identity_vector - np.array(direction_vector)) +
-                                       np.array(direction_vector) * max_coords)
-                connection_geo_settings = {
-                    "": {
-                        "coordinates": [extension_start_point, extension_end_point],
-                        "ndim": 1,
-                    }
-                }
-                self.gmsh_io.generate_geometry(connection_geo_settings, "")
-                # For soil sleepers, create a 3D volume for each sleeper.
+
             for i, coord in enumerate(sleeper_global_coords):
-                coords_base = self.__generate_sleeper_base_coordinates(coord, sleeper_dimensions,
-                                                                       sleeper_rail_pad_offset, direction_vector)
+
+                # check sleeper position in the track, to adjust sleeper base coordinates
+                if i == 0:
+                    sleeper_position = 'first'
+                elif i == len(sleeper_global_coords) - 1:
+                    sleeper_position = 'last'
+                else:
+                    sleeper_position = 'middle'
+
+                # Generate sleeper base coordinates
+                sleeper_base_coords = self.__generate_sleeper_base_coordinates(coord, sleeper_dimensions,
+                                                                               direction_vector, sleeper_position,
+                                                                               distance_middle_to_rail)
+
+                # Compute extrusion length vector (normal to sleeper base)
+                normal_unit_vector = Utils.calculated_normal_unit_vector_to_plane(sleeper_base_coords)
+                extrusion_length = normal_unit_vector * sleeper_dimensions[1]
+                normal_unit_vectors[i, :] = normal_unit_vector
+
                 # Ensure the list is initialized with float values
-                extrusions: List[float] = [0.0, 0.0, 0.0]
-                extrusions[VERTICAL_AXIS] = sleeper_dimensions[2]  # Ensure this is a float
                 sleeper_geo_settings = {
                     base_sleeper_name: {
-                        "coordinates": coords_base,
+                        "coordinates": sleeper_base_coords,
                         "ndim": 3,
-                        "extrusion_length": extrusions
+                        "extrusion_length": extrusion_length
                     }
                 }
                 self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
+
+        # add sleeper model part
+        sleeper_model_part = self.__create_sleeper_model_parts(base_sleeper_name, sleeper_parameters)
+        self.body_model_parts.append(sleeper_model_part)
+
+        return normal_unit_vectors
 
     def __create_rail_model_part(self, rail_name: str, rail_parameters: EulerBeam) -> BodyModelPart:
         """
@@ -287,13 +302,14 @@ class Model:
                                                                   value=[0, 0, 0])
         return constraint_model_part
 
-    def __create_rail_no_rotation_model_part(self, rail_name: str, rail_global_coords: ndarray[Any, Any]) -> ModelPart:
+    def __create_rail_no_rotation_model_part(self, rail_name: str,
+                                             rail_global_coords: NDArray[np.float64]) -> ModelPart:
         """
         Creates a model part that prevents rotation at the rail ends preventing torsion.
 
         Args:
             - rail_name (str): Name of the rail.
-            - rail_global_coords (np.ndarray): Global coordinates of the rail.
+            - rail_global_coords (NDArray[np.float64]): Global coordinates of the rail.
 
         Returns:
             - :class:`stem.model_part.ModelPart`: Configured no-rotation constraint model part.
@@ -325,19 +341,19 @@ class Model:
                                 origin_point: Sequence[float],
                                 direction_vector: Sequence[float],
                                 name: str,
-                                sleeper_rail_pad_offset: float = 0.0,
-                                sleeper_dimensions: Optional[Sequence[float]] = None):
+                                sleeper_dimensions: Optional[Sequence[float]] = None,
+                                distance_middle_sleeper_to_rail: Optional[float] = None):
         """
-        Generates a track geometry. With rail, rail-pads and sleepers as mass elements. Sleepers are placed at the
+        Generates a track geometry. With rail, rail-pads and sleepers. Sleepers are placed at the
         bottom of the track with a distance of sleeper_distance between them. The sleepers are connected to the rail
         with rail-pads with a thickness of rail_pad_thickness. The track is generated in the direction of the
         direction_vector starting from the origin_point. The track can only move in the vertical direction.
 
-        Sleepers can be modelled as NodalConcentrated or SoilMaterial, so as  mass points or volume elements.
-        If the sleepers are modelled as SoilMaterial, the dimensions of the sleepers must be provided and the offset
-        between the sleeper end and the rail pad location.
+        Sleepers can be modelled as NodalConcentrated or SoilMaterial, so as points or volume elements.
+        If the sleepers are modelled as SoilMaterial, the dimensions of the sleepers must be provided and the distance
+        between the sleeper centre and the rail pad location in the sleeper length direction.
 
-        The sleeper dimensions must be provided in the format [length, width, height], where the length is defined
+        The sleeper dimensions must be provided in the format [width, height, length], where the length is defined
         as half the sleeper length, as symmetry is assumed and only half the sleeper is modelled
 
         Args:
@@ -351,48 +367,121 @@ class Model:
             - origin_point (Sequence[float]): origin point of the track
             - direction_vector (Sequence[float]): direction vector of the track
             - name (str): name of the track
-            - sleeper_rail_pad_offset  (float): offset between the sleeper end and the rail pad location
-            - sleeper_dimensions (Sequence[float]): dimensions of the sleepers  to be modelled
-            with the format [length, width, height]
+            - sleeper_dimensions (Optional[Sequence[float]]): dimensions of the sleepers  to be modelled
+                with the format [width, height, length]
+            - distance_middle_sleeper_to_rail (Optional[float]): distance from centre of sleeper to the rail pad
+                location in the sleeper length direction.
+
         """
-
-        rail_name = f"{name}"
-
-        sleeper_name = f"sleeper_{name}"
-        rail_pads_name = f"rail_pads_{name}"
 
         if isinstance(sleeper_parameters, SoilMaterial):
             if sleeper_dimensions is None:
                 raise ValueError("If sleeper parameters are SoilMaterial, dimensions must be a list of "
                                  "length, width, height.")
+            if distance_middle_sleeper_to_rail is None:
+                raise ValueError("If sleeper parameters are SoilMaterial, the offset between the sleeper "
+                                 "middle and the rail must be provided.")
         else:
-            if sleeper_dimensions is None:
-                sleeper_dimensions = [0.0, 0.0, 0.0]
+            sleeper_dimensions = [0.0, 0.0, 0.0]
+            distance_middle_sleeper_to_rail = 0.0
 
         normalized_direction_vector = np.array(direction_vector) / np.linalg.norm(direction_vector)
 
         # set local rail geometry
-        rail_local_distance = np.linspace(0, sleeper_distance * (n_sleepers - 1), n_sleepers)
+        rail_local_distance = np.linspace(0, sleeper_distance * (n_sleepers - 1), n_sleepers).astype(np.float64)
         sleeper_local_coords = np.copy(rail_local_distance)
+
+        sleeper_bottom_global_coords = sleeper_local_coords[:, None].dot(
+            normalized_direction_vector[None, :]) + origin_point
+
+        # Generate sleeper geometry based on the type of sleeper parameters
+        sleeper_normal_vectors = self.__generate_and_add_sleepers(sleeper_parameters, sleeper_dimensions,
+                                                                  f"sleeper_{name}", sleeper_bottom_global_coords,
+                                                                  direction_vector, distance_middle_sleeper_to_rail)
+
+        self.__add_straight_track_items(name, rail_parameters, rail_pad_parameters, origin_point, rail_local_distance,
+                                        normalized_direction_vector, sleeper_normal_vectors,
+                                        sleeper_bottom_global_coords, sleeper_dimensions, rail_pad_thickness)
+
+    def __calculate_nodal_equivalent_sleeper_parameters(self, sleeper_dimensions: Sequence[float],
+                                                        sleeper_material: SoilMaterial) -> NodalConcentrated:
+        """
+        Computes the nodal equivalent parameters for volume sleepers located outside the soil domain.
+
+        Args:
+            - sleeper_dimensions (Sequence[float]): Dimensions of the sleeper [width, height, length].
+            - sleeper_material (:class:`stem.soil_material.SoilMaterial`): Material properties of the sleeper.
+
+        Raises:
+            - ValueError: if sleeper_material is not of type SoilMaterial.
+            - ValueError: if sleeper dimensions are zero.
+
+        Returns:
+            - :class:`stem.structural_material.NodalConcentrated`: Nodal equivalent parameters for the sleeper.
+        """
+
+        # if volume sleepers are used, compute the nodal equivalent parameters for the sleepers outside the soil domain
+        if isinstance(sleeper_material.soil_formulation, (OnePhaseSoil, TwoPhaseSoil)):
+
+            if (self.ndim == 2 and np.isclose(sleeper_dimensions[0] * sleeper_dimensions[1], 0)) or \
+                    (self.ndim == 3 and
+                     np.isclose(sleeper_dimensions[0] * sleeper_dimensions[1] * sleeper_dimensions[2], 0)):
+                raise ValueError("If sleeper parameters are SoilMaterial, dimensions must be non-zero.")
+
+            if self.ndim == 2:
+                sleeper_space = sleeper_dimensions[0] * sleeper_dimensions[1]
+            else:
+                sleeper_space = sleeper_dimensions[0] * sleeper_dimensions[1] * sleeper_dimensions[2]
+
+            sleeper_mass = sleeper_material.soil_formulation.DENSITY_SOLID * sleeper_space
+            nodal_sleeper_parameters = NodalConcentrated(NODAL_MASS=sleeper_mass,
+                                                         NODAL_DAMPING_COEFFICIENT=[0, 0, 0],
+                                                         NODAL_DISPLACEMENT_STIFFNESS=[0, 0, 0])
+            return nodal_sleeper_parameters
+        else:
+            raise ValueError("sleeper soil formulation must be of type OnePhaseSoil or TwoPhaseSoil to compute "
+                             "nodal equivalent parameters.")
+
+    def __add_straight_track_items(self, name: str, rail_parameters: EulerBeam,
+                                   rail_pad_parameters: ElasticSpringDamper, origin_point: Sequence[float],
+                                   rail_local_distance: NDArray[np.float64],
+                                   normalized_direction_vector: NDArray[np.float64],
+                                   sleeper_normal_vectors: NDArray[np.float64],
+                                   sleeper_bottom_global_coords: Sequence[float], sleeper_dimensions: Sequence[float],
+                                   rail_pad_thickness: float):
+        """
+        Adds rail, rail pad and constraints geometries and model parts to the model.
+
+        Args:
+            - name (str): name of the track
+            - rail_parameters (:class:`stem.structural_material.EulerBeam`): rail parameters
+            - rail_pad_parameters (:class:`stem.structural_material.ElasticSpringDamper`): rail pad parameters
+            - origin_point (Sequence[float]): origin point of the track
+            - rail_local_distance (NDArray[np.float64]): local distance along the rail
+            - normalized_direction_vector (NDArray[np.float64]): normalized direction vector of the track
+            - sleeper_normal_vectors (NDArray[np.float64]): normal unit vectors from the sleeper bases at each
+                sleeper location
+            - sleeper_bottom_global_coords (Sequence[float]): global coordinates of the sleeper bases
+        """
+
+        rail_name = f"{name}"
+        rail_pads_name = f"rail_pads_{name}"
 
         # set global rail geometry
         rail_global_coords = rail_local_distance[:, None].dot(normalized_direction_vector[None, :]) + origin_point
-        rail_global_coords[:, VERTICAL_AXIS] += rail_pad_thickness
-        rail_global_coords[:, VERTICAL_AXIS] += sleeper_dimensions[2]
-        rail_geo_settings = {rail_name: {"coordinates": rail_global_coords, "ndim": 1}}
+        rail_global_coords = rail_global_coords + sleeper_normal_vectors * rail_pad_thickness
+        rail_global_coords = rail_global_coords + sleeper_normal_vectors * sleeper_dimensions[1]
 
-        sleeper_global_coords = sleeper_local_coords[:, None].dot(normalized_direction_vector[None, :]) + origin_point
-        # Generate sleeper geometry based on the type of sleeper parameters
-
-        self.__generate_sleepers(sleeper_parameters, sleeper_dimensions, sleeper_name, sleeper_global_coords,
-                                 sleeper_rail_pad_offset, direction_vector)
         # add the rail geometry
+        rail_geo_settings = {rail_name: {"coordinates": rail_global_coords, "ndim": 1}}
         self.gmsh_io.generate_geometry(rail_geo_settings, "")
 
         # create rail pad geometries
         rail_pad_line_ids_aux = []
-        for top_coordinates, bot_coordinates in zip(rail_global_coords, sleeper_global_coords):
-            bot_coordinates[VERTICAL_AXIS] += sleeper_dimensions[2]
+        for top_coordinates, bot_coordinates, sleeper_normal_vector in zip(rail_global_coords,
+                                                                           sleeper_bottom_global_coords,
+                                                                           sleeper_normal_vectors):
+            bot_coordinates = bot_coordinates + sleeper_normal_vector * sleeper_dimensions[1]
             rail_pad_line_ids_aux.append(self.gmsh_io.make_geometry_1d((top_coordinates, bot_coordinates)))
         rail_pad_line_ids = [ids[0] for ids in rail_pad_line_ids_aux]
 
@@ -400,13 +489,11 @@ class Model:
 
         # Create and add model parts
         rail_model_part = self.__create_rail_model_part(rail_name, rail_parameters)
-        sleeper_model_part = self.__create_sleeper_model_parts(sleeper_name, sleeper_parameters)
         rail_pads_model_part = self.__create_rail_pads_model_part(rail_pads_name, rail_pad_parameters)
         constraint_model_part = self.__create_rail_constraint_model_part(rail_name)
         no_rotation_model_part = self.__create_rail_no_rotation_model_part(rail_name, rail_global_coords)
 
         self.body_model_parts.append(rail_model_part)
-        self.body_model_parts.append(sleeper_model_part)
         self.body_model_parts.append(rail_pads_model_part)
         self.process_model_parts.append(constraint_model_part)
         self.process_model_parts.append(no_rotation_model_part)
@@ -423,17 +510,21 @@ class Model:
                                          length_soil_equivalent_element: float,
                                          direction_vector: Sequence[float],
                                          name: str,
-                                         use_volume_sleepers: bool = False,
                                          sleeper_dimensions: Optional[Sequence[float]] = None,
-                                         sleeper_rail_pad_offset=0.0):
+                                         distance_middle_sleeper_to_rail: Optional[float] = None):
         """
-        Generates a track geometry. With rail, rail-pads and sleepers as mass elements. Sleepers are placed at the
+        Generates a track geometry. With rail, rail-pads and sleepers. Sleepers are placed at the
         bottom of the track with a distance of sleeper_distance between them. The sleepers are connected to the rail
         with rail-pads with a thickness of rail_pad_thickness. The track is generated in the direction of the
         direction_vector starting from the origin_point. The track can only move in the vertical direction.
         When part of the track is located outside the 2D or 3D soil domain, 1D elements are placed below the sleepers
         which simulate the behaviour of the soil in vertical direction. The bottom of the 1D elements are fixed in all
         directions.
+
+        Sleepers can be modelled as NodalConcentrated or SoilMaterial, so as points or volume elements.
+        If the sleepers are modelled as SoilMaterial, the dimensions of the sleepers must be provided and the distance
+        between the sleeper centre and the rail pad location in the sleeper length direction. Sleepers outside the soil
+        domain are modelled as NodalConcentrated elements with equivalent mass.
 
         Args:
             - sleeper_distance (float): distance between sleepers
@@ -448,103 +539,84 @@ class Model:
             - length_soil_equivalent_element (float): length of the 1D soil equivalent
             - direction_vector (Sequence[float]): direction vector of the track
             - name (str): name of the track
+            - sleeper_dimensions (Optional[Sequence[float]]): dimensions of the sleepers  to be modelled
+                with the format [width, height, length]
+            - distance_middle_sleeper_to_rail (Optional[float]): distance from centre of sleeper to the rail pad
+                location in the sleeper length direction.
+
+        Raises:
+            - ValueError: if sleeper_parameters is SoilMaterial and sleeper_dimensions is not provided.
+            - ValueError: if sleeper_parameters is SoilMaterial and distance_middle_sleeper_to_rail is not provided.
         """
 
-        # if use_volume_sleepers:
-        #     if not isinstance(sleeper_parameters, SoilMaterial):
-        #         raise ValueError("If use_volume_sleepers is True, sleeper_parameters must be of type SoilMaterial.")
-        #
-        #     sleeper_volume = sleeper_dimensions[0] * sleeper_dimensions[1] * sleeper_dimensions[2]
-        #     sleeper_mass= sleeper_parameters.soil_formulation.DENSITY_SOLID * sleeper_volume
-        #     nodal_sleeper_parameters = NodalConcentrated(NODAL_MASS=sleeper_mass, NODAL_DAMPING_COEFFICIENT=[0, 0, 0],
-        #                                                  NODAL_DISPLACEMENT_STIFFNESS=[0, 0, 0])
-        #
-        #
-        # rail_name = f"{name}"
-        #
-        # sleeper_name_outside = f"sleeper_outside_{name}"
-        # sleeper_name = f"sleeper_{name}"
-        #
-        # rail_pads_name = f"rail_pads_{name}"
-        #
-        # if isinstance(sleeper_parameters, SoilMaterial):
-        #     if sleeper_dimensions is None:
-        #         raise ValueError("If sleeper parameters are SoilMaterial, dimensions must be a list of "
-        #                          "length, width, height.")
-        # else:
-        #     if sleeper_dimensions is None:
-        #         sleeper_dimensions = [0.0, 0.0, 0.0]
-        #
-        # normalized_direction_vector = np.array(direction_vector) / np.linalg.norm(direction_vector)
-        #
-        # # set local rail geometry
-        # rail_local_distance = np.linspace(0, sleeper_distance * (n_sleepers - 1), n_sleepers)
-        # sleeper_local_coords = np.copy(rail_local_distance)
-        #
-        # # set global rail geometry
-        # rail_global_coords = rail_local_distance[:, None].dot(normalized_direction_vector[None, :]) + origin_point
-        # rail_global_coords[:, VERTICAL_AXIS] += rail_pad_thickness
-        # rail_global_coords[:, VERTICAL_AXIS] += sleeper_dimensions[2]
-        # rail_geo_settings = {rail_name: {"coordinates": rail_global_coords, "ndim": 1}}
-        #
-        # sleeper_global_coords = sleeper_local_coords[:, None].dot(normalized_direction_vector[None, :]) + origin_point
-        #
-        #
-        # min_coordinates, max_coordinates = self.get_bounding_box_soil()
-        #
-        # # Check which points are inside the bounding box
-        # inside_mask = np.all((sleeper_global_coords >= min_coordinates) &
-        #                      (sleeper_global_coords <= max_coordinates), axis=1)
-        #
-        # # Split into inside/outside arrays
-        # inside_coords = sleeper_global_coords[inside_mask]
-        # outside_coords = sleeper_global_coords[~inside_mask]
-        # outside_coords[:, VERTICAL_AXIS] = outside_coords[:, VERTICAL_AXIS] + sleeper_dimensions[2]
-        #
-        # if use_volume_sleepers:
-        #     if len(inside_coords) > 0:
-        #         self.__generate_sleepers(sleeper_parameters, sleeper_dimensions, sleeper_name, inside_coords,
-        #                                  sleeper_rail_pad_offset, direction_vector)
-        #     if len(outside_coords) > 0:
-        #         self.__generate_sleepers(nodal_sleeper_parameters, sleeper_dimensions, sleeper_name_outside,
-        #         outside_coords, 0.0, direction_vector)
-        # else:
-        #     self.__generate_sleepers(sleeper_parameters, sleeper_dimensions, sleeper_name, sleeper_global_coords,
-        #                              0.0, direction_vector)
-        #
-        # # add the rail geometry
-        # self.gmsh_io.generate_geometry(rail_geo_settings, "")
-        #
-        # # create rail pad geometries
-        # rail_pad_line_ids_aux = []
-        # for top_coordinates, bot_coordinates in zip(rail_global_coords, sleeper_global_coords):
-        #     bot_coordinates[VERTICAL_AXIS] += sleeper_dimensions[2]
-        #     rail_pad_line_ids_aux.append(self.gmsh_io.make_geometry_1d((top_coordinates, bot_coordinates)))
-        # rail_pad_line_ids = [ids[0] for ids in rail_pad_line_ids_aux]
-        #
-        # self.gmsh_io.add_physical_group(rail_pads_name, 1, rail_pad_line_ids)
-        #
-        # # Create and add model parts
-        # rail_model_part = self.__create_rail_model_part(rail_name, rail_parameters)
-        # sleeper_model_part = self.__create_sleeper_model_parts(sleeper_name, sleeper_parameters)
-        # sleeper_outside_model_part = self.__create_sleeper_model_parts(sleeper_name_outside, nodal_sleeper_parameters)
-        # self.body_model_parts.append(sleeper_outside_model_part)
-        # rail_pads_model_part = self.__create_rail_pads_model_part(rail_pads_name, rail_pad_parameters)
-        # constraint_model_part = self.__create_rail_constraint_model_part(rail_name)
-        # no_rotation_model_part = self.__create_rail_no_rotation_model_part(rail_name, rail_global_coords)
-        #
-        # self.body_model_parts.append(rail_model_part)
-        # self.body_model_parts.append(sleeper_model_part)
-        # self.body_model_parts.append(rail_pads_model_part)
-        # self.process_model_parts.append(constraint_model_part)
-        # self.process_model_parts.append(no_rotation_model_part)
+        sleeper_name_outside = f"sleeper_outside_{name}"
+        sleeper_name = f"sleeper_{name}"
 
-        self.generate_straight_track(sleeper_distance, n_sleepers, rail_parameters, sleeper_parameters,
-                                     rail_pad_parameters, rail_pad_thickness, origin_point, direction_vector, name)
-        self.__generate_extended_rail_part(soil_equivalent_parameters, name, length_soil_equivalent_element)
+        if isinstance(sleeper_parameters, SoilMaterial):
+            if sleeper_dimensions is None:
+                raise ValueError("If sleeper parameters are SoilMaterial, dimensions must be a list of "
+                                 "length, width, height.")
+            if distance_middle_sleeper_to_rail is None:
+                raise ValueError("If sleeper parameters are SoilMaterial, the offset between the sleeper "
+                                 "middle and the rail must be provided.")
+        else:
+            sleeper_dimensions = [0.0, 0.0, 0.0]
+            distance_middle_sleeper_to_rail = 0.0
+
+        normalized_direction_vector = np.array(direction_vector) / np.linalg.norm(direction_vector)
+
+        # set local rail geometry
+        rail_local_distance = np.linspace(0, sleeper_distance * (n_sleepers - 1), n_sleepers).astype(np.float64)
+        sleeper_local_coords = np.copy(rail_local_distance)
+
+        sleeper_bottom_global_coords = sleeper_local_coords[:, None].dot(
+            normalized_direction_vector[None, :]) + origin_point
+
+        # get the bounding box of the soil domain
+        min_coordinates, max_coordinates = self.get_bounding_box_soil()
+
+        # Check which points are inside the bounding box
+        inside_mask = np.all(
+            (sleeper_bottom_global_coords >= min_coordinates) & (sleeper_bottom_global_coords <= max_coordinates),
+            axis=1)
+
+        # Split into inside/outside the soil domain coordinates
+        inside_coords = sleeper_bottom_global_coords[inside_mask]
+        outside_coords = sleeper_bottom_global_coords[~inside_mask]
+        outside_coords[:, VERTICAL_AXIS] = outside_coords[:, VERTICAL_AXIS] + sleeper_dimensions[1]
+
+        sleeper_normal_vectors = np.zeros_like(sleeper_bottom_global_coords)
+        if isinstance(sleeper_parameters, SoilMaterial):
+            # Generate sleepers differently for inside and outside soil domain
+            # inside: volume sleepers, outside: nodal sleepers
+            if len(inside_coords) > 0:
+                sleeper_normal_vectors[inside_mask] = self.__generate_and_add_sleepers(
+                    sleeper_parameters, sleeper_dimensions, sleeper_name, inside_coords, direction_vector,
+                    distance_middle_sleeper_to_rail)
+            if len(outside_coords) > 0:
+
+                nodal_sleeper_parameters = self.__calculate_nodal_equivalent_sleeper_parameters(
+                    sleeper_dimensions, sleeper_parameters)
+
+                sleeper_normal_vectors[~inside_mask] = self.__generate_and_add_sleepers(
+                    nodal_sleeper_parameters, [], sleeper_name_outside, outside_coords, direction_vector, 0.0)
+        else:
+            # all sleepers are nodal concentrated
+            sleeper_normal_vectors = self.__generate_and_add_sleepers(sleeper_parameters, sleeper_dimensions,
+                                                                      sleeper_name, sleeper_bottom_global_coords,
+                                                                      direction_vector, 0.0)
+
+        # add rail, rail pads and constraints
+        self.__add_straight_track_items(name, rail_parameters, rail_pad_parameters, origin_point, rail_local_distance,
+                                        normalized_direction_vector, sleeper_normal_vectors,
+                                        sleeper_bottom_global_coords, sleeper_dimensions, rail_pad_thickness)
+
+        # generate soil equivalent elements outside the soil domain
+        self.__generate_extended_rail_part(soil_equivalent_parameters, name, length_soil_equivalent_element,
+                                           outside_coords)
 
     def __generate_extended_rail_part(self, soil_equivalent_parameters: ElasticSpringDamper, name: str,
-                                      length_soil_equivalent_element: float):
+                                      length_soil_equivalent_element: float, outside_coords: np.ndarray):
         """
         Generates the soil equivalent elements outside the 2D or 3D soil domain. The soil equivalent elements are
         spring-damper elements that represents the soil below the rail in vertical direction. The soil equivalent
@@ -559,22 +631,14 @@ class Model:
         """
 
         soil_equivalent_name = f"soil_equivalent_{name}"
-        # sleeper_name = f"sleeper_outside_{name}"
-        sleeper_name = f"sleeper_{name}"
-
-        # check which sleepers are outside the soil domain
-        points_outside_soil_domain = self.get_points_outside_soil(sleeper_name)
-        points_outside_ids = [point.id for point in points_outside_soil_domain]
-        points_outside_coords = [point.coordinates for point in points_outside_soil_domain]
-        # create bottom points for the soil equivalent
         # set global rail geometry
-        soil_equivalent_bottom = np.copy(points_outside_coords)
+        soil_equivalent_bottom = np.copy(outside_coords)
         soil_equivalent_bottom[:, VERTICAL_AXIS] -= length_soil_equivalent_element
 
         # create geometries of the soil equivalent lines
         soil_equivalent_lines = [
             self.gmsh_io.make_geometry_1d((top_coordinates, bot_coordinates))
-            for top_coordinates, bot_coordinates in zip(points_outside_coords, soil_equivalent_bottom)
+            for top_coordinates, bot_coordinates in zip(outside_coords, soil_equivalent_bottom)
         ]
 
         soil_equivalent_line_ids = [ids[0] for ids in soil_equivalent_lines]
@@ -594,7 +658,7 @@ class Model:
         constraint_parameters = DisplacementConstraint(active=constraint_list,
                                                        is_fixed=constraint_list,
                                                        value=[0, 0, 0])
-        self.add_boundary_condition_by_geometry_ids(0, points_outside_ids, constraint_parameters,
+        self.add_boundary_condition_by_geometry_ids(1, soil_equivalent_line_ids, constraint_parameters,
                                                     constraint_horizontal_soil_equivalent_name)
 
         # add bottom points fixed
@@ -2111,7 +2175,8 @@ class Model:
         node_dict: Dict[int, Node] = {}
         for mp in self.all_model_parts:
             if mp.mesh is None:
-                raise ValueError("Geometry has not been meshed yet! Please first run the Model.generate_mesh method.")
+                continue
+                # raise ValueError("Geometry has not been meshed yet! Please first run the Model.generate_mesh method.")
             node_dict.update(mp.mesh.nodes)
 
         return node_dict
