@@ -122,7 +122,9 @@ def test_stem():
                                            sleeper_dimensions=sleeper_dimensions,
                                            distance_middle_sleeper_to_rail=distance_middle_sleeper_to_rail)
 
-    load = MovingLoad(load=[-10, -10000, 0],
+    # Define moving load in Vertical direction, but also with small components in longitudinal and lateral direction
+    # to check if the boundary conditions work as expected
+    load = MovingLoad(load=[-10, -10000, -10],
                       direction=[1, 1, 1],
                       velocity=60.0,
                       origin=[0.75, 2.5 + sleeper_height + rail_pad_thickness, -5],
