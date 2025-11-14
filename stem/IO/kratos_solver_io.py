@@ -2,6 +2,7 @@ from typing import Dict, Any, List, Optional
 from copy import deepcopy
 import math
 
+from stem.additional_processes import CPhiReductionProcessParameters
 from stem.solver import *
 from stem.model_part import ModelPart, BodyModelPart
 from stem.load import UvecLoad
@@ -139,7 +140,10 @@ class KratosSolverIO:
                 model_parts_dict["problem_domain_sub_model_part_list"].append(model_part.name)
                 model_parts_dict["body_domain_sub_model_part_list"].append(model_part.name)
             else:
-                model_parts_dict["processes_sub_model_part_list"].append(model_part.name)
+                if not isinstance(model_part.parameters, CPhiReductionProcessParameters):
+                    model_parts_dict["processes_sub_model_part_list"].append(model_part.name)
+
+                # model_parts_dict["processes_sub_model_part_list"].append(model_part.name)
 
         return model_parts_dict
 

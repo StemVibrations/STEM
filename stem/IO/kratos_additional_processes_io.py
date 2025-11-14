@@ -79,6 +79,7 @@ class KratosAdditionalProcessesIO:
             process_dict["Parameters"]["model_part_name"] = f"{self.domain}.{part_name}"
             process_dict["Parameters"]["variable_name"] = property_name
             process_dict["Parameters"]["func_type"] = parameters.function_type
+            process_dict["Parameters"]["vector_variable_indices"] = parameters.vector_variable_indices
 
             # initialise to dummy
             process_dict["Parameters"]["function"] = "dummy"
@@ -130,6 +131,36 @@ class KratosAdditionalProcessesIO:
 
         return [process_dict_axis_2, process_dict_axis_3]
 
+    def __create_c_phi_reduction_dict(self, parameters: CPhiReductionProcessParameters) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the parameters for the c-phi reduction process
+
+        Args:
+            - part_name (str): part name where the c-phi reduction is applied
+            - parameters (:class:`stem.additional_processes.CphiReductionParameters`): c-phi reduction parameters \
+                object
+
+        Returns:
+            - Dict[str, Any]: dictionary containing the additional process parameters
+        """
+
+        if parameters.soil_model_part_name == "":
+            model_part_name = self.domain
+        else:
+            model_part_name = f"{self.domain}.{parameters.soil_model_part_name}"
+
+        # initialize boundary dictionary
+        process_dict: Dict[str, Any] = {
+            "python_module": "apply_c_phi_reduction_process",
+            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+            "process_name": "ApplyCphiReductionProcess",
+            "Parameters": {
+                "model_part_name": model_part_name
+            },
+        }
+
+        return process_dict
+
     def create_additional_processes_dict(
             self, part_name: str, parameters: AdditionalProcessesParametersABC) -> Union[List[Dict[str, Any]], None]:
         """
@@ -151,5 +182,7 @@ class KratosAdditionalProcessesIO:
             return self.__create_parameter_field_dict(part_name, parameters)
         elif isinstance(parameters, HingeParameters):
             return self.__create_hinge_dict(part_name, parameters)
+        elif isinstance(parameters, CPhiReductionProcessParameters):
+            return [self.__create_c_phi_reduction_dict(parameters)]
         else:
             raise NotImplementedError

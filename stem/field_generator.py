@@ -158,6 +158,18 @@ class RandomFieldGenerator(FieldGeneratorABC):
 
         return [self.__generated_field]
 
+    @generated_fields.setter
+    def generated_fields(self, value: List[Any]):
+        """
+        Setter for the generated field.
+
+        Args:
+            - value (List[Any]): list of generated values to set.
+
+        """
+
+        self.__generated_field = value
+
     def generate(self, coordinates: npty.NDArray[np.float64]):
         """
         Generate the random field parameters at the coordinates specified.

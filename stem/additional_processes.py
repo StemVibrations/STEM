@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from abc import ABC
 from typing import Optional, List
 
@@ -13,6 +13,17 @@ class AdditionalProcessesParametersABC(ABC):
     Abstract base class to describe the parameters required for additional processes (e.g. excavations and parameter
     fields)
     """
+
+
+@dataclass
+class CPhiReductionProcessParameters(AdditionalProcessesParametersABC):
+    """
+    Class containing the parameters for a cphi reduction process
+
+    Inheritance:
+        - :class:`AdditionalProcessesParametersABC`
+        """
+    soil_model_part_name: str = ""
 
 
 @dataclass
@@ -45,6 +56,8 @@ class ParameterFieldParameters(AdditionalProcessesParametersABC):
             (e.g. [YOUNG_MODULUS])
         - function_type (str): the type of function to be provided. It can be either `json_file` or `input`,
             as provided in the function documentation.
+        - vector_variable_indices (List[int]): list of indices for vector variables. \
+            This is currently not used but will be in the future for vector variables.
         - field_file_names (Optional[List[str]]): Name for the json file where the field parameters will be stored. \
             This is optional for `json` function_type.
         - field_generator (Optional[:class:`stem.field_generator.FieldGeneratorABC`]): the field generator to produce \
@@ -60,6 +73,7 @@ class ParameterFieldParameters(AdditionalProcessesParametersABC):
 
     property_names: List[str]
     function_type: str
+    vector_variable_indices: List[int] = field(default_factory=list)
     field_file_names: Optional[List[str]] = None
     field_generator: Optional[FieldGeneratorABC] = None
     tiny_expr_function: Optional[str] = None

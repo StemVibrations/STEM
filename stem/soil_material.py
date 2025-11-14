@@ -169,6 +169,8 @@ class SmallStrainUmatLaw(SoilConstitutiveLawABC):
     IS_FORTRAN_UMAT: bool
     UMAT_PARAMETERS: List[Any]
     STATE_VARIABLES: List[Any]
+    INDEX_OF_UMAT_C_PARAMETER: int = 3
+    INDEX_OF_UMAT_PHI_PARAMETER: int = 4
 
 
 @dataclass
