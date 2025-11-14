@@ -104,7 +104,7 @@ class Model:
                 four base corners.
         """
         # Unpack dimensions; height is not used here.
-        width, _, length = sleeper_dimensions
+        width = sleeper_dimensions[0]
 
         # Define the sleeper's local base coordinates
         left_width_coord = 0 if sleeper_position == 'first' else -width / 2
@@ -117,7 +117,7 @@ class Model:
 
             points_local = np.array([[left_width_coord, 0.0, 0.0], [right_width_coord, 0.0, 0.0]])
         else:
-
+            length = sleeper_dimensions[2]
             if width <= 0 or length <= 0:
                 raise ValueError("Sleeper dimensions must be positive values.")
 
@@ -180,8 +180,11 @@ class Model:
         normal_unit_vectors = np.zeros((len(sleeper_global_coords), 3))
         normal_unit_vectors[:, VERTICAL_AXIS] = 1.0
 
-        connection_geo_settings = {"": {"coordinates": sleeper_global_coords, "ndim": 1}}
-        self.gmsh_io.generate_geometry(connection_geo_settings, "")
+        # in 3D sleepers are connected with a line such that they are not in the middle of a volume geometry, as gmsh
+        # cannot always handle this case well
+        if self.ndim == 3:
+            connection_geo_settings = {"": {"coordinates": sleeper_global_coords, "ndim": 1}}
+            self.gmsh_io.generate_geometry(connection_geo_settings, "")
         if isinstance(sleeper_parameters, NodalConcentrated):
 
             # For nodal sleepers, create a connection line and a point geometry for the sleeper.
@@ -206,18 +209,31 @@ class Model:
                                                                                distance_middle_to_rail)
 
                 # Compute extrusion length vector (normal to sleeper base)
-                normal_unit_vector = Utils.calculated_normal_unit_vector_to_plane(sleeper_base_coords)
+                if self.ndim == 2:
+                    normal_unit_vector = Utils.calculate_normal_unit_vector_to_line_on_xy_plane(sleeper_base_coords)
+                else:
+                    normal_unit_vector = Utils.calculated_normal_unit_vector_to_plane(sleeper_base_coords)
+
                 extrusion_length = normal_unit_vector * sleeper_dimensions[1]
                 normal_unit_vectors[i, :] = normal_unit_vector
 
-                # Ensure the list is initialized with float values
-                sleeper_geo_settings = {
-                    base_sleeper_name: {
-                        "coordinates": sleeper_base_coords,
-                        "ndim": 3,
-                        "extrusion_length": extrusion_length
+                if self.ndim == 2:
+                    sleeper_coords = np.zeros((4, 3))
+                    sleeper_coords[0, :] = sleeper_base_coords[0, :]
+                    sleeper_coords[1, :] = sleeper_base_coords[1, :]
+                    sleeper_coords[2, :] = sleeper_base_coords[1, :] + extrusion_length
+                    sleeper_coords[3, :] = sleeper_base_coords[0, :] + extrusion_length
+
+                    sleeper_geo_settings = {base_sleeper_name: {"coordinates": sleeper_coords, "ndim": 2}}
+                else:
+                    # Ensure the list is initialized with float values
+                    sleeper_geo_settings = {
+                        base_sleeper_name: {
+                            "coordinates": sleeper_base_coords,
+                            "ndim": 3,
+                            "extrusion_length": extrusion_length
+                        }
                     }
-                }
                 self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
 
         # add sleeper model part
@@ -438,7 +454,8 @@ class Model:
             else:
                 sleeper_space = sleeper_dimensions[0] * sleeper_dimensions[1] * sleeper_dimensions[2]
 
-            sleeper_mass = sleeper_material.soil_formulation.DENSITY_SOLID * sleeper_space
+            sleeper_mass = (sleeper_material.soil_formulation.DENSITY_SOLID *
+                            (1 - sleeper_material.soil_formulation.POROSITY) * sleeper_space)
             nodal_sleeper_parameters = NodalConcentrated(NODAL_MASS=sleeper_mass,
                                                          NODAL_DAMPING_COEFFICIENT=[0, 0, 0],
                                                          NODAL_DISPLACEMENT_STIFFNESS=[0, 0, 0])
@@ -560,10 +577,14 @@ class Model:
         if isinstance(sleeper_parameters, SoilMaterial):
             if sleeper_dimensions is None:
                 raise ValueError("If sleeper parameters are SoilMaterial, dimensions must be a list of "
-                                 "length, width, height.")
+                                 "width, height, length in 3D or width, height in 2D.")
             if distance_middle_sleeper_to_rail is None:
-                raise ValueError("If sleeper parameters are SoilMaterial, the offset between the sleeper "
-                                 "middle and the rail must be provided.")
+                if self.ndim == 3:
+                    raise ValueError("If sleeper parameters are SoilMaterial in 3D, the offset between the sleeper "
+                                     "middle and the rail must be provided.")
+                else:
+                    distance_middle_sleeper_to_rail = 0.0
+
         else:
             sleeper_dimensions = [0.0, 0.0, 0.0]
             distance_middle_sleeper_to_rail = 0.0
@@ -595,6 +616,11 @@ class Model:
             # Generate sleepers differently for inside and outside soil domain
             # inside: volume sleepers, outside: nodal sleepers
             if len(inside_coords) > 0:
+
+                # there is no length in 2D sleepers
+                if self.ndim == 2:
+                    distance_middle_sleeper_to_rail = 0.0
+
                 sleeper_normal_vectors[inside_mask] = self.__generate_and_add_sleepers(
                     sleeper_parameters, sleeper_dimensions, sleeper_name, inside_coords, direction_vector,
                     distance_middle_sleeper_to_rail)

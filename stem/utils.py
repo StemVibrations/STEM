@@ -801,3 +801,41 @@ class Utils:
         unit_normal = normal / norm_normal
 
         return unit_normal
+
+    @staticmethod
+    def calculate_normal_unit_vector_to_line_on_xy_plane(
+            line_points: Sequence[Sequence[float]]) -> npty.NDArray[np.float64]:
+        """
+        Calculates the normal unit vector to a line defined by two points.
+
+        Args:
+            - line_points (Sequence[Sequence[float]]): two points defining the line.
+
+        Raises:
+            - ValueError: if less than two points are provided.
+            - ValueError: if the points are identical.
+
+        Returns:
+            - npty.NDArray[np.float64]: normal unit vector to the line.
+
+        """
+
+        if len(line_points) < 2:
+            raise ValueError("Less than 2 points are given, cannot define a line.")
+
+        # Convert points to a NumPy array for easier manipulation
+        p1, p2 = np.array(line_points[:2], dtype=np.float64)
+
+        # Calculate vector from p1 to p2
+        v = p2 - p1
+        normal = [-v[1], v[0], 0.0]
+
+        norm_v = np.linalg.norm(v)
+
+        if np.isclose(norm_v, 0.0):
+            raise ValueError("The provided points are identical, cannot define a line.")
+
+        # Normalize the vector to get the unit vector
+        normal_unit_vector = normal / norm_v
+
+        return normal_unit_vector

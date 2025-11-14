@@ -15,7 +15,7 @@ from stem.output import NodalOutput, GiDOutputParameters, JsonOutputParameters
 from stem.solver import *
 from stem.boundary import RotationConstraint, DisplacementConstraint
 from tests.utils import TestUtils
-from stem.soil_material import SoilMaterial, OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
+from stem.soil_material import SoilMaterial, OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw, SoilFormulationParametersABC
 
 IS_LINUX = sys.platform == "linux"
 
@@ -4298,6 +4298,135 @@ class TestModel:
         TestUtils.assert_dictionary_almost_equal(extended_soil_parameters.__dict__,
                                                  calculated_soil_equivalent_parameters.__dict__)
 
+    def test_generate_extended_straight_track_3d_volume_sleepers(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Tests if a straight track is generated correctly in a 3d space with volume sleepers. A straight track is
+        generated and added to the model. The geometry and material of the rails, sleepers and rail pads are checked.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+        """
+
+        sleeper_material = create_default_3d_soil_material
+        model = Model(3)
+
+        model.extrusion_length = 1
+
+        soil_material = create_default_3d_soil_material
+        layer_coordinates = [(0.0, 0.0, 0.0), (2.0, 0.0, 0.0), (2.0, 3.0, 0.0), (0.0, 3.0, 0.0)]
+        # add soil layer
+        model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
+
+        rail_parameters = EulerBeam(3, 1, 1, 1, 1, 1, 1, 1)
+        rail_pad_parameters = ElasticSpringDamper([1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1])
+        extended_soil_parameters = ElasticSpringDamper([1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1])
+
+        origin_point = np.array([1.0, 3.0, -0.5])
+        direction_vector = np.array([0, 0, 1])
+
+        sleeper_dimensions = [0.3, 0.2, 1.5]  # width, height, length
+        distance_mid_sleeper_to_rail = 1
+
+        # create a straight track with rails, sleepers and rail pads
+        model.generate_extended_straight_track(0.5, 5, rail_parameters, sleeper_material, rail_pad_parameters, 0.02,
+                                               origin_point, extended_soil_parameters, 3, direction_vector, "track_1",
+                                               sleeper_dimensions, distance_mid_sleeper_to_rail)
+
+        rail_geometry = model.get_model_part_by_name("track_1").geometry
+        sleeper_geometry = model.get_model_part_by_name("sleeper_track_1").geometry
+        sleeper_outside_geometry = model.get_model_part_by_name("sleeper_outside_track_1").geometry
+        rail_pad_geometry = model.get_model_part_by_name("rail_pads_track_1").geometry
+        soil_equivalent_geometry = model.get_model_part_by_name("soil_equivalent_track_1").geometry
+
+        calculated_geometry = {
+            "rail_geometry": rail_geometry.to_dict(),
+            "sleeper_geometry": sleeper_geometry.to_dict(),
+            "sleeper_outside_geometry": sleeper_outside_geometry.to_dict(),
+            "rail_pad_geometry": rail_pad_geometry.to_dict(),
+            "soil_equivalent_geometry": soil_equivalent_geometry.to_dict()
+        }
+
+        calculated_material = {
+            "rail_material": model.get_model_part_by_name("track_1").material.material_parameters.__dict__,
+            "sleeper_material": model.get_model_part_by_name("sleeper_track_1").material.to_dict(),
+            "sleeper_outside_material": model.get_model_part_by_name(
+                "sleeper_outside_track_1").material.material_parameters.__dict__,
+            "rail_pad_material": model.get_model_part_by_name(
+                "rail_pads_track_1").material.material_parameters.__dict__,
+            "soil_equivalent_material": model.get_model_part_by_name(
+                "soil_equivalent_track_1").material.material_parameters.__dict__
+        }
+
+        calculated_results = {"geometry": calculated_geometry, "material": calculated_material}
+
+        # get expected geometry from json file
+        with open("tests/test_data/expected_extended_straight_track_3d_volume_sleepers.json", "r") as f:
+            expected_results = json.load(f)
+
+        TestUtils.assert_dictionary_almost_equal(expected_results, calculated_results)
+
+    def test_extended_straight_track_2d_surface_sleepers(self, create_default_2d_soil_material: SoilMaterial):
+        """
+        Tests if a straight track is generated correctly in a 2d space with surface sleepers. A straight track is
+        generated and added to the model. The geometry and material of the rails, sleepers and rail pads are checked.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+        """
+
+        sleeper_material = create_default_2d_soil_material
+        model = Model(2)
+
+        soil_material = create_default_2d_soil_material
+        layer_coordinates = [(0, 0, 0), (0, 1, 0), (1, 1, 0), (1, 0, 0)]
+        # add soil layer
+        model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
+        rail_parameters = EulerBeam(2, 1, 1, 1, 1, 1)
+        rail_pad_parameters = ElasticSpringDamper([1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1])
+        extended_soil_parameters = ElasticSpringDamper([1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1])
+        origin_point = np.array([-1.0, 1.0, 0.0])
+        direction_vector = np.array([1, 0, 0])
+        # create a straight track with rails, sleepers and rail pads
+        model.generate_extended_straight_track(0.5, 7, rail_parameters, sleeper_material, rail_pad_parameters, 0.02,
+                                               origin_point, extended_soil_parameters, 1, direction_vector, "track_1",
+                                               [0.3, 0.2])
+
+        # uncomment to visualize the model
+        # model.show_geometry()
+
+        rail_geometry = model.get_model_part_by_name("track_1").geometry
+        sleeper_geometry = model.get_model_part_by_name("sleeper_track_1").geometry
+        sleeper_outside_geometry = model.get_model_part_by_name("sleeper_outside_track_1").geometry
+        rail_pad_geometry = model.get_model_part_by_name("rail_pads_track_1").geometry
+        soil_equivalent_geometry = model.get_model_part_by_name("soil_equivalent_track_1").geometry
+
+        calculated_geometry = {
+            "rail_geometry": rail_geometry.to_dict(),
+            "sleeper_geometry": sleeper_geometry.to_dict(),
+            "sleeper_outside_geometry": sleeper_outside_geometry.to_dict(),
+            "rail_pad_geometry": rail_pad_geometry.to_dict(),
+            "soil_equivalent_geometry": soil_equivalent_geometry.to_dict()
+        }
+
+        calculated_material = {
+            "rail_material": model.get_model_part_by_name("track_1").material.material_parameters.__dict__,
+            "sleeper_material": model.get_model_part_by_name("sleeper_track_1").material.to_dict(),
+            "sleeper_outside_material": model.get_model_part_by_name(
+                "sleeper_outside_track_1").material.material_parameters.__dict__,
+            "rail_pad_material": model.get_model_part_by_name(
+                "rail_pads_track_1").material.material_parameters.__dict__,
+            "soil_equivalent_material": model.get_model_part_by_name(
+                "soil_equivalent_track_1").material.material_parameters.__dict__
+        }
+
+        calculated_results = {"geometry": calculated_geometry, "material": calculated_material}
+
+        # get expected geometry from json file
+        with open("tests/test_data/expected_extended_straight_track_2d_surface_sleepers.json", "r") as f:
+            expected_results = json.load(f)
+
+        TestUtils.assert_dictionary_almost_equal(expected_results, calculated_results)
+
     def test_add_hinge_on_beam(self, create_default_3d_beam):
         """
         Test if a hinge is added correctly on a beam. A model is created with a beam and a hinge is added on the beam.
@@ -4654,6 +4783,73 @@ class TestModel:
         with pytest.raises(ValueError, match="Sleeper width must be positive."):
             calculated_middle_sleeper = model._Model__generate_sleeper_base_coordinates(
                 global_coord, sleeper_dimensions, direction_vector, 'middle', distance_middle_to_rail)
+
+    def test_calculate_nodal_equivalent_sleeper_parameters_3d(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test the calculation of nodal equivalent sleeper parameters in a 3D model.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default 3D soil material
+        """
+
+        model = Model(3)
+
+        # density = 2650 kg/m3, POROSITY = 0.3,
+        sleeper_material = create_default_3d_soil_material
+
+        calculated_nodal_parameters = model._Model__calculate_nodal_equivalent_sleeper_parameters([1.0, 0.5, 3.0],
+                                                                                                  sleeper_material)
+        expected_nodal_parameters = NodalConcentrated([0.0, 0.0, 0.0], 2782.5, [0.0, 0.0, 0.0])
+
+        TestUtils.assert_dictionary_almost_equal(calculated_nodal_parameters.__dict__,
+                                                 expected_nodal_parameters.__dict__)
+
+    def test_calculate_nodal_equivalent_sleeper_parameters_2d(self, create_default_2d_soil_material):
+        """
+        Test the calculation of nodal equivalent sleeper parameters in a 2D model.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): default 2D soil material
+
+        """
+
+        model = Model(2)
+
+        # density = 2650 kg/m3, POROSITY = 0.3,
+        sleeper_material = create_default_2d_soil_material
+
+        # check also if length is not considered in 2D
+        calculated_nodal_parameters = model._Model__calculate_nodal_equivalent_sleeper_parameters([1.0, 0.5, 3.0],
+                                                                                                  sleeper_material)
+        expected_nodal_parameters = NodalConcentrated([0.0, 0.0, 0.0], 927.5, [0.0, 0.0, 0.0])
+
+        TestUtils.assert_dictionary_almost_equal(calculated_nodal_parameters.__dict__,
+                                                 expected_nodal_parameters.__dict__)
+
+    def test_calculate_nodal_equivalent_sleeper_parameters_error(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Test the calculation of nodal equivalent sleeper parameters when invalid dimensions are provided. And when
+        an invalid soil formulation is used.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default 3D soil material
+
+        """
+
+        model = Model(3)
+
+        # invalid dimensions
+        with pytest.raises(ValueError, match="If sleeper parameters are SoilMaterial, dimensions must be non-zero."):
+            model._Model__calculate_nodal_equivalent_sleeper_parameters([0.0, 0.5, 3.0],
+                                                                        create_default_3d_soil_material)
+
+        # invalid soil formulation
+        create_default_3d_soil_material.soil_formulation = SoilFormulationParametersABC(ndim=3)
+        with pytest.raises(ValueError,
+                           match="sleeper soil formulation must be of type OnePhaseSoil or TwoPhaseSoil to "
+                           "compute nodal equivalent parameters."):
+            model._Model__calculate_nodal_equivalent_sleeper_parameters([1.0, -0.5, 3.0],
+                                                                        create_default_3d_soil_material)
 
     def test_split_second_order_elements_with_beam_and_load(self, create_default_3d_beam: StructuralMaterial,
                                                             create_default_moving_load_parameters: MovingLoad):
