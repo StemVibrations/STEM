@@ -106,16 +106,21 @@ class Model:
         # Unpack dimensions; height is not used here.
         width, _, length = sleeper_dimensions
 
-        if width <= 0 or length <= 0:
-            raise ValueError("Sleeper dimensions must be positive values.")
-
         # Define the sleeper's local base coordinates
         left_width_coord = 0 if sleeper_position == 'first' else -width / 2
         right_width_coord = 0 if sleeper_position == 'last' else width / 2
 
         if self.ndim == 2:
-            points_local = np.array([[left_width_coord, 0.0, 0.0], right_width_coord, 0.0, 0.0])
+
+            if width <= 0:
+                raise ValueError("Sleeper width must be positive.")
+
+            points_local = np.array([[left_width_coord, 0.0, 0.0], [right_width_coord, 0.0, 0.0]])
         else:
+
+            if width <= 0 or length <= 0:
+                raise ValueError("Sleeper dimensions must be positive values.")
+
             points_local = np.array([
                 [left_width_coord, 0.0, 0],
                 [right_width_coord, 0.0, 0],

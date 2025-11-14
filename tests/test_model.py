@@ -4585,6 +4585,76 @@ class TestModel:
                                           [-1, bot_y_coord, close_z_coord], [-1, global_coord[1], global_coord[2]]])
         np.testing.assert_array_almost_equal(calculated_last_sleeper, expected_last_sleeper)
 
+    def test_sleeper_base_coordinates_expected_error(self):
+        """
+        Test the creation of sleeper base coordinates when invalid dimensions are provided.
+
+        This test ensures that a ValueError is raised when the direction vector has zero magnitude.
+
+        """
+        global_coord = [0.0, 0.0, 0.0]
+        sleeper_dimensions = [1.0, 1.0, 0.0]  # width, height, length with zero length
+        distance_middle_to_rail = 1.0
+        direction_vector = [0.0, 0.0, 1.0]
+
+        model = Model(3)
+
+        with pytest.raises(ValueError, match="Sleeper dimensions must be positive values."):
+            calculated_middle_sleeper = model._Model__generate_sleeper_base_coordinates(
+                global_coord, sleeper_dimensions, direction_vector, 'middle', distance_middle_to_rail)
+
+    def test_sleeper_base_coordinates_2d(self):
+        """
+        Test the creation of sleeper base coordinates in a 2D model.
+
+
+        """
+
+        global_coord = [0.0, 0.0, 0.0]
+        sleeper_dimensions = [2.0, 1.0, 0.0]  # width, height, length
+        distance_middle_to_rail = 1.0
+        direction_vector = [1.0, 1.0, 0.0]  # aligned in the x - y direction
+
+        model = Model(2)
+
+        calculated_middle_sleeper = model._Model__generate_sleeper_base_coordinates(global_coord, sleeper_dimensions,
+                                                                                    direction_vector, 'middle',
+                                                                                    distance_middle_to_rail)
+        expected_middle_sleeper = np.array([[-np.sqrt(2) / 2, -np.sqrt(2) / 2, 0.0],
+                                            [np.sqrt(2) / 2, np.sqrt(2) / 2, 0.0]])
+        np.testing.assert_array_almost_equal(calculated_middle_sleeper, expected_middle_sleeper)
+
+        calculated_first_sleeper = model._Model__generate_sleeper_base_coordinates(global_coord, sleeper_dimensions,
+                                                                                   direction_vector, 'first',
+                                                                                   distance_middle_to_rail)
+        expected_first_sleeper = np.array([[0.0, 0.0, 0.0], [np.sqrt(2) / 2, np.sqrt(2) / 2, 0.0]])
+        np.testing.assert_array_almost_equal(calculated_first_sleeper, expected_first_sleeper)
+
+        calculated_last_sleeper = model._Model__generate_sleeper_base_coordinates(global_coord, sleeper_dimensions,
+                                                                                  direction_vector, 'last',
+                                                                                  distance_middle_to_rail)
+        expected_last_sleeper = np.array([[-np.sqrt(2) / 2, -np.sqrt(2) / 2, 0.0], [0.0, 0.0, 0.0]])
+        np.testing.assert_array_almost_equal(calculated_last_sleeper, expected_last_sleeper)
+
+    def test_sleeper_base_coordinates_2d_error(self):
+        """
+        Test the creation of sleeper base coordinates in a 2D model when invalid dimensions are provided.
+
+        This test ensures that a ValueError is raised when the direction vector has zero magnitude.
+
+        """
+
+        global_coord = [0.0, 0.0, 0.0]
+        sleeper_dimensions = [0.0, 1.0, 0.0]  # 0 width
+        distance_middle_to_rail = 1.0
+        direction_vector = [1.0, 0.0, 0.0]
+
+        model = Model(2)
+
+        with pytest.raises(ValueError, match="Sleeper width must be positive."):
+            calculated_middle_sleeper = model._Model__generate_sleeper_base_coordinates(
+                global_coord, sleeper_dimensions, direction_vector, 'middle', distance_middle_to_rail)
+
     def test_split_second_order_elements_with_beam_and_load(self, create_default_3d_beam: StructuralMaterial,
                                                             create_default_moving_load_parameters: MovingLoad):
         """
