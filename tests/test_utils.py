@@ -809,3 +809,94 @@ class TestUtilsStem:
         # test for strings
         with pytest.raises(ValueError, match=f"could not convert string to float: 'test'"):
             Utils.validate_coordinates([(0.0, 0.0, 0.0), (0.0, "test", 0.0)])
+
+    def test_calculated_normal_unit_vector_valid_plane(self):
+        """
+        Tests calculation of normal unit vectors to a planes defined by 3 points.
+
+        """
+
+        # xy-plane positive coordinates
+        plane_points = [(0, 0, 0), (1, 0, 0), (0, 1, 0)]
+        expected_normal = np.array([0, 0, 1], dtype=np.float64)
+        actual_normal = Utils.calculated_normal_unit_vector_to_plane(plane_points)
+        npt.assert_almost_equal(actual_normal, expected_normal)
+        npt.assert_almost_equal(np.linalg.norm(actual_normal), 1.0)
+
+        # xy-plane positive coordinates mirrored point order
+        plane_points = [(0, 0, 0), (0, 1, 0), (1, 0, 0)]
+        expected_normal = np.array([0, 0, -1], dtype=np.float64)
+        actual_normal = Utils.calculated_normal_unit_vector_to_plane(plane_points)
+        npt.assert_almost_equal(actual_normal, expected_normal)
+        npt.assert_almost_equal(np.linalg.norm(actual_normal), 1.0)
+
+        # xy-plane negative coordinates
+        plane_points = [(0, 0, 0), (-1, 0, 0), (0, -1, 0)]
+        expected_normal = np.array([0, 0, 1], dtype=np.float64)
+        actual_normal = Utils.calculated_normal_unit_vector_to_plane(plane_points)
+        npt.assert_almost_equal(actual_normal, expected_normal)
+        npt.assert_almost_equal(np.linalg.norm(actual_normal), 1.0)
+
+        # Plane: x + y + z = 1
+        pts = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]
+        expected = np.array([1, 1, 1]) / np.sqrt(3)
+        actual = Utils.calculated_normal_unit_vector_to_plane(pts)
+        npt.assert_almost_equal(actual, expected)
+        npt.assert_almost_equal(np.linalg.norm(actual), 1.0)
+
+    def test_calculated_normal_unit_vector_plane_expected_raises(self):
+        """
+        Tests expected raises of calculated_normal_unit_vector_to_plane. Errors are raised when
+        less than 3 points are given or when the provided points are collinear.
+        """
+
+        plane_points = [(0, 0, 0), (1, 0, 0)]
+        with pytest.raises(ValueError, match="Less than 3 points are given, cannot define a plane."):
+            Utils.calculated_normal_unit_vector_to_plane(plane_points)
+
+        plane_points = [(0, 0, 0), (1, 0, 0), (2, 0, 0)]
+        with pytest.raises(ValueError, match="The provided points are collinear, cannot define a plane."):
+            Utils.calculated_normal_unit_vector_to_plane(plane_points)
+
+    def test_calculate_normal_unit_vector_to_line_horizontal_line(self):
+        """
+        Tests calculation of normal unit vector to a line on the xy-plane defined by 2 points.
+
+        """
+
+        # following x-axis
+        line_points = [(0, 0, 0), (1, 0, 0)]
+        expected_normal = np.array([0, 1, 0], dtype=np.float64)
+        actual_normal = Utils.calculate_normal_unit_vector_to_line_on_xy_plane(line_points)
+        npt.assert_almost_equal(actual_normal, expected_normal)
+        npt.assert_almost_equal(np.linalg.norm(actual_normal), 1.0)
+
+        # following y-axis
+        line_points = [(0, 0, 0), (0, 1, 0)]
+        expected_normal = np.array([-1, 0, 0], dtype=np.float64)
+        actual_normal = Utils.calculate_normal_unit_vector_to_line_on_xy_plane(line_points)
+        npt.assert_almost_equal(actual_normal, expected_normal)
+        npt.assert_almost_equal(np.linalg.norm(actual_normal), 1.0)
+
+        # diagonal line 45 degrees
+        line_points = [(0, 0, 0), (1, 1, 0)]
+        expected_normal = np.array([-1 / np.sqrt(2), 1 / np.sqrt(2), 0], dtype=np.float64)
+        actual_normal = Utils.calculate_normal_unit_vector_to_line_on_xy_plane(line_points)
+        npt.assert_almost_equal(actual_normal, expected_normal)
+        npt.assert_almost_equal(np.linalg.norm(actual_normal), 1.0)
+
+    def test_calculate_normal_unit_vector_to_line_expected_raises(self):
+        """
+        Tests expected raises of calculate_normal_unit_vector_to_line_on_xy_plane. Errors are raised when
+        less than 2 points are given or when the provided points are identical.
+
+
+        """
+
+        line_points = [(0, 0, 0)]
+        with pytest.raises(ValueError, match="Less than 2 points are given, cannot define a line."):
+            Utils.calculate_normal_unit_vector_to_line_on_xy_plane(line_points)
+
+        line_points = [(0, 0, 0), (0, 0, 0)]
+        with pytest.raises(ValueError, match="The provided points are identical, cannot define a line."):
+            Utils.calculate_normal_unit_vector_to_line_on_xy_plane(line_points)
