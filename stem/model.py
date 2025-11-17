@@ -2209,8 +2209,7 @@ class Model:
         node_dict: Dict[int, Node] = {}
         for mp in self.all_model_parts:
             if mp.mesh is None:
-                continue
-                # raise ValueError("Geometry has not been meshed yet! Please first run the Model.generate_mesh method.")
+                raise ValueError("Geometry has not been meshed yet! Please first run the Model.generate_mesh method.")
             node_dict.update(mp.mesh.nodes)
 
         return node_dict
