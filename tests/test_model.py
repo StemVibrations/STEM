@@ -3119,7 +3119,7 @@ class TestModel:
             5: Point.create([2.6, 3.02, 0], 5),
             6: Point.create([3.2, 3.02, 0], 6)
         }
-        expected_rail_lines = {3: Line.create([4, 5], 3), 4: Line.create([5, 6], 4)}
+        expected_rail_lines = {1: Line.create([4, 5], 1), 2: Line.create([5, 6], 2)}
 
         expected_rail_geometry = Geometry(expected_rail_points, expected_rail_lines)
 
@@ -3160,7 +3160,7 @@ class TestModel:
             3: Point.create([3.2, 3.0, 0], 3)
         }
 
-        expected_rail_pad_lines = {5: Line.create([4, 1], 5), 6: Line.create([5, 2], 6), 7: Line.create([6, 3], 7)}
+        expected_rail_pad_lines = {3: Line.create([4, 1], 3), 4: Line.create([5, 2], 4), 5: Line.create([6, 3], 5)}
 
         expected_rail_pad_geometry = Geometry(expected_rail_pad_points, expected_rail_pad_lines)
 
@@ -4426,6 +4426,54 @@ class TestModel:
             expected_results = json.load(f)
 
         TestUtils.assert_dictionary_almost_equal(expected_results, calculated_results)
+
+    def test_extend_straight_track_volume_sleepers_error(self, create_default_3d_soil_material: SoilMaterial):
+        """
+        Tests if a straight track is generated correctly in a 3d space with volume sleepers. A straight track is
+        generated and added to the model. The geometry and material of the rails, sleepers and rail pads are checked.
+
+        Args:
+            - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+        """
+
+        sleeper_material = create_default_3d_soil_material
+        model = Model(3)
+        model.extrusion_length = 1
+
+        soil_material = create_default_3d_soil_material
+        layer_coordinates = [(0.0, 0.0, 0.0), (2.0, 0.0, 0.0), (2.0, 3.0, 0.0), (0.0, 3.0, 0.0)]
+
+        # add soil layer
+        model.add_soil_layer_by_coordinates(layer_coordinates, soil_material, "soil1")
+
+        rail_parameters = EulerBeam(3, 1, 1, 1, 1, 1, 1, 1)
+        rail_pad_parameters = ElasticSpringDamper([1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1])
+        extended_soil_parameters = ElasticSpringDamper([1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1])
+
+        origin_point = np.array([1.0, 3.0, -0.5])
+        direction_vector = np.array([0, 0, 1])
+
+        sleeper_dimensions = [0.3, 0.2, 1.5]  # width, height, length
+        distance_mid_sleeper_to_rail = 1
+
+        # create a straight track with rails, sleepers and rail pads
+        with pytest.raises(
+                ValueError,
+                match=
+                "If sleeper parameters are SoilMaterial, dimensions must be a list of width, height, length in 3D or width, height in 2D."
+        ):
+            model.generate_extended_straight_track(0.5, 5, rail_parameters, sleeper_material, rail_pad_parameters, 0.02,
+                                                   origin_point, extended_soil_parameters, 3, direction_vector,
+                                                   "track_1", None, distance_mid_sleeper_to_rail)
+
+        with pytest.raises(
+                ValueError,
+                match=
+                "If sleeper parameters are SoilMaterial in 3D, the offset between the sleeper middle and the rail must be provided."
+        ):
+            model.generate_extended_straight_track(0.5, 5, rail_parameters, sleeper_material, rail_pad_parameters, 0.02,
+                                                   origin_point, extended_soil_parameters, 3, direction_vector,
+                                                   "track_1", sleeper_dimensions, None)
 
     def test_add_hinge_on_beam(self, create_default_3d_beam):
         """

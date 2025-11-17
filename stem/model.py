@@ -400,8 +400,11 @@ class Model:
                 raise ValueError("If sleeper parameters are SoilMaterial, dimensions must be a list of "
                                  "length, width, height.")
             if distance_middle_sleeper_to_rail is None:
-                raise ValueError("If sleeper parameters are SoilMaterial, the offset between the sleeper "
-                                 "middle and the rail must be provided.")
+                if self.ndim == 3:
+                    raise ValueError("If sleeper parameters are SoilMaterial in 3D, the offset between the sleeper "
+                                     "middle and the rail must be provided.")
+                else:
+                    distance_middle_sleeper_to_rail = 0.0
         else:
             sleeper_dimensions = [0.0, 0.0, 0.0]
             distance_middle_sleeper_to_rail = 0.0
