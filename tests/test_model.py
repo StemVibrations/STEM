@@ -4429,8 +4429,8 @@ class TestModel:
 
     def test_extend_straight_track_volume_sleepers_error(self, create_default_3d_soil_material: SoilMaterial):
         """
-        Tests if a straight track is generated correctly in a 3d space with volume sleepers. A straight track is
-        generated and added to the model. The geometry and material of the rails, sleepers and rail pads are checked.
+        Tests if a straight track with volume sleepers raises an error when sleeper dimensions are not provided. And
+        when distance from middle sleeper to rail is not provided.
 
         Args:
             - create_default_3d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
