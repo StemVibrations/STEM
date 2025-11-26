@@ -190,7 +190,9 @@ def test_stem():
         calculated_data_stage2 = json.load(f)
 
     # Check if the expected displacements and velocities in stage 2 are equal to the calculated ones
-    TestUtils.assert_dictionary_almost_equal(expected=expected_data_stage2, actual=calculated_data_stage2)
+    TestUtils.assert_dictionary_almost_equal(expected=expected_data_stage2,
+                                             actual=calculated_data_stage2,
+                                             abs_tolerance=1e-20)
 
     merged_expected_data = Utils.merge(expected_data_stage1, expected_data_stage2)
     merged_calculated_data = Utils.merge(calculated_data_stage1, calculated_data_stage2)
