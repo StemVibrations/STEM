@@ -3186,9 +3186,10 @@ class TestModel:
         origin_point = np.array([2.5, 1.0, 0.0])
         direction_vector = np.array([0, 0, 1])
 
-        with pytest.raises(
-                ValueError,
-                match=r"If sleeper parameters are SoilMaterial, dimensions must be a list of length, width, height."):
+        with pytest.raises(ValueError,
+                           match=re.escape(
+                               r"If sleeper parameters are SoilMaterial, sleeper dimensions must be a list of "
+                               r"[width, height, length] in 3D or [width, height] in 2D.")):
             model.generate_straight_track(5.0, 2, rail_parameters, create_default_3d_soil_material, rail_pad_parameters,
                                           0.02, origin_point, direction_vector, "track_1", None)
 
@@ -4459,9 +4460,9 @@ class TestModel:
         # create a straight track with rails, sleepers and rail pads
         with pytest.raises(
                 ValueError,
-                match=
-                "If sleeper parameters are SoilMaterial, dimensions must be a list of width, height, length in 3D or width, height in 2D."
-        ):
+                match=re.escape(
+                    "If sleeper parameters are SoilMaterial, dimensions must be a list of [width, height, length] "
+                    "in 3D or [width, height] in 2D.")):
             model.generate_extended_straight_track(0.5, 5, rail_parameters, sleeper_material, rail_pad_parameters, 0.02,
                                                    origin_point, extended_soil_parameters, 3, direction_vector,
                                                    "track_1", None, distance_mid_sleeper_to_rail)
@@ -4776,7 +4777,7 @@ class TestModel:
 
         model = Model(3)
 
-        with pytest.raises(ValueError, match="Sleeper dimensions must be positive values."):
+        with pytest.raises(ValueError, match="Sleeper dimensions must be greater than 0."):
             calculated_middle_sleeper = model._Model__generate_sleeper_base_coordinates(
                 global_coord, sleeper_dimensions, direction_vector, 'middle', distance_middle_to_rail)
 
@@ -4828,7 +4829,7 @@ class TestModel:
 
         model = Model(2)
 
-        with pytest.raises(ValueError, match="Sleeper width must be positive."):
+        with pytest.raises(ValueError, match="Sleeper width must be greater than 0."):
             calculated_middle_sleeper = model._Model__generate_sleeper_base_coordinates(
                 global_coord, sleeper_dimensions, direction_vector, 'middle', distance_middle_to_rail)
 
