@@ -78,15 +78,26 @@ class Model:
         Computes the global coordinates of the four base corner points of a sleeper,
         rotated so that its length is perpendicular to the given direction vector.
 
-        The sleeper is defined in its local coordinate system:
+        The sleeper is defined in its local coordinate system and is presented in the ASCI art below:
           - the sleeper width follows the local x-axis
           - the sleeper length follows the local z-axis
+          - the connection to the rail pad is at the origin of the local coordinate system
+          - the distance middle to rail is indicated with d in the figure below
 
-        Local base corners (relative to the origin) are defined as:
-            B: [-width/2, 0, length - distance_centre_to_railpad]
-            C: [ width/2, 0, length - distance_centre_to_railpad]
-            D: [ width/2, 0, -distance_centre_to_railpad]
-            E: [-width/2, 0, -distance_centre_to_railpad]
+                  local z axis
+                       ^
+                       |
+            3 +--------+--------+ 2
+              |        |        |
+              |        |        |
+              |        Or-----------------> local x axis
+              |        :        |
+              |        :        |
+              |      d :        | length
+              |        :        |
+              |        :        |
+            0 +--------+--------+ 1
+                     width
 
         These local coordinates are then rotated and translated so that the sleeper width aligns with the provided
         direction_vector while not using roll-rotation.
@@ -113,13 +124,13 @@ class Model:
         if self.ndim == 2:
 
             if width <= 0:
-                raise ValueError("Sleeper width must be positive.")
+                raise ValueError("Sleeper width must be greater than 0.")
 
             points_local = np.array([[left_width_coord, 0.0, 0.0], [right_width_coord, 0.0, 0.0]])
         else:
             length = sleeper_dimensions[2]
             if width <= 0 or length <= 0:
-                raise ValueError("Sleeper dimensions must be positive values.")
+                raise ValueError("Sleeper dimensions must be greater than 0.")
 
             points_local = np.array([
                 [left_width_coord, 0.0, 0],
@@ -208,16 +219,11 @@ class Model:
                                                                                direction_vector, sleeper_position,
                                                                                distance_middle_to_rail)
 
-                # Compute extrusion length vector (normal to sleeper base)
+                # Set the sleeper geo settings based on model dimensionality
                 if self.ndim == 2:
                     normal_unit_vector = Utils.calculate_normal_unit_vector_to_line_on_xy_plane(sleeper_base_coords)
-                else:
-                    normal_unit_vector = Utils.calculated_normal_unit_vector_to_plane(sleeper_base_coords)
+                    extrusion_length = normal_unit_vector * sleeper_dimensions[1]
 
-                extrusion_length = normal_unit_vector * sleeper_dimensions[1]
-                normal_unit_vectors[i, :] = normal_unit_vector
-
-                if self.ndim == 2:
                     sleeper_coords = np.zeros((4, 3))
                     sleeper_coords[0, :] = sleeper_base_coords[0, :]
                     sleeper_coords[1, :] = sleeper_base_coords[1, :]
@@ -225,8 +231,11 @@ class Model:
                     sleeper_coords[3, :] = sleeper_base_coords[0, :] + extrusion_length
 
                     sleeper_geo_settings = {base_sleeper_name: {"coordinates": sleeper_coords, "ndim": 2}}
-                else:
-                    # Ensure the list is initialized with float values
+
+                elif self.ndim == 3:
+                    normal_unit_vector = Utils.calculated_normal_unit_vector_to_plane(sleeper_base_coords)
+                    extrusion_length = normal_unit_vector * sleeper_dimensions[1]
+
                     sleeper_geo_settings = {
                         base_sleeper_name: {
                             "coordinates": sleeper_base_coords,
@@ -234,6 +243,11 @@ class Model:
                             "extrusion_length": extrusion_length
                         }
                     }
+                else:
+                    raise ValueError("Model ndim must be 2 or 3.")
+
+                normal_unit_vectors[i, :] = normal_unit_vector
+
                 self.gmsh_io.generate_geometry(sleeper_geo_settings, "")
 
         # add sleeper model part
@@ -374,7 +388,8 @@ class Model:
         If the sleepers are modelled as SoilMaterial, the dimensions of the sleepers must be provided and the distance
         between the sleeper centre and the rail pad location in the sleeper length direction.
 
-        The sleeper dimensions must be provided in the format [width, height, length], where the length is defined
+        In 2D the sleeper dimensions must be provided in the format [width, height], where the length is not required.
+        In 3D The sleeper dimensions must be provided in the format [width, height, length], where the length is defined
         as half the sleeper length, as symmetry is assumed and only half the sleeper is modelled
 
         Args:
@@ -389,7 +404,7 @@ class Model:
             - direction_vector (Sequence[float]): direction vector of the track
             - name (str): name of the track
             - sleeper_dimensions (Optional[Sequence[float]]): dimensions of the sleepers  to be modelled
-                with the format [width, height, length]
+                with the format [width, height] in 2D and [width, height, length] in 3D
             - distance_middle_sleeper_to_rail (Optional[float]): distance from centre of sleeper to the rail pad
                 location in the sleeper length direction.
 
@@ -397,8 +412,8 @@ class Model:
 
         if isinstance(sleeper_parameters, SoilMaterial):
             if sleeper_dimensions is None:
-                raise ValueError("If sleeper parameters are SoilMaterial, dimensions must be a list of "
-                                 "length, width, height.")
+                raise ValueError("If sleeper parameters are SoilMaterial, sleeper dimensions must be a list of "
+                                 "[width, height, length] in 3D or [width, height] in 2D.")
             if distance_middle_sleeper_to_rail is None:
                 if self.ndim == 3:
                     raise ValueError("If sleeper parameters are SoilMaterial in 3D, the offset between the sleeper "
@@ -433,7 +448,8 @@ class Model:
         Computes the nodal equivalent parameters for volume sleepers located outside the soil domain.
 
         Args:
-            - sleeper_dimensions (Sequence[float]): Dimensions of the sleeper [width, height, length].
+            - sleeper_dimensions (Sequence[float]): Dimensions of the sleeper [width, height, length] in 3D or
+                [width, height] in 2D.
             - sleeper_material (:class:`stem.soil_material.SoilMaterial`): Material properties of the sleeper.
 
         Raises:
@@ -454,8 +470,10 @@ class Model:
 
             if self.ndim == 2:
                 sleeper_space = sleeper_dimensions[0] * sleeper_dimensions[1]
-            else:
+            elif self.ndim == 3:
                 sleeper_space = sleeper_dimensions[0] * sleeper_dimensions[1] * sleeper_dimensions[2]
+            else:
+                raise ValueError("Model ndim must be 2 or 3.")
 
             sleeper_mass = (sleeper_material.soil_formulation.DENSITY_SOLID *
                             (1 - sleeper_material.soil_formulation.POROSITY) * sleeper_space)
@@ -565,7 +583,7 @@ class Model:
             - direction_vector (Sequence[float]): direction vector of the track
             - name (str): name of the track
             - sleeper_dimensions (Optional[Sequence[float]]): dimensions of the sleepers  to be modelled
-                with the format [width, height, length]
+                with the format [width, height, length] in 3D and [width, height] in 2D
             - distance_middle_sleeper_to_rail (Optional[float]): distance from centre of sleeper to the rail pad
                 location in the sleeper length direction.
 
@@ -580,7 +598,7 @@ class Model:
         if isinstance(sleeper_parameters, SoilMaterial):
             if sleeper_dimensions is None:
                 raise ValueError("If sleeper parameters are SoilMaterial, dimensions must be a list of "
-                                 "width, height, length in 3D or width, height in 2D.")
+                                 "[width, height, length] in 3D or [width, height] in 2D.")
             if distance_middle_sleeper_to_rail is None:
                 if self.ndim == 3:
                     raise ValueError("If sleeper parameters are SoilMaterial in 3D, the offset between the sleeper "
@@ -588,9 +606,12 @@ class Model:
                 else:
                     distance_middle_sleeper_to_rail = 0.0
 
-        else:
+        elif isinstance(sleeper_parameters, NodalConcentrated):
             sleeper_dimensions = [0.0, 0.0, 0.0]
             distance_middle_sleeper_to_rail = 0.0
+
+        else:
+            raise ValueError("sleeper parameters must be of type SoilMaterial or NodalConcentrated.")
 
         normalized_direction_vector = np.array(direction_vector) / np.linalg.norm(direction_vector)
 
@@ -634,11 +655,13 @@ class Model:
 
                 sleeper_normal_vectors[~inside_mask] = self.__generate_and_add_sleepers(
                     nodal_sleeper_parameters, [], sleeper_name_outside, outside_coords, direction_vector, 0.0)
-        else:
+        elif isinstance(sleeper_parameters, NodalConcentrated):
             # all sleepers are nodal concentrated
             sleeper_normal_vectors = self.__generate_and_add_sleepers(sleeper_parameters, sleeper_dimensions,
                                                                       sleeper_name, sleeper_bottom_global_coords,
                                                                       direction_vector, 0.0)
+        else:
+            raise ValueError("sleeper parameters must be of type SoilMaterial or NodalConcentrated.")
 
         # add rail, rail pads and constraints
         self.__add_straight_track_items(name, rail_parameters, rail_pad_parameters, origin_point, rail_local_distance,
@@ -650,7 +673,7 @@ class Model:
                                            outside_coords)
 
     def __generate_extended_rail_part(self, soil_equivalent_parameters: ElasticSpringDamper, name: str,
-                                      length_soil_equivalent_element: float, outside_coords: np.ndarray):
+                                      length_soil_equivalent_element: float, outside_coords: NDArray[np.float64]):
         """
         Generates the soil equivalent elements outside the 2D or 3D soil domain. The soil equivalent elements are
         spring-damper elements that represents the soil below the rail in vertical direction. The soil equivalent
@@ -659,9 +682,10 @@ class Model:
 
         Args:
             - soil_equivalent_parameters: (:class:`stem.structural_material.ElasticSpringDamper`): soil equivalent
-            parameters
+               parameters
             - name (str): name of the track
             - length_soil_equivalent_element (float): length of the 1D soil equivalent elements
+            - outside_coords (NDArray[np.float64]): global coordinates of the top of the soil equivalent elements
         """
 
         soil_equivalent_name = f"soil_equivalent_{name}"
