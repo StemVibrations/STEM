@@ -6,17 +6,9 @@ import numpy as np
 from stem.model import Model
 from stem.structural_material import EulerBeam, ElasticSpringDamper
 from stem.boundary import DisplacementConstraint
-from stem.load import PointLoad
-from stem.solver import (
-    AnalysisType,
-    SolutionType,
-    TimeIntegration,
-    DisplacementConvergenceCriteria,
-    StressInitialisationType,
-    SolverSettings,
-    Problem,
-    NewtonRaphsonStrategy,
-)
+from stem.load import MovingLoad
+from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
+                         StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy, Cg)
 from stem.output import NodalOutput, Output, VtkOutputParameters
 from stem.soil_material import (
     SoilMaterial,
@@ -29,7 +21,7 @@ from stem.stem import Stem
 from benchmark_tests.utils import assert_floats_in_directories_almost_equal
 
 
-def test_point_load_on_track_static():
+def test_stem():
     ndim = 3
     model = Model(ndim)
     model.extrusion_length = 20
@@ -99,36 +91,46 @@ def test_point_load_on_track_static():
         retention_parameters=SaturatedBelowPhreaticLevelLaw(),
     )
 
-    origin_point = np.array([0.75, 2.5, 0])
+    origin_point = np.array([0.75, 2.5, -10])
     direction_vector = np.array([0, 0, 1])
     # dimensions of the sleeper
     sleeper_height = 0.3
     rail_pad_thickness = 0.02
     sleeper_length = 2.5 / 2
     sleeper_width = 0.234
-    sleeper_distance = 1.0
+    sleeper_distance = 0.5
     sleeper_dimensions = [sleeper_width, sleeper_height, sleeper_length]
     distance_middle_sleeper_to_rail = origin_point[0]
 
-    # create a straight track with rails, sleepers and rail pads
-    model.generate_straight_track(sleeper_distance=sleeper_distance,
-                                  n_sleepers=21,
-                                  rail_parameters=rail_parameters,
-                                  sleeper_parameters=sleeper_parameters,
-                                  rail_pad_parameters=rail_pad_parameters,
-                                  rail_pad_thickness=rail_pad_thickness,
-                                  origin_point=origin_point,
-                                  direction_vector=direction_vector,
-                                  sleeper_dimensions=sleeper_dimensions,
-                                  name="rail_track_1",
-                                  distance_middle_sleeper_to_rail=distance_middle_sleeper_to_rail)
+    soil_equivalent_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[0, 8e6, 0],
+                                                     NODAL_ROTATIONAL_STIFFNESS=[0, 0, 0],
+                                                     NODAL_DAMPING_COEFFICIENT=[0, 1, 0],
+                                                     NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0])
 
-    load = PointLoad(active=[False, True, False], value=[0.0, -10000.0, 0.0])
-    model.add_load_by_coordinates(
-        coordinates=[[0.75, 2.5 + sleeper_height + rail_pad_thickness, 10.0]],
-        load_parameters=load,
-        name="point_load",
-    )
+    # create a straight track with rails, sleepers and rail pads
+    model.generate_extended_straight_track(sleeper_distance=sleeper_distance,
+                                           n_sleepers=61,
+                                           rail_parameters=rail_parameters,
+                                           sleeper_parameters=sleeper_parameters,
+                                           rail_pad_parameters=rail_pad_parameters,
+                                           rail_pad_thickness=rail_pad_thickness,
+                                           origin_point=origin_point,
+                                           soil_equivalent_parameters=soil_equivalent_parameters,
+                                           length_soil_equivalent_element=1,
+                                           direction_vector=direction_vector,
+                                           name="rail_track_1",
+                                           sleeper_dimensions=sleeper_dimensions,
+                                           distance_middle_sleeper_to_rail=distance_middle_sleeper_to_rail)
+
+    # Define moving load in Vertical direction, but also with small components in longitudinal and lateral direction
+    # to check if the boundary conditions work as expected
+    load = MovingLoad(load=[-10, -10000, -10],
+                      direction=[1, 1, 1],
+                      velocity=60.0,
+                      origin=[0.75, 2.5 + sleeper_height + rail_pad_thickness, -5],
+                      offset=0.0)
+
+    model.add_load_on_line_model_part("rail_track_1", load, "moving_load")
 
     # Define boundary conditions
     no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
@@ -155,12 +157,12 @@ def test_point_load_on_track_static():
 
     # Set up solver settings
     analysis_type = AnalysisType.MECHANICAL
-    solution_type = SolutionType.QUASI_STATIC
+    solution_type = SolutionType.DYNAMIC
     # Set up start and end time of calculation, time step and etc
     time_integration = TimeIntegration(
         start_time=0.0,
-        end_time=1.00,
-        delta_time=1.00,
+        end_time=0.30,
+        delta_time=1e-3,
         reduction_factor=1.0,
         increase_factor=1.0,
         max_delta_time_factor=1000,
@@ -168,7 +170,7 @@ def test_point_load_on_track_static():
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-9,
                                                             displacement_absolute_tolerance=1.0e-12)
     stress_initialisation_type = StressInitialisationType.NONE
-    strategy = NewtonRaphsonStrategy()
+    strategy = LinearNewtonRaphsonStrategy()
     solver_settings = SolverSettings(
         analysis_type=analysis_type,
         solution_type=solution_type,
@@ -177,9 +179,10 @@ def test_point_load_on_track_static():
         is_stiffness_matrix_constant=True,
         are_mass_and_damping_constant=True,
         convergence_criteria=convergence_criterion,
+        linear_solver_settings=Cg(),
         strategy_type=strategy,
-        rayleigh_k=0.0,
-        rayleigh_m=0.0,
+        rayleigh_k=1e-6,
+        rayleigh_m=1e-4,
     )
 
     # Set up problem data
@@ -189,22 +192,18 @@ def test_point_load_on_track_static():
     # Define the results to be written to the output file
 
     # Nodal results
-    nodal_results = [
-        NodalOutput.DISPLACEMENT,
-    ]
+    nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY]
     # Gauss point results
-    # gauss_point_results = [GaussPointOutput.CAUCHY_STRESS_VECTOR,GaussPointOutput.CAUCHY_STRESS_TENSOR ]
     gauss_point_results = []
 
     # Define the output process
-
     vtk_output_process = Output(
         part_name="porous_computational_model_part",
         output_name="vtk_output",
         output_dir="output",
         output_parameters=VtkOutputParameters(
             file_format="ascii",
-            output_interval=1,
+            output_interval=30,
             output_control_type="step",
             nodal_results=nodal_results,
             gauss_point_results=gauss_point_results,
@@ -214,7 +213,7 @@ def test_point_load_on_track_static():
     # Set mesh size
     # --------------------------------
     model.set_mesh_size(element_size=1)
-    input_folder = "benchmark_tests/test_volume_sleepers/inputs_kratos_full_qs"
+    input_folder = "benchmark_tests/test_volume_sleepers_extended_track/inputs_kratos"
     # Write KRATOS input files
     # --------------------------------
     stem = Stem(model, input_folder)
@@ -224,9 +223,9 @@ def test_point_load_on_track_static():
     stem.run_calculation()
 
     if sys.platform == "win32":
-        expected_output_dir = "benchmark_tests/test_volume_sleepers/output_windows/output_vtk_porous_computational_model_part"
+        expected_output_dir = "benchmark_tests/test_volume_sleepers_extended_track/output_windows/output_vtk_porous_computational_model_part"
     elif sys.platform == "linux":
-        expected_output_dir = "benchmark_tests/test_volume_sleepers/output_linux/output_vtk_porous_computational_model_part"
+        expected_output_dir = "benchmark_tests/test_volume_sleepers_extended_track/output_linux/output_vtk_porous_computational_model_part"
     else:
         raise Exception("Unknown platform")
 

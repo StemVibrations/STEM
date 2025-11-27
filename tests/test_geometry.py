@@ -540,3 +540,52 @@ class TestGeometry:
 
         # Assert that the centre of mass is calculated correctly
         npt.assert_array_almost_equal(centre_of_mass, np.array([0.5, 0.5, 0.5]))
+
+    def test_to_dict(self):
+        """
+        Test the serialization of the geometry to a dictionary.
+        """
+
+        # check if empty geometry is serialized correctly
+        geometry = Geometry()
+        serialized = geometry.to_dict()
+        assert serialized == {"points": {}, "lines": {}, "surfaces": {}, "volumes": {}}
+
+        # check if geometry with points, lines, surfaces and volumes is serialized correctly
+        points = {
+            1: Point.create([0, 0, 0], 1),
+            2: Point.create([1, 0, 0], 2),
+            3: Point.create([0, 1, 0], 3),
+            4: Point.create([0, 0, 1], 4)
+        }
+        lines = {
+            1: Line.create([1, 2], 1),
+            2: Line.create([2, 3], 2),
+            3: Line.create([3, 1], 3),
+            4: Line.create([1, 4], 4)
+        }
+        surfaces = {1: Surface.create([1, 2, 3], 1), 2: Surface.create([1, 4], 2)}
+        volumes = {1: Volume.create([1, 2], 1)}
+        geometry = Geometry(points=points, lines=lines, surfaces=surfaces, volumes=volumes)
+        serialized = geometry.to_dict()
+        assert serialized == {
+            "points": {
+                "1": [0, 0, 0],
+                "2": [1, 0, 0],
+                "3": [0, 1, 0],
+                "4": [0, 0, 1]
+            },
+            "lines": {
+                "1": [1, 2],
+                "2": [2, 3],
+                "3": [3, 1],
+                "4": [1, 4]
+            },
+            "surfaces": {
+                "1": [1, 2, 3],
+                "2": [1, 4]
+            },
+            "volumes": {
+                "1": [1, 2]
+            }
+        }

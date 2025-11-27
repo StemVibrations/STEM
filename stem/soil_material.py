@@ -1,4 +1,4 @@
-from typing import List, Any, Optional
+from typing import List, Any, Optional, Dict
 from dataclasses import dataclass, field
 from abc import ABC
 
@@ -299,6 +299,28 @@ class SoilMaterial:
             raise ValueError(f"Analysis type {analysis_type} is not implemented yet for soil material.")
 
         return element_name
+
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Function to convert the soil material to a dictionary. For serialization purposes.
+
+        Returns:
+            - Dict[str, Any]: The soil material as a dictionary.
+        """
+
+        # add class name to each sub-dictionary
+        self.soil_formulation.__dict__.update({"type": self.soil_formulation.__class__.__name__})
+        self.constitutive_law.__dict__.update({"type": self.constitutive_law.__class__.__name__})
+        self.retention_parameters.__dict__.update({"type": self.retention_parameters.__class__.__name__})
+        self.fluid_properties.__dict__.update({"type": self.fluid_properties.__class__.__name__})
+
+        return {
+            "name": self.name,
+            "soil_formulation": self.soil_formulation.__dict__,
+            "constitutive_law": self.constitutive_law.__dict__,
+            "retention_parameters": self.retention_parameters.__dict__,
+            "fluid_properties": self.fluid_properties.__dict__,
+        }
 
     def get_property_in_material(self, property_name: str) -> Any:
         """

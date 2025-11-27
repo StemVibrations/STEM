@@ -338,6 +338,36 @@ class Geometry:
         else:
             return super().__getattribute__(item)
 
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Serializes the geometry object to a dictionary.
+
+        Returns:
+            - Dict[str, Any]: A dictionary representation of the geometry object.
+        """
+
+        # transform the geometry dataclass to dictionary for serialization
+        geometry_dict = {
+            "points": {
+                str(point_id): point.coordinates
+                for point_id, point in self.points.items()
+            },
+            "lines": {
+                str(line_id): line.point_ids
+                for line_id, line in self.lines.items()
+            },
+            "surfaces": {
+                str(surface_id): surface.line_ids
+                for surface_id, surface in self.surfaces.items()
+            },
+            "volumes": {
+                str(volume_id): volume.surface_ids
+                for volume_id, volume in self.volumes.items()
+            }
+        }
+
+        return geometry_dict
+
     @staticmethod
     def __set_point(geo_data: Dict[str, Any], point_id: int):
         """
