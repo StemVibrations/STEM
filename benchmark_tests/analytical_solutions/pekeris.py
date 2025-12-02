@@ -355,14 +355,29 @@ class Pekeris:
 
 
 if __name__ == "__main__":
-    lmb = Pekeris()
-    lmb.material_properties(0.2, 2000, 100e3)
-    lmb.loading(-1000, LoadType.Pulse)
-    lmb.solution([3, 4, 5, 6])
-    lmb.results(output_folder="Results", file_name="Pulse")
+    # lmb = Pekeris()
+    # lmb.material_properties(0.2, 2000, 100e3)
+    # lmb.loading(-1000, LoadType.Pulse)
+    # lmb.solution([3, 4, 5, 6])
+    # lmb.results(output_folder="Results", file_name="Pulse")
 
     lmb = Pekeris()
-    lmb.material_properties(0.2, 2000, 100e3)
-    lmb.loading(-1000, LoadType.Heaviside)
+    poisson = 0
+    density = 2000
+    young = 100e3
+    cs = np.sqrt(young / (2 * (1 + poisson)) / density)
+    shear_modulus = young / (2 * (1 + poisson))
+    P = 1000
+
+    lmb.material_properties(poisson, density, young)
+    lmb.loading(-P, LoadType.Heaviside)
     lmb.solution([3, 4, 5, 6])
     lmb.results(output_folder="Results", file_name="Heaviside")
+
+    radius = 3
+    plt.plot(lmb.time[:, 0] * cs / radius, lmb.u[:, 0] * shear_modulus * radius / P, label="Pekeris")
+    plt.plot(lmb.tau, -lmb.u_bar, label="Pekeris norm")
+    plt.grid()
+    plt.xlim(0, 2)
+    plt.ylim(-0.5, 0.5)
+    plt.show()
