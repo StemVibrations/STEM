@@ -66,7 +66,7 @@ def test_stem():
     model.add_boundary_condition_on_plane([(0, 0, 1), (0, 10, 1), (20, 0, 1)], fixed_z_displacement_parameters,
                                           "fixed_z_back")
 
-    model.set_mesh_size(element_size=0.5)
+    model.set_mesh_size(element_size=1)
     model.mesh_settings.element_order = 2
 
     # Synchronize geometry
