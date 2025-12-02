@@ -1,5 +1,4 @@
 import os
-import sys
 
 from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
@@ -111,7 +110,7 @@ def test_stem():
 
     # Write KRATOS input files
     # --------------------------------
-    input_folder = "benchmark_tests/test_strip_load/inputs_kratos"
+    input_folder = "benchmark_tests/test_strip_load_2D/inputs_kratos"
 
     # Write KRATOS input files
     # --------------------------------
@@ -122,7 +121,7 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
-    expected_output_dir = "benchmark_tests/test_strip_load/output_/output_vtk_porous_computational_model_part"
+    expected_output_dir = "benchmark_tests/test_strip_load_2D/output_/output_vtk_porous_computational_model_part"
 
     assert_floats_in_directories_almost_equal(expected_output_dir,
                                               os.path.join(input_folder,
