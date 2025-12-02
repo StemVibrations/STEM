@@ -1,4 +1,5 @@
 import os
+import sys
 
 from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
@@ -132,7 +133,12 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
-    expected_output_dir = "benchmark_tests/test_strip_load_3D/output_/output_vtk_porous_computational_model_part"
+    if sys.platform == "win32":
+        expected_output_dir = "benchmark_tests/test_strip_load_3D/output_windows/output_vtk_porous_computational_model_part"
+    elif sys.platform == "linux":
+        expected_output_dir = "benchmark_tests/test_strip_load_3D/output_linux/output_vtk_porous_computational_model_part"
+    else:
+        raise Exception("Unknown platform")
 
     assert_floats_in_directories_almost_equal(expected_output_dir,
                                               os.path.join(input_folder,
