@@ -136,6 +136,6 @@ def test_stem():
                                                            "output_vtk_porous_computational_model_part"),
                                               os.path.join(input_folder,
                                                            "output/output_vtk_porous_computational_model_part"),
-                                              decimal=5)
+                                              decimal=6)
 
     rmtree(input_folder)
