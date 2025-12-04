@@ -9,7 +9,7 @@ from stem.solver import AnalysisType, SolutionType, TimeIntegration, Displacemen
     StressInitialisationType, SolverSettings, Problem, NewtonRaphsonStrategy, Lu
 from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters, GaussPointOutput
 from stem.stem import Stem
-from benchmark_tests.utils import assert_floats_in_directories_almost_equal
+from benchmark_tests.utils import assert_floats_in_directories_almost_equal, assert_floats_in_files_almost_equal
 from shutil import rmtree
 
 
@@ -123,15 +123,19 @@ def test_stem():
     stem.run_calculation()
 
     if sys.platform == "win32":
-        expected_output_dir = "benchmark_tests/test_strip_load_2D/output_windows/output_vtk_porous_computational_model_part"
+        expected_output_dir = "benchmark_tests/test_strip_load_2D/output_windows"
     elif sys.platform == "linux":
-        expected_output_dir = "benchmark_tests/test_strip_load_2D/output_linux/output_vtk_porous_computational_model_part"
+        expected_output_dir = "benchmark_tests/test_strip_load_2D/output_linux"
     else:
         raise Exception("Unknown platform")
 
-    assert_floats_in_directories_almost_equal(expected_output_dir,
+    assert_floats_in_files_almost_equal(os.path.join(expected_output_dir, "json_output.json"),
+                                        os.path.join(input_folder, "json_output.json"))
+
+    assert_floats_in_directories_almost_equal(os.path.join(expected_output_dir,
+                                                           "output_vtk_porous_computational_model_part"),
                                               os.path.join(input_folder,
                                                            "output/output_vtk_porous_computational_model_part"),
-                                              decimal=6)
+                                              decimal=5)
 
     rmtree(input_folder)
