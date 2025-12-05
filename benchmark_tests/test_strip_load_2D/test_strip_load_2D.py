@@ -6,7 +6,7 @@ from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, Sa
 from stem.load import LineLoad
 from stem.boundary import DisplacementConstraint
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, \
-    StressInitialisationType, SolverSettings, Problem, NewtonRaphsonStrategy, Lu
+    StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy, Lu
 from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters, GaussPointOutput
 from stem.stem import Stem
 from benchmark_tests.utils import assert_floats_in_directories_almost_equal, assert_floats_in_files_almost_equal
@@ -82,7 +82,7 @@ def test_stem():
                                      is_stiffness_matrix_constant=True,
                                      are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
-                                     strategy_type=NewtonRaphsonStrategy(),
+                                     strategy_type=LinearNewtonRaphsonStrategy(),
                                      linear_solver_settings=Lu(),
                                      rayleigh_k=7.86e-5,
                                      rayleigh_m=0.248)
@@ -99,12 +99,11 @@ def test_stem():
         (15, 10, 0),
     ], json_output_parameters, "json_output")
 
-    model.add_output_settings(output_parameters=VtkOutputParameters(
-        file_format="ascii",
-        output_interval=20,
-        nodal_results=[NodalOutput.VELOCITY],
-        gauss_point_results=[GaussPointOutput.CAUCHY_STRESS_VECTOR],
-        output_control_type="step"),
+    model.add_output_settings(output_parameters=VtkOutputParameters(file_format="ascii",
+                                                                    output_interval=20,
+                                                                    nodal_results=[NodalOutput.VELOCITY],
+                                                                    gauss_point_results=[],
+                                                                    output_control_type="step"),
                               part_name="porous_computational_model_part",
                               output_dir="output",
                               output_name="vtk_output")
