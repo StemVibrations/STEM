@@ -139,18 +139,6 @@ def test_stem():
     stem.run_calculation()
 
     if sys.platform == "win32":
-        expected_output_dir = "benchmark_tests/test_pekeris/output_windows/output_vtk_porous_computational_model_part"
-    elif sys.platform == "linux":
-        expected_output_dir = "benchmark_tests/test_pekeris/output_linux/output_vtk_porous_computational_model_part"
-    else:
-        raise Exception("Unknown platform")
-
-    assert_floats_in_directories_almost_equal(expected_output_dir,
-                                              os.path.join(input_folder,
-                                                           "output/output_vtk_porous_computational_model_part"),
-                                              decimal=9)
-
-    if sys.platform == "win32":
         expected_output_dir = "benchmark_tests/test_pekeris/output_windows"
     elif sys.platform == "linux":
         expected_output_dir = "benchmark_tests/test_pekeris/output_linux"
@@ -164,6 +152,6 @@ def test_stem():
                                                            "output_vtk_porous_computational_model_part"),
                                               os.path.join(input_folder,
                                                            "output/output_vtk_porous_computational_model_part"),
-                                              decimal=6)
+                                              decimal=9)
 
     rmtree(input_folder)
