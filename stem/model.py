@@ -902,6 +902,7 @@ class Model:
         The coordinates have to belong to the same plane.
         In a 3D model, the 2D geometry is extruded in the direction of the extrusion group.
         If no extrusion group is provided, the geometry is extruded in the out of plane direction.
+        The coordinates need to follow clockwise or anti-clockwise order.
 
         Args:
             - coordinates (Sequence[Sequence[float]]): The plane coordinates of the soil layer.
@@ -1025,6 +1026,7 @@ class Model:
         """
         Adds a load to the model by giving a sequence of 3D coordinates. For a 2D model, the third coordinate is
         ignored.
+        The coordinates need to follow clockwise or anti-clockwise order.
 
         Args:
             - coordinates (Sequence[Sequence[float]]): The coordinates of the load.
