@@ -1,0 +1,51 @@
+\documentclass[11pt,a4paper]{report}
+
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{siunitx}
+\usepackage{geometry}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{siunitx}
+
+\geometry{margin=2.5cm}
+
+% Paragraph formatting
+\setlength{\parindent}{0em}
+\setlength{\parskip}{0.6em}
+
+
+\title{STEM Benchmark Test Report}
+\author{STEM Development Team}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\clearpage
+
+% -------------------------------------------------------
+\chapter{Introduction}
+% -------------------------------------------------------
+This report documents the verification tests performed on the STEM.
+The purpose is to validate numerical accuracy through comparison against
+analytical solutions and established benchmark results.
+
+Each chapter corresponds to a benchmark configuration, including a description
+of the mathematical model, numerical setup, and comparison of results.
+
+\clearpage
+\input{pekeris/pekeris.tex}
+\input{strip_load_2D/strip_load_2D.tex}
+\input{strip_load_3D/strip_load_3D.tex}
+
+
+\clearpage
+\bibliographystyle{unsrt}
+\bibliography{references}
+\end{document}
