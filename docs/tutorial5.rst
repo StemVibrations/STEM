@@ -1,11 +1,10 @@
-STEM tutorials
-==============
-
 .. _tutorial5:
 
 Train model (UVEC) with rail joint and static initialisation
-------------------------------------------------------------
-This tutorial shows step by step guide on how to set up a train model on top of track on an embankment with
+============================================================
+Overview
+--------
+This tutorial shows a step-by-step guide on how to set up a train model on top of track on an embankment with
 two soil layers underneath, in a 3D model, on a railway track with a rail joint.
 The UVEC (User defined VEhiCle model) is a model used to represent a train as dynamic loads on the system.
 
@@ -15,6 +14,8 @@ The second stage is a dynamic analysis of the model, where the train moves over 
 The UVEC model is used to represent the train. The UVEC model is a user defined vehicle model that can be used to
 represent a train as a dynamic load on the system.
 
+Imports and setup
+-----------------
 First we import the necessary packages.
 
 .. code-block:: python
@@ -34,9 +35,13 @@ First we import the necessary packages.
 
     # END CODE BLOCK
 
+Geometry, track and materials
+----------------------------
 For setting up the model, Model class is imported from stem.model. And for setting up the soil material, OnePhaseSoil,
 LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw classes are imported.
 In this tutorial, a train model load (modelled using the UVEC) is used on top of a track.
+Structural elements
+-------------------
 For this purpose, the ElasticSpringDamper and NodalConcentrated classes are imported from stem.structural_material,
 the UvecLoad class is imported from stem.load.
 

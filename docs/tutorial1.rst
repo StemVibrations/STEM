@@ -1,13 +1,15 @@
-STEM tutorials
-==============
-
 .. _tutorial1:
 
 Stationary load on a 3D field
------------------------------
-This tutorial shows step by step guide on how to set up a line load
+=============================
+
+Overview
+--------
+This tutorial shows a step-by-step guide on how to set up a line load
 on top of an embankment with two soil layers underneath, in a 3D model.
 
+Imports and setup
+-----------------
 First the necessary packages are imported and paths are defined.
 
 .. code-block:: python
@@ -34,7 +36,9 @@ For setting up the solver settings, necessary classes are imported from stem.sol
 Classes needed for the output, are NodalOutput, VtkOutputParameters and Output which are imported from stem.output.
 Lastly, Stem class is imported from stem.stem, in order to run the simulation.
 
-In this step, the geometry, conditions, and material parameters for the simulation is defined.
+Geometry and materials
+----------------------
+In this step, the geometry, conditions, and material parameters for the simulation are defined.
 First the dimension of the model is indicated which in this case is 3. After which the model can be initialised.
 
 .. code-block:: python
@@ -89,7 +93,7 @@ the Young's modulus is 10e6 Pa and the Poisson's ratio is 0.2.
 The soil is dry above the phreatic level and wet below the phreatic level. A porosity of 0.3 is specified.
 The soil is a one-phase soil, meaning that the flow of water through the soil is not computed.
 
- .. code-block:: python
+.. code-block:: python
 
     solid_density_3 = 2650
     porosity_3 = 0.3
@@ -102,8 +106,10 @@ The soil is a one-phase soil, meaning that the flow of water through the soil is
 
     # END CODE BLOCK
 
-The coordinates of the model are defined in the following way. Each of the layers are defined by a list of coordinates,
-defined in th x-y plane. For 3D models, the x-y plane can be extruded in the z-direction. In this case, the extrusion
+Coordinates and model extents
+-----------------------------
+The coordinates of the model are defined in the following way. Each of the layers is defined by a list of coordinates,
+defined in the x-y plane. For 3D models, the x-y plane can be extruded in the z-direction. In this case, the extrusion
 length is 50 m in the z-direction.
 
 .. code-block:: python
@@ -133,9 +139,11 @@ a unique name.
 
     # END CODE BLOCK
 
+Loads
+-----
 For the line load, LineLoad class is called. The load is defined following a list of coordinates. In this case,
 a line load is applied along the load coordinates. The line load can be defined along which axis is active,
-and the value of the load for each axis. In this case the load is only active in the y-direction and the value of the -1000.
+and the value of the load for each axis. In this case the load is only active in the y-direction and the value is -1000.
 
 .. code-block:: python
 
@@ -145,6 +153,8 @@ and the value of the load for each axis. In this case the load is only active in
 
     # END CODE BLOCK
 
+Geometry IDs and visualisation
+------------------------------
 The boundary conditions are defined on geometry ids, which are created by gmsh when making the geometry. Gmsh will
 assign an id to each of the points, lines, surfaces and volumes created.
 The geometry ids can be seen after using the show_geometry function.
@@ -168,6 +178,8 @@ The geometry ids can be seen in the pictures below.
 .. image:: _static/geometry_ids.png
 
 
+Boundary conditions
+-------------------
 Below the boundary conditions are defined. The base of the model is fixed in all directions with the name "base_fixed".
 The roller boundary condition is applied on the sides of the embankment with the name "sides_roller".
 The boundary conditions are added to the model on the edge surfaces, i.e. the boundary conditions are applied to a list
@@ -187,7 +199,9 @@ dimension, "2".
 
     # END CODE BLOCK
 
-After which the mesh size can be set. The element size for the mesh can be defined as a single value, the mesh
+Mesh
+----
+After which the mesh size can be set. The element size for the mesh can be defined as a single value; the mesh
 will be generated when the Stem class is initialised.
 
 .. code-block:: python
@@ -196,7 +210,9 @@ will be generated when the Stem class is initialised.
 
     # END CODE BLOCK
 
-Now that the geometry is defined, the solver settings of the model has to be set.
+Solver settings
+---------------
+Now that the geometry is defined, the solver settings of the model have to be set.
 The analysis type is set to "MECHANICAL" and the solution type is set to "DYNAMIC".
 Then the start time is set to 0.0 second and the end time is set to 0.1 second. The time step size is set to 0.01 second.
 Furthermore, the reduction factor and increase factor are set to 1.0, such that the time step size is constant throughout
@@ -232,6 +248,8 @@ assumed, with a damping coefficient of 0.0002 for the stiffness matrix and 0.6 f
 
     # END CODE BLOCK
 
+Problem and output
+------------------
 Now the problem data should be set up. The problem should be given a name, in this case it is
 "calculate_load_on_embankment_3d". Then the solver settings are added to the problem.
 
@@ -275,7 +293,9 @@ results will be written every time step.
 
     # END CODE BLOCK
 
-Now that the model is set up, the calculation is almost ready to be ran.
+Run
+---
+Now that the model is set up, the calculation is almost ready to be run.
 
 Firstly the Stem class is initialised, with the model and the directory where the input files will be written to.
 While initialising the Stem class, the mesh will be generated.
@@ -286,6 +306,8 @@ While initialising the Stem class, the mesh will be generated.
 
     # END CODE BLOCK
 
+Write inputs
+------------
 The Kratos input files are then written. The project settings and output definitions are written to
 ProjectParameters_stage_1.json file. The mesh is written to the .mdpa file and the material parameters are
 written to the MaterialParameters_stage_1.json file.
@@ -297,6 +319,8 @@ All of the input files are then written to the input files directory.
 
     # END CODE BLOCK
 
+Run calculation
+---------------
 The calculation is then ran by calling the run_calculation function within the stem class.
 
 .. code-block:: python

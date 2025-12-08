@@ -5,7 +5,7 @@ Interface definitions
 
 User-defined vehicle model
 --------------------------
-STEM support the definition of user-defined vehicle models. To define the vehicle model the user needs to create an *Python UVEC file*.
+STEM supports the definition of user-defined vehicle models. To define the vehicle model the user needs to create a *Python UVEC file*.
 The UVEC file is a Python script that defines the vehicle model. The UVEC file must contain a function called `uvec` that has the following structure:
 
 .. code-block:: python
@@ -38,7 +38,7 @@ The UVEC file is a Python script that defines the vehicle model. The UVEC file m
 
         return json.dumps(uvec_data)
 
-In this example the uvec_data contains the structure that it is used in STEM. The structure of the uvec_data is the following:
+In this example, ``uvec_data`` follows the structure used in STEM. The structure of ``uvec_data`` is the following:
 
     * *uvec_data["u"]* - the displacement of the vehicle at the location of the wheel
     * *uvec_data["theta"]* - the rotation of the vehicle at the location of the wheel

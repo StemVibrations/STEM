@@ -1,13 +1,15 @@
-STEM tutorials
-==============
-
 .. _tutorial2:
 
 Moving load on an embankment in 3D
-----------------------------------
-This tutorial shows step by step guide on how to set up a moving load
+==================================
+
+Overview
+--------
+This tutorial shows a step-by-step guide on how to set up a moving load
 on top of an embankment with two soil layers underneath, in a 3D model.
 
+Imports and setup
+-----------------
 First the necessary packages are imported and paths are defined.
 
 .. code-block:: python
@@ -28,13 +30,30 @@ First the necessary packages are imported and paths are defined.
 
 For setting up the model, Model class is imported from stem.model. And for setting up the soil material, OnePhaseSoil,
 LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw classes are imported.
+
+Loads
+-----
 In this case, there is a moving load on top of the embankment. MovingLoad class is imported from stem.load.
+
+Boundary conditions
+-------------------
 As for setting the boundary conditions, DisplacementConstraint class is imported from stem.boundary.
+
+Solver settings
+---------------
 For setting up the solver settings, necessary classes are imported from stem.solver.
+
+Output
+------
 Classes needed for the output, are NodalOutput, VtkOutputParameters and Output which are imported from stem.output.
+
+Run
+---
 Lastly, Stem class is imported from stem.stem, in order to run the simulation.
 
-In this step, the geometry, conditions, and material parameters for the simulation is defined.
+Geometry and materials
+----------------------
+In this step, the geometry, conditions, and material parameters for the simulation are defined.
 First the dimension of the model is indicated which in this case is 3. After which the model can be initialised.
 
 .. code-block:: python
