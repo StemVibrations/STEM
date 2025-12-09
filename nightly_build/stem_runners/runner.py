@@ -2,10 +2,7 @@ from pathlib import Path
 import shutil
 import sys
 
-# Ensure repository root is on sys.path when executed as a script
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.append(".")
 
 from nightly_build.stem_runners.pekeris import run_pekeris
 from nightly_build.stem_runners.strip_load_2D import run_strip_2D
