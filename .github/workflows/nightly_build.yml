@@ -32,6 +32,14 @@ jobs:
           echo "No changes detected on main -- skipping report."
           exit 0
 
+      # Install libGLU library on Ubuntu
+      - name: Install libGLU library on Ubuntu
+        run: |
+            if [ "$RUNNER_OS" == "Linux" ]; then
+                sudo apt-get install -y libglu1-mesa
+            fi
+        shell: bash
+
       # Set up Python
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
