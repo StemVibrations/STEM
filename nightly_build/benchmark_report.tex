@@ -50,10 +50,11 @@
 %  header and footer
 % -------------------------------------------------------
 \usepackage{fancyhdr}
+\renewcommand{\chaptermark}[1]{\markboth{\thechapter}{}}
 \pagestyle{fancy}
 \fancyhf{}
 \lhead{\small{STEM Benchmark Report}}
-\rhead{\small{\leftmark}}
+\rhead{\small{Chapter~\thechapter}}
 \cfoot{\small{\thepage}}
 
 \newcommand{\STEMversion}{1.3.0}
@@ -107,10 +108,10 @@
 \clearpage
 
 \input{introduction/introduction.tex}
+\input{one_dim_wave_prop/one_dim_wave_prop.tex}
 \input{pekeris/pekeris.tex}
 \input{strip_load_2D/strip_load_2D.tex}
 \input{strip_load_3D/strip_load_3D.tex}
-% \input{cantilever_beam/cantilever_beam.tex}
 
 \clearpage
 \bibliographystyle{unsrt}
