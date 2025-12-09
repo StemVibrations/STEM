@@ -64,7 +64,7 @@ def run_column(input_folder):
 
     # Set mesh size
     # --------------------------------
-    model.set_mesh_size(element_size=0.10)
+    model.set_mesh_size(element_size=0.05)
     model.mesh_settings.element_order = 2
 
     # Define project parameters

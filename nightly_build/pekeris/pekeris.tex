@@ -1,5 +1,6 @@
-\chapter{Dynamic point load on elastic halfspace}
-
+% ==============================================================================================
+\chapter{Dynamic point load on elastic halfspace}\label{ch:pekeris}
+% ==============================================================================================
 
 % ----------------------------------------------------------------------------------------------
 \section{Introduction}
@@ -17,7 +18,7 @@ half-space, enabling a direct time-history comparison against the numerical mode
 % ----------------------------------------------------------------------------------------------
 
 % ..............................................................................................
-\subsection{Geometry, Mesh and Loading}
+\subsection{Geometry, mesh and loading}
 % ..............................................................................................
 The point load was modelled in a three-dimensional domain representing an elastic half-space.
 An overview of the geometry for the numerical analysis is shown in Figure~\ref{fig:3D_scheme}.
@@ -59,6 +60,13 @@ following parameters:
     \item Poisson ratio: \qty{0.3},
     \item Density: \qty{2000}{\kilogram\per\meter\cubed}.
 \end{itemize}
+
+Material damping is included via Rayleigh damping, with parameters that provide a damping ratio of
+\qty{0.01}{\percent} at \qty{1}{\hertz} and \qty{80}{\hertz}.
+
+The dynamic analysis is performed over a \qty{0.20}{\second} time window, with a time step of \qty{0.001}{\second}.
+The system of equations is solved using the Newmark time integration~\cite{Newmark_1959} scheme with
+parameters $\beta = 0.25$ and $\gamma = 0.5$.
 
 % ----------------------------------------------------------------------------------------------
 \section{Results}

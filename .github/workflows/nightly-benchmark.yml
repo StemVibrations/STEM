@@ -2,7 +2,7 @@ name: Nightly Benchmark Report
 
 on:
   schedule:
-    - cron: "0 2 * * *"  # every night at 02:00 UTC
+    - cron: "0 2 * * *"
   workflow_dispatch:
 
 jobs:

@@ -1,5 +1,6 @@
-\chapter{Dynamic strip load on 2D elastic halfspace}
-
+% ==============================================================================================
+\chapter{Dynamic strip load on 2D elastic halfspace} \label{ch:strip_load_2D}
+% ==============================================================================================
 
 % ----------------------------------------------------------------------------------------------
 \section{Introduction}
@@ -11,16 +12,14 @@ The analytical solution is presented in~\cite{Verruijt_Brinkgreve_Li_2008}.
 The analytical solution provides closed-form expressions for the vertical stress along the surface of the
 half-space, enabling a direct time-history comparison against the numerical model.
 
-
-
 % ----------------------------------------------------------------------------------------------
 \section{Model Description}
 % ----------------------------------------------------------------------------------------------
 
 % ..............................................................................................
-\subsection{Geometry, Mesh and Loading}
+\subsection{Geometry, mesh and loading}
 % ..............................................................................................
-The soil domain is modelled in 2D and  represents a \qty{20}{\meter} (x-direction) by \qty{10}{\meter}
+The soil domain is modelled in 2D and represents a \qty{20}{\meter} (x-direction) by \qty{10}{\meter}
 (y-direction) soil layer, modelled with high-order triangular elements. The mesh uses an average
 element size of \qty{1}{\meter}. Figure~\ref{fig:strip2d_mesh} illustrates the geometry and mesh
 adopted for the analysis.
@@ -48,7 +47,7 @@ The nodes at the bottom are fully fixed, while the two vertical sides are restra
 \end{figure}
 
 % ..............................................................................................
-\subsection{Materials and Numerical Parameters}
+\subsection{Materials and numerical parameters}
 % ..............................................................................................
 The soil is modelled as an one-phase continuum with a linear elastic constitutive law, with the
 following parameters:
@@ -62,27 +61,24 @@ following parameters:
 Material damping is included via Rayleigh damping, with parameters that provide a damping ratio of
 \qty{0.5}{\percent} at \qty{1}{\hertz} and \qty{80}{\hertz}.
 
-
-time integration uses a constant time step of \qty{0.001}{\second} within the \qty{0.20}{\second}
-analysis window. The stiffness, mass and damping matrices are kept constant, and the system is solved
-with a linear Newton--Raphson strategy combined with a direct LU factorisation, matching the solver
-settings defined in the python test case.
-
+The dynamic analysis is performed over a \qty{0.20}{\second} time window, with a time step of \qty{0.001}{\second}.
+The system of equations is solved using the Newmark time integration~\cite{Newmark_1959} scheme with
+parameters $\beta = 0.25$ and $\gamma = 0.5$.
 
 % ----------------------------------------------------------------------------------------------
 \section{Results}
 % ----------------------------------------------------------------------------------------------
+Figure~\ref{fig:strip2d_results} presents the vertical stress at a depth of {\qty{-1}{\meter}}
+below the surface, at three moments in time: \qty{0.05}{\second}, \qty{0.075}{\second} and \qty{0.10}{\second}.
+The figure compares the STEM results against the analytical solution.
+If follows that there is an agreement between both solutions, demonstrating the accuracy of the STEM
+for this type of dynamic loading condition.
 
-The validation focuses on the vertical velocity recorded at three nodes located along the loaded
-surface at $(x,y) = (5,10)$, $(10,10)$ and $(15,10)$. Figure~\ref{fig:strip2d_results} compares the
-STEM prediction against the stored Linux reference histories. The overlap of the two curves confirms
-that the entire workflow---from geometry creation to Kratos execution and post-processing---remains
-consistent for the 2D strip load scenario.
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.8\textwidth]{strip_load_2D/time_history.pdf}
-    \caption{Vertical velocity time histories at the three monitored surface nodes for STEM and the
-    Linux reference dataset.}
+    \caption{Vertical stress at a depth of {\qty{-1}{\meter}} below the surface at three moments in time:
+    (a) \qty{0.05}{\second}, (b) \qty{0.075}{\second} and (c) \qty{0.10}{\second}.}
     \label{fig:strip2d_results}
 \end{figure}
