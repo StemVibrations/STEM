@@ -1,0 +1,19 @@
+name: Nightly Benchmark Report
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-report:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Set up Python
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+
+      - name: Install Python dependencies
+        run: |
+          pip install .
