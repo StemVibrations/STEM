@@ -94,9 +94,9 @@ def run_strip_2D(input_folder):
 
     model.add_output_settings(output_parameters=VtkOutputParameters(
         file_format="ascii",
-        output_interval=20,
+        output_interval=1,
         nodal_results=[NodalOutput.VELOCITY],
-        gauss_point_results=[GaussPointOutput.CAUCHY_STRESS_TENSOR],
+        gauss_point_results=[GaussPointOutput.CAUCHY_STRESS_VECTOR],
         output_control_type="step"),
                               part_name="porous_computational_model_part",
                               output_dir="output",

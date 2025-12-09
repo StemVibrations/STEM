@@ -1,51 +1,119 @@
-\documentclass[11pt,a4paper]{report}
+\documentclass[11pt, a4paper, oneside]{scrreprt}
 
 \usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{microtype}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\usepackage{setspace}
+\onehalfspacing
+
+\usepackage[dvipsnames]{xcolor}
+\definecolor{accent}{HTML}{004F9F}
+
+\addtokomafont{chapter}{\color{accent}}
+\addtokomafont{section}{\color{accent}}
+\addtokomafont{subsection}{\color{accent}}
+
 \usepackage{graphicx}
 \usepackage{amsmath,amsfonts,amssymb}
 \usepackage{booktabs}
-\usepackage{hyperref}
 \usepackage{siunitx}
-\usepackage{geometry}
+\sisetup{detect-all}
 \usepackage{caption}
 \usepackage{subcaption}
 \usepackage{enumitem}
-\usepackage{siunitx}
+\usepackage{xstring}
+\usepackage{catchfile}
 
-\geometry{margin=2.5cm}
+% -------------------------------------------------------
+% font
+% -------------------------------------------------------
+\usepackage[sfdefault]{noto}
+\usepackage[T1]{fontenc}
 
-% Paragraph formatting
-\setlength{\parindent}{0em}
-\setlength{\parskip}{0.6em}
+
+% -------------------------------------------------------
+%  hyperref customization
+% -------------------------------------------------------
+\usepackage[
+  pdfauthor={STEM Development Team},
+  pdftitle={STEM Benchmark Report},
+  colorlinks=true,
+  linkcolor=accent,
+  urlcolor=accent,
+  citecolor=accent
+]{hyperref}
+
+% -------------------------------------------------------
+%  header and footer
+% -------------------------------------------------------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\small{STEM Benchmark Report}}
+\rhead{\small{\leftmark}}
+\cfoot{\small{\thepage}}
+
+\newcommand{\STEMversion}{1.3.0}
 
 
-\title{STEM Benchmark Test Report}
-\author{STEM Development Team}
-\date{\today}
+% -------------------------------------------------------
+%  for git hash
+% -------------------------------------------------------
+% Based on this: https://gist.github.com/kbjarkefur/88820e5a5365b3f707b6b20aee57cf8a
+\newcommand{\gitfolder}{../.git}             % Relative path to .git folder from .tex file
+\CatchFileDef{\headfull}{\gitfolder/HEAD}{}              % Get path to head file for checked out branch
+\StrGobbleRight{\headfull}{1}[\head]                      % Remove end of line character
+\StrBehind[2]{\head}{/}[\branch]                          % Parse out the path only
+\CatchFileDef{\commit}{\gitfolder/refs/heads/\branch}{}  % Get the content of the branch head
+\StrGobbleRight{\commit}{1}[\commithash]                  % Remove end of line character
 
+% Define the hash
+\newcommand{\commiturl}{\commithash}
+
+
+% -------------------------------------------------------
+%  paragraph style
+% -------------------------------------------------------
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.8em}
+
+% -------------------------------------------------------
+%  title page
+% -------------------------------------------------------
+\newcommand{\reporttitle}{
+    \begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\Huge\bfseries STEM Benchmark Test Report \\[1.5em]}
+    \rule{\textwidth}{0.5pt} \\[1.5em]
+    {\Large Numerical Accuracy and Validation Results}\\[4em]
+    {\Large \textbf{STEM Development Team}}\\[1em]
+    \today
+    \vfill
+    \textit{Version \STEMversion: \commiturl}
+    \end{titlepage}
+}
+
+% -------------------------------------------------------
+%  document
+% -------------------------------------------------------
 \begin{document}
 
-\maketitle
+\reporttitle
 \tableofcontents
 \clearpage
 
-% -------------------------------------------------------
-\chapter{Introduction}
-% -------------------------------------------------------
-This report documents the verification tests performed on the STEM.
-The purpose is to validate numerical accuracy through comparison against
-analytical solutions and established benchmark results.
-
-Each chapter corresponds to a benchmark configuration, including a description
-of the mathematical model, numerical setup, and comparison of results.
-
-\clearpage
+\input{introduction/introduction.tex}
 \input{pekeris/pekeris.tex}
 \input{strip_load_2D/strip_load_2D.tex}
 \input{strip_load_3D/strip_load_3D.tex}
-
+% \input{cantilever_beam/cantilever_beam.tex}
 
 \clearpage
 \bibliographystyle{unsrt}
 \bibliography{references}
+
 \end{document}

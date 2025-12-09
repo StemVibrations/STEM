@@ -10,13 +10,14 @@ from stem.stem import Stem
 
 
 def run_column(input_folder):
-    # Define geometry, conditions and material parameters
-    # --------------------------------
+    # dimension
+    column_height = 10
+    column_width = 0.25
 
     # Specify dimension and initiate the model
     ndim = 3
     model = Model(ndim)
-    model.extrusion_length = 0.25
+    model.extrusion_length = column_width
 
     # Specify material model
     # Linear elastic drained soil with a Density of 2700, a Young's modulus of 50e6,
@@ -31,13 +32,14 @@ def run_column(input_folder):
     material1 = SoilMaterial("soil", soil_formulation1, constitutive_law1, retention_parameters1)
 
     # Specify the coordinates for the column: x:1m x y:10m
-    layer1_coordinates = [(0, 0, 0), (1, 0, 0), (1, 10, 0), (0, 10, 0)]
+    layer1_coordinates = [(0, 0, 0), (column_width, 0, 0), (column_width, column_height, 0), (0, column_height, 0)]
 
     # Create the soil layer
     model.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil_column")
 
     # Boundary conditions and Loads
-    load_coordinates = [(0.0, 10.0, 0), (1.0, 10.0, 0), (1.0, 10.0, 1), (0.0, 10.0, 1)]
+    load_coordinates = [(0.0, column_height, 0), (column_width, column_height, 0),
+                        (column_width, column_height, column_width), (0.0, column_height, column_width)]
     # Add table for the load in the mdpa file
     t = (0.0, 0.0025, 1)
     values = (0.0, -1000.0, -1000.0)

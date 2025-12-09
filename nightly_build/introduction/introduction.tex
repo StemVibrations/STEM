@@ -1,0 +1,34 @@
+% -------------------------------------------------------
+\chapter{Introduction}
+% -------------------------------------------------------
+
+This document provides a validation overview for the STEM (Soil and Track System Modeling Tool) software,
+a Python-based numerical model designed to simulate railway-induced vibrations using the Finite Element Method (FEM).
+The objective is to validate numerical accuracy through comparison against analytical solutions and
+established benchmark results.
+
+STEM is an open-source Python toolkit to model, simulate, and analyse railway-induced vibrations in
+soil-track systems. It builds finite element models, generates meshes, writes Kratos Multiphysics input files,
+runs multi-stage geotechnical and structural analyses, and collects results for verification and visualization.
+
+STEM is an open and transparent model that allows users to model railway induced vibrations and test the
+effect of mitigation techniques.
+
+Besides the tests presented in this report, STEM is continuously tested through an extensive suite of automated tests.
+All the tests are run on Windows and Linux systems on multiple cores, ensuring consistent cross-platform behaviour,
+reliable concurrency performance, and early detection of environment-specific issues.
+The tests include:
+
+\begin{itemize}[noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt]
+    \item \textbf{Unit Tests}: Verify the correctness of individual functions and classes (e.g., mesh generation,
+        load application).
+    \item \textbf{Benchmarks}: Validate the integrated system against known physical phenomena, analytical solutions,
+        or established engineering scenarios.
+    % \item \textbf{Validation}: Verify the results of STEM against experimental results.
+    \item \textbf{Extensive test suite} available in Kratos Multiphysics, in which 2401 unit tests and 1435 benchmark
+        tests are run.
+\end{itemize}
+
+In the following chapters, we present a series of benchmark tests that assess the numerical accuracy of STEM.
+Each chapter corresponds to a benchmark configuration, including the mathematical model, the numerical approach,
+and the result comparison.
