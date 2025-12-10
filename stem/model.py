@@ -61,6 +61,9 @@ class Model:
         self.extrusion_length: Optional[float] = None
         self.groups: Dict[str, Any] = {}
 
+        # set default gmsh verbosity to 1 (only errors)
+        self.gmsh_io.set_verbosity_level(1)
+
     @property
     def all_model_parts(self) -> List[ModelPart]:
         """
