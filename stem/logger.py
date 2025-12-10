@@ -19,3 +19,7 @@ def enable_writing_to_log_file(log_path: Union[Path, str]):
     # Duplicate the low-level file descriptor so that *all* output goes to the log file
     os.dup2(logfile.fileno(), sys.stdout.fileno())
     os.dup2(logfile.fileno(), sys.stderr.fileno())
+
+    # Redirect the high-level sys.stdout/sys.stderr as well
+    sys.stdout = logfile
+    sys.stderr = logfile
