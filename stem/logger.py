@@ -1,13 +1,16 @@
 import os
 import sys
 
+from typing import Union
+from pathlib import Path
 
-def enable_writing_to_log_file(log_path: str):
+
+def enable_writing_to_log_file(log_path: Union[Path, str]):
     """
     Redirects all stdout/stderr to a log file
 
     Args:
-        - log_path (str): Path to the log file
+        - log_path (Union[Path, str]): Path to the log file
     """
 
     # Open log file for writing
