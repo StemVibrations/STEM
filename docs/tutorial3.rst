@@ -1,15 +1,17 @@
-STEM tutorials
-==============
-
 .. _tutorial3:
 
 Train model (UVEC) on track and embankment in 3D with irregularities
---------------------------------------------------------------------
+====================================================================
+
+Overview
+--------
 This tutorial shows step by step guide on how to set up a train model
 on top of track on an embankment with two soil layers underneath, in a 3D model.
 The UVEC (User defined VEhiCle model) is a model used to represent a train as dynamic loads on the system, and
 the irregularities in the contact between the wheel and the rail are modelled using the UVEC.
 
+Imports and setup
+-----------------
 In order to use the UVEC you need to import the UVEC package, together with all the remaining packages.
 
 .. code-block:: python
@@ -34,9 +36,13 @@ In order to use the UVEC you need to import the UVEC package, together with all 
     # END CODE BLOCK
 
 
+Geometry, track and materials
+----------------------------
 For setting up the model, Model class is imported from stem.model. And for setting up the soil material, OnePhaseSoil,
 LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw classes are imported.
 In this tutorial, a train model load (modelled using the UVEC) is used on top of a track.
+Structural elements
+-------------------
 For this purpose, the ElasticSpringDamper and NodalConcentrated classes are imported from stem.structural_material,
 the UvecLoad class is imported from stem.load.
 

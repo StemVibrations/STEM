@@ -43,10 +43,10 @@ To install the package in editable mode with the following command:
 
 .. code-block::
 
-   pip install -e ."[testing]"
+   pip install -e '.[testing]'
 
 This will install the package in editable mode, so that any changes you make to the code will be reflected in the installed package.
-The [testing] flag will also install the dependencies needed for running the tests.
+The ``[testing]`` extra will also install the dependencies needed for running the tests.
 
 Alternatively, you can install the requirements manually with the following command:
 
