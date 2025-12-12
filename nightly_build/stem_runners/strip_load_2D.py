@@ -3,7 +3,7 @@ from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, Sa
 from stem.load import LineLoad
 from stem.boundary import DisplacementConstraint
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, \
-    StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy, Lu
+    StressInitialisationType, SolverSettings, Problem, NewtonRaphsonStrategy, Lu
 from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters, GaussPointOutput
 from stem.stem import Stem
 
@@ -75,7 +75,7 @@ def run_strip_2D(input_folder):
                                      is_stiffness_matrix_constant=True,
                                      are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
-                                     strategy_type=LinearNewtonRaphsonStrategy(),
+                                     strategy_type=NewtonRaphsonStrategy(),
                                      linear_solver_settings=Lu(),
                                      rayleigh_k=7.86e-5,
                                      rayleigh_m=0.248)
