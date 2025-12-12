@@ -1,6 +1,5 @@
 import os
 import json
-from tqdm import tqdm
 
 import numpy as np
 from matplotlib.path import Path
@@ -317,7 +316,7 @@ def read(folder, coordinate_points, data_name, output_file):
     # read each file
     coord_list = []
     data_list = []
-    for file in tqdm(files):
+    for file in files:
         coordinates, data = read_vtk_local_interpolated(os.path.join(folder, file), coordinate_points, data_name,
                                                         is_vector_data)
         data_list.append(data)
