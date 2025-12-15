@@ -70,7 +70,7 @@ def run_pekeris(input_folder):
     model.add_boundary_condition_on_plane([(0, 0, z_max), (x_max, 0, z_max), (x_max, y_max, z_max)],
                                           abs_boundary_parameters, "abs_z=z_max")
 
-    model.set_mesh_size(element_size=0.2)
+    model.set_mesh_size(element_size=0.5)
     model.mesh_settings.element_order = 2
 
     # Synchronize geometry
@@ -79,7 +79,7 @@ def run_pekeris(input_folder):
     # Define project parameters
     # --------------------------------
     # Set up solver settings
-    time_step = 0.0005
+    time_step = 0.001
     # Set up start and end time of calculation, time step and etc
     time_integration = TimeIntegration(start_time=0.0,
                                        end_time=0.08,
@@ -107,22 +107,13 @@ def run_pekeris(input_folder):
     model.project_parameters = problem
 
     # Result output settings
-    json_output_parameters = JsonOutputParameters(time_step, [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY], [])
+    json_output_parameters = JsonOutputParameters(time_step, [NodalOutput.DISPLACEMENT], [])
     model.add_output_settings_by_coordinates([
         (0, y_max, 0),
         (1, y_max, 0),
         (2, y_max, 0),
         (3, y_max, 0),
     ], json_output_parameters, "json_output")
-
-    model.add_output_settings(output_parameters=VtkOutputParameters(file_format="ascii",
-                                                                    output_interval=100,
-                                                                    nodal_results=[NodalOutput.VELOCITY],
-                                                                    gauss_point_results=[],
-                                                                    output_control_type="step"),
-                              part_name="porous_computational_model_part",
-                              output_dir="output",
-                              output_name="vtk_output")
 
     # Write KRATOS input files
     # --------------------------------

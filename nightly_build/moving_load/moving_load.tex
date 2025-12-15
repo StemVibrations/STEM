@@ -9,8 +9,8 @@ This benchmark compares the STEM numerical solution against the analytical solut
 for a moving load travelling on an elastic halfspace.
 
 The analytical solution is presented in~\cite{Fryba_2013}.
-The analytical solution provides closed-form expressions for the vertical displacement along the surface of the halfspace,
-enabling a direct time-history comparison against the numerical model.
+The analytical solution provides closed-form expressions for the vertical displacement along the surface of the
+halfspace, enabling a direct time-history comparison against the numerical model.
 
 % ----------------------------------------------------------------------------------------------
 \section{Model Description}
@@ -19,27 +19,20 @@ enabling a direct time-history comparison against the numerical model.
 % ..............................................................................................
 \subsection{Geometry, mesh and loading}
 % ..............................................................................................
-The soil domain is modelled as a three-dimensional continuum representing a vertical column
-with a height of \qty{10}{\meter} and a square cross-section of \qty{0.25}{\meter} by \qty{0.25}{\meter}.
-The column is aligned with the $y$-axis, so that wave propagation is essentially one-dimensional along
-the vertical direction.
+The soil domain is modelled as a three-dimensional block representing the halfspace, with the following dimensions:
+height \qty{10}{\meter}, width \qty{10}{\meter} and length \qty{10}{\meter}.
 The soil is discretised with high-order tetrahedral elements, using an average element size of \qty{0.10}{\meter}.
 An overview of the geometry and mesh adopted for the analysis is shown in
 Figure~\ref{fig:one_dim_wave_mesh}.
-A vertical surface load is applied on the entire top face of the column. The load acts in compression along
-the $y$-direction and is applied as a step function in time:
 
-\begin{equation}
-	p(t) =
-	\begin{cases}
-		0, & t < \qty{0}{\second}, \\
-		\qty{-1000}{\kilo\newton\per\meter\squared}, & t \geq \qty{0}{\second}.
-	\end{cases}
-\end{equation}
+The moving load is modelled as a vertical point load travelling along the z-direction at a constant speed of
+\qty{40}{\meter\per\second}.
+The load has a magnitude of \qty{1000}{\kilo\newton}.
 
-The base of the column is fully fixed, preventing displacements in all three directions.
-The four vertical faces are restrained only in the horizontal directions, thereby allowing vertical motion
-similar to an one-dimensional situation.
+The nodes at the sides of the soil have absorbing boundaries at the free ends, and with fixed boundary conditions
+on the perpendicular plane along the axis of symmetry.
+At the bottom the soil is assumed to be fixed.
+
 
 \begin{figure}
 	\centering
@@ -66,7 +59,7 @@ following parameters:
 Material damping is included via Rayleigh damping, with parameters that provide a damping ratio of
 \qty{0.5}{\percent} at \qty{1}{\hertz} and \qty{80}{\hertz}.
 
-The dynamic analysis is performed over a \qty{0.20}{\second} time window, with a time step of \qty{0.001}{\second}.
+The dynamic analysis is performed over a \qty{1}{\second} time window, with a time step of \qty{0.001}{\second}.
 The system of equations is solved using the Newmark time integration~\cite{Newmark_1959} scheme with
 parameters $\beta = 0.25$ and $\gamma = 0.5$.
 
