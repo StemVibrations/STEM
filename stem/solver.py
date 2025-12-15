@@ -474,6 +474,9 @@ class Amgcl(LinearSolverSettingsABC):
     tolerance: float = 1e-12
     max_iteration: int = 1000
     krylov_type: str = "cg"
+    smoother_type: str = "gauss_seidel"
+    preconditioner_type: str = "amg"
+    coarsening_type: str = "smoothed_aggregation"
 
     @property
     def solver_type(self):
