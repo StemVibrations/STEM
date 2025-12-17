@@ -18,6 +18,7 @@ from benchmark_tests.utils import assert_floats_in_files_almost_equal
 
 PLOT_RESULTS = False
 
+
 @pytest.mark.parametrize(
     "ndim, axis_index",
     [
@@ -48,12 +49,12 @@ def test_stem(ndim, axis_index):
     DENSITY = 2303
     CROSS_AREA = 0.1
     I33 = 0.29
-    beam_material = EulerBeam(ndim, YOUNG_MODULUS, POISSON_RATIO, DENSITY, CROSS_AREA, I33, I33, 2*I33)
+    beam_material = EulerBeam(ndim, YOUNG_MODULUS, POISSON_RATIO, DENSITY, CROSS_AREA, I33, I33, 2 * I33)
     name = "beam"
     structural_material = StructuralMaterial(name, beam_material)
     # Specify the coordinates for the beam: x:1m x y:0m
     total_length = 25
-    middle_coordinate = [0,0,0]
+    middle_coordinate = [0, 0, 0]
     middle_coordinate[axis_index] = total_length / 2
 
     beam_coordinates = [[0, 0, 0], [0, 0, 0]]
@@ -122,7 +123,7 @@ def test_stem(ndim, axis_index):
     analysis_type = AnalysisType.MECHANICAL
     solution_type = SolutionType.DYNAMIC
     # Set up start and end time of calculation, time step and etc
-    delta_time=0.002
+    delta_time = 0.002
     time_integration = TimeIntegration(start_time=0.0,
                                        end_time=0.9,
                                        delta_time=delta_time,
@@ -169,9 +170,6 @@ def test_stem(ndim, axis_index):
                                                                   gauss_point_results=gauss_point_results),
                                              "json_output")
 
-
-
-
     input_folder = r"benchmark_tests/test_sdof_uvec_beam/input_kratos"
     # copy uvec to input folder
     os.makedirs(input_folder, exist_ok=True)
@@ -194,7 +192,6 @@ def test_stem(ndim, axis_index):
         data = json.load(f)
     time_kratos = data["TIME"]
     disp_kratos_middle_beam = data["NODE_3"]["DISPLACEMENT_Y"]
-
 
     if PLOT_RESULTS:
         import matplotlib.pyplot as plt
@@ -249,10 +246,11 @@ def test_stem(ndim, axis_index):
         data = json.load(f)
     expected_disp_middle_beam = data["NODE_3"]["DISPLACEMENT_Y"]
 
-    npt.assert_array_almost_equal(disp_kratos_middle_beam,expected_disp_middle_beam, decimal=6)
+    npt.assert_array_almost_equal(disp_kratos_middle_beam, expected_disp_middle_beam, decimal=6)
 
-    assert_floats_in_files_almost_equal(f"benchmark_tests/test_sdof_uvec_beam/output_/expected_vehicle_output_{ndim}d.csv",
-                                        os.path.join(input_folder, "test.csv"),
-                                        decimal=4)
+    assert_floats_in_files_almost_equal(
+        f"benchmark_tests/test_sdof_uvec_beam/output_/expected_vehicle_output_{ndim}d.csv",
+        os.path.join(input_folder, "test.csv"),
+        decimal=4)
 
     rmtree(input_folder)
