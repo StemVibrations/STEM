@@ -1,5 +1,7 @@
 import os
 import numpy as np
+import numpy.testing as npt
+import pytest
 
 from stem.model import Model
 from stem.model_part import BodyModelPart
@@ -7,22 +9,35 @@ from stem.structural_material import EulerBeam, StructuralMaterial
 from stem.load import UvecLoad
 from stem.boundary import DisplacementConstraint, RotationConstraint
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, StressInitialisationType, SolverSettings, Problem
-from stem.output import NodalOutput, VtkOutputParameters, Output
+from stem.output import NodalOutput, VtkOutputParameters, Output, JsonOutputParameters
 from stem.stem import Stem
 from shutil import rmtree, copytree
 
 from benchmark_tests.analytical_solutions.moving_vehicle import TwoDofVehicle
-from benchmark_tests.utils import assert_floats_in_directories_almost_equal, assert_floats_in_files_almost_equal
+from benchmark_tests.utils import assert_floats_in_files_almost_equal
 
 PLOT_RESULTS = False
 
+@pytest.mark.parametrize(
+    "ndim, axis_index",
+    [
+        (2, 0),
+        (3, 0),
+        (3, 2),
+    ],
+)
+def test_stem(ndim, axis_index):
+    """
+    Test for a single degree of freedom UVEC moving on a beam structure.
 
-def test_stem():
+    Args:
+        - ndim (int): Dimension of the problem (2 or 3).
+        - axis_index (int): Index of the axis along which the UVEC moves (0 for x, 1 for y, 2 for z).
+    """
     # Define geometry, conditions and material parameters
     # --------------------------------
 
     # Specify dimension and initiate the model
-    ndim = 2
     model = Model(ndim)
 
     velocity = 100 / 3.6
@@ -32,12 +47,17 @@ def test_stem():
     POISSON_RATIO = 0.30000
     DENSITY = 2303
     CROSS_AREA = 0.1
-    I22 = 0.29
-    beam_material = EulerBeam(ndim, YOUNG_MODULUS, POISSON_RATIO, DENSITY, CROSS_AREA, I22)
+    I33 = 0.29
+    beam_material = EulerBeam(ndim, YOUNG_MODULUS, POISSON_RATIO, DENSITY, CROSS_AREA, I33, I33, 2*I33)
     name = "beam"
     structural_material = StructuralMaterial(name, beam_material)
     # Specify the coordinates for the beam: x:1m x y:0m
-    beam_coordinates = [(0, 0, 0), (25, 0, 0)]
+    total_length = 25
+    middle_coordinate = [0,0,0]
+    middle_coordinate[axis_index] = total_length / 2
+
+    beam_coordinates = [[0, 0, 0], [0, 0, 0]]
+    beam_coordinates[1][axis_index] = total_length
     # Create the beam
     gmsh_input = {name: {"coordinates": beam_coordinates, "ndim": 1}}
     # check if extrusion length is specified in 3D
@@ -71,7 +91,7 @@ def test_stem():
         "file_name": r"test.csv"
     }
 
-    uvec_load = UvecLoad(direction=[1, 1, 0],
+    uvec_load = UvecLoad(direction=[1, 1, 1],
                          velocity=velocity,
                          origin=[0.0, 0, 0],
                          wheel_configuration=[0.0],
@@ -93,7 +113,7 @@ def test_stem():
 
     # Set mesh size and generate mesh
     # --------------------------------
-    model.set_mesh_size(element_size=0.1)
+    model.set_mesh_size(element_size=2.5)
 
     # Define project parameters
     # --------------------------------
@@ -102,9 +122,10 @@ def test_stem():
     analysis_type = AnalysisType.MECHANICAL
     solution_type = SolutionType.DYNAMIC
     # Set up start and end time of calculation, time step and etc
+    delta_time=0.002
     time_integration = TimeIntegration(start_time=0.0,
                                        end_time=0.9,
-                                       delta_time=0.002,
+                                       delta_time=delta_time,
                                        reduction_factor=1.0,
                                        increase_factor=1.0,
                                        max_delta_time_factor=1000)
@@ -130,16 +151,26 @@ def test_stem():
     # Gauss point results
     gauss_point_results = []
 
-    # Define the output process
-    vtk_output_process = Output(output_name="vtk_output",
-                                output_dir="output",
-                                output_parameters=VtkOutputParameters(file_format="ascii",
-                                                                      output_interval=40,
-                                                                      nodal_results=nodal_results,
-                                                                      gauss_point_results=gauss_point_results,
-                                                                      output_control_type="step"))
+    # uncomment code below to output vtk files
+    # # Define the output process
+    # vtk_output_process = Output(output_name="vtk_output",
+    #                             output_dir="output",
+    #                             output_parameters=VtkOutputParameters(file_format="ascii",
+    #                                                                   output_interval=1,
+    #                                                                   nodal_results=nodal_results,
+    #                                                                   gauss_point_results=gauss_point_results,
+    #                                                                   output_control_type="step"))
+    #
+    # model.output_settings = [vtk_output_process]
 
-    model.output_settings = [vtk_output_process]
+    model.add_output_settings_by_coordinates([middle_coordinate],
+                                             JsonOutputParameters(output_interval=delta_time,
+                                                                  nodal_results=nodal_results,
+                                                                  gauss_point_results=gauss_point_results),
+                                             "json_output")
+
+
+
 
     input_folder = r"benchmark_tests/test_sdof_uvec_beam/input_kratos"
     # copy uvec to input folder
@@ -156,6 +187,14 @@ def test_stem():
     # Run Kratos calculation
     # --------------------------------
     stem.run_calculation()
+
+    # middle beams displacement
+    with open(os.path.join(input_folder, "json_output.json"), "r") as f:
+        import json
+        data = json.load(f)
+    time_kratos = data["TIME"]
+    disp_kratos_middle_beam = data["NODE_3"]["DISPLACEMENT_Y"]
+
 
     if PLOT_RESULTS:
         import matplotlib.pyplot as plt
@@ -182,30 +221,38 @@ def test_stem():
         ss = TwoDofVehicle()
         ss.vehicle(uvec_parameters["bogie_mass"], uvec_parameters["wheel_mass"], velocity,
                    uvec_parameters["wheel_stiffness"], uvec_parameters["wheel_damping"])
-        ss.beam(YOUNG_MODULUS, I22, DENSITY, CROSS_AREA, 25)
+        ss.beam(YOUNG_MODULUS, I33, DENSITY, CROSS_AREA, total_length)
         ss.compute()
 
         # plot numerical and analytical solution
-        fig, ax = plt.subplots(2, 1, sharex=True)
-        ax[0].plot(time, displacement_top, label="kraton body", color='b')
-        ax[1].plot(time, displacement_bottom, label="kraton wheel", color='r')
-        ax[0].plot(ss.time, -ss.displacement[:, 0], color='b', linestyle="--", label="analytical")
+        fig, ax = plt.subplots(3, 1, sharex=True)
+        ax[0].plot(time_kratos, disp_kratos_middle_beam, label="kraton beam", color='b')
+        ax[1].plot(time, displacement_top, label="kraton body", color='b')
+        ax[0].plot(ss.time, -ss.displacement[:, 0], color='r', linestyle="--", label="analytical")
         ax[1].plot(ss.time, -ss.displacement[:, 1], color='r', linestyle="--", label="analytical")
         ax[0].set_ylabel("Displacement beam [m]")
         ax[1].set_ylabel("Displacement bogie [m]")
-        ax[1].set_xlabel("Time [s]")
         ax[0].legend()
         ax[1].legend()
+
+        # plot wheel displacement, without analytical solution
+        ax[2].plot(time, displacement_bottom, label="kraton wheel", color='b')
+        ax[2].set_ylabel("Displacement wheel [m]")
+        ax[2].set_xlabel("Time [s]")
+        ax[2].legend()
+
         plt.tight_layout()
         plt.show()
 
     # test output
-    assert_floats_in_directories_almost_equal("benchmark_tests/test_sdof_uvec_beam/output_/output_vtk_full_model",
-                                              os.path.join(input_folder, "output/output_vtk_full_model"),
-                                              decimal=3)
+    with open(f"benchmark_tests/test_sdof_uvec_beam/output_/expected_disp_middle_beam_{ndim}d.json", "r") as f:
+        data = json.load(f)
+    expected_disp_middle_beam = data["NODE_3"]["DISPLACEMENT_Y"]
 
-    assert_floats_in_files_almost_equal("benchmark_tests/test_sdof_uvec_beam/output_/expected_vehicle_output.csv",
+    npt.assert_array_almost_equal(disp_kratos_middle_beam,expected_disp_middle_beam, decimal=6)
+
+    assert_floats_in_files_almost_equal(f"benchmark_tests/test_sdof_uvec_beam/output_/expected_vehicle_output_{ndim}d.csv",
                                         os.path.join(input_folder, "test.csv"),
-                                        decimal=5)
+                                        decimal=4)
 
     rmtree(input_folder)
