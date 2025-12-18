@@ -27,7 +27,7 @@ PLOT_RESULTS = False
         (3, 2),
     ],
 )
-def test_stem(ndim, axis_index):
+def test_stem(ndim: int, axis_index: int):
     """
     Test for a single degree of freedom UVEC moving on a beam structure.
 
