@@ -73,7 +73,7 @@ def run_strip_3D(input_folder):
     time_step = 0.001
     # Set up start and end time of calculation, time step and etc
     time_integration = TimeIntegration(start_time=0.0,
-                                       end_time=0.20,
+                                       end_time=0.1,
                                        delta_time=time_step,
                                        reduction_factor=1.0,
                                        increase_factor=1.0,
@@ -107,7 +107,7 @@ def run_strip_3D(input_folder):
 
     model.add_output_settings(output_parameters=VtkOutputParameters(
         file_format="ascii",
-        output_interval=1,
+        output_interval=25,
         nodal_results=[NodalOutput.VELOCITY],
         gauss_point_results=[GaussPointOutput.CAUCHY_STRESS_VECTOR],
         output_control_type="step"),

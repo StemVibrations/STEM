@@ -331,6 +331,7 @@ def read(folder, coordinate_points, data_name, output_file):
     data = {
         "STEP": np.linspace(0,
                             len(files) - 1, len(files)).astype(int).tolist(),
+        "TIME_INDEX": [int(float(f.split("_")[-1].split("vtk")[0])) for f in files],
         "COORDINATES": coord_list[0],
         "DATA": data_list
     }

@@ -42,7 +42,7 @@ def compare_wave_propagation(path_model, output_file):
     p.write_results()
 
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 5), sharex=True, sharey=True)
-    ax.plot(p.time, p.v[10, :] * 1000, label="Analytical", marker="x", color='r', markevery=25)
+    ax.plot(p.time, p.v[10, :] * 1000, label="Analytical", marker="x", color='r', markevery=5)
     ax.plot(data_kratos["TIME"], np.array(data_kratos['NODE_9']['VELOCITY_Y']) * 1000, color="b", label="STEM")
     ax.set_xlabel("Time [s]")
     ax.set_ylabel("Velocity [mm/s]")
@@ -65,10 +65,7 @@ def compare_pekeris(path_model, output_file):
     poisson_ratio = 0.2
     density_solid = 2000  # kg/m3
     load_value = -1e6  # Pa
-    coords = [1, 2, 3, 4, 5]
-
-    cs = np.sqrt(young_modulus / (2 * (1 + poisson_ratio)) / density_solid)
-    shear_modulus = young_modulus / (2 * (1 + poisson_ratio))
+    coords = [1, 2, 3]
 
     lmb = Pekeris(tau_max=8)
     lmb.material_properties(poisson_ratio, density_solid, young_modulus)
@@ -80,19 +77,22 @@ def compare_pekeris(path_model, output_file):
     for j, c in enumerate(coords):
         # find index in STEM data
         node_key = [k for k in keys_nodes if pekeris_data_kratos[k]["COORDINATES"][0] == c][0]
+        ax[j].plot(np.array(lmb.time)[:, j],
+                   np.array(lmb.u)[:, j],
+                   color="r",
+                   label="Analytical",
+                   marker="x",
+                   markevery=10)
         ax[j].plot(np.array(pekeris_data_kratos["TIME"]),
                    np.array(pekeris_data_kratos[node_key]["DISPLACEMENT_Y"]),
-                   color="r",
-                   marker="x",
+                   color="b",
                    label="STEM")
-        ax[j].plot(np.array(lmb.time)[:, j], np.array(lmb.u)[:, j], color="b", label="Analytical")
-
         ax[j].set_ylabel(f'Displacement at x={c} m [m]')
         ax[j].grid()
         ax[j].legend(loc=1)
         ax[j].text(0.5, -0.15, f'({chr(97+j)})', transform=ax[j].transAxes, ha='center', va='top', fontsize=12)
 
-    ax[1].set_xlabel('Time [s]')
+    ax[2].set_xlabel('Time [s]')
     ax[1].set_xlim(0, 0.08)
     ax[1].set_ylim(-0.1, 0.1)
     plt.tight_layout()
@@ -120,7 +120,6 @@ def compare_strip_load_2D(path_model, output_file):
     time_step = 0.001
 
     x = [coord[0] for coord in data["COORDINATES"]]
-    time = np.array(data['STEP']) * time_step
     stress_zz_kratos = []
     for i in range(len(data["DATA"])):
         aux = [data_point[1] for data_point in data["DATA"][i]]
@@ -134,9 +133,6 @@ def compare_strip_load_2D(path_model, output_file):
     line_load_length = 1  # m
 
     strip_load = StripLoad(young_modulus, poisson_ratio, (1 - porosity) * density_solid, load_value)
-
-    # time to calculate the vertical stress at
-    end_time = time[-1]
 
     # x coordinates
     start_x = 0
@@ -156,7 +152,8 @@ def compare_strip_load_2D(path_model, output_file):
         ]
 
         # plot vertical stress: Figure 12.14 in Verruijt
-        ax[j].plot([i for i in x], [stress_zz_kratos[int(t / time_step)][i] / 1e3 for i in range(len(x))],
+        idx_k = np.where(t == np.array(data['TIME_INDEX']).astype(float) * time_step)[0][0]
+        ax[j].plot([i for i in x], [stress_zz_kratos[idx_k][i] / 1e3 for i in range(len(x))],
                    color="r",
                    marker="x",
                    label="STEM")
@@ -229,7 +226,8 @@ def compare_strip_load_3D(path_model, output_file):
         ]
 
         # plot vertical stress: Figure 12.14 in Verruijt
-        ax[j].plot([i for i in x], [stress_zz_kratos[int(t / time_step)][i] / 1e3 for i in range(len(x))],
+        idx_k = np.where(t == np.array(data['TIME_INDEX']).astype(float) * time_step)[0][0]
+        ax[j].plot([i for i in x], [stress_zz_kratos[idx_k][i] / 1e3 for i in range(len(x))],
                    color="r",
                    marker="x",
                    label="STEM")
@@ -272,6 +270,7 @@ def compare_sdof(path_model, output_file):
     ax.plot(data_kratos["TIME"], np.array(data_kratos["NODE_2"]["DISPLACEMENT_Y"]) * 1000, label="STEM", color='b')
     ax.grid()
     ax.set_xlim(0, end_time)
+    ax.set_ylim(-20, 5)
     ax.set_xlabel("Time [s]")
     ax.set_ylabel("Displacement [mm]")
     ax.legend(loc='upper right')

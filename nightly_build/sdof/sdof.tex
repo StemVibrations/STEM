@@ -1,0 +1,62 @@
+% ==============================================================================================
+\chapter{Single degree of freedom} \label{ch:sdof}
+% ==============================================================================================
+
+% ----------------------------------------------------------------------------------------------
+\section{Introduction}
+% ----------------------------------------------------------------------------------------------
+
+This benchmark compares the STEM numerical solution against the analytical solution, for a single degree of freedom
+mass--spring--damper oscillator.
+The STEM numerical response is compared with the analytical solution of the linear oscillator subjected to the
+sudden application of its self-weight.
+The analytical solution is described in~\cite{Verruijt_2010}.
+
+% ----------------------------------------------------------------------------------------------
+\section{Model Description}
+% ----------------------------------------------------------------------------------------------
+
+% ..............................................................................................
+\subsection{Geometry and loading}
+% ..............................................................................................
+The model consists of a mass--spring--damper sytem, where the damper is connected in parallel to the spring.
+The system is subjected to a step load equal to the self-weight of the mass, applied at \qty{0}{\second}.
+Figure~\ref{fig:sdof_model} illustrates the configuration of the single degree of freedom oscillator.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.75\textwidth]{sdof/sdof.pdf}
+    \caption{Geometry of the single degree of freedom oscillator.}
+    \label{fig:sdof_model}
+\end{figure}
+
+% ..............................................................................................
+\subsection{Materials and numerical parameters}
+% ..............................................................................................
+The spring--damper element follows a linear elastic constitutive law. The mass is
+introduced through a nodal concentrated element. The parameters employed in the calculation are:
+
+\begin{itemize}[noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt]
+	\item Spring stiffness: \qty{10}{\kilo\newton\per\meter},
+	\item Damping coefficient: \qty{100}{\newton\second\per\meter},
+	\item Concentrated mass: \qty{10}{\kilogram},
+	\item Gravity acceleration: \qty{9.81}{\meter\per\second\squared}.
+\end{itemize}
+
+The dynamic analysis has the duration of \qty{1.0}{\second} with a time step of \qty{0.001}{\second}.
+The equations of motion are integrated with the Newmark scheme~\cite{Newmark_1959} using the average
+acceleration parameters $\beta = 0.25$ and $\gamma = 0.5$. A
+
+% ----------------------------------------------------------------------------------------------
+\section{Results}
+% ----------------------------------------------------------------------------------------------
+Figure~\ref{fig:sdof_results} shows the vertical displacement history of the mass obtained with STEM and compares
+it against the analytical solution. The results show a perfect agreement between the numerical and analytical results.
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.8\textwidth]{sdof/time_history.pdf}
+	\caption{Comparison between the STEM and analytical vertical for the displacement of the single degree of freedom.}
+	\label{fig:sdof_results}
+\end{figure}
+

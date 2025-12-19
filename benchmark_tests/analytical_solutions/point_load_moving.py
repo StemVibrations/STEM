@@ -1,6 +1,3 @@
-import sys
-from typing import Dict
-
 import numpy as np
 import numpy.typing as Npt
 from scipy.optimize import brentq
@@ -44,6 +41,9 @@ class MovingLoadElasticHalfSpace:
         self.cs = np.sqrt(self.G / self.rho)  # S-wave speed
         self.cr = self.Rayleigh_wave_speed()  # Rayleigh wave speed
 
+        if self.speed > self.cr:
+            raise ValueError("Error: The current implementation only supports subsonic speeds (c < cr).")
+
         # Parameters
         self.Gp = None  # Green's function for P-waves
         self.Gs = None  # Green's function for S-waves
@@ -60,9 +60,6 @@ class MovingLoadElasticHalfSpace:
         # Gaussian quadrature points and weights
         self.n_gh = 128
         self.gh_x, self.gh_w = hermgauss(self.n_gh)
-
-        # check speed regime
-        self.__check_speed_regime()
 
     @staticmethod
     def __rayleigh_func(xi: float, eta: float) -> float:
@@ -89,17 +86,17 @@ class MovingLoadElasticHalfSpace:
         eta = self.cs**2 / self.cp**2
 
         # solve cubic equation for qsi
-        xi = brentq(self.__rayleigh_func, 0, 1, args=(eta, ))
+        xi = brentq(self.__rayleigh_func, 0, 0.99, args=(eta, ))
         return np.sqrt(xi) * self.cs
 
-    def __check_speed_regime(self):
-        """
-        Check the speed regime.
-        """
-        if self.speed > self.cr:
-            sys.exit("Error: The current implementation only supports subsonic speeds (c < cr).")
-
-    def compute(self, x: float, y: float, z: float, t: float, ky_max: float = 8., n_tau=100, n_ky=400) -> float:
+    def compute_vertical_displacement(self,
+                                      x: float,
+                                      y: float,
+                                      z: float,
+                                      t: float,
+                                      ky_max: float = 10.,
+                                      n_tau=100,
+                                      n_ky=400) -> float:
         """
         Compute the vertical displacement at a given point and time.
 
@@ -122,12 +119,11 @@ class MovingLoadElasticHalfSpace:
         y_prime = y - self.speed * t
 
         # ky limits for integration
-        ky = np.linspace(ky_max, ky_max, n_ky)
+        ky = np.linspace(-ky_max, ky_max, n_ky)
         # tau limits for integration
-        # np.exp(r * ky * tau **2) < epsilon (e.g. 1e-10)
-        # tau_max > np.sqrt(-lm(epsilon) / r * np.abs(ky))
-        # using epsilon = 1e-10 yields: tau_max > np.sqrt(23 / (r * np.abs(ky))) ~ 4.8
-        tau_max = 5.0 / np.sqrt(max(ky_max * r, 1e-6))
+        # Decay factor is exp(-|ky| * r * tau**2)
+        # We need |ky|*r*tau**2 approx 10 for convergence
+        tau_max = np.sqrt(12 / (ky_max * r))
         tau = np.linspace(-tau_max, tau_max, n_tau)
 
         self.Gp = np.zeros_like(ky, dtype=complex)
@@ -159,17 +155,13 @@ class MovingLoadElasticHalfSpace:
         else:
             region = 'II'
 
-        a = r * ky
-        t = self.gh_x / np.sqrt(a)
-        weight = self.gh_w / np.sqrt(a)
-
         # Equation 24
-        kx_bar = -1j * np.cos(theta) * (t**2 + self.beta_p) + t * np.sin(theta) * np.sqrt(t**2 + 2 * self.beta_p)
+        kx_bar = -1j * np.cos(theta) * (tau**2 + self.beta_p) + tau * np.sin(theta) * np.sqrt(tau**2 + 2 * self.beta_p)
 
         # Equation 25
-        diff_kx_bar = -1j * np.cos(theta) * 2 * t + \
-            np.sin(theta) * (np.sqrt(t**2 + 2*self.beta_p + 0j) +
-                             t**2 * np.sin(theta) / np.sqrt(t**2 + 2*self.beta_p))
+        diff_kx_bar = -1j * np.cos(theta) * 2 * tau + \
+            np.sin(theta) * (np.sqrt(tau**2 + 2*self.beta_p + 0j) +
+                             tau**2 * np.sin(theta) / np.sqrt(tau**2 + 2*self.beta_p))
 
         # variables between Equation 5 and 6
         kx = ky * kx_bar
@@ -188,11 +180,11 @@ class MovingLoadElasticHalfSpace:
         E = -v * A * np.exp(-v * z)
 
         # Equation 14
-        # integral = (E / F) * diff_kx_bar * np.exp(-ky * r * tau**2)
+        integral = (E / F) * diff_kx_bar * np.exp(-ky * r * tau**2)
         # Integrate using trapezoidal rule
-        # integral_sdp = trapezoid(integral, x=tau)
+        integral_sdp = trapezoid(integral, x=tau)
         # Using Gaussian quadrature
-        integral_sdp = np.sum(weight * (E / F) * diff_kx_bar)
+        # integral_sdp = np.sum(weight * (E / F) * diff_kx_bar)
 
         # Equation 25
         Gp = ky * np.exp(-ky * r * self.beta_p) * integral_sdp
@@ -217,17 +209,17 @@ class MovingLoadElasticHalfSpace:
         if ky <= 0:
             return 0
 
-        a = r * ky
-        t = self.gh_x / np.sqrt(a)
-        weight = self.gh_w / np.sqrt(a)
+        # a = r * ky
+        # t = self.gh_x / np.sqrt(a)
+        # weight = self.gh_w / np.sqrt(a)
 
         # Equation 34
-        kx_bar = -1j * np.cos(theta) * (t**2 + self.beta_s) + t * np.sin(theta) * np.sqrt(t**2 + 2 * self.beta_s)
+        kx_bar = -1j * np.cos(theta) * (tau**2 + self.beta_s) + tau * np.sin(theta) * np.sqrt(tau**2 + 2 * self.beta_s)
 
         # Equation 35
-        diff_kx_bar = -1j * np.cos(theta) * 2 * t + \
-            np.sin(theta) * (np.sqrt(t**2 + 2*self.beta_s) +
-                             t**2 * np.sin(theta) / np.sqrt(t**2 + 2*self.beta_s))
+        diff_kx_bar = -1j * np.cos(theta) * 2 * tau + \
+            np.sin(theta) * (np.sqrt(tau**2 + 2*self.beta_s) +
+                             tau**2 * np.sin(theta) / np.sqrt(tau**2 + 2*self.beta_s))
 
         # variables between Equation 5 and 6
         kx = ky * kx_bar
@@ -246,12 +238,12 @@ class MovingLoadElasticHalfSpace:
         E = k_sq * C * np.exp(-v_prime * z)
 
         # Equation 14
-        # integral = (E / F) * diff_kx_bar * np.exp(-ky * r * tau**2)
+        integral = (E / F) * diff_kx_bar * np.exp(-ky * r * tau**2)
 
         # Integrate using trapezoidal rule
-        # integral_sdp = trapezoid(integral, x=tau)
+        integral_sdp = trapezoid(integral, x=tau)
         # Using Gaussian quadrature
-        integral_sdp = np.sum(weight * (E / F) * diff_kx_bar)
+        # integral_sdp = np.sum(weight * (E / F) * diff_kx_bar)
 
         # Equation 25
         Gs = ky * np.exp(-ky * r * self.beta_s) * integral_sdp
@@ -288,7 +280,7 @@ class MovingLoadElasticHalfSpace:
             return 0.0
 
         # Pole location in normalized plane
-        kx_bar_pole = -1j * self.beta_p * np.cos(theta)
+        kx_bar_pole = -1j * self.beta_r * np.cos(theta)
 
         kx = ky * kx_bar_pole
         k_sq = kx**2 + ky**2
@@ -382,23 +374,47 @@ def main():
     E = 30e6  # Pa
     nu = 0.1  # dimensionless
     rho = 2000  # kg/m³
-    force = 1e3  # N
-    speed = 10  # m/s
+    force = -1e3  # N
+    speed = 700  # m/s
+
+    # 1. Defined Constants from Paper
+    c_s_target = 1000.0  # m/s
+    c_p_target = 1732.0  # m/s
+    rho = 2000.0  # kg/m^3 (Arbitrary scaling factor, cancels out in dimensionless results)
+    nu = 0.25  # Poisson's ratio
+
+    # 2. Back-calculate Young's Modulus E to match cs = 1000 m/s
+    # Formula: cs = sqrt( G / rho ) and G = E / (2*(1+nu))
+    # Therefore: E = rho * cs^2 * 2 * (1 + nu)
+    E = rho * (c_s_target**2) * 2 * (1 + nu)  # Result: 5e9 Pa
 
     x, y, z = 0.0, 0.0, 10
-    time = np.linspace(-20, 20, num=100)
+    time = np.linspace(-0.1, 0.1, num=100)
 
     model = MovingLoadElasticHalfSpace(E, nu, rho, force, speed)
 
     uz = []
     for t in time:
-        model.compute(x, y, z, t)
+        model.compute_vertical_displacement(x, y, z, t, ky_max=10.0, n_ky=100)
         uz.append(np.real(model.vertical_displacement))
 
-    plt.plot(time, uz)
-    plt.xlabel("Time step")
-    plt.ylabel("Vertical displacement uz (m)")
-    plt.grid()
+    radius = np.sqrt(x**2 + z**2)
+    shear_modulus = model.G
+
+    tau = model.cs * time / radius
+    dimensionless_displacement = np.array(uz) * shear_modulus * radius / model.force
+
+    fig, ax = plt.subplots(ncols=2, nrows=1, figsize=(12, 5))
+
+    ax[0].plot(time, uz)
+    ax[0].set_xlabel("Time step")
+    ax[0].set_ylabel("Vertical displacement uz (m)")
+    ax[0].grid()
+
+    ax[1].plot(tau, dimensionless_displacement)
+    ax[1].set_xlabel("Dimensionless time τ = c_s t / r")
+    ax[1].set_ylabel("Dimensionless displacement U_z = uz G r / F")
+    ax[1].grid()
     plt.savefig("moving.png")
     plt.show()
 
