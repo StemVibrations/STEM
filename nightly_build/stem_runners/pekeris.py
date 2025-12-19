@@ -3,7 +3,7 @@ from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, Sa
 from stem.load import PointLoad
 from stem.boundary import DisplacementConstraint, AbsorbingBoundary
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, \
-    StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy, NewtonRaphsonStrategy, Cg
+    StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy, Cg
 from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters
 from stem.stem import Stem
 
@@ -27,9 +27,9 @@ def run_pekeris(input_folder):
     material1 = SoilMaterial("soil", soil_formulation1, constitutive_law1, retention_parameters1)
 
     # Specify the coordinates for the 3D block: x:10m x y:10m z:10m
-    x_max = 5
+    x_max = 10
     y_max = 5
-    z_max = 5
+    z_max = 10
     force = -1e6
     layer1_coordinates = [(0.0, 0.0, 0.0), (x_max, 0.0, 0.0), (x_max, y_max, 0.0), (0.0, y_max, 0.0)]
     model.extrusion_length = z_max
@@ -70,7 +70,7 @@ def run_pekeris(input_folder):
     model.add_boundary_condition_on_plane([(0, 0, z_max), (x_max, 0, z_max), (x_max, y_max, z_max)],
                                           abs_boundary_parameters, "abs_z=z_max")
 
-    model.set_mesh_size(element_size=0.5)
+    model.set_mesh_size(element_size=0.25)
     model.mesh_settings.element_order = 2
 
     # Synchronize geometry
@@ -99,8 +99,8 @@ def run_pekeris(input_folder):
                                      convergence_criteria=convergence_criterion,
                                      strategy_type=LinearNewtonRaphsonStrategy(),
                                      linear_solver_settings=Cg(),
-                                     rayleigh_k=1.9648758406406834e-05,
-                                     rayleigh_m=0.062056151182020604)
+                                     rayleigh_k=7.86e-5,
+                                     rayleigh_m=0.248)
 
     # Set up problem data
     problem = Problem(problem_name="Pekeris", number_of_threads=44, settings=solver_settings)
@@ -114,6 +114,16 @@ def run_pekeris(input_folder):
         (2, y_max, 0),
         (3, y_max, 0),
     ], json_output_parameters, "json_output")
+
+    model.add_output_settings(output_parameters=VtkOutputParameters(
+        file_format="ascii",
+        output_interval=1,
+        nodal_results=[NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY],
+        gauss_point_results=[],
+        output_control_type="step"),
+                              part_name="porous_computational_model_part",
+                              output_dir="output",
+                              output_name="vtk_output")
 
     # Write KRATOS input files
     # --------------------------------

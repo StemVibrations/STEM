@@ -6,7 +6,9 @@ import matplotlib.pyplot as plt
 from benchmark_tests.analytical_solutions.strip_load import StripLoad
 from benchmark_tests.analytical_solutions.pekeris import Pekeris, LoadType
 from benchmark_tests.analytical_solutions.analytical_wave_prop import OneDimWavePropagation
-from benchmark_tests.analytical_solutions.new import uz_moving_load
+from benchmark_tests.analytical_solutions.linear_spring_damper_mass import LinearSpringDamperMass
+
+# from benchmark_tests.analytical_solutions.new import uz_moving_load
 
 import nightly_build.stem_runners.read_VTK as read_VTK
 
@@ -39,18 +41,15 @@ def compare_wave_propagation(path_model, output_file):
     p.solution()
     p.write_results()
 
-    plt.plot(data_kratos["TIME"],
-             np.array(data_kratos['NODE_9']['VELOCITY_Y']) * 1000,
-             color="r",
-             marker="x",
-             label="STEM")
-    plt.plot(p.time, p.v[10, :] * 1000, color="b", label="Analytical")
-    plt.xlabel("Time [s]")
-    plt.ylabel("Velocity [mm/s]")
-    plt.grid()
-    plt.xlim(0, 0.5)
-    plt.ylim(-4, 4)
-    plt.legend()
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 5), sharex=True, sharey=True)
+    ax.plot(p.time, p.v[10, :] * 1000, label="Analytical", marker="x", color='r', markevery=25)
+    ax.plot(data_kratos["TIME"], np.array(data_kratos['NODE_9']['VELOCITY_Y']) * 1000, color="b", label="STEM")
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Velocity [mm/s]")
+    ax.grid()
+    ax.set_xlim(0, 0.5)
+    ax.set_ylim(-4, 4)
+    ax.legend(loc='upper right')
     plt.savefig(output_file)
     plt.close()
 
@@ -66,7 +65,7 @@ def compare_pekeris(path_model, output_file):
     poisson_ratio = 0.2
     density_solid = 2000  # kg/m3
     load_value = -1e6  # Pa
-    coords = [1, 2, 3]
+    coords = [1, 2, 3, 4, 5]
 
     cs = np.sqrt(young_modulus / (2 * (1 + poisson_ratio)) / density_solid)
     shear_modulus = young_modulus / (2 * (1 + poisson_ratio))
@@ -246,6 +245,40 @@ def compare_strip_load_3D(path_model, output_file):
     plt.close()
 
 
+def compare_sdof(path_model, output_file):
+
+    # load data from STEM
+    with open(path_model, "r") as f:
+        data_kratos = json.load(f)
+
+    # calculate spring damper mass system analytically
+    end_time = 1
+    nsteps = 1000
+    analytical_solution = LinearSpringDamperMass(k=10000, c=100, m=10, g=9.81, end_time=end_time, n_steps=nsteps)
+
+    analytical_solution.solve()
+
+    # start at 0 displacement
+    amplitude = analytical_solution.displacement[0]
+    analytical_solution.displacement -= amplitude
+
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 5), sharex=True, sharey=True)
+    ax.plot(analytical_solution.time,
+            analytical_solution.displacement * 1000,
+            label="Analytical",
+            marker="x",
+            color='r',
+            markevery=25)
+    ax.plot(data_kratos["TIME"], np.array(data_kratos["NODE_2"]["DISPLACEMENT_Y"]) * 1000, label="STEM", color='b')
+    ax.grid()
+    ax.set_xlim(0, end_time)
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Displacement [mm]")
+    ax.legend(loc='upper right')
+    plt.savefig(output_file)
+    plt.close()
+
+
 def compare_moving_load(path_model, output_file):
 
     # Based on:
@@ -257,43 +290,47 @@ def compare_moving_load(path_model, output_file):
     with open(path_model, "r") as f:
         data_kratos = json.load(f)
 
-    nodes = [k for k in data_kratos.keys() if k.startswith("NODE_")]
-    # get point coordinated z = 5
-    coordinates = []
-    for n in nodes:
-        coordinates.append(data_kratos[n]["COORDINATES"][2])
-        if data_kratos[n]["COORDINATES"][2] == 5:
-            node_z5 = n
+    plt.plot(data_kratos["TIME"], data_kratos['NODE_13']['DISPLACEMENT_Y'], color="r", marker="x", label="STEM")
+    plt.show()
 
-    idx_peak = np.argmax(np.abs(data_kratos[node_z5]['DISPLACEMENT_Y']))
-    displacement_peak_time = [data_kratos[n]["DISPLACEMENT_Y"][idx_peak] for n in nodes]
+    print(1)
+    # nodes = [k for k in data_kratos.keys() if k.startswith("NODE_")]
+    # # get point coordinated z = 5
+    # coordinates = []
+    # for n in nodes:
+    #     coordinates.append(data_kratos[n]["COORDINATES"][2])
+    #     if data_kratos[n]["COORDINATES"][2] == 5:
+    #         node_z5 = n
 
-    E = 30e6  # Pa
-    nu = 0.25  # dimensionless
-    rho = 2000  # kg/m³
-    force = -1000  # N
-    speed = 40  # m/s
+    # idx_peak = np.argmax(np.abs(data_kratos[node_z5]['DISPLACEMENT_Y']))
+    # displacement_peak_time = [data_kratos[n]["DISPLACEMENT_Y"][idx_peak] for n in nodes]
 
-    cp = np.sqrt(E / (rho * (1 - nu**2)))  # P-wave speed
-    cs = cp * np.sqrt((1 - 2 * nu) / (2 * (1 - nu)))  # S-wave speed
+    # E = 30e6  # Pa
+    # nu = 0.25  # dimensionless
+    # rho = 2000  # kg/m³
+    # force = -1000  # N
+    # speed = 40  # m/s
 
-    t_vals = np.linspace(-0.03, 0.03, 300)
-    uz_vals = []
+    # cp = np.sqrt(E / (rho * (1 - nu**2)))  # P-wave speed
+    # cs = cp * np.sqrt((1 - 2 * nu) / (2 * (1 - nu)))  # S-wave speed
 
-    for t in t_vals:
-        uz_vals.append(uz_moving_load(0, 5, 0, t, 1000, cp, cs, rho, speed))
+    # t_vals = np.linspace(-0.03, 0.03, 300)
+    # uz_vals = []
 
-    # x_list = np.linspace(-5, 5, 100)
-    # Using z=0.01m to avoid the singularity exactly at the load point
-    # disp = [model.vertical_displacement(x, z=0.0001) for x in x_list]
+    # for t in t_vals:
+    #     uz_vals.append(uz_moving_load(0, 5, 0, t, 1000, cp, cs, rho, speed))
 
-    plt.plot(coordinates, np.array(displacement_peak_time) * 1000, color="r", marker="x", label="STEM")
-    plt.plot(speed * t_vals, np.array(uz_vals) * 1000, color="b", label="Analytical")
-    plt.xlabel("Distance [m]")
-    plt.ylabel("Displacement [mm]")
-    plt.grid()
-    # plt.xlim(0, 0.5)
-    # plt.ylim(-4, 4)
-    plt.legend()
-    plt.savefig(output_file)
-    plt.close()
+    # # x_list = np.linspace(-5, 5, 100)
+    # # Using z=0.01m to avoid the singularity exactly at the load point
+    # # disp = [model.vertical_displacement(x, z=0.0001) for x in x_list]
+
+    # plt.plot(coordinates, np.array(displacement_peak_time) * 1000, color="r", marker="x", label="STEM")
+    # plt.plot(speed * t_vals, np.array(uz_vals) * 1000, color="b", label="Analytical")
+    # plt.xlabel("Distance [m]")
+    # plt.ylabel("Displacement [mm]")
+    # plt.grid()
+    # # plt.xlim(0, 0.5)
+    # # plt.ylim(-4, 4)
+    # plt.legend()
+    # plt.savefig(output_file)
+    # plt.close()

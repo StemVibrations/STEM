@@ -5,6 +5,7 @@ import numpy as np
 import numpy.typing as Npt
 from scipy.optimize import brentq
 from scipy.integrate import trapezoid
+from numpy.polynomial.hermite import hermgauss
 import matplotlib.pyplot as plt
 
 
@@ -56,6 +57,10 @@ class MovingLoadElasticHalfSpace:
         self.beta_s = np.sqrt(1 - self.Ms**2)
         self.beta_r = np.sqrt(1 - (self.speed / self.cr)**2)
 
+        # Gaussian quadrature points and weights
+        self.n_gh = 128
+        self.gh_x, self.gh_w = hermgauss(self.n_gh)
+
         # check speed regime
         self.__check_speed_regime()
 
@@ -71,7 +76,7 @@ class MovingLoadElasticHalfSpace:
         Returns:
             - (float): Value of the Rayleigh function
         """
-        return xi**3 - 8 * xi**2 + 8 * xi * (3 - 2 * eta) * xi**2 - 16 * (1 - eta)
+        return xi**3 - 8 * xi**2 + 8 * xi * (3 - 2 * eta) - 16 * (1 - eta)
 
     def Rayleigh_wave_speed(self):
         """
@@ -81,10 +86,10 @@ class MovingLoadElasticHalfSpace:
         See: https://en.wikipedia.org/wiki/Rayleigh_wave
         """
 
-        eta = self.cs / self.cp
+        eta = self.cs**2 / self.cp**2
 
         # solve cubic equation for qsi
-        xi = brentq(self.__rayleigh_func, 0, 1, args=(eta))
+        xi = brentq(self.__rayleigh_func, 0, 1, args=(eta, ))
         return np.sqrt(xi) * self.cs
 
     def __check_speed_regime(self):
@@ -94,7 +99,7 @@ class MovingLoadElasticHalfSpace:
         if self.speed > self.cr:
             sys.exit("Error: The current implementation only supports subsonic speeds (c < cr).")
 
-    def compute(self, x: float, y: float, z: float, t: float, ky_max: float = 8., n_tau=100, n_ky=200) -> float:
+    def compute(self, x: float, y: float, z: float, t: float, ky_max: float = 8., n_tau=100, n_ky=400) -> float:
         """
         Compute the vertical displacement at a given point and time.
 
@@ -117,7 +122,7 @@ class MovingLoadElasticHalfSpace:
         y_prime = y - self.speed * t
 
         # ky limits for integration
-        ky = np.linspace(-ky_max, ky_max, n_ky)
+        ky = np.linspace(ky_max, ky_max, n_ky)
         # tau limits for integration
         # np.exp(r * ky * tau **2) < epsilon (e.g. 1e-10)
         # tau_max > np.sqrt(-lm(epsilon) / r * np.abs(ky))
@@ -129,11 +134,11 @@ class MovingLoadElasticHalfSpace:
         self.Gs = np.zeros_like(ky, dtype=complex)
 
         for i, ky_i in enumerate(ky):
-            self.Gp[i] = self.__Gp(theta, tau, ky_i, r)
-            self.Gs[i] = self.__Gs(theta, tau, ky_i, r)
+            self.Gp[i] = self.__Gp(theta, tau, ky_i, r, z)
+            self.Gs[i] = self.__Gs(theta, tau, ky_i, r, z)
 
         # Synthesis of Fourier components Equation 13
-        integrand = (self.Gp + self.Gs) * np.exp(1j * ky * y_prime)
+        integrand = (self.Gp + self.Gs) * np.exp(-1j * ky * y_prime)
         I_ky = trapezoid(integrand, x=ky)
 
         # scale factor Equation 10c
@@ -141,7 +146,7 @@ class MovingLoadElasticHalfSpace:
 
         return np.real(self.vertical_displacement)
 
-    def __Gp(self, theta: float, tau: Npt.NDArray, ky: float, r: float):
+    def __Gp(self, theta: float, tau: Npt.NDArray, ky: float, r: float, z: float):
 
         # compute angles for region classification (Fig 3)
         theta_r = np.arccos(np.real(self.beta_r / self.beta_p))
@@ -154,13 +159,17 @@ class MovingLoadElasticHalfSpace:
         else:
             region = 'II'
 
+        a = r * ky
+        t = self.gh_x / np.sqrt(a)
+        weight = self.gh_w / np.sqrt(a)
+
         # Equation 24
-        kx_bar = -1j * np.cos(theta) * (tau**2 + self.beta_p) + tau * np.sin(theta) * np.sqrt(tau**2 + 2 * self.beta_p)
+        kx_bar = -1j * np.cos(theta) * (t**2 + self.beta_p) + t * np.sin(theta) * np.sqrt(t**2 + 2 * self.beta_p)
 
         # Equation 25
-        diff_kx_bar = -1j * np.cos(theta) * 2 * tau + \
-            np.sin(theta) * (np.sqrt(tau**2 + 2*self.beta_p + 0j) +
-                             tau**2 * np.sin(theta) / np.sqrt(tau**2 + 2*self.beta_p))
+        diff_kx_bar = -1j * np.cos(theta) * 2 * t + \
+            np.sin(theta) * (np.sqrt(t**2 + 2*self.beta_p + 0j) +
+                             t**2 * np.sin(theta) / np.sqrt(t**2 + 2*self.beta_p))
 
         # variables between Equation 5 and 6
         kx = ky * kx_bar
@@ -179,22 +188,23 @@ class MovingLoadElasticHalfSpace:
         E = -v * A * np.exp(-v * z)
 
         # Equation 14
-        integral = (E / F) * diff_kx_bar * np.exp(-ky * r * tau**2)
-
+        # integral = (E / F) * diff_kx_bar * np.exp(-ky * r * tau**2)
         # Integrate using trapezoidal rule
-        integral_sdp = trapezoid(integral, x=tau)
+        # integral_sdp = trapezoid(integral, x=tau)
+        # Using Gaussian quadrature
+        integral_sdp = np.sum(weight * (E / F) * diff_kx_bar)
 
         # Equation 25
         Gp = ky * np.exp(-ky * r * self.beta_p) * integral_sdp
 
         # perform pole correction
-        correction = self.__pole_correction_p(region, theta, ky, E, F, F_prime, kx_bar, diff_kx_bar, v, x, z)
+        correction = self.__pole_correction_p(region, theta, ky, E, F, F_prime, kx_bar, diff_kx_bar, v, z)
 
         Gp += correction
 
         return Gp
 
-    def __Gs(self, theta: float, tau: Npt.NDArray, ky: float, r: float):
+    def __Gs(self, theta: float, tau: Npt.NDArray, ky: float, r: float, z: float):
 
         # compute angles for region classification (Fig 5)
         theta_r_star = np.arccos(np.real(self.beta_r / self.beta_s))
@@ -204,13 +214,20 @@ class MovingLoadElasticHalfSpace:
         else:
             region = 'II'
 
+        if ky <= 0:
+            return 0
+
+        a = r * ky
+        t = self.gh_x / np.sqrt(a)
+        weight = self.gh_w / np.sqrt(a)
+
         # Equation 34
-        kx_bar = -1j * np.cos(theta) * (tau**2 + self.beta_s) + tau * np.sin(theta) * np.sqrt(tau**2 + 2 * self.beta_s)
+        kx_bar = -1j * np.cos(theta) * (t**2 + self.beta_s) + t * np.sin(theta) * np.sqrt(t**2 + 2 * self.beta_s)
 
         # Equation 35
-        diff_kx_bar = -1j * np.cos(theta) * 2 * tau + \
-            np.sin(theta) * (np.sqrt(tau**2 + 2*self.beta_s) +
-                             tau**2 * np.sin(theta) / np.sqrt(tau**2 + 2*self.beta_s))
+        diff_kx_bar = -1j * np.cos(theta) * 2 * t + \
+            np.sin(theta) * (np.sqrt(t**2 + 2*self.beta_s) +
+                             t**2 * np.sin(theta) / np.sqrt(t**2 + 2*self.beta_s))
 
         # variables between Equation 5 and 6
         kx = ky * kx_bar
@@ -229,10 +246,12 @@ class MovingLoadElasticHalfSpace:
         E = k_sq * C * np.exp(-v_prime * z)
 
         # Equation 14
-        integral = (E / F) * diff_kx_bar * np.exp(-ky * r * tau**2)
+        # integral = (E / F) * diff_kx_bar * np.exp(-ky * r * tau**2)
 
         # Integrate using trapezoidal rule
-        integral_sdp = trapezoid(integral, x=tau)
+        # integral_sdp = trapezoid(integral, x=tau)
+        # Using Gaussian quadrature
+        integral_sdp = np.sum(weight * (E / F) * diff_kx_bar)
 
         # Equation 25
         Gs = ky * np.exp(-ky * r * self.beta_s) * integral_sdp
@@ -245,7 +264,7 @@ class MovingLoadElasticHalfSpace:
 
     def __pole_correction_p(self, region: str, theta: float, ky: float, E: Npt.NDArray, F: Npt.NDArray,
                             F_prime: Npt.NDArray, kx_bar: Npt.NDArray, diff_kx_bar: Npt.NDArray, v: Npt.NDArray,
-                            x: float, z: float) -> Npt.NDArray:
+                            z: float) -> Npt.NDArray:
         """
         Perform pole correction for the Green's function.
 
@@ -268,8 +287,21 @@ class MovingLoadElasticHalfSpace:
         if region == 'I':
             return 0.0
 
+        # Pole location in normalized plane
+        kx_bar_pole = -1j * self.beta_p * np.cos(theta)
+
+        kx = ky * kx_bar_pole
+        k_sq = kx**2 + ky**2
+        kp = self.Mp * ky
+        ks = self.Ms * ky
+        v = np.sqrt(k_sq - kp**2)
+        v_prime = np.sqrt(k_sq - ks**2)
+
+        _, F_prime = self.__rayleigh_denominator(k_sq, kx, kx_bar_pole, ks, v, v_prime)
+
         # Equation 28
         v_r_bar = np.sqrt(self.beta_p**2 - self.beta_r**2)
+        x = r * np.cos(theta)
         exponent = -ky * (v_r_bar * z + self.beta_r * x * np.sign(np.cos(theta)))
 
         correction = (-np.sign(np.cos(theta)) * 2 * np.pi * 1j * (E / F_prime) * np.exp(exponent))
@@ -300,6 +332,18 @@ class MovingLoadElasticHalfSpace:
         """
         if region == 'I':
             return 0.0
+
+        # Pole location in normalized plane
+        kx_bar_pole = -1j * self.beta_s * np.cos(theta)
+
+        kx = ky * kx_bar_pole
+        k_sq = kx**2 + ky**2
+        kp = self.Mp * ky
+        ks = self.Ms * ky
+        v = np.sqrt(k_sq - kp**2)
+        v_prime = np.sqrt(k_sq - ks**2)
+
+        _, F_prime = self.__rayleigh_denominator(k_sq, kx, kx_bar_pole, ks, v, v_prime)
 
         v_r_bar = np.sqrt(self.beta_s**2 - self.beta_r**2)
         exponent = -ky * (v_r_bar * z + self.beta_r * x * np.sign(np.cos(theta)))
@@ -333,12 +377,12 @@ class MovingLoadElasticHalfSpace:
         return F, F_prime
 
 
-if __name__ == "__main__":
+def main():
     # Example usage
     E = 30e6  # Pa
-    nu = 0.4  # dimensionless
+    nu = 0.1  # dimensionless
     rho = 2000  # kg/m³
-    force = 1e4  # N
+    force = 1e3  # N
     speed = 10  # m/s
 
     x, y, z = 0.0, 0.0, 10
@@ -355,4 +399,9 @@ if __name__ == "__main__":
     plt.xlabel("Time step")
     plt.ylabel("Vertical displacement uz (m)")
     plt.grid()
+    plt.savefig("moving.png")
     plt.show()
+
+
+if __name__ == "__main__":
+    main()
