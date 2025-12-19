@@ -54,7 +54,7 @@ jobs:
       #  Run benchmark generation
       - name: Run benchmark runner
         run: python nightly_build/stem_runners/runner.py
-
+  
       # Install LaTeX
       - name: Install LaTeX
         run: |
@@ -64,7 +64,10 @@ jobs:
             texlive-fonts-recommended \
             texlive-bibtex-extra \
             texlive-science \
-            biber latexmk
+            biber latexmk \
+            texlive-xetex \
+            latexmk \
+            fonts-noto
 
       # Compile the report
       - name: Build PDF
