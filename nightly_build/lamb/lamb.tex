@@ -22,8 +22,8 @@ half-space, enabling a direct time-history comparison against the numerical mode
 % ..............................................................................................
 The point load was modelled in a three-dimensional domain representing an elastic half-space.
 An overview of the geometry for the numerical analysis is shown in Figure~\ref{fig:3D_scheme}.
-The soil has a width, length and depth of \qty{5}{\meter} and is subjected to a compressive pulse load, $F(t)$,
-which is suddenly applied at the top edge:
+The soil has a width and length of \qty{10}{\meter} and depth of \qty{5}{\meter} and is subjected to a
+compressive pulse load, $F(t)$, which is suddenly applied at the top edge:
 
 \begin{equation}
     F(t) =
@@ -36,7 +36,7 @@ which is suddenly applied at the top edge:
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.75\textwidth]{pekeris/mesh.pdf}
+    \includegraphics[width=0.75\textwidth]{lamb/mesh.png}
     \caption{Geometry, mesh and loading conditions for the three-dimensional wave propagation problem.}
     \label{fig:3D_scheme}
 \end{figure}
@@ -72,14 +72,16 @@ parameters $\beta = 0.25$ and $\gamma = 0.5$.
 \section{Results}
 % ----------------------------------------------------------------------------------------------
 Figure~\ref{fig:pekeris_results} presents the time histories of the vertical displacement for three
-nodes. located at 1, 2 and~\qty{3}{\meter} from the load, located along the surface.
+nodes, located at 1, 2 and~\qty{3}{\meter} from the load, located along the surface.
 The figure compares the STEM results against the analytical solution.
 If follows that there is an agreement between both solutions, demonstrating the accuracy of the STEM
-for this type of dynamic loading condition.
+for this type of dynamic loading condition. This is a notable difficult problem to solve numerically,
+due to the steep gradients in stress and displacement that occur close to the point of application of the
+load.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\textwidth]{pekeris/time_history.pdf}
+    \includegraphics[width=0.8\textwidth]{lamb/time_history.pdf}
     \caption{Comparison of the vertical displacement time histories at surface nodes located at:
      (a) \qty{1}{\meter}, (b) \qty{2}{\meter} and (c) \qty{3}{\meter} from the load.}
     \label{fig:pekeris_results}
