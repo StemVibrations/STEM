@@ -1375,7 +1375,12 @@ class Model:
         # validation of input coordinates
         Utils.validate_coordinates(coordinates)
 
-        gmsh_input = {part_name: {"coordinates": coordinates, "ndim": 1}}
+        if len(coordinates) == 1:
+            geometry_ndim = 0
+        else:
+            geometry_ndim = 1
+
+        gmsh_input = {part_name: {"coordinates": coordinates, "ndim": geometry_ndim}}
 
         self.gmsh_io.generate_geometry(gmsh_input, "")
 
