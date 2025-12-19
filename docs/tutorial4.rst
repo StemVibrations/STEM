@@ -1,14 +1,15 @@
-STEM tutorials
-==============
-
 .. _tutorial4:
 
 Variation in the Z-direction
------------------------------
-This tutorial shows a step by step guide on how to set up a 3D geometry where the soil layers vary in both Y and Z
+============================
+Overview
+--------
+This tutorial shows a step-by-step guide on how to set up a 3D geometry where the soil layers vary in both Y and Z
 directions. Furthermore, a track is defined which lays on top of the soil and extends outside of the soil domain. The
 problem will be calculated in a multistage analysis.
 
+Imports and setup
+-----------------
 First the necessary packages are imported and paths are defined.
 
 .. code-block:: python
@@ -29,6 +30,8 @@ First the necessary packages are imported and paths are defined.
 
     # END CODE BLOCK
 
+Geometry, track and materials
+----------------------------
 For setting up the model, Model class is imported from stem.model. And for setting up the soil material, OnePhaseSoil,
 LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw classes are imported.
 For the structural elements, the ElasticSpringDamper and NodalConcentrated classes are imported. The rail material will
