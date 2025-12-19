@@ -49,7 +49,7 @@ def test_stem():
     load_coordinates = [(0.0, 1.0, 0.0), (0.0, 1.0, 10)]
 
     uvec_parameters = {"load_wheel_1": -30.0, "load_wheel_2": -10.0}
-    uvec_load = UvecLoad(direction=[1, 1, 1],
+    uvec_load = UvecLoad(direction_signs=[1, 1, 1],
                          velocity=5,
                          origin=[0.0, 1.0, 0.0],
                          wheel_configuration=[1.0, 2.0],

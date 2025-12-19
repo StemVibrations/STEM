@@ -142,7 +142,7 @@ def test_train_track_soil_uvec_3d_joint_multistage(test_type, input_folder_suffi
         }
 
     # define the UVEC load
-    uvec_load = UvecLoad(direction=[1, 1, 1],
+    uvec_load = UvecLoad(direction_signs=[1, 1, 1],
                          velocity=velocity,
                          origin=[0.75, 3 + rail_pad_thickness, 0],
                          wheel_configuration=wheel_configuration,

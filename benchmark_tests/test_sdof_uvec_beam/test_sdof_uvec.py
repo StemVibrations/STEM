@@ -71,7 +71,7 @@ def test_stem():
         "file_name": r"test.csv"
     }
 
-    uvec_load = UvecLoad(direction=[1, 1, 0],
+    uvec_load = UvecLoad(direction_signs=[1, 1, 0],
                          velocity=velocity,
                          origin=[0.0, 0, 0],
                          wheel_configuration=[0.0],
