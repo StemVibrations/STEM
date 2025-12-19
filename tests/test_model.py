@@ -404,7 +404,7 @@ class TestModel:
                           load=[0.0, -10.0, 0.0],
                           velocity=5.0,
                           offset=3.0,
-                          direction=[1, 1, 1])
+                          direction_signs=[1, 1, 1])
 
     @pytest.fixture
     def create_default_outputs(self):
@@ -1371,6 +1371,45 @@ class TestModel:
                                       output_parameters=GiDOutputParameters(file_format="binary",
                                                                             output_interval=100,
                                                                             nodal_results=nodal_results))
+
+    def test_add_output_by_coordinates_one_point(self, create_default_2d_soil_material: SoilMaterial):
+        """
+        Test if output can be generated for a single point in 2D.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+        """
+        ndim = 2
+        layer1_coordinates = [(0, 0, 0), (4, 0, 0), (4, 1, 0), (0, 1, 0)]
+
+        # define soil materials
+        soil_material1 = create_default_2d_soil_material
+        soil_material1.name = "soil1"
+
+        # create model
+        model = Model(ndim)
+
+        # add soil layers
+        model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
+
+        nodal_results = [NodalOutput.ACCELERATION]
+        # Define output coordinates
+        output_coordinates = [(1.5, 1, 0)]
+
+        # add output settings
+        model.add_output_settings_by_coordinates(output_coordinates,
+                                                 part_name="nodal_accelerations",
+                                                 output_name="json_nodal_accelerations_top",
+                                                 output_dir="dir_test",
+                                                 output_parameters=JsonOutputParameters(output_interval=100,
+                                                                                        nodal_results=nodal_results))
+
+        model.generate_mesh()
+
+        output_model_part = model.get_model_part_by_name("nodal_accelerations")
+
+        # check if output mesh is consists of only one node with the correct coordinates
+        assert output_model_part.mesh.nodes == {5: Node(5, (1.5, 1, 0))}
 
     def test_add_output_to_a_surface_2d(self, create_default_2d_soil_material: SoilMaterial):
         """
@@ -2347,7 +2386,7 @@ class TestModel:
                                                      load=[0.0, -10.0, 0.0],
                                                      velocity=5.0,
                                                      offset=3.0,
-                                                     direction=[1, 1, 1])
+                                                     direction_signs=[1, 1, 1])
 
         # add body model part
         soil_material = create_default_3d_soil_material
@@ -2458,7 +2497,7 @@ class TestModel:
                                             load=[0.0, -10.0, 0.0],
                                             velocity=5.0,
                                             offset=3.0,
-                                            direction=[1, 1, 1])
+                                            direction_signs=[1, 1, 1])
 
         # check raising of errors
         msg = "Load parameter provided is not supported: `GravityLoad`."

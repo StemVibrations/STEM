@@ -46,7 +46,7 @@ def test_stem():
     # Define moving load
     load_coordinates = [(0.75, 3.0, 0.0), (0.75, 3.0, 10.0)]
     moving_load = MovingLoad(load=[0.0, -10.0, 0.0],
-                             direction=[-1, -1, 1],
+                             direction_signs=[-1, -1, 1],
                              velocity=5,
                              origin=[0.75, 3.0, 0.0],
                              offset=0.0)

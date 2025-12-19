@@ -33,12 +33,15 @@ class KratosLoadsIO:
             - Dict[str, Any]: dictionary containing the load parameters
         """
 
+        moving_load_params = deepcopy(parameters.__dict__)
+        moving_load_params["direction"] = moving_load_params.pop("direction_signs")
+
         # initialize load dictionary
         load_dict: Dict[str, Any] = {
             "python_module": "set_moving_load_process",
             "kratos_module": "RailwayApplication",
             "process_name": "SetMovingLoadProcess",
-            "Parameters": deepcopy(parameters.__dict__),
+            "Parameters": moving_load_params
         }
 
         load_dict["Parameters"]["model_part_name"] = f"{self.domain}.{part_name}"
@@ -67,7 +70,7 @@ class KratosLoadsIO:
             "compute_model_part_name": "porous_computational_model_part",  # as hard-coded in Kratos
             "variable_name": "POINT_LOAD",
             "load": [1, 1, 1],  # dummy parameter
-            "direction": parameters.direction,
+            "direction": parameters.direction_signs,
             "velocity": parameters.velocity,
             "origin": parameters.origin,
             "configuration": parameters.wheel_configuration

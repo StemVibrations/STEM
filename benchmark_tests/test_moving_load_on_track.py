@@ -51,7 +51,7 @@ def test_moving_load_on_track():
     model.synchronise_geometry()
 
     moving_load = MovingLoad(load=[0.0, 10.0, 0.0],
-                             direction=[1, 1, 1],
+                             direction_signs=[1, 1, 1],
                              velocity=5,
                              origin=[0.0, 3.001, 1.0],
                              offset=0.75)

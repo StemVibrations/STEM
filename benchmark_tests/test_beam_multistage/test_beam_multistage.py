@@ -53,7 +53,7 @@ def test_stem():
     body_model_part.get_geometry_from_geo_data(model.gmsh_io.geo_data, name)
     model.body_model_parts.append(body_model_part)
 
-    moving_load = MovingLoad(load=[0, -80000, 0], velocity=velocity, origin=[0, 0, 0], direction=[1, 0, 0])
+    moving_load = MovingLoad(load=[0, -80000, 0], velocity=velocity, origin=[0, 0, 0], direction_signs=[1, 0, 0])
     model.add_load_on_line_model_part("beam", moving_load, "moving_load")
 
     # Define displacement conditions
