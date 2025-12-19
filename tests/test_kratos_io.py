@@ -729,7 +729,7 @@ class TestKratosModelIO:
                                             load=[0.0, -10.0, 0.0],
                                             velocity=5.0,
                                             offset=3.0,
-                                            direction=[1, 1, 1])
+                                            direction_signs=[1, 1, 1])
         msg = "Attribute `value` does not exist in class: MovingLoad."
         with pytest.raises(ValueError, match=msg):
 

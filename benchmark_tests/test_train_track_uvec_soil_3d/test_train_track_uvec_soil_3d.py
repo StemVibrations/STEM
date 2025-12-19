@@ -111,7 +111,7 @@ def test_train_track_uvec_soil_3d():
     }
 
     # define the UVEC load
-    uvec_load = UvecLoad(direction=[1, 1, 1],
+    uvec_load = UvecLoad(direction_signs=[1, 1, 1],
                          velocity=40,
                          origin=[0.75, 3 + rail_pad_thickness, 5],
                          wheel_configuration=[0.0, 2.5, 19.9, 22.4],

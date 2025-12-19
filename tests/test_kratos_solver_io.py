@@ -137,7 +137,7 @@ class TestKratosSolverIO:
         # set up uvec load
         uvec_parameters = {"load_wheel_1": -10.0, "load_wheel_2": -20.0}
         uvec_state_variables = {"state_1": [0.0, 1.0], "state_2": [9, 8]}
-        uvec_load = UvecLoad(direction=[1, 1, 0],
+        uvec_load = UvecLoad(direction_signs=[1, 1, 0],
                              velocity=5,
                              origin=[0.0, 1.0, 0.0],
                              wheel_configuration=[0.0, 2.0],
@@ -197,7 +197,7 @@ class TestKratosSolverIO:
         # set up uvec load
         uvec_parameters = {"load_wheel_1": -10.0, "load_wheel_2": -20.0}
         uvec_state_variables = {"state_1": [0.0, 1.0], "state_2": [9, 8]}
-        uvec_load = UvecLoad(direction=[1, 1, 0],
+        uvec_load = UvecLoad(direction_signs=[1, 1, 0],
                              velocity=5,
                              origin=[0.0, 1.0, 0.0],
                              wheel_configuration=[0.0, 2.0],

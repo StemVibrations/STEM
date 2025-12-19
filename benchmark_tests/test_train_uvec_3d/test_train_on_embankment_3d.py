@@ -69,7 +69,7 @@ def test_stem():
     }
 
     uvec_load = UvecLoad(
-        direction=[1, 1, 1],
+        direction_signs=[1, 1, 1],
         velocity=1000,
         origin=[0.75, 3, 5],
         wheel_configuration=[0.0, 2.5, 19.9, 22.4],

@@ -141,7 +141,7 @@ load starts at coordinates: [0.75, 3.0, 0.0].
 .. code-block:: python
 
     load_coordinates = [(0.75, 3.0, 0.0), (0.75, 3.0, 50.0)]
-    moving_load = MovingLoad(load=[0.0, -10000.0, 0.0], direction=[1, 1, 1], velocity=30, origin=[0.75, 3.0, 0.0],
+    moving_load = MovingLoad(load=[0.0, -10000.0, 0.0], direction_signs=[1, 1, 1], velocity=30, origin=[0.75, 3.0, 0.0],
                              offset=0.0)
     model.add_load_by_coordinates(load_coordinates, moving_load, "moving_load")
 

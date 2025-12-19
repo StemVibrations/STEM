@@ -72,7 +72,7 @@ def test_stem():
         "file_name": r"calculated_results.txt"
     }
 
-    uvec_load = UvecLoad(direction=[1, 1, 0],
+    uvec_load = UvecLoad(direction_signs=[1, 1, 0],
                          velocity=0,
                          origin=[12.5, 0, 0],
                          wheel_configuration=[0.0],

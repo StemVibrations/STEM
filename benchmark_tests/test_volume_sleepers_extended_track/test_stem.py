@@ -125,7 +125,7 @@ def test_stem():
     # Define moving load in Vertical direction, but also with small components in longitudinal and lateral direction
     # to check if the boundary conditions work as expected
     load = MovingLoad(load=[-10, -10000, -10],
-                      direction=[1, 1, 1],
+                      direction_signs=[1, 1, 1],
                       velocity=60.0,
                       origin=[0.75, 2.5 + sleeper_height + rail_pad_thickness, -5],
                       offset=0.0)

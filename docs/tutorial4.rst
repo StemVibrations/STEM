@@ -193,7 +193,7 @@ an origin point at coordinates [0.75, 2.025, -3.0] (on top of the track, 2 meter
 .. code-block:: python
 
     # define the moving load
-    moving_load = MovingLoad(load=[0,-10000,0], direction=[1, 1, 1], velocity=0, origin=[0.75, 2 + rail_pad_thickness, -3])
+    moving_load = MovingLoad(load=[0,-10000,0], direction_signs=[1, 1, 1], velocity=0, origin=[0.75, 2 + rail_pad_thickness, -3])
 
     # add the load on the track
     model.add_load_on_line_model_part("rail_track_1", moving_load, "moving_load")

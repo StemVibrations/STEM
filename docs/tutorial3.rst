@@ -410,7 +410,7 @@ Below the uvec parameters are defined.
                        }
 
     # define the UVEC load
-    uvec_load = UvecLoad(direction=[1, 1, 1], velocity=velocity, origin=[0.75, 3+rail_pad_thickness, 5],
+    uvec_load = UvecLoad(direction_signs=[1, 1, 1], velocity=velocity, origin=[0.75, 3+rail_pad_thickness, 5],
                          wheel_configuration=wheel_configuration,
                          uvec_model=uvec,
                          uvec_parameters=uvec_parameters)

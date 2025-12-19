@@ -55,7 +55,7 @@ def test_moving_load_on_track_on_soil():
     model.split_model_part("rail_pads_rail_track_1", "rail_pads_rail_track_1_hanging", [50, 51], damaged_material)
 
     moving_load = MovingLoad(load=[0.0, -10000.0, 0.0],
-                             direction=[1, 1, 1],
+                             direction_signs=[1, 1, 1],
                              velocity=10,
                              origin=[1.0, 3 + rail_pad_thickness, 0.0],
                              offset=0.0)

@@ -204,14 +204,15 @@ class MovingLoad(LoadParametersABC):
         - load (Union[List[float], List[str]]): Entity of the load [N] in the 3 \
                directions. Can be defined as strings (when function of time) or as float. \
                Mixed types are not accepted.
-        - direction (List[int]):  Direction of the moving load (-1 or +1 in x, y, z direction) [-].
+        - direction_signs (List[int]): Sign of motion along each axis (+1 or -1 for x, y, z).
+               The actual direction is defined by the existing load path geometry.
         - velocity (Union[float, str]): Velocity of the moving load [m/s].
         - origin (List[float]): Starting coordinates of the moving load [m].
         - offset (float): Offset of the moving load [m].
     """
 
     load: Union[List[float], List[str]]
-    direction: List[float]
+    direction_signs: List[int]
     velocity: Union[float, str]
     origin: List[float]
     offset: float = 0.0
@@ -271,7 +272,8 @@ class UvecLoad(LoadParametersABC):
         - :class:`LoadParametersABC`
 
     Attributes:
-        - direction (List[int]):  Direction of the moving load (-1 or +1 in x, y, z direction) [-].
+        - direction_signs (List[int]): Sign of motion along each axis (+1 or -1 for x, y, z).
+               The actual direction is defined by the existing load path geometry.
         - velocity (Union[float, str]): Velocity of the moving load [m/s].
         - origin (List[float]): Starting coordinates of the first wheel [m].
         - wheel_configuration (List[float]): Wheel configuration, i.e. distances from the origin of each wheel [m].
@@ -282,7 +284,7 @@ class UvecLoad(LoadParametersABC):
         - uvec_function_name (str): Name of the UVEC function.
     """
 
-    direction: List[float]
+    direction_signs: List[int]
     velocity: Union[float, str]
     origin: List[float]
     wheel_configuration: List[float]
