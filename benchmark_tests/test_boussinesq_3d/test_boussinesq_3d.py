@@ -17,29 +17,24 @@ from stem.stem import Stem
 
 from benchmark_tests.analytical_solutions.boussinesq import Boussinesq
 
-SHOW_RESULTS = True
+SHOW_RESULTS = False
 
 
-def discretise_quarter_circle(r, N):
+def discretise_quarter_circle(radius: float, n_points: int) -> np.ndarray:
     """
     Discretised quarter circle of radius r in the xy-plane.
 
-    Parameters
-    ----------
-    r : float
-        Radius
-    N : int
-        Number of points
+    Args:
+        - radius (float): Radius of the quarter circle
+        - n_points (int): Number of discretisation points
 
-    Returns
-    -------
-    coords : (N, 3) ndarray
-        Discretised coordinates (x, y, z)
+    Returns:
+        - np.ndarray: Array of shape (n_points, 3) containing the coordinates of the quarter circle
     """
-    theta = np.linspace(0, np.pi / 2, N)
-    x = r * np.cos(theta)
+    theta = np.linspace(0, np.pi / 2, n_points)
+    x = radius * np.cos(theta)
     y = np.zeros_like(theta)
-    z = r * np.sin(theta)
+    z = radius * np.sin(theta)
 
     return np.column_stack((x, y, z))
 
@@ -239,8 +234,8 @@ def test_stem():
         import matplotlib.pyplot as plt
 
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 6))
-        # Plot displacement results
 
+        # Plot displacement results
         ax1.plot(calculated_x_coordinates_surface_sorted,
                  calculated_disp_results_sorted,
                  'o-',
@@ -249,19 +244,22 @@ def test_stem():
                  analytical_disp_results_sorted,
                  'x--',
                  label='Analytical Displacement Y')
-        ax1.set_xlabel('X Coordinate')
-        ax1.set_ylabel('Displacement Y')
+        ax1.set_xlabel('X-Coordinate [m]')
+        ax1.set_ylabel('Displacement Y [m]')
         ax1.set_title('Vertical Displacement at Surface')
         ax1.grid()
+        ax1.legend()
 
-        ax2.plot(calculated_y_coordinates_sorted, calculated_stress_results_sorted, 'o-', label='Calculated Stress Y')
-        ax2.plot(calculated_y_coordinates_sorted, analytical_stress_results_sorted, 'x--', label='Analytical Stress Y')
+        ax2.plot(calculated_y_coordinates_sorted, calculated_stress_results_sorted, 'o-', label='Calculated stress yy')
+        ax2.plot(calculated_y_coordinates_sorted, analytical_stress_results_sorted, 'x--', label='Analytical stress yy')
 
-        ax2.set_xlabel('Y Coordinate')
-        ax2.set_ylabel('Cauchy Stress Y')
+        ax2.set_xlabel('Y-Coordinate [m]')
+        ax2.set_ylabel('Stress yy [Pa]')
         ax2.set_title('Vertical Stress Below Load')
         ax2.grid()
+        ax2.legend()
 
+        fig.tight_layout()
         plt.show()
 
     rmtree(input_folder)
