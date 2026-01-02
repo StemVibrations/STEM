@@ -10,7 +10,8 @@ from typing import Sequence, Tuple, get_args, Set, Optional, List, Dict, Any, Un
 
 from gmsh_utils import gmsh_IO
 
-from stem.additional_processes import ParameterFieldParameters, HingeParameters
+from stem.additional_processes import (ParameterFieldParameters, HingeParameters, AdditionalProcessPart,
+                                       AdditionalProcessesParametersABC)
 from stem.field_generator import RandomFieldGenerator
 from stem.globals import ELEMENT_DATA, OUT_OF_PLANE_AXIS_2D, VERTICAL_AXIS, GRAVITY_VALUE, GEOMETRY_PRECISION
 from stem.load import *
@@ -57,6 +58,7 @@ class Model:
         self.gmsh_io = gmsh_IO.GmshIO()
         self.body_model_parts: List[BodyModelPart] = []
         self.process_model_parts: List[ModelPart] = []
+        self.additional_process_parts: List[AdditionalProcessPart] = []
         self.output_settings: List[Output] = []
         self.extrusion_length: Optional[float] = None
         self.groups: Dict[str, Any] = {}
@@ -1551,6 +1553,32 @@ class Model:
 
             # add the field_parameter part to process model parts
             self.process_model_parts.append(model_part)
+
+    def apply_additional_process(self, process_parameters: AdditionalProcessesParametersABC, part_name: str = ""):
+        """
+        Apply a process on an existing model part.
+
+        Args:
+            - process_parameters (:class:`stem.additional_processes.ProcessParametersABC`): the objects containing \
+                the parameters necessary for the definition of the process.
+            - part_name (str): model part name where to apply the process. If empty, the process is applied to the
+                whole model.
+
+        Raises:
+            - ValueError: if the part name does not exist.
+        """
+
+        if part_name != "":
+            # Check if the model part exists and retrieve the part
+            target_part = self.get_model_part_by_name(part_name=part_name)
+            if target_part is None:
+                raise ValueError(f"The target part, `{part_name}`, does not exist.")
+
+        # create a new model part for the process
+        additional_process_part = AdditionalProcessPart(process_parameters, part_name)
+
+        # add the additional process part to the model
+        self.additional_process_parts.append(additional_process_part)
 
     def synchronise_geometry(self):
         """
