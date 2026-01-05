@@ -54,7 +54,7 @@ jobs:
       #  Run benchmark generation
       - name: Run benchmark runner
         run: python nightly_build/stem_runners/runner.py
-  
+
       # Install LaTeX
       - name: Install LaTeX
         run: |
@@ -73,7 +73,7 @@ jobs:
       - name: Build PDF
         working-directory: nightly_build
         run: |
-          latexmk -xelatex ./benchmark_report.tex
+          pdflatex benchmark_report.tex
 
       # Upload Artifact
       - name: Upload Report PDF
