@@ -73,7 +73,7 @@ jobs:
       - name: Build PDF
         working-directory: nightly_build
         run: |
-          pdflatex benchmark_report.tex
+          latexmk -pdf -interaction=nonstopmode ./benchmark_report.tex
 
       # Upload Artifact
       - name: Upload Report PDF
