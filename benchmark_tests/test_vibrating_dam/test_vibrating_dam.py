@@ -17,12 +17,12 @@ from stem.stem import Stem
 
 from tests.utils import TestUtils
 
-SHOW_RESULTS = True
+SHOW_RESULTS = False
 
 
 def test_stem():
     """
-    Geotechnical earthquake engineering chapter 7.3.4, vibrating dam, shear beam approach
+    Kramer, S. L., Geotechnical earthquake engineering chapter 7.3.4, vibrating dam, shear beam approach
     """
 
     # Define geometry, conditions and material parameters

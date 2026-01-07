@@ -43,7 +43,7 @@ class KratosAdditionalProcessesIO:
             "Parameters": {},
         }
 
-        process_dict["Parameters"]["model_part_name"] = f"{self.domain}.{part_name}"
+        process_dict["Parameters"]["model_part_name"] = part_name
         process_dict["Parameters"]["variable_name"] = "EXCAVATION"
         process_dict["Parameters"]["deactivate_soil_part"] = parameters.deactivate_body_model_part
 
@@ -76,7 +76,7 @@ class KratosAdditionalProcessesIO:
                 "Parameters": {},
             }
 
-            process_dict["Parameters"]["model_part_name"] = f"{self.domain}.{part_name}"
+            process_dict["Parameters"]["model_part_name"] = part_name
             process_dict["Parameters"]["variable_name"] = property_name
             process_dict["Parameters"]["func_type"] = parameters.function_type
 
@@ -119,7 +119,7 @@ class KratosAdditionalProcessesIO:
             "process_name": "AssignScalarVariableToNodesProcess",
             "Parameters": {},
         }
-        process_dict_axis_2["Parameters"]["model_part_name"] = f"{self.domain}.{part_name}"
+        process_dict_axis_2["Parameters"]["model_part_name"] = part_name
         process_dict_axis_2["Parameters"]["variable_name"] = "ROTATIONAL_STIFFNESS_AXIS_2"
 
         process_dict_axis_2["Parameters"]["value"] = parameters.ROTATIONAL_STIFFNESS_AXIS_2
