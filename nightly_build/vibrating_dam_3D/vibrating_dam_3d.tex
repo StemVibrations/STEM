@@ -1,12 +1,13 @@
 % ==============================================================================================
-\chapter{Dynamic horizontal point load on dam 2D} \label{ch:vibrating_dam_2D}
+\chapter{Dynamic horizontal line load on dam 3D} \label{ch:vibrating_dam_3D}
 % ==============================================================================================
 
 % ----------------------------------------------------------------------------------------------
 \section{Introduction}
 % ----------------------------------------------------------------------------------------------
 This benchmark compares the STEM numerical solution against an analytical solution for the natural frequencies of a 
-dam subjected to a dynamic horizontal point load under plane-strain conditions.
+dam subjected to a dynamic horizontal line load under plane-strain conditions. This test is the 3D extension of the
+2D vibrating dam benchmark presented in Chapter~\ref{ch:vibrating_dam_2D}.
 
 The analytical solution is presented in~\cite[Chapter~7.3.4]{Kramer_1996}. The analytical solution provides the first
 5 natural frequencies of vibration of the dam structure, which are compared against the numerical model.
@@ -21,12 +22,13 @@ The analytical solution is presented in~\cite[Chapter~7.3.4]{Kramer_1996}. The a
 The reference geometry as presented in~\cite{Kramer_1996} is given with feet units. For consistency with the rest of
 the benchmarks in this report, the geometry has been converted to SI units (meters).
 
-The soil domain is modeled in 2D and represents a triangle with base \qty{160.02}{\meter} and height \qty{45.72}{\meter},
+The soil domain is modeled in 3D and represents a triangular prism with base \qty{160.02}{\meter} and height \qty{45.72}{\meter},
 the left slope is inclined with a ratio of 2:1 (horizontal to vertical), while the right slope is inclined with a ratio
-of 1.5:1. The mesh is created with second order triangular elements and uses an average element size of \qty{2}{\meter}.
-Figure~\ref{fig:vibrating_dam_mesh} illustrates the geometry and mesh adopted for the analysis.
+of 1.5:1. The geometry is extruded to \qty{4}{\meter} thickness in the z-direction to create a 3D model.
+The mesh is created with second order tetrahedron elements and uses an average element size of \qty{2}{\meter}.
+Figure~\ref{fig:vibrating_dam_mesh_3d} illustrates the geometry and mesh adopted for the analysis.
 
-The horizontal point load with a magnitude of \qty{1e6}{\newton\per\meter} is instantly applied at the top of the dam
+The horizontal line load with a magnitude of \qty{1e6}{\newton\per\meter} is instantly applied at the top of the dam
 structure and is kept constant during the analysed time window.
 
 All nodes along the bottom boundary are fully fixed, while all remaining nodes are constrained to move only in the horizontal 
@@ -34,9 +36,9 @@ x direction.
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.75\textwidth]{vibrating_dam/vibrating_dam_mesh.pdf}
+    \includegraphics[width=0.75\textwidth]{vibrating_dam_3D/vibrating_dam_mesh_3D.pdf}
     \caption{Geometry and mesh adopted for the vibrating dam benchmark.}
-    \label{fig:vibrating_dam_mesh}
+    \label{fig:vibrating_dam_mesh_3d}
 \end{figure}
 
 % ..............................................................................................
@@ -60,7 +62,7 @@ parameters $\beta = 0.25$ and $\gamma = 0.5$.
 % ----------------------------------------------------------------------------------------------
 \section{Results}
 % ----------------------------------------------------------------------------------------------
-Figure~\ref{fig:vibrating_dam_results} presents the power spectral density of the horizontal displacement of the
+Figure~\ref{fig:vibrating_dam_results_3d} presents the power spectral density of the horizontal displacement of the
  top of the dam.
 The figure compares the STEM results against the analytical solution.
 The peaks of the power spectral density occur at the expected first five natural frequencies,
@@ -68,7 +70,7 @@ showing excellent agreement between the numerical and analytical solutions.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\textwidth]{vibrating_dam/power_spectral_density.pdf}
-    \caption{Power spectral density plot of the horizontal displacement at the top of the dam}
-    \label{fig:vibrating_dam_results}
+    \includegraphics[width=0.8\textwidth]{vibrating_dam_3d/power_spectral_density.pdf}
+    \caption{Power spectral density plot of the horizontal x displacement at the top of the dam}
+    \label{fig:vibrating_dam_results_3d}
 \end{figure}

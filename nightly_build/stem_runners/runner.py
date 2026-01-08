@@ -11,6 +11,7 @@ from nightly_build.stem_runners.one_dim_wave_prop import run_column
 # from nightly_build.stem_runners.moving_load_halfspace import run_moving_load
 from nightly_build.stem_runners.sdof import run_sdof
 from nightly_build.stem_runners.vibrating_dam import run_vibrating_dam
+from nightly_build.stem_runners.vibrating_dam_3D import run_vibrating_dam_3d
 
 from nightly_build.stem_runners.compare_analytical import compare_pekeris, compare_strip_load_2D, \
       compare_strip_load_3D, compare_wave_propagation, compare_sdof, compare_vibrating_dam #, compare_moving_load
@@ -43,11 +44,18 @@ compare_strip_load_3D(r"strip_3D_tmp/output/output_vtk_porous_computational_mode
                       r"nightly_build/strip_load_3D/time_history.pdf")
 shutil.rmtree("strip_3D_tmp")
 
-run_vibrating_dam(Path("./vibrating_dam_tmp"))
-compare_vibrating_dam(r"vibrating_dam_tmp/json_output_top.json",
+run_vibrating_dam(Path("./vibrating_dam_2D_tmp"))
+compare_vibrating_dam(r"vibrating_dam_2D_tmp/json_output_top.json",
                       r"nightly_build/vibrating_dam/power_spectral_density.pdf")
 
-shutil.rmtree("vibrating_dam_tmp")
+shutil.rmtree("vibrating_dam_2D_tmp")
+
+
+run_vibrating_dam_3d(Path("./vibrating_dam_3D_tmp"))
+compare_vibrating_dam(r"vibrating_dam_3D_tmp/json_output_top.json",
+                      r"nightly_build/vibrating_dam_3D/power_spectral_density.pdf")
+
+shutil.rmtree("vibrating_dam_3D_tmp")
 
 # run_moving_load(Path("./moving_load_halfspace_tmp"))
 # compare_moving_load(r"moving_load_halfspace_tmp/output/calculated_output.json",
