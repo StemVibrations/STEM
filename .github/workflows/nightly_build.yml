@@ -66,8 +66,7 @@ jobs:
             texlive-science \
             biber latexmk \
             texlive-xetex \
-            latexmk \
-            fonts-noto
+            latexmk
 
       # Compile the report
       - name: Build PDF
