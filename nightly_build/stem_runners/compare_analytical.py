@@ -335,6 +335,7 @@ def compare_vibrating_dam(path_model, output_file):
     plt.savefig(output_file)
     plt.close()
 
+
 #     E = 30e6  # Pa
 #     nu = 0.2  # dimensionless
 #     rho = 2000  # kg/m³
