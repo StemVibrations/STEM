@@ -293,6 +293,7 @@ def compare_moving_load(path_model, output_file):
     plt.plot(data_kratos["TIME"], data_kratos['NODE_13']['DISPLACEMENT_Y'], color="r", marker="x", label="STEM")
     # plt.show()
 
+
 def compare_vibrating_dam(path_model, output_file):
 
     # load data from STEM
@@ -321,9 +322,9 @@ def compare_vibrating_dam(path_model, output_file):
     # plot expected natural frequencies
     for i, expected_natural_frequency in enumerate(expected_natural_frequencies):
         ax.axvline(expected_natural_frequency,
-                    color='g',
-                    linestyle='--',
-                    label=f'Expected natural frequency' if i == 0 else None)
+                   color='g',
+                   linestyle='--',
+                   label=f'Expected natural frequency' if i == 0 else None)
 
     ax.set_xlim(0, 20)
     ax.set_xlabel('Frequency [Hz]')

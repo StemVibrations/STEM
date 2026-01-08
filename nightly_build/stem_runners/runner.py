@@ -50,7 +50,6 @@ compare_vibrating_dam(r"vibrating_dam_2D_tmp/json_output_top.json",
 
 shutil.rmtree("vibrating_dam_2D_tmp")
 
-
 run_vibrating_dam_3d(Path("./vibrating_dam_3D_tmp"))
 compare_vibrating_dam(r"vibrating_dam_3D_tmp/json_output_top.json",
                       r"nightly_build/vibrating_dam_3D/power_spectral_density.pdf")

@@ -1,4 +1,3 @@
-
 import os
 import sys
 from pathlib import Path
@@ -16,6 +15,7 @@ from stem.solver import AnalysisType, SolutionType, TimeIntegration, Displacemen
 from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters, GaussPointOutput
 from stem.stem import Stem
 
+
 def run_vibrating_dam(input_folder):
     """
     Kramer, S. L., Geotechnical earthquake engineering chapter 7.3.4, vibrating dam, shear beam approach
@@ -24,7 +24,6 @@ def run_vibrating_dam(input_folder):
     # Define geometry, conditions and material parameters
 
     # --------------------------------
-
 
     # Specify dimension and initiate the model
     ndim = 2
@@ -134,7 +133,6 @@ def run_vibrating_dam(input_folder):
     #                           part_name="porous_computational_model_part",
     #                           output_dir="output",
     #                           output_name="vtk_output")
-
 
     # Write KRATOS input files
     # --------------------------------
