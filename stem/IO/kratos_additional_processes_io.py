@@ -43,7 +43,7 @@ class KratosAdditionalProcessesIO:
             "Parameters": {},
         }
 
-        process_dict["Parameters"]["model_part_name"] = f"{self.domain}.{part_name}"
+        process_dict["Parameters"]["model_part_name"] = part_name
         process_dict["Parameters"]["variable_name"] = "EXCAVATION"
         process_dict["Parameters"]["deactivate_soil_part"] = parameters.deactivate_body_model_part
 
@@ -76,7 +76,7 @@ class KratosAdditionalProcessesIO:
                 "Parameters": {},
             }
 
-            process_dict["Parameters"]["model_part_name"] = f"{self.domain}.{part_name}"
+            process_dict["Parameters"]["model_part_name"] = part_name
             process_dict["Parameters"]["variable_name"] = property_name
             process_dict["Parameters"]["func_type"] = parameters.function_type
 
@@ -119,7 +119,7 @@ class KratosAdditionalProcessesIO:
             "process_name": "AssignScalarVariableToNodesProcess",
             "Parameters": {},
         }
-        process_dict_axis_2["Parameters"]["model_part_name"] = f"{self.domain}.{part_name}"
+        process_dict_axis_2["Parameters"]["model_part_name"] = part_name
         process_dict_axis_2["Parameters"]["variable_name"] = "ROTATIONAL_STIFFNESS_AXIS_2"
 
         process_dict_axis_2["Parameters"]["value"] = parameters.ROTATIONAL_STIFFNESS_AXIS_2
@@ -129,6 +129,32 @@ class KratosAdditionalProcessesIO:
         process_dict_axis_3["Parameters"]["value"] = parameters.ROTATIONAL_STIFFNESS_AXIS_3
 
         return [process_dict_axis_2, process_dict_axis_3]
+
+    def __create_extrapolate_integration_point_to_nodes_dict(
+            self, part_name: str, parameters: ExtrapolateIntegrationPointToNodesParameters) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the parameters for the extrapolate integration point to nodes process
+
+        Args:
+            - part_name (str): part name where the extrapolate integration point to nodes is applied
+            - parameters (:class:`stem.additional_processes.ExtrapolateIntegrationPointToNodesParameters`): \
+                extrapolate integration point to nodes parameters object
+
+        Returns:
+            - Dict[str, Any]: dictionary containing the extrapolate integration point to nodes process parameters
+        """
+
+        process_dict: Dict[str, Any] = {
+            "python_module": "geo_extrapolate_integration_point_values_to_nodes_process",
+            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+            "process_name": "GeoExtrapolateIntegrationPointValuesToNodesProcess",
+            "Parameters": {},
+        }
+
+        process_dict["Parameters"]["model_part_name"] = part_name
+        process_dict["Parameters"]["list_of_variables"] = parameters.list_of_variables
+
+        return process_dict
 
     def create_additional_processes_dict(
             self, part_name: str, parameters: AdditionalProcessesParametersABC) -> Union[List[Dict[str, Any]], None]:
@@ -144,6 +170,12 @@ class KratosAdditionalProcessesIO:
             - List[Dict[str, Any]]: list of dictionaries containing the parameters for the additional process
         """
 
+        # set full part name, including domain, if part name is empty, the process is applied to the whole domain
+        if part_name == "":
+            part_name = self.domain
+        else:
+            part_name = f"{self.domain}.{part_name}"
+
         # add additional processes dictionary
         if isinstance(parameters, Excavation):
             return [self.__create_excavation_dict(part_name, parameters)]
@@ -151,5 +183,7 @@ class KratosAdditionalProcessesIO:
             return self.__create_parameter_field_dict(part_name, parameters)
         elif isinstance(parameters, HingeParameters):
             return self.__create_hinge_dict(part_name, parameters)
+        elif isinstance(parameters, ExtrapolateIntegrationPointToNodesParameters):
+            return [self.__create_extrapolate_integration_point_to_nodes_dict(part_name, parameters)]
         else:
             raise NotImplementedError
