@@ -2,6 +2,7 @@ import json
 
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.signal import welch
 
 from benchmark_tests.analytical_solutions.strip_load import StripLoad
 from benchmark_tests.analytical_solutions.pekeris import Pekeris, LoadType
@@ -291,6 +292,48 @@ def compare_moving_load(path_model, output_file):
 
     plt.plot(data_kratos["TIME"], data_kratos['NODE_13']['DISPLACEMENT_Y'], color="r", marker="x", label="STEM")
     # plt.show()
+
+
+def compare_vibrating_dam(path_model, output_file):
+
+    # load data from STEM
+    with open(path_model, "r") as f:
+        data_kratos = json.load(f)
+
+    feet_to_m = 0.3048
+    shear_wave_velocity = 1200 * feet_to_m  # ft/s to m/s
+    y_max = 150 * feet_to_m
+
+    time_step = data_kratos["TIME"][1] - data_kratos["TIME"][0]
+    calculated_horizontal_displacement = data_kratos["NODE_2"]["DISPLACEMENT_X"]
+    f, Pxx = welch(calculated_horizontal_displacement,
+                   fs=1 / time_step,
+                   nfft=20000,
+                   nperseg=len(calculated_horizontal_displacement))
+
+    # the beta values follow from literature for the shear beam natural frequencies
+    betas = [2.404, 5.520, 8.654, 11.792, 14.931]
+    expected_natural_frequencies = [shear_wave_velocity / y_max * beta / (2 * np.pi) for beta in betas]
+
+    # plot PSD
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 5), sharex=True, sharey=True)
+    ax.plot(f, Pxx)
+
+    # plot expected natural frequencies
+    for i, expected_natural_frequency in enumerate(expected_natural_frequencies):
+        ax.axvline(expected_natural_frequency,
+                   color='g',
+                   linestyle='--',
+                   label=f'Expected natural frequency' if i == 0 else None)
+
+    ax.set_xlim(0, 20)
+    ax.set_xlabel('Frequency [Hz]')
+    ax.set_ylabel('Power Spectral Density [m^2/Hz]')
+    ax.legend()
+    ax.grid()
+
+    plt.savefig(output_file)
+    plt.close()
 
 
 #     E = 30e6  # Pa
