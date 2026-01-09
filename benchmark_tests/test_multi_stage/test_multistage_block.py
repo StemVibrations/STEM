@@ -144,6 +144,6 @@ def test_stem():
     stem.run_calculation()
 
     assert_floats_in_directories_almost_equal("benchmark_tests/test_multi_stage/output_/output_vtk_full_model",
-                                               os.path.join(input_folder, "output/output_vtk_full_model"))
+                                              os.path.join(input_folder, "output/output_vtk_full_model"))
 
     rmtree(input_folder)

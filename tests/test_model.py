@@ -5445,3 +5445,33 @@ class TestModel:
 
         # assert that the constraints dictionary is set correctly
         assert model.gmsh_io.geo_data["constraints"] == expected_constraint_dict
+
+    def test_apply_additional_process(self):
+        """
+        Tests the application of additional processes to model parts in the Model class.
+        """
+
+        model = Model(3)
+
+        existing_model_part = ModelPart("existing_part")
+        model.process_model_parts.append(existing_model_part)
+
+        # add additional process to existing part
+        process_parameters = AdditionalProcessesParametersABC()
+        model.apply_additional_process(process_parameters, "existing_part")
+
+        assert len(model.additional_process_parts) == 1
+        assert model.additional_process_parts[0].model_part_name == "existing_part"
+        assert model.additional_process_parts[0].parameters == process_parameters
+
+        # add additional process to whole model
+        process_parameters_whole_model = AdditionalProcessesParametersABC()
+        model.apply_additional_process(process_parameters_whole_model)
+
+        assert len(model.additional_process_parts) == 2
+        assert model.additional_process_parts[1].model_part_name == ""
+        assert model.additional_process_parts[1].parameters == process_parameters_whole_model
+
+        # add process to non-existent part should raise error
+        with pytest.raises(ValueError, match="The target part, `nonexistent_part`, does not exist."):
+            model.apply_additional_process(process_parameters, "nonexistent_part")
