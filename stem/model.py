@@ -38,6 +38,8 @@ class Model:
         - geometry (Optional[:class:`stem.geometry.Geometry`]) The geometry of the whole model.
         - body_model_parts (List[:class:`stem.model_part.BodyModelPart`]): A list containing the body model parts.
         - process_model_parts (List[:class:`stem.model_part.ModelPart`]): A list containing the process model parts.
+        - additional_process_parts (List[:class:`stem.additional_processes.AdditionalProcessPart`]): A list containing
+            the additional process model parts.
         - output_settings (List[:class:`stem.output.Output`]): A list containing the output settings.
         - extrusion_length (Optional[float]): The extrusion length in the out of plane direction.
         - groups (Dict[str, Any]): A dictionary containing shared information among sets of model parts.
