@@ -14,7 +14,8 @@ from stem.solver import AnalysisType, SolutionType, TimeIntegration, Displacemen
 from stem.output import NodalOutput, VtkOutputParameters, Output, JsonOutputParameters
 from stem.stem import Stem
 
-def run_simply_supported_beam(input_folder: Path , ndim: int, axis_index: int = 0):
+
+def run_simply_supported_beam(input_folder: Path, ndim: int, axis_index: int = 0):
     """
     Test for a simply supported beam and unloading of a distributed load.
 
@@ -35,7 +36,7 @@ def run_simply_supported_beam(input_folder: Path , ndim: int, axis_index: int = 
     total_length = 25
     q = 1  # uniform load in N/m
 
-    YOUNG_MODULUS = 16 * DENSITY * CROSS_AREA * total_length ** 4 / (np.pi ** 2 * I33)
+    YOUNG_MODULUS = 16 * DENSITY * CROSS_AREA * total_length**4 / (np.pi**2 * I33)
 
     beam_material = EulerBeam(ndim, YOUNG_MODULUS, POISSON_RATIO, DENSITY, CROSS_AREA, I33, I33, I33)
     name = "beam"
@@ -155,6 +156,3 @@ def run_simply_supported_beam(input_folder: Path , ndim: int, axis_index: int = 
     # Run Kratos calculation
     # --------------------------------
     stem.run_calculation()
-
-
-

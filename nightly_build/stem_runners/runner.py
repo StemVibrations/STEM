@@ -57,8 +57,8 @@ compare_vibrating_dam(r"vibrating_dam_3D_tmp/json_output_top.json",
 
 shutil.rmtree("vibrating_dam_3D_tmp")
 
-run_simply_supported_beam(Path("./simply_supported_beam_tmp"),2)
-run_simply_supported_beam(Path("./simply_supported_beam_tmp"),3)
+run_simply_supported_beam(Path("./simply_supported_beam_tmp"), 2)
+run_simply_supported_beam(Path("./simply_supported_beam_tmp"), 3)
 
 compare_simply_supported_beam(r"simply_supported_beam_tmp",
                               r"nightly_build/simply_supported_beam/simply_supported_beam_results.pdf")
