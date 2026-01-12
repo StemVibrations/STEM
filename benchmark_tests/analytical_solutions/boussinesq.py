@@ -4,7 +4,8 @@ import numpy as np
 
 class Boussinesq:
     """
-    Analytical solutions for the Boussinesq equations.
+    Analytical solutions for the Boussinesq equations. Solutions are based on:
+    - Timoshenko, S. P., & Goodier, J. N. (1951/1970). Theory of Elasticity. Chapter 13.124
 
     Attributes:
         - E (float): Young's modulus of the material [Pa]
@@ -30,7 +31,7 @@ class Boussinesq:
 
     def calculate_vertical_stress_below_load_centre(self, depth: float) -> float:
         """
-        Calculate vertical stress below the centre of a circular load. (Craig, 2013)
+        Calculate vertical stress below the centre of a circular load.
 
         Args:
             - depth (float): Depth below the load [m]
@@ -42,7 +43,7 @@ class Boussinesq:
         if depth == 0:
             return self.q
 
-        return self.q * (1 - (1 / ((1 + (self.load_radius / depth)**2)**(3 / 2))))
+        return -self.q * (-1 + depth**3 / ((depth**2 + self.load_radius**2)**(3 / 2)))
 
     def calculate_vertical_displacement_on_surface(self, radial_distance: float) -> float:
         """
@@ -59,15 +60,14 @@ class Boussinesq:
         if radial_distance == self.load_radius:
             radial_distance -= 1e-12
 
-        # case outside the loaded area ( Love, A. E. H. (1927) ?)
+        # case outside the loaded area
         if radial_distance > self.load_radius:
             k = self.load_radius / radial_distance
-            c1 = (radial_distance / self.load_radius * special.ellipe(k**2) -
-                  (radial_distance**2 - self.load_radius**2) /
-                  (radial_distance * self.load_radius) * special.ellipk(k**2))
+            c1 = (special.ellipe(k**2) - (1 - k**2) * special.ellipk(k**2)) / k
+
             displacement = 4 * self.q * self.load_radius * (1 - self.nu**2) / (self.E * np.pi) * c1
 
-        # case inside the loaded area ( Timoshenko, S. P., & Goodier, J. N. (1951/1970). Theory of Elasticity. ? )
+        # case inside the loaded area
         else:
             k = radial_distance / self.load_radius
             displacement = 4 * self.q * self.load_radius * (1 - self.nu**2) / (self.E * np.pi) * special.ellipe(k**2)

@@ -10,10 +10,11 @@ from nightly_build.stem_runners.strip_load_3D import run_strip_3D
 from nightly_build.stem_runners.one_dim_wave_prop import run_column
 # from nightly_build.stem_runners.moving_load_halfspace import run_moving_load
 from nightly_build.stem_runners.sdof import run_sdof
+from nightly_build.stem_runners.boussinesq import run_boussinesq
 
 
 from nightly_build.stem_runners.compare_analytical import compare_pekeris, compare_strip_load_2D, \
-      compare_strip_load_3D, compare_wave_propagation, compare_sdof #, compare_moving_load
+      compare_strip_load_3D, compare_wave_propagation, compare_sdof, compare_boussinesq #, compare_moving_load
 
 
 def move_file(src: Path, dest: Path):
@@ -42,6 +43,10 @@ run_strip_3D(Path("./strip_3D_tmp"))
 compare_strip_load_3D(r"strip_3D_tmp/output/output_vtk_porous_computational_model_part",
                       r"nightly_build/strip_load_3D/time_history.pdf")
 shutil.rmtree("strip_3D_tmp")
+
+run_boussinesq(Path("./boussinesq_tmp"))
+compare_boussinesq(r"boussinesq_tmp", r"nightly_build/boussinesq/boussinesq_comparison.pdf")
+shutil.rmtree("boussinesq_tmp")
 
 # run_moving_load(Path("./moving_load_halfspace_tmp"))
 # compare_moving_load(r"moving_load_halfspace_tmp/output/calculated_output.json",
