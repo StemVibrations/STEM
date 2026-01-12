@@ -1,0 +1,92 @@
+% ==============================================================================================
+\chapter{Distributed load on simply supported beam} \label{ch:simply_supported_beam}
+% ==============================================================================================
+
+% ----------------------------------------------------------------------------------------------
+\section{Introduction}
+% ----------------------------------------------------------------------------------------------
+
+This benchmark compares the STEM numerical solution against the analytical solution for the dynamic response of a
+simply supported beam subjected to a uniformly distributed load that is suddenly removed.
+
+The STEM numerical response is compared with the analytical solution in terms of the first-mode period of vibration
+and the maximum and minimum mid-span displacements.
+
+The first-mode period of vibration, $T_{1}$ is calculated as:
+\begin{equation}
+    f_{1} = \frac{1}{2 \pi} \left( \frac{\pi}{L} \right)^2 \sqrt{\frac{E I}{\rho A}}
+\end{equation}
+
+\begin{equation}
+    T_{1} = \frac{1}{f_{1}}
+\end{equation}
+
+Where $f_{1}$ is the first-mode natural frequency, $L$ is the length of the beam, $E$ is the Young's modulus, $I$ is
+the moment of inertia, $\rho$ is the density and $A$ is the cross-sectional area.
+
+The maximum and minimum mid-span displacements, $u_{max}$ and $u_{min}$, respectively, are calculated as:
+\begin{equation}
+    u_{max} = \frac{q L^{4}}{384 E I}
+\end{equation}
+\begin{equation}
+    u_{min} = -u_{max}
+\end{equation}
+
+Where $q$ is the magnitude of the distributed load.
+
+
+% ----------------------------------------------------------------------------------------------
+\section{Model Description}
+% ----------------------------------------------------------------------------------------------
+
+% ..............................................................................................
+\subsection{Geometry and loading}
+% ..............................................................................................
+The model consists of a simply supported beam with a length of \qty{25}{\meter}. The beam is initially subjected to a
+uniformly distributed load of \qty{1}{\newton\per\meter}. The dynamic response is analysed following the sudden
+removal of the distributed load.
+
+Figure~\ref{fig:simply_supported_beam_model} illustrates the geometry, boundary conditions and loading of the
+simply supported beam.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{simply_supported_beam/simply_supported_beam.pdf}
+    \caption{Geometry, boundary conditions and loading of the simply supported beam.}
+    \label{fig:simply_supported_beam_model}
+\end{figure}
+
+% ..............................................................................................
+\subsection{Materials and numerical parameters}
+% ..............................................................................................
+The simply supported beam is modelled using Euler-Bernoulli beam elements. The beam properties used in analysis are:
+
+\begin{itemize}[noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt]
+	\item Young's modulus: \qty{316628.699}{\newton\per\meter\squared},
+	\item Poisson ratio: \qty{0.3}{},
+	\item Density: \qty{1}{\kilogram\per\meter\cubed},
+	\item Cross-sectional area: \qty{0.5}{\meter\squared},
+    \item Moment of inertia: \qty{1}{\meter\tothe{4}},
+\end{itemize}
+
+The beam is discretised using beam elements with an element size of \qty{0.3125}{\meter}.
+
+The dynamic analysis has a duration of \qty{2}{\second} with a time step of \qty{0.00125}{\second}.
+The equations of motion are integrated with the Newmark scheme~\cite{Newmark_1959} using the average
+acceleration parameters $\beta = 0.25$ and $\gamma = 0.5$.
+
+% ----------------------------------------------------------------------------------------------
+\section{Results}
+% ----------------------------------------------------------------------------------------------
+Figure~\ref{fig:simply_supported_beam_results} shows the vertical displacement history at the mid-span of the beam
+obtained using STEM in both 2D and 3D, and compares it with the analytical solution. The results show that the
+first-mode period of vibration and the maximum and minimum mid-span displacements obtained with STEM are in agreement
+with the analytical solution.
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.8\textwidth]{simply_supported_beam/simply_supported_beam_results.pdf}
+	\caption{Comparison between the STEM and analytical vertical displacement at mid-span of the simply supported beam.}
+	\label{fig:simply_supported_beam_results}
+\end{figure}
+
