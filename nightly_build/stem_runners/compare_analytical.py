@@ -336,6 +336,52 @@ def compare_vibrating_dam(path_model, output_file):
     plt.close()
 
 
+def compare_abs_boundary(path_model, output_file):
+
+    # load data from STEM
+    with open(path_model, "r") as f:
+        data_kratos = json.load(f)
+
+    young_modulus = 50e6  # Pa
+    poisson_ratio = 0.3
+    density_solid = 2700  # kg/m3
+    porosity = 0.3
+    load_value = -1e3  # Pa
+    lenght = 10  # m
+    nb_elements = 20
+
+    p_modulus = (young_modulus * (1 - poisson_ratio)) / ((1 + poisson_ratio) * (1 - 2 * poisson_ratio))
+
+    # firstly calculate without absorption
+    p = OneDimWavePropagation(nb_terms=100)
+    p.properties(density_solid * (1 - porosity), p_modulus, load_value, lenght, nb_elements)
+    p.solution()
+
+    # add absorption by keeping velocity constant after wave arrival time
+    vp = np.sqrt(p_modulus / (density_solid * (1 - porosity)))
+    wave_arrival_time = lenght / vp
+
+    idx = np.argmax(p.time > wave_arrival_time)
+    p.v[:, idx:] = p.v[:, idx][:, None]  # velocity remains constant after wave arrival time (to simulate absorption)
+    p.u[:,
+        idx:] = p.u[:,
+                    idx][:,
+                         None] + p.v[:, idx][:, None] * (p.time[idx:] - p.time[idx])  # displacement continues linearly
+    p.write_results()
+
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 5), sharex=True, sharey=True)
+    ax.plot(p.time, p.v[10, :] * 1000, label="Analytical", marker="x", color='r', markevery=5)
+    ax.plot(data_kratos["TIME"], np.array(data_kratos['NODE_9']['VELOCITY_Y']) * 1000, color="b", label="STEM")
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Velocity [mm/s]")
+    ax.grid()
+    ax.set_xlim(0, 0.5)
+    ax.set_ylim(-4, 4)
+    ax.legend(loc='upper right')
+    plt.savefig(output_file)
+    plt.close()
+
+
 #     E = 30e6  # Pa
 #     nu = 0.2  # dimensionless
 #     rho = 2000  # kg/m³
