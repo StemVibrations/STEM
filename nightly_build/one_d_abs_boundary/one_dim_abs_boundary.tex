@@ -9,9 +9,7 @@ This benchmark compares the STEM numerical solution against the analytical solut
 for the one dimensional wave propagation in a vertical elastic soil column with an absorbing boundary at the bottom,
 subjected to a surface load.
 
-The analytical solution for 1D wave propagation is presented in~\cite{Verruijt_2010}, rhis solution is extended by
-adding absorption. When the wave has arrived at the bottom of the column, reflection is prevented by keeping the
-velocity constant and the displacement linearly increasing.
+The analytical solution for 1D wave propagation on infinite columns is presented in~\cite{Verruijt_2010}.
 The analytical solution provides closed-form expressions for the vertical velocity along the column,
 enabling a direct time-history comparison against the numerical model.
 
@@ -22,14 +20,19 @@ enabling a direct time-history comparison against the numerical model.
 % ..............................................................................................
 \subsection{Geometry, mesh and loading}
 % ..............................................................................................
-The soil domain is modelled as a three-dimensional continuum representing a vertical column
-with a height of \qty{10}{\meter} and a square cross-section of \qty{0.25}{\meter} by \qty{0.25}{\meter}.
-The column is aligned with the $y$-axis, so that wave propagation is essentially one-dimensional along
+Two soil domains are modelled, a two-dimensional and a three-dimensional continuum representing vertical columns.
+The two-dimensional column is modelled with a height of \qty{10}{\meter} and a width of \qty{0.25}{\meter}.
+The three-dimensional column is modelled with a height of \qty{10}{\meter} and a square cross-section of
+\qty{0.25}{\meter} by \qty{0.25}{\meter}.
+The columns are aligned with the $y$-axis, so that wave propagation is essentially one-dimensional along
 the vertical direction.
-The soil is discretised with second-order tetrahedral elements, using an average element size of \qty{0.10}{\meter}.
-An overview of the geometry and mesh adopted for the analysis is shown in
+
+For the two-dimensional column, the soil is discretised with second-order triangular elements, for the three-dimensional
+column, the soil is discretised with second-order tetrahedral elements.
+In both cases, an average element size of \qty{0.10}{\meter} is adopted.
+An overview of the geometries and meshes adopted for the analysis is shown in
 Figure~\ref{fig:one_dim_wave_abs_mesh}.
-A vertical surface load is applied on the entire top face of the column. The load acts in compression along
+A vertical distributed load is applied on the entire top face of the column. The load acts in compression along
 the $y$-direction and is applied as a step function in time:
 
 \begin{equation}
@@ -46,8 +49,8 @@ similar to a one-dimensional situation.
 
 \begin{figure}
 	\centering
-	\includegraphics[width=0.30\textwidth]{one_dim_wave_prop/mesh.png}
-	\caption{Geometry, mesh and boundary conditions adopted for the one-dimensional
+	\includegraphics[width=0.2\textwidth]{one_d_abs_boundary/one_d_column_mesh.pdf}
+	\caption{Geometry and mesh adopted for the one-dimensional
 	wave propagation with absorbing boundary benchmark. }
 	\label{fig:one_dim_wave_abs_mesh}
 \end{figure}

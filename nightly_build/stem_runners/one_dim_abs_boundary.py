@@ -1,6 +1,6 @@
 from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
-from stem.load import SurfaceLoad
+from stem.load import SurfaceLoad, LineLoad
 from stem.table import Table
 from stem.boundary import DisplacementConstraint, AbsorbingBoundary
 from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
@@ -9,13 +9,12 @@ from stem.output import NodalOutput, VtkOutputParameters, Output, JsonOutputPara
 from stem.stem import Stem
 
 
-def run_abs_boundary(input_folder):
+def run_abs_boundary(input_folder, ndim):
     # dimension
     column_height = 10
     column_width = 0.25
 
     # Specify dimension and initiate the model
-    ndim = 3
     model = Model(ndim)
     model.extrusion_length = column_width
 
@@ -38,24 +37,41 @@ def run_abs_boundary(input_folder):
     model.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil_column")
 
     # Boundary conditions and Loads
-    load_coordinates = [(0.0, column_height, 0), (column_width, column_height, 0),
-                        (column_width, column_height, column_width), (0.0, column_height, column_width)]
     # Add table for the load in the mdpa file
     t = (0.0, 0.0025, 1)
     values = (0.0, -1000.0, -1000.0)
     LOAD_Y = Table(times=t, values=values)
-    # Add line load
-    surface_load = SurfaceLoad(active=[False, True, False], value=[0, LOAD_Y, 0])
-    model.add_load_by_coordinates(load_coordinates, surface_load, "load")
 
     # Define boundary conditions
     abs_boundary_parameters = AbsorbingBoundary([1, 1], 100000)
-
     sym_parameters = DisplacementConstraint(active=[True, False, True], is_fixed=[True, False, True], value=[0, 0, 0])
 
+    # add load and boundary conditions based on dimension
+    if ndim == 2:
+        load_coordinates = [(0.0, column_height, 0), (column_width, column_height, 0)]
+
+        # Add line load
+        surface_load = LineLoad(active=[False, True, False], value=[0, LOAD_Y, 0])
+
+        geometry_ids_base = [1]
+        geometry_ids_sides = [2, 4]
+    elif ndim == 3:
+        load_coordinates = [(0.0, column_height, 0), (column_width, column_height, 0),
+                            (column_width, column_height, column_width), (0.0, column_height, column_width)]
+        # Add surface load
+        surface_load = SurfaceLoad(active=[False, True, False], value=[0, LOAD_Y, 0])
+
+        geometry_ids_base = [2]
+        geometry_ids_sides = [1, 3, 6, 5]
+    else:
+        raise ValueError("ndim must be 2 or 3")
+
+    # Add load
+    model.add_load_by_coordinates(load_coordinates, surface_load, "load")
+
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
-    model.add_boundary_condition_by_geometry_ids(2, [2], abs_boundary_parameters, "base_abs")
-    model.add_boundary_condition_by_geometry_ids(2, [1, 3, 6, 5], sym_parameters, "side_rollers")
+    model.add_boundary_condition_by_geometry_ids(ndim - 1, geometry_ids_base, abs_boundary_parameters, "base_abs")
+    model.add_boundary_condition_by_geometry_ids(ndim - 1, geometry_ids_sides, sym_parameters, "side_rollers")
 
     # Synchronize geometry
     model.synchronise_geometry()
@@ -115,7 +131,7 @@ def run_abs_boundary(input_folder):
                                              JsonOutputParameters(output_interval=delta_time,
                                                                   nodal_results=nodal_results,
                                                                   gauss_point_results=[]),
-                                             "calculated_output",
+                                             f"calculated_output_{ndim}D",
                                              output_dir="output")
 
     # Write KRATOS input files

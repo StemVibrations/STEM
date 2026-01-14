@@ -57,9 +57,9 @@ compare_vibrating_dam(r"vibrating_dam_3D_tmp/json_output_top.json",
 
 shutil.rmtree("vibrating_dam_3D_tmp")
 
-run_abs_boundary(Path("./one_dim_abs_boundary_tmp"))
-compare_abs_boundary(r"one_dim_abs_boundary_tmp/output/calculated_output.json",
-                     r"nightly_build/one_d_abs_boundary/time_history.pdf")
+run_abs_boundary(Path("./one_dim_abs_boundary_tmp"), 2)
+run_abs_boundary(Path("./one_dim_abs_boundary_tmp"), 3)
+compare_abs_boundary(r"one_dim_abs_boundary_tmp/output", r"nightly_build/one_d_abs_boundary/time_history.pdf")
 shutil.rmtree("one_dim_abs_boundary_tmp")
 
 # run_moving_load(Path("./moving_load_halfspace_tmp"))
