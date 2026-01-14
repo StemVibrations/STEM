@@ -13,12 +13,13 @@ The STEM numerical response is compared with the analytical solution in terms of
 and the maximum and minimum mid-span displacements.
 
 The first-mode period of vibration, $T_{1}$ is calculated as:
+
 \begin{equation}
-    f_{1} = \frac{1}{2 \pi} \left( \frac{\pi}{L} \right)^2 \sqrt{\frac{E I}{\rho A}}
+    T_{1} = \frac{1}{f_{1}},
 \end{equation}
 
 \begin{equation}
-    T_{1} = \frac{1}{f_{1}}
+    f_{1} = \frac{1}{2 \pi} \left( \frac{\pi}{L} \right)^2 \sqrt{\frac{E I}{\rho A}},
 \end{equation}
 
 Where $f_{1}$ is the first-mode natural frequency, $L$ is the length of the beam, $E$ is the Young's modulus, $I$ is
@@ -44,7 +45,7 @@ Where $q$ is the magnitude of the distributed load.
 % ..............................................................................................
 The model consists of a simply supported beam with a length of \qty{25}{\meter}. The beam is initially subjected to a
 uniformly distributed load of \qty{1}{\newton\per\meter}. The dynamic response is analysed following the sudden
-removal of the distributed load.
+removal of the distributed load. The analysis is performed for both 2D and 3D configurations.
 
 Figure~\ref{fig:simply_supported_beam_model} illustrates the geometry, boundary conditions and loading of the
 simply supported beam.
@@ -73,7 +74,7 @@ The beam is discretised using beam elements with an element size of \qty{0.3125}
 
 The dynamic analysis has a duration of \qty{2}{\second} with a time step of \qty{0.00125}{\second}.
 The equations of motion are integrated with the Newmark scheme~\cite{Newmark_1959} using the average
-acceleration parameters $\beta = 0.25$ and $\gamma = 0.5$.
+acceleration parameters $\beta = 0.25$ and $\gamma = 0.5$. No damping is considered in the analysis.
 
 % ----------------------------------------------------------------------------------------------
 \section{Results}
