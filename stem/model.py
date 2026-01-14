@@ -1561,8 +1561,8 @@ class Model:
         Apply a process on an existing model part.
 
         Args:
-            - process_parameters (:class:`stem.additional_processes.ProcessParametersABC`): the objects containing \
-                the parameters necessary for the definition of the process.
+            - process_parameters (:class:`stem.additional_processes.AdditionalProcessesParametersABC`): the objects \
+                containing the parameters necessary for the definition of the process.
             - part_name (str): model part name where to apply the process. If empty, the process is applied to the
                 whole model.
 
