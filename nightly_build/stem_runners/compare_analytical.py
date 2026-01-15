@@ -9,6 +9,7 @@ from benchmark_tests.analytical_solutions.strip_load import StripLoad
 from benchmark_tests.analytical_solutions.pekeris import Pekeris, LoadType
 from benchmark_tests.analytical_solutions.analytical_wave_prop import OneDimWavePropagation
 from benchmark_tests.analytical_solutions.linear_spring_damper_mass import LinearSpringDamperMass
+from benchmark_tests.analytical_solutions.wave_in_infinite_pile import InfinitePileWaveSolution
 
 # from benchmark_tests.analytical_solutions.point_load_moving import MovingLoadElasticHalfSpace
 
@@ -333,6 +334,47 @@ def compare_vibrating_dam(path_model, output_file):
     ax.legend()
     ax.grid()
 
+    plt.savefig(output_file)
+    plt.close()
+
+
+def compare_abs_boundary(path_model, output_file):
+
+    # load data from STEM
+    path_2d_results = Path(path_model) / "calculated_output_2D.json"
+    path_3d_results = Path(path_model) / "calculated_output_3D.json"
+    with open(path_2d_results, "r") as f:
+        data_kratos_2d = json.load(f)
+
+    with open(path_3d_results, "r") as f:
+        data_kratos_3d = json.load(f)
+
+    young_modulus = 50e6  # Pa
+    poisson_ratio = 0.3
+    density_solid = 2700  # kg/m3
+    porosity = 0.3
+    load_value = -1e3  # Pa
+
+    p_modulus = (young_modulus * (1 - poisson_ratio)) / ((1 + poisson_ratio) * (1 - 2 * poisson_ratio))
+    bulk_density = density_solid * (1 - porosity)
+    analytical_sol = InfinitePileWaveSolution(p_modulus, bulk_density, load_value)
+    t = np.linspace(0, 0.5, 100)
+    _, analytical_v = analytical_sol.calculate(5, t)
+
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 5), sharex=True, sharey=True)
+    ax.plot(t, analytical_v * 1000, label="Analytical", marker="x", color='r', markevery=5)
+    ax.plot(data_kratos_2d["TIME"], np.array(data_kratos_2d['NODE_5']['VELOCITY_Y']) * 1000, color="b", label="STEM_2D")
+    ax.plot(data_kratos_3d["TIME"],
+            np.array(data_kratos_3d['NODE_9']['VELOCITY_Y']) * 1000,
+            linestyle="-.",
+            color="orange",
+            label="STEM_3D")
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Velocity [mm/s]")
+    ax.grid()
+    ax.set_xlim(0, 0.5)
+    ax.set_ylim(-4, 4)
+    ax.legend(loc='upper right')
     plt.savefig(output_file)
     plt.close()
 
