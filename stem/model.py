@@ -11,7 +11,7 @@ from typing import Sequence, Tuple, get_args, Set, Optional, List, Dict, Any, Un
 from gmsh_utils import gmsh_IO
 
 from stem.additional_processes import (ParameterFieldParameters, HingeParameters, AdditionalProcessPart,
-                                       AdditionalProcessesParametersABC)
+                                       AdditionalProcessesParametersABC, ExtrapolateIntegrationPointToNodesParameters)
 from stem.field_generator import RandomFieldGenerator
 from stem.globals import ELEMENT_DATA, OUT_OF_PLANE_AXIS_2D, VERTICAL_AXIS, GRAVITY_VALUE, GEOMETRY_PRECISION
 from stem.load import *
@@ -19,7 +19,7 @@ from stem.boundary import *
 from stem.geometry import Geometry, Point
 from stem.mesh import Mesh, MeshSettings, Node, Element
 from stem.model_part import ModelPart, BodyModelPart, Material, ProcessParameters
-from stem.output import Output, OutputParametersABC, JsonOutputParameters
+from stem.output import Output, OutputParametersABC, JsonOutputParameters, NodalOutput
 from stem.plot_utils import PlotUtils
 from stem.soil_material import *
 from stem.solver import Problem, StressInitialisationType
@@ -1325,6 +1325,12 @@ class Model:
         if (part_name is not None and part_name != "porous_computational_model_part"
                 and self.get_model_part_by_name(part_name=part_name) is None):
             raise ValueError("Model part for which output needs to be requested doesn't exist.")
+
+        # if Cauchy stress vector is requested for json output, add extrapolation process from
+        # integration points to nodes
+        if (isinstance(output_parameters, JsonOutputParameters)
+                and NodalOutput.CAUCHY_STRESS_VECTOR in output_parameters.nodal_results):
+            self.apply_additional_process(ExtrapolateIntegrationPointToNodesParameters(["CAUCHY_STRESS_VECTOR"]))
 
         self.output_settings.append(
             Output(output_parameters=output_parameters,

@@ -1392,7 +1392,7 @@ class TestModel:
         # add soil layers
         model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
 
-        nodal_results = [NodalOutput.ACCELERATION]
+        nodal_results = [NodalOutput.ACCELERATION, NodalOutput.CAUCHY_STRESS_VECTOR]
         # Define output coordinates
         output_coordinates = [(1.5, 1, 0)]
 
@@ -1410,6 +1410,9 @@ class TestModel:
 
         # check if output mesh is consists of only one node with the correct coordinates
         assert output_model_part.mesh.nodes == {5: Node(5, (1.5, 1, 0))}
+
+        # check if extrapolation process is added
+        assert isinstance(model.additional_process_parts[0].parameters, ExtrapolateIntegrationPointToNodesParameters)
 
     def test_add_output_to_a_surface_2d(self, create_default_2d_soil_material: SoilMaterial):
         """

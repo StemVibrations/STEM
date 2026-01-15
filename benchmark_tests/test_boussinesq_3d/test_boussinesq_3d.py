@@ -1,5 +1,3 @@
-import os
-import sys
 from pathlib import Path
 from shutil import rmtree
 import json
@@ -12,7 +10,6 @@ from stem.boundary import DisplacementConstraint, AbsorbingBoundary
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, \
     StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy, Cg
 from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters, GaussPointOutput
-from stem.additional_processes import ExtrapolateIntegrationPointToNodesParameters
 from stem.stem import Stem
 
 from benchmark_tests.analytical_solutions.boussinesq import Boussinesq
@@ -156,8 +153,6 @@ def test_stem():
 
     model.add_output_settings_by_coordinates(output_coordinates_below_load, json_output_parameters_depth,
                                              "json_output_depth")
-
-    model.apply_additional_process(ExtrapolateIntegrationPointToNodesParameters(["CAUCHY_STRESS_VECTOR"]))
 
     # uncomment to output at all nodes
     model.add_output_settings(output_parameters=VtkOutputParameters(
