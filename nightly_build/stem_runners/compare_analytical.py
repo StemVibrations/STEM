@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -332,6 +333,60 @@ def compare_vibrating_dam(path_model, output_file):
     ax.legend()
     ax.grid()
 
+    plt.savefig(output_file)
+    plt.close()
+
+
+def compare_simply_supported_beam(path_model, output_file):
+    path_model = Path(path_model)
+
+    # Specify beam material model
+
+    DENSITY = 1
+    CROSS_AREA = 0.5
+    I33 = 1
+    total_length = 25
+    q = 1  # uniform load in N/m
+
+    YOUNG_MODULUS = 16 * DENSITY * CROSS_AREA * total_length**4 / (np.pi**2 * I33)
+
+    # expected frequency and max displacement
+    expected_f = 1 / (2 * np.pi) * (np.pi / total_length)**2 * np.sqrt(YOUNG_MODULUS * I33 / (DENSITY * CROSS_AREA))
+    expected_max_disp = 5 * q * total_length**4 / (384 * YOUNG_MODULUS * I33)
+
+    period = 1 / expected_f
+
+    # load data from STEM
+    with open(path_model / "json_output_2D_stage_2.json", "r") as f:
+        data_kratos_2D = json.load(f)
+
+    with open(path_model / "json_output_3D_stage_2.json", "r") as f:
+        data_kratos_3D = json.load(f)
+
+    time = np.array(data_kratos_2D["TIME"])
+    displacement_2D = data_kratos_2D["NODE_3"]["DISPLACEMENT_Y"]
+    displacement_3D = data_kratos_3D["NODE_3"]["DISPLACEMENT_Y"]
+
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 5), sharex=True, sharey=True)
+
+    # set vertical line at 1/f
+    start_time = 0.5 + time[1] - time[0]  # stage 1 duration + delta_time
+    ax.plot(time - start_time, displacement_2D, color='blue', label='STEM 2D')
+    ax.plot(time - start_time, displacement_3D, color='orange', linestyle='-.', label='STEM 3D')
+
+    ax.axvline(x=period, color='g', linestyle='--', label='Analytical period')
+    ax.axvline(x=period * 2, color='g', linestyle='--')
+    ax.axvline(x=period * 3, color='g', linestyle='--')
+    ax.axvline(x=period * 4, color='g', linestyle='--')
+    ax.axhline(y=expected_max_disp, color='r', linestyle=':', label='Analytical displacement limit')
+    ax.axhline(y=-expected_max_disp, color='r', linestyle=':')
+    ax.set_xlabel("Time (s)")
+    ax.set_ylabel("Mid-span vertical displacement (m)")
+    ax.legend(loc='upper right')
+
+    ax.grid()
+
+    plt.tight_layout()
     plt.savefig(output_file)
     plt.close()
 
