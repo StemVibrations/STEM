@@ -124,7 +124,7 @@ def test_stem(ndim: int, axis_index: int):
                                      rayleigh_m=0)
 
     # Set up problem data
-    problem = Problem(problem_name="uvec_sdof", number_of_threads=1, settings=solver_settings)
+    problem = Problem(problem_name="simply_supported_beam", number_of_threads=1, settings=solver_settings)
     model.project_parameters = problem
 
     # Nodal results

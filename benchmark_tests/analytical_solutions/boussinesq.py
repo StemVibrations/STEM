@@ -4,8 +4,7 @@ import numpy as np
 
 class Boussinesq:
     """
-    Analytical solutions for the Boussinesq equations. Solutions are based on:
-    - Timoshenko, S. P., & Goodier, J. N. (1951/1970). Theory of Elasticity. Chapter 13.124
+    Analytical solutions for the Boussinesq equations. Solutions are based on: :cite:`Timoshenko_1951`, Chapter 13.124
 
     Attributes:
         - E (float): Young's modulus of the material [Pa]
