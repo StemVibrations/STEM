@@ -15,8 +15,8 @@ from nightly_build.stem_runners.vibrating_dam_3D import run_vibrating_dam_3d
 from nightly_build.stem_runners.one_dim_abs_boundary import run_abs_boundary
 from nightly_build.stem_runners.simply_supported_beam import run_simply_supported_beam
 
-from nightly_build.stem_runners.compare_analytical import compare_pekeris, compare_strip_load_2D, \
-      compare_strip_load_3D, compare_wave_propagation, compare_sdof, compare_vibrating_dam, compare_abs_boundary, \
+from nightly_build.stem_runners.compare_analytical import compare_pekeris, compare_strip_load, compare_strip_load, \
+      compare_wave_propagation, compare_sdof, compare_vibrating_dam, compare_abs_boundary, \
       compare_simply_supported_beam#, compare_moving_load
 
 
@@ -38,12 +38,9 @@ compare_pekeris(r"lamb_tmp/json_output.json", r"nightly_build/lamb/time_history.
 shutil.rmtree("lamb_tmp")
 
 run_strip_2D(Path("./strip_2D_tmp"))
-compare_strip_load_2D(r"strip_2D_tmp", r"nightly_build/strip_load_2D/time_history.pdf")
-shutil.rmtree("strip_2D_tmp")
-
 run_strip_3D(Path("./strip_3D_tmp"))
-compare_strip_load_3D(r"strip_3D_tmp/output/output_vtk_porous_computational_model_part",
-                      r"nightly_build/strip_load_3D/time_history.pdf")
+compare_strip_load(["strip_2D_tmp", "strip_3D_tmp"], r"nightly_build/strip_load/time_history.pdf")
+shutil.rmtree("strip_2D_tmp")
 shutil.rmtree("strip_3D_tmp")
 
 run_vibrating_dam(Path("./vibrating_dam_2D_tmp"))

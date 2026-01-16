@@ -1,5 +1,5 @@
 % ==============================================================================================
-\chapter{Dynamic strip load on 2D elastic halfspace} \label{ch:strip_load_2D}
+\chapter{Dynamic strip load elastic halfspace} \label{ch:strip_load_2D}
 % ==============================================================================================
 
 % ----------------------------------------------------------------------------------------------
@@ -19,10 +19,23 @@ half-space, enabling a direct time-history comparison against the numerical mode
 % ..............................................................................................
 \subsection{Geometry, mesh and loading}
 % ..............................................................................................
-The soil domain is modelled in 2D and represents a \qty{20}{\meter} (x-direction) by \qty{10}{\meter}
-(y-direction) soil layer, modelled with high-order triangular elements. The mesh uses an average
-element size of \qty{0.15}{\meter}. Figure~\ref{fig:strip2d_mesh} illustrates the geometry and mesh
-adopted for the analysis.
+The analytical solution is formulated in plane-strain conditions. To mimic this, two analyses are performed:
+a two-dimensional analysis representing a strip load in plane-strain conditions, and a three-dimensional
+analysis representing a strip load in a full 3D setting, where the thickness in the out-of-plane direction is set to
+\qty{1}{\meter} and the displacements are fixed in the out-of-plane direction. This allows to verify that the
+three-dimensional solution converges to the analytical solution.
+
+In the two-dimensional analysis, the soil domain is modelled as a
+\qty{20}{\meter} (x-direction) by \qty{10}{\meter} (y-direction) soil layer,
+modelled with high-order triangular elements.
+
+In the three-dimensional analysis, the soil domain is modelled as  a \qty{20}{\meter} (x-direction) by \qty{10}{\meter}
+(y-direction) soil layer, extruded to \qty{1}{\meter} thickness in the z-direction, and modelled with high-order
+ tetrahedral elements.
+
+Both analyses use a mesh with an average element size of \qty{0.15}{\meter}.
+
+Figure~\ref{fig:strip_mesh} illustrates the geometry and mesh adopted for the analyses.
 
 The strip load is applied at the surface with a width of \qty{1}{\meter}.
 A downward line load with magnitude \qty{1e6}{\newton\per\meter} is applied instantaneously and kept
@@ -38,12 +51,14 @@ constant during the analysed time window:
 
 The nodes at the bottom are fully fixed, while the two vertical sides are restrained only in the normal direction
 (roller boundaries) to allow vertical and tangential movement.
+In the three-dimensional case, the front and back surface are prevented from moving in the
+out-of-plane direction, to simulate plane-strain conditions along the extrusion axis.
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.75\textwidth]{strip_load_2D/mesh.png}
+    \includegraphics[width=0.75\textwidth]{strip_load/mesh.png}
     \caption{Geometry, mesh and boundary conditions for the dynamic strip load problem.}
-    \label{fig:strip2d_mesh}
+    \label{fig:strip_mesh}
 \end{figure}
 
 % ..............................................................................................
@@ -68,8 +83,8 @@ parameters $\beta = 0.25$ and $\gamma = 0.5$.
 % ----------------------------------------------------------------------------------------------
 \section{Results}
 % ----------------------------------------------------------------------------------------------
-Figure~\ref{fig:strip2d_results} presents the vertical stress at a depth of {\qty{-1}{\meter}}
-below the surface, at three moments in time: \qty{0.05}{\second}, \qty{0.075}{\second} and \qty{0.10}{\second}.
+Figure~\ref{fig:strip_results} presents the vertical stress at a depth of {\qty{-1}{\meter}} below the surface,
+at three moments in time: \qty{0.05}{\second}, \qty{0.075}{\second} and \qty{0.10}{\second}.
 The figure compares the STEM results against the analytical solution.
 If follows that there is an agreement between both solutions, demonstrating the accuracy of the STEM
 for this type of dynamic loading condition.
@@ -77,8 +92,8 @@ for this type of dynamic loading condition.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\textwidth]{strip_load_2D/time_history.pdf}
+    \includegraphics[width=0.8\textwidth]{strip_load/time_history.pdf}
     \caption{Vertical stress at a depth of {\qty{-1}{\meter}} below the surface at three moments in time:
     (a) \qty{0.05}{\second}, (b) \qty{0.075}{\second} and (c) \qty{0.10}{\second}.}
-    \label{fig:strip2d_results}
+    \label{fig:strip_results}
 \end{figure}
