@@ -10,7 +10,8 @@ from typing import Sequence, Tuple, get_args, Set, Optional, List, Dict, Any, Un
 
 from gmsh_utils import gmsh_IO
 
-from stem.additional_processes import ParameterFieldParameters, HingeParameters
+from stem.additional_processes import (ParameterFieldParameters, HingeParameters, AdditionalProcessPart,
+                                       AdditionalProcessesParametersABC, ExtrapolateIntegrationPointToNodesParameters)
 from stem.field_generator import RandomFieldGenerator
 from stem.globals import ELEMENT_DATA, OUT_OF_PLANE_AXIS_2D, VERTICAL_AXIS, GRAVITY_VALUE, GEOMETRY_PRECISION
 from stem.load import *
@@ -18,7 +19,7 @@ from stem.boundary import *
 from stem.geometry import Geometry, Point
 from stem.mesh import Mesh, MeshSettings, Node, Element
 from stem.model_part import ModelPart, BodyModelPart, Material, ProcessParameters
-from stem.output import Output, OutputParametersABC, JsonOutputParameters
+from stem.output import Output, OutputParametersABC, JsonOutputParameters, NodalOutput
 from stem.plot_utils import PlotUtils
 from stem.soil_material import *
 from stem.solver import Problem, StressInitialisationType
@@ -37,6 +38,8 @@ class Model:
         - geometry (Optional[:class:`stem.geometry.Geometry`]) The geometry of the whole model.
         - body_model_parts (List[:class:`stem.model_part.BodyModelPart`]): A list containing the body model parts.
         - process_model_parts (List[:class:`stem.model_part.ModelPart`]): A list containing the process model parts.
+        - additional_process_parts (List[:class:`stem.additional_processes.AdditionalProcessPart`]): A list containing
+            the additional process model parts.
         - output_settings (List[:class:`stem.output.Output`]): A list containing the output settings.
         - extrusion_length (Optional[float]): The extrusion length in the out of plane direction.
         - groups (Dict[str, Any]): A dictionary containing shared information among sets of model parts.
@@ -57,6 +60,7 @@ class Model:
         self.gmsh_io = gmsh_IO.GmshIO()
         self.body_model_parts: List[BodyModelPart] = []
         self.process_model_parts: List[ModelPart] = []
+        self.additional_process_parts: List[AdditionalProcessPart] = []
         self.output_settings: List[Output] = []
         self.extrusion_length: Optional[float] = None
         self.groups: Dict[str, Any] = {}
@@ -1322,6 +1326,12 @@ class Model:
                 and self.get_model_part_by_name(part_name=part_name) is None):
             raise ValueError("Model part for which output needs to be requested doesn't exist.")
 
+        # if Cauchy stress vector is requested for json output, add extrapolation process from
+        # integration points to nodes
+        if (isinstance(output_parameters, JsonOutputParameters)
+                and NodalOutput.CAUCHY_STRESS_VECTOR in output_parameters.nodal_results):
+            self.apply_additional_process(ExtrapolateIntegrationPointToNodesParameters(["CAUCHY_STRESS_VECTOR"]))
+
         self.output_settings.append(
             Output(output_parameters=output_parameters,
                    part_name=part_name,
@@ -1551,6 +1561,32 @@ class Model:
 
             # add the field_parameter part to process model parts
             self.process_model_parts.append(model_part)
+
+    def apply_additional_process(self, process_parameters: AdditionalProcessesParametersABC, part_name: str = ""):
+        """
+        Apply a process on an existing model part.
+
+        Args:
+            - process_parameters (:class:`stem.additional_processes.AdditionalProcessesParametersABC`): the objects \
+                containing the parameters necessary for the definition of the process.
+            - part_name (str): model part name where to apply the process. If empty, the process is applied to the
+                whole model.
+
+        Raises:
+            - ValueError: if the part name does not exist.
+        """
+
+        if part_name != "":
+            # Check if the model part exists and retrieve the part
+            target_part = self.get_model_part_by_name(part_name=part_name)
+            if target_part is None:
+                raise ValueError(f"The target part, `{part_name}`, does not exist.")
+
+        # create a new model part for the process
+        additional_process_part = AdditionalProcessPart(process_parameters, part_name)
+
+        # add the additional process part to the model
+        self.additional_process_parts.append(additional_process_part)
 
     def synchronise_geometry(self):
         """
