@@ -10,6 +10,7 @@ from stem.solver import (AnalysisType, SolutionType, TimeIntegration, Displaceme
 from stem.output import NodalOutput, GaussPointOutput, VtkOutputParameters, Output, JsonOutputParameters
 from stem.stem import Stem
 
+
 def run_moving_load_on_beam(input_folder, ndim):
     # Define geometry, conditions and material parameters
     # --------------------------------
@@ -61,16 +62,16 @@ def run_moving_load_on_beam(input_folder, ndim):
 
     # Define rotation boundary condition
     no_torsion_parameters = RotationConstraint(active=[True, False, False],
-                                               is_fixed=[True, False, False], value= [0, 0, 0])
-
+                                               is_fixed=[True, False, False],
+                                               value=[0, 0, 0])
 
     # Define displacement conditions
     no_vert_displacement = DisplacementConstraint(active=[False, True, False],
-                                                        is_fixed=[False, True, False],
-                                                        value=[0, 0, 0])
+                                                  is_fixed=[False, True, False],
+                                                  value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
-    model.add_boundary_condition_by_geometry_ids(0, [1,2], no_torsion_parameters, "no_torsion")
+    model.add_boundary_condition_by_geometry_ids(0, [1, 2], no_torsion_parameters, "no_torsion")
     model.add_boundary_condition_by_geometry_ids(0, [1, 2], no_vert_displacement, "no_vert_displacement")
 
     # Synchronize geometry
@@ -87,7 +88,7 @@ def run_moving_load_on_beam(input_folder, ndim):
     analysis_type = AnalysisType.MECHANICAL
     solution_type = SolutionType.DYNAMIC
 
-    end_time = length_beam/ velocity_moving_load
+    end_time = length_beam / velocity_moving_load
     dt = end_time / 1000
     # Set up start and end time of calculation, time step and etc
     time_integration = TimeIntegration(start_time=0.0,
@@ -122,7 +123,8 @@ def run_moving_load_on_beam(input_folder, ndim):
     gauss_point_results = [GaussPointOutput.FORCE]
 
     JsonOutputParameters(dt, nodal_results)
-    model.add_output_settings_by_coordinates([(length_beam/2, 0, 0)], output_parameters=JsonOutputParameters(dt, nodal_results),
+    model.add_output_settings_by_coordinates([(length_beam / 2, 0, 0)],
+                                             output_parameters=JsonOutputParameters(dt, nodal_results),
                                              part_name=f"json_output_{ndim}D")
 
     # # Define the output process
@@ -142,4 +144,3 @@ def run_moving_load_on_beam(input_folder, ndim):
     # Run Kratos calculation
     # --------------------------------
     stem.run_calculation()
-

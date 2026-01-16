@@ -15,8 +15,9 @@ class BeamMovingLoadAnalytical:
         - rho_A (float): Mass per unit length of the beam.
         - EI (float): Flexural rigidity of the beam.
     """
-    def __init__(self, length: float, young_modulus: float, inertia: float, cross_area: float,
-                 density: float, load: float, velocity: float):
+
+    def __init__(self, length: float, young_modulus: float, inertia: float, cross_area: float, density: float,
+                 load: float, velocity: float):
         """
         Initialize the BeamMovingLoadAnalytical class with beam properties and load parameters.
 
@@ -29,15 +30,15 @@ class BeamMovingLoadAnalytical:
             - load (float): Magnitude of the moving point load.
             - velocity (float): Velocity of the moving load.
         """
-        self.L:float = length
-        self.A:float = cross_area
-        self.rho:float = density
+        self.L: float = length
+        self.A: float = cross_area
+        self.rho: float = density
 
-        self.P:float = load
-        self.v:float = velocity
+        self.P: float = load
+        self.v: float = velocity
 
-        self.rho_A:float = self.rho * self.A
-        self.EI:float = young_modulus * inertia
+        self.rho_A: float = self.rho * self.A
+        self.EI: float = young_modulus * inertia
 
     def critical_velocity(self) -> float:
         """
@@ -57,10 +58,9 @@ class BeamMovingLoadAnalytical:
             - float: Static deflection at mid-span first mode approximation.
         """
 
-        return (2 * self.P * self.L ** 3) / (np.pi ** 4 * self.EI)
+        return (2 * self.P * self.L**3) / (np.pi**4 * self.EI)
 
-
-    def calculate_dynamic_deflection(self,x: float, time: np.array, n_modes: int = 100):
+    def calculate_dynamic_deflection(self, x: float, time: np.array, n_modes: int = 100):
         """
         Calculate the dynamic deflection of the beam at position x and time array time, using n_modes modes.
 
@@ -91,8 +91,8 @@ class BeamMovingLoadAnalytical:
             # In this form, we use the dimensionless alpha/n ratio
 
             # Modal natural frequency for the sine term
-            omega_1 = (np.pi / self.L) ** 2 * np.sqrt(self.EI / self.rho_A)
-            omega_n = n ** 2 * omega_1
+            omega_1 = (np.pi / self.L)**2 * np.sqrt(self.EI / self.rho_A)
+            omega_n = n**2 * omega_1
 
             # Mode calculation
             forced = np.sin(n * omega * time)
@@ -101,13 +101,11 @@ class BeamMovingLoadAnalytical:
 
             # To avoid division by zero when n == alpha
             if np.isclose(n, alpha):
-                deflection += 1 / (2 * n ** 4) * (forced - n * omega * time * np.cos(n * omega * time)) * mode_shape
+                deflection += 1 / (2 * n**4) * (forced - n * omega * time * np.cos(n * omega * time)) * mode_shape
             else:
                 free = (alpha / n) * np.sin(omega_n * time)
-                denom = (n ** 2) * (n ** 2 - alpha ** 2)
+                denom = (n**2) * (n**2 - alpha**2)
 
                 deflection += (1.0 / denom) * (forced - free) * mode_shape
 
         return self.static_deflection_at_midspan_approximation() * deflection
-
-

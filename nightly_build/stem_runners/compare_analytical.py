@@ -15,6 +15,7 @@ from benchmark_tests.analytical_solutions.moving_load_on_beam import BeamMovingL
 
 import nightly_build.stem_runners.read_VTK as read_VTK
 
+
 def compare_wave_propagation(path_model, output_file):
 
     # Based on: benchmark_tests/test_1d_wave_prop_drained_soil_3D/test_1d_wave_prop_drained_soil_3d.py
@@ -431,14 +432,14 @@ def compare_simply_supported_beam(path_model, output_file):
     plt.savefig(output_file)
     plt.close()
 
-def compare_moving_load_on_beam(path_model, output_file):
 
+def compare_moving_load_on_beam(path_model, output_file):
 
     length = 25
     velocity = 10  # m/s
     time_array = np.linspace(0, length / velocity, 500)
-    analytical_solution = BeamMovingLoadAnalytical(length, 210e9, 1e-4,0.01,7850, 1000, 10)
-    analytical_deflection = analytical_solution.calculate_dynamic_deflection(length/2, time_array)
+    analytical_solution = BeamMovingLoadAnalytical(length, 210e9, 1e-4, 0.01, 7850, 1000, velocity)
+    analytical_deflection = analytical_solution.calculate_dynamic_deflection(length / 2, time_array)
 
     path_model = Path(path_model)
 

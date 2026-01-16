@@ -74,7 +74,7 @@ shutil.rmtree("simply_supported_beam_tmp")
 run_moving_load_on_beam(Path("./moving_load_on_beam_tmp"), 2)
 run_moving_load_on_beam(Path("./moving_load_on_beam_tmp"), 3)
 compare_moving_load_on_beam(r"moving_load_on_beam_tmp",
-                              r"nightly_build/moving_load_on_beam/moving_load_on_beam_results.pdf")
+                            r"nightly_build/moving_load_on_beam/moving_load_on_beam_results.pdf")
 shutil.rmtree("moving_load_on_beam_tmp")
 
 # run_moving_load(Path("./moving_load_halfspace_tmp"))
