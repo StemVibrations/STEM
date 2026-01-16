@@ -10,11 +10,10 @@ from benchmark_tests.analytical_solutions.pekeris import Pekeris, LoadType
 from benchmark_tests.analytical_solutions.analytical_wave_prop import OneDimWavePropagation
 from benchmark_tests.analytical_solutions.linear_spring_damper_mass import LinearSpringDamperMass
 from benchmark_tests.analytical_solutions.wave_in_infinite_pile import InfinitePileWaveSolution
-
+from benchmark_tests.analytical_solutions.moving_load_on_beam import BeamMovingLoadAnalytical
 # from benchmark_tests.analytical_solutions.point_load_moving import MovingLoadElasticHalfSpace
 
 import nightly_build.stem_runners.read_VTK as read_VTK
-
 
 def compare_wave_propagation(path_model, output_file):
 
@@ -422,6 +421,45 @@ def compare_simply_supported_beam(path_model, output_file):
     ax.axvline(x=period * 4, color='g', linestyle='--')
     ax.axhline(y=expected_max_disp, color='r', linestyle=':', label='Analytical displacement limit')
     ax.axhline(y=-expected_max_disp, color='r', linestyle=':')
+    ax.set_xlabel("Time (s)")
+    ax.set_ylabel("Mid-span vertical displacement (m)")
+    ax.legend(loc='upper right')
+
+    ax.grid()
+
+    plt.tight_layout()
+    plt.savefig(output_file)
+    plt.close()
+
+def compare_moving_load_on_beam(path_model, output_file):
+
+
+    length = 25
+    velocity = 10  # m/s
+    time_array = np.linspace(0, length / velocity, 500)
+    analytical_solution = BeamMovingLoadAnalytical(length, 210e9, 1e-4,0.01,7850, 1000, 10)
+    analytical_deflection = analytical_solution.calculate_dynamic_deflection(length/2, time_array)
+
+    path_model = Path(path_model)
+
+    # load data from STEM
+    with open(path_model / "json_output_2D.json", "r") as f:
+        data_kratos_2D = json.load(f)
+
+    with open(path_model / "json_output_3D.json", "r") as f:
+        data_kratos_3D = json.load(f)
+
+    time_kratos = np.array(data_kratos_2D["TIME"])
+    displacement_2D = data_kratos_2D["NODE_3"]["DISPLACEMENT_Y"]
+    displacement_3D = data_kratos_3D["NODE_3"]["DISPLACEMENT_Y"]
+
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 5), sharex=True, sharey=True)
+
+    ax.plot(time_kratos, displacement_2D, color='blue', label='STEM 2D')
+    ax.plot(time_kratos, displacement_3D, color='orange', linestyle='-.', label='STEM 3D')
+
+    ax.plot(time_array, analytical_deflection, color='red', linestyle='--', label='Analytical Solution')
+
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Mid-span vertical displacement (m)")
     ax.legend(loc='upper right')
