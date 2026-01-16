@@ -23,13 +23,13 @@ displacement along the surface of the elastic half-space, enabling direct compar
 The soil domain is modelled in 3D and  represents a \qty{10}{\meter} $\times$ \qty{30}{\meter}
 $\times$ \qty{10}{\meter} soil layer, modeled with second order tetrahedral elements. The mesh uses an average
 element size of \qty{1}{\meter}.
- Figure~\ref{fig:boussinesq_mesh} illustrates the geometry and mesh adopted for the analysis.
+Figure~\ref{fig:boussinesq_mesh} illustrates the geometry and mesh adopted for the analysis.
 
 A quarter circular distributed load, consistent with the applied symmetry conditions, is applied at the surface with
 a radius of \qty{0.1}{\meter}. A downward surface load with magnitude \qty{10}{\kilo\newton\per\meter\squared} is applied.
-The mesh is locally refined beneath the loaded area, with an average element size of approximately \qty{0.015}{\meter}..
+The mesh is locally refined beneath the loaded area, with an average element size of approximately \qty{0.015}{\meter}.
 
-The nodes at the bottom are fully fixed, while the two vertical sides are restrained only in the normal direction
+The nodes at the bottom are fully fixed, while the four vertical sides are restrained only in the normal direction
 (roller boundaries) to allow vertical and tangential movement.
 
 \begin{figure}
@@ -42,12 +42,12 @@ The nodes at the bottom are fully fixed, while the two vertical sides are restra
 % ..............................................................................................
 \subsection{Materials and numerical parameters}
 % ..............................................................................................
-The soil is modelled as an one-phase continuum with a linear elastic constitutive law, with the
+The soil is modelled as a one-phase continuum with a linear elastic constitutive law, with the
 following parameters:
 
 \begin{itemize}[noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt]
     \item Young's modulus: \qty{20}{\mega\pascal},
-    \item Poisson ratio: 0.3,
+    \item Poisson ratio: \qty{0.3}{},
     \item Density: \qty{2000}{\kilogram\per\meter\cubed}.
 \end{itemize}
 
