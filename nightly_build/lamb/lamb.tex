@@ -36,14 +36,12 @@ compressive pulse load, $F(t)$, which is suddenly applied at the top edge:
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.75\textwidth]{lamb/mesh.png}
+    \includegraphics[width=0.75\textwidth]{lamb/mesh.pdf}
     \caption{Geometry, mesh and loading conditions for the three-dimensional wave propagation problem.}
     \label{fig:3D_scheme}
 \end{figure}
 
-The soil is discretised in high-order tetrahedral elements with size \qty{0.15}{\meter}.
-In total the model comprises 596~493~elements.
-
+The soil is discretised in high-order tetrahedral elements with size \qty{0.25}{\meter}.
 The nodes at the sides of the soil have absorbing boundaries at the free ends, and with fixed boundary conditions
 on the perpendicular plane along the axis of symmetry.
 At the bottom the soil is assumed to be fixed, simulating the existence of the top of bedrock that has a
@@ -52,7 +50,7 @@ significantly larger stiffness than the soil above.
 % ..............................................................................................
 \subsection{Materials and numerical parameters}
 % ..............................................................................................
-The soil is modelled as an one-phase continuum with a linear elastic constitutive law, with the
+The soil is modelled as a one-phase continuum with a linear elastic constitutive law, with the
 following parameters:
 
 \begin{itemize}[noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt]
@@ -64,7 +62,7 @@ following parameters:
 Material damping is included via Rayleigh damping, with parameters that provide a damping ratio of
 \qty{0.01}{\percent} at \qty{1}{\hertz} and \qty{80}{\hertz}.
 
-The dynamic analysis is performed over a \qty{0.20}{\second} time window, with a time step of \qty{0.001}{\second}.
+The dynamic analysis is performed over a \qty{0.08}{\second} time window, with a time step of \qty{0.001}{\second}.
 The system of equations is solved using the Newmark time integration~\cite{Newmark_1959} scheme with
 parameters $\beta = 0.25$ and $\gamma = 0.5$.
 

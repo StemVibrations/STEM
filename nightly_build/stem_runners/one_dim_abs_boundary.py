@@ -127,7 +127,7 @@ def run_abs_boundary(input_folder, ndim):
                               output_dir="output",
                               output_name="vtk_output")
 
-    model.add_output_settings_by_coordinates([[0, 5, 0], [1, 5, 0]],
+    model.add_output_settings_by_coordinates([[0, 2.5, 0], [0, 5, 0], [0, 7.5, 0]],
                                              JsonOutputParameters(output_interval=delta_time,
                                                                   nodal_results=nodal_results,
                                                                   gauss_point_results=[]),
