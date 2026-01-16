@@ -22,8 +22,9 @@ direct time-history comparison against the numerical model.
 \subsection{Geometry and loading}
 % ..............................................................................................
 The model consists of a simply supported beam with a length of \qty{25}{\meter}. The beam is subjected to
-a moving vertical point load with a magnitude of \qty{1}{\kilo\newton}. The analysis is performed for both 2D
-and 3D configurations.
+a moving vertical point load with a magnitude of \qty{1}{\kilo\newton}. The load travels at a constant speed of
+\qty{10}{\meter\per\second}, starting at the left support.
+The analysis is performed for both 2D and 3D configurations.
 
 Figure~\ref{fig:moving_load_on_beam_model} illustrates the geometry, boundary conditions and loading of the
 simply supported beam with the moving load.
@@ -59,7 +60,7 @@ acceleration parameters $\beta = 0.25$ and $\gamma = 0.5$. No damping is conside
 % ----------------------------------------------------------------------------------------------
 Figure~\ref{fig:moving_load_on_beam_results} shows the vertical displacement history at the mid-span of the beam
 obtained using STEM in both 2D and 3D, and compares it with the analytical solution. The results show that the
-mid-span deflection obtained with STEM are in agreement
+mid-span deflections obtained with STEM are in agreement
 with the analytical solution.
 
 \begin{figure}[h]
