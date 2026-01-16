@@ -85,7 +85,8 @@ def run_strip_2D(input_folder):
     model.project_parameters = problem
 
     # Result output settings
-    json_output_parameters = JsonOutputParameters(time_step, [NodalOutput.VELOCITY], [])
+    json_output_parameters = JsonOutputParameters(time_step, [NodalOutput.VELOCITY],
+                                                  [GaussPointOutput.CAUCHY_STRESS_VECTOR])
     model.add_output_settings_by_coordinates([
         (5, 10, 0),
         (10, 10, 0),
@@ -94,7 +95,7 @@ def run_strip_2D(input_folder):
 
     model.add_output_settings(output_parameters=VtkOutputParameters(
         file_format="ascii",
-        output_interval=25,
+        output_interval=50,
         nodal_results=[NodalOutput.VELOCITY],
         gauss_point_results=[GaussPointOutput.CAUCHY_STRESS_VECTOR],
         output_control_type="step"),

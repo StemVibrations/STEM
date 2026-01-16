@@ -10,6 +10,7 @@ from benchmark_tests.analytical_solutions.pekeris import Pekeris, LoadType
 from benchmark_tests.analytical_solutions.analytical_wave_prop import OneDimWavePropagation
 from benchmark_tests.analytical_solutions.linear_spring_damper_mass import LinearSpringDamperMass
 from benchmark_tests.analytical_solutions.boussinesq import Boussinesq
+from benchmark_tests.analytical_solutions.wave_in_infinite_pile import InfinitePileWaveSolution
 
 # from benchmark_tests.analytical_solutions.point_load_moving import MovingLoadElasticHalfSpace
 
@@ -26,8 +27,14 @@ def compare_wave_propagation(path_model, output_file):
     # - rayleigh_m=0.12411230236404121
 
     # load data from STEM
-    with open(path_model, "r") as f:
-        data_kratos = json.load(f)
+    path_2d_results = Path(path_model) / "calculated_output_2.json"
+    path_3d_results = Path(path_model) / "calculated_output_3.json"
+
+    with open(path_2d_results, "r") as f:
+        data_kratos_2d = json.load(f)
+
+    with open(path_3d_results, "r") as f:
+        data_kratos_3d = json.load(f)
 
     young_modulus = 50e6  # Pa
     poisson_ratio = 0.3
@@ -44,15 +51,64 @@ def compare_wave_propagation(path_model, output_file):
     p.solution()
     p.write_results()
 
-    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 5), sharex=True, sharey=True)
-    ax.plot(p.time, p.v[10, :] * 1000, label="Analytical", marker="x", color='r', markevery=5)
-    ax.plot(data_kratos["TIME"], np.array(data_kratos['NODE_9']['VELOCITY_Y']) * 1000, color="b", label="STEM")
-    ax.set_xlabel("Time [s]")
-    ax.set_ylabel("Velocity [mm/s]")
-    ax.grid()
-    ax.set_xlim(0, 0.5)
-    ax.set_ylim(-4, 4)
-    ax.legend(loc='upper right')
+    fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(6, 10), sharex=True, sharey=True)
+    ax[0].plot(p.time, p.v[5, :] * 1000, label="Analytical", marker="x", color='r', markevery=5)
+    ax[0].plot(data_kratos_2d["TIME"],
+               np.array(data_kratos_2d["NODE_5"]['VELOCITY_Y']) * 1000,
+               color="b",
+               marker="o",
+               markersize=3,
+               markevery=5,
+               label="STEM 2D")
+    ax[0].plot(data_kratos_3d["TIME"],
+               np.array(data_kratos_3d["NODE_9"]['VELOCITY_Y']) * 1000,
+               color="orange",
+               linestyle="-.",
+               label="STEM 3D")
+    ax[0].text(0.5, -0.05, '(a)', transform=ax[0].transAxes, ha='center', va='top', fontsize=12)
+
+    ax[1].plot(p.time, p.v[10, :] * 1000, label="Analytical", marker="x", color='r', markevery=5)
+    ax[1].plot(data_kratos_2d["TIME"],
+               np.array(data_kratos_2d["NODE_6"]['VELOCITY_Y']) * 1000,
+               color="b",
+               marker="o",
+               markersize=3,
+               markevery=5,
+               label="STEM 2D")
+    ax[1].plot(data_kratos_3d["TIME"],
+               np.array(data_kratos_3d["NODE_10"]['VELOCITY_Y']) * 1000,
+               color="orange",
+               linestyle="-.",
+               label="STEM 3D")
+    ax[1].text(0.5, -0.075, '(b)', transform=ax[1].transAxes, ha='center', va='top', fontsize=12)
+
+    ax[2].plot(p.time, p.v[15, :] * 1000, label="Analytical", marker="x", color='r', markevery=5)
+    ax[2].plot(data_kratos_2d["TIME"],
+               np.array(data_kratos_2d["NODE_7"]['VELOCITY_Y']) * 1000,
+               color="b",
+               marker="o",
+               markersize=3,
+               markevery=5,
+               label="STEM 2D")
+    ax[2].plot(data_kratos_3d["TIME"],
+               np.array(data_kratos_3d["NODE_11"]['VELOCITY_Y']) * 1000,
+               color="orange",
+               linestyle="-.",
+               label="STEM 3D")
+    ax[2].text(0.5, -0.20, '(c)', transform=ax[2].transAxes, ha='center', va='top', fontsize=12)
+
+    ax[0].set_ylabel("Velocity at y=2.5m [mm/s]")
+    ax[1].set_ylabel("Velocity at y=5m [mm/s]")
+    ax[2].set_ylabel("Velocity at y=7.5m [mm/s]")
+    ax[2].set_xlabel("Time [s]")
+    ax[0].grid()
+    ax[1].grid()
+    ax[2].grid()
+    ax[0].set_xlim(0, 0.5)
+    ax[0].set_ylim(-4, 4)
+    ax[0].legend(loc='upper right')
+    ax[1].legend(loc='upper right')
+    ax[2].legend(loc='upper right')
     plt.savefig(output_file)
     plt.close()
 
@@ -109,6 +165,16 @@ def compare_strip_load_2D(path_model, output_file):
     # with:
     # - model.set_mesh_size(element_size=0.15)
     # - element_order=2
+
+    # load data from STEM
+    path_2d_results = Path(path_model) / "json_output.json"
+    path_3d_results = Path(path_model) / "calculated_output_3.json"
+
+    with open(path_2d_results, "r") as f:
+        data_kratos_2d = json.load(f)
+
+    with open(path_3d_results, "r") as f:
+        data_kratos_3d = json.load(f)
 
     coordinate_x_coords = np.linspace(0, 20, 41)
     coordinate_y_coords = np.ones(len(coordinate_x_coords)) * 9
@@ -401,7 +467,7 @@ def compare_vibrating_dam(path_model, output_file):
     y_max = 150 * feet_to_m
 
     time_step = data_kratos["TIME"][1] - data_kratos["TIME"][0]
-    calculated_horizontal_displacement = data_kratos["NODE_2"]["DISPLACEMENT_X"]
+    calculated_horizontal_displacement = np.array(data_kratos["NODE_2"]["DISPLACEMENT_X"])
     f, Pxx = welch(calculated_horizontal_displacement,
                    fs=1 / time_step,
                    nfft=20000,
@@ -432,67 +498,144 @@ def compare_vibrating_dam(path_model, output_file):
     plt.close()
 
 
-#     E = 30e6  # Pa
-#     nu = 0.2  # dimensionless
-#     rho = 2000  # kg/m³
-#     force = -1e3 * 2 # N
-#     speed = 10  # m/s
+def compare_abs_boundary(path_model, output_file):
 
-#     x, y, z = 0.0, 0.0, 1
-#     time = np.linspace(-0.1, 0.1, num=100)
+    # load data from STEM
+    path_2d_results = Path(path_model) / "calculated_output_2D.json"
+    path_3d_results = Path(path_model) / "calculated_output_3D.json"
+    with open(path_2d_results, "r") as f:
+        data_kratos_2d = json.load(f)
 
-#     model = MovingLoadElasticHalfSpace(E, nu, rho, force, speed)
+    with open(path_3d_results, "r") as f:
+        data_kratos_3d = json.load(f)
 
-#     uz = []
-#     for t in time:
-#         model.compute_vertical_displacement(x, y, z, t, ky_max=10.0, n_ky=1000)
-#         uz.append(np.real(model.vertical_displacement))
+    young_modulus = 50e6  # Pa
+    poisson_ratio = 0.3
+    density_solid = 2700  # kg/m3
+    porosity = 0.3
+    load_value = -1e3  # Pa
 
-#     plt.plot(time, np.array(uz), color="b", label="Analytical")
-#     plt.xlabel("Distance [m]")
-#     plt.ylabel("Displacement [m]")
-#     plt.grid()
-#     plt.legend()
-#     plt.show()
-#     print(1)
+    p_modulus = (young_modulus * (1 - poisson_ratio)) / ((1 + poisson_ratio) * (1 - 2 * poisson_ratio))
+    bulk_density = density_solid * (1 - porosity)
+    analytical_sol = InfinitePileWaveSolution(p_modulus, bulk_density, load_value)
+    t = np.linspace(0, 0.5, 100)
+    _, analytical_v_0 = analytical_sol.calculate(7.5, t)
+    _, analytical_v_1 = analytical_sol.calculate(5, t)
+    _, analytical_v_2 = analytical_sol.calculate(2.5, t)
 
-#     # nodes = [k for k in data_kratos.keys() if k.startswith("NODE_")]
-# # get point coordinated z = 5
-# coordinates = []
-# for n in nodes:
-#     coordinates.append(data_kratos[n]["COORDINATES"][2])
-#     if data_kratos[n]["COORDINATES"][2] == 5:
-#         node_z5 = n
+    fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(6, 10), sharex=True, sharey=True)
+    ax[0].plot(t, analytical_v_0 * 1000, label="Analytical", marker="x", color='r', markevery=5)
+    ax[0].plot(data_kratos_2d["TIME"],
+               np.array(data_kratos_2d["NODE_5"]['VELOCITY_Y']) * 1000,
+               color="b",
+               marker="o",
+               markersize=3,
+               markevery=5,
+               label="STEM 2D")
+    ax[0].plot(data_kratos_3d["TIME"],
+               np.array(data_kratos_3d["NODE_9"]['VELOCITY_Y']) * 1000,
+               color="orange",
+               linestyle="-.",
+               label="STEM 3D")
+    ax[0].text(0.5, -0.05, '(a)', transform=ax[0].transAxes, ha='center', va='top', fontsize=12)
 
-# idx_peak = np.argmax(np.abs(data_kratos[node_z5]['DISPLACEMENT_Y']))
-# displacement_peak_time = [data_kratos[n]["DISPLACEMENT_Y"][idx_peak] for n in nodes]
+    ax[1].plot(t, analytical_v_1 * 1000, label="Analytical", marker="x", color='r', markevery=5)
+    ax[1].plot(data_kratos_2d["TIME"],
+               np.array(data_kratos_2d["NODE_6"]['VELOCITY_Y']) * 1000,
+               color="b",
+               marker="o",
+               markersize=3,
+               markevery=5,
+               label="STEM 2D")
+    ax[1].plot(data_kratos_3d["TIME"],
+               np.array(data_kratos_3d["NODE_10"]['VELOCITY_Y']) * 1000,
+               color="orange",
+               linestyle="-.",
+               label="STEM 3D")
+    ax[1].text(0.5, -0.075, '(b)', transform=ax[1].transAxes, ha='center', va='top', fontsize=12)
 
-# E = 30e6  # Pa
-# nu = 0.25  # dimensionless
-# rho = 2000  # kg/m³
-# force = -1000  # N
-# speed = 40  # m/s
+    ax[2].plot(t, analytical_v_2 * 1000, label="Analytical", marker="x", color='r', markevery=5)
+    ax[2].plot(data_kratos_2d["TIME"],
+               np.array(data_kratos_2d["NODE_7"]['VELOCITY_Y']) * 1000,
+               color="b",
+               marker="o",
+               markersize=3,
+               markevery=5,
+               label="STEM 2D")
+    ax[2].plot(data_kratos_3d["TIME"],
+               np.array(data_kratos_3d["NODE_11"]['VELOCITY_Y']) * 1000,
+               color="orange",
+               linestyle="-.",
+               label="STEM 3D")
+    ax[2].text(0.5, -0.20, '(c)', transform=ax[2].transAxes, ha='center', va='top', fontsize=12)
 
-# cp = np.sqrt(E / (rho * (1 - nu**2)))  # P-wave speed
-# cs = cp * np.sqrt((1 - 2 * nu) / (2 * (1 - nu)))  # S-wave speed
+    ax[0].set_ylabel("Velocity at y=2.5m [mm/s]")
+    ax[1].set_ylabel("Velocity at y=5m [mm/s]")
+    ax[2].set_ylabel("Velocity at y=7.5m [mm/s]")
+    ax[2].set_xlabel("Time [s]")
+    ax[0].grid()
+    ax[1].grid()
+    ax[2].grid()
+    ax[0].set_xlim(0, 0.5)
+    ax[0].set_ylim(-4, 4)
+    ax[0].legend(loc='upper right')
+    ax[1].legend(loc='upper right')
+    ax[2].legend(loc='upper right')
+    plt.savefig(output_file)
+    plt.close()
 
-# t_vals = np.linspace(-0.03, 0.03, 300)
-# uz_vals = []
 
-# for t in t_vals:
-#     uz_vals.append(uz_moving_load(0, 5, 0, t, 1000, cp, cs, rho, speed))
+def compare_simply_supported_beam(path_model, output_file):
+    path_model = Path(path_model)
 
-# # x_list = np.linspace(-5, 5, 100)
-# # Using z=0.01m to avoid the singularity exactly at the load point
-# # disp = [model.vertical_displacement(x, z=0.0001) for x in x_list]
+    # Specify beam material model
 
-# plt.plot(coordinates, np.array(displacement_peak_time) * 1000, color="r", marker="x", label="STEM")
-# plt.plot(speed * t_vals, np.array(uz_vals) * 1000, color="b", label="Analytical")
-# plt.xlabel("Distance [m]")
-# plt.ylabel("Displacement [mm]")
-# plt.grid()
-# # plt.xlim(0, 0.5)
-# # plt.ylim(-4, 4)
-# plt.legend()
-# plt.savefig(output_file)
-# plt.close()
+    DENSITY = 1
+    CROSS_AREA = 0.5
+    I33 = 1
+    total_length = 25
+    q = 1  # uniform load in N/m
+
+    YOUNG_MODULUS = 16 * DENSITY * CROSS_AREA * total_length**4 / (np.pi**2 * I33)
+
+    # expected frequency and max displacement
+    expected_f = 1 / (2 * np.pi) * (np.pi / total_length)**2 * np.sqrt(YOUNG_MODULUS * I33 / (DENSITY * CROSS_AREA))
+    expected_max_disp = 5 * q * total_length**4 / (384 * YOUNG_MODULUS * I33)
+
+    period = 1 / expected_f
+
+    # load data from STEM
+    with open(path_model / "json_output_2D_stage_2.json", "r") as f:
+        data_kratos_2D = json.load(f)
+
+    with open(path_model / "json_output_3D_stage_2.json", "r") as f:
+        data_kratos_3D = json.load(f)
+
+    time = np.array(data_kratos_2D["TIME"])
+    displacement_2D = data_kratos_2D["NODE_3"]["DISPLACEMENT_Y"]
+    displacement_3D = data_kratos_3D["NODE_3"]["DISPLACEMENT_Y"]
+
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 5), sharex=True, sharey=True)
+
+    # set vertical line at 1/f
+    start_time = 0.5 + time[1] - time[0]  # stage 1 duration + delta_time
+    ax.axvline(x=period, label='Analytical period', color='r', markevery=5)
+    ax.plot(time - start_time, displacement_2D, color="b", marker="o", markersize=3, markevery=5, label='STEM 2D')
+    ax.plot(time - start_time, displacement_3D, color='orange', linestyle='-.', label='STEM 3D')
+
+    ax.axvline(x=period * 2, color='g', linestyle='--')
+    ax.axvline(x=period * 3, color='g', linestyle='--')
+    ax.axvline(x=period * 4, color='g', linestyle='--')
+    ax.axhline(y=expected_max_disp, color='r', linestyle=':', label='Analytical displacement limit')
+    ax.axhline(y=-expected_max_disp, color='r', linestyle=':')
+    ax.set_xlabel("Time (s)")
+    ax.set_ylabel("Mid-span vertical displacement (m)")
+    ax.legend(loc='upper right')
+
+    ax.set_xlim(0, 2)
+    ax.set_ylim(-0.02, 0.02)
+    ax.grid()
+
+    plt.tight_layout()
+    plt.savefig(output_file)
+    plt.close()

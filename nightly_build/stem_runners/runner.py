@@ -13,9 +13,12 @@ from nightly_build.stem_runners.sdof import run_sdof
 from nightly_build.stem_runners.boussinesq import run_boussinesq
 from nightly_build.stem_runners.vibrating_dam import run_vibrating_dam
 from nightly_build.stem_runners.vibrating_dam_3D import run_vibrating_dam_3d
+from nightly_build.stem_runners.one_dim_abs_boundary import run_abs_boundary
+from nightly_build.stem_runners.simply_supported_beam import run_simply_supported_beam
 
 from nightly_build.stem_runners.compare_analytical import compare_pekeris, compare_strip_load_2D, \
-      compare_strip_load_3D, compare_wave_propagation, compare_sdof,compare_boussinesq,  compare_vibrating_dam #, compare_moving_load
+      compare_strip_load_3D, compare_wave_propagation, compare_sdof, compare_vibrating_dam, compare_abs_boundary, \
+      compare_simply_supported_beam, compare_boussinesq#, compare_moving_load
 
 
 def move_file(src: Path, dest: Path):
@@ -60,6 +63,17 @@ compare_vibrating_dam(r"vibrating_dam_3D_tmp/json_output_top.json",
                       r"nightly_build/vibrating_dam_3D/power_spectral_density.pdf")
 
 shutil.rmtree("vibrating_dam_3D_tmp")
+
+run_abs_boundary(Path("./one_dim_abs_boundary_tmp"), 2)
+run_abs_boundary(Path("./one_dim_abs_boundary_tmp"), 3)
+compare_abs_boundary(r"one_dim_abs_boundary_tmp/output", r"nightly_build/one_d_abs_boundary/time_history.pdf")
+shutil.rmtree("one_dim_abs_boundary_tmp")
+
+run_simply_supported_beam(Path("./simply_supported_beam_tmp"), 2)
+run_simply_supported_beam(Path("./simply_supported_beam_tmp"), 3)
+compare_simply_supported_beam(r"simply_supported_beam_tmp",
+                              r"nightly_build/simply_supported_beam/simply_supported_beam_results.pdf")
+shutil.rmtree("simply_supported_beam_tmp")
 
 # run_moving_load(Path("./moving_load_halfspace_tmp"))
 # compare_moving_load(r"moving_load_halfspace_tmp/output/calculated_output.json",

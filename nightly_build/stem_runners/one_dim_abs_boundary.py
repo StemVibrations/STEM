@@ -2,14 +2,14 @@ from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
 from stem.load import SurfaceLoad, LineLoad
 from stem.table import Table
-from stem.boundary import DisplacementConstraint
+from stem.boundary import DisplacementConstraint, AbsorbingBoundary
 from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
-                         StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy, Cg)
+                         StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy, Cg, Lu)
 from stem.output import NodalOutput, VtkOutputParameters, Output, JsonOutputParameters
 from stem.stem import Stem
 
 
-def run_column(input_folder, ndim):
+def run_abs_boundary(input_folder, ndim):
     # dimension
     column_height = 10
     column_width = 0.25
@@ -36,10 +36,15 @@ def run_column(input_folder, ndim):
     # Create the soil layer
     model.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil_column")
 
+    # Boundary conditions and Loads
     # Add table for the load in the mdpa file
     t = (0.0, 0.0025, 1)
     values = (0.0, -1000.0, -1000.0)
     LOAD_Y = Table(times=t, values=values)
+
+    # Define boundary conditions
+    abs_boundary_parameters = AbsorbingBoundary([1, 1], 100000)
+    sym_parameters = DisplacementConstraint(active=[True, False, True], is_fixed=[True, False, True], value=[0, 0, 0])
 
     # add load and boundary conditions based on dimension
     if ndim == 2:
@@ -61,17 +66,11 @@ def run_column(input_folder, ndim):
     else:
         raise ValueError("ndim must be 2 or 3")
 
+    # Add load
     model.add_load_by_coordinates(load_coordinates, surface_load, "load")
 
-    # Define boundary conditions
-    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
-
-    sym_parameters = DisplacementConstraint(active=[True, False, True], is_fixed=[True, False, True], value=[0, 0, 0])
-
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
-    model.add_boundary_condition_by_geometry_ids(ndim - 1, geometry_ids_base, no_displacement_parameters, "base_fixed")
+    model.add_boundary_condition_by_geometry_ids(ndim - 1, geometry_ids_base, abs_boundary_parameters, "base_abs")
     model.add_boundary_condition_by_geometry_ids(ndim - 1, geometry_ids_sides, sym_parameters, "side_rollers")
 
     # Synchronize geometry
@@ -79,7 +78,7 @@ def run_column(input_folder, ndim):
 
     # Set mesh size
     # --------------------------------
-    model.set_mesh_size(element_size=0.10)
+    model.set_mesh_size(element_size=0.1)
     model.mesh_settings.element_order = 2
 
     # Define project parameters
@@ -96,8 +95,8 @@ def run_column(input_folder, ndim):
                                        reduction_factor=1.0,
                                        increase_factor=1.0,
                                        max_delta_time_factor=1000)
-    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0E-12,
-                                                            displacement_absolute_tolerance=1.0E-6)
+    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0E-6,
+                                                            displacement_absolute_tolerance=1.0E-12)
     stress_initialisation_type = StressInitialisationType.NONE
     solver_settings = SolverSettings(analysis_type=analysis_type,
                                      solution_type=solution_type,
@@ -105,14 +104,14 @@ def run_column(input_folder, ndim):
                                      time_integration=time_integration,
                                      is_stiffness_matrix_constant=True,
                                      are_mass_and_damping_constant=True,
-                                     linear_solver_settings=Cg(),
+                                     linear_solver_settings=Lu(),
                                      convergence_criteria=convergence_criterion,
                                      strategy_type=LinearNewtonRaphsonStrategy(),
                                      rayleigh_k=3.929751681281367e-05,
                                      rayleigh_m=0.12411230236404121)
 
     # Set up problem data
-    problem = Problem(problem_name="test_1d_wave_prop_drained_soil", number_of_threads=16, settings=solver_settings)
+    problem = Problem(problem_name="test_1d_abs_boundary", number_of_threads=16, settings=solver_settings)
     model.project_parameters = problem
 
     # Define the results to be written to the output file
@@ -132,7 +131,7 @@ def run_column(input_folder, ndim):
                                              JsonOutputParameters(output_interval=delta_time,
                                                                   nodal_results=nodal_results,
                                                                   gauss_point_results=[]),
-                                             f"calculated_output_{ndim}",
+                                             f"calculated_output_{ndim}D",
                                              output_dir="output")
 
     # Write KRATOS input files
