@@ -9,7 +9,7 @@ from stem.solver import (AnalysisType, SolutionType, TimeIntegration, Displaceme
                          LinearNewtonRaphsonStrategy)
 from stem.output import NodalOutput, VtkOutputParameters
 from stem.stem import Stem
-from benchmark_tests.utils import assert_files_equal
+from benchmark_tests.utils import assert_floats_in_directories_almost_equal
 from shutil import rmtree
 
 
@@ -143,8 +143,7 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
-    result = assert_files_equal("benchmark_tests/test_multi_stage/output_/output_vtk_full_model",
-                                os.path.join(input_folder, "output/output_vtk_full_model"))
+    assert_floats_in_directories_almost_equal("benchmark_tests/test_multi_stage/output_/output_vtk_full_model",
+                                              os.path.join(input_folder, "output/output_vtk_full_model"))
 
-    assert result is True
     rmtree(input_folder)

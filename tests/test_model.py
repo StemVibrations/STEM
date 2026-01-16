@@ -1392,7 +1392,7 @@ class TestModel:
         # add soil layers
         model.add_soil_layer_by_coordinates(layer1_coordinates, soil_material1, "layer1")
 
-        nodal_results = [NodalOutput.ACCELERATION]
+        nodal_results = [NodalOutput.ACCELERATION, NodalOutput.CAUCHY_STRESS_VECTOR]
         # Define output coordinates
         output_coordinates = [(1.5, 1, 0)]
 
@@ -1410,6 +1410,9 @@ class TestModel:
 
         # check if output mesh is consists of only one node with the correct coordinates
         assert output_model_part.mesh.nodes == {5: Node(5, (1.5, 1, 0))}
+
+        # check if extrapolation process is added
+        assert isinstance(model.additional_process_parts[0].parameters, ExtrapolateIntegrationPointToNodesParameters)
 
     def test_add_output_to_a_surface_2d(self, create_default_2d_soil_material: SoilMaterial):
         """
@@ -5445,3 +5448,33 @@ class TestModel:
 
         # assert that the constraints dictionary is set correctly
         assert model.gmsh_io.geo_data["constraints"] == expected_constraint_dict
+
+    def test_apply_additional_process(self):
+        """
+        Tests the application of additional processes to model parts in the Model class.
+        """
+
+        model = Model(3)
+
+        existing_model_part = ModelPart("existing_part")
+        model.process_model_parts.append(existing_model_part)
+
+        # add additional process to existing part
+        process_parameters = AdditionalProcessesParametersABC()
+        model.apply_additional_process(process_parameters, "existing_part")
+
+        assert len(model.additional_process_parts) == 1
+        assert model.additional_process_parts[0].model_part_name == "existing_part"
+        assert model.additional_process_parts[0].parameters == process_parameters
+
+        # add additional process to whole model
+        process_parameters_whole_model = AdditionalProcessesParametersABC()
+        model.apply_additional_process(process_parameters_whole_model)
+
+        assert len(model.additional_process_parts) == 2
+        assert model.additional_process_parts[1].model_part_name == ""
+        assert model.additional_process_parts[1].parameters == process_parameters_whole_model
+
+        # add process to non-existent part should raise error
+        with pytest.raises(ValueError, match="The target part, `nonexistent_part`, does not exist."):
+            model.apply_additional_process(process_parameters, "nonexistent_part")
