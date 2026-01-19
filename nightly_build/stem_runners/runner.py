@@ -17,8 +17,10 @@ from nightly_build.stem_runners.simply_supported_beam import run_simply_supporte
 from nightly_build.stem_runners.moving_load_on_beam import run_moving_load_on_beam
 
 from nightly_build.stem_runners.compare_analytical import (compare_pekeris, compare_strip_load,
-                                                           compare_wave_propagation, compare_sdof, compare_vibrating_dam, compare_abs_boundary, \
-      compare_simply_supported_beam, compare_moving_load_on_beam)#, compare_moving_load
+                                                           compare_wave_propagation, compare_sdof,
+                                                           compare_vibrating_dam, compare_abs_boundary,
+                                                           compare_simply_supported_beam,
+                                                           compare_moving_load_on_beam)  #, compare_moving_load
 
 
 def move_file(src: Path, dest: Path):
