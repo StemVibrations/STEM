@@ -7,7 +7,7 @@ from types import ModuleType
 
 import numpy as np
 
-from stem.globals import GRAVITY_VALUE, VERTICAL_AXIS
+from stem.globals import GlobalSettings, VERTICAL_AXIS
 from stem.solver import AnalysisType
 from stem.table import Table
 from stem.utils import Utils
@@ -349,7 +349,7 @@ class GravityLoad(LoadParametersABC):
         Adds global gravity acceleration if it is not defined
         """
         if np.allclose(self.value, [0, 0, 0]):
-            self.value[VERTICAL_AXIS] = GRAVITY_VALUE
+            self.value[VERTICAL_AXIS] = GlobalSettings.gravity_value
 
     @staticmethod
     def get_element_name(n_dim_model, n_nodes_element, analysis_type) -> Optional[str]:

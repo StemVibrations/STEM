@@ -2664,6 +2664,40 @@ class TestModel:
         npt.assert_allclose(model.process_model_parts[0].parameters.value, [0, -9.81, 0])
         npt.assert_allclose(model.process_model_parts[0].parameters.active, [True, True, True])
 
+    def test_add_gravity_load_with_different_gravity_value(self, create_default_2d_soil_material: SoilMaterial):
+        """
+        Test if a gravity load is added correctly to the model with a different gravity value than the default one.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+        original_gravity_value = GlobalSettings.gravity_value
+
+        # try finally to reset gravity value after test
+        try:
+            GlobalSettings.gravity_value = -3.71
+
+            # create model
+            model = Model(2)
+
+            # add a 2d layer
+            model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0)], create_default_2d_soil_material,
+                                                "soil1")
+
+            # add gravity load
+            model._Model__add_gravity_load()
+
+            assert len(model.process_model_parts) == 1
+            assert model.process_model_parts[0].name == "gravity_load_2d"
+            npt.assert_allclose(model.process_model_parts[0].parameters.value, [0, -3.71, 0])
+            npt.assert_allclose(model.process_model_parts[0].parameters.active, [True, True, True])
+
+        finally:
+
+            # reset gravity value
+            GlobalSettings.gravity_value = original_gravity_value
+
     def test_setup_stress_initialisation(self, create_default_2d_soil_material: SoilMaterial):
         """
         Test if the stress initialisation is set up correctly. A model is created with a soil layer. It is checked if
