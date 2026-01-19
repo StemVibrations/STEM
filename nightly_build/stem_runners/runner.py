@@ -16,10 +16,9 @@ from nightly_build.stem_runners.vibrating_dam_3D import run_vibrating_dam_3d
 from nightly_build.stem_runners.one_dim_abs_boundary import run_abs_boundary
 from nightly_build.stem_runners.simply_supported_beam import run_simply_supported_beam
 
-from nightly_build.stem_runners.compare_analytical import compare_pekeris, compare_strip_load_2D, \
-      compare_strip_load_3D, compare_wave_propagation, compare_sdof, compare_vibrating_dam, compare_abs_boundary, \
+from nightly_build.stem_runners.compare_analytical import compare_pekeris, compare_strip_load, \
+      compare_wave_propagation, compare_sdof, compare_vibrating_dam, compare_abs_boundary, \
       compare_simply_supported_beam, compare_boussinesq#, compare_moving_load
-
 
 def move_file(src: Path, dest: Path):
     shutil.move(src, dest)
@@ -29,9 +28,9 @@ run_sdof(Path("./sdof_tmp"))
 compare_sdof(r"sdof_tmp/sdof_results.json", r"nightly_build/sdof/time_history.pdf")
 shutil.rmtree("sdof_tmp")
 
-run_column(Path("./one_dim_wave_prop_tmp"))
-compare_wave_propagation(r"one_dim_wave_prop_tmp/output/calculated_output.json",
-                         r"nightly_build/one_dim_wave_prop/time_history.pdf")
+run_column(Path("./one_dim_wave_prop_tmp"), 2)
+run_column(Path("./one_dim_wave_prop_tmp"), 3)
+compare_wave_propagation(r"one_dim_wave_prop_tmp/output", r"nightly_build/one_dim_wave_prop/time_history.pdf")
 shutil.rmtree("one_dim_wave_prop_tmp")
 
 run_pekeris(Path("./lamb_tmp"))
@@ -39,13 +38,9 @@ compare_pekeris(r"lamb_tmp/json_output.json", r"nightly_build/lamb/time_history.
 shutil.rmtree("lamb_tmp")
 
 run_strip_2D(Path("./strip_2D_tmp"))
-compare_strip_load_2D(r"strip_2D_tmp/output/output_vtk_porous_computational_model_part",
-                      r"nightly_build/strip_load_2D/time_history.pdf")
-shutil.rmtree("strip_2D_tmp")
-
 run_strip_3D(Path("./strip_3D_tmp"))
-compare_strip_load_3D(r"strip_3D_tmp/output/output_vtk_porous_computational_model_part",
-                      r"nightly_build/strip_load_3D/time_history.pdf")
+compare_strip_load(["strip_2D_tmp", "strip_3D_tmp"], r"nightly_build/strip_load/time_history.pdf")
+shutil.rmtree("strip_2D_tmp")
 shutil.rmtree("strip_3D_tmp")
 
 run_boussinesq(Path("./boussinesq_tmp"))
@@ -55,13 +50,11 @@ shutil.rmtree("boussinesq_tmp")
 run_vibrating_dam(Path("./vibrating_dam_2D_tmp"))
 compare_vibrating_dam(r"vibrating_dam_2D_tmp/json_output_top.json",
                       r"nightly_build/vibrating_dam/power_spectral_density.pdf")
-
 shutil.rmtree("vibrating_dam_2D_tmp")
 
 run_vibrating_dam_3d(Path("./vibrating_dam_3D_tmp"))
 compare_vibrating_dam(r"vibrating_dam_3D_tmp/json_output_top.json",
                       r"nightly_build/vibrating_dam_3D/power_spectral_density.pdf")
-
 shutil.rmtree("vibrating_dam_3D_tmp")
 
 run_abs_boundary(Path("./one_dim_abs_boundary_tmp"), 2)

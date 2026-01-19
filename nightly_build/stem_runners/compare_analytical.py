@@ -159,7 +159,7 @@ def compare_pekeris(path_model, output_file):
     plt.close()
 
 
-def compare_strip_load_2D(path_model, output_file):
+def compare_strip_load(path_model, output_file):
 
     # based on: benchmark_tests/test_strip_load_2D/test_strip_load_2D.py
     # with:
@@ -167,8 +167,8 @@ def compare_strip_load_2D(path_model, output_file):
     # - element_order=2
 
     # load data from STEM
-    path_2d_results = Path(path_model) / "json_output.json"
-    path_3d_results = Path(path_model) / "calculated_output_3.json"
+    path_2d_results = Path(path_model[0]) / "json_output.json"
+    path_3d_results = Path(path_model[1]) / "json_output.json"
 
     with open(path_2d_results, "r") as f:
         data_kratos_2d = json.load(f)
@@ -176,23 +176,35 @@ def compare_strip_load_2D(path_model, output_file):
     with open(path_3d_results, "r") as f:
         data_kratos_3d = json.load(f)
 
-    coordinate_x_coords = np.linspace(0, 20, 41)
-    coordinate_y_coords = np.ones(len(coordinate_x_coords)) * 9
-    coordinate_z_coords = np.zeros(len(coordinate_x_coords))
-    coordinate_points = np.array([coordinate_x_coords, coordinate_y_coords, coordinate_z_coords]).T.tolist()
+    # get data 2D
+    coords_2d = []
+    for n in data_kratos_2d.keys():
+        if n.startswith("NODE_"):
+            coords_2d.append((data_kratos_2d[n]["COORDINATES"][0], n))
 
-    read_VTK.read(path_model, coordinate_points, "CAUCHY_STRESS_VECTOR", "results.json")
+    stress_2d = []
+    for t in [1, 2, 3]:
+        aux = []
+        dist = []
+        for c, n in coords_2d:
+            dist.append(c)
+            aux.append(data_kratos_2d[n]['CAUCHY_STRESS_VECTOR'][t][1])
+        stress_2d.append(aux)
 
-    with open("results.json", "r") as f:
-        data = json.load(f)
+    # get data 3D
+    coords_3d = []
+    for n in data_kratos_3d.keys():
+        if n.startswith("NODE_"):
+            coords_3d.append((data_kratos_3d[n]["COORDINATES"][0], n))
 
-    time_step = 0.001
-
-    x = [coord[0] for coord in data["COORDINATES"]]
-    stress_zz_kratos = []
-    for i in range(len(data["DATA"])):
-        aux = [data_point[1] for data_point in data["DATA"][i]]
-        stress_zz_kratos.append(aux)
+    stress_3d = []
+    for t in [1, 2, 3]:
+        aux = []
+        dist = []
+        for c, n in coords_3d:
+            dist.append(c)
+            aux.append(data_kratos_3d[n]['CAUCHY_STRESS_VECTOR'][t][1])
+        stress_3d.append(aux)
 
     young_modulus = 30e6  # Pa
     poisson_ratio = 0.2
@@ -220,13 +232,18 @@ def compare_strip_load_2D(path_model, output_file):
             strip_load.calculate_vertical_stress(x, depth, t, line_load_length, load_value) for x in x_coordinates
         ]
 
-        # plot vertical stress: Figure 12.14 in Verruijt
-        idx_k = np.where(t == np.array(data['TIME_INDEX']).astype(float) * time_step)[0][0]
-        ax[j].plot([i for i in x], [stress_zz_kratos[idx_k][i] / 1e3 for i in range(len(x))],
-                   color="r",
-                   marker="x",
-                   label="STEM")
         ax[j].plot([i for i in x_coordinates], [i / 1e3 for i in all_sigma_zz], color="b", label="Analytical")
+
+        # plot vertical stress: Figure 12.14 in Verruijt
+        ax[j].plot(dist, [i / 1e3 for i in stress_2d[j]],
+                   color="b",
+                   marker="o",
+                   markersize=3,
+                   markevery=5,
+                   label="STEM 2D")
+
+        ax[j].plot(dist, [i / 1e3 for i in stress_3d[j]], color="orange", linestyle="-.", label="STEM 3D")
+
         ax[j].set_ylabel(f'Vertical stress at t={t} s [kPa]')
         ax[j].grid()
         ax[j].legend()
@@ -619,15 +636,14 @@ def compare_simply_supported_beam(path_model, output_file):
 
     # set vertical line at 1/f
     start_time = 0.5 + time[1] - time[0]  # stage 1 duration + delta_time
-    ax.axvline(x=period, label='Analytical period', color='r', markevery=5)
-    ax.plot(time - start_time, displacement_2D, color="b", marker="o", markersize=3, markevery=5, label='STEM 2D')
-    ax.plot(time - start_time, displacement_3D, color='orange', linestyle='-.', label='STEM 3D')
-
-    ax.axvline(x=period * 2, color='g', linestyle='--')
-    ax.axvline(x=period * 3, color='g', linestyle='--')
-    ax.axvline(x=period * 4, color='g', linestyle='--')
+    ax.axvline(x=period, label='Analytical period', color='r', markevery=5, linestyle='--')
+    ax.axvline(x=period * 2, color='r', linestyle='--')
+    ax.axvline(x=period * 3, color='r', linestyle='--')
+    ax.axvline(x=period * 4, color='r', linestyle='--')
     ax.axhline(y=expected_max_disp, color='r', linestyle=':', label='Analytical displacement limit')
     ax.axhline(y=-expected_max_disp, color='r', linestyle=':')
+    ax.plot(time - start_time, displacement_2D, color="b", marker="o", markersize=3, markevery=5, label='STEM 2D')
+    ax.plot(time - start_time, displacement_3D, color='orange', linestyle='-.', label='STEM 3D')
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Mid-span vertical displacement (m)")
     ax.legend(loc='upper right')
