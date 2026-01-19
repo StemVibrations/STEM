@@ -20,6 +20,7 @@ from nightly_build.stem_runners.compare_analytical import compare_pekeris, compa
       compare_wave_propagation, compare_sdof, compare_vibrating_dam, compare_abs_boundary, \
       compare_simply_supported_beam, compare_boussinesq#, compare_moving_load
 
+
 def move_file(src: Path, dest: Path):
     shutil.move(src, dest)
 
