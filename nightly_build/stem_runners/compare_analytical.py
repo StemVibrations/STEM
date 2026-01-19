@@ -585,10 +585,9 @@ def compare_moving_load_on_beam(path_model, output_file):
 
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 5), sharex=True, sharey=True)
 
-    ax.plot(time_kratos, displacement_2D, color='blue', label='STEM 2D')
+    ax.plot(time_array, analytical_deflection, color='red', marker='x', label='Analytical Solution')
+    ax.plot(time_kratos, displacement_2D, color='blue', linestyle='-', label='STEM 2D')
     ax.plot(time_kratos, displacement_3D, color='orange', linestyle='-.', label='STEM 3D')
-
-    ax.plot(time_array, analytical_deflection, color='red', linestyle='--', label='Analytical Solution')
 
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Mid-span vertical displacement (m)")
