@@ -72,6 +72,10 @@ class TestKratosBoundariesIO:
         test_dictionary = kratos_io._KratosIO__write_project_parameters_json(model=model,
                                                                              mesh_file_name="test_load_parameters.mdpa",
                                                                              materials_file_name="")
+        # remove solver settings for this test, as this does not have to be tested
+        test_dictionary.pop("solver_settings")
+        test_dictionary.pop("problem_data")
+        test_dictionary.pop("output_processes")
 
         # load expected dictionary from the json
         expected_boundary_parameters_json = json.load(

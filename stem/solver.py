@@ -468,12 +468,21 @@ class Amgcl(LinearSolverSettingsABC):
         - tolerance (float): tolerance for the linear solver convergence criteria. Default value is 1e-12.
         - max_iteration (int): maximum number of iterations for the linear solver. Default value is 1000.
         - krylov_type (str): type of the Krylov solver. Default value is "cg", other options are "gmres" and "bicgstab".
+        - smoother_type (str): type of the smoother. Default value is "ilu0", other options are "spai0", "spai1", \
+            "ilut", "iluk", "damped_jacobi", "gauss_seidel" and "chebyshev"
+        - preconditioner_type (str): type of the preconditioner. Default value is "amg", other options are "relaxation"\
+            and "none"
+        - coarsening_type (str): type of the coarsening. Default value is "aggregation", other options are
+            "ruge_stuben","smoothed_aggregation" and "smoothed_aggr_emin"
 
     """
     scaling: bool = False
     tolerance: float = 1e-12
     max_iteration: int = 1000
     krylov_type: str = "cg"
+    smoother_type: str = "ilu0"
+    preconditioner_type: str = "amg"
+    coarsening_type: str = "aggregation"
 
     @property
     def solver_type(self):

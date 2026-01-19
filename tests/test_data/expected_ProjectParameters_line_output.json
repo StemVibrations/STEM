@@ -34,6 +34,7 @@
         "block_builder": true,
         "rebuild_level": 0,
         "prebuild_dynamics": true,
+        "initialize_acceleration": false,
         "solution_type": "dynamic",
         "rayleigh_m": 0.001,
         "rayleigh_k": 0.001,
@@ -55,7 +56,11 @@
             "solver_type": "amgcl",
             "scaling": false,
             "tolerance": 1e-08,
-            "max_iteration": 500
+            "max_iteration": 500,
+            "krylov_type": "cg",
+            "smoother_type": "ilu0",
+            "preconditioner_type": "amg",
+            "coarsening_type": "aggregation"
         },
         "problem_domain_sub_model_part_list": [
             "soil1"
@@ -85,7 +90,7 @@
                         "DISPLACEMENT"
                     ],
                     "gauss_points_output_variables": [],
-                    "time_frequency": 100
+                    "time_frequency": 99.99999999
                 }
             }
         ],
@@ -145,6 +150,7 @@
                     ]
                 }
             }
-        ]
+        ],
+        "auxiliary_process_list": []
     }
 }
