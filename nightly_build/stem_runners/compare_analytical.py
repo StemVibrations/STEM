@@ -433,16 +433,18 @@ def compare_boussinesq(path_model, output_file):
 
     # Plot displacement results
     m_to_mm = 1e3
-    ax1.plot(calculated_x_coordinates_surface_sorted,
-             calculated_disp_results_sorted * m_to_mm,
-             'x--',
-             color='r',
-             label='STEM')
+
     ax1.plot(calculated_x_coordinates_surface_sorted,
              analytical_disp_results_sorted * m_to_mm,
-             '-',
-             color='b',
+             'x-',
+             color='r',
              label='Analytical')
+
+    ax1.plot(calculated_x_coordinates_surface_sorted,
+             calculated_disp_results_sorted * m_to_mm,
+             '--',
+             color='b',
+             label='STEM')
     ax1.set_xlabel('X-Coordinate [m]')
     ax1.set_ylabel('Vertical displacement along surface [mm]')
     # ax1.set_title('Vertical Displacement at Surface')
@@ -450,16 +452,18 @@ def compare_boussinesq(path_model, output_file):
     ax1.legend()
 
     pa_to_kpa = 1e-3
-    ax2.plot(calculated_stress_results_sorted * pa_to_kpa,
-             calculated_y_coordinates_sorted,
-             'x--',
-             color='r',
-             label='STEM')
     ax2.plot(analytical_stress_results_sorted * pa_to_kpa,
              calculated_y_coordinates_sorted,
-             '-',
-             color='b',
+             'x-',
+             color='r',
              label='Analytical')
+
+    ax2.plot(calculated_stress_results_sorted * pa_to_kpa,
+             calculated_y_coordinates_sorted,
+             '--',
+             color='b',
+             label='STEM')
+
 
     ax2.set_xlabel('Vertical stress below load centre [kPa]')
     ax2.set_ylabel('Y-Coordinate [m]')
