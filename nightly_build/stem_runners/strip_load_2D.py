@@ -87,7 +87,7 @@ def run_strip_2D(input_folder):
     # Result output settings
     json_output_parameters = JsonOutputParameters(0.025, [NodalOutput.VELOCITY, NodalOutput.CAUCHY_STRESS_VECTOR], [])
 
-    nodes = [(i * 0.3, 10, 0) for i in range(67)]
+    nodes = [(i * 0.3, 9, 0) for i in range(67)]
     model.add_output_settings_by_coordinates(nodes, json_output_parameters, "json_output")
 
     model.add_output_settings(output_parameters=VtkOutputParameters(

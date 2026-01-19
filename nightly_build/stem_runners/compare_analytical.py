@@ -184,11 +184,17 @@ def compare_strip_load(path_model, output_file):
     stress_2d = []
     for t in [1, 2, 3]:
         aux = []
-        dist = []
+        dist_2D = []
         for c, n in coords_2d:
-            dist.append(c)
+            dist_2D.append(c)
             aux.append(data_kratos_2d[n]['CAUCHY_STRESS_VECTOR'][t][1])
         stress_2d.append(aux)
+
+    # index of sorted dist_2D
+    sorted_indices = np.argsort(dist_2D)
+    dist_2D = [dist_2D[i] for i in sorted_indices]
+    for i in range(len(stress_2d)):
+        stress_2d[i] = [stress_2d[i][j] for j in sorted_indices]
 
     # get data 3D
     coords_3d = []
@@ -199,11 +205,17 @@ def compare_strip_load(path_model, output_file):
     stress_3d = []
     for t in [1, 2, 3]:
         aux = []
-        dist = []
+        dist_3D = []
         for c, n in coords_3d:
-            dist.append(c)
+            dist_3D.append(c)
             aux.append(data_kratos_3d[n]['CAUCHY_STRESS_VECTOR'][t][1])
         stress_3d.append(aux)
+
+    # index of sorted dist_3D
+    sorted_indices = np.argsort(dist_3D)
+    dist_3D = [dist_3D[i] for i in sorted_indices]
+    for i in range(len(stress_3d)):
+        stress_3d[i] = [stress_3d[i][j] for j in sorted_indices]
 
     young_modulus = 30e6  # Pa
     poisson_ratio = 0.2
@@ -231,17 +243,21 @@ def compare_strip_load(path_model, output_file):
             strip_load.calculate_vertical_stress(x, depth, t, line_load_length, load_value) for x in x_coordinates
         ]
 
-        ax[j].plot([i for i in x_coordinates], [i / 1e3 for i in all_sigma_zz], color="b", label="Analytical")
+        ax[j].plot([i for i in x_coordinates], [i / 1e3 for i in all_sigma_zz],
+                   color="r",
+                   marker="x",
+                   markevery=10,
+                   label="Analytical")
 
         # plot vertical stress: Figure 12.14 in Verruijt
-        ax[j].plot(dist, [i / 1e3 for i in stress_2d[j]],
+        ax[j].plot(dist_2D, [i / 1e3 for i in stress_2d[j]],
                    color="b",
                    marker="o",
                    markersize=3,
                    markevery=5,
                    label="STEM 2D")
 
-        ax[j].plot(dist, [i / 1e3 for i in stress_3d[j]], color="orange", linestyle="-.", label="STEM 3D")
+        ax[j].plot(dist_3D, [i / 1e3 for i in stress_3d[j]], color="orange", linestyle="-.", label="STEM 3D")
 
         ax[j].set_ylabel(f'Vertical stress at t={t} s [kPa]')
         ax[j].grid()
