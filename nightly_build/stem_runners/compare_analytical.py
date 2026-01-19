@@ -464,7 +464,6 @@ def compare_boussinesq(path_model, output_file):
              color='b',
              label='STEM')
 
-
     ax2.set_xlabel('Vertical stress below load centre [kPa]')
     ax2.set_ylabel('Y-Coordinate [m]')
     # ax2.set_title('Vertical Stress Below Load')
