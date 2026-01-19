@@ -10,14 +10,16 @@ from nightly_build.stem_runners.strip_load_3D import run_strip_3D
 from nightly_build.stem_runners.one_dim_wave_prop import run_column
 # from nightly_build.stem_runners.moving_load_halfspace import run_moving_load
 from nightly_build.stem_runners.sdof import run_sdof
+from nightly_build.stem_runners.boussinesq import run_boussinesq
 from nightly_build.stem_runners.vibrating_dam import run_vibrating_dam
 from nightly_build.stem_runners.vibrating_dam_3D import run_vibrating_dam_3d
 from nightly_build.stem_runners.one_dim_abs_boundary import run_abs_boundary
 from nightly_build.stem_runners.simply_supported_beam import run_simply_supported_beam
+from nightly_build.stem_runners.moving_load_on_beam import run_moving_load_on_beam
 
-from nightly_build.stem_runners.compare_analytical import compare_pekeris, compare_strip_load, compare_strip_load, \
+from nightly_build.stem_runners.compare_analytical import compare_pekeris, compare_strip_load, \
       compare_wave_propagation, compare_sdof, compare_vibrating_dam, compare_abs_boundary, \
-      compare_simply_supported_beam#, compare_moving_load
+      compare_simply_supported_beam, compare_boussinesq, compare_moving_load_on_beam#, compare_moving_load
 
 
 def move_file(src: Path, dest: Path):
@@ -43,6 +45,10 @@ compare_strip_load(["strip_2D_tmp", "strip_3D_tmp"], r"nightly_build/strip_load/
 shutil.rmtree("strip_2D_tmp")
 shutil.rmtree("strip_3D_tmp")
 
+run_boussinesq(Path("./boussinesq_tmp"))
+compare_boussinesq(r"boussinesq_tmp", r"nightly_build/boussinesq/boussinesq_comparison.pdf")
+shutil.rmtree("boussinesq_tmp")
+
 run_vibrating_dam(Path("./vibrating_dam_2D_tmp"))
 compare_vibrating_dam(r"vibrating_dam_2D_tmp/json_output_top.json",
                       r"nightly_build/vibrating_dam/power_spectral_density.pdf")
@@ -63,6 +69,12 @@ run_simply_supported_beam(Path("./simply_supported_beam_tmp"), 3)
 compare_simply_supported_beam(r"simply_supported_beam_tmp",
                               r"nightly_build/simply_supported_beam/simply_supported_beam_results.pdf")
 shutil.rmtree("simply_supported_beam_tmp")
+
+run_moving_load_on_beam(Path("./moving_load_on_beam_tmp"), 2)
+run_moving_load_on_beam(Path("./moving_load_on_beam_tmp"), 3)
+compare_moving_load_on_beam(r"moving_load_on_beam_tmp",
+                            r"nightly_build/moving_load_on_beam/moving_load_on_beam_results.pdf")
+shutil.rmtree("moving_load_on_beam_tmp")
 
 # run_moving_load(Path("./moving_load_halfspace_tmp"))
 # compare_moving_load(r"moving_load_halfspace_tmp/output/calculated_output.json",

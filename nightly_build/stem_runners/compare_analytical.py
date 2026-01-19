@@ -9,8 +9,9 @@ from benchmark_tests.analytical_solutions.strip_load import StripLoad
 from benchmark_tests.analytical_solutions.pekeris import Pekeris, LoadType
 from benchmark_tests.analytical_solutions.analytical_wave_prop import OneDimWavePropagation
 from benchmark_tests.analytical_solutions.linear_spring_damper_mass import LinearSpringDamperMass
+from benchmark_tests.analytical_solutions.boussinesq import Boussinesq
 from benchmark_tests.analytical_solutions.wave_in_infinite_pile import InfinitePileWaveSolution
-
+from benchmark_tests.analytical_solutions.moving_load_on_beam import BeamMovingLoadAnalytical
 # from benchmark_tests.analytical_solutions.point_load_moving import MovingLoadElasticHalfSpace
 
 import nightly_build.stem_runners.read_VTK as read_VTK
@@ -394,6 +395,103 @@ def compare_moving_load(path_model, output_file):
     # plt.show()
 
 
+def compare_boussinesq(path_model, output_file):
+
+    young_modulus = 20e6  # Pa
+    poisson_ratio = 0.3
+    load_radius = 0.1  # m
+    load_value = -10e3  # Pa
+
+    y_max = 30  # m
+
+    output_vert_displacements_surface_file_name = Path(path_model) / "json_output_surface.json"
+    output_vert_stresses_depth_file_name = Path(path_model) / "json_output_depth.json"
+
+    with open(output_vert_displacements_surface_file_name, 'r') as f:
+        output_vert_displacements_surface = json.load(f)
+
+    with open(output_vert_stresses_depth_file_name, 'r') as f:
+        output_vert_stresses_depth = json.load(f)
+
+    analytical_sol = Boussinesq(young_modulus, poisson_ratio, load_radius, load_value)
+    calculated_x_coordinates_surface = []
+    calculated_disp_results = []
+    analytical_disp_results = []
+    for key, value in output_vert_displacements_surface.items():
+        if key != "TIME":
+            calculated_x_coordinates_surface.append(value["COORDINATES"][0])
+            calculated_disp_results.append(value["DISPLACEMENT_Y"][0])
+            analytical_disp_results.append(
+                analytical_sol.calculate_vertical_displacement_on_surface(value["COORDINATES"][0]))
+
+    sort_idx = np.argsort(calculated_x_coordinates_surface)
+    calculated_x_coordinates_surface_sorted = np.array(calculated_x_coordinates_surface)[sort_idx]
+    calculated_disp_results_sorted = np.array(calculated_disp_results)[sort_idx]
+    analytical_disp_results_sorted = np.array(analytical_disp_results)[sort_idx]
+
+    calculated_y_coordinates = []
+    calculated_stress_results = []
+    analytical_stress_results = []
+    for key, value in output_vert_stresses_depth.items():
+        if key != "TIME":
+            calculated_y_coordinates.append(value["COORDINATES"][1])
+            calculated_stress = value["CAUCHY_STRESS_VECTOR"][0][1]
+            calculated_stress_results.append(calculated_stress)
+            depth = y_max - value["COORDINATES"][1]
+            analytical_stress_results.append(analytical_sol.calculate_vertical_stress_below_load_centre(depth))
+
+    sort_idx = np.argsort(calculated_y_coordinates)
+    calculated_y_coordinates_sorted = np.array(calculated_y_coordinates)[sort_idx]
+    calculated_stress_results_sorted = np.array(calculated_stress_results)[sort_idx]
+    analytical_stress_results_sorted = np.array(analytical_stress_results)[sort_idx]
+
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(6, 10))
+
+    # Plot displacement results
+    m_to_mm = 1e3
+
+    ax1.plot(calculated_x_coordinates_surface_sorted,
+             analytical_disp_results_sorted * m_to_mm,
+             'x-',
+             color='r',
+             label='Analytical')
+
+    ax1.plot(calculated_x_coordinates_surface_sorted,
+             calculated_disp_results_sorted * m_to_mm,
+             '--',
+             color='b',
+             label='STEM')
+    ax1.set_xlabel('X-Coordinate [m]')
+    ax1.set_ylabel('Vertical displacement along surface [mm]')
+    # ax1.set_title('Vertical Displacement at Surface')
+    ax1.grid()
+    ax1.legend()
+
+    pa_to_kpa = 1e-3
+    ax2.plot(analytical_stress_results_sorted * pa_to_kpa,
+             calculated_y_coordinates_sorted,
+             'x-',
+             color='r',
+             label='Analytical')
+
+    ax2.plot(calculated_stress_results_sorted * pa_to_kpa,
+             calculated_y_coordinates_sorted,
+             '--',
+             color='b',
+             label='STEM')
+
+    ax2.set_xlabel('Vertical stress below load centre [kPa]')
+    ax2.set_ylabel('Y-Coordinate [m]')
+    # ax2.set_title('Vertical Stress Below Load')
+    ax2.grid()
+    ax2.legend()
+
+    fig.tight_layout()
+
+    plt.savefig(output_file)
+    plt.close()
+
+
 def compare_vibrating_dam(path_model, output_file):
 
     # load data from STEM
@@ -571,6 +669,44 @@ def compare_simply_supported_beam(path_model, output_file):
 
     ax.set_xlim(0, 2)
     ax.set_ylim(-0.02, 0.02)
+    ax.grid()
+
+    plt.tight_layout()
+    plt.savefig(output_file)
+    plt.close()
+
+
+def compare_moving_load_on_beam(path_model, output_file):
+
+    length = 25
+    velocity = 10  # m/s
+    time_array = np.linspace(0, length / velocity, 500)
+    analytical_solution = BeamMovingLoadAnalytical(length, 210e9, 1e-4, 0.01, 7850, 1000, velocity)
+    analytical_deflection = analytical_solution.calculate_dynamic_deflection(length / 2, time_array)
+
+    path_model = Path(path_model)
+
+    # load data from STEM
+    with open(path_model / "json_output_2D.json", "r") as f:
+        data_kratos_2D = json.load(f)
+
+    with open(path_model / "json_output_3D.json", "r") as f:
+        data_kratos_3D = json.load(f)
+
+    time_kratos = np.array(data_kratos_2D["TIME"])
+    displacement_2D = data_kratos_2D["NODE_3"]["DISPLACEMENT_Y"]
+    displacement_3D = data_kratos_3D["NODE_3"]["DISPLACEMENT_Y"]
+
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 5), sharex=True, sharey=True)
+
+    ax.plot(time_array, analytical_deflection, color='red', marker='x', label='Analytical Solution')
+    ax.plot(time_kratos, displacement_2D, color='blue', linestyle='-', label='STEM 2D')
+    ax.plot(time_kratos, displacement_3D, color='orange', linestyle='-.', label='STEM 3D')
+
+    ax.set_xlabel("Time (s)")
+    ax.set_ylabel("Mid-span vertical displacement (m)")
+    ax.legend(loc='upper right')
+
     ax.grid()
 
     plt.tight_layout()
