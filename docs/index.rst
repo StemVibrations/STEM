@@ -1,10 +1,10 @@
 STEM
 ====
-STEM is an open-source calculation model that is developed to compute the impact of
-mitigation techniques on railway induced vibrations.
+STEM is an open-source calculation model developed to compute the impact of
+mitigation techniques on railway-induced vibrations.
 
-In STEM the train-track interaction and the propagation of the vibrations through the subsurface
-are simulated. The model is able to compute the vibration levels at the ground surface taking into account
+In STEM the train–track interaction and the propagation of the vibrations through the subsurface
+are simulated. The model can compute the vibration levels at the ground surface taking into account
 the presence of irregularities in the track geometry, the type of train and train speed, and the spatial variability
 of the track and soil properties.
 
@@ -17,71 +17,53 @@ of the track and soil properties.
 The STEM model is based on the finite element method and it is powered by
 `Kratos Multiphysics <https://github.com/KratosMultiphysics/Kratos>`_.
 
-User guide
-==========
+Background & prerequisites
+==========================
+STEM is a finite-element railway vibration solver. A quick refresher on the
+following topics will help you get the most out of the platform:
 
-Background information
-......................
-STEM is a numerical model based on the finite element method.
-It is recommended to have a basic understanding of the finite element theory before using STEM.
-
-STEM is build in Python. It is recommended to have a basic understanding of Python before using STEM.
-For new users of Python, the following resources are recommended:
-
-* `Python beginners guide <https://wiki.python.org/moin/BeginnersGuide>`_
-
-Alternatively, you can follow one of the many online free courses, for example (the STEM team is not
-affiliated to any of these courses):
-
-* `Introduction to Python <https://www.udacity.com/course/introduction-to-python--ud1110>`_
-* `Programming for Everybody <https://www.coursera.org/learn/python>`_
-
-To use STEM it is convenient to use an IDE (Integrated Development Environment) for Python. The STEM team
-recommends to use `PyCharm <https://www.jetbrains.com/pycharm/>`_ or `Visual Studio Code <https://code.visualstudio.com/>`_.
-More information can be found in the following links:
-
-* `VS Code in Python <https://code.visualstudio.com/docs/languages/python>`_
-* `PyCharm in Python <https://www.jetbrains.com/help/pycharm/quick-start-guide.html>`_
-
-To visualise the results STEM makes use of `ParaView <https://www.paraview.org/>`_. It is recommended to have a basic
-understanding of ParaView before using STEM. The following resources are recommended:
-
-* `ParaView tutorials <https://www.paraview.org/tutorials/>`_
+* **Numerics:** introductory texts on the finite element method.
+* **Programming:** STEM is written in Python. Good starting points are the
+   `Python beginners guide <https://wiki.python.org/moin/BeginnersGuide>`_,
+   `Introduction to Python <https://www.udacity.com/course/introduction-to-python--ud1110>`_, and
+   `Programming for Everybody <https://www.coursera.org/learn/python>`_.
+* **Tooling:** we recommend `PyCharm <https://www.jetbrains.com/pycharm/>`_ or
+   `Visual Studio Code <https://code.visualstudio.com/>`_. The quick-start pages for
+   `VS Code <https://code.visualstudio.com/docs/languages/python>`_ and
+   `PyCharm <https://www.jetbrains.com/help/pycharm/quick-start-guide.html>`_ walk through
+   STEM-style workflows.
+* **Visualisation:** post-processing relies on `ParaView <https://www.paraview.org/>`_;
+   the official `ParaView tutorials <https://www.paraview.org/tutorials/>`_ cover the basics.
 
 
-STEM Installation
-.................
-To install STEM you need to install the following items:
-
-* :ref:`python_stem`
-
-* :ref:`parav`
-
-Optionally, you can install `gmsh <https://gmsh.info/>`_ to visualise the mesh.
+Installation overview
+=====================
+STEM ships with a Python interface (:ref:`python_stem`) and ParaView utilities (:ref:`parav`).
+Follow the :doc:`installation` guide to set up both components and optionally add
+`gmsh <https://gmsh.info/>`_ for mesh inspection.
 
 
-Tutorials
-.........
+Tutorial track
+==============
+Work through the tutorials in order to get hands-on experience:
 
 * :ref:`tutorial1`
-
 * :ref:`tutorial2`
-
 * :ref:`tutorial3`
-
 * :ref:`tutorial4`
-
 * :ref:`tutorial5`
 
 
-STEM interface definitions
-==========================
-STEM has interface definitions to interact with the model, and allow the extension of the model and the use
-of different train and material models:
+Interface contracts
+===================
+STEM exposes several extension points so you can plug in custom train and material
+models. The interface definitions are documented in :doc:`API_definition`, including:
 
-   * :ref:`uvec`
+* :ref:`uvec` – user-defined vector evolution components.
+* :ref:`umat` – user-defined material models for soil or structure behavior.
 
-   * :ref:`umat`
+For a full per-module reference, see :doc:`api` which aggregates every public
+function discovered by ``sphinx-apidoc``.
 
 
 How to contribute
@@ -98,12 +80,65 @@ STEM is a research programme that results from a collaboration between the follo
 * `TNO <https://www.tno.nl>`_
 * `TU Delft <https://www.tudelft.nl>`_
 
-The :doc:`authors`.
+See :doc:`authors` for the full list of maintainers and contributors.
 
-Package documentation
-=====================
+Contents
+========
 
-The :doc:`stem` documentation.
+.. toctree::
+   :maxdepth: 2
+   :caption: Getting started
+
+   installation
+   quickstart
+   known_issues
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Formulation and theory
+
+   formulation
+   bibliography
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Tutorials
+
+   tutorial1
+   tutorial2
+   tutorial3
+   tutorial4
+   tutorial5
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Simulation concepts
+
+   materials
+   boundary_conditions
+   loads
+   outputs
+   solver_settings
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Interface definitions
+
+   API_definition
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Developer reference
+
+   stem
+   api
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Project
+
+   contributions
+   authors
 
 .. References
 .. ==========
