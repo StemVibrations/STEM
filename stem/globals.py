@@ -3,14 +3,29 @@ This module contains global variables used in the stem package.
 """
 
 from typing import Dict, Any
+from dataclasses import dataclass
 
-GRAVITY_VALUE = -9.81  # [m/s2]
 VERTICAL_AXIS = 1  # [0, 1, 2] = [x, y, z]
 OUT_OF_PLANE_AXIS_2D = 2  # [0, 1, 2] = [x, y, z]
-# time step to subtract to the actual desired time step
-# Kratos provides the first time step following the desired one
-TIME_STEP_PRECISION = 1e-08  # s
-GEOMETRY_PRECISION = 1e-08  # m
+
+
+# mutable global variables by users
+@dataclass
+class GlobalSettings:
+    """
+    Class containing global settings for the stem package. These settings can be modified by the user to adjust
+    the behavior of the package.
+
+    Attributes:
+        - gravity_value (float): The gravitational acceleration value in m/s². Default is -9.81 m/s².
+        - time_step_precision (float): The precision for time step calculations in seconds. Default is 1e-08 s.
+        - geometry_precision (float): The precision for geometry calculations in meters. Default is 1e-08 m.
+    """
+
+    gravity_value: float = -9.81  # [m/s2]
+    time_step_precision: float = 1e-08  # s
+    geometry_precision: float = 1e-08  # m
+
 
 # yapf: disable
 #: Element data for supported element types in STEM. The data contains the following information: \

@@ -13,7 +13,7 @@ from gmsh_utils import gmsh_IO
 from stem.additional_processes import (ParameterFieldParameters, HingeParameters, AdditionalProcessPart,
                                        AdditionalProcessesParametersABC, ExtrapolateIntegrationPointToNodesParameters)
 from stem.field_generator import RandomFieldGenerator
-from stem.globals import ELEMENT_DATA, OUT_OF_PLANE_AXIS_2D, VERTICAL_AXIS, GRAVITY_VALUE, GEOMETRY_PRECISION
+from stem.globals import GlobalSettings, ELEMENT_DATA, OUT_OF_PLANE_AXIS_2D, VERTICAL_AXIS
 from stem.load import *
 from stem.boundary import *
 from stem.geometry import Geometry, Point
@@ -161,7 +161,7 @@ class Model:
         transformation_matrix[2, :] = v
 
         # mirror local sleeper points if rotation around vertical axis is negative
-        if transformation_matrix[2, 0] < -GEOMETRY_PRECISION:
+        if transformation_matrix[2, 0] < -GlobalSettings.geometry_precision:
             points_local[:, 2] = -points_local[:, 2]
             points_local[[0, 1]] = points_local[[1, 0]]
             points_local[[2, 3]] = points_local[[3, 2]]
@@ -2235,7 +2235,7 @@ class Model:
 
         # set gravity load at vertical axis
         gravity_load_values: List[float] = [0, 0, 0]
-        gravity_load_values[VERTICAL_AXIS] = GRAVITY_VALUE
+        gravity_load_values[VERTICAL_AXIS] = GlobalSettings.gravity_value
         gravity_load = GravityLoad(value=gravity_load_values, active=[True, True, True])
 
         # get all body model part names

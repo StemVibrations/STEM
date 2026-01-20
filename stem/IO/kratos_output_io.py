@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import List, Dict, Tuple, Any
 
-from stem.globals import TIME_STEP_PRECISION
+from stem.globals import GlobalSettings
 from stem.output import (
     Output,
     GiDOutputParameters,
@@ -206,7 +206,7 @@ class KratosOutputsIO:
         # to avoid this the time-precision is subtracted to the requested time step so that
         # by requesting a time-step of 0.1999999 the correct time step of 0.2 is provided in output
 
-        output_interval = output_parameters.output_interval - TIME_STEP_PRECISION
+        output_interval = output_parameters.output_interval - GlobalSettings.time_step_precision
 
         # initialize output dictionary
         output_dict: Dict[str, Any] = {
