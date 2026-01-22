@@ -73,9 +73,9 @@
     "processes": {
         "json_output": [
             {
-                "python_module": "json_output_process",
-                "kratos_module": "KratosMultiphysics",
-                "process_name": "JsonOutputProcess",
+                "python_module": "fast_json_output_process",
+                "kratos_module": "KratosMultiphysics.RailwayApplication",
+                "process_name": "FastJsonOutputProcess",
                 "Parameters": {
                     "model_part_name": "PorousDomain.line_output_soil1",
                     "output_file_name": "dir_test/json_line_output_soil1.json",
