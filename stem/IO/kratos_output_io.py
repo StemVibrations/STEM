@@ -210,9 +210,9 @@ class KratosOutputsIO:
 
         # initialize output dictionary
         output_dict: Dict[str, Any] = {
-            "python_module": "json_output_process",
-            "kratos_module": "KratosMultiphysics",
-            "process_name": "JsonOutputProcess",
+            "python_module": "fast_json_output_process",
+            "kratos_module": "KratosMultiphysics.RailwayApplication",
+            "process_name": "FastJsonOutputProcess",
             "Parameters": {
                 "model_part_name": model_part_name,
                 "output_file_name": output_path_json,
