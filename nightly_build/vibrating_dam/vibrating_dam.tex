@@ -1,11 +1,11 @@
 % ==============================================================================================
-\chapter{Dynamic horizontal point load on dam 2D} \label{ch:vibrating_dam_2D}
+\chapter{Dynamic horizontal point load on dam} \label{ch:vibrating_dam}
 % ==============================================================================================
 
 % ----------------------------------------------------------------------------------------------
 \section{Introduction}
 % ----------------------------------------------------------------------------------------------
-This benchmark compares the STEM numerical solution against an analytical solution for the natural frequencies of a 
+This benchmark compares the STEM numerical solution against an analytical solution for the natural frequencies of a
 dam subjected to a dynamic horizontal point load under plane-strain conditions.
 
 The analytical solution is presented in~\cite[Chapter~7.3.4]{Kramer_1996}. The analytical solution provides the first
@@ -21,28 +21,53 @@ The analytical solution is presented in~\cite[Chapter~7.3.4]{Kramer_1996}. The a
 The reference geometry as presented in~\cite{Kramer_1996} is given with feet units. For consistency with the rest of
 the benchmarks in this report, the geometry has been converted to SI units (meters).
 
-The soil domain is modeled in 2D and represents a triangle with base \qty{160.02}{\meter} and height \qty{45.72}{\meter},
+The analytical solution is formulated in plane-strain conditions. To mimic this, two analyses are performed:
+a two-dimensional analysis representing a dam in plane-strain conditions, and a three-dimensional
+analysis representing a dam in a full 3D setting, where the thickness in the out-of-plane direction is set to
+\qty{1}{\meter} and the displacements are fixed in the out-of-plane direction. This allows to verify that the
+three-dimensional solution converges to the analytical solution.
+
+In the two-dimensional analysis, the soil domain is modelled as a
+triangle with base \qty{160.02}{\meter} and height \qty{45.72}{\meter},
 the left slope is inclined with a ratio of 2:1 (horizontal to vertical), while the right slope is inclined with a ratio
-of 1.5:1. The mesh is created with second order triangular elements and uses an average element size of \qty{2}{\meter}.
-Figure~\ref{fig:vibrating_dam_mesh} illustrates the geometry and mesh adopted for the analysis.
+of 1.5:1. The mesh is created with second-order triangular elements and uses an average element size of \qty{2}{\meter}.
 
-The horizontal point load with a magnitude of \qty{1e6}{\newton\per\meter} is instantly applied at the top of the dam
+In the three-dimensional analysis, the soil domain is modelled as a triangular prism with base
+\qty{160.02}{\meter} and height \qty{45.72}{\meter},
+the left slope is inclined with a ratio of 2:1 (horizontal to vertical), while the right slope is inclined with a ratio
+of 1.5:1. The geometry is extruded to \qty{4}{\meter} thickness in the z-direction to create a 3D model.
+The mesh is created with second-order tetrahedron elements and uses an average element size of \qty{2}{\meter}.
+
+Figure~\ref{fig:vibrating_dam_mesh_3d} illustrates the geometry and mesh adopted for the analysis.
+
+The horizontal load with a magnitude of \qty{1e6}{\newton\per\meter} is instantly applied at the top of the dam
 structure and is kept constant during the analysed time window.
+All nodes along the bottom boundary are fully fixed, while all remaining nodes are constrained to
+move only in the horizontal x direction.
 
-All nodes along the bottom boundary are fully fixed, while all remaining nodes are constrained to move only in the horizontal 
-x direction.
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.75\textwidth]{vibrating_dam/vibrating_dam_mesh.pdf}
-    \caption{Geometry and mesh adopted for the vibrating dam benchmark.}
+    \begin{subfigure}[t]{0.49\textwidth}
+        \includegraphics[width=0.75\textwidth]{vibrating_dam/vibrating_dam_mesh.pdf}
+    \caption{}
+    \label{fig:vibrating_dam_mesh_a}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.49\textwidth}
+        \includegraphics[width=0.75\textwidth]{vibrating_dam/vibrating_dam_mesh_3D.pdf}
+    \caption{}
+    \label{fig:vibrating_dam_mesh_b}
+    \end{subfigure}
+    \caption{Geometry and mesh for the vibrating dam benchmark in: (a) two-dimensional
+     and (b) three-dimensional.}
     \label{fig:vibrating_dam_mesh}
 \end{figure}
+
 
 % ..............................................................................................
 \subsection{Materials and numerical parameters}
 % ..............................................................................................
-The soil is modeled as a one-phase continuum with a linear elastic constitutive law, with the
+The soil is modelled as a one-phase continuum with a linear elastic constitutive law, with the
 following parameters:
 
 \begin{itemize}[noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt]
@@ -61,7 +86,7 @@ parameters $\beta = 0.25$ and $\gamma = 0.5$.
 \section{Results}
 % ----------------------------------------------------------------------------------------------
 Figure~\ref{fig:vibrating_dam_results} presents the power spectral density of the horizontal displacement of the
- top of the dam.
+top of the dam.
 The figure compares the STEM results against the analytical solution.
 The peaks of the power spectral density occur at the expected first five natural frequencies,
 showing an agreement between the numerical and analytical solutions.

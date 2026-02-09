@@ -27,10 +27,10 @@ three-dimensional solution converges to the analytical solution.
 
 In the two-dimensional analysis, the soil domain is modelled as a
 \qty{20}{\meter} (x-direction) by \qty{10}{\meter} (y-direction) soil layer,
-modelled with high-order triangular elements.
+modelled with second-order triangular elements.
 
 In the three-dimensional analysis, the soil domain is modelled as  a \qty{20}{\meter} (x-direction) by \qty{10}{\meter}
-(y-direction) soil layer, extruded to \qty{1}{\meter} thickness in the z-direction, and modelled with high-order
+(y-direction) soil layer, extruded to \qty{1}{\meter} thickness in the z-direction, and modelled with second-order
  tetrahedral elements.
 
 Both analyses use a mesh with an average element size of \qty{0.15}{\meter}.
@@ -66,7 +66,7 @@ out-of-plane direction, to simulate plane-strain conditions along the extrusion 
     \caption{}
     \label{fig:strip_mesh_b}
     \end{subfigure}
-    \caption{Geometry, mesh and boundary conditions for the dynamic strip load problem in: (a) two-dimensional
+    \caption{Geometry and mesh for the dynamic strip load problem in: (a) two-dimensional
      and (b) three-dimensional.}
     \label{fig:strip_mesh}
 \end{figure}
@@ -93,7 +93,7 @@ parameters $\beta = 0.25$ and $\gamma = 0.5$.
 % ----------------------------------------------------------------------------------------------
 \section{Results}
 % ----------------------------------------------------------------------------------------------
-Figure~\ref{fig:strip_results} presents the vertical stress at a depth of {\qty{-1}{\meter}} below the surface,
+Figure~\ref{fig:strip_results} presents the vertical stress at a depth of {\qty{1}{\meter}} below the surface,
 at three moments in time: \qty{0.05}{\second}, \qty{0.075}{\second} and \qty{0.10}{\second}.
 The figure compares the STEM results against the analytical solution.
 If follows that there is an agreement between both solutions, demonstrating the accuracy of the STEM
@@ -103,7 +103,7 @@ for this type of dynamic loading condition.
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.8\textwidth]{strip_load/time_history.pdf}
-    \caption{Vertical stress at a depth of {\qty{-1}{\meter}} below the surface at three moments in time:
+    \caption{Vertical stress at a depth of {\qty{1}{\meter}} below the surface at three moments in time:
     (a) \qty{0.05}{\second}, (b) \qty{0.075}{\second} and (c) \qty{0.10}{\second}.}
     \label{fig:strip_results}
 \end{figure}

@@ -8,7 +8,7 @@
 This benchmark compares the STEM numerical solution against the analytical solution,
 for a moving load travelling on an elastic halfspace.
 
-The analytical solution is presented in~\cite{Fryba_2013}.
+The analytical solution is presented in~\cite{Liao_Teng_Yeh_2005}.
 The analytical solution provides closed-form expressions for the vertical displacement along the surface of the
 halfspace, enabling a direct time-history comparison against the numerical model.
 
@@ -20,8 +20,8 @@ halfspace, enabling a direct time-history comparison against the numerical model
 \subsection{Geometry, mesh and loading}
 % ..............................................................................................
 The soil domain is modelled as a three-dimensional block representing the halfspace, with the following dimensions:
-height \qty{10}{\meter}, width \qty{10}{\meter} and length \qty{10}{\meter}.
-The soil is discretised with high-order tetrahedral elements, using an average element size of \qty{0.10}{\meter}.
+height \qty{10}{\meter}, width \qty{10}{\meter} and length \qty{20}{\meter}.
+The soil is discretised with second-order tetrahedral elements, using an average element size of \qty{0.10}{\meter}.
 An overview of the geometry and mesh adopted for the analysis is shown in
 Figure~\ref{fig:one_dim_wave_mesh}.
 
@@ -36,7 +36,7 @@ At the bottom the soil is assumed to be fixed.
 
 \begin{figure}
 	\centering
-	\includegraphics[width=0.75\textwidth]{one_dim_wave_prop/mesh.pdf}
+	\includegraphics[width=0.75\textwidth]{moving_load/mesh.pdf}
 	\caption{Geometry, mesh and boundary conditions adopted for the one-dimensional
 	wave propagation benchmark.}
 	\label{fig:one_dim_wave_mesh}
