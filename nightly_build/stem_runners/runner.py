@@ -8,7 +8,7 @@ from nightly_build.stem_runners.pekeris import run_pekeris
 from nightly_build.stem_runners.strip_load_2D import run_strip_2D
 from nightly_build.stem_runners.strip_load_3D import run_strip_3D
 from nightly_build.stem_runners.one_dim_wave_prop import run_column
-# from nightly_build.stem_runners.moving_load_halfspace import run_moving_load
+from nightly_build.stem_runners.moving_load_halfspace import run_moving_load
 from nightly_build.stem_runners.sdof import run_sdof
 from nightly_build.stem_runners.boussinesq import run_boussinesq
 from nightly_build.stem_runners.vibrating_dam import run_vibrating_dam
@@ -19,7 +19,7 @@ from nightly_build.stem_runners.moving_load_on_beam import run_moving_load_on_be
 
 from nightly_build.stem_runners.compare_analytical import compare_pekeris, compare_strip_load, \
       compare_wave_propagation, compare_sdof, compare_vibrating_dam, compare_abs_boundary, \
-      compare_simply_supported_beam, compare_boussinesq, compare_moving_load_on_beam#, compare_moving_load
+      compare_simply_supported_beam, compare_boussinesq, compare_moving_load_on_beam, compare_moving_load
 
 
 def move_file(src: Path, dest: Path):
@@ -50,13 +50,12 @@ compare_boussinesq(r"boussinesq_tmp", r"nightly_build/boussinesq/boussinesq_comp
 shutil.rmtree("boussinesq_tmp")
 
 run_vibrating_dam(Path("./vibrating_dam_2D_tmp"))
-compare_vibrating_dam(r"vibrating_dam_2D_tmp/json_output_top.json",
-                      r"nightly_build/vibrating_dam/power_spectral_density.pdf")
-shutil.rmtree("vibrating_dam_2D_tmp")
-
 run_vibrating_dam_3d(Path("./vibrating_dam_3D_tmp"))
-compare_vibrating_dam(r"vibrating_dam_3D_tmp/json_output_top.json",
-                      r"nightly_build/vibrating_dam_3D/power_spectral_density.pdf")
+compare_vibrating_dam([
+    r"vibrating_dam_2D_tmp/json_output_top.json",
+    r"vibrating_dam_3D_tmp/json_output_top.json",
+], r"nightly_build/vibrating_dam/power_spectral_density.pdf")
+shutil.rmtree("vibrating_dam_2D_tmp")
 shutil.rmtree("vibrating_dam_3D_tmp")
 
 run_abs_boundary(Path("./one_dim_abs_boundary_tmp"), 2)

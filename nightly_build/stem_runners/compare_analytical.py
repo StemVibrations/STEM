@@ -12,7 +12,7 @@ from benchmark_tests.analytical_solutions.linear_spring_damper_mass import Linea
 from benchmark_tests.analytical_solutions.boussinesq import Boussinesq
 from benchmark_tests.analytical_solutions.wave_in_infinite_pile import InfinitePileWaveSolution
 from benchmark_tests.analytical_solutions.moving_load_on_beam import BeamMovingLoadAnalytical
-# from benchmark_tests.analytical_solutions.point_load_moving import MovingLoadElasticHalfSpace
+from benchmark_tests.analytical_solutions.point_load_moving import MovingLoadElasticHalfSpace
 
 import nightly_build.stem_runners.read_VTK as read_VTK
 
@@ -38,8 +38,8 @@ def compare_wave_propagation(path_model, output_file):
 
     young_modulus = 50e6  # Pa
     poisson_ratio = 0.3
-    density_solid = 2700  # kg/m3
-    porosity = 0.3
+    density_solid = 2000  # kg/m3
+    porosity = 0
     load_value = -1e3  # Pa
     lenght = 10  # m
     nb_elements = 20
@@ -391,8 +391,79 @@ def compare_moving_load(path_model, output_file):
     with open(path_model, "r") as f:
         data_kratos = json.load(f)
 
-    plt.plot(data_kratos["TIME"], data_kratos['NODE_13']['DISPLACEMENT_Y'], color="r", marker="x", label="STEM")
-    # plt.show()
+    # idx = np.argmin(data_kratos['NODE_18']['DISPLACEMENT_Y'])
+    # dist = []
+    # amp = []
+    # for i in range(9, 30):
+    #     dist.append(data_kratos[f'NODE_{i}']['COORDINATES'][2])
+    #     amp.append(data_kratos[f'NODE_{i}']['DISPLACEMENT_Y'][idx])
+
+    # plt.plot(dist, amp, color="r", marker="x", label="STEM")
+    # plt.plot(data_kratos["TIME"], data_kratos['NODE_16']['DISPLACEMENT_Y'], color="r", marker="x", label="STEM")
+    # plt.plot(data_kratos["TIME"], data_kratos['NODE_10']['DISPLACEMENT_Y'], color="r", marker="x", label="STEM")
+    plt.plot(data_kratos["TIME"], data_kratos['NODE_17']['DISPLACEMENT_Y'], color="r", marker="x", label="STEM")
+    plt.plot(data_kratos["TIME"], data_kratos['NODE_18']['DISPLACEMENT_Y'], color="r", marker="x", label="STEM")
+    # plt.plot(data_kratos["TIME"], data_kratos['NODE_20']['DISPLACEMENT_Y'], color="r", marker="x", label="STEM")
+    # plt.plot(data_kratos["TIME"], data_kratos['NODE_21']['DISPLACEMENT_Y'], color="r", marker="x", label="STEM")
+    # plt.plot(data_kratos["TIME"], data_kratos['NODE_22']['DISPLACEMENT_Y'], color="r", marker="x", label="STEM")
+    # plt.plot(data_kratos["TIME"], data_kratos['NODE_27']['DISPLACEMENT_Y'], color="r", marker="x", label="STEM")
+    # # plt.plot(data_kratos["TIME"], data_kratos['NODE_18']['DISPLACEMENT_Y'], color="r", marker="x", label="STEM")
+
+    # Example usage
+    E = 30e6  # Pa
+    nu = 0.2  # dimensionless
+    rho = 2000  # kg/m³
+    force = -2e3  # N
+    speed = 10  # m/s
+
+    # 1. Defined Constants from Paper
+    # c_s_target = 1000.0  # m/s
+    # rho = 2000.0  # kg/m^3 (Arbitrary scaling factor, cancels out in dimensionless results)
+    # nu = 0.25  # Poisson's ratio
+
+    # 2. Back-calculate Young's Modulus E to match cs = 1000 m/s
+    # Formula: cs = sqrt( G / rho ) and G = E / (2*(1+nu))
+    # Therefore: E = rho * cs^2 * 2 * (1 + nu)
+    # E = rho * (c_s_target**2) * 2 * (1 + nu)  # Result: 5e9 Pa
+
+    x, y, z = 0.0, 0.0, 1
+    time = np.linspace(-1, 1, num=200)
+
+    # model = MovingLoadElasticHalfSpace(E, nu, rho, force, speed)
+    # uz = []
+    # for t in time:
+    #     print(f"t {t} / {time[-1]}")
+    #     model.compute_vertical_displacement(x, y, z, t, ky_max=200.0, n_ky=2000)
+    #     uz.append(np.real(model.vertical_displacement))
+
+    #     model = MovingLoadElasticHalfSpace2(E, nu, rho, force, speed)
+    #     w_history = []
+    #     for t in time:
+    #         x_bar = x - speed * t
+    #         w = model.compute_vertical_displacement(x_bar, y, z)
+    #         w_history.append(w)
+
+    # #     model = MovingLoadElasticHalfSpace3(E, nu, rho, force, speed)
+    # #     t, w = model.compute_vertical_displacement(
+    # #     x=0.0, y=0.0, z=1.0
+    # # )
+    #     # uz = []
+    #     # for t in time:
+    #     #     u = model.compute_vertical_displacement(x, y, z, t, ky_max=50.0, n_ky=2000)
+    #     #     uz.append(u)
+
+    # plt.plot(time, uz, color="b", marker="x", label="Analytical")
+
+    idx_kratos = np.argmin(data_kratos['NODE_17']['DISPLACEMENT_Y'])
+    # plt.plot(time + data_kratos["TIME"][idx_kratos], uz-uz[0], label="Analytical")
+    # plt.plot(time + data_kratos["TIME"][idx_kratos], w_history)
+    # plt.plot(t + data_kratos["TIME"][idx_kratos], w)
+
+    plt.xlabel("Time step")
+    plt.ylabel("Vertical displacement uz (m)")
+    plt.legend()
+    plt.grid()
+    plt.show()
 
 
 def compare_boussinesq(path_model, output_file):
@@ -495,19 +566,29 @@ def compare_boussinesq(path_model, output_file):
 def compare_vibrating_dam(path_model, output_file):
 
     # load data from STEM
-    with open(path_model, "r") as f:
-        data_kratos = json.load(f)
+    with open(path_model[0], "r") as f:
+        data_kratos_2D = json.load(f)
+
+    with open(path_model[1], "r") as f:
+        data_kratos_3D = json.load(f)
 
     feet_to_m = 0.3048
     shear_wave_velocity = 1200 * feet_to_m  # ft/s to m/s
     y_max = 150 * feet_to_m
 
-    time_step = data_kratos["TIME"][1] - data_kratos["TIME"][0]
-    calculated_horizontal_displacement = np.array(data_kratos["NODE_2"]["DISPLACEMENT_X"])
-    f, Pxx = welch(calculated_horizontal_displacement,
-                   fs=1 / time_step,
-                   nfft=20000,
-                   nperseg=len(calculated_horizontal_displacement))
+    time_step = data_kratos_2D["TIME"][1] - data_kratos_2D["TIME"][0]
+    calculated_horizontal_displacement = np.array(data_kratos_2D["NODE_2"]["DISPLACEMENT_X"])
+    f, Pxx_2D = welch(calculated_horizontal_displacement,
+                      fs=1 / time_step,
+                      nfft=20000,
+                      nperseg=len(calculated_horizontal_displacement))
+
+    time_step = data_kratos_3D["TIME"][1] - data_kratos_3D["TIME"][0]
+    calculated_horizontal_displacement = np.array(data_kratos_3D["NODE_2"]["DISPLACEMENT_X"])
+    f, Pxx_3D = welch(calculated_horizontal_displacement,
+                      fs=1 / time_step,
+                      nfft=20000,
+                      nperseg=len(calculated_horizontal_displacement))
 
     # the beta values follow from literature for the shear beam natural frequencies
     betas = [2.404, 5.520, 8.654, 11.792, 14.931]
@@ -515,19 +596,21 @@ def compare_vibrating_dam(path_model, output_file):
 
     # plot PSD
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 5), sharex=True, sharey=True)
-    ax.plot(f, Pxx)
-
     # plot expected natural frequencies
     for i, expected_natural_frequency in enumerate(expected_natural_frequencies):
         ax.axvline(expected_natural_frequency,
-                   color='g',
-                   linestyle='--',
-                   label=f'Expected natural frequency' if i == 0 else None)
+                   color='r',
+                   linestyle='-',
+                   marker="x",
+                   label=f'Analytical' if i == 0 else None)
+
+    ax.plot(f, Pxx_2D, color="b", marker="o", markersize=3, markevery=5, label="STEM 2D")
+    ax.plot(f, Pxx_3D, color="orange", linestyle="-.", label="STEM 3D")
 
     ax.set_xlim(0, 20)
     ax.set_xlabel('Frequency [Hz]')
     ax.set_ylabel('Power Spectral Density [m^2/Hz]')
-    ax.legend()
+    ax.legend(loc='upper right')
     ax.grid()
 
     plt.savefig(output_file)
@@ -546,9 +629,9 @@ def compare_abs_boundary(path_model, output_file):
         data_kratos_3d = json.load(f)
 
     young_modulus = 50e6  # Pa
-    poisson_ratio = 0.3
-    density_solid = 2700  # kg/m3
-    porosity = 0.3
+    poisson_ratio = 0.
+    density_solid = 2000  # kg/m3
+    porosity = 0
     load_value = -1e3  # Pa
 
     p_modulus = (young_modulus * (1 - poisson_ratio)) / ((1 + poisson_ratio) * (1 - 2 * poisson_ratio))
@@ -699,7 +782,7 @@ def compare_moving_load_on_beam(path_model, output_file):
 
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 5), sharex=True, sharey=True)
 
-    ax.plot(time_array, analytical_deflection, color='red', marker='x', label='Analytical Solution')
+    ax.plot(time_array, analytical_deflection, color='red', marker='x', label='Analytical Solution', markevery=25)
     ax.plot(time_kratos, displacement_2D, color='blue', linestyle='-', label='STEM 2D')
     ax.plot(time_kratos, displacement_3D, color='orange', linestyle='-.', label='STEM 3D')
 
