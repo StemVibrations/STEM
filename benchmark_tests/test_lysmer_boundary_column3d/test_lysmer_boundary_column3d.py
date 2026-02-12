@@ -58,9 +58,7 @@ def test_stem(element_type):
     absorbing_boundaries_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=1000.0)
 
     # Define displacement conditions
-    displacement_parameters = DisplacementConstraint(active=[True, False, True],
-                                                     is_fixed=[True, False, True],
-                                                     value=[0, 0, 0])
+    displacement_parameters = DisplacementConstraint(is_fixed=[True, False, True], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(2, [2], absorbing_boundaries_parameters, "abs")

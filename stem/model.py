@@ -339,9 +339,7 @@ class Model:
         # add displacement_constraint in the non-vertical directions
         is_constraint = [True, True, True]
         is_constraint[VERTICAL_AXIS] = False
-        constraint_model_part.parameters = DisplacementConstraint(active=is_constraint,
-                                                                  is_fixed=is_constraint,
-                                                                  value=[0, 0, 0])
+        constraint_model_part.parameters = DisplacementConstraint(is_fixed=is_constraint, value=[0, 0, 0])
         return constraint_model_part
 
     def __create_rail_no_rotation_model_part(self, rail_name: str,
@@ -358,9 +356,7 @@ class Model:
         """
         rotation_constraint_name = f"rotation_constraint_{rail_name}"
         no_rotation_model_part = ModelPart(rotation_constraint_name)
-        no_rotation_constraint = RotationConstraint(active=[True, True, True],
-                                                    is_fixed=[True, True, True],
-                                                    value=[0, 0, 0])
+        no_rotation_constraint = RotationConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
         no_rotation_model_part.parameters = no_rotation_constraint
 
         no_rotation_geo_settings: Dict[str, Any] = {
@@ -720,18 +716,14 @@ class Model:
         # can only move in the vertical direction
         constraint_list = [True, True, True]
         constraint_list[VERTICAL_AXIS] = False
-        constraint_parameters = DisplacementConstraint(active=constraint_list,
-                                                       is_fixed=constraint_list,
-                                                       value=[0, 0, 0])
+        constraint_parameters = DisplacementConstraint(is_fixed=constraint_list, value=[0, 0, 0])
         self.add_boundary_condition_by_geometry_ids(1, soil_equivalent_line_ids, constraint_parameters,
                                                     constraint_horizontal_soil_equivalent_name)
 
         # add bottom points fixed
         constraint_model_soil_equivalent_name = f"constraint_{soil_equivalent_name}"
         constraint_model_soil_equivalent_part = ModelPart(f"constraint_{soil_equivalent_name}")
-        constraint_model_soil_equivalent = DisplacementConstraint(active=[True, True, True],
-                                                                  is_fixed=[True, True, True],
-                                                                  value=[0, 0, 0])
+        constraint_model_soil_equivalent = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
         constraint_model_soil_equivalent_part.parameters = constraint_model_soil_equivalent
         constraint_model_soil_equivalent_part_settings = {
             constraint_model_soil_equivalent_name: {
