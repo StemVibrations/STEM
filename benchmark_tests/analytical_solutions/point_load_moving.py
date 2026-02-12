@@ -3,6 +3,7 @@ from numpy.lib.scimath import sqrt
 from scipy.optimize import brentq
 import matplotlib.pyplot as plt
 from scipy import integrate
+import sys
 
 
 class MovingLoadElasticHalfSpace:
@@ -13,6 +14,16 @@ class MovingLoadElasticHalfSpace:
     """
 
     def __init__(self, E: float, nu: float, rho: float, force: float, speed: float):
+        """
+        Initialize the model with material properties and load parameters.
+
+        Args:
+            - E (float): Young's modulus of the half-space
+            - nu (float): Poisson's ratio of the half-space
+            - rho (float): Density of the half-space
+            - force (float): Magnitude of the moving point load
+            - speed (float): Speed of the moving load (must be sub-Rayleigh)
+        """
         self.E = E
         self.nu = nu
         self.rho = rho
@@ -32,31 +43,29 @@ class MovingLoadElasticHalfSpace:
         if self.speed >= self.cr:
             raise ValueError(f"Speed {self.speed:.2f} m/s must be sub-Rayleigh (< {self.cr:.2f} m/s)")
 
-    def compute_vertical_displacement(self,
-                                      x: float,
-                                      y: float,
-                                      z: float,
-                                      t: float,
-                                      ky_max: float = 50.0,
-                                      n_ky: int = 2000,
-                                      n_tau: int = 100):
+    def compute_vertical_displacement(
+        self,
+        x: float,
+        y: float,
+        z: float,
+        t: float,
+        ky_max: float = 50.0,
+        n_ky: int = 2000,
+    ):
         """
         Compute the vertical displacement uz at a point (x, y, z) and time t due to a moving point load.
 
         Args:
-            - x, y, z (float): Spatial coordinates of the observation point
-            - t (float): Time at which to compute the displacement
-            - ky_max (float): Maximum value of the wavenumber in the y-direction for integration
-            - n_ky (int): Number of points for numerical integration in the y-direction
-            - n_tau (int): Number of points for numerical integration in the tau-direction
+            - x (float): Horizontal distance from the load path (m)
+            - y (float): Along-track distance from the load (m)
+            - z (float): Depth below the surface (m)
+            - t (float): Time at which to compute the displacement (s)
         Returns:
             - uz (float): Vertical displacement at the specified point and time
         """
 
-        #
-        # ky = np.linspace(0, ky_max, n_ky)
+        # wavenumber range for integration
         ky = np.geomspace(1e-4, ky_max, n_ky)
-        delta_ky = ky[1] - ky[0]
 
         # Equation 11
         self.Mp = self.speed / self.cp
@@ -68,25 +77,17 @@ class MovingLoadElasticHalfSpace:
         # Moving coordinate
         y_prime = y - self.speed * t
 
-        # tau limits for integration
-        # Decay factor is exp(-r * ky * tau**2)
-        # define convergence criterion
-        # exp(r * ky * tau**2) < tol
-        # r = sqrt(x**2 + z**2)
-        # tol = 1e-12
-
-        # Gp = np.zeros_like(ky, dtype=complex)
-        # Gs = np.zeros_like(ky, dtype=complex)
         integrand_list = []
         ti, wi = np.polynomial.hermite.hermgauss(128)
 
-        for i, k in enumerate(ky):
-            if k <= 1e-6:  # skip ky=0 to avoid singularity
-                continue
-            # tau_max = np.sqrt(np.log(1 / tol) / (r * k))  # see line above for derivation
-            # tau = np.linspace(-tau_max, tau_max, n_tau)
-            Gp = self.__intregand_Gp(x, z, k, ti, wi)
-            Gs = self.__intregand_Gs(x, z, k, ti, wi)
+        # constants for integrand evaluation
+        r = sqrt(x**2 + z**2)
+        theta = np.arctan2(z, x)
+        region_p, region_s = self.define_regions(theta)
+
+        for _, k in enumerate(ky):
+            Gp = self.__integrand_Gp(x, z, k, r, theta, region_p, ti, wi)
+            Gs = self.__integrand_Gs(x, z, k, r, theta, region_s, ti, wi)
 
             # add residue/pole terms if applicable (use complex-step derivative at pole)
             # include +ky and -ky contributions (symmetry)
@@ -102,25 +103,59 @@ class MovingLoadElasticHalfSpace:
         # scale factor Equation 10c
         self.vertical_displacement = -self.force / (4 * np.pi**2 * self.G) * I_ky
 
-    def __intregand_Gp(self, x, z, ky, ti, wi):
+    def define_regions(self, theta: float) -> tuple[str, str]:
+        """
+        Define the regions in the (x, z) plane based on the angle theta and the wave speeds.
 
-        r = sqrt(x**2 + z**2)
-        theta = np.arctan2(z, x)
-
-        # map Hermite nodes
-        tau = ti / np.sqrt(r * ky)
-
+        Args:
+            - theta (float): Angle between the point of interest and the load path (radians)
+        Returns:
+            - region_p (str): Region classification for P-wave contribution (I, II, or III)
+            - region_s (str): Region classification for S-wave contribution (I or II)
+        """
         # compute angles for region classification (Fig 3)
         theta_r = np.arccos(np.real(self.beta_r / self.beta_p))
         theta_s = np.arccos(np.real(self.beta_s / self.beta_p))
 
         if theta_r < theta < np.pi - theta_r:
-            region = 'I'
+            region_p = 'I'
         elif (0 <= theta < theta_s) or (np.pi - theta_s < theta <= np.pi):
-            region = 'III'
-            print(f"Region III: theta={theta:.2f} rad")
+            region_p = 'III'
+            sys.exit("Region III correction not implemented yet")
         else:
-            region = 'II'
+            region_p = 'II'
+
+        # compute angles for region classification (Fig 5)
+        theta_r_star = np.arccos(np.real(self.beta_r / self.beta_s))
+
+        if theta_r_star < theta < np.pi - theta_r_star:
+            region_s = 'I'
+        else:
+            region_s = 'II'
+
+        return region_p, region_s
+
+    def __integrand_Gp(self, x: float, z: float, ky: float, r: float, theta: float, region: str, ti: np.ndarray,
+                       wi: np.ndarray) -> complex:
+        """
+        Compute the integrand Gp for the P-wave contribution to the vertical displacement.
+
+        Args:
+            - x (float): Horizontal distance from the load path (m)
+            - z (float): Depth below the surface (m)
+            - ky (float): Wavenumber for integration (1/m)
+            - r (float): Distance from the load path to the point of interest (m)
+            - theta (float): Angle between the point of interest and the load path (radians)
+            - region (str): Region classification for P-wave contribution (I, II, or III)
+            - ti (np.ndarray): Hermite quadrature nodes
+            - wi (np.ndarray): Hermite quadrature weights
+        Returns:
+            - Gp (complex): Value of the integrand Gp for the given parameters
+        """
+
+        # map Hermite nodes
+        # Decay factor is exp(-r * ky * tau**2)
+        tau = ti / np.sqrt(r * ky)
 
         # Equation 24
         kx_bar = -1j * np.cos(theta) * (tau**2 + self.beta_p) +\
@@ -137,11 +172,10 @@ class MovingLoadElasticHalfSpace:
         v_bar = sqrt(kx_bar**2 + self.beta_p**2)
         v_bar_prime = sqrt(kx_bar**2 + self.beta_s**2)
 
-        # kp = self.Mp * ky
         ks = self.Ms * ky
 
         # Equation 9
-        F, _ = self.__F_prime(k, kx, ky, kx_bar, v, v_prime, v_bar, v_bar_prime)
+        F, _ = self.__F_prime(k, ky, kx_bar, v, v_prime, v_bar, v_bar_prime)
         # Equation 8
         A = (2 * k**2 - ks**2)
         # Equation 14
@@ -152,42 +186,50 @@ class MovingLoadElasticHalfSpace:
         dkx_bar_dtau = -2 * 1j * tau * np.cos(theta) + np.sin(theta) * (root + tau**2 / root)
 
         # Equation 27
-        # integrand = (Ep / F) * np.exp(-r * ky * tau**2) * dkx_bar_dtau
+        # np.exp(-r * ky * tau**2) is not needed because we are using Hermite quadrature which
+        # already includes the exp(-tau^2) weight in the weights wi.
         integrand = (Ep / F) * dkx_bar_dtau  #* np.exp(-r * ky * tau**2)
         Gp = ky * np.exp(-r * ky * self.beta_p) * np.sum(integrand * wi) / sqrt(r * ky)
-        # Gp = ky * np.exp(-r * ky * self.beta_p) * integrate.trapezoid(integrand, tau)
 
-        if region == 'II' or region == 'III':
+        if region != 'I':
             k_ = -np.sign(np.cos(theta)) * 1j * self.beta_r  # Equation 28
             vr_bar = sqrt(self.beta_p**2 - self.beta_r**2)  # Equation 30
             exp = np.exp(-ky * (vr_bar * z + self.beta_r * x * np.sign(np.cos(theta))))
-            _, fct = self.__F_prime(k_, kx, ky, k_, v, v_prime, v_bar, v_bar_prime)
+            _, fct = self.__F_prime(k_, ky, k_, v, v_prime, v_bar, v_bar_prime)
             correction = -np.sign(np.cos(theta)) * 2 * np.pi * 1j * Ep / fct * exp  # Equation 30
             Gp += correction
         if region == 'III':
-            int = integrate.trapezoid(Ep / F * np.exp(-ky * (v_prime * z + 1j * kx_bar * x)), kx_bar)
-            correction = ky * int
-            Gp += correction
+            # int = integrate.trapezoid(Ep / F * np.exp(-ky * (v_prime * z + 1j * kx_bar * x)), kx_bar)
+            # correction = ky * int
+            # Gp += correction
+            sys.exit("Region III correction not implemented yet")
         return Gp
 
-    def __intregand_Gs(self, x, z, ky, ti, wi):
+    def __integrand_Gs(self, x: float, z: float, ky: float, r: float, theta: float, region: str, ti: np.ndarray,
+                       wi: np.ndarray) -> complex:
+        """
+        Compute the integrand Gs for the S-wave contribution to the vertical displacement.
 
-        r = sqrt(x**2 + z**2)
-        theta = np.arctan2(z, x)
+        Args:
+            - x (float): Horizontal distance from the load path (m)
+            - z (float): Depth below the surface (m)
+            - ky (float): Wavenumber for integration (1/m)
+            - r (float): Distance from the load path to the point of interest (m)
+            - theta (float): Angle between the point of interest and the load path (radians)
+            - region (str): Region classification for S-wave contribution (I or II)
+            - ti (np.ndarray): Hermite quadrature nodes
+            - wi (np.ndarray): Hermite quadrature weights
+        Returns:
+            - Gs (complex): Value of the integrand Gs for the given parameters
+        """
 
         # map Hermite nodes
+        # Decay factor is exp(-r * ky * tau**2)
         tau = ti / np.sqrt(r * ky)
 
-        # compute angles for region classification (Fig 5)
-        theta_r_star = np.arccos(np.real(self.beta_r / self.beta_s))
-
-        if theta_r_star < theta < np.pi - theta_r_star:
-            region = 'I'
-        else:
-            region = 'II'
-
         # Equation 33
-        kx_bar = -1j * np.cos(theta) * (tau**2 + self.beta_s) + tau * np.sin(theta) * sqrt(tau**2 + 2 * self.beta_s)
+        kx_bar = -1j * np.cos(theta) * (tau**2 + self.beta_s) +\
+                 tau * np.sin(theta) * sqrt(tau**2 + 2 * self.beta_s)
         # Equation 19
         kx = ky * kx_bar
         # Equation 5c
@@ -199,15 +241,13 @@ class MovingLoadElasticHalfSpace:
         # Equation 17
         v_bar = sqrt(kx_bar**2 + self.beta_p**2)
         v_bar_prime = sqrt(kx_bar**2 + self.beta_s**2)
-        # kp = self.Mp * ky
-        # ks = self.Ms * ky
 
         # Equation 9
-        F, _ = self.__F_prime(k, kx, ky, kx_bar, v, v_prime, v_bar, v_bar_prime)
+        F, _ = self.__F_prime(k, ky, kx_bar, v, v_prime, v_bar, v_bar_prime)
         # Equation 8
-        C = 2 * v  #/ F
+        C = 2 * v
         # Equation 14
-        Es = k**2 * C  #* np.exp(-v * z)
+        Es = k**2 * C
 
         # diff kx_bar / tau
         dkx_bar_dtau = -2 * 1j * tau * np.cos(theta) +\
@@ -215,34 +255,31 @@ class MovingLoadElasticHalfSpace:
                         tau**2 * np.sin(theta) / (sqrt(tau**2 + 2 * self.beta_s))
 
         # Equation 35
+        # np.exp(-r * ky * tau**2) is not needed because we are using Hermite quadrature which
+        # already includes the exp(-tau^2) weight in the weights wi.
         integrand = (Es / F) * dkx_bar_dtau  #* np.exp(-r * ky * tau**2)
         Gs = ky * np.exp(-r * ky * self.beta_s) * np.sum(integrand * wi) / sqrt(r * ky)
-        # integrand = (Es / F) * np.exp(-r * ky * tau**2) * dkx_bar_dtau
-        # Gs = ky * np.exp(-r * ky * self.beta_s) * integrate.trapezoid(integrand, tau)
 
         if region == 'II':
             k_ = -np.sign(np.cos(theta)) * 1j * self.beta_r  # Equation 36
             vr_bar = sqrt(self.beta_s**2 - self.beta_r**2)  # Equation 36
             exp = np.exp(-ky * (vr_bar * z + self.beta_r * x * np.sign(np.cos(theta))))
-            _, fct = self.__F_prime(k_, kx, ky, k_, v, v_prime, v_bar, v_bar_prime)
+            _, fct = self.__F_prime(k_, ky, k_, v, v_prime, v_bar, v_bar_prime)
             correction = -np.sign(np.cos(theta)) * 2 * np.pi * 1j * Es / fct * exp  # Equation 36
             Gs += correction
 
         return Gs
 
-    def __F_prime(self, k, kx, ky, kx_bar, v, v_prime, v_bar, v_bar_prime):
+    def __F_prime(self, k, ky, kx_bar, v, v_prime, v_bar, v_bar_prime):
 
         # Equation 9
         F_k = (2 * k**2 - (self.Ms * ky)**2)**2 - 4 * k**2 * v * v_prime
         # Derivative of F with respect to kr (Equation 29)
-        # NOTE: this equation is wrong the the paper.
-        # F_k_prime = 8*k*sqrt(ky**2-(self.Mp*kx)/k+kx**2)*sqrt(ky**2-(self.Ms*kx)/k+kx**2)+ \
-        #     (2*self.Mp*kx*sqrt(ky**2-(self.Ms*kx)/k+kx**2))/sqrt(ky**2-(self.Mp*kx)/k+kx**2)+\
-        #         (2*self.Ms*kx*sqrt(ky**2-(self.Mp*kx)/k+kx**2))/sqrt(ky**2-(self.Ms*kx)/k+kx**2)
-        #F_k_prime = ky**2 * (8 * kx_bar * (2 * k**2 - ky**2) * (self.Ms**2 + v_bar*v_bar_prime) + 4 * kx**2 * k**2 * (v_bar/v_bar_prime + v_bar_prime/v_bar))
-        F_k_prime = 4 * kx_bar * ky**2 * ((2 * (2 * k**2 - self.Ms**2) - 2 * v_bar * v_bar_prime) - k**2 *
-                                          (v_bar / v_bar_prime + v_bar_prime / v_bar))
-        # F_k_prime = 4 * kx * (2 * (2 * k**2 - ks**2) - 2 * v * v_prime - k**2 * (v / v_prime + v_prime / v))
+        # F_k_prime = 4 * kx_bar * ky**2 * ((2 * (2 * k**2 - self.Ms**2) - 2 * v_bar * v_bar_prime) - k**2 *
+        #                                   (v_bar / v_bar_prime + v_bar_prime / v_bar))
+        term1 = 2 * k**2 - ky**2 * (self.Ms**2 + v_bar * v_bar_prime)
+        term2 = 0.5 * k**2 * (v_bar / v_bar_prime + v_bar_prime / v_bar)
+        F_k_prime = 8 * kx_bar * ky**2 * (term1 - term2)
         return F_k, F_k_prime
 
     @staticmethod
@@ -275,17 +312,18 @@ class MovingLoadElasticHalfSpace:
 
 
 def main():
-    # 1. Defined Constants from Paper
+    """
+    Reproduce Figure 7a from Liao et al. (2005) for the vertical displacement uz at a point (x, z) = (0, 10 m)
+    """
+
+    # Defined Constants from Paper
     c_s_target = 1000.0  # m/s
     rho = 2000.0  # kg/m^3
     nu = 0.25  # Poisson's ratio
 
-    # 2. Back-calculate Young's Modulus E to match cs = 1000 m/s
-    # Formula: cs = sqrt( G / rho ) and G = E / (2*(1+nu))
-    # Therefore: E = rho * cs^2 * 2 * (1 + nu)
-    E = rho * (c_s_target**2) * 2 * (1 + nu)  # Result: 5e9 Pa
-    force = 1e6  # N
-    speed = 700  # m/s
+    E = rho * (c_s_target**2) * 2 * (1 + nu)
+    force = 1e6
+    speed = 700
 
     x, y, z = 0.0, 0.0, 10
     time = np.linspace(-0.2, 0.2, num=100)
