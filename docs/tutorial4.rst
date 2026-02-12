@@ -208,10 +208,8 @@ the boundary conditions are applied to planes defined by 3 points.
 
 .. code-block:: python
 
-    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True], value=[0, 0, 0])
-    roller_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                            is_fixed=[True, False, True], value=[0, 0, 0])
+    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
+    roller_displacement_parameters = DisplacementConstraint(is_fixed=[True, False, True], value=[0, 0, 0])
     absorbing_boundaries_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=3.0)
 
     # add the boundary conditions to the model
