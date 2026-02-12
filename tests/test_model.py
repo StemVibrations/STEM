@@ -2254,13 +2254,13 @@ class TestModel:
         model.extrusion_length = 1
 
         # create multiple boundary condition parameters
-        no_rotation_parameters = RotationConstraint(active=[True, True, True],
+        no_rotation_parameters = RotationConstraint(
                                                     is_fixed=[True, True, True],
                                                     value=[0, 0, 0])
 
         absorbing_parameters = AbsorbingBoundary(absorbing_factors=[1, 1], virtual_thickness=0)
 
-        no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+        no_displacement_parameters = DisplacementConstraint(
                                                             is_fixed=[True, True, True],
                                                             value=[0, 0, 0])
 
@@ -2276,13 +2276,13 @@ class TestModel:
         model.synchronise_geometry()
 
         # set expected parameters of the boundary conditions
-        expected_0d_model_part_parameters = RotationConstraint(active=[True, True, True],
+        expected_0d_model_part_parameters = RotationConstraint(
                                                                is_fixed=[True, True, True],
                                                                value=[0, 0, 0])
 
         expected_1d_model_part_parameters = AbsorbingBoundary(absorbing_factors=[1, 1], virtual_thickness=0)
 
-        expected_2d_model_part_parameters = DisplacementConstraint(active=[True, True, True],
+        expected_2d_model_part_parameters = DisplacementConstraint(
                                                                    is_fixed=[True, True, True],
                                                                    value=[0, 0, 0])
 
@@ -2339,7 +2339,6 @@ class TestModel:
         ]
 
         # check 0d parameters
-        npt.assert_allclose(model.process_model_parts[0].parameters.active, expected_0d_model_part_parameters.active)
         npt.assert_allclose(model.process_model_parts[0].parameters.is_fixed,
                             expected_0d_model_part_parameters.is_fixed)
         npt.assert_allclose(model.process_model_parts[0].parameters.value, expected_0d_model_part_parameters.value)
@@ -2351,7 +2350,6 @@ class TestModel:
                             expected_1d_model_part_parameters.virtual_thickness)
 
         # check 2d parameters
-        npt.assert_allclose(model.process_model_parts[2].parameters.active, expected_2d_model_part_parameters.active)
         npt.assert_allclose(model.process_model_parts[2].parameters.is_fixed,
                             expected_2d_model_part_parameters.is_fixed)
         npt.assert_allclose(model.process_model_parts[2].parameters.value, expected_2d_model_part_parameters.value)
@@ -3535,8 +3533,7 @@ class TestModel:
         expected_rotation_constrain_geometry = Geometry(expected_rotation_constrain_points)
 
         expected_rotation_constraint_parameters = RotationConstraint(value=[0, 0, 0],
-                                                                     is_fixed=[True, True, True],
-                                                                     active=[True, True, True])
+                                                                     is_fixed=[True, True, True])
 
         TestUtils.assert_almost_equal_geometries(expected_rotation_constrain_geometry,
                                                  calculated_rotation_constrain_geometry)
@@ -3865,7 +3862,7 @@ class TestModel:
 
         model.synchronise_geometry()
 
-        no_displacement_boundary = DisplacementConstraint(active=[True, True, True],
+        no_displacement_boundary = DisplacementConstraint(
                                                           is_fixed=[True, True, True],
                                                           value=[0, 0, 0])
 
@@ -3946,8 +3943,7 @@ class TestModel:
 
         model.synchronise_geometry()
 
-        no_displacement_boundary = DisplacementConstraint(active=[True, True, True],
-                                                          is_fixed=[True, True, True],
+        no_displacement_boundary = DisplacementConstraint(is_fixed=[True, True, True],
                                                           value=[0, 0, 0])
 
         polygon_coordinates = [(0, 0, 0), (0, 0, 1), (0, 1, 1), (0, 1, 0)]
@@ -4344,8 +4340,8 @@ class TestModel:
         expected_rotation_constrain_geometry = Geometry(expected_rotation_constrain_points)
 
         expected_rotation_constraint_parameters = RotationConstraint(value=[0, 0, 0],
-                                                                     is_fixed=[True, True, True],
-                                                                     active=[True, True, True])
+                                                                     is_fixed=[True, True, True]
+                                                                     )
 
         TestUtils.assert_almost_equal_geometries(expected_rotation_constrain_geometry,
                                                  calculated_rotation_constrain_geometry)
@@ -4706,7 +4702,7 @@ class TestModel:
                 "coordinates": [(0, 0, 0), (0, 2, 0), (0, 2, 1), (0, 0, 1)],
                 "ndim": 1
             }}, "")
-        constraint_params = DisplacementConstraint([True, False, True], [True, False, True], [0.0, 0.0, 0.0])
+        constraint_params = DisplacementConstraint([True, False, True], [0.0, 0.0, 0.0])
         constraint_part = model._Model__create_rail_constraint_model_part(rail_name)
         assert constraint_part.geometry is not None
         assert constraint_part.name == "constraint_" + rail_name
@@ -4725,7 +4721,7 @@ class TestModel:
                 "coordinates": [(0, 0, 0), (0, 2, 0), (0, 2, 1), (0, 0, 1)],
                 "ndim": 1
             }}, "")
-        no_rotation_params = RotationConstraint([True, True, True], [True, True, True], [0.0, 0.0, 0.0])
+        no_rotation_params = RotationConstraint([True, True, True], [0.0, 0.0, 0.0])
         no_rotation_part = model._Model__create_rail_no_rotation_model_part(rail_name, global_rail_coords)
         assert no_rotation_part.geometry is not None
         assert no_rotation_part.name == "rotation_constraint_" + rail_name

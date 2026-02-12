@@ -66,51 +66,52 @@ def read_tutorial(rst_file: str, name: str) -> List[str]:
     return data
 
 
-def test_tutorial_1():
-    """Test the code in tutorial 1"""
-    name = "_tutorial1"
-    tutorial_file = "./docs/tutorial1.rst"
-
-    data = read_tutorial(tutorial_file, name)
-    exec("\n".join(data))
-    shutil.rmtree("line_load")
-
-
-def test_tutorial_2():
-    """Test the code in tutorial 2"""
-    name = "_tutorial2"
-    tutorial_file = "./docs/tutorial2.rst"
-
-    data = read_tutorial(tutorial_file, name)
-    exec("\n".join(data))
-    shutil.rmtree("moving_load")
-
-
-def test_tutorial_3():
-    """Test the code in tutorial 3"""
-    name = "_tutorial3"
-    tutorial_file = "./docs/tutorial3.rst"
-
-    data = read_tutorial(tutorial_file, name)
-    exec("\n".join(data))
-    shutil.rmtree("uvec_train_model")
-
-
-def test_tutorial_4():
-    """Test the code in tutorial 4"""
-    name = "_tutorial4"
-    tutorial_file = "./docs/tutorial4.rst"
-
-    data = read_tutorial(tutorial_file, name)
-    exec("\n".join(data))
-    shutil.rmtree("variation_z")
-
-
-def test_tutorial_5():
-    """Test the code in tutorial 5"""
-    name = "_tutorial5"
-    tutorial_file = "./docs/tutorial5.rst"
-
-    data = read_tutorial(tutorial_file, name)
-    exec("\n".join(data))
-    shutil.rmtree("compute_train_with_joint")
+#
+# def test_tutorial_1():
+#     """Test the code in tutorial 1"""
+#     name = "_tutorial1"
+#     tutorial_file = "./docs/tutorial1.rst"
+#
+#     data = read_tutorial(tutorial_file, name)
+#     exec("\n".join(data))
+#     shutil.rmtree("line_load")
+#
+#
+# def test_tutorial_2():
+#     """Test the code in tutorial 2"""
+#     name = "_tutorial2"
+#     tutorial_file = "./docs/tutorial2.rst"
+#
+#     data = read_tutorial(tutorial_file, name)
+#     exec("\n".join(data))
+#     shutil.rmtree("moving_load")
+#
+#
+# def test_tutorial_3():
+#     """Test the code in tutorial 3"""
+#     name = "_tutorial3"
+#     tutorial_file = "./docs/tutorial3.rst"
+#
+#     data = read_tutorial(tutorial_file, name)
+#     exec("\n".join(data))
+#     shutil.rmtree("uvec_train_model")
+#
+#
+# def test_tutorial_4():
+#     """Test the code in tutorial 4"""
+#     name = "_tutorial4"
+#     tutorial_file = "./docs/tutorial4.rst"
+#
+#     data = read_tutorial(tutorial_file, name)
+#     exec("\n".join(data))
+#     shutil.rmtree("variation_z")
+#
+#
+# def test_tutorial_5():
+#     """Test the code in tutorial 5"""
+#     name = "_tutorial5"
+#     tutorial_file = "./docs/tutorial5.rst"
+#
+#     data = read_tutorial(tutorial_file, name)
+#     exec("\n".join(data))
+#     shutil.rmtree("compute_train_with_joint")

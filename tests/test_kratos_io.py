@@ -93,7 +93,7 @@ class TestKratosModelIO:
         model.add_load_by_coordinates(load_coordinates_right, line_load2, "load_right")
 
         # add pin parameters
-        no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+        no_displacement_parameters = DisplacementConstraint(
                                                             is_fixed=[True, True, True],
                                                             value=[0, 0, 0])
 
@@ -143,7 +143,7 @@ class TestKratosModelIO:
         model.add_load_by_coordinates(load_coordinates_top, line_load1, "load_top")
 
         # add pin parameters
-        no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+        no_displacement_parameters = DisplacementConstraint(
                                                             is_fixed=[True, True, True],
                                                             value=[0, 0, 0])
 
@@ -198,7 +198,7 @@ class TestKratosModelIO:
         model.add_load_by_coordinates(load_coordinates_top, line_load1, "load_top")
 
         # add pin parameters
-        no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+        no_displacement_parameters = DisplacementConstraint(
                                                             is_fixed=[True, True, True],
                                                             value=[0, 0, 0])
 
@@ -265,7 +265,7 @@ class TestKratosModelIO:
         model.add_load_by_coordinates(load_coordinates_bottom, surface_load_bottom, "load_bottom")
 
         # add pin parameters
-        no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
+        no_displacement_parameters = DisplacementConstraint(
                                                             is_fixed=[True, True, True],
                                                             value=[0, table2, 0])
 
