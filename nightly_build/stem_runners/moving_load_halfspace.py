@@ -7,7 +7,6 @@ from stem.solver import AnalysisType, SolutionType, TimeIntegration, Displacemen
     StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy, NewtonRaphsonStrategy, Cg
 from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters
 from stem.stem import Stem
-from stem.utils import Utils
 
 
 def run_moving_load(input_folder):
@@ -48,19 +47,20 @@ def run_moving_load(input_folder):
                              direction_signs=[1, 1, 1],
                              velocity=10,
                              origin=[0.0, y_max, 0.0],
-                             offset=0.0)
+                             offset=1.0)
     model.add_load_by_coordinates(load_coordinates, moving_load, "moving_load")
 
     # Define boundary conditions
     no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
                                                         is_fixed=[True, True, True],
                                                         value=[0, 0, 0])
-    roller_displacement_parameters_x = DisplacementConstraint(active=[True, True, True],
+    roller_displacement_parameters_x = DisplacementConstraint(active=[True, False, False],
                                                               is_fixed=[True, False, False],
                                                               value=[0, 0, 0])
-    roller_displacement_parameters_z = DisplacementConstraint(active=[True, True, True],
+    roller_displacement_parameters_z = DisplacementConstraint(active=[False, False, True],
                                                               is_fixed=[False, False, True],
                                                               value=[0, 0, 0])
+
     abs_boundary_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=10)
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
@@ -69,19 +69,12 @@ def run_moving_load(input_folder):
     model.add_boundary_condition_on_plane([(0, 0, 0), (0, y_max, 0), (0, y_max, z_max)],
                                           roller_displacement_parameters_x, "sides_roler_x=0")
     model.add_boundary_condition_on_plane([(x_max, 0, 0), (x_max, y_max, 0), (x_max, y_max, z_max)],
-                                          roller_displacement_parameters_x, "sides_roler_x=x_max")
+                                          abs_boundary_parameters, "sides_roler_x=x_max")
 
-    model.add_boundary_condition_on_plane([(0, 0, 0), (x_max, 0, 0), (x_max, y_max, 0)],
-                                          roller_displacement_parameters_z, "abs_z=0")
+    model.add_boundary_condition_on_plane([(0, 0, 0), (x_max, 0, 0), (x_max, y_max, 0)], abs_boundary_parameters,
+                                          "abs_z=0")
     model.add_boundary_condition_on_plane([(0, 0, z_max), (x_max, 0, z_max), (x_max, y_max, z_max)],
-                                          roller_displacement_parameters_z, "abs_z=z_max")
-
-    # model.add_boundary_condition_on_plane([(0, 0, 0), (x_max, 0, 0), (x_max, y_max, 0)],
-    #                                       abs_boundary_parameters, "abs_z=0")
-    # model.add_boundary_condition_on_plane([(x_max, 0, 0), (x_max, y_max, 0), (x_max, y_max, z_max)],
-    #                                       abs_boundary_parameters, "abs_x=x_max")
-    # model.add_boundary_condition_on_plane([(0, 0, z_max), (x_max, 0, z_max), (x_max, y_max, z_max)],
-    #                                       abs_boundary_parameters, "abs_z=z_max")
+                                          abs_boundary_parameters, "abs_z=z_max")
 
     # Synchronize geometry
     model.synchronise_geometry()
@@ -101,7 +94,6 @@ def run_moving_load(input_folder):
                                        max_delta_time_factor=1000)
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
                                                             displacement_absolute_tolerance=1.0e-12)
-    stress_initialisation_type = StressInitialisationType.NONE
     solver_settings = SolverSettings(analysis_type=AnalysisType.MECHANICAL,
                                      solution_type=SolutionType.QUASI_STATIC,
                                      stress_initialisation_type=StressInitialisationType.NONE,

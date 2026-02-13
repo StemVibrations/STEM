@@ -382,32 +382,15 @@ def compare_sdof(path_model, output_file):
 
 def compare_moving_load(path_model, output_file):
 
-    # Based on:
-    # with:
-    # - model.set_mesh_size(element_size=0.15)
-    # - model.mesh_settings.element_order = 2
-
     # load data from STEM
     with open(path_model, "r") as f:
         data_kratos = json.load(f)
-
-    # idx = np.argmin(data_kratos['NODE_18']['DISPLACEMENT_Y'])
-    # dist = []
-    # amp = []
-    # for i in range(9, 30):
-    #     dist.append(data_kratos[f'NODE_{i}']['COORDINATES'][2])
-    #     amp.append(data_kratos[f'NODE_{i}']['DISPLACEMENT_Y'][idx])
-
-    # plt.plot(dist, amp, color="r", marker="x", label="STEM")
-    # plt.plot(data_kratos["TIME"], data_kratos['NODE_16']['DISPLACEMENT_Y'], color="r", marker="x", label="STEM")
-    # plt.plot(data_kratos["TIME"], data_kratos['NODE_10']['DISPLACEMENT_Y'], color="r", marker="x", label="STEM")
-    plt.plot(data_kratos["TIME"], data_kratos['NODE_17']['DISPLACEMENT_Y'], color="r", marker="x", label="STEM")
-    plt.plot(data_kratos["TIME"], data_kratos['NODE_18']['DISPLACEMENT_Y'], color="r", marker="x", label="STEM")
-    # plt.plot(data_kratos["TIME"], data_kratos['NODE_20']['DISPLACEMENT_Y'], color="r", marker="x", label="STEM")
-    # plt.plot(data_kratos["TIME"], data_kratos['NODE_21']['DISPLACEMENT_Y'], color="r", marker="x", label="STEM")
-    # plt.plot(data_kratos["TIME"], data_kratos['NODE_22']['DISPLACEMENT_Y'], color="r", marker="x", label="STEM")
-    # plt.plot(data_kratos["TIME"], data_kratos['NODE_27']['DISPLACEMENT_Y'], color="r", marker="x", label="STEM")
-    # # plt.plot(data_kratos["TIME"], data_kratos['NODE_18']['DISPLACEMENT_Y'], color="r", marker="x", label="STEM")
+    plt.plot(np.array(data_kratos["TIME"]) - data_kratos["TIME"][0],
+             np.array(data_kratos['NODE_16']['DISPLACEMENT_Y']) * 1000,
+             color="r",
+             marker="x",
+             markevery=5,
+             label="STEM")
 
     # Example usage
     E = 30e6  # Pa
@@ -416,54 +399,26 @@ def compare_moving_load(path_model, output_file):
     force = -2e3  # N
     speed = 10  # m/s
 
-    # 1. Defined Constants from Paper
-    # c_s_target = 1000.0  # m/s
-    # rho = 2000.0  # kg/m^3 (Arbitrary scaling factor, cancels out in dimensionless results)
-    # nu = 0.25  # Poisson's ratio
-
-    # 2. Back-calculate Young's Modulus E to match cs = 1000 m/s
-    # Formula: cs = sqrt( G / rho ) and G = E / (2*(1+nu))
-    # Therefore: E = rho * cs^2 * 2 * (1 + nu)
-    # E = rho * (c_s_target**2) * 2 * (1 + nu)  # Result: 5e9 Pa
-
     x, y, z = 0.0, 0.0, 1
     time = np.linspace(-1, 1, num=200)
 
-    # model = MovingLoadElasticHalfSpace(E, nu, rho, force, speed)
-    # uz = []
-    # for t in time:
-    #     print(f"t {t} / {time[-1]}")
-    #     model.compute_vertical_displacement(x, y, z, t, ky_max=200.0, n_ky=2000)
-    #     uz.append(np.real(model.vertical_displacement))
+    model = MovingLoadElasticHalfSpace(E, nu, rho, force, speed)
+    uz = []
+    for t in time:
+        model.compute_vertical_displacement(x, y, z, t, ky_max=200.0, n_ky=2000)
+        uz.append(np.real(model.vertical_displacement))
 
-    #     model = MovingLoadElasticHalfSpace2(E, nu, rho, force, speed)
-    #     w_history = []
-    #     for t in time:
-    #         x_bar = x - speed * t
-    #         w = model.compute_vertical_displacement(x_bar, y, z)
-    #         w_history.append(w)
+    idx_kratos = np.argmin(data_kratos['NODE_16']['DISPLACEMENT_Y'])
+    plt.plot(time + np.array(data_kratos["TIME"])[idx_kratos] - data_kratos["TIME"][0], (np.array(uz) - uz[0]) * 1000,
+             label="Analytical")
 
-    # #     model = MovingLoadElasticHalfSpace3(E, nu, rho, force, speed)
-    # #     t, w = model.compute_vertical_displacement(
-    # #     x=0.0, y=0.0, z=1.0
-    # # )
-    #     # uz = []
-    #     # for t in time:
-    #     #     u = model.compute_vertical_displacement(x, y, z, t, ky_max=50.0, n_ky=2000)
-    #     #     uz.append(u)
-
-    # plt.plot(time, uz, color="b", marker="x", label="Analytical")
-
-    idx_kratos = np.argmin(data_kratos['NODE_17']['DISPLACEMENT_Y'])
-    # plt.plot(time + data_kratos["TIME"][idx_kratos], uz-uz[0], label="Analytical")
-    # plt.plot(time + data_kratos["TIME"][idx_kratos], w_history)
-    # plt.plot(t + data_kratos["TIME"][idx_kratos], w)
-
-    plt.xlabel("Time step")
-    plt.ylabel("Vertical displacement uz (m)")
+    plt.xlabel("Time [s]")
+    plt.ylabel("Vertical displacement [mm]")
     plt.legend()
     plt.grid()
-    plt.show()
+    plt.xlim(0, 1.5)
+    plt.savefig(output_file)
+    plt.close()
 
 
 def compare_boussinesq(path_model, output_file):
