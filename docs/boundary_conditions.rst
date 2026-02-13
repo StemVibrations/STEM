@@ -64,6 +64,7 @@ To assign boundary conditions by geometry IDs, specify the dimension of the boun
    model.add_boundary_condition_by_geometry_ids(2, [1], fixed, "base_fixed")
    model.add_boundary_condition_by_geometry_ids(2, [2, 4, 5, 6, 7, 10, 11, 12, 15, 16, 17], roller, "sides_roller")
 
+.. _geometry_id_bc
 Inspect geometry IDs
 --------------------
 When assigning boundary conditions by geometry IDs, it is crucial to ensure that the correct IDs are used.
