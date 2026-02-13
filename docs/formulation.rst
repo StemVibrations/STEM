@@ -89,8 +89,7 @@ STEM support different types of boundary conditions, including:
 
 - Dirichlet boundary conditions (fixed boundary condition)
 - Neumann boundary conditions (velocity boundary condition)
-- Absorbing boundaries :cite:`Lysmer_Kuhlemeyer_1969` and other processes are handled through Kratos processes;
-  STEM exposes these through :mod:`stem.additional_processes` and :mod:`stem.water_processes` when applicable.
+- Absorbing boundaries :cite:`Lysmer_Kuhlemeyer_1969`
 
 Loads
 -----
@@ -111,6 +110,8 @@ Constitutive models
 STEM supports linear elastic material models.
 Non-linear material models can be implemented by the user and integrated into STEM through the
 UMAT interface (see :doc:`API_definition`).
+
+.. _linear_elastic_material:
 
 Linear elastic material
 ----------------------
