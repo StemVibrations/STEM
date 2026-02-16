@@ -73,7 +73,7 @@ def test_tutorial_1():
 
     data = read_tutorial(tutorial_file, name)
     exec("\n".join(data))
-    shutil.rmtree("line_load")
+    shutil.rmtree("lamb")
 
 
 def test_tutorial_2():
@@ -83,7 +83,7 @@ def test_tutorial_2():
 
     data = read_tutorial(tutorial_file, name)
     exec("\n".join(data))
-    shutil.rmtree("moving_load")
+    shutil.rmtree("line_load")
 
 
 def test_tutorial_3():
@@ -93,7 +93,7 @@ def test_tutorial_3():
 
     data = read_tutorial(tutorial_file, name)
     exec("\n".join(data))
-    shutil.rmtree("uvec_train_model")
+    shutil.rmtree("moving_load")
 
 
 def test_tutorial_4():
@@ -103,13 +103,23 @@ def test_tutorial_4():
 
     data = read_tutorial(tutorial_file, name)
     exec("\n".join(data))
-    shutil.rmtree("variation_z")
+    shutil.rmtree("uvec_train_model")
 
 
 def test_tutorial_5():
     """Test the code in tutorial 5"""
     name = "_tutorial5"
     tutorial_file = "./docs/tutorial5.rst"
+
+    data = read_tutorial(tutorial_file, name)
+    exec("\n".join(data))
+    shutil.rmtree("variation_z")
+
+
+def test_tutorial_6():
+    """Test the code in tutorial 6"""
+    name = "_tutorial6"
+    tutorial_file = "./docs/tutorial6.rst"
 
     data = read_tutorial(tutorial_file, name)
     exec("\n".join(data))

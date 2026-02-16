@@ -1,45 +1,47 @@
 .. _tutorial1:
 
-Stationary load on a 3D field
-=============================
+Lamb's problem in 3D
+====================
 
 Overview
 --------
-This tutorial shows a step-by-step guide on how to set up a line load
-on top of an embankment with two soil layers underneath, in a 3D model.
+This tutorial shows a step-by-step guide on how to set up and run a 3D Lamb problem, that
+consists on the application of a point load on the surface, and computing the wave propagation
+towards the free field.
+To avoid reflections at the model edges, absorbing boundaries are used.
 
 Imports and setup
 -----------------
-First the necessary packages are imported and paths are defined.
+First the necessary packages are imported and the input folder is defined.
 
 .. code-block:: python
 
-    input_files_dir = "line_load"
-    results_dir = "output_line_load"
+    input_files_dir = "lamb"
 
     from stem.model import Model
     from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
-    from stem.load import LineLoad
-    from stem.boundary import DisplacementConstraint
-    from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
-         LinearNewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
-    from stem.output import NodalOutput, VtkOutputParameters, Output
+    from stem.load import PointLoad
+    from stem.boundary import DisplacementConstraint, AbsorbingBoundary
+    from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, \
+        StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy, Cg
+    from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters
     from stem.stem import Stem
 
     # END CODE BLOCK
 
-For setting up the model, Model class is imported from stem.model. And for setting up the soil material, OnePhaseSoil,
-LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw classes are imported.
-In this case, there is a line load on top of the embankment. LineLoad class is imported from stem.load.
-As for setting the boundary conditions, DisplacementConstraint class is imported from stem.boundary.
-For setting up the solver settings, necessary classes are imported from stem.solver.
-Classes needed for the output, are NodalOutput, VtkOutputParameters and Output which are imported from stem.output.
-Lastly, Stem class is imported from stem.stem, in order to run the simulation.
+For setting up the model, ``Model`` is imported from ``stem.model``.
+For the soil material, ``OnePhaseSoil``, ``LinearElasticSoil``, ``SoilMaterial``,
+and ``SaturatedBelowPhreaticLevelLaw`` are imported from ``stem.soil_material``.
+In this case, a point load is applied, therefore ``PointLoad`` is imported from ``stem.load``.
+Boundary conditions are set using ``DisplacementConstraint`` and ``AbsorbingBoundary``.
+Solver settings are defined with classes imported from ``stem.solver``.
+For output, ``NodalOutput``, ``VtkOutputParameters``, and ``JsonOutputParameters`` are imported.
+Finally, ``Stem`` is imported from ``stem.stem`` to write input files and run the calculation.
 
-Geometry and materials
-----------------------
-In this step, the geometry, conditions, and material parameters for the simulation are defined.
-First the dimension of the model is indicated which in this case is 3. After which the model can be initialised.
+Geometry and material
+---------------------
+In this step, the geometry and material are defined.
+First the model dimension is set to 3 and the model is initialised.
 
 .. code-block:: python
 
@@ -48,257 +50,177 @@ First the dimension of the model is indicated which in this case is 3. After whi
 
     # END CODE BLOCK
 
-Specification of the soil material is defined afterwards.
-The bottom soil layer is defined as a material with the name "soil_1".
-It's a Linear elastic material model with the solid density (rho) of 2650 kg/m3,
-the Young's modulus is 30e6 Pa and the Poisson's ratio is 0.2.
-The soil is dry above the phreatic level and wet below the phreatic level. A porosity of 0.3 is specified.
-The soil is a one-phase soil, meaning that the flow of water through the soil is not computed.
+The soil is modelled as linear elastic, drained, and one-phase.
 
 .. code-block:: python
 
-    solid_density_1 = 2650
-    porosity_1 = 0.3
-    young_modulus_1 = 30e6
-    poisson_ratio_1 = 0.2
-    soil_formulation_1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_1, POROSITY=porosity_1)
-    constitutive_law_1 = LinearElasticSoil(YOUNG_MODULUS=young_modulus_1, POISSON_RATIO=poisson_ratio_1)
-    retention_parameters_1 = SaturatedBelowPhreaticLevelLaw()
-    material_soil_1 = SoilMaterial("soil_1", soil_formulation_1, constitutive_law_1, retention_parameters_1)
+    DENSITY_SOLID = 2000
+    POROSITY = 0
+    YOUNG_MODULUS = 30e6
+    POISSON_RATIO = 0.2
+
+    soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
+    constitutive_law = LinearElasticSoil(YOUNG_MODULUS=YOUNG_MODULUS, POISSON_RATIO=POISSON_RATIO)
+    retention_parameters = SaturatedBelowPhreaticLevelLaw()
+    material = SoilMaterial("soil", soil_formulation, constitutive_law, retention_parameters)
 
     # END CODE BLOCK
 
-The second soil layer is defined as a material with the name "soil_2".
-It's a Linear elastic material model with the solid density (rho) of 2550 kg/m3,
-the Young's modulus is 30e6 Pa and the Poisson's ratio is 0.2.
-The soil is dry above the phreatic level and wet below the phreatic level. A porosity of 0.3 is specified.
-The soil is a one-phase soil, meaning that the flow of water through the soil is not computed.
+A rectangular soil domain is created in the x-y plane and extruded in z-direction.
 
 .. code-block:: python
 
-    solid_density_2 = 2550
-    porosity_2 = 0.3
-    young_modulus_2 = 30e6
-    poisson_ratio_2 = 0.2
-    soil_formulation_2 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_2, POROSITY=porosity_2)
-    constitutive_law_2 = LinearElasticSoil(YOUNG_MODULUS=young_modulus_2, POISSON_RATIO=poisson_ratio_2)
-    retention_parameters_2 = SaturatedBelowPhreaticLevelLaw()
-    material_soil_2 = SoilMaterial("soil_2", soil_formulation_2, constitutive_law_2, retention_parameters_2)
+    x_max = 10
+    y_max = 5
+    z_max = 10
+
+    layer_coordinates = [(0.0, 0.0, 0.0), (x_max, 0.0, 0.0), (x_max, y_max, 0.0), (0.0, y_max, 0.0)]
+    model.extrusion_length = z_max
+
+    model.add_soil_layer_by_coordinates(layer_coordinates, material, "soil")
 
     # END CODE BLOCK
 
-The embankment layer on top is defined as a material with the name "embankment".
-It's a Linear elastic material model with the solid density (rho) of 2650 kg/m3,
-the Young's modulus is 10e6 Pa and the Poisson's ratio is 0.2.
-The soil is dry above the phreatic level and wet below the phreatic level. A porosity of 0.3 is specified.
-The soil is a one-phase soil, meaning that the flow of water through the soil is not computed.
+Load
+----
+A point load is applied at the surface corner (x=0, y=y_max, z=0), acting in the negative y-direction.
 
 .. code-block:: python
 
-    solid_density_3 = 2650
-    porosity_3 = 0.3
-    young_modulus_3 = 10e6
-    poisson_ratio_3 = 0.2
-    soil_formulation_3 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_3, POROSITY=porosity_3)
-    constitutive_law_3 = LinearElasticSoil(YOUNG_MODULUS=young_modulus_3, POISSON_RATIO=poisson_ratio_3)
-    retention_parameters_3 = SaturatedBelowPhreaticLevelLaw()
-    material_embankment = SoilMaterial("embankment", soil_formulation_3, constitutive_law_3, retention_parameters_3)
+    force = -1e6
+    node_coordinates = [(0.0, y_max, 0.0)]
+
+    point_load = PointLoad(active=[True, True, True], value=[0, force, 0])
+    model.add_load_by_coordinates(node_coordinates, point_load, "point_load")
 
     # END CODE BLOCK
-
-Coordinates and model extents
------------------------------
-The coordinates of the model are defined in the following way. Each of the layers is defined by a list of coordinates,
-defined in the x-y plane. For 3D models, the x-y plane can be extruded in the z-direction. In this case, the extrusion
-length is 50 m in the z-direction.
-
-.. code-block:: python
-
-    soil1_coordinates = [(0.0, 0.0, 0.0), (5.0, 0.0, 0.0), (5.0, 1.0, 0.0), (0.0, 1.0, 0.0)]
-    soil2_coordinates = [(0.0, 1.0, 0.0), (5.0, 1.0, 0.0), (5.0, 2.0, 0.0), (0.0, 2.0, 0.0)]
-    embankment_coordinates = [(0.0, 2.0, 0.0), (3.0, 2.0, 0.0), (1.5, 3.0, 0.0), (0.75, 3.0, 0.0), (0, 3.0, 0.0)]
-    model.extrusion_length = 50
-
-    # END CODE BLOCK
-
-The geometry is shown in the figures below.
-
-.. image:: _static/embankment_1.png
-
-.. image:: _static/embankment_2.png
-
-
-The soil layers are then added to the model in the following way. It is important that all soil layers have
-a unique name.
-
-.. code-block:: python
-
-    model.add_soil_layer_by_coordinates(soil1_coordinates, material_soil_1, "soil_layer_1")
-    model.add_soil_layer_by_coordinates(soil2_coordinates, material_soil_2, "soil_layer_2")
-    model.add_soil_layer_by_coordinates(embankment_coordinates, material_embankment, "embankment_layer")
-
-    # END CODE BLOCK
-
-Loads
------
-For the line load, LineLoad class is called. The load is defined following a list of coordinates. In this case,
-a line load is applied along the load coordinates. The line load can be defined along which axis is active,
-and the value of the load for each axis. In this case the load is only active in the y-direction and the value is -1000.
-
-.. code-block:: python
-
-    load_coordinates = [(0.75, 3.0, 0.0), (0.75, 3.0, 50.0)]
-    line_load = LineLoad(active=[False, True, False], value=[0, -1000, 0])
-    model.add_load_by_coordinates(load_coordinates, line_load, "line_load")
-
-    # END CODE BLOCK
-
-Geometry IDs and visualisation
-------------------------------
-The boundary conditions are defined on geometry ids, which are created by gmsh when making the geometry. Gmsh will
-assign an id to each of the points, lines, surfaces and volumes created.
-The geometry ids can be seen after using the show_geometry function.
-
-This function is only used for visualisation of the geometry ids after creation of the geometry, to be able to see the
-geometry ids issued by gmsh, and to know which ids belong to each boundary conditions.
-For visualisation of surface ids, "show_surface_ids" should be set to "True".
-Also for visualisation of line ids, "show_line_ids" and for visualisation of point ids, "show_point_ids"
-should be set to "True".
-
-.. code-block:: python
-
-    model.synchronise_geometry()
-
-    model.show_geometry(show_surface_ids=True)
-
-    # END CODE BLOCK
-
-The geometry ids can be seen in the pictures below.
-
-.. image:: _static/geometry_ids.png
-
 
 Boundary conditions
 -------------------
-Below the boundary conditions are defined. The base of the model is fixed in all directions with the name "base_fixed".
-The roller boundary condition is applied on the sides of the embankment with the name "sides_roller".
-The boundary conditions are added to the model on the edge surfaces, i.e. the boundary conditions are applied to a list
-of surface ids (which can be visualised using: "model.show_geometry(show_surface_ids=True)")  with the corresponding
-dimension, "2".
+Below the boundary conditions are defined.
+The base is fully fixed.
+Roller boundaries are applied on x=0 and z=0 planes.
+Absorbing boundaries are applied on x=x_max and z=z_max planes.
 
 .. code-block:: python
 
     no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True], value=[0, 0, 0])
-    roller_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                            is_fixed=[True, False, True], value=[0, 0, 0])
+                                                        is_fixed=[True, True, True],
+                                                        value=[0, 0, 0])
 
-    model.add_boundary_condition_by_geometry_ids(2, [1], no_displacement_parameters, "base_fixed")
-    model.add_boundary_condition_by_geometry_ids(2, [2, 4, 5, 6, 7, 10, 11, 12, 15, 16, 17],
-                                                 roller_displacement_parameters, "sides_roller")
+    roller_displacement_parameters_x = DisplacementConstraint(active=[True, True, True],
+                                                              is_fixed=[True, False, False],
+                                                              value=[0, 0, 0])
+
+    roller_displacement_parameters_z = DisplacementConstraint(active=[True, True, True],
+                                                              is_fixed=[False, False, True],
+                                                              value=[0, 0, 0])
+
+    abs_boundary_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=10)
+
+    model.add_boundary_condition_on_plane([(0, 0, 0), (x_max, 0, 0), (x_max, 0, z_max)],
+                                          no_displacement_parameters, "base_fixed")
+
+    model.add_boundary_condition_on_plane([(0, 0, 0), (0, y_max, 0), (0, y_max, z_max)],
+                                          roller_displacement_parameters_x, "sides_roler_x=0")
+
+    model.add_boundary_condition_on_plane([(0, 0, 0), (x_max, 0, 0), (x_max, y_max, 0)],
+                                          roller_displacement_parameters_z, "sides_roler_z=0")
+
+    model.add_boundary_condition_on_plane([(x_max, 0, 0), (x_max, y_max, 0), (x_max, y_max, z_max)],
+                                          abs_boundary_parameters, "abs_x=x_max")
+
+    model.add_boundary_condition_on_plane([(0, 0, z_max), (x_max, 0, z_max), (x_max, y_max, z_max)],
+                                          abs_boundary_parameters, "abs_z=z_max")
 
     # END CODE BLOCK
 
-Mesh
-----
-After which the mesh size can be set. The element size for the mesh can be defined as a single value; the mesh
-will be generated when the Stem class is initialised.
+Mesh and geometry synchronisation
+---------------------------------
+The mesh size and element order are defined.
+After assigning geometry and conditions, the geometry is synchronised.
 
 .. code-block:: python
 
-    model.set_mesh_size(element_size=1.0)
+    model.set_mesh_size(element_size=0.25)
+    model.mesh_settings.element_order = 2
+
+    model.synchronise_geometry()
 
     # END CODE BLOCK
 
 Solver settings
 ---------------
-Now that the geometry is defined, the solver settings of the model have to be set.
-The analysis type is set to "MECHANICAL" and the solution type is set to "DYNAMIC".
-Then the start time is set to 0.0 second and the end time is set to 0.1 second. The time step size is set to 0.01 second.
-Furthermore, the reduction factor and increase factor are set to 1.0, such that the time step size is constant throughout
-the simulation. Displacement convergence criteria is set to 1.0e-4 for the relative tolerance and 1.0e-9 for the
-absolute tolerance. Since the problem is linear elastic, Linear-Newton-Raphson is used as a solving strategy.
-And Newmark is used as an integration method. Amgcl is used as a linear solver. Stresses are not initialised since
-the "stress_initialisation_type" is set to "NONE". Other options are "StressInitialisationType.GRAVITY_LOADING" and
-"StressInitialisationType.K0_PROCEDURE". Since the problem is linear elastic, the stiffness matrix is constant and the mass and
-damping matrices are constant, defining the matrices as constant will speed up the computation. Rayleigh damping is
-assumed, with a damping coefficient of 0.0002 for the stiffness matrix and 0.6 for the mass matrix.
+Now that the model is defined, the solver settings are set.
+A dynamic mechanical analysis is used with constant time step.
+Linear-Newton-Raphson is used as strategy and Cg as linear solver.
 
 .. code-block:: python
 
-    analysis_type = AnalysisType.MECHANICAL
-    solution_type = SolutionType.DYNAMIC
-    # Set up start and end time of calculation, time step and etc
-    time_integration = TimeIntegration(start_time=0.0, end_time=0.1, delta_time=0.01, reduction_factor=1.0,
-                                       increase_factor=1.0)
+    time_step = 0.001
+
+    time_integration = TimeIntegration(start_time=0.0,
+                                       end_time=0.08,
+                                       delta_time=time_step,
+                                       reduction_factor=1.0,
+                                       increase_factor=1.0,
+                                       max_delta_time_factor=1000)
+
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
                                                             displacement_absolute_tolerance=1.0e-9)
-    strategy_type = LinearNewtonRaphsonStrategy()
-    scheme_type = NewmarkScheme()
-    linear_solver_settings = Amgcl()
-    stress_initialisation_type = StressInitialisationType.NONE
-    solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
-                                     stress_initialisation_type=stress_initialisation_type,
+
+    solver_settings = SolverSettings(analysis_type=AnalysisType.MECHANICAL,
+                                     solution_type=SolutionType.DYNAMIC,
+                                     stress_initialisation_type=StressInitialisationType.NONE,
                                      time_integration=time_integration,
-                                     is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
+                                     is_stiffness_matrix_constant=True,
+                                     are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
-                                     strategy_type=strategy_type, scheme=scheme_type,
-                                     linear_solver_settings=linear_solver_settings, rayleigh_k=0.0002,
-                                     rayleigh_m=0.6)
+                                     strategy_type=LinearNewtonRaphsonStrategy(),
+                                     linear_solver_settings=Cg(),
+                                     rayleigh_k=7.86e-5,
+                                     rayleigh_m=0.248)
 
     # END CODE BLOCK
 
 Problem and output
 ------------------
-Now the problem data should be set up. The problem should be given a name, in this case it is
-"calculate_load_on_embankment_3d". Then the solver settings are added to the problem.
+The problem definition is added to the model.
+In this example, JSON output is requested at four surface points and VTK output
+is written for the full computational model part.
 
 .. code-block:: python
 
-    # Set up problem data
-    problem = Problem(problem_name="calculate_load_on_embankment_3d", number_of_threads=1,
-                      settings=solver_settings)
+    problem = Problem(problem_name="Pekeris", number_of_threads=44, settings=solver_settings)
     model.project_parameters = problem
 
-    # END CODE BLOCK
+    json_output_parameters = JsonOutputParameters(time_step, [NodalOutput.DISPLACEMENT], [])
 
-Before starting the calculation, it is required to specify why output is desired. In this case, displacement,
-velocity and acceleration is given on the nodes and written to the output file. In this test case, gauss point results
-are left empty.
+    model.add_output_settings_by_coordinates([
+        (0, y_max, 0),
+        (1, y_max, 0),
+        (2, y_max, 0),
+        (3, y_max, 0),
+    ], json_output_parameters, "json_output")
 
-.. code-block:: python
-
-    nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY, NodalOutput.ACCELERATION]
-    gauss_point_results = []
-
-    # END CODE BLOCK
-
-The output process is added to the model using the `Model.add_output_settings` method. The results will be then written to the output directory in vtk
-format. In this case, the output interval is set to 1 and the output control type is set to "step", meaning that the
-results will be written every time step.
-
-.. code-block:: python
-
-     model.add_output_settings(
-        part_name="porous_computational_model_part",
-        output_name="vtk_output",
-        output_dir="output",
+    model.add_output_settings(
         output_parameters=VtkOutputParameters(
+            file_format="ascii",
             output_interval=1,
-            nodal_results=nodal_results,
-            gauss_point_results=gauss_point_results,
+            nodal_results=[NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY],
+            gauss_point_results=[],
             output_control_type="step"
-        )
+        ),
+        part_name="porous_computational_model_part",
+        output_dir="output",
+        output_name="vtk_output"
     )
 
     # END CODE BLOCK
 
 Run
 ---
-Now that the model is set up, the calculation is almost ready to be run.
-
-Firstly the Stem class is initialised, with the model and the directory where the input files will be written to.
-While initialising the Stem class, the mesh will be generated.
+Now that the model is set up, the calculation is ready to run.
 
 .. code-block:: python
 
@@ -308,10 +230,7 @@ While initialising the Stem class, the mesh will be generated.
 
 Write inputs
 ------------
-The Kratos input files are then written. The project settings and output definitions are written to
-ProjectParameters_stage_1.json file. The mesh is written to the .mdpa file and the material parameters are
-written to the MaterialParameters_stage_1.json file.
-All of the input files are then written to the input files directory.
+The Kratos input files are written to the input folder.
 
 .. code-block:: python
 
@@ -321,7 +240,7 @@ All of the input files are then written to the input files directory.
 
 Run calculation
 ---------------
-The calculation is then ran by calling the run_calculation function within the stem class.
+The calculation is run by calling `run_calculation`.
 
 .. code-block:: python
 

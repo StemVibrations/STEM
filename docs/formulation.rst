@@ -8,17 +8,22 @@ and is powered by `Kratos Multiphysics <https://github.com/KratosMultiphysics/Kr
 
 Governing equation
 ------------------
-STEM solves the dynamic equilibrium equation, following a Lagrangian formulation (small-strain).
+STEM solves the dynamic equilibrium equation, following a Total Lagrangian formulation with small strains.
 The governing finite element equation to be solved is:
 
   .. math::
-          \mathbf{M}\mathbf{a} + \mathbf{C}\mathbf{v} + \mathbf{K}\mathbf{u} = \mathbf{F_{ext}}\left( t \right)
+          \mathbf{M}\mathbf{a} + \mathbf{C}\mathbf{v} + \mathbf{K}\mathbf{u} = \mathbf{F_{ext}}\left( \text{t} \right)
 
-\noindent where :math:`\mathbf{M}` is the mass :math:`\mathbf{C}` is the damping, :math:`\mathbf{K}` is the
-stiffness matrices of the entire system, :math:`\mathbf{F_{ext}}` denotes the vector of the external forces and
+where :math:`\mathbf{M}` is the mass matrix, :math:`\mathbf{C}` is the damping matrix, and :math:`\mathbf{K}` is the
+stiffness matrix of the entire system, :math:`\mathbf{F_{ext}}` denotes the vector of the external forces and
 :math:`\mathbf{a}`, :math:`\mathbf{v}`, :math:`\mathbf{u}` are, respectively, the acceleration, the velocity and
 the displacement in the nodes.
 
+In STEM is also possible to perform quasi-static analyses, in which inertial and damping effects are neglected.
+In this case, the governing equation is reduced to:
+
+  .. math::
+          \mathbf{K}\mathbf{u} = \mathbf{F_{ext}}\left( t \right).
 
 Spatial discretisation
 ----------------------
@@ -87,8 +92,8 @@ Boundary conditions
 -------------------
 STEM support different types of boundary conditions, including:
 
-- Dirichlet boundary conditions (fixed boundary condition)
-- Neumann boundary conditions (velocity boundary condition)
+- Dirichlet boundary conditions (prescribed displacement or velocity)
+- Neumann boundary conditions (force or traction boundary conditions)
 - Absorbing boundaries :cite:`Lysmer_Kuhlemeyer_1969`
 
 Loads
@@ -114,7 +119,7 @@ UMAT interface (see :doc:`API_definition`).
 .. _linear_elastic_material:
 
 Linear elastic material
-----------------------
+-----------------------
 The default material model for STEM analysis is the linear elastic material model.
 In STEM a material is defined by specifying the material formulation and the linear elastic material parameters.
 
@@ -144,7 +149,7 @@ and it can be calculated as:
     \rho = (1-n)\rho_s + n\rho_f
 
 where :math:`\rho_f` is the density of the fluid phase (water).
-Because in STEM the soil is modelled as a drained single phase material this equation simplies to:
+Because in STEM the soil is modelled as a drained single phase material this equation simplifies to:
 
 .. math::
     \rho = (1-n)\rho_s
@@ -153,11 +158,12 @@ If the user has the bulk density and wants to use it as input, the porosity can 
 zero and the density of the solid phase can be set as the bulk density.
 
 To model soil layers below ground water table, since the soil is modelled as a drained single phase material,
-the Poisson ratio of the soil layer should be set to 0.495. This means that the material is imcompressible,
+the Poisson ratio of the soil layer should be set to 0.495. This means that the material is nearly incompressible,
 i.e. cannot experience volumetric deformation and this accurately mimics the saturated behaviour of soil, subjected
 to dynamic loading, in the short term (before pore water pressure dissipation occurs).
 
 .. _uvec_form:
+
 Train-track model
 =================
 The train and the train-track interaction model can be modelled by a user-defined vehicle model (UVEC)
@@ -174,13 +180,13 @@ conditions applied to the central plane.
 The figure shows the schematic of the train model.
 
 .. figure:: _static/STEM_track.png
-  :alt: Train model
-  :width: 500
+   :alt: Train model
+   :width: 500
 
    STEM train model
 
 The railway track consists of rail, railpad and sleeper.
-The rail is modelled as a Euler-Bernoulli beam element.
+The rail is modelled as an Euler-Bernoulli beam element.
 The railpad is modelled as a spring-damper element, which provides the stiffness and damping of the railpad.
 The sleeper can either be modelled as a concentrated mass, or a volume element, depending on the level of
 detail required by the user.
@@ -215,20 +221,19 @@ is used to produce the samples of the irregularities.
     S(\Omega) = \frac{2 \pi A_v \Omega^{2}_{c}}{(\Omega^2 + \Omega_c^2)\Omega^2}
 
 
-where :math:`\Omega` the wave number, :math:`A_v` the rail irregularity parameter and :math:`\Omega_c`
+where :math:`\Omega` the wavenumber, :math:`A_v` the rail irregularity parameter and :math:`\Omega_c`
 is the critical wavenumber. These two parameters define the quality of the railway track :cite:`Lei_Noda_2002`.
 
 The sample of rail irregularities can be produced by inverse Fourier transform shown as follows:
 
-\begin{equation}
+.. math::
     r(x) = \sum^{N}_{n=1} \sqrt{4 S(\omega_n) \Delta \omega} \cos(\omega_n x - \theta_n)
-    \label{eq:irr2}
-\end{equation}
+
 
 where :math:`\omega_n`, is a circular frequency within the interval in which the PSD function is defined,
- :math:`\theta_n`, a random phase angle uniformly distributed from 0 to :math:`2\pi`, and
- :math:`\Delta \omega` is defined as he total number of frequency increments :math:`N` in the range of the
- circular frequency.
+:math:`\theta_n`, a random phase angle uniformly distributed from 0 to :math:`2\pi`, and
+:math:`\Delta \omega` is defined as the total number of frequency increments :math:`N` in the range of the
+circular frequency.
 
 The parameter :math:`A_v` can be estimated based on the track quality :cite:`Lei_Noda_2002`.
 
@@ -250,14 +255,3 @@ The parameter :math:`A_v` can be estimated based on the track quality :cite:`Lei
     +-----------------+------------------------+
     | 6 (very good)   | 0.0339e-4              |
     +-----------------+------------------------+
-
-
-.. References
-.. ----------
-.. For background on soil/structural dynamics and train-track interaction:
-
-.. - :cite:`Verruijt_2010` — Soil dynamics fundamentals.
-.. - :cite:`Biggs_1964` — Structural dynamics.
-.. - :cite:`Zhang_2001`, :cite:`Lei_Noda_2002`, :cite:`Kabo_2006` — Examples of vehicle-track interaction modelling.
-
-.. See :doc:`bibliography` for the complete list.

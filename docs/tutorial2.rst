@@ -1,11 +1,11 @@
-.. _tutorial2:
+.. _tutorial1:
 
-Moving load on an embankment in 3D
-==================================
+Stationary load on a 3D field
+=============================
 
 Overview
 --------
-This tutorial shows a step-by-step guide on how to set up a moving load
+This tutorial shows a step-by-step guide on how to set up a line load
 on top of an embankment with two soil layers underneath, in a 3D model.
 
 Imports and setup
@@ -14,12 +14,12 @@ First the necessary packages are imported and paths are defined.
 
 .. code-block:: python
 
-    input_files_dir = "moving_load"
-    results_dir = "output_moving_load"
+    input_files_dir = "line_load"
+    results_dir = "output_line_load"
 
     from stem.model import Model
     from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
-    from stem.load import MovingLoad
+    from stem.load import LineLoad
     from stem.boundary import DisplacementConstraint
     from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
          LinearNewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
@@ -30,25 +30,10 @@ First the necessary packages are imported and paths are defined.
 
 For setting up the model, Model class is imported from stem.model. And for setting up the soil material, OnePhaseSoil,
 LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw classes are imported.
-
-Loads
------
-In this case, there is a moving load on top of the embankment. MovingLoad class is imported from stem.load.
-
-Boundary conditions
--------------------
+In this case, there is a line load on top of the embankment. LineLoad class is imported from stem.load.
 As for setting the boundary conditions, DisplacementConstraint class is imported from stem.boundary.
-
-Solver settings
----------------
 For setting up the solver settings, necessary classes are imported from stem.solver.
-
-Output
-------
 Classes needed for the output, are NodalOutput, VtkOutputParameters and Output which are imported from stem.output.
-
-Run
----
 Lastly, Stem class is imported from stem.stem, in order to run the simulation.
 
 Geometry and materials
@@ -121,8 +106,10 @@ The soil is a one-phase soil, meaning that the flow of water through the soil is
 
     # END CODE BLOCK
 
-The coordinates of the model are defined in the following way. Each of the layers are defined by a list of coordinates,
-defined in th x-y plane. For 3D models, the x-y plane can be extruded in the z-direction. In this case, the extrusion
+Coordinates and model extents
+-----------------------------
+The coordinates of the model are defined in the following way. Each of the layers is defined by a list of coordinates,
+defined in the x-y plane. For 3D models, the x-y plane can be extruded in the z-direction. In this case, the extrusion
 length is 50 m in the z-direction.
 
 .. code-block:: python
@@ -152,20 +139,22 @@ a unique name.
 
     # END CODE BLOCK
 
-For the moving load, MovingLoad class is called. The load is defined following a list of coordinates. In this case,
-a moving load is applied on a line with a 0.75 meter distance from the x-axis on top of the embankment. The velocity of
-the moving load is 30 m/s and the load is 10 kN/m in the y-direction. The load moves in positive directions and  the
-load starts at coordinates: [0.75, 3.0, 0.0].
+Loads
+-----
+For the line load, LineLoad class is called. The load is defined following a list of coordinates. In this case,
+a line load is applied along the load coordinates. The line load can be defined along which axis is active,
+and the value of the load for each axis. In this case the load is only active in the y-direction and the value is -1000.
 
 .. code-block:: python
 
     load_coordinates = [(0.75, 3.0, 0.0), (0.75, 3.0, 50.0)]
-    moving_load = MovingLoad(load=[0.0, -10000.0, 0.0], direction_signs=[1, 1, 1], velocity=30, origin=[0.75, 3.0, 0.0],
-                             offset=0.0)
-    model.add_load_by_coordinates(load_coordinates, moving_load, "moving_load")
+    line_load = LineLoad(active=[False, True, False], value=[0, -1000, 0])
+    model.add_load_by_coordinates(load_coordinates, line_load, "line_load")
 
     # END CODE BLOCK
 
+Geometry IDs and visualisation
+------------------------------
 The boundary conditions are defined on geometry ids, which are created by gmsh when making the geometry. Gmsh will
 assign an id to each of the points, lines, surfaces and volumes created.
 The geometry ids can be seen after using the show_geometry function.
@@ -189,6 +178,8 @@ The geometry ids can be seen in the pictures below.
 .. image:: _static/geometry_ids.png
 
 
+Boundary conditions
+-------------------
 Below the boundary conditions are defined. The base of the model is fixed in all directions with the name "base_fixed".
 The roller boundary condition is applied on the sides of the embankment with the name "sides_roller".
 The boundary conditions are added to the model on the edge surfaces, i.e. the boundary conditions are applied to a list
@@ -205,10 +196,12 @@ dimension, "2".
     model.add_boundary_condition_by_geometry_ids(2, [1], no_displacement_parameters, "base_fixed")
     model.add_boundary_condition_by_geometry_ids(2, [2, 4, 5, 6, 7, 10, 11, 12, 15, 16, 17],
                                                  roller_displacement_parameters, "sides_roller")
+
     # END CODE BLOCK
 
-
-After which the mesh size can be set. The element size for the mesh can be defined as a single value, the mesh
+Mesh
+----
+After which the mesh size can be set. The element size for the mesh can be defined as a single value; the mesh
 will be generated when the Stem class is initialised.
 
 .. code-block:: python
@@ -217,15 +210,16 @@ will be generated when the Stem class is initialised.
 
     # END CODE BLOCK
 
-
-Now that the geometry is defined, the solver settings of the model has to be set.
+Solver settings
+---------------
+Now that the geometry is defined, the solver settings of the model have to be set.
 The analysis type is set to "MECHANICAL" and the solution type is set to "DYNAMIC".
-Then the start time is set to 0.0 second and the end time is set to 1.5 second. The time step size is set to 0.01 second.
+Then the start time is set to 0.0 second and the end time is set to 0.1 second. The time step size is set to 0.01 second.
 Furthermore, the reduction factor and increase factor are set to 1.0, such that the time step size is constant throughout
 the simulation. Displacement convergence criteria is set to 1.0e-4 for the relative tolerance and 1.0e-9 for the
 absolute tolerance. Since the problem is linear elastic, Linear-Newton-Raphson is used as a solving strategy.
-And Newmark is used as an integration method. Amgcl is used as a linear solver. Stresses are not initialised since the
-"stress_initialisation_type" is set to "NONE". Other options are "StressInitialisationType.GRAVITY_LOADING" and
+And Newmark is used as an integration method. Amgcl is used as a linear solver. Stresses are not initialised since
+the "stress_initialisation_type" is set to "NONE". Other options are "StressInitialisationType.GRAVITY_LOADING" and
 "StressInitialisationType.K0_PROCEDURE". Since the problem is linear elastic, the stiffness matrix is constant and the mass and
 damping matrices are constant, defining the matrices as constant will speed up the computation. Rayleigh damping is
 assumed, with a damping coefficient of 0.0002 for the stiffness matrix and 0.6 for the mass matrix.
@@ -235,7 +229,7 @@ assumed, with a damping coefficient of 0.0002 for the stiffness matrix and 0.6 f
     analysis_type = AnalysisType.MECHANICAL
     solution_type = SolutionType.DYNAMIC
     # Set up start and end time of calculation, time step and etc
-    time_integration = TimeIntegration(start_time=0.0, end_time=1.5, delta_time=0.01, reduction_factor=1.0,
+    time_integration = TimeIntegration(start_time=0.0, end_time=0.1, delta_time=0.01, reduction_factor=1.0,
                                        increase_factor=1.0)
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
                                                             displacement_absolute_tolerance=1.0e-9)
@@ -254,19 +248,19 @@ assumed, with a damping coefficient of 0.0002 for the stiffness matrix and 0.6 f
 
     # END CODE BLOCK
 
-
+Problem and output
+------------------
 Now the problem data should be set up. The problem should be given a name, in this case it is
-"calculate_moving_load_on_embankment_3d". Then the solver settings are added to the problem.
+"calculate_load_on_embankment_3d". Then the solver settings are added to the problem.
 
 .. code-block:: python
 
     # Set up problem data
-    problem = Problem(problem_name="calculate_moving_load_on_embankment_3d", number_of_threads=1,
+    problem = Problem(problem_name="calculate_load_on_embankment_3d", number_of_threads=1,
                       settings=solver_settings)
     model.project_parameters = problem
 
     # END CODE BLOCK
-
 
 Before starting the calculation, it is required to specify why output is desired. In this case, displacement,
 velocity and acceleration is given on the nodes and written to the output file. In this test case, gauss point results
@@ -285,7 +279,7 @@ results will be written every time step.
 
 .. code-block:: python
 
-    model.add_output_settings(
+     model.add_output_settings(
         part_name="porous_computational_model_part",
         output_name="vtk_output",
         output_dir="output",
@@ -299,8 +293,9 @@ results will be written every time step.
 
     # END CODE BLOCK
 
-
-Now that the model is set up, the calculation is almost ready to be ran.
+Run
+---
+Now that the model is set up, the calculation is almost ready to be run.
 
 Firstly the Stem class is initialised, with the model and the directory where the input files will be written to.
 While initialising the Stem class, the mesh will be generated.
@@ -311,6 +306,8 @@ While initialising the Stem class, the mesh will be generated.
 
     # END CODE BLOCK
 
+Write inputs
+------------
 The Kratos input files are then written. The project settings and output definitions are written to
 ProjectParameters_stage_1.json file. The mesh is written to the .mdpa file and the material parameters are
 written to the MaterialParameters_stage_1.json file.
@@ -322,7 +319,8 @@ All of the input files are then written to the input files directory.
 
     # END CODE BLOCK
 
-
+Run calculation
+---------------
 The calculation is then ran by calling the run_calculation function within the stem class.
 
 .. code-block:: python
@@ -330,7 +328,6 @@ The calculation is then ran by calling the run_calculation function within the s
     stem.run_calculation()
 
     # END CODE BLOCK
-
 
 .. seealso::
 
