@@ -52,6 +52,7 @@ To assign boundary conditions on a plane, specify three points that define the p
 boundary condition (as shown above), and give it a name:
 
 .. code-block:: python
+
    # Define the plane by three points
    model.add_boundary_condition_on_plane([(0, 0, 0), (x_max, 0, 0), (x_max, 0, z_max)], fixed, "base_fixed")
 
@@ -60,11 +61,14 @@ To assign boundary conditions by geometry IDs, specify the dimension of the boun
 2 for surfaces in 3D), a list of geometry IDs, the boundary condition (as shown above), and a name:
 
 .. code-block:: python
+
    # Apply to surface IDs (dimension=2 for surfaces in 3D)
    model.add_boundary_condition_by_geometry_ids(2, [1], fixed, "base_fixed")
    model.add_boundary_condition_by_geometry_ids(2, [2, 4, 5, 6, 7, 10, 11, 12, 15, 16, 17], roller, "sides_roller")
 
-.. _geometry_id_bc
+
+.. _geometry_id_bc:
+
 Inspect geometry IDs
 --------------------
 When assigning boundary conditions by geometry IDs, it is crucial to ensure that the correct IDs are used.

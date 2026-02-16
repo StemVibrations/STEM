@@ -64,7 +64,6 @@ html_static_path = ['_static']
 # # Configure the RTD theme options
 html_theme_options = {
     'logo_only': False,
-    'display_version': True,
     'prev_next_buttons_location': 'bottom',
     'style_external_links': True,  # Toc options
     'collapse_navigation': False,

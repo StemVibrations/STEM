@@ -120,7 +120,6 @@ See :doc:`authors` for the full list of maintainers and contributors.
    :hidden:
 
    formulation
-   .. bibliography
 
 .. toctree::
    :maxdepth: 2
