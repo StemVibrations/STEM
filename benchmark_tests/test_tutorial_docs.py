@@ -66,7 +66,6 @@ def read_tutorial(rst_file: str, name: str) -> List[str]:
     return data
 
 
-
 def test_tutorial_1():
     """Test the code in tutorial 1"""
     name = "_tutorial1"
