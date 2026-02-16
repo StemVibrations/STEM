@@ -65,14 +65,12 @@ def run_simply_supported_beam(input_folder: Path, ndim: int, axis_index: int = 0
     model.add_load_by_geometry_ids([1], line_load, "line_load")
 
     # Define displacement conditions
-    displacementXYZ_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
+    displacementXYZ_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
     # no torsion
-    is_active = [False, False, False]
-    is_active[axis_index] = True
-    rot_boundary_parameters = RotationConstraint(active=is_active, is_fixed=is_active, value=[0, 0, 0])
+    is_fixed = [False, False, False]
+    is_fixed[axis_index] = True
+    rot_boundary_parameters = RotationConstraint(is_fixed=is_fixed, value=[0, 0, 0])
 
     model.add_boundary_condition_by_geometry_ids(0, [1, 2], displacementXYZ_parameters, "displacementXYZ")
     model.add_boundary_condition_by_geometry_ids(0, [1], rot_boundary_parameters, "rotation")

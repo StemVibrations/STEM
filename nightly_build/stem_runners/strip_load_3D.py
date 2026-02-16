@@ -39,15 +39,9 @@ def run_strip_3D(input_folder):
     model.add_load_by_coordinates([(0, 10.0, 0), (1, 10.0, 0), (1, 10.0, 1), (0, 10.0, 1)], surface_load, "load")
 
     # Define boundary conditions
-    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
-    roller_displacement_parameters_x = DisplacementConstraint(active=[True, True, True],
-                                                              is_fixed=[True, False, False],
-                                                              value=[0, 0, 0])
-    fixed_z_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                             is_fixed=[False, False, True],
-                                                             value=[0, 0, 0])
+    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
+    roller_displacement_parameters_x = DisplacementConstraint(is_fixed=[True, False, False], value=[0, 0, 0])
+    fixed_z_displacement_parameters = DisplacementConstraint(is_fixed=[False, False, True], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_on_plane([(0, 0, 0), (20, 0, 0), (20, 0, 1)], no_displacement_parameters, "base_fixed")

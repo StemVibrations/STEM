@@ -69,12 +69,8 @@ def run_vibrating_dam(input_folder):
     model.add_load_by_coordinates(load_coordinates, load, "point_load")
 
     # Define boundary conditions
-    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
-    no_vertical_displacement = DisplacementConstraint(active=[False, True, False],
-                                                      is_fixed=[False, True, False],
-                                                      value=[0, 0, 0])
+    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
+    no_vertical_displacement = DisplacementConstraint(is_fixed=[False, True, False], value=[0, 0, 0])
 
     # model.show_geometry(show_line_ids=True)
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)

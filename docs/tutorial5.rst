@@ -28,7 +28,7 @@ First the necessary packages are imported and paths are defined.
     from stem.output import NodalOutput, VtkOutputParameters
     from stem.stem import Stem
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 Geometry, track and materials
 ----------------------------
@@ -48,7 +48,7 @@ First the dimension of the model is indicated which in this case is 3. After whi
     ndim = 3
     model = Model(ndim)
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 In this tutorial, different soil layers will be added in the vertical direction and in the extruded out of plane
 direction. In order to extrude different parts of the geometry differently, it is required to divide the model in groups.
@@ -62,7 +62,7 @@ at a reference z-coordinate of 5.0 and is extruded for 3 meter. In total, the so
     model.add_group_for_extrusion("group_1", reference_depth=0.0, extrusion_length=5.0)
     model.add_group_for_extrusion("group_2", reference_depth=5.0, extrusion_length=3.0)
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 Specification of the soil material is defined afterwards.
 The bottom soil layer is defined as a material with the name "soil_1".
@@ -82,7 +82,7 @@ The soil is a one-phase soil, meaning that the flow of water through the soil is
     retention_parameters_1 = SaturatedBelowPhreaticLevelLaw()
     material_soil_1 = SoilMaterial("soil_1", soil_formulation_1, constitutive_law_1, retention_parameters_1)
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 The second soil layer is defined as a material with the name "soil_2".
 It's a Linear elastic material model with the solid density (rho) of 2550 kg/m3,
@@ -101,7 +101,7 @@ The soil is a one-phase soil, meaning that the flow of water through the soil is
     retention_parameters_2 = SaturatedBelowPhreaticLevelLaw()
     material_soil_2 = SoilMaterial("soil_2", soil_formulation_2, constitutive_law_2, retention_parameters_2)
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 The coordinates of the model are defined in the following way. Each of the layers are defined by a list of coordinates,
 defined on an x-y plane. For 3D models, x-y planes are extruded in the z-direction. Since in this case, two groups are
@@ -121,7 +121,7 @@ created, the soil layers are added to "group_1" and "group_2". It is important t
     model.add_soil_layer_by_coordinates(second_section_bottom_coordinates, material_soil_1, "soil_layer_1_group_2", "group_2")
     model.add_soil_layer_by_coordinates(second_section_top_coordinates, material_soil_2, "soil_layer_2_group_2", "group_2")
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 The geometry is shown in the figures below.
 
@@ -154,7 +154,7 @@ of 1 Ns/m.
                                                      NODAL_DAMPING_COEFFICIENT=[0, 1, 0],
                                                      NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0])
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 Now that the track materials are defined, the track can be added to the model. The track has equal distance between the
 sleepers of 0.5 meters. The number of sleepers is calculated based on the distance between the sleepers and the total
@@ -168,7 +168,7 @@ is supported with 1D soil equivalent elements with a length of 2 meters.
     model.add_soil_layer_by_coordinates(soil2_coordinates, material_soil_2, "soil_layer_2")
     model.add_soil_layer_by_coordinates(embankment_coordinates, material_embankment, "embankment_layer")
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 
 Generating the train track
@@ -200,7 +200,7 @@ are spaced 0.5m from each others which results in a 50m straight track, with par
                                   rail_pad_thickness, origin_point,
                                   direction_vector, "rail_track")
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 
 The rail joint is modelled by adding a hinge on the rail track.
@@ -225,7 +225,7 @@ of the joint, the hinge parameters and the name of the hinge.
     model.add_hinge_on_beam("rail_track", [(0.75, 3 + rail_pad_thickness, distance_joint)],
                             HingeParameters(hinge_stiffness_y, hinge_stiffness_z), "hinge")
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 The UVEC model is then defined using the UvecLoad class. The train moves in positive direction from the origin, this is
 defined in `direction=[1, 1, 1]`, values greater than 0 indicate positive direction, values smaller than 0 indicate
@@ -298,7 +298,7 @@ Below the uvec parameters are defined.
     # add the load on the tracks
     model.add_load_on_line_model_part("rail_track", uvec_load, "train_load")
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 The boundary conditions are defined on planes using "DisplacementConstraint" and "AbsorbingBoundary" classes.
 The base of the model is fixed in all directions with the name "base_fixed".
@@ -322,7 +322,7 @@ surface-dimension, "2".
     model.add_boundary_condition_on_plane([(0, 0, extrusion_length), (5, 0, extrusion_length), (5, 3, extrusion_length)],absorbing_boundaries_parameters,"abs")
     model.add_boundary_condition_on_plane([(5, 0, 0), (5, 3, 0), (5, 0, extrusion_length)], absorbing_boundaries_parameters, "abs")
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 Now that the geometry is generated, materials, loads and boundary conditions are assigned. The mesh specifications can
 be defined. In this case, the general element size is set to 1.0 and the element size of the soil layer "soil_layer_1_group_2"
@@ -333,7 +333,7 @@ is set to 0.2.
     model.set_mesh_size(element_size=1.0)
     model.set_element_size_of_group(element_size=0.2, group_name="soil_layer_1_group_2")
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 Below it is shown how the solver settings are defined. The analysis type is set to "MECHANICAL" and the solution type of
 the first stage is set to "QUASI_STATIC". The start time is set to 0.0 second and the end time is set to 0.1 second. The
@@ -363,7 +363,7 @@ to be constant. Cg is used as a linear solver. Further solver settings are set t
                                      convergence_criteria=convergence_criterion,
                                      linear_solver_settings=Cg())
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 Now the problem data should be set up. The problem should be given a name, in this case it is
 "variation_z". The problem will be solved on 4 threads. Then the solver settings are added to the problem. And the problem
@@ -376,7 +376,7 @@ definition is added to the model.
                       settings=solver_settings)
     model.project_parameters = problem
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 Before starting the calculation, it is required to specify why output is desired. In this case, displacement,
 velocity and acceleration is given on the nodes and written to the output file. In this test case, gauss point results
@@ -387,7 +387,7 @@ are left empty.
     nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY, NodalOutput.ACCELERATION]
     gauss_point_results = []
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 The output process is added to the model using the `Model.add_output_settings` method. The results will be then written to the output directory in vtk
 format. In this case, the output interval is set to 1 and the output control type is set to "step", meaning that the
@@ -408,7 +408,7 @@ results will be written every time step. The vtk files will be written in binary
         )
     )
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 Now that the the first stage is set up, the calculation is almost ready to be ran.
 
@@ -419,7 +419,7 @@ While initialising the Stem class, the mesh will be generated.
 
     stem = Stem(model, input_files_dir)
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 The second stage can easily be created  by calling the "create_new_stage" function, this function requires the delta time
 and the duration of the stage, for the rest, the latest added stage is coppied. In the second stage, the solution type is
@@ -440,7 +440,7 @@ added to the calculation.
     stage2.get_model_part_by_name("moving_load").parameters.velocity = 18.0
     stem.add_calculation_stage(stage2)
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 The Kratos input files are then written. The project settings and output definitions are written to
 ProjectParameters_stage_1.json file. The mesh is written to the .mdpa file and the material parameters are
@@ -451,7 +451,7 @@ All of the input files are then written to the input files directory.
 
     stem.write_all_input_files()
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 The calculation is then ran by calling the run_calculation function within the stem class.
 
@@ -459,7 +459,7 @@ The calculation is then ran by calling the run_calculation function within the s
 
     stem.run_calculation()
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 .. seealso::
 

@@ -75,7 +75,7 @@ compare_moving_load_on_beam(r"moving_load_on_beam_tmp",
                             r"nightly_build/moving_load_on_beam/moving_load_on_beam_results.pdf")
 shutil.rmtree("moving_load_on_beam_tmp")
 
-# run_moving_load(Path("./moving_load_halfspace_tmp"))
-# compare_moving_load(r"moving_load_halfspace_tmp/output/calculated_output.json",
-#                     r"nightly_build/moving_load_halfspace/time_history.pdf")
-# shutil.rmtree("moving_load_halfspace_tmp")
+run_moving_load(Path("./moving_load_halfspace_tmp"))
+compare_moving_load(r"moving_load_halfspace_tmp/output/calculated_output.json",
+                    r"nightly_build/moving_load_halfspace/time_history.pdf")
+shutil.rmtree("moving_load_halfspace_tmp")

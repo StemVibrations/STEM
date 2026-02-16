@@ -1,4 +1,4 @@
-.. _tutorial2:
+.. _tutorial3:
 
 Moving load on an embankment in 3D
 ==================================
@@ -26,7 +26,7 @@ First the necessary packages are imported and paths are defined.
     from stem.output import NodalOutput, VtkOutputParameters, Output
     from stem.stem import Stem
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 For setting up the model, Model class is imported from stem.model. And for setting up the soil material, OnePhaseSoil,
 LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw classes are imported.
@@ -61,7 +61,7 @@ First the dimension of the model is indicated which in this case is 3. After whi
     ndim = 3
     model = Model(ndim)
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 Specification of the soil material is defined afterwards.
 The bottom soil layer is defined as a material with the name "soil_1".
@@ -81,7 +81,7 @@ The soil is a one-phase soil, meaning that the flow of water through the soil is
     retention_parameters_1 = SaturatedBelowPhreaticLevelLaw()
     material_soil_1 = SoilMaterial("soil_1", soil_formulation_1, constitutive_law_1, retention_parameters_1)
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 The second soil layer is defined as a material with the name "soil_2".
 It's a Linear elastic material model with the solid density (rho) of 2550 kg/m3,
@@ -100,7 +100,7 @@ The soil is a one-phase soil, meaning that the flow of water through the soil is
     retention_parameters_2 = SaturatedBelowPhreaticLevelLaw()
     material_soil_2 = SoilMaterial("soil_2", soil_formulation_2, constitutive_law_2, retention_parameters_2)
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 The embankment layer on top is defined as a material with the name "embankment".
 It's a Linear elastic material model with the solid density (rho) of 2650 kg/m3,
@@ -119,7 +119,7 @@ The soil is a one-phase soil, meaning that the flow of water through the soil is
     retention_parameters_3 = SaturatedBelowPhreaticLevelLaw()
     material_embankment = SoilMaterial("embankment", soil_formulation_3, constitutive_law_3, retention_parameters_3)
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 The coordinates of the model are defined in the following way. Each of the layers are defined by a list of coordinates,
 defined in th x-y plane. For 3D models, the x-y plane can be extruded in the z-direction. In this case, the extrusion
@@ -132,7 +132,7 @@ length is 50 m in the z-direction.
     embankment_coordinates = [(0.0, 2.0, 0.0), (3.0, 2.0, 0.0), (1.5, 3.0, 0.0), (0.75, 3.0, 0.0), (0, 3.0, 0.0)]
     model.extrusion_length = 50
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 The geometry is shown in the figures below.
 
@@ -150,7 +150,7 @@ a unique name.
     model.add_soil_layer_by_coordinates(soil2_coordinates, material_soil_2, "soil_layer_2")
     model.add_soil_layer_by_coordinates(embankment_coordinates, material_embankment, "embankment_layer")
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 For the moving load, MovingLoad class is called. The load is defined following a list of coordinates. In this case,
 a moving load is applied on a line with a 0.75 meter distance from the x-axis on top of the embankment. The velocity of
@@ -164,7 +164,7 @@ load starts at coordinates: [0.75, 3.0, 0.0].
                              offset=0.0)
     model.add_load_by_coordinates(load_coordinates, moving_load, "moving_load")
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 The boundary conditions are defined on geometry ids, which are created by gmsh when making the geometry. Gmsh will
 assign an id to each of the points, lines, surfaces and volumes created.
@@ -182,7 +182,7 @@ should be set to "True".
 
     model.show_geometry(show_surface_ids=True)
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 The geometry ids can be seen in the pictures below.
 
@@ -205,7 +205,7 @@ dimension, "2".
     model.add_boundary_condition_by_geometry_ids(2, [1], no_displacement_parameters, "base_fixed")
     model.add_boundary_condition_by_geometry_ids(2, [2, 4, 5, 6, 7, 10, 11, 12, 15, 16, 17],
                                                  roller_displacement_parameters, "sides_roller")
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 
 After which the mesh size can be set. The element size for the mesh can be defined as a single value, the mesh
@@ -215,7 +215,7 @@ will be generated when the Stem class is initialised.
 
     model.set_mesh_size(element_size=1.0)
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 
 Now that the geometry is defined, the solver settings of the model has to be set.
@@ -252,7 +252,7 @@ assumed, with a damping coefficient of 0.0002 for the stiffness matrix and 0.6 f
                                      linear_solver_settings=linear_solver_settings, rayleigh_k=0.0002,
                                      rayleigh_m=0.6)
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 
 Now the problem data should be set up. The problem should be given a name, in this case it is
@@ -265,7 +265,7 @@ Now the problem data should be set up. The problem should be given a name, in th
                       settings=solver_settings)
     model.project_parameters = problem
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 
 Before starting the calculation, it is required to specify why output is desired. In this case, displacement,
@@ -277,7 +277,7 @@ are left empty.
     nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY, NodalOutput.ACCELERATION]
     gauss_point_results = []
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 The output process is added to the model using the `Model.add_output_settings` method. The results will be then written to the output directory in vtk
 format. In this case, the output interval is set to 1 and the output control type is set to "step", meaning that the
@@ -297,7 +297,7 @@ results will be written every time step.
         )
     )
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 
 Now that the model is set up, the calculation is almost ready to be ran.
@@ -309,7 +309,7 @@ While initialising the Stem class, the mesh will be generated.
 
     stem = Stem(model, input_files_dir)
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 The Kratos input files are then written. The project settings and output definitions are written to
 ProjectParameters_stage_1.json file. The mesh is written to the .mdpa file and the material parameters are
@@ -320,7 +320,7 @@ All of the input files are then written to the input files directory.
 
     stem.write_all_input_files()
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 
 The calculation is then ran by calling the run_calculation function within the stem class.
@@ -329,7 +329,7 @@ The calculation is then ran by calling the run_calculation function within the s
 
     stem.run_calculation()
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 
 .. seealso::

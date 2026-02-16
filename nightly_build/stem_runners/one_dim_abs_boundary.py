@@ -44,7 +44,7 @@ def run_abs_boundary(input_folder, ndim):
 
     # Define boundary conditions
     abs_boundary_parameters = AbsorbingBoundary([1, 1], 100000)
-    sym_parameters = DisplacementConstraint(active=[True, False, True], is_fixed=[True, False, True], value=[0, 0, 0])
+    sym_parameters = DisplacementConstraint(is_fixed=[True, False, True], value=[0, 0, 0])
 
     # add load and boundary conditions based on dimension
     if ndim == 2:

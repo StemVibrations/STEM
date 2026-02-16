@@ -7,7 +7,7 @@ from stem.boundary import RotationConstraint
 from stem.boundary import DisplacementConstraint
 from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
                          StressInitialisationType, SolverSettings, Problem)
-from stem.output import NodalOutput, GaussPointOutput, VtkOutputParameters, Output, JsonOutputParameters
+from stem.output import NodalOutput, GaussPointOutput, JsonOutputParameters
 from stem.stem import Stem
 
 
@@ -61,14 +61,10 @@ def run_moving_load_on_beam(input_folder, ndim):
     model.add_load_by_geometry_ids([1], moving_load, "moving_load")
 
     # Define rotation boundary condition
-    no_torsion_parameters = RotationConstraint(active=[True, False, False],
-                                               is_fixed=[True, False, False],
-                                               value=[0, 0, 0])
+    no_torsion_parameters = RotationConstraint(is_fixed=[True, False, False], value=[0, 0, 0])
 
     # Define displacement conditions
-    no_vert_displacement = DisplacementConstraint(active=[False, True, False],
-                                                  is_fixed=[False, True, False],
-                                                  value=[0, 0, 0])
+    no_vert_displacement = DisplacementConstraint(is_fixed=[False, True, False], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(0, [1, 2], no_torsion_parameters, "no_torsion")

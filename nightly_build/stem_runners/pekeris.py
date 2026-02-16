@@ -43,19 +43,9 @@ def run_pekeris(input_folder):
     model.add_load_by_coordinates(node_coordinates, load, "point_load")
 
     # Define boundary conditions
-    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
-    roller_displacement_parameters_x = DisplacementConstraint(active=[True, True, True],
-                                                              is_fixed=[True, False, False],
-                                                              value=[0, 0, 0])
-    roller_displacement_parameters_z = DisplacementConstraint(active=[True, True, True],
-                                                              is_fixed=[False, False, True],
-                                                              value=[0, 0, 0])
-
-    # abs_boundary_parameters = DisplacementConstraint(active=[True, True, True],
-    #                                                     is_fixed=[True, True, True],
-    #                                                     value=[0, 0, 0])
+    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
+    roller_displacement_parameters_x = DisplacementConstraint(is_fixed=[True, False, False], value=[0, 0, 0])
+    roller_displacement_parameters_z = DisplacementConstraint(is_fixed=[False, False, True], value=[0, 0, 0])
     abs_boundary_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=10)
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
@@ -115,15 +105,15 @@ def run_pekeris(input_folder):
         (3, y_max, 0),
     ], json_output_parameters, "json_output")
 
-    model.add_output_settings(output_parameters=VtkOutputParameters(
-        file_format="ascii",
-        output_interval=1,
-        nodal_results=[NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY],
-        gauss_point_results=[],
-        output_control_type="step"),
-                              part_name="porous_computational_model_part",
-                              output_dir="output",
-                              output_name="vtk_output")
+    # model.add_output_settings(output_parameters=VtkOutputParameters(
+    #     file_format="ascii",
+    #     output_interval=1,
+    #     nodal_results=[NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY],
+    #     gauss_point_results=[],
+    #     output_control_type="step"),
+    #                           part_name="porous_computational_model_part",
+    #                           output_dir="output",
+    #                           output_name="vtk_output")
 
     # Write KRATOS input files
     # --------------------------------

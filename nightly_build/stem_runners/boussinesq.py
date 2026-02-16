@@ -71,15 +71,9 @@ def run_boussinesq(input_folder):
     model.add_load_by_coordinates(surface_load_coords, load, "circular_load")
 
     # Define boundary conditions
-    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
-    roller_displacement_parameters_x = DisplacementConstraint(active=[True, True, True],
-                                                              is_fixed=[True, False, False],
-                                                              value=[0, 0, 0])
-    roller_displacement_parameters_z = DisplacementConstraint(active=[True, True, True],
-                                                              is_fixed=[False, False, True],
-                                                              value=[0, 0, 0])
+    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
+    roller_displacement_parameters_x = DisplacementConstraint(is_fixed=[True, False, False], value=[0, 0, 0])
+    roller_displacement_parameters_z = DisplacementConstraint(is_fixed=[False, False, True], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_on_plane([(0, 0, 0), (x_max, 0, 0), (x_max, 0, z_max)], no_displacement_parameters,

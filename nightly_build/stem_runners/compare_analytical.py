@@ -14,8 +14,6 @@ from benchmark_tests.analytical_solutions.wave_in_infinite_pile import InfiniteP
 from benchmark_tests.analytical_solutions.moving_load_on_beam import BeamMovingLoadAnalytical
 from benchmark_tests.analytical_solutions.point_load_moving import MovingLoadElasticHalfSpace
 
-import nightly_build.stem_runners.read_VTK as read_VTK
-
 
 def compare_wave_propagation(path_model, output_file):
 

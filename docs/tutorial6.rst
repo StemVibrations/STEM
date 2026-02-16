@@ -33,7 +33,7 @@ First we import the necessary packages.
     from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters
     from stem.stem import Stem
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 Geometry, track and materials
 ----------------------------
@@ -59,7 +59,7 @@ Firstly the dimension of the model is indicated which in this case is 3. After w
     ndim = 3
     model = Model(ndim)
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 Specification of the soil material is defined afterwards.
 The bottom soil layer is defined as a material with the name "soil_1".
@@ -79,7 +79,7 @@ The soil is a one-phase soil, meaning that the flow of water through the soil is
     retention_parameters_1 = SaturatedBelowPhreaticLevelLaw()
     material_soil_1 = SoilMaterial("soil_1", soil_formulation_1, constitutive_law_1, retention_parameters_1)
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 The second soil layer is defined as a material with the name "soil_2".
 It's a Linear elastic material model with the solid density (rho) of 2550 kg/m3,
@@ -98,7 +98,7 @@ The soil is a one-phase soil, meaning that the flow of water through the soil is
     retention_parameters_2 = SaturatedBelowPhreaticLevelLaw()
     material_soil_2 = SoilMaterial("soil_2", soil_formulation_2, constitutive_law_2, retention_parameters_2)
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 The embankment layer on top is defined as a material with the name "embankment".
 It's a Linear elastic material model with the solid density (rho) of 2650 kg/m3,
@@ -117,7 +117,7 @@ The soil is a one-phase soil, meaning that the flow of water through the soil is
     retention_parameters_3 = SaturatedBelowPhreaticLevelLaw()
     material_embankment = SoilMaterial("embankment", soil_formulation_3, constitutive_law_3, retention_parameters_3)
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 For the rails, default properties of a  54E1 rail profile are used.
 Other rail profiles for which default material properties are provided are: the 46E3 and 60E1 rail profiles.
@@ -135,7 +135,7 @@ masses.
                                            NODAL_MASS=140,
                                            NODAL_DAMPING_COEFFICIENT=[0, 0, 0])
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 The coordinates of the model are defined in the following way. Each of the layers are defined by a list of coordinates,
 defined in th x-y plane. For 3D models, the x-y plane can be extruded in the z-direction. In this case, the extrusion
@@ -149,7 +149,7 @@ length is 50 m in the z-direction.
     embankment_coordinates = [(0.0, 2.0, 0.0), (3.0, 2.0, 0.0), (1.5, 3.0, 0.0), (0.75, 3.0, 0.0), (0, 3.0, 0.0)]
     model.extrusion_length = extrusion_length
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 The geometry is shown in the figure below.
 
@@ -165,7 +165,7 @@ a unique name.
     model.add_soil_layer_by_coordinates(soil2_coordinates, material_soil_2, "soil_layer_2")
     model.add_soil_layer_by_coordinates(embankment_coordinates, material_embankment, "embankment_layer")
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 
 Generating the train track
@@ -197,7 +197,7 @@ are spaced 0.5m from each others which results in a 50m straight track, with par
                                   rail_pad_thickness, origin_point,
                                   direction_vector, "rail_track")
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 
 The rail joint is modelled by adding a hinge on the rail track.
@@ -216,7 +216,7 @@ of the joint, the hinge parameters and the name of the hinge.
     model.add_hinge_on_beam("rail_track", [(0.75, 3 + rail_pad_thickness, distance_joint)],
                             HingeParameters(hinge_stiffness_y, hinge_stiffness_z), "hinge")
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 The UVEC model is then defined using the UvecLoad class. The train moves in positive direction from the origin, this is
 defined in `direction=[1, 1, 1]`, values greater than 0 indicate positive direction, values smaller than 0 indicate
@@ -289,7 +289,7 @@ Below the uvec parameters are defined.
     # add the load on the tracks
     model.add_load_on_line_model_part("rail_track", uvec_load, "train_load")
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 The boundary conditions are defined on planes using "DisplacementConstraint" and "AbsorbingBoundary" classes.
 The base of the model is fixed in all directions with the name "base_fixed".
@@ -315,7 +315,7 @@ surface-dimension, "2".
     model.add_boundary_condition_on_plane([(0, 0, extrusion_length), (5, 0, extrusion_length), (5, 3, extrusion_length)],absorbing_boundaries_parameters,"abs")
     model.add_boundary_condition_on_plane([(5, 0, 0), (5, 3, 0), (5, 0, extrusion_length)], absorbing_boundaries_parameters, "abs")
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 After which the mesh size can be set. The mesh will be generated when the Stem class is initialised.
 
@@ -323,7 +323,7 @@ After which the mesh size can be set. The mesh will be generated when the Stem c
 
     model.set_mesh_size(element_size=1.0)
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 Now that the geometry is defined, the solver settings of the model has to be set.
 The analysis type is set to "MECHANICAL" and the solution type is set to "QUASI_STATIC".
@@ -364,7 +364,7 @@ the problem is quasi-static the Rayleigh damping is coefficients are set to 0.
                                     linear_solver_settings=linear_solver_settings, rayleigh_k=0,
                                     rayleigh_m=0)
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 Now the problem data should be set up. The problem should be given a name, in this case it is
 "compute_train_with_joint". Then the solver settings are added to the problem.
@@ -376,7 +376,7 @@ Now the problem data should be set up. The problem should be given a name, in th
                       settings=solver_settings)
     model.project_parameters = problem
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 Before starting the calculation, it is required to specify which output is desired. In this case, displacement,
 velocity and acceleration are given on the nodes and written to the output files. In this test case, gauss point results
@@ -388,7 +388,7 @@ For this stage the velocity and acceleration are zero, since the calculations is
     nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY, NodalOutput.ACCELERATION]
     gauss_point_results = []
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 The output process is added to the model using the `Model.add_output_settings` method. The results will be then
 written to the output directory in vtk format. In this case, the output interval is set to 1 and the output control
@@ -411,7 +411,7 @@ The output directory is set to "results".
         )
     )
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 Additionally, nodal output can be retrieved on given coordinates, however it is required that these coordinates are
 placed on an existing surface within the model. In this tutorial the output is given on three points located
@@ -438,7 +438,7 @@ For json output it is required that the output interval is defined in seconds.
         )
     )
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 
 Now that the first stage of the model is set up, the Stem class needs to be  initialised,
@@ -449,7 +449,7 @@ with the model and the directory where the input files will be written to.
     input_files_dir = "compute_train_with_joint"
     stem = Stem(model, input_files_dir)
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 The second stage can easily be created  by calling the "create_new_stage" function.
 This copies the entire stage into stage 2. The new stage requires the definition of a duration and a time step.
@@ -460,7 +460,7 @@ This copies the entire stage into stage 2. The new stage requires the definition
     duration_stage_2 = 0.5
     stage2 = stem.create_new_stage(delta_time_stage_2, duration_stage_2)
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 In the second stage we want to compute the dynamic response of the moving train.
 Therefore, the solution type needs to be set to "DYNAMIC" and the Rayleigh damping coefficients adjusted
@@ -481,7 +481,7 @@ The static initialisation in the UVEC, needs to be set to False to model the dyn
     stage2.get_model_part_by_name("train_load").parameters.uvec_parameters["velocity"] = velocity
     stage2.get_model_part_by_name("train_load").parameters.uvec_parameters["static_initialisation"] = False
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 After the stage is created, and the settings are set, the stage is added to the calculation.
 The calculation is then ran by calling the run_calculation function within the stem class.
@@ -492,7 +492,7 @@ The calculation is then ran by calling the run_calculation function within the s
     stem.write_all_input_files()
     stem.run_calculation()
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 Once the calculation is finished, the results can be visualised using Paraview, or by loading the json output file.
 

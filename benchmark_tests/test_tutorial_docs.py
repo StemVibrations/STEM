@@ -48,7 +48,7 @@ def read_tutorial(rst_file: str, name: str) -> List[str]:
         if val.lstrip() == ".. code-block:: python":
             idx_ini.append(i)
             for j in range(i + 1, len(tutorial)):
-                if tutorial[j].lstrip() == "# END CODE BLOCK":
+                if tutorial[j].lstrip() == "..    # END CODE BLOCK":
                     idx_end.append(j)
                     break
 

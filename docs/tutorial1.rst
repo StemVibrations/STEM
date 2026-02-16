@@ -5,10 +5,10 @@ Lamb's problem in 3D
 
 Overview
 --------
-This tutorial shows a step-by-step guide on how to set up and run a 3D Lamb problem, that
-consists on the application of a point load on the surface, and computing the wave propagation
-towards the free field.
-To avoid reflections at the model edges, absorbing boundaries are used.
+This tutorial shows how to set up and run a 3D Lamb problem. The Lamb problem
+consists of the application of a point load on the surface of an elastic half-space,
+and computing the wave propagation towards the free field.
+To avoid reflections at the model edges, absorbing boundary conditions are used.
 
 Imports and setup
 -----------------
@@ -27,7 +27,7 @@ First the necessary packages are imported and the input folder is defined.
     from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters
     from stem.stem import Stem
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 For setting up the model, ``Model`` is imported from ``stem.model``.
 For the soil material, ``OnePhaseSoil``, ``LinearElasticSoil``, ``SoilMaterial``,
@@ -48,9 +48,10 @@ First the model dimension is set to 3 and the model is initialised.
     ndim = 3
     model = Model(ndim)
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
-The soil is modelled as linear elastic, drained, and one-phase.
+The soil is modelled as linear-elastic, drained, and one-phase material.
+The material parameters are defined as follows.
 
 .. code-block:: python
 
@@ -64,9 +65,10 @@ The soil is modelled as linear elastic, drained, and one-phase.
     retention_parameters = SaturatedBelowPhreaticLevelLaw()
     material = SoilMaterial("soil", soil_formulation, constitutive_law, retention_parameters)
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 A rectangular soil domain is created in the x-y plane and extruded in z-direction.
+The layer coordinates are defined and the soil layer is added to the model.
 
 .. code-block:: python
 
@@ -79,11 +81,12 @@ A rectangular soil domain is created in the x-y plane and extruded in z-directio
 
     model.add_soil_layer_by_coordinates(layer_coordinates, material, "soil")
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 Load
 ----
 A point load is applied at the surface corner (x=0, y=y_max, z=0), acting in the negative y-direction.
+The load consists of a step function with amplitude of :math:`10^6` N.
 
 .. code-block:: python
 
@@ -93,49 +96,70 @@ A point load is applied at the surface corner (x=0, y=y_max, z=0), acting in the
     point_load = PointLoad(active=[True, True, True], value=[0, force, 0])
     model.add_load_by_coordinates(node_coordinates, point_load, "point_load")
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 Boundary conditions
 -------------------
 Below the boundary conditions are defined.
-The base is fully fixed.
+The bottom base is fully fixed in all directions.
 Roller boundaries are applied on x=0 and z=0 planes.
-Absorbing boundaries are applied on x=x_max and z=z_max planes.
+Absorbing boundary conditions are applied on x=x_max and z=z_max planes.
 
 .. code-block:: python
 
-    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
-    roller_displacement_parameters = DisplacementConstraint(is_fixed=[True, False, True], value=[0, 0, 0])
+    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True],
+                                                        value=[0, 0, 0])
+    roller_displacement_parameters_x = DisplacementConstraint(is_fixed=[True, False, False],
+                                                              value=[0, 0, 0])
+    roller_displacement_parameters_z = DisplacementConstraint(is_fixed=[False, False, True],
+                                                              value=[0, 0, 0])
+    abs_boundary_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=10)
 
-    model.add_boundary_condition_by_geometry_ids(2, [1], no_displacement_parameters, "base_fixed")
-    model.add_boundary_condition_by_geometry_ids(2, [2, 4, 5, 6, 7, 10, 11, 12, 15, 16, 17],
-                                                 roller_displacement_parameters, "sides_roller")
+    model.add_boundary_condition_on_plane([(0, 0, 0), (x_max, 0, 0), (x_max, 0, z_max)], no_displacement_parameters,
+                                          "base_fixed")
+    model.add_boundary_condition_on_plane([(0, 0, 0), (0, y_max, 0), (0, y_max, z_max)],
+                                          roller_displacement_parameters_x, "sides_roler_x=0")
+    model.add_boundary_condition_on_plane([(0, 0, 0), (x_max, 0, 0), (x_max, y_max, 0)],
+                                          roller_displacement_parameters_z, "sides_roler_z=0")
+    model.add_boundary_condition_on_plane([(x_max, 0, 0), (x_max, y_max, 0), (x_max, y_max, z_max)],
+                                          abs_boundary_parameters, "abs_x=x_max")
+    model.add_boundary_condition_on_plane([(0, 0, z_max), (x_max, 0, z_max), (x_max, y_max, z_max)],
+                                          abs_boundary_parameters, "abs_z=z_max")
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
-Mesh and geometry synchronisation
----------------------------------
+Mesh
+----
 The mesh size and element order are defined.
 After assigning geometry and conditions, the geometry is synchronised.
 
 .. code-block:: python
 
-    model.set_mesh_size(element_size=0.25)
+    model.set_mesh_size(element_size=1)
     model.mesh_settings.element_order = 2
 
     model.synchronise_geometry()
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 Solver settings
 ---------------
-Now that the model is defined, the solver settings are set.
-A dynamic mechanical analysis is used with constant time step.
-Linear-Newton-Raphson is used as strategy and Cg as linear solver.
+Now that the model is defined, the solver settings should be set.
+
+The analysis type is set to `Mechanical` and the the time step and analyses time are set to 0.01 and 0.08, repectivelly.
+The system of equations is solved with the assumption of constant stiffness matrix, mass matrix, and damping matrix.
+The Linear-Newton-Raphson (Newmark explicit solver) is used as strategy and Cg as solver for the linear system of equations.
+
+The Rayleigh damping parameters are set to :math:`\alpha = 7.86 \cdot 10^{-5}` and :math:`\beta = 0.248`, which
+correspond to a damping ratio of 2% for 1 and 80Hz.
+
+The convergence criterion for the numerical solver are set to a relative tolerance of :math:`10^{-4}` and an absolute
+tolerance of :math:`10^{-9}` for the displacements.
+
 
 .. code-block:: python
 
-    time_step = 0.001
+    time_step = 0.01
 
     time_integration = TimeIntegration(start_time=0.0,
                                        end_time=0.08,
@@ -159,24 +183,24 @@ Linear-Newton-Raphson is used as strategy and Cg as linear solver.
                                      rayleigh_k=7.86e-5,
                                      rayleigh_m=0.248)
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 Problem and output
 ------------------
 The problem definition is added to the model.
-In this example, JSON output is requested at four surface points and VTK output
-is written for the full computational model part.
+The problem name is set to "Lamb", the number of threads is set to 8 and the solver settings are applied.
+
+In this example, JSON output is requested at 2 surface points (displacements) and VTK output
+is written for the full computational model part (displacements and velocities).
 
 .. code-block:: python
 
-    problem = Problem(problem_name="Pekeris", number_of_threads=44, settings=solver_settings)
+    problem = Problem(problem_name="Lamb", number_of_threads=8, settings=solver_settings)
     model.project_parameters = problem
 
     json_output_parameters = JsonOutputParameters(time_step, [NodalOutput.DISPLACEMENT], [])
 
     model.add_output_settings_by_coordinates([
-        (0, y_max, 0),
-        (1, y_max, 0),
         (2, y_max, 0),
         (3, y_max, 0),
     ], json_output_parameters, "json_output")
@@ -194,37 +218,44 @@ is written for the full computational model part.
         output_name="vtk_output"
     )
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
 
 Run
 ---
 Now that the model is set up, the calculation is ready to run.
+Firstly the Stem class is initialised, with the model and the directory where the input files will be written to.
+While initialising the Stem class, the mesh will be generated.
+This is followed by writing all the input files required to run the calculation.
+The calculation is run by calling `run_calculation`.
+
 
 .. code-block:: python
 
     stem = Stem(model, input_files_dir)
-
-    # END CODE BLOCK
-
-Write inputs
-------------
-The Kratos input files are written to the input folder.
-
-.. code-block:: python
-
     stem.write_all_input_files()
-
-    # END CODE BLOCK
-
-Run calculation
----------------
-The calculation is run by calling `run_calculation`.
-
-.. code-block:: python
-
     stem.run_calculation()
 
-    # END CODE BLOCK
+..    # END CODE BLOCK
+
+Results
+-------
+Once the calculation is finished, the results can be visualised using Paraview,
+or by loading the JSON output file.
+
+This figure shows the time history of the vertical displacements at the two points along the surface
+(these results have been obtained for a time step of 0.001 and with an element size of 0.25m).
+The results are compared with the analytical solution of the Lamb problem.
+
+.. image:: _static/lamb_displacements.png
+   :align: center
+   :alt: Vertical displacements at the surface of the model at different time steps.
+
+
+This animation shows the vertical velocity of the soil when subjected to the pulse load.
+
+.. image:: _static/lamb.gif
+   :alt: Vertical velocity
+
 
 .. seealso::
 
