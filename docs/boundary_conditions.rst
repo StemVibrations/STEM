@@ -6,6 +6,7 @@ for assigning them to the correct geometric entities.
 Types of boundary conditions
 ----------------------------
 STEM supports the following types of boundary conditions:
+
 - Displacement constraints (fixed, roller, etc.)
 - Absorbing boundaries (Lysmer-type :cite:`Lysmer_Kuhlemeyer_1969`)
 
@@ -21,8 +22,8 @@ In STEM the displacement boundary conditions are defined as:
    # Define a roller boundary condition (zero displacement in x and z, free in y)
    roller = DisplacementConstraint(is_fixed=[True, False, True], value=[0, 0, 0])
 
-The 'is_fixed' array indicates which directions have fixed displacement (True means fixed, False means free).
-The value is used to specify the displacement value for fixed directions (0 means zero displacement).
+The ``is_fixed`` array indicates which directions have fixed displacement (``True`` means fixed, ``False`` means free).
+The ``value`` array is used to specify the displacement value for fixed directions (0 means zero displacement).
 For roller conditions, the free direction can have a value of 0 or any other value since it is not constrained.
 
 The absorbing boundaries are defined as:
@@ -35,11 +36,11 @@ The absorbing boundaries are defined as:
                                                        virtual_thickness=10.0)
 
 
-The `absorbing_factors` are the Lysmer scaling factors for the normal and tangential directions, respectively.
+The ``absorbing_factors`` are the Lysmer scaling factors for the normal and tangential directions, respectively.
 A value of 1.0 corresponds to impedance-matched (optimal) absorption for normally incident waves,
 while a value of 0.0 disables absorption.
 
-The `virtual_thickness` defines a virtual boundary layer used to compute elastic stiffness terms that stabilize
+The ``virtual_thickness`` defines a virtual boundary layer used to compute elastic stiffness terms that stabilize
 the model against rigid body motion.
 
 Application of boundary conditions

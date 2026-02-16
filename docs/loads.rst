@@ -16,9 +16,9 @@ To define a point load:
    p = PointLoad(active=[False, True, False], value=[0.0, -1e4, 0.0])
    model.add_load_by_coordinates([(x, y, z)], p, "point_load")
 
-The `active` parameter is a list of three booleans that indicate whether the load is active in the
+The ``active`` parameter is a list of three booleans that indicate whether the load is active in the
 x, y, and z directions, respectively.
-The `value` parameter is a list of three values that specify the magnitude of the load in each direction.
+The ``value`` parameter is a list of three values that specify the magnitude of the load in each direction.
 The load then is applied to to model, by specifying a list of the node coordinates where the load should be applied,
 the load object, and the load name.
 
@@ -35,9 +35,9 @@ To define a line load:
    line = LineLoad(active=[False, True, False], value=[0.0, -1e3, 0.0])
    model.add_load_by_coordinates([(x1, y1, z1), (x2, y2, z2)], line, "line_load")
 
-The `active` parameter is a list of three booleans that indicate whether the load is active in the
+The ``active`` parameter is a list of three booleans that indicate whether the load is active in the
 x, y, and z directions, respectively.
-The `value` parameter is a list of three values that specify the magnitude of the load in each direction.
+The ``value`` parameter is a list of three values that specify the magnitude of the load in each direction.
 The load then is applied to to model, by specifying a list of the node coordinates where the load should be applied,
 the load object, and the load name.
 
@@ -58,9 +58,9 @@ To define a surface load:
    model.add_load_by_coordinates([(x1, y1, z1), (x2, y2, z2), (x3, y3, z3), (x4, y4, z4)], surf, "surface_load")
 
 
-The `active` parameter is a list of three booleans that indicate whether the load is active in the
+The ``active`` parameter is a list of three booleans that indicate whether the load is active in the
 x, y, and z directions, respectively.
-The `value` parameter is a list of three values that specify the magnitude of the load in each direction.
+The ``value`` parameter is a list of three values that specify the magnitude of the load in each direction.
 
 The load can be applied on a surface by specifying the geometry IDs, or
 by specifying the coordinates of the surface nodes.
@@ -86,12 +86,12 @@ To define a moving load:
    model.add_load_by_coordinates([(x1, y1, z1), (x2, y2, z2)], mload, "moving_load")
 
 
-The `load` parameter is a list of three values that specify the magnitude of the load in each direction.
-The `direction` parameter is a list of three values that specify the direction of the load
+The ``load`` parameter is a list of three values that specify the magnitude of the load in each direction.
+The ``direction`` parameter is a list of three values that specify the direction of the load
 (e.g., [1, 0, 0] for x-direction).
-The `velocity` parameter specifies the speed at which the load moves along the path (in m/s).
-The `origin` parameter specifies the starting point of the load,
-and the `offset` parameter can be used to specify an initial offset along the path.
+The ``velocity`` parameter specifies the speed at which the load moves along the path (in m/s).
+The ``origin`` parameter specifies the starting point of the load,
+and the ``offset`` parameter can be used to specify an initial offset along the path.
 
 
 UVEC load
@@ -136,7 +136,7 @@ Time-dependent loads with Table
 In STEM, it is possible to define time-dependent loads using the Tables.
 
 A Table is a class that allows you to define a function of time (or any other parameter)
- by specifying a list of x and y values.
+by specifying a list of x and y values.
 
 .. code-block:: python
 

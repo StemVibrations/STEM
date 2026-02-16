@@ -155,7 +155,6 @@ See :doc:`authors` for the full list of maintainers and contributors.
    :caption: Developer reference
    :hidden:
 
-   stem
    api
 
 .. toctree::
