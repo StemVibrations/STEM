@@ -1,187 +1,137 @@
-Solver settings and modeling choices
-===================================
+Solver settings and modelling choices
+=====================================
+This page provides practical guidelines for selecting solver settings and modelling choices in STEM,
+including mesh resolution, time step selection, and Rayleigh damping parameters.
+These guidelines are based on common practices in computational mechanics and wave propagation problems,
+and can help users configure their simulations for accuracy and efficiency.
 
-This guide provides practical rules of thumb for mesh size, time step selection,
-and Rayleigh damping parameters when configuring :mod:`stem.solver`.
 
-Element size (mesh resolution)
-------------------------------
-For wave-dominated problems, resolve the shortest wavelength of interest
-with sufficient elements. Use the minimum wave speed in your domain (often shear)
+Element size
+------------
+For dynamic analysis, the element size should be chosen to adequately resolve the wave propagation in the model.
+A common rule of thumb is to use at least 10 elements per wavelength for linear elements and
+5-10 elements per wavelength for quadratic elements.
+
+The wavelength, :math:`\lambda`, can be estimated from the shear wave speed, :math:`c_{s}`, and the maximum
+frequency of interest :math:`f_{max}` as:
 
 .. math::
 
-   h \;\lesssim\; \frac{c_{\min}}{n_\lambda\, f_{\max}} \quad \text{with} \quad c_{\min} = \min(V_S, V_P, V_R)
+   \lambda = \frac{c_s}{f_{max}}.
 
-- :math:`f_{\max}`: highest frequency you want to resolve in the response.
-- :math:`n_\lambda`: elements per wavelength; typical values are 10–15 (linear) or 6–10 (quadratic).
-- :math:`c_{\min}`: smallest relevant wave speed (shear :math:`V_S` often governs in soils).
+The maximum element size, :math:`h`, can then be estimated as:
 
-Example: :math:`V_S=150\,\text{m/s}`, :math:`f_{\max}=40\,\text{Hz}`, with 12 el/λ ⇒
-:math:`h \lesssim 150/(12\cdot 40) \approx 0.31\,\text{m}`.
+.. math::
+
+   h \lesssim \frac{c_{s}}{n_{\lambda} f_{max}}
+
+where :math:`n_{\lambda}` is the number of elements per wavelength.
+In practice, the choice of element size may also be influenced by other factors such as the geometry of the model,
+the material properties, and the computational resources available.
+
 
 Time step selection
 -------------------
-STEM's default dynamic scheme (:class:`stem.solver.NewmarkScheme` with :math:`\beta=0.25,\,\gamma=0.5`) is
-unconditionally stable for linear problems, but accuracy still requires a small enough :math:`\Delta t`.
-Use one of the following simple rules:
+STEM uses by default the Newmark time integration scheme (formulated explicitly).
+Two common guidelines for selecting the time step are:
 
-- Frequency-based:
+- Frequency condition: the time step should be small enough to accurately resolve the highest
+  sinusoidal frequency of interest in the response, typically by ensuring that each period of that
+  frequency is represented by a sufficient number of time steps (e.g., 10 points per cycle) to
+  avoid numerical dispersion and phase error.
 
-  .. math:: \quad \Delta t \;\lesssim\; \frac{1}{n_t\, f_{\max}}\,, \quad n_t\in[20,50]
+.. math::
 
-- Courant-like (wave travel per step):
+   \Delta t \lesssim \frac{1}{n_t f_{max}}
 
-  .. math:: \quad \Delta t \;\lesssim\; \frac{h}{n_c\, c_{\min}}\,, \quad n_c\in[5,10]
+where :math:`n_t` is the number of time steps per period (e.g., 5-10) to ensure accuracy.
 
-Pick the more restrictive. For quasi-static analyses, accuracy—not stability—governs; you may use larger steps,
-but ensure convergence and path accuracy.
+- Courant condition: the time step must be sufficiently small such that numerical information does not propagate
+  faster than the physical wave speed of the system. This means that the time step should be less than a critical
+  value proportional to the smallest element size divided by the highest wave speed (compression wave speed :math:`c_p`).
+
+.. math::
+
+   \Delta t \lesssim \frac{h}{n_c c_{p}}
+
+where :math:`n_c` is a safety factor (e.g., 5-10) to ensure accuracy.
+
+The more restrictive of these two conditions should be used to ensure stability and accuracy in the simulation
+
 
 Rayleigh damping parameters
 ---------------------------
-Rayleigh damping in STEM uses mass and stiffness coefficients (``rayleigh_m``, ``rayleigh_k``) in
-:class:`stem.solver.SolverSettings`.
-The target damping ratio :math:`\zeta(\omega)` at circular frequency :math:`\omega` is
-
-.. math:: \qquad \zeta(\omega) = \tfrac{\alpha}{2\,\omega} + \tfrac{\beta\,\omega}{2}
-
-Given two target damping ratios :math:`\zeta_1, \zeta_2` at frequencies :math:`f_1, f_2`
-(:math:`\omega_i=2\pi f_i`), solve for :math:`\alpha` (mass) and :math:`\beta` (stiffness):
+STEM offers the possibility of including Rayleigh damping in the model, which is commonly used in dynamic
+finite element analyses to represent material and numerical dissipation.
+The damping matrix is defined as a linear combination of the mass, :math:`\mathbf{M}`, and
+stiffness, :math:`\mathbf{K}`, matrices:
 
 .. math::
-   \beta = \frac{2\,(\omega_2\,\zeta_2 - \omega_1\,\zeta_1)}{\omega_2^2 - \omega_1^2}\,,\qquad
-   \alpha = 2\,\omega_1\,\zeta_1 - \beta\,\omega_1^2
 
-Notes and tips:
-- Choose :math:`f_1` near the lowest significant mode and :math:`f_2` near the highest frequency to damp.
-- Typical soil/structure modal damping ratios: 1–5% in the band of interest.
-- Excessive damping suppresses wave content; verify against measurements or literature.
+   \mathbf{C} = \alpha \mathbf{M} + \beta \mathbf{K}
 
-Putting it together (example)
------------------------------
-.. code-block:: python
+where :math:`\alpha` is the mass-proportional damping coefficient and :math:`\beta` is the stiffness-proportional
+damping coefficient. This figure illustrates the frequency-dependent damping ratio for Rayleigh damping.
 
-   from stem.solver import (
-       AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
-       NewmarkScheme, Amgcl, SolverSettings, StressInitialisationType
-   )
+.. figure:: _static/Rayleigh_damping.png
+   :align: center
+   :alt: Rayleigh damping
+   :width: 400
 
-   # Mesh choice from Vs, f_max, target elements per wavelength
-   element_size = 0.3  # m (per guideline above)
-   model.set_mesh_size(element_size=element_size)
+The mass-proportional damping introduces increasing attenuation at low frequencies.
+The stiffness-proportional damping introduces increasing attenuation at high frequencies and may lead to
+excessive numerical dissipation.
 
-   # Time step from frequency-based rule
-   dt = 1.0 / (30 * 40.0)  # n_t=30, f_max=40 Hz ⇒ ~0.00083 s
+To determine the Rayleigh damping coefficients (:math:`\alpha` and :math:`\beta`), it is common to specify
+target damping ratios (:math:`\zeta_1` and :math:`\zeta_2`) at two frequencies of interest
+(:math:`\omega_1` and :math:`\omega_2`), and then solve for the coefficients that achieve
+those damping ratios at those frequencies.
 
-   time = TimeIntegration(start_time=0.0, end_time=0.2, delta_time=dt, reduction_factor=1.0, increase_factor=1.0)
+.. math::
+   \begin{aligned}
+      \frac{1}{2} \left( \frac{\alpha}{\omega_1} + \beta \omega_1 \right) = \zeta_1 \\
+      \frac{1}{2} \left( \frac{\alpha}{\omega_2} + \beta \omega_2 \right) = \zeta_2
+   \end{aligned}
 
-   conv = DisplacementConvergenceCriteria(1e-4, 1e-9)
+A helper function to compute the Rayleigh damping coefficients from target damping ratios and frequencies
+follows:
 
-   settings = SolverSettings(
-       analysis_type=AnalysisType.MECHANICAL,
-       solution_type=SolutionType.DYNAMIC,
-       stress_initialisation_type=StressInitialisationType.NONE,
-       time_integration=time,
-       is_stiffness_matrix_constant=True,
-       are_mass_and_damping_constant=True,
-       convergence_criteria=conv,
-       scheme=NewmarkScheme(),
-       linear_solver_settings=Amgcl(),
-       rayleigh_m=0.6,           # example values; compute from two target ζ and frequencies
-       rayleigh_k=2.0e-4,
-   )
-
-See also
---------
-- :mod:`stem.solver` for available schemes, strategies and linear solvers.
-- :doc:`formulation` for the governing equations and context.
-- :doc:`materials`, :doc:`boundary_conditions` for related modeling choices.
-
-Helper scripts
---------------
-Below are small, ready-to-run snippets to estimate mesh size, time step and Rayleigh damping.
-They follow the guidelines above and can be adapted to your problem.
-
-Wave speeds, mesh size and time step
-....................................
-.. code-block:: python
-
-   import math
-
-   # Material properties
-   E = 50e6        # Young's modulus [Pa]
-   nu = 0.49       # Poisson's ratio [-]
-   rho = 1500.0    # density [kg/m^3]
-
-   # Target band and resolution
-   f_max = 100.0   # highest frequency to resolve [Hz]
-   n_lambda = 12   # elements per wavelength (10–15 linear; 6–10 quadratic)
-   n_c = 6         # Courant-like divisor for accuracy (5–10)
-
-   # Elastic moduli
-   M = E * (1.0 - nu) / ((1.0 + nu) * (1.0 - 2.0 * nu))  # P-wave modulus = K + 4/3 G
-   G = E / (2.0 * (1.0 + nu))                             # shear modulus
-
-   # Wave speeds
-   c_p = math.sqrt(M / rho)
-   c_s = math.sqrt(G / rho)
-
-   # Guideline mesh size and time step (use shear speed for worst case in soils)
-   h = c_s / (n_lambda * f_max)          # element size [m]
-   dt = h / (n_c * c_s)                  # time step [s]
-
-   print(f"Compression-wave speed c_p: {c_p:.3f} m/s")
-   print(f"Shear-wave speed      c_s: {c_s:.3f} m/s")
-   print(f"Recommended element size h: {h:.4f} m (n_lambda={n_lambda}, f_max={f_max} Hz)")
-   print(f"Recommended time step  dt: {dt:.6f} s (n_c={n_c})")
-
-Notes:
-- The earlier rule of taking only two elements per wavelength (h = λ/2) is too coarse for FEM wave problems.
-  Prefer 10–15 elements per wavelength with linear elements to limit dispersion.
-- Newmark is unconditionally stable for linear systems, but accuracy still requires small enough dt.
-
-Rayleigh damping (compute α, β and plot ζ(f))
-.............................................
 .. code-block:: python
 
    import numpy as np
-   import matplotlib.pyplot as plt
 
-   def damping_Rayleigh(f1, d1, f2, d2):
-      """
-      Compute Rayleigh coefficients (alpha, beta) from two target damping ratios
-      d1, d2 at frequencies f1, f2 [Hz].
-      """
-      if f1 == f2:
-         raise ValueError("Frequencies for the Rayleigh damping are the same.")
+   def damping_Rayleigh(f1: float, d1: float, f2: float, d2: float) -> tuple[float, float]:
+       """
+       Rayleigh damping coefficients calculation
 
-      # Matrix for: zeta = 0.5 * (alpha / omega) + 0.5 * (beta * omega)
-      A = 0.5 * np.array([[1.0 / (2.0 * np.pi * f1), 2.0 * np.pi * f1],
-                     [1.0 / (2.0 * np.pi * f2), 2.0 * np.pi * f2]])
-      b = np.array([d1, d2])
-      alpha, beta = np.linalg.solve(A, b)
-      return alpha, beta
+       Args:
+          f1 (float): frequency 1 (Hz)
+          d1 (float): damping ratio at frequency 1
+          f2 (float): frequency 2 (Hz)
+          d2 (float): damping ratio at frequency 2
+
+       Returns:
+          tuple[float, float]: alpha (mass-proportional), beta (stiffness-proportional)
+       """
+       if f1 == f2:
+          raise SystemExit('Frequencies for the Rayleigh damping are the same.')
+
+       # damping matrix
+       damp_mat = 1 / 2 * np.array([[1 / (2 * np.pi * f1), 2 * np.pi * f1],
+                                     [1 / (2 * np.pi * f2), 2 * np.pi * f2]])
+
+       damp_qsi = np.array([d1, d2])
+
+       # solution
+       coefs = np.linalg.solve(damp_mat, damp_qsi)
+
+       return coefs[0], coefs[1]
 
    if __name__ == "__main__":
-      f1, d1 = 1.0, 0.01
-      f2, d2 = 60.0, 0.01
+       f1 = 1  # Hz
+       d1 = 0.02  # 2% damping at f1
+       f2 = 80  # Hz
+       d2 = 0.02  # 2% damping at f2
 
-      alpha, beta = damping_Rayleigh(f1, d1, f2, d2)
-      print(f"Rayleigh coefficients: alpha={alpha:.6e}, beta={beta:.6e}")
-
-      f = np.linspace(0.1, 100.0, 1001)
-      omega = 2.0 * np.pi * f
-      zeta_alpha = 0.5 * (alpha / omega)
-      zeta_beta  = 0.5 * (beta * omega)
-      zeta = zeta_alpha + zeta_beta
-
-      plt.plot(f, zeta_alpha, label=r"$\alpha$ term")
-      plt.plot(f, zeta_beta,  label=r"$\beta$ term")
-      plt.plot(f, zeta,       label="total")
-      plt.plot([f1, f2], [d1, d2], "ro", label="targets")
-      plt.xlabel("Frequency [Hz]")
-      plt.ylabel("Damping ratio [-]")
-      plt.grid(True)
-      plt.legend()
-      plt.tight_layout()
-      plt.show()
+       alpha, beta = damping_Rayleigh(f1, d1, f2, d2)
+       print(f"Rayleigh damping coefficients:\n\talpha: {alpha}\n\tbeta: {beta}")
