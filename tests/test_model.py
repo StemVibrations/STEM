@@ -2254,15 +2254,11 @@ class TestModel:
         model.extrusion_length = 1
 
         # create multiple boundary condition parameters
-        no_rotation_parameters = RotationConstraint(
-                                                    is_fixed=[True, True, True],
-                                                    value=[0, 0, 0])
+        no_rotation_parameters = RotationConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
         absorbing_parameters = AbsorbingBoundary(absorbing_factors=[1, 1], virtual_thickness=0)
 
-        no_displacement_parameters = DisplacementConstraint(
-                                                            is_fixed=[True, True, True],
-                                                            value=[0, 0, 0])
+        no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
         # add body model part
         soil_material = create_default_3d_soil_material
@@ -2276,15 +2272,11 @@ class TestModel:
         model.synchronise_geometry()
 
         # set expected parameters of the boundary conditions
-        expected_0d_model_part_parameters = RotationConstraint(
-                                                               is_fixed=[True, True, True],
-                                                               value=[0, 0, 0])
+        expected_0d_model_part_parameters = RotationConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
         expected_1d_model_part_parameters = AbsorbingBoundary(absorbing_factors=[1, 1], virtual_thickness=0)
 
-        expected_2d_model_part_parameters = DisplacementConstraint(
-                                                                   is_fixed=[True, True, True],
-                                                                   value=[0, 0, 0])
+        expected_2d_model_part_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
         # set expected geometry 0d boundary condition
         expected_boundary_points = {1: Point.create([0, 0, 0], 1), 2: Point.create([1, 0, 0], 2)}
@@ -3532,8 +3524,7 @@ class TestModel:
         expected_rotation_constrain_points = {4: Point.create([2.0, 3.02, 1.0], 4)}
         expected_rotation_constrain_geometry = Geometry(expected_rotation_constrain_points)
 
-        expected_rotation_constraint_parameters = RotationConstraint(value=[0, 0, 0],
-                                                                     is_fixed=[True, True, True])
+        expected_rotation_constraint_parameters = RotationConstraint(value=[0, 0, 0], is_fixed=[True, True, True])
 
         TestUtils.assert_almost_equal_geometries(expected_rotation_constrain_geometry,
                                                  calculated_rotation_constrain_geometry)
@@ -3862,9 +3853,7 @@ class TestModel:
 
         model.synchronise_geometry()
 
-        no_displacement_boundary = DisplacementConstraint(
-                                                          is_fixed=[True, True, True],
-                                                          value=[0, 0, 0])
+        no_displacement_boundary = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
         plane_coordinates = [(0, 0, 0), (0, 0, 1), (0, 1, 1)]
         model.add_boundary_condition_on_plane(plane_coordinates, no_displacement_boundary, "left_side_boundary")
@@ -3943,8 +3932,7 @@ class TestModel:
 
         model.synchronise_geometry()
 
-        no_displacement_boundary = DisplacementConstraint(is_fixed=[True, True, True],
-                                                          value=[0, 0, 0])
+        no_displacement_boundary = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
         polygon_coordinates = [(0, 0, 0), (0, 0, 1), (0, 1, 1), (0, 1, 0)]
         model.add_boundary_condition_on_polygon(polygon_coordinates, no_displacement_boundary, "left_bottom_boundary")
@@ -4339,9 +4327,7 @@ class TestModel:
         expected_rotation_constrain_points = {14: Point.create([2.0, 3.02, -0.5], 14)}
         expected_rotation_constrain_geometry = Geometry(expected_rotation_constrain_points)
 
-        expected_rotation_constraint_parameters = RotationConstraint(value=[0, 0, 0],
-                                                                     is_fixed=[True, True, True]
-                                                                     )
+        expected_rotation_constraint_parameters = RotationConstraint(value=[0, 0, 0], is_fixed=[True, True, True])
 
         TestUtils.assert_almost_equal_geometries(expected_rotation_constrain_geometry,
                                                  calculated_rotation_constrain_geometry)

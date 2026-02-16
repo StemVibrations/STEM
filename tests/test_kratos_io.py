@@ -93,9 +93,7 @@ class TestKratosModelIO:
         model.add_load_by_coordinates(load_coordinates_right, line_load2, "load_right")
 
         # add pin parameters
-        no_displacement_parameters = DisplacementConstraint(
-                                                            is_fixed=[True, True, True],
-                                                            value=[0, 0, 0])
+        no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
         # add boundary conditions in 0d, 1d and 2d
         model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "no_displacement")
@@ -143,9 +141,7 @@ class TestKratosModelIO:
         model.add_load_by_coordinates(load_coordinates_top, line_load1, "load_top")
 
         # add pin parameters
-        no_displacement_parameters = DisplacementConstraint(
-                                                            is_fixed=[True, True, True],
-                                                            value=[0, 0, 0])
+        no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
         # add boundary conditions in 0d, 1d and 2d
         model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "no_displacement")
@@ -198,9 +194,7 @@ class TestKratosModelIO:
         model.add_load_by_coordinates(load_coordinates_top, line_load1, "load_top")
 
         # add pin parameters
-        no_displacement_parameters = DisplacementConstraint(
-                                                            is_fixed=[True, True, True],
-                                                            value=[0, 0, 0])
+        no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
         # add boundary conditions in 0d, 1d and 2d
         model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "no_displacement")
@@ -265,9 +259,7 @@ class TestKratosModelIO:
         model.add_load_by_coordinates(load_coordinates_bottom, surface_load_bottom, "load_bottom")
 
         # add pin parameters
-        no_displacement_parameters = DisplacementConstraint(
-                                                            is_fixed=[True, True, True],
-                                                            value=[0, table2, 0])
+        no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, table2, 0])
 
         # add boundary conditions in 0d, 1d and 2d
         model.add_boundary_condition_by_geometry_ids(2, [6], no_displacement_parameters, "no_displacement")
