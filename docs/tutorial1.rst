@@ -104,34 +104,12 @@ Absorbing boundaries are applied on x=x_max and z=z_max planes.
 
 .. code-block:: python
 
-    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
+    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
+    roller_displacement_parameters = DisplacementConstraint(is_fixed=[True, False, True], value=[0, 0, 0])
 
-    roller_displacement_parameters_x = DisplacementConstraint(active=[True, True, True],
-                                                              is_fixed=[True, False, False],
-                                                              value=[0, 0, 0])
-
-    roller_displacement_parameters_z = DisplacementConstraint(active=[True, True, True],
-                                                              is_fixed=[False, False, True],
-                                                              value=[0, 0, 0])
-
-    abs_boundary_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=10)
-
-    model.add_boundary_condition_on_plane([(0, 0, 0), (x_max, 0, 0), (x_max, 0, z_max)],
-                                          no_displacement_parameters, "base_fixed")
-
-    model.add_boundary_condition_on_plane([(0, 0, 0), (0, y_max, 0), (0, y_max, z_max)],
-                                          roller_displacement_parameters_x, "sides_roler_x=0")
-
-    model.add_boundary_condition_on_plane([(0, 0, 0), (x_max, 0, 0), (x_max, y_max, 0)],
-                                          roller_displacement_parameters_z, "sides_roler_z=0")
-
-    model.add_boundary_condition_on_plane([(x_max, 0, 0), (x_max, y_max, 0), (x_max, y_max, z_max)],
-                                          abs_boundary_parameters, "abs_x=x_max")
-
-    model.add_boundary_condition_on_plane([(0, 0, z_max), (x_max, 0, z_max), (x_max, y_max, z_max)],
-                                          abs_boundary_parameters, "abs_z=z_max")
+    model.add_boundary_condition_by_geometry_ids(2, [1], no_displacement_parameters, "base_fixed")
+    model.add_boundary_condition_by_geometry_ids(2, [2, 4, 5, 6, 7, 10, 11, 12, 15, 16, 17],
+                                                 roller_displacement_parameters, "sides_roller")
 
     # END CODE BLOCK
 

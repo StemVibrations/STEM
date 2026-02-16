@@ -164,66 +164,163 @@ is supported with 1D soil equivalent elements with a length of 2 meters.
 
 .. code-block:: python
 
-    sleeper_distance =0.5
-    total_length = 18
-    n_sleepers = int(total_length/sleeper_distance)
+    model.add_soil_layer_by_coordinates(soil1_coordinates, material_soil_1, "soil_layer_1")
+    model.add_soil_layer_by_coordinates(soil2_coordinates, material_soil_2, "soil_layer_2")
+    model.add_soil_layer_by_coordinates(embankment_coordinates, material_embankment, "embankment_layer")
+
+    # END CODE BLOCK
+
+
+Generating the train track
+--------------------------
+STEM provides two options to generate a straight track (see :doc:`Tutorial 3 </tutorial3>`).
+In this tutorial the track is generated on top of the embankment layer.
+
+The track is added by specifying the origin point of the track and the direction for the extrusion that creates
+the rail as well as rail pads and sleepers. Important is that the origin point and the end of the track lie on
+geometry edges.
+
+In this tutorial, a straight track is generated parallel to the z-axis at 0.75 m distance from the x-axis,
+on top of the embankment. To do this, the origin point of the track is set with coordinates [0.75, 3.0, 0.0] and the
+extrusion is done parallel to the positive z-axis, i.e. with a direction vector of [0, 0, 1].
+The length of the track is defined by the number of sleepers and their spacing.
+In this tutorial, 101 sleepers are placed which are connected by to the rail by 0.025m thick railpads. The sleepers
+are spaced 0.5m from each others which results in a 50m straight track, with part name "rail_track".
+
+.. code-block:: python
+
+    origin_point = [0.75, 3.0, 0.0]
+    direction_vector = [0, 0, 1]
+    number_of_sleepers = 101
+    sleeper_spacing = 0.5
     rail_pad_thickness = 0.025
 
-    # create a straight track with rails, sleepers, rail pads and a 1D soil extension
-    model.generate_extended_straight_track(sleeper_distance=0.5,
-                                           n_sleepers=n_sleepers,
-                                           rail_pad_thickness=0.025,
-                                           origin_point=[0.75, 2.0, -5.0],
-                                           direction_vector=[0, 0, 1],
-                                           rail_parameters=rail_parameters,
-                                           sleeper_parameters=sleeper_parameters,
-                                           rail_pad_parameters=rail_pad_parameters,
-                                           soil_equivalent_parameters=soil_equivalent_parameters,
-                                           length_soil_equivalent_element=2,
-                                           name="rail_track_1")
-
-    # END CODE BLOCK
-
-The new geometry is shown in the figure below.
-
-.. image:: _static/double_extrusion_with_track.png
-
-For the moving load, MovingLoad class is called. The load has a value of -10000 N in the y-direction and is applied on the
-track. When the load starts moving, the load follows a positive x,y,z trajectory. However, in this tutorial, a multistage
-analysis is performed. In the first stage, the load should be stationary. Therefore, the velocity is set to 0. The load has
-an origin point at coordinates [0.75, 2.025, -3.0] (on top of the track, 2 meter away from the end).
-
-.. code-block:: python
-
-    # define the moving load
-    moving_load = MovingLoad(load=[0,-10000,0], direction_signs=[1, 1, 1], velocity=0, origin=[0.75, 2 + rail_pad_thickness, -3])
-
-    # add the load on the track
-    model.add_load_on_line_model_part("rail_track_1", moving_load, "moving_load")
+    model.generate_straight_track(sleeper_spacing, number_of_sleepers, rail_parameters,
+                                  sleeper_parameters, rail_pad_parameters,
+                                  rail_pad_thickness, origin_point,
+                                  direction_vector, "rail_track")
 
     # END CODE BLOCK
 
 
-Below the boundary conditions are defined. The base of the model is fixed in all directions with the name "base_fixed".
-The roller boundary condition is applied along the symmetry side of the domain with the name "sides_roller". On all other
-sides, absorbing boundary conditions are applied with the name "abs". In this tutorial, contrary to the previous tutorials,
-the boundary conditions are applied to planes defined by 3 points.
+The rail joint is modelled by adding a hinge on the rail track.
+The hinge requires the definition of the distance to the joint, starting from the origin point of the track and
+the rotational stiffness in the y and z direction.
+The hinge is added to the model by specifying the name of the track (in this case "rail_track"), the coordinates
+of the joint, the hinge parameters and the name of the hinge.
 
 .. code-block:: python
 
-    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True], value=[0, 0, 0])
-    roller_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                            is_fixed=[True, False, True], value=[0, 0, 0])
+    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True],
+                                                        value=[0, 0, 0])
+    roller_displacement_parameters = DisplacementConstraint(is_fixed=[True, False, True],
+                                                            value=[0, 0, 0])
     absorbing_boundaries_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=3.0)
 
-    # add the boundary conditions to the model
-    model.add_boundary_condition_on_plane([(0,0,0), (0,0,1), (1,0,0)],no_displacement_parameters,"base_fixed")
-    model.add_boundary_condition_on_plane([(0,0,0), (0,1,0), (0,0,1)], roller_displacement_parameters, "sides_roller")
+    # set hinge rotation stiffness
+    distance_joint = 35.75
+    hinge_stiffness_y = 37.8e7
+    hinge_stiffness_z = 37.8e7
 
-    model.add_boundary_condition_on_plane([(0,0,0), (1,0,0), (0,1,0)],absorbing_boundaries_parameters,"abs")
-    model.add_boundary_condition_on_plane([(0,0,8), (1,0,8), (0,1,8)],absorbing_boundaries_parameters,"abs")
-    model.add_boundary_condition_on_plane([(5,0,0), (5,1,0), (5,0,1)], absorbing_boundaries_parameters, "abs")
+    model.add_hinge_on_beam("rail_track", [(0.75, 3 + rail_pad_thickness, distance_joint)],
+                            HingeParameters(hinge_stiffness_y, hinge_stiffness_z), "hinge")
+
+    # END CODE BLOCK
+
+The UVEC model is then defined using the UvecLoad class. The train moves in positive direction from the origin, this is
+defined in `direction=[1, 1, 1]`, values greater than 0 indicate positive direction, values smaller than 0 indicate
+negative direction.
+
+In this tutorial the train is statically initialised therefore the velocity is set to 0 m/s.
+This means that the train is not moving, but the static load of the train is applied to the model, on top of the track,
+that includes an extra thickness of the rail-pad, as shown above in `rail_pad_thickness`.
+
+The wheel configuration is defined as a list of distances from the origin point to the wheels. The `uvec_model` is the
+imported UVEC train model. The `uvec_parameters` parameter is a dictionary which contains the parameters of the
+UVEC model. The UVEC load is added on top of the previously defined track with the name "rail_track".
+And the name of the load is set to "train_load".
+Because a rail joint is present in the model, the "joint_parameters" key needs to be defined in the `uvec_parameters`
+dictionary. If not, the joint will not be taken into account in the UVEC model.
+The joint is modelled following the model of dipped joint :cite:`Kabo_2006`, and the parameters are defined as a
+dictionary with the following keys:
+
+- "location_joint": the distance from the origin point to the joint in meters
+- "depth_joint": the depth of the joint in meters
+- "width_joint": the width of the joint in meters.
+
+A schematisation of the UVEC model and the rail joint as defined in this tutorial, is shown below.
+
+.. |uvec_model| image:: _static/figure_uvec.png
+    :width: 60%
+
+.. |joint_model| image:: _static/figure_joint.png
+    :width: 39%
+
+|uvec_model| |joint_model|
+
+
+Below the uvec parameters are defined.
+
+.. code-block:: python
+
+    # define uvec parameters
+    wheel_configuration=[0.0, 2.5, 19.9, 22.4] # wheel configuration [m]
+    velocity = 0 # velocity of the UVEC [m/s]
+    uvec_parameters = {"n_carts": 1, # number of carts [-]
+                       "cart_inertia": (1128.8e3) / 2, # inertia of the cart [kgm2]
+                       "cart_mass": (50e3) / 2, # mass of the cart [kg]
+                       "cart_stiffness": 2708e3, # stiffness between the cart and bogies [N/m]
+                       "cart_damping": 64e3, # damping coefficient between the cart and bogies [Ns/m]
+                       "bogie_distances": [-9.95, 9.95], # distances of the bogies from the centre of the cart [m]
+                       "bogie_inertia": (0.31e3) / 2, # inertia of the bogie [kgm2]
+                       "bogie_mass": (6e3) / 2, # mass of the bogie [kg]
+                       "wheel_distances": [-1.25, 1.25], # distances of the wheels from the centre of the bogie [m]
+                       "wheel_mass": 1.5e3, # mass of the wheel [kg]
+                       "wheel_stiffness": 4800e3, # stiffness between the wheel and the bogie [N/m]
+                       "wheel_damping": 0.25e3, # damping coefficient between the wheel and the bogie [Ns/m]
+                       "gravity_axis": 1, # axis on which gravity works [x =0, y = 1, z = 2]
+                       "contact_coefficient": 9.1e-7, # Hertzian contact coefficient between the wheel and the rail [N/m]
+                       "contact_power": 1.0, # Hertzian contact power between the wheel and the rail [-]
+                       "static_initialisation": True, # True if the analysis of the UVEC is static
+                       "wheel_configuration": wheel_configuration,
+                       "velocity": velocity,
+                       "joint_parameters": {"location_joint": distance_joint,  # joint location [m]
+                                            "depth_joint": 0.01,  # depth of the joint [m]
+                                            "width_joint": 0.25},  # width of the joint [m]
+                       }
+
+    # define the UVEC load
+    uvec_load = UvecLoad(direction_signs=[1, 1, 1], velocity=velocity, origin=[0.75, 3+rail_pad_thickness, 0],
+                         wheel_configuration=wheel_configuration,
+                         uvec_model=uvec,
+                         uvec_parameters=uvec_parameters)
+
+    # add the load on the tracks
+    model.add_load_on_line_model_part("rail_track", uvec_load, "train_load")
+
+    # END CODE BLOCK
+
+The boundary conditions are defined on planes using "DisplacementConstraint" and "AbsorbingBoundary" classes.
+The base of the model is fixed in all directions with the name "base_fixed".
+For the surfaces at the symmetry plane, roller boundary condition is applied with the name "sides_roller".
+To prevent reflections from the sides of the model, absorbing boundaries are applied with virtual thickness of 40 meters.
+The boundary conditions are added to the model on the edge surfaces, i.e. the boundary conditions are applied to a list
+of surface ids (which can be visualised using: "model.show_geometry(show_surface_ids=True)")  with the corresponding
+surface-dimension, "2".
+
+.. code-block:: python
+
+    # define BC
+    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
+    roller_displacement_parameters = DisplacementConstraint(is_fixed=[True, False, True], value=[0, 0, 0])
+    absorbing_boundaries_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=40.0)
+
+    model.add_boundary_condition_on_plane([(0, 0, 0), (0, 0, extrusion_length), (5, 0, 0)], no_displacement_parameters,"base_fixed")
+    model.add_boundary_condition_on_plane([(0, 0, 0), (0, 0, extrusion_length), (0, 3, 0)], roller_displacement_parameters, "sides_roller")
+    #
+    model.add_boundary_condition_on_plane([(0, 0, 0), (5, 0, 0), (5, 3, 0)],absorbing_boundaries_parameters,"abs")
+    model.add_boundary_condition_on_plane([(0, 0, extrusion_length), (5, 0, extrusion_length), (5, 3, extrusion_length)],absorbing_boundaries_parameters,"abs")
+    model.add_boundary_condition_on_plane([(5, 0, 0), (5, 3, 0), (5, 0, extrusion_length)], absorbing_boundaries_parameters, "abs")
 
     # END CODE BLOCK
 

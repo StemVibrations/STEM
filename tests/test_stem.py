@@ -65,9 +65,7 @@ class TestStem:
         model.add_load_by_coordinates(load_coordinates, line_load, "load")
 
         # Define boundary conditions
-        no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                            is_fixed=[True, True, True],
-                                                            value=[0, 0, 0])
+        no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
         # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
         model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "base_fixed")
@@ -1035,9 +1033,7 @@ class TestStem:
         model.add_load_by_coordinates(load_coordinates, line_load, "load")
 
         # Define boundary conditions
-        no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                            is_fixed=[True, True, True],
-                                                            value=[0, 0, 0])
+        no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
         # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
         model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "base_fixed")

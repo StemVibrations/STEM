@@ -61,11 +61,9 @@ def test_stem():
     model.add_soil_layer_by_coordinates(block_coordinates, gravity_block, "gravity_block")
 
     # Define boundary conditions
-    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
+    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
-    sym_parameters = DisplacementConstraint(active=[True, False, True], is_fixed=[True, False, False], value=[0, 0, 0])
+    sym_parameters = DisplacementConstraint(is_fixed=[True, False, False], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "base_fixed")

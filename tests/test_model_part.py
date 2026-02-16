@@ -150,7 +150,7 @@ class TestModelPart:
         """
 
         # displacement constraint does not have element names
-        displacement_constraint = DisplacementConstraint([True, True, True], [True, True, True], [0, 0, 0])
+        displacement_constraint = DisplacementConstraint([True, True, True], [0, 0, 0])
         displacement_constraint_part = ModelPart("displacement_constraint_part")
         displacement_constraint_part.parameters = displacement_constraint
 
@@ -169,7 +169,7 @@ class TestModelPart:
             displacement_constraint_part.get_element_name(1, 4, AnalysisType.MECHANICAL)
 
         # rotation constraint does not have element names
-        rotation_constraint = RotationConstraint([True, True, True], [True, True, True], [0, 0, 0])
+        rotation_constraint = RotationConstraint([True, True, True], [0, 0, 0])
         rotation_constraint_part = ModelPart("rotation_constraint_part")
         rotation_constraint_part.parameters = rotation_constraint
 

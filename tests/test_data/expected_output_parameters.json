@@ -176,9 +176,9 @@
     },
     "processes": {
         "json_output": [{
-            "python_module": "json_output_process",
-            "kratos_module": "KratosMultiphysics",
-            "process_name": "JsonOutputProcess",
+            "python_module": "fast_json_output_process",
+            "kratos_module": "KratosMultiphysics.RailwayApplication",
+            "process_name": "FastJsonOutputProcess",
             "Parameters": {
                 "model_part_name": "PorousDomain.test_json_output1",
                 "output_file_name": "test_json_output1.json",
@@ -195,9 +195,9 @@
             }
         },
         {
-            "python_module": "json_output_process",
-            "kratos_module": "KratosMultiphysics",
-            "process_name": "JsonOutputProcess",
+            "python_module": "fast_json_output_process",
+            "kratos_module": "KratosMultiphysics.RailwayApplication",
+            "process_name": "FastJsonOutputProcess",
             "Parameters": {
                 "model_part_name": "PorousDomain.test_json_output2",
                 "output_file_name": "dir_test/test_json_output2.json",
@@ -216,9 +216,9 @@
             }
         },
         {
-            "kratos_module": "KratosMultiphysics",
-            "process_name": "JsonOutputProcess",
-            "python_module": "json_output_process",
+            "kratos_module": "KratosMultiphysics.RailwayApplication",
+            "process_name": "FastJsonOutputProcess",
+            "python_module": "fast_json_output_process",
             "Parameters": {
                 "gauss_points_output_variables": [
                     "VON_MISES_STRESS",

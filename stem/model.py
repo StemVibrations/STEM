@@ -13,7 +13,7 @@ from gmsh_utils import gmsh_IO
 from stem.additional_processes import (ParameterFieldParameters, HingeParameters, AdditionalProcessPart,
                                        AdditionalProcessesParametersABC, ExtrapolateIntegrationPointToNodesParameters)
 from stem.field_generator import RandomFieldGenerator
-from stem.globals import ELEMENT_DATA, OUT_OF_PLANE_AXIS_2D, VERTICAL_AXIS, GRAVITY_VALUE, GEOMETRY_PRECISION
+from stem.globals import GlobalSettings, ELEMENT_DATA, OUT_OF_PLANE_AXIS_2D, VERTICAL_AXIS
 from stem.load import *
 from stem.boundary import *
 from stem.geometry import Geometry, Point
@@ -161,7 +161,7 @@ class Model:
         transformation_matrix[2, :] = v
 
         # mirror local sleeper points if rotation around vertical axis is negative
-        if transformation_matrix[2, 0] < -GEOMETRY_PRECISION:
+        if transformation_matrix[2, 0] < -GlobalSettings.geometry_precision:
             points_local[:, 2] = -points_local[:, 2]
             points_local[[0, 1]] = points_local[[1, 0]]
             points_local[[2, 3]] = points_local[[3, 2]]
@@ -339,9 +339,7 @@ class Model:
         # add displacement_constraint in the non-vertical directions
         is_constraint = [True, True, True]
         is_constraint[VERTICAL_AXIS] = False
-        constraint_model_part.parameters = DisplacementConstraint(active=is_constraint,
-                                                                  is_fixed=is_constraint,
-                                                                  value=[0, 0, 0])
+        constraint_model_part.parameters = DisplacementConstraint(is_fixed=is_constraint, value=[0, 0, 0])
         return constraint_model_part
 
     def __create_rail_no_rotation_model_part(self, rail_name: str,
@@ -358,9 +356,7 @@ class Model:
         """
         rotation_constraint_name = f"rotation_constraint_{rail_name}"
         no_rotation_model_part = ModelPart(rotation_constraint_name)
-        no_rotation_constraint = RotationConstraint(active=[True, True, True],
-                                                    is_fixed=[True, True, True],
-                                                    value=[0, 0, 0])
+        no_rotation_constraint = RotationConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
         no_rotation_model_part.parameters = no_rotation_constraint
 
         no_rotation_geo_settings: Dict[str, Any] = {
@@ -720,18 +716,14 @@ class Model:
         # can only move in the vertical direction
         constraint_list = [True, True, True]
         constraint_list[VERTICAL_AXIS] = False
-        constraint_parameters = DisplacementConstraint(active=constraint_list,
-                                                       is_fixed=constraint_list,
-                                                       value=[0, 0, 0])
+        constraint_parameters = DisplacementConstraint(is_fixed=constraint_list, value=[0, 0, 0])
         self.add_boundary_condition_by_geometry_ids(1, soil_equivalent_line_ids, constraint_parameters,
                                                     constraint_horizontal_soil_equivalent_name)
 
         # add bottom points fixed
         constraint_model_soil_equivalent_name = f"constraint_{soil_equivalent_name}"
         constraint_model_soil_equivalent_part = ModelPart(f"constraint_{soil_equivalent_name}")
-        constraint_model_soil_equivalent = DisplacementConstraint(active=[True, True, True],
-                                                                  is_fixed=[True, True, True],
-                                                                  value=[0, 0, 0])
+        constraint_model_soil_equivalent = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
         constraint_model_soil_equivalent_part.parameters = constraint_model_soil_equivalent
         constraint_model_soil_equivalent_part_settings = {
             constraint_model_soil_equivalent_name: {
@@ -2235,7 +2227,7 @@ class Model:
 
         # set gravity load at vertical axis
         gravity_load_values: List[float] = [0, 0, 0]
-        gravity_load_values[VERTICAL_AXIS] = GRAVITY_VALUE
+        gravity_load_values[VERTICAL_AXIS] = GlobalSettings.gravity_value
         gravity_load = GravityLoad(value=gravity_load_values, active=[True, True, True])
 
         # get all body model part names

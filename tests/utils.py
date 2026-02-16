@@ -119,6 +119,8 @@ class TestUtils:
             - rel_tolerance (float): Relative tolerance for comparing numerical values. Default is 1e-7.
         """
 
+        assert len(expected) == len(actual)
+
         for k, v in expected.items():
 
             assert k in actual

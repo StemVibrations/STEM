@@ -81,14 +81,10 @@ def test_stem(element_order):
     model.add_load_by_coordinates(load_coordinates, moving_load, "moving_load")
 
     # Define rotation boundary condition
-    rotation_boundaries_parameters = RotationConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
+    rotation_boundaries_parameters = RotationConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
     # Define displacement conditions
-    displacementXYZ_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
+    displacementXYZ_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(0, [4], rotation_boundaries_parameters, "rotation")

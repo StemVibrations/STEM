@@ -81,13 +81,9 @@ def test_stem(element_order):
     model.add_load_by_coordinates(load_coordinates, moving_load, "moving_load")
 
     # Define displacement conditions
-    displacementXYZ_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
+    displacementXYZ_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
-    roller_displacement_parameters = DisplacementConstraint(active=[True, False, True],
-                                                            is_fixed=[True, False, True],
-                                                            value=[0, 0, 0])
+    roller_displacement_parameters = DisplacementConstraint(is_fixed=[True, False, True], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(2, [1, 2, 3, 6], displacementXYZ_parameters, "displacementXYZ")

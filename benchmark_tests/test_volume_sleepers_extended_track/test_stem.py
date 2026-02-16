@@ -133,12 +133,8 @@ def test_stem():
     model.add_load_on_line_model_part("rail_track_1", load, "moving_load")
 
     # Define boundary conditions
-    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
-    roller_displacement_parameters = DisplacementConstraint(active=[True, False, True],
-                                                            is_fixed=[True, False, True],
-                                                            value=[0, 0, 0])
+    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
+    roller_displacement_parameters = DisplacementConstraint(is_fixed=[True, False, True], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     # model.show_geometry(show_surface_ids=True)
