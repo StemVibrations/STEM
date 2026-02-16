@@ -151,7 +151,7 @@ The system of equations is solved with the assumption of constant stiffness matr
 The Linear-Newton-Raphson (Newmark explicit solver) is used as strategy and Cg as solver for the linear system of equations.
 
 The Rayleigh damping parameters are set to :math:`\alpha = 7.86 \cdot 10^{-5}` and :math:`\beta = 0.248`, which
-correspond to a damping ratio of 2% for 1 and 80Hz.
+correspond to a damping ratio of 2% for 1 and 80 Hz.
 
 The convergence criterion for the numerical solver are set to a relative tolerance of :math:`10^{-4}` and an absolute
 tolerance of :math:`10^{-9}` for the displacements.
@@ -223,10 +223,11 @@ is written for the full computational model part (displacements and velocities).
 Run
 ---
 Now that the model is set up, the calculation is ready to run.
+
 Firstly the Stem class is initialised, with the model and the directory where the input files will be written to.
 While initialising the Stem class, the mesh will be generated.
 This is followed by writing all the input files required to run the calculation.
-The calculation is run by calling `run_calculation`.
+The calculation is run by calling ``stem.run_calculation()``.
 
 
 .. code-block:: python
