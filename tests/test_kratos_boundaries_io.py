@@ -40,14 +40,12 @@ class TestKratosBoundariesIO:
 
         # Displacements
         fix_displacements_parameters = DisplacementConstraint(
-            active=[True, True, False],
             is_fixed=[True, True, False],
             value=[0.0, table1, 0.0],
         )
 
         # Rotations
         fix_rotations_parameters = RotationConstraint(
-            active=[False, False, True],
             is_fixed=[False, False, True],
             value=[table2, 0.0, 0.0],
         )

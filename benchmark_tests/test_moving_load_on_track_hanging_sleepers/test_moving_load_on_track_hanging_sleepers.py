@@ -65,9 +65,7 @@ def test_moving_load_on_track_on_soil():
     # model.show_geometry(show_surface_ids=True, show_point_ids=True)
 
     # Define boundary conditions
-    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
+    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     sleeper_point_ids = list(model.body_model_parts[1].geometry.points.keys())
