@@ -123,24 +123,13 @@ See :doc:`authors` for the full list of maintainers and contributors.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Tutorials
-   :hidden:
-
-   tutorial1
-   tutorial2
-   tutorial3
-   tutorial4
-   tutorial5
-   tutorial6
-
-.. toctree::
-   :maxdepth: 2
-   :caption: STEM concepts
+   :caption: STEM definitions
    :hidden:
 
    materials
    boundary_conditions
    loads
+   track
    outputs
    solver_settings
 
@@ -150,6 +139,19 @@ See :doc:`authors` for the full list of maintainers and contributors.
    :hidden:
 
    API_definition
+
+   
+.. toctree::
+   :maxdepth: 2
+   :caption: Tutorials
+   :hidden:
+
+   tutorial1
+   tutorial2
+   tutorial3
+   tutorial4
+   tutorial5
+   tutorial6
 
 .. toctree::
    :maxdepth: 1

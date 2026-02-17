@@ -1,39 +1,44 @@
 .. _tutorial2:
 
-Stationary load on a 3D field
-=============================
+Moving load on an embankment in 3D
+==================================
 
 Overview
 --------
-This tutorial shows how set up a line load on top of an embankment with two soil layers underneath, in a 3D model.
+This tutorial shows how to set up a moving load on top of an embankment with two soil layers underneath, in a 3D model.
+This tutorial builds on :ref:`tutorial2`, where a line load was applied on top of the embankment.
+In this tutorial, the line load is replaced by a moving load, which moves along the embankment
+with a velocity of 30 m/s. The geometry and material parameters are the same as in the previous tutorial.
 
 Imports and setup
 -----------------
-First the necessary packages are imported and the input is defined.
+First the necessary packages are imported and the input folder is defined.
 
 .. code-block:: python
 
-    input_files_dir = "line_load"
+    input_files_dir = "moving_load"
 
     from stem.model import Model
     from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
-    from stem.load import LineLoad
+    from stem.load import MovingLoad
     from stem.boundary import DisplacementConstraint
     from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
          LinearNewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
-    from stem.output import NodalOutput, VtkOutputParameters
+    from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters
     from stem.stem import Stem
 
 ..    # END CODE BLOCK
 
-For setting up the model, ``Model`` class is imported from ``stem.model``. And for setting up the soil material,
-``OnePhaseSoil``, ``LinearElasticSoil``, ``SoilMaterial``, ``SaturatedBelowPhreaticLevelLaw`` classes are imported.
-In this case, there is a line load on top of the embankment. ``LineLoad`` class is imported from ``stem.load``.
-As for setting the boundary conditions, ``DisplacementConstraint`` class is imported from ``stem.boundary``.
-For setting up the solver settings, necessary classes are imported from ``stem.solver``.
-Classes needed for the output, are ``NodalOutput`` and ``VtkOutputParameters``
-which are imported from ``stem.output``.
-Lastly, ``Stem`` class is imported from ``stem.stem``, in order to run the simulation.
+
+For setting up the model, ``Model`` is imported from ``stem.model``.
+For the soil material, ``OnePhaseSoil``, ``LinearElasticSoil``, ``SoilMaterial``,
+and ``SaturatedBelowPhreaticLevelLaw`` are imported from ``stem.soil_material``.
+In this case, a moving load is applied, therefore ``MovingLoad`` is imported from ``stem.load``.
+Boundary conditions are set using ``DisplacementConstraint``.
+Solver settings are defined with classes imported from ``stem.solver``.
+For output, ``NodalOutput`` and ``VtkOutputParameters`` are imported.
+Finally, ``Stem`` is imported from ``stem.stem`` to write input files and run the calculation.
+
 
 Geometry and materials
 ----------------------
@@ -139,20 +144,27 @@ a unique name.
 
 ..    # END CODE BLOCK
 
+
 Load
-----
-For the line load, ``LineLoad`` class is called. The load is defined following a list of coordinates.
-In this case, a line load is applied along the `load_coordinates`.
-The line load can be defined along which axis is active, and the value of the load for each axis.
-In this example, the load is only active in the y-direction and the value is -1000 N.
+-----
+The moving load is modelled using the ``MovingLoad`` class.
+The load is defined following a list of coordinates.
+In this case, a moving load is applied along a line located at 0.75 m distance from the x-axis on top of the embankment.
+The velocity of the moving load is 30 m/s and the load is -10000 N in the y-direction.
+he load moves in positive z direction and the load starts at coordinates: [0.75, 3.0, 0.0].
+
+It is possible to use different types of loads. Please refer to :doc:`loads` for more information on the different
+load types and how to define them.
 
 .. code-block:: python
 
     load_coordinates = [(0.75, 3.0, 0.0), (0.75, 3.0, 50.0)]
-    line_load = LineLoad(active=[False, True, False], value=[0, -1000, 0])
-    model.add_load_by_coordinates(load_coordinates, line_load, "line_load")
+    moving_load = MovingLoad(load=[0.0, -10000.0, 0.0], direction_signs=[1, 1, 1], velocity=30, origin=[0.75, 3.0, 0.0],
+                             offset=0.0)
+    model.add_load_by_coordinates(load_coordinates, moving_load, "moving_load")
 
 ..    # END CODE BLOCK
+
 
 
 Boundary conditions
@@ -240,7 +252,7 @@ Solver settings
 Now that the model is defined, the solver settings should be set.
 The analysis type is set to `MECHANICAL` and the solution type is set to `DYNAMIC`.
 
-Then the start time is set to 0.0 s and the end time is set to 0.5 s. The time step for the analysis is set to 0.01 s.
+Then the start time is set to 0.0 s and the end time is set to 1.5 s. The time step for the analysis is set to 0.01 s.
 Furthermore, the reduction factor and increase factor are set to 1.0, such that the time step size is constant throughout
 the simulation. Displacement convergence criteria is set to 1.0e-4 for the relative tolerance and 1.0e-9 for the
 absolute tolerance.
@@ -258,7 +270,7 @@ correspond to a damping ratio of 2% for 1 and 80 Hz.
     analysis_type = AnalysisType.MECHANICAL
     solution_type = SolutionType.DYNAMIC
     # Set up start and end time of calculation, time step
-    time_integration = TimeIntegration(start_time=0.0, end_time=0.5, delta_time=0.01, reduction_factor=1.0,
+    time_integration = TimeIntegration(start_time=0.0, end_time=1.5, delta_time=0.01, reduction_factor=1.0,
                                        increase_factor=1.0)
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
                                                             displacement_absolute_tolerance=1.0e-9)
@@ -278,30 +290,27 @@ correspond to a damping ratio of 2% for 1 and 80 Hz.
 
 ..    # END CODE BLOCK
 
+
 Problem and output
 ------------------
 The problem definition is added to the model.
-The problem name is set to “calculate_load_on_embankment_3d”,
+The problem name is set to "moving_load_on_embankment_3d",
 the number of threads is set to 8 and the solver settings are applied.
 
 .. code-block:: python
 
-    problem = Problem(problem_name="calculate_load_on_embankment_3d", number_of_threads=8,
+    problem = Problem(problem_name="moving_load_on_embankment_3d", number_of_threads=8,
                       settings=solver_settings)
     model.project_parameters = problem
 
 ..    # END CODE BLOCK
 
 Before starting the calculation, it is required to specify the desired output. In this case, displacement,
-velocity and acceleration are requested on the nodes and written to the output file.
+and velocity are requested on the nodes and written into VTK files.
 In this case, Gauss point results (stresses) are left empty.
 
-.. code-block:: python
-
-    nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY, NodalOutput.ACCELERATION]
-    gauss_point_results = []
-
-..    # END CODE BLOCK
+The JSON output file is requested at a node located in the surface of the embankment, in the middle of the model,
+with coordinates (0.75, 3.0, 25.0).
 
 The output process is added to the model using the ``Model.add_output_settings`` method.
 The results are written to the output directory in VTK format.
@@ -309,6 +318,16 @@ In this case, the output interval is set to 1 and the output control type is set
 results will be written every time step.
 
 .. code-block:: python
+
+    json_output_parameters = JsonOutputParameters(0.01, [NodalOutput.DISPLACEMENT], [])
+
+    model.add_output_settings_by_coordinates([
+        (0.75, 3.0, 25.0)],
+        json_output_parameters,
+        "json_output")
+
+    nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY]
+    gauss_point_results = []
 
      model.add_output_settings(
         part_name="porous_computational_model_part",
@@ -344,13 +363,21 @@ The calculation is run by calling ``stem.run_calculation()``.
 
 Results
 -------
-Once the calculation is finished, the results can be visualised using Paraview.
+Once the calculation is finished, the results can be visualised using Paraview,
+or by loading the JSON output file.
 
-This animation shows the vertical displacement of the soil when subjected to the line load.
+This figure shows the time history of the vertical displacements at the point on the embankment surface
+(these results have been obtained for a time step of 0.005 s, time duration of 1.75 s and with an element size of 0.5m).
 
-.. image:: _static/line_load.gif
+.. image:: _static/moving_load.png
+   :align: center
+   :alt: Vertical displacements at the surface of the model at different time steps.
+
+
+This animation shows the vertical displacement of the soil due to the moving load.
+
+.. image:: _static/moving.gif
    :alt: Vertical displacement
-
 
 
 .. seealso::

@@ -1,31 +1,36 @@
 .. _tutorial5:
 
-Variation in the Z-direction
-============================
+Train model (UVEC) with rail joint and static initialisation
+============================================================
 Overview
 --------
-This tutorial shows a step-by-step guide on how to set up a 3D geometry where the soil layers vary in both Y and Z
-directions. Furthermore, a track is defined which lays on top of the soil and extends outside of the soil domain. The
-problem will be calculated in a multistage analysis.
+This tutorial shows a step-by-step guide on how to set up a train model on top of track on an embankment with
+two soil layers underneath, in a 3D model, on a railway track with a rail joint.
+The UVEC (User defined VEhiCle model) is a model used to represent a train as dynamic loads on the system.
+
+The calculation is performed in two stages.
+The first stage is a static initialisation of the model, where the static load of the train is applied to the model.
+The second stage is a dynamic analysis of the model, where the train moves over the track.
+The UVEC model is used to represent the train. The UVEC model is a user defined vehicle model that can be used to
+represent a train as a dynamic load on the system.
 
 Imports and setup
 -----------------
-First the necessary packages are imported and paths are defined.
+First we import the necessary packages.
 
 .. code-block:: python
 
-    input_files_dir = "variation_z"
-    results_dir = "output"
-
+    import UVEC.uvec_ten_dof_vehicle_2D as uvec
     from stem.model import Model
+    from stem.additional_processes import HingeParameters
     from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
     from stem.structural_material import ElasticSpringDamper, NodalConcentrated
     from stem.default_materials import DefaultMaterial
-    from stem.load import MovingLoad
+    from stem.load import UvecLoad
     from stem.boundary import DisplacementConstraint, AbsorbingBoundary
-    from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, \
-        LinearNewtonRaphsonStrategy, StressInitialisationType, SolverSettings, Problem, Cg
-    from stem.output import NodalOutput, VtkOutputParameters
+    from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
+        LinearNewtonRaphsonStrategy, NewmarkScheme, Cg, StressInitialisationType, SolverSettings, Problem
+    from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters
     from stem.stem import Stem
 
 ..    # END CODE BLOCK
@@ -34,33 +39,25 @@ Geometry, track and materials
 ----------------------------
 For setting up the model, Model class is imported from stem.model. And for setting up the soil material, OnePhaseSoil,
 LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw classes are imported.
-For the structural elements, the ElasticSpringDamper and NodalConcentrated classes are imported. The rail material will
-be retrieved from the DefaultMaterial class. In this case, there is a moving load on top a track. MovingLoad class is
-imported from stem.load. As for setting the boundary conditions, DisplacementConstraint class and the AbsorbingBoundary
-are imported from stem.boundary. For setting up the solver settings, necessary classes are imported from stem.solver.
-Classes needed for the output, are NodalOutput, VtkOutputParameters and Output which are imported from stem.output.
-Lastly, Stem class is imported from stem.stem, in order to run the simulation.
+In this tutorial, a train model load (modelled using the UVEC) is used on top of a track.
+Structural elements
+-------------------
+For this purpose, the ElasticSpringDamper and NodalConcentrated classes are imported from stem.structural_material,
+the UvecLoad class is imported from stem.load.
 
-First the dimension of the model is indicated which in this case is 3. After which the model can be initialised.
+To define the default rail properties, the DefaultMaterial class is imported.
+As for setting the boundary conditions, the DisplacementConstraint class and the AbsorbingBoundary class are imported
+from stem.boundary. For setting up the solver settings, necessary classes are imported from stem.solver.
+Classes needed for the output, are NodalOutput, VtkOutputParameters and Output which are imported from stem.output.
+Lastly, the Stem class is imported from stem.stem, in order to run the simulation.
+
+In this step, the geometry, conditions, and material parameters for the simulation are defined.
+Firstly the dimension of the model is indicated which in this case is 3. After which the model can be initialised.
 
 .. code-block:: python
 
     ndim = 3
     model = Model(ndim)
-
-..    # END CODE BLOCK
-
-In this tutorial, different soil layers will be added in the vertical direction and in the extruded out of plane
-direction. In order to extrude different parts of the geometry differently, it is required to divide the model in groups.
-Below, two groups with unique names are created. Later on, soil layers will be added to these groups. For the creation
-of the groups, the 'reference_depth' (reference out of plane coordinate) and the extrusion length have to be given. In
-this case, "group_1" has a reference z-coordinate of 0.0 and is extruded for 5 meter along the z-axis; "group_2" starts
-at a reference z-coordinate of 5.0 and is extruded for 3 meter. In total, the soil domain will be extruded for 8 meter.
-
-.. code-block:: python
-
-    model.add_group_for_extrusion("group_1", reference_depth=0.0, extrusion_length=5.0)
-    model.add_group_for_extrusion("group_2", reference_depth=5.0, extrusion_length=3.0)
 
 ..    # END CODE BLOCK
 
@@ -103,64 +100,64 @@ The soil is a one-phase soil, meaning that the flow of water through the soil is
 
 ..    # END CODE BLOCK
 
-The coordinates of the model are defined in the following way. Each of the layers are defined by a list of coordinates,
-defined on an x-y plane. For 3D models, x-y planes are extruded in the z-direction. Since in this case, two groups are
-created, the soil layers are added to "group_1" and "group_2". It is important that all soil layers have a unique name.
+The embankment layer on top is defined as a material with the name "embankment".
+It's a Linear elastic material model with the solid density (rho) of 2650 kg/m3,
+the Young's modulus is 10e6 Pa and the Poisson's ratio is 0.2.
+The soil is dry above the phreatic level and wet below the phreatic level. A porosity of 0.3 is specified.
+The soil is a one-phase soil, meaning that the flow of water through the soil is not computed.
 
 .. code-block:: python
 
-    soil_bottom_coordinates = [(0.0, 0.0, 0.0), (5.0, 0.0, 0.0), (5.0, 1.0, 0.0), (0.0, 1.0, 0.0)]
-    soil_top_coordinates = [(0.0, 1.0, 0.0), (5.0, 1.0, 0.0), (5.0, 2.0, 0.0), (0.0, 2.0, 0.0)]
-
-    second_section_bottom_coordinates = [(0.0, 1.5, 5.0), (5.0, 1.5, 5.0), (5.0, 2.0, 5.0), (0.0, 2.0, 5.0)]
-    second_section_top_coordinates=  [(0.0, 0.0, 5.0), (5.0, 0.0, 5.0), (5.0, 1.5, 5.0), (0.0, 1.5, 5.0)]
-
-    model.add_soil_layer_by_coordinates(soil_bottom_coordinates, material_soil_1, "soil_layer_1", "group_1")
-    model.add_soil_layer_by_coordinates(soil_top_coordinates, material_soil_2, "soil_layer_2", "group_1")
-
-    model.add_soil_layer_by_coordinates(second_section_bottom_coordinates, material_soil_1, "soil_layer_1_group_2", "group_2")
-    model.add_soil_layer_by_coordinates(second_section_top_coordinates, material_soil_2, "soil_layer_2_group_2", "group_2")
+    solid_density_3 = 2650
+    porosity_3 = 0.3
+    young_modulus_3 = 10e6
+    poisson_ratio_3 = 0.2
+    soil_formulation_3 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_3, POROSITY=porosity_3)
+    constitutive_law_3 = LinearElasticSoil(YOUNG_MODULUS=young_modulus_3, POISSON_RATIO=poisson_ratio_3)
+    retention_parameters_3 = SaturatedBelowPhreaticLevelLaw()
+    material_embankment = SoilMaterial("embankment", soil_formulation_3, constitutive_law_3, retention_parameters_3)
 
 ..    # END CODE BLOCK
 
-The geometry is shown in the figures below.
-
-.. image:: _static/double_extrusion.png
-
-Now that the soil layers are defined, the track will be defined. The track consists of a rail, railpads and sleepers.
-Furthermore, the track is extended outside of the 3D soil domain. On the extended part of the track, the track is supported
-by 1D elastic spring damper elements which simulate the soil behaviour. The rail parameters are retrieved from the
-DefaultMaterial class, where default properties are given to a beam element. The railpad parameters are defined as an
-ElasticSpringDamper with a nodal displacement stiffness of 750e6 N/m, a nodal damping coefficient of 750e3 Ns/m.
-The sleeper parameters are defined as a NodalConcentrated with a nodal mass of 140 kg. The soil equivalent parameters
-are defined as an ElasticSpringDamper with a nodal displacement stiffness of 8e6 N/m and a nodal damping coefficient
-of 1 Ns/m.
+For the rails, default properties of a  54E1 rail profile are used.
+Other rail profiles for which default material properties are provided are: the 46E3 and 60E1 rail profiles.
+The rail pads are modelled by means of elastic spring dampers while the sleepers are modelled using nodal concentrated
+masses.
 
 .. code-block:: python
 
     rail_parameters = DefaultMaterial.Rail_54E1_3D.value.material_parameters
-
     rail_pad_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[0, 750e6, 0],
                                               NODAL_ROTATIONAL_STIFFNESS=[0, 0, 0],
-                                              NODAL_DAMPING_COEFFICIENT=[0, 750e3, 0],
+                                              NODAL_DAMPING_COEFFICIENT=[0, 750e3, 0], # damping coefficient [Ns/m]
                                               NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0])
-
     sleeper_parameters = NodalConcentrated(NODAL_DISPLACEMENT_STIFFNESS=[0, 0, 0],
                                            NODAL_MASS=140,
                                            NODAL_DAMPING_COEFFICIENT=[0, 0, 0])
 
-    soil_equivalent_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[0, 8e6, 0],
-                                                     NODAL_ROTATIONAL_STIFFNESS=[0, 0, 0],
-                                                     NODAL_DAMPING_COEFFICIENT=[0, 1, 0],
-                                                     NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0])
+..    # END CODE BLOCK
+
+The coordinates of the model are defined in the following way. Each of the layers are defined by a list of coordinates,
+defined in th x-y plane. For 3D models, the x-y plane can be extruded in the z-direction. In this case, the extrusion
+length is 50 m in the z-direction.
+
+.. code-block:: python
+
+    extrusion_length = 50
+    soil1_coordinates = [(0.0, 0.0, 0.0), (5.0, 0.0, 0.0), (5.0, 1.0, 0.0), (0.0, 1.0, 0.0)]
+    soil2_coordinates = [(0.0, 1.0, 0.0), (5.0, 1.0, 0.0), (5.0, 2.0, 0.0), (0.0, 2.0, 0.0)]
+    embankment_coordinates = [(0.0, 2.0, 0.0), (3.0, 2.0, 0.0), (1.5, 3.0, 0.0), (0.75, 3.0, 0.0), (0, 3.0, 0.0)]
+    model.extrusion_length = extrusion_length
 
 ..    # END CODE BLOCK
 
-Now that the track materials are defined, the track can be added to the model. The track has equal distance between the
-sleepers of 0.5 meters. The number of sleepers is calculated based on the distance between the sleepers and the total
-length of the track. The rail pad thickness is set to 0.025 meters. The track has an origin point at coordinates [0.75, 2.0, -5.0].
-From this point, the track follows the direction of the 'direction_vector' [0, 0, 1] (following the z-axis). The extension
-is supported with 1D soil equivalent elements with a length of 2 meters.
+The geometry is shown in the figure below.
+
+.. image:: _static/3d_model_rail.png
+
+
+The soil layers are then added to the model in the following way. It is important that all soil layers have
+a unique name.
 
 .. code-block:: python
 
@@ -210,12 +207,6 @@ The hinge is added to the model by specifying the name of the track (in this cas
 of the joint, the hinge parameters and the name of the hinge.
 
 .. code-block:: python
-
-    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
-    roller_displacement_parameters = DisplacementConstraint(is_fixed=[True, False, True],
-                                                            value=[0, 0, 0])
-    absorbing_boundaries_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=3.0)
 
     # set hinge rotation stiffness
     distance_joint = 35.75
@@ -311,8 +302,10 @@ surface-dimension, "2".
 .. code-block:: python
 
     # define BC
-    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
-    roller_displacement_parameters = DisplacementConstraint(is_fixed=[True, False, True], value=[0, 0, 0])
+    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True],
+                                                        value=[0, 0, 0])
+    roller_displacement_parameters = DisplacementConstraint(is_fixed=[True, False, True],
+                                                            value=[0, 0, 0])
     absorbing_boundaries_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=40.0)
 
     model.add_boundary_condition_on_plane([(0, 0, 0), (0, 0, extrusion_length), (5, 0, 0)], no_displacement_parameters,"base_fixed")
@@ -324,63 +317,71 @@ surface-dimension, "2".
 
 ..    # END CODE BLOCK
 
-Now that the geometry is generated, materials, loads and boundary conditions are assigned. The mesh specifications can
-be defined. In this case, the general element size is set to 1.0 and the element size of the soil layer "soil_layer_1_group_2"
-is set to 0.2.
+After which the mesh size can be set. The mesh will be generated when the Stem class is initialised.
 
 .. code-block:: python
 
     model.set_mesh_size(element_size=1.0)
-    model.set_element_size_of_group(element_size=0.2, group_name="soil_layer_1_group_2")
 
 ..    # END CODE BLOCK
 
-Below it is shown how the solver settings are defined. The analysis type is set to "MECHANICAL" and the solution type of
-the first stage is set to "QUASI_STATIC". The start time is set to 0.0 second and the end time is set to 0.1 second. The
-time step size is set to 0.025 second. Furthermore, the reduction factor and increase factor are set to 1.0, such that the
-time step size is constant throughout the simulation. Displacement convergence criteria is set to 1.0e-4 for the relative
-tolerance and 1.0e-12 for the absolute tolerance. No stress initialisation is used. Furthemore, all matrices are assumed
-to be constant. Cg is used as a linear solver. Further solver settings are set to the default settings.
+Now that the geometry is defined, the solver settings of the model has to be set.
+The analysis type is set to "MECHANICAL" and the solution type is set to "QUASI_STATIC".
+Then the start time is set to 0.0 second and the end time is set to 1e-2 second. This is enought to perform the static
+initialisation of the model. The time step size is set to 0.001 second.
+Since the problem is linear elastic, Linear-Newton-Raphson is used as a solving strategy.
+The Newmark scheme is used for the time integration.
+Because the problem is quasi-static in reality the integration method falls into Euler-Backward, but this is taken care
+of in STEM. The user can proceed with the Newmark scheme, which is convenient for the next stage that it is dynamic.
+Stresses are not initialised since the "stress_initialisation_type" is set to "NONE".
+Since the problem is linear elastic, the stiffness matrix is constant and the mass and
+damping matrices are constant, defining the matrices as constant will speed up the computation. Because
+the problem is quasi-static the Rayleigh damping is coefficients are set to 0.
 
 .. code-block:: python
 
-    # set time integration parameters
-    end_time = 0.1
-    delta_time = 0.025
+    end_time = 1e-1
+    delta_time = 1e-2
+    analysis_type = AnalysisType.MECHANICAL
+    solution_type = SolutionType.QUASI_STATIC
+
     time_integration = TimeIntegration(start_time=0.0, end_time=end_time, delta_time=delta_time,
                                        reduction_factor=1, increase_factor=1, max_delta_time_factor=1000)
 
-    # set convergence criteria
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
-                                                            displacement_absolute_tolerance=1.0e-12)
+                                                        displacement_absolute_tolerance=1.0e-12)
 
-    # set solver settings
-    solver_settings = SolverSettings(analysis_type=AnalysisType.MECHANICAL,
-                                     solution_type=SolutionType.QUASI_STATIC,
-                                     stress_initialisation_type=StressInitialisationType.NONE,
-                                     time_integration=time_integration,
-                                     is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
-                                     convergence_criteria=convergence_criterion,
-                                     linear_solver_settings=Cg())
+    strategy_type = LinearNewtonRaphsonStrategy()
+    scheme_type = NewmarkScheme()
+    linear_solver_settings = Cg()
+    stress_initialisation_type = StressInitialisationType.NONE
+    solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
+                                    stress_initialisation_type=stress_initialisation_type,
+                                    time_integration=time_integration,
+                                    is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
+                                    convergence_criteria=convergence_criterion,
+                                    strategy_type=strategy_type, scheme=scheme_type,
+                                    linear_solver_settings=linear_solver_settings, rayleigh_k=0,
+                                    rayleigh_m=0)
 
 ..    # END CODE BLOCK
 
 Now the problem data should be set up. The problem should be given a name, in this case it is
-"variation_z". The problem will be solved on 4 threads. Then the solver settings are added to the problem. And the problem
-definition is added to the model.
+"compute_train_with_joint". Then the solver settings are added to the problem.
 
 .. code-block:: python
 
     # Set up problem data
-    problem = Problem(problem_name="variation_z", number_of_threads=4,
+    problem = Problem(problem_name="compute_train_with_joint", number_of_threads=8,
                       settings=solver_settings)
     model.project_parameters = problem
 
 ..    # END CODE BLOCK
 
-Before starting the calculation, it is required to specify why output is desired. In this case, displacement,
-velocity and acceleration is given on the nodes and written to the output file. In this test case, gauss point results
+Before starting the calculation, it is required to specify which output is desired. In this case, displacement,
+velocity and acceleration are given on the nodes and written to the output files. In this test case, gauss point results
 are left empty.
+For this stage the velocity and acceleration are zero, since the calculations is quasi-static.
 
 .. code-block:: python
 
@@ -389,18 +390,20 @@ are left empty.
 
 ..    # END CODE BLOCK
 
-The output process is added to the model using the `Model.add_output_settings` method. The results will be then written to the output directory in vtk
-format. In this case, the output interval is set to 1 and the output control type is set to "step", meaning that the
-results will be written every time step. The vtk files will be written in binary format in order to save space.
+The output process is added to the model using the `Model.add_output_settings` method. The results will be then
+written to the output directory in vtk format. In this case, the output interval is set to 1 and the output control
+type is set to "step", meaning that the results will be written every time step.
+The output directory is set to "results".
 
 .. code-block:: python
 
+    results_dir = "results"
     model.add_output_settings(
         part_name="porous_computational_model_part",
         output_dir=results_dir,
         output_name="vtk_output",
         output_parameters=VtkOutputParameters(
-            file_format="binary",
+            file_format="ascii",
             output_interval=1,
             nodal_results=nodal_results,
             gauss_point_results=gauss_point_results,
@@ -410,58 +413,105 @@ results will be written every time step. The vtk files will be written in binary
 
 ..    # END CODE BLOCK
 
-Now that the the first stage is set up, the calculation is almost ready to be ran.
-
-Firstly the Stem class is initialised, with the model and the directory where the input files will be written to.
-While initialising the Stem class, the mesh will be generated.
+Additionally, nodal output can be retrieved on given coordinates, however it is required that these coordinates are
+placed on an existing surface within the model. In this tutorial the output is given on three points located
+next to the rail joint, at the rail, embankment and at the top layer.
+For json output it is required that the output interval is defined in seconds.
 
 .. code-block:: python
 
+    desired_output_points = [
+                             (0.75, 3.0, 36),
+                             (0.75, 3.0 + rail_pad_thickness, 36),
+                             (3, 2.0, 36),
+                             ]
+
+    model.add_output_settings_by_coordinates(
+        part_name="subset_outputs",
+        output_dir=results_dir,
+        output_name="json_output",
+        coordinates=desired_output_points,
+        output_parameters=JsonOutputParameters(
+            output_interval=delta_time,
+            nodal_results=nodal_results,
+            gauss_point_results=gauss_point_results
+        )
+    )
+
+..    # END CODE BLOCK
+
+
+Now that the first stage of the model is set up, the Stem class needs to be  initialised,
+with the model and the directory where the input files will be written to.
+
+.. code-block:: python
+
+    input_files_dir = "compute_train_with_joint"
     stem = Stem(model, input_files_dir)
 
 ..    # END CODE BLOCK
 
-The second stage can easily be created  by calling the "create_new_stage" function, this function requires the delta time
-and the duration of the stage, for the rest, the latest added stage is coppied. In the second stage, the solution type is
-set to "DYNAMIC" and the Rayleigh damping coefficients are set to 0.0002 for the stiffness matrix and 0.6 for the mass
-matrix. Since the problem is linear elastic, the Linear-Newton-Raphson strategy is used. Furthermore, the velocity of the
-moving load is set to move with a velocity of 18 m/s. After the stage is created, and the settings are set, the stage is
-added to the calculation.
+The second stage can easily be created  by calling the "create_new_stage" function.
+This copies the entire stage into stage 2. The new stage requires the definition of a duration and a time step.
 
 .. code-block:: python
 
-    delta_time_stage_2 = 0.01
-    duration_stage_2 = 1.0
-    stage2 = stem.create_new_stage(delta_time_stage_2,duration_stage_2)
+    delta_time_stage_2 = 1e-3
+    duration_stage_2 = 0.5
+    stage2 = stem.create_new_stage(delta_time_stage_2, duration_stage_2)
+
+..    # END CODE BLOCK
+
+In the second stage we want to compute the dynamic response of the moving train.
+Therefore, the solution type needs to be set to "DYNAMIC" and the Rayleigh damping coefficients adjusted
+(0.0002 for the stiffness matrix and 0.6 for the mass matrix).
+Since the problem is linear elastic, the Linear-Newton-Raphson strategy is used.
+The train velocity also needs to be adjusted to 40 m/s. This adjustment needs to be done on the train load parameters
+and on the UVEC parameters.
+The static initialisation in the UVEC, needs to be set to False to model the dynamic behaviour of the vehicle.
+
+.. code-block:: python
+
+    velocity = 40
     stage2.project_parameters.settings.solution_type = SolutionType.DYNAMIC
     stage2.project_parameters.settings.strategy_type = LinearNewtonRaphsonStrategy()
     stage2.project_parameters.settings.rayleigh_k = 0.0002
     stage2.project_parameters.settings.rayleigh_m = 0.6
-    stage2.get_model_part_by_name("moving_load").parameters.velocity = 18.0
-    stem.add_calculation_stage(stage2)
+    stage2.get_model_part_by_name("train_load").parameters.velocity = velocity
+    stage2.get_model_part_by_name("train_load").parameters.uvec_parameters["velocity"] = velocity
+    stage2.get_model_part_by_name("train_load").parameters.uvec_parameters["static_initialisation"] = False
 
 ..    # END CODE BLOCK
 
-The Kratos input files are then written. The project settings and output definitions are written to
-ProjectParameters_stage_1.json file. The mesh is written to the .mdpa file and the material parameters are
-written to the MaterialParameters_stage_1.json file.
-All of the input files are then written to the input files directory.
-
-.. code-block:: python
-
-    stem.write_all_input_files()
-
-..    # END CODE BLOCK
-
+After the stage is created, and the settings are set, the stage is added to the calculation.
 The calculation is then ran by calling the run_calculation function within the stem class.
 
 .. code-block:: python
 
+    stem.add_calculation_stage(stage2)
+    stem.write_all_input_files()
     stem.run_calculation()
 
 ..    # END CODE BLOCK
 
-.. seealso::
+Once the calculation is finished, the results can be visualised using Paraview, or by loading the json output file.
 
+This figure shows the results for the three nodes that were defined in the model.
+The figure compares the results of the model with rail joint and without rail joint.
+The analysis for this results have been obtained with an element size of 0.25m, time step of 5e-4s and a
+duration of 5e-3s for stage 1 and 0.5s for stage 2.
+For the sake of a quick tutorial, the element size and time step in this tutorial are set to large values.
+
+
+.. image:: _static/time_history_rail_joint.png
+    :alt: Comparison of the results
+
+
+This animation shows the vertical velocity of the model with rail joint.
+
+.. image:: _static/field_rail_joint.gif
+   :alt: Vertical velocity
+
+
+.. seealso::
     - Previous: :ref:`tutorial4`
-    - Next: :ref:`tutorial6`

@@ -5,19 +5,20 @@ Train model (UVEC) on track and embankment in 3D with irregularities
 
 Overview
 --------
-This tutorial shows step by step guide on how to set up a train model
-on top of track on an embankment with two soil layers underneath, in a 3D model.
+This tutorial shows  how to set up a train model on top of track on an embankment with two soil layers
+underneath, in a 3D model.
 The UVEC (User defined VEhiCle model) is a model used to represent a train as dynamic loads on the system, and
 the irregularities in the contact between the wheel and the rail are modelled using the UVEC.
+The spatial variability in the soil properties is modelled by means of a random field.
+
 
 Imports and setup
 -----------------
-In order to use the UVEC you need to import the UVEC package, together with all the remaining packages.
+First the necessary packages are imported and the input folder is defined.
 
 .. code-block:: python
 
     input_files_dir = "uvec_train_model"
-    results_dir = "output_uvec_train_model"
 
     import UVEC.uvec_ten_dof_vehicle_2D as uvec
     from stem.model import Model
@@ -30,33 +31,30 @@ In order to use the UVEC you need to import the UVEC package, together with all 
     from stem.field_generator import RandomFieldGenerator
     from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
          LinearNewtonRaphsonStrategy, NewmarkScheme, Cg, StressInitialisationType, SolverSettings, Problem
-    from stem.output import NodalOutput, VtkOutputParameters, Output, JsonOutputParameters
+    from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters
     from stem.stem import Stem
 
 ..    # END CODE BLOCK
 
 
-Geometry, track and materials
-----------------------------
-For setting up the model, Model class is imported from stem.model. And for setting up the soil material, OnePhaseSoil,
-LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw classes are imported.
-In this tutorial, a train model load (modelled using the UVEC) is used on top of a track.
-Structural elements
--------------------
-For this purpose, the ElasticSpringDamper and NodalConcentrated classes are imported from stem.structural_material,
-the UvecLoad class is imported from stem.load.
+For setting up the model, ``Model`` is imported from ``stem.model``.
+For the soil material, ``OnePhaseSoil``, ``LinearElasticSoil``, ``SoilMaterial``,
+and ``SaturatedBelowPhreaticLevelLaw`` are imported from ``stem.soil_material``.
+Because the railway track is modelled it is required to import the ``DefaultMaterial`` class from
+``stem.default_materials`` to use the default rail properties.
+In order to use the UVEC the ``UvecLoad`` class is imported from ``stem.load``.
+Boundary conditions are set using ``DisplacementConstraint`` and ``AbsorbingBoundary``.
+Solver settings are defined with classes imported from ``stem.solver``.
+For output, ``NodalOutput``, ``VtkOutputParameters``, and ``JsonOutputParameters`` are imported.
+In this tutorial, a random field is also added on the soil layers. For this the classes ``ParameterFieldParameters`` is
+imported from ``stem.additional_processes`` and ``RandomFieldGenerator`` is imported from ``stem.field_generator``.
+Finally, ``Stem`` is imported from ``stem.stem`` to write input files and run the calculation.
 
-To define the default rail properties, the DefaultMaterial class is imported.
-As for setting the boundary conditions, the DisplacementConstraint class and the AbsorbingBoundary class are imported
-from stem.boundary. For setting up the solver settings, necessary classes are imported from stem.solver.
-Classes needed for the output, are NodalOutput, VtkOutputParameters and Output which are imported from stem.output.
-Lastly, the Stem class is imported from stem.stem, in order to run the simulation.
 
-In this tutorial, a random field is also added on the soil layers. For this the classes ParameterFieldParameters is
-imported from stem.additional_processes and RandomFieldGenerator is imported from stem.field_generator.
-
-In this step, the geometry, conditions, and material parameters for the simulation are defined.
-Firstly the dimension of the model is indicated which in this case is 3. After which the model can be initialised.
+Geometry and material
+---------------------
+In this step, the geometry and material are defined.
+First the model dimension is set to 3 and the model is initialised.
 
 .. code-block:: python
 
@@ -67,9 +65,9 @@ Firstly the dimension of the model is indicated which in this case is 3. After w
 
 Specification of the soil material is defined afterwards.
 The bottom soil layer is defined as a material with the name "soil_1".
-It's a Linear elastic material model with the solid density (rho) of 2650 kg/m3,
-the Young's modulus is 30e6 Pa and the Poisson's ratio is 0.2.
-The soil is dry above the phreatic level and wet below the phreatic level. A porosity of 0.3 is specified.
+It's a Linear elastic material model with the solid density of 2650 kg/m3,
+the Young's modulus is 30e6 Pa and the Poisson's ratio is of 0.2.
+A porosity of  of 0.3 is specified.
 The soil is a one-phase soil, meaning that the flow of water through the soil is not computed.
 
 .. code-block:: python
@@ -88,7 +86,7 @@ The soil is a one-phase soil, meaning that the flow of water through the soil is
 The second soil layer is defined as a material with the name "soil_2".
 It's a Linear elastic material model with the solid density (rho) of 2550 kg/m3,
 the Young's modulus is 30e6 Pa and the Poisson's ratio is 0.2.
-The soil is dry above the phreatic level and wet below the phreatic level. A porosity of 0.3 is specified.
+A porosity of 0.3 is specified.
 The soil is a one-phase soil, meaning that the flow of water through the soil is not computed.
 
 .. code-block:: python
@@ -105,9 +103,9 @@ The soil is a one-phase soil, meaning that the flow of water through the soil is
 ..    # END CODE BLOCK
 
 The embankment layer on top is defined as a material with the name "embankment".
-It's a Linear elastic material model with the solid density (rho) of 2650 kg/m3,
+It's a Linear elastic material model with the solid density of 2650 kg/m3,
 the Young's modulus is 10e6 Pa and the Poisson's ratio is 0.2.
-The soil is dry above the phreatic level and wet below the phreatic level. A porosity of 0.3 is specified.
+A porosity of 0.3 is specified.
 The soil is a one-phase soil, meaning that the flow of water through the soil is not computed.
 
 .. code-block:: python
@@ -123,7 +121,7 @@ The soil is a one-phase soil, meaning that the flow of water through the soil is
 
 ..    # END CODE BLOCK
 
-For the rails, default properties of a  54E1 rail profile are used.
+The rail is defined as a material with the name "rail", with the properties of a 54E1 rail profile.
 Other rail profiles for which default material properties are provided are: the 46E3 and 60E1 rail profiles.
 The rail pads are modelled by means of elastic spring dampers while the sleepers are modelled using nodal concentrated
 masses.
@@ -144,6 +142,11 @@ masses.
 The coordinates of the model are defined in the following way. Each of the layers are defined by a list of coordinates,
 defined in th x-y plane. For 3D models, the x-y plane can be extruded in the z-direction. In this case, the extrusion
 length is 50 m in the z-direction.
+The geometry of the model is defined afterwards. The model consists of two soil layers and an embankment on top.
+Each layer is defined by a list of coordinates, defined in the x-y plane. The coordinates are defined in clockwise or
+anti-clockwise order, and the first and last coordinates are not the same, since the geometry will be closed.
+To generate a full 3D model, the geometry in the x-y plane is extruded in the z-direction.
+In this case, the extrusion length is 50 m.
 
 .. code-block:: python
 
@@ -173,24 +176,26 @@ a unique name.
 ..    # END CODE BLOCK
 
 Generating the train track
---------------------------
+..........................
 
 STEM provides two options to generate a straight track, with two different ways to model the sleepers:
 
 1. A straight track with rails, sleepers and rail pads. This track is placed on top of the 2D or 3D geometry.
 
-2. A straight track with rails, sleepers, rail pads and an extension of the track outside the 2D or 3D geometry. This extension is placed on 1D elements which simulate the soil behaviour.
+2. A straight track with rails, sleepers, rail pads and an extension of the track outside the 2D or 3D geometry.
+  This extension is placed on 1D elements which simulate the soil behaviour.
 
 **Option 1: Straight track with rails, sleepers and rail pads**
 
 The tracks are added by specifying the origin point of the track and the direction for the extrusion that creates
 the rail as well as rail pads and sleepers. Important is that the origin point and the end of the track lie on
-geometry edges. In this tutorial, a straight track is generated parallel to the z-axis at 0.75 m distance from the x-axis,
+geometry edges.
+In this tutorial, a straight track is generated along the z-axis at 0.75 m distance from the x-axis,
 on top of the embankment. To do this, the origin point of the track is set with coordinates [0.75, 3.0, 0.0] and the
 extrusion is done parallel to the positive z-axis, i.e. with a direction vector of [0, 0, 1].
 The length of the track is defined by the number of sleepers and their spacing.
-In this tutorial, 101 sleepers are placed which are connected by to the rail by 0.025m thick railpads. The sleepers
-are spaced 0.5m from each others which results in a 50m straight track, with part name "rail_track_1."
+In this tutorial, 101 sleepers are placed which are connected by to the rail by 0.025 m thick railpads. The sleepers
+are spaced 0.5 m from each others which results in a 50 m straight track, with part name "rail_track_1."
 
 .. code-block:: python
 
@@ -209,7 +214,7 @@ are spaced 0.5m from each others which results in a 50m straight track, with par
 
 **Option 2: Extended straight track with rails, sleepers, rail pads and 1D soil elements.**
 
-When applying a moving train load to the track, we are often interested in the dynamic response of a specific area of
+When applying a train load on the track, we are often interested in the dynamic response of a specific area of
 the track. This requires the generated geometry to be large enough to ensure that the initial train load has not yet
 reached or influenced the area of interest. However, this results in a significantly larger geometry, which, in turn,
 increases computational cost.
@@ -229,7 +234,7 @@ The equivalent geometry consists of the following parts:
 
 The equivalent soil part is added to the model in the following way. Note that:
 
-- The origin point is moved 25m in the negative z-direction. Such that the track starts 25m away from the 3D domain.
+- The origin point is moved 25 m in the negative z-direction. Such that the track starts 25m away from the 3D domain.
 - The number of sleepers is increased to 190, such that 90 sleepers are added outside the 3D domain.
 - The length of the soil equivalent element is set to 3m. Which means that the equivalent soil part extends 3m in y-direction ( in depth).
 - The soil equivalent parameters are defined as ElasticSpringDamper. These parameters should be defined by the user
@@ -361,7 +366,7 @@ based on the track quality :cite:`Lei_Noda_2002`.
 In case that irregularities are not required, the `irr_parameters` key must be omitted.
 
 .. table:: Track quality classification and corresponding Av values
-    :widths: 50 50
+    :widths: 60 60
 
     +-----------------+------------------------+
     | Line grade      | Av Value (m² rad / m)  |

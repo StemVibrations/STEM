@@ -1,9 +1,20 @@
-Solver settings and modelling choices
-=====================================
+Modelling choices
+=================
 This page provides practical guidelines for selecting solver settings and modelling choices in STEM,
 including mesh resolution, time step selection, and Rayleigh damping parameters.
 These guidelines are based on common practices in computational mechanics and wave propagation problems,
 and can help users configure their simulations for accuracy and efficiency.
+
+
+Model initialisation
+--------------------
+
+Quasi-static initialisation followed by dynamic analysis is a common approach for simulating the
+response of systems that are initially at rest or in equilibrium.
+
+
+
+
 
 
 Element size

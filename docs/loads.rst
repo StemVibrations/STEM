@@ -114,21 +114,75 @@ UVEC load are defined as:
    }
 
    uvec_load = UvecLoad(direction_signs=[1, 1, 1],
-                        velocity=velocity,
-                        origin=[0.0, 0, 0],
-                        wheel_configuration=[0.0],
-                        uvec_file="uvec.py",
-                        uvec_function_name="uvec",
+                        velocity=40,
+                        origin=[0, 0, 0],
+                        wheel_configuration=[0.0, 2.5, 19.9, 22.4],
+                        uvec_file="uvec.py",  # the file where the UVEC function is defined
+                        uvec_function_name="uvec",  # the name of the function that defines the UVEC load
                         uvec_parameters=uvec_parameters)
-   model.add_load_by_geometry_ids([1], uvec_load, "uvec_load")
 
-   # UVEC can be added to coordinates; geometry IDs or model parts.
-   # For example, to add it to coordinates:
+Similar to the moving load, the UVEC load also needs a path to move along;
+make sure the orientation matches the intended travel direction.
+The UVEC load can be added to coordinates, geometry IDs or model parts:
+
+.. code-block:: python
+
+   # Add UVEC by coordinates:
    model.add_load_by_coordinates([(x1, y1, z1), (x2, y2, z2)], uvec_load, "train_load")
-   # Or to a geometry ID:
+   # Add UVEC by geometry ID:
    model.add_load_by_geometry_ids([1], uvec_load, "uvec_load")
-   # Or to a model part:
+   # Add UVEC to model part:
    model.add_load_on_line_model_part("rail_track_1", uvec_load, "uvec_load")
+
+
+Default train
+.............
+The default train in STEM (2D with 10 degrees of freedom) is defined as a UVEC load.
+In order to use the default train, the user can simply import ``uvec``.
+This function defines contains the train definition and the train-track interaction model as described in
+:ref:`uvec_formulation`.
+
+To define the UVEC train it is required to define the wheel configuration `wheel_configuration`
+and train parameters `uvec_parameters`.
+In this example a train with two carts is defined, where each cart has two bogies and each bogie has two wheels.
+
+.. code-block:: python
+
+   from stem.load import UvecLoad
+   import UVEC.uvec_ten_dof_vehicle_2D as uvec
+
+   # define uvec parameters
+   wheel_configuration=[0.0, 2.5, 19.9, 22.4, 23.5, 26.0, 43.4, 45.9] # wheel configuration [m]
+   uvec_parameters = {"n_carts": 2, # number of carts [-]
+                      "cart_inertia": (1128.8e3) / 2, # inertia of the cart [kgm2]
+                      "cart_mass": (50e3) / 2, # mass of the cart [kg]
+                      "cart_stiffness": 2708e3, # stiffness between the cart and bogies [N/m]
+                      "cart_damping": 64e3, # damping coefficient between the cart and bogies [Ns/m]
+                      "bogie_distances": [-9.95, 9.95], # distances of the bogies from the centre of the cart [m]
+                      "bogie_inertia": (0.31e3) / 2, # inertia of the bogie [kgm2]
+                      "bogie_mass": (6e3) / 2, # mass of the bogie [kg]
+                      "wheel_distances": [-1.25, 1.25], # distances of the wheels from the centre of the bogie [m]
+                      "wheel_mass": 1.5e3, # mass of the wheel [kg]
+                      "wheel_stiffness": 4800e3, # stiffness between the wheel and the bogie [N/m]
+                      "wheel_damping": 0.25e3, # damping coefficient between the wheel and the bogie [Ns/m]
+                      "gravity_axis": 1, # axis on which gravity works [x =0, y = 1, z = 2]
+                      "contact_coefficient": 9.1e-7, # Hertzian contact coefficient between the wheel and the rail [N/m]
+                      "contact_power": 1.0, # Hertzian contact power between the wheel and the rail [-]
+                      "static_initialisation": False, # True if the analysis of the UVEC is static
+                      "wheel_configuration": wheel_configuration,
+                      "velocity": 40,
+                      }
+
+    uvec_load = UvecLoad(direction_signs=[1, 1, 1],
+                        velocity=40,
+                        origin=wheel_configuration,
+                        wheel_configuration=wheel_configuration,
+                        uvec_parameters=uvec_parameters,
+                        uvec_model=uvec,
+                        )
+
+In this case, the ``uvec_model`` parameter is used to specify the UVEC function that defines the train and the
+train-track interaction model.
 
 
 Time-dependent loads with Table

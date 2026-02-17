@@ -107,7 +107,8 @@ All the loads can be defined as moving loads.
 
 For STEM is of importance to be able to model the train-track interaction, which is the main source of the
 dynamic loading in the problem of railway-induced ground vibrations.
-To model the train-track interaction force STEM uses point moving loads, in combination with the UVEC (see :ref:`uvec_form`).
+To model the train-track interaction force STEM uses point moving loads, in combination with the UVEC
+(see :ref:`uvec_formulation`).
 
 
 Constitutive models
@@ -162,7 +163,7 @@ the Poisson ratio of the soil layer should be set to 0.495. This means that the 
 i.e. cannot experience volumetric deformation and this accurately mimics the saturated behaviour of soil, subjected
 to dynamic loading, in the short term (before pore water pressure dissipation occurs).
 
-.. _uvec_form:
+.. _uvec_formulation:
 
 Train-track model
 =================
@@ -210,6 +211,7 @@ where :math:`k_\text{c}` is the Hertzian stiffness coefficient and :math:`\delta
 where :math:`u_{\text{w},j}` is the displacement of wheel :math:`j` and :math:`u_{\text{r},j}` is the displacement
 of the rail at the position of wheel :math:`j`.
 
+.. _irr_formulation:
 
 Irregularities model
 --------------------
@@ -255,3 +257,37 @@ The parameter :math:`A_v` can be estimated based on the track quality :cite:`Lei
     +-----------------+------------------------+
     | 6 (very good)   | 0.0339e-4              |
     +-----------------+------------------------+
+
+
+.. _rail_joint_formulation:
+
+Rail joint model
+----------------
+The rail join is modelled as a hinge along a beam element, with a rotational stiffness defined based on the properties
+ of the rail and the joint.
+The rail joint might have a local geometric irregularity, commonly referred to as a
+dipped joint, following the approach proposed by :cite:`Kabo_2006`.
+The dipped joint represents the permanent plastic deformation that develops at rail ends due to repeated
+wheel-rail impact loads at insulated joints.
+
+The dip is introduced as a prescribed vertical rail surface irregularity with a smooth cosine shape,
+defined by its maximum depth :math:`d` and total length :math:`l`.
+The vertical irregularity profile :math:`r(x)` along the rail longitudinal coordinate :math:`x` is given by:
+
+.. math::
+  r(x) =
+    \begin{cases}
+    d \left(1 - \cos\left(\dfrac{\pi x}{l}\right)\right), & 0 < x \le \dfrac{l}{2}, \\
+    d \left(1 + \cos\left(\dfrac{\pi x}{l}\right)\right), & \dfrac{l}{2} < x < l,
+    \end{cases}
+
+where :math:`x = 0` corresponds to the start of the dipped region.
+This formulation ensures a continuous and smooth rail profile with zero slope at the beginning and end of the joint,
+avoiding artificial high-frequency excitation.
+
+A schematic of the dipped joint is shown in the figure below.
+
+.. figure:: _static/figure_joint.png
+   :alt: Dipped joint model
+
+   Schematic of the dipped joint model
