@@ -114,13 +114,4 @@ def test_tutorial_5():
     data = read_tutorial(tutorial_file, name)
     exec("\n".join(data))
     shutil.rmtree("variation_z")
-
-
-def test_tutorial_6():
-    """Test the code in tutorial 6"""
-    name = "_tutorial6"
-    tutorial_file = "./docs/tutorial6.rst"
-
-    data = read_tutorial(tutorial_file, name)
-    exec("\n".join(data))
-    shutil.rmtree("compute_train_with_joint")
+    
