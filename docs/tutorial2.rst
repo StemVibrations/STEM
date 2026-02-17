@@ -21,7 +21,7 @@ First the necessary packages are imported and the input is defined.
     from stem.boundary import DisplacementConstraint
     from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
          LinearNewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
-    from stem.output import NodalOutput, VtkOutputParameters, Output
+    from stem.output import NodalOutput, VtkOutputParameters
     from stem.stem import Stem
 
 ..    # END CODE BLOCK
@@ -31,7 +31,7 @@ For setting up the model, ``Model`` class is imported from ``stem.model``. And f
 In this case, there is a line load on top of the embankment. ``LineLoad`` class is imported from ``stem.load``.
 As for setting the boundary conditions, ``DisplacementConstraint`` class is imported from ``stem.boundary``.
 For setting up the solver settings, necessary classes are imported from ``stem.solver``.
-Classes needed for the output, are ``NodalOutput``, ``VtkOutputParameters`` and ``Output``
+Classes needed for the output, are ``NodalOutput`` and ``VtkOutputParameters``
 which are imported from ``stem.output``.
 Lastly, ``Stem`` class is imported from ``stem.stem``, in order to run the simulation.
 
@@ -167,16 +167,15 @@ The boundary conditions are applied on plane surfaces defined by a list of coord
     roller_displacement_parameters = DisplacementConstraint(is_fixed=[True, False, True], value=[0, 0, 0])
 
     model.add_boundary_condition_on_plane([(0.0, 0.0, 0.0), (5.0, 0.0, 0.0), (5.0, 0.0, 50)], no_displacement_parameters,
-                                         "base_fixed")
+                                          "base_fixed")
     model.add_boundary_condition_on_plane([(0, 0, 0), (0, 3, 0), (0, 3, 50)],
-                                      roller_displacement_parameters_x, "sides_roler_x=0")
+                                          roller_displacement_parameters, "sides_roler_x=0")
     model.add_boundary_condition_on_plane([(0, 0, 0), (5, 0, 0), (5, 3, 0)],
-                                        roller_displacement_parameters_z, "sides_roler_z=0")
+                                          roller_displacement_parameters, "sides_roler_z=0")
     model.add_boundary_condition_on_plane([(5, 0, 0), (5, 3, 0), (5, 3, 50)],
-                                        abs_boundary_parameters, "sides_roler_x=5")
+                                          roller_displacement_parameters, "sides_roler_x=5")
     model.add_boundary_condition_on_plane([(0, 0, 50), (5, 0, 50), (5, 1, 50)],
-                                        abs_boundary_parameters, "sides_roler_z=50")
-
+                                          roller_displacement_parameters, "sides_roler_z=50")
 
 Alternatively, the boundary conditions can also be added by geometry ids.
 
@@ -231,9 +230,9 @@ Alternatively, the element size can also be defined for each soil layer separate
 
 .. code-block:: python
 
-    model.set_element_size_of_group(0.5, "soil_1")
-    model.set_element_size_of_group(1.5, "soil_2")
-    model.set_element_size_of_group(1, "embankment")
+    model.set_element_size_of_group(0.5, "soil_layer_1")
+    model.set_element_size_of_group(1.5, "soil_layer_2")
+    model.set_element_size_of_group(1, "embankment_layer")
 
 
 Solver settings
@@ -241,7 +240,7 @@ Solver settings
 Now that the model is defined, the solver settings should be set.
 The analysis type is set to `MECHANICAL` and the solution type is set to `DYNAMIC`.
 
-Then the start time is set to 0.0 s and the end time is set to 0.1 s. The time step for the analysis is set to 0.01 s.
+Then the start time is set to 0.0 s and the end time is set to 0.5 s. The time step for the analysis is set to 0.01 s.
 Furthermore, the reduction factor and increase factor are set to 1.0, such that the time step size is constant throughout
 the simulation. Displacement convergence criteria is set to 1.0e-4 for the relative tolerance and 1.0e-9 for the
 absolute tolerance.
@@ -251,15 +250,15 @@ Other options are `StressInitialisationType.GRAVITY_LOADING` and `StressInitiali
 Since the problem is linear elastic, the stiffness matrix is constant and the mass and damping matrices are constant,
 defining the matrices as constant will speed up the computation.
 
-The Rayleigh damping parameters are set to :math:`\alpha = 7.86 \cdot 10^{-5}` and :math:`\beta = 0.248`, which
+The Rayleigh damping parameters are set to :math:`\alpha = 0.248` and :math:`\beta = 7.86 \cdot 10^{-5}`, which
 correspond to a damping ratio of 2% for 1 and 80 Hz.
 
 .. code-block:: python
 
     analysis_type = AnalysisType.MECHANICAL
     solution_type = SolutionType.DYNAMIC
-    # Set up start and end time of calculation, time step and etc
-    time_integration = TimeIntegration(start_time=0.0, end_time=0.1, delta_time=0.01, reduction_factor=1.0,
+    # Set up start and end time of calculation, time step
+    time_integration = TimeIntegration(start_time=0.0, end_time=0.5, delta_time=0.01, reduction_factor=1.0,
                                        increase_factor=1.0)
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
                                                             displacement_absolute_tolerance=1.0e-9)
@@ -273,8 +272,9 @@ correspond to a damping ratio of 2% for 1 and 80 Hz.
                                      is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
                                      strategy_type=strategy_type, scheme=scheme_type,
-                                     linear_solver_settings=linear_solver_settings, rayleigh_k=0.248,
-                                     rayleigh_m=7.86e-5)
+                                     linear_solver_settings=linear_solver_settings,
+                                     rayleigh_k=7.86e-5,
+                                     rayleigh_m=0.248)
 
 ..    # END CODE BLOCK
 
@@ -286,7 +286,6 @@ the number of threads is set to 8 and the solver settings are applied.
 
 .. code-block:: python
 
-    # Set up problem data
     problem = Problem(problem_name="calculate_load_on_embankment_3d", number_of_threads=8,
                       settings=solver_settings)
     model.project_parameters = problem
@@ -345,6 +344,12 @@ The calculation is run by calling ``stem.run_calculation()``.
 
 Results
 -------
+Once the calculation is finished, the results can be visualised using Paraview.
+
+This animation shows the vertical displacement of the soil when subjected to the line load.
+
+.. image:: _static/line_load.gif
+   :alt: Vertical displacement
 
 
 
