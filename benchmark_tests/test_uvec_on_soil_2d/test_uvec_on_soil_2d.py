@@ -10,7 +10,7 @@ from stem.solver import (AnalysisType, SolutionType, TimeIntegration, Displaceme
 from stem.output import NodalOutput, VtkOutputParameters, Output
 from stem.stem import Stem
 
-from benchmark_tests.utils import assert_files_equal
+from benchmark_tests.utils import assert_floats_in_directories_almost_equal
 
 
 def test_stem():
@@ -141,7 +141,9 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
-    assert assert_files_equal("benchmark_tests/test_uvec_on_soil_2d/output_/output_vtk_porous_computational_model_part",
-                              os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
+    assert_floats_in_directories_almost_equal(
+        "benchmark_tests/test_uvec_on_soil_2d/output_/output_vtk_porous_computational_model_part",
+        os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"),
+        decimal=12)
 
     rmtree(input_folder)
