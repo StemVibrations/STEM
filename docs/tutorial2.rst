@@ -164,7 +164,6 @@ load types and how to define them.
 ..    # END CODE BLOCK
 
 
-
 Boundary conditions
 -------------------
 Below the boundary conditions are defined. The base of the model is fixed in all directions with the name "base_fixed".
@@ -187,10 +186,10 @@ The boundary conditions are applied on plane surfaces defined by a list of coord
     model.add_boundary_condition_on_plane([(0, 0, 50), (5, 0, 50), (5, 1, 50)],
                                           roller_displacement_parameters, "sides_roler_z=50")
 
-Alternatively, the boundary conditions can also be added by geometry ids.
+Alternatively, the boundary conditions can also be added by geometry IDs.
 
-The roller boundary condition is active in the y-direction, meaning that the The boundary conditions are added to
-the model on the edge surfaces, i.e. the boundary conditions are applied to a list of surface ids
+The roller boundary condition is active in the y-direction, meaning that the boundary conditions are added to
+the model on the edge surfaces, i.e. the boundary conditions are applied to a list of surface IDs
 (which can be visualised using: "model.show_geometry(show_surface_ids=True)")  with the corresponding
 dimension, "2".
 
@@ -206,10 +205,10 @@ dimension, "2".
 ..    # END CODE BLOCK
 
 To inspect the geometry IDs, the geometry can be visualised using the ``model.show_geometry`` function.
-This function can be used for visualisation of the geometry Ids after creation of the geometry, so that it is known
+This function can be used for visualisation of the geometry IDs after creation of the geometry, so that it is known
 which ID belong to each boundary condition.
-For visualisation of surface ids, `show_surface_ids` should be set to `True`.
-Also for visualisation of line ids, `show_line_ids` and for visualisation of point ids, `show_point_ids`
+For visualisation of surface IDs, `show_surface_ids` should be set to `True`.
+Also for visualisation of line IDs, `show_line_ids` and for visualisation of point IDs, `show_point_ids`
 should be set to `True`.
 
 .. code-block:: python
@@ -220,7 +219,7 @@ should be set to `True`.
 
 ..    # END CODE BLOCK
 
-The geometry ids can be seen in the pictures below.
+The geometry IDs can be seen in the pictures below.
 
 .. image:: _static/geometry_ids.png
 
@@ -240,6 +239,7 @@ Alternatively, the element size can also be defined for each soil layer separate
 
 .. code-block:: python
 
+    model.set_mesh_size(element_size=1.0)
     model.set_element_size_of_group(0.5, "soil_layer_1")
     model.set_element_size_of_group(1.5, "soil_layer_2")
     model.set_element_size_of_group(1, "embankment_layer")
@@ -305,9 +305,9 @@ the number of threads is set to 8 and the solver settings are applied.
 
 Before starting the calculation, it is required to specify the desired output. In this case, displacement,
 and velocity are requested on the nodes and written into VTK files.
-In this case, Gauss point results (stresses) are left empty.
+Gauss point results (stresses) are left empty.
 
-The JSON output file is requested at a node located in the surface of the embankment, in the middle of the model,
+The JSON output file is requested at a point located in the surface of the embankment, in the middle of the model,
 with coordinates (0.75, 3.0, 25.0).
 
 The output process is added to the model using the ``Model.add_output_settings`` method.

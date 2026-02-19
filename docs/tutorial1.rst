@@ -38,9 +38,9 @@ Solver settings are defined with classes imported from ``stem.solver``.
 For output, ``NodalOutput``, ``VtkOutputParameters``, and ``JsonOutputParameters`` are imported.
 Finally, ``Stem`` is imported from ``stem.stem`` to write input files and run the calculation.
 
-Geometry and material
----------------------
-In this step, the geometry and material are defined.
+Geometry and materials
+----------------------
+In this step, the geometry and materials are defined.
 First the model dimension is set to 3 and the model is initialised.
 
 .. code-block:: python

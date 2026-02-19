@@ -3,6 +3,7 @@ Track properties
 
 This page outlines how to define the railway track, the irregularities and rail joint in STEM.
 
+.. _railway_track:
 
 Railway track
 --------------
@@ -197,7 +198,7 @@ The stiffness of the hinges can be defined based on the properties of the rail a
 The irregularities of the rail joint can be modelled (see :ref:`rail_joint_formulation`) by defining the
 `joint_parameters` key in the UVEC model, with parameters `location_joint`, `depth_joint` and `width_joint`.
 
-..code-block:: python
+.. code-block:: python
 
    distance_joint = 35.75
    hinge_stiffness_y = 37.8e7
