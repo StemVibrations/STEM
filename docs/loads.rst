@@ -17,7 +17,7 @@ To define a point load:
    model.add_load_by_coordinates([(x, y, z)], p, "point_load")
 
 The ``active`` parameter is a list of three booleans that indicate whether the load is active in the
-x, y, and z directions, respectively.
+x, y, and z-directions, respectively.
 The ``value`` parameter is a list of three values that specify the magnitude of the load in each direction.
 The load then is applied to to model, by specifying a list of the node coordinates where the load should be applied,
 the load object, and the load name.
@@ -36,7 +36,7 @@ To define a line load:
    model.add_load_by_coordinates([(x1, y1, z1), (x2, y2, z2)], line, "line_load")
 
 The ``active`` parameter is a list of three booleans that indicate whether the load is active in the
-x, y, and z directions, respectively.
+x, y, and z-directions, respectively.
 The ``value`` parameter is a list of three values that specify the magnitude of the load in each direction.
 The load then is applied to to model, by specifying a list of the node coordinates where the load should be applied,
 the load object, and the load name.
@@ -59,7 +59,7 @@ To define a surface load:
 
 
 The ``active`` parameter is a list of three booleans that indicate whether the load is active in the
-x, y, and z directions, respectively.
+x, y, and z-directions, respectively.
 The ``value`` parameter is a list of three values that specify the magnitude of the load in each direction.
 
 The load can be applied on a surface by specifying the geometry IDs, or

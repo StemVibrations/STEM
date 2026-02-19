@@ -202,7 +202,7 @@ are spaced 0.5m from each others which results in a 50m straight track, with par
 
 The rail joint is modelled by adding a hinge on the rail track.
 The hinge requires the definition of the distance to the joint, starting from the origin point of the track and
-the rotational stiffness in the y and z direction.
+the rotational stiffness in the y and z-direction.
 The hinge is added to the model by specifying the name of the track (in this case "rail_track"), the coordinates
 of the joint, the hinge parameters and the name of the hinge.
 

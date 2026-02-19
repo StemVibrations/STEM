@@ -264,7 +264,7 @@ The parameter :math:`A_v` can be estimated based on the track quality :cite:`Lei
 Rail joint model
 ----------------
 The rail join is modelled as a hinge along a beam element, with a rotational stiffness defined based on the properties
- of the rail and the joint.
+of the rail and the joint.
 The rail joint might have a local geometric irregularity, commonly referred to as a
 dipped joint, following the approach proposed by :cite:`Kabo_2006`.
 The dipped joint represents the permanent plastic deformation that develops at rail ends due to repeated

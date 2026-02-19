@@ -140,7 +140,7 @@ See :doc:`authors` for the full list of maintainers and contributors.
 
    API_definition
 
-   
+
 .. toctree::
    :maxdepth: 2
    :caption: Tutorials
@@ -151,7 +151,6 @@ See :doc:`authors` for the full list of maintainers and contributors.
    tutorial3
    tutorial4
    tutorial5
-   tutorial6
 
 .. toctree::
    :maxdepth: 1

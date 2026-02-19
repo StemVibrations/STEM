@@ -6,9 +6,7 @@ Moving load on an embankment in 3D
 Overview
 --------
 This tutorial shows how to set up a moving load on top of an embankment with two soil layers underneath, in a 3D model.
-This tutorial builds on :ref:`tutorial2`, where a line load was applied on top of the embankment.
-In this tutorial, the line load is replaced by a moving load, which moves along the embankment
-with a velocity of 30 m/s. The geometry and material parameters are the same as in the previous tutorial.
+The moving load is applied on top of the embankment and moves in the z-direction at constant velocity.
 
 Imports and setup
 -----------------
@@ -55,7 +53,7 @@ After which the model can be initialised.
 
 Specification of the soil material is defined afterwards.
 The bottom soil layer is defined as a material with the name "soil_1".
-It's a Linear elastic material model with the solid density of 2650 kg/m3,
+It is a Linear elastic material model with the solid density of 2650 kg/m3,
 the Young's modulus is 30e6 Pa and the Poisson's ratio is of 0.2.
 A porosity of  of 0.3 is specified.
 The soil is a one-phase soil, meaning that the flow of water through the soil is not computed.
@@ -74,7 +72,7 @@ The soil is a one-phase soil, meaning that the flow of water through the soil is
 ..    # END CODE BLOCK
 
 The second soil layer is defined as a material with the name "soil_2".
-It's a Linear elastic material model with the solid density (rho) of 2550 kg/m3,
+It is a Linear elastic material model with the solid density of 2550 kg/m3,
 the Young's modulus is 30e6 Pa and the Poisson's ratio is 0.2.
 A porosity of 0.3 is specified.
 The soil is a one-phase soil, meaning that the flow of water through the soil is not computed.
@@ -93,7 +91,7 @@ The soil is a one-phase soil, meaning that the flow of water through the soil is
 ..    # END CODE BLOCK
 
 The embankment layer on top is defined as a material with the name "embankment".
-It's a Linear elastic material model with the solid density of 2650 kg/m3,
+It is a Linear elastic material model with the solid density of 2650 kg/m3,
 the Young's modulus is 10e6 Pa and the Poisson's ratio is 0.2.
 A porosity of 0.3 is specified.
 The soil is a one-phase soil, meaning that the flow of water through the soil is not computed.
@@ -151,7 +149,7 @@ The moving load is modelled using the ``MovingLoad`` class.
 The load is defined following a list of coordinates.
 In this case, a moving load is applied along a line located at 0.75 m distance from the x-axis on top of the embankment.
 The velocity of the moving load is 30 m/s and the load is -10000 N in the y-direction.
-he load moves in positive z direction and the load starts at coordinates: [0.75, 3.0, 0.0].
+The load moves in positive z-direction and the load starts at coordinates: [0.75, 3.0, 0.0].
 
 It is possible to use different types of loads. Please refer to :doc:`loads` for more information on the different
 load types and how to define them.
@@ -209,7 +207,7 @@ dimension, "2".
 
 To inspect the geometry IDs, the geometry can be visualised using the ``model.show_geometry`` function.
 This function can be used for visualisation of the geometry Ids after creation of the geometry, so that it is known
- which ID belong to each boundary condition.
+which ID belong to each boundary condition.
 For visualisation of surface ids, `show_surface_ids` should be set to `True`.
 Also for visualisation of line ids, `show_line_ids` and for visualisation of point ids, `show_point_ids`
 should be set to `True`.
