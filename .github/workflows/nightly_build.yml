@@ -5,6 +5,9 @@ on:
     - cron: "0 2 * * *"
   workflow_dispatch:
 
+permissions:
+  contents: write
+  
 jobs:
   build-report:
     runs-on: ubuntu-latest
@@ -74,9 +77,15 @@ jobs:
         run: |
           latexmk -pdf -interaction=nonstopmode ./benchmark_report.tex
 
-      # Upload Artifact
-      - name: Upload Report PDF
-        uses: actions/upload-artifact@v4
+      # # Upload Artifact
+      # - name: Upload Report PDF
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: STEM-nightly-report
+      #     path: nightly_build/benchmark_report.pdf
+
+      - name: Create/Update release and upload PDF
+        uses: softprops/action-gh-release@v2
         with:
-          name: STEM-nightly-report
-          path: nightly_build/benchmark_report.pdf
+          tag_name: pdf-latest
+          files: report.pdf
