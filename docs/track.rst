@@ -1,5 +1,5 @@
-Track properties
-================
+Railway track
+=============
 
 This page outlines how to define the railway track, the irregularities and rail joint in STEM.
 
@@ -148,6 +148,8 @@ distance between the middle of the sleeper and the rail as defined above):
                                  name)
 
 
+.. _irregularities_track:
+
 Irregularities
 --------------
 The track irregularities can be applied in STEM in combination with the UVEC.
@@ -163,13 +165,13 @@ In case that irregularities are not required, the `irr_parameters` key must be o
    wheel_configuration = [0.0, 2.5, 19.9, 22.4]
    # define uvec parameters
    uvec_parameters = {"n_carts": 1,
-                     "cart_inertia": (1128.8e3) / 2,
-                     "cart_mass": (50e3) / 2,
+                     "cart_inertia": 564.4e3,
+                     "cart_mass": 25e3,
                      "cart_stiffness": 2708e3,
                      "cart_damping": 64e3,
                      "bogie_distances": [-9.95, 9.95],
-                     "bogie_inertia": (0.31e3) / 2,
-                     "bogie_mass": (6e3) / 2,
+                     "bogie_inertia": 0.16e3,
+                     "bogie_mass": 3e3,
                      "wheel_distances": [-1.25, 1.25],
                      "wheel_mass": 1.5e3,
                      "wheel_stiffness": 4800e3,

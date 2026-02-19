@@ -21,7 +21,7 @@ First the necessary packages are imported and the input folder is defined.
     from stem.load import MovingLoad
     from stem.boundary import DisplacementConstraint
     from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
-         LinearNewtonRaphsonStrategy, NewmarkScheme, Amgcl, StressInitialisationType, SolverSettings, Problem
+         LinearNewtonRaphsonStrategy, NewmarkScheme, Cg, StressInitialisationType, SolverSettings, Problem
     from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters
     from stem.stem import Stem
 
@@ -127,8 +127,11 @@ In this case, the extrusion length is 50 m.
 The geometry is shown in the figures below.
 
 .. image:: _static/embankment_1.png
+    :align: center
 
 .. image:: _static/embankment_2.png
+    :align: center
+    :alt: Overview of geometry.
 
 
 The soil layers are then added to the model in the following way. It is important that all soil layers have
@@ -222,6 +225,8 @@ should be set to `True`.
 The geometry IDs can be seen in the pictures below.
 
 .. image:: _static/geometry_ids.png
+    :align: center
+    :alt: Geometry IDs for visualisation of boundary conditions.
 
 
 Mesh
@@ -248,41 +253,35 @@ Alternatively, the element size can also be defined for each soil layer separate
 Solver settings
 ---------------
 Now that the model is defined, the solver settings should be set.
-The analysis type is set to `MECHANICAL` and the solution type is set to `DYNAMIC`.
 
-Then the start time is set to 0.0 s and the end time is set to 1.5 s. The time step for the analysis is set to 0.01 s.
-Furthermore, the reduction factor and increase factor are set to 1.0, such that the time step size is constant throughout
-the simulation. Displacement convergence criteria is set to 1.0e-4 for the relative tolerance and 1.0e-9 for the
-absolute tolerance.
-Since the problem is linear elastic, `Linear-Newton-Raphson` is used as a solving strategy (Newmark explicit solver).
-`Amgcl` is used as a linear solver. Stresses are not initialised since the `stress_initialisation_type` is set to `NONE`.
-Other options are `StressInitialisationType.GRAVITY_LOADING` and `StressInitialisationType.K0_PROCEDURE`.
-Since the problem is linear elastic, the stiffness matrix is constant and the mass and damping matrices are constant,
-defining the matrices as constant will speed up the computation.
+The analysis type is set to `MECHANICAL` and the solution type to `DYNAMIC`.
+The start time is set to 0.0 s and the end time is set to 1.5 s. The time step for the analysis is set to 0.01 s.
+The system of equations is solved with the assumption of constant stiffness matrix, mass matrix, and damping matrix.
+The Linear-Newton-Raphson (Newmark explicit solver) is used as strategy and Cg as solver for the linear system of equations.
 
 The Rayleigh damping parameters are set to :math:`\alpha = 0.248` and :math:`\beta = 7.86 \cdot 10^{-5}`, which
 correspond to a damping ratio of 2% for 1 and 80 Hz.
 
+The convergence criterion for the numerical solver are set to a relative tolerance of :math:`10^{-4}` and an absolute
+tolerance of :math:`10^{-9}` for the displacements.
+
 .. code-block:: python
 
-    analysis_type = AnalysisType.MECHANICAL
-    solution_type = SolutionType.DYNAMIC
     # Set up start and end time of calculation, time step
     time_integration = TimeIntegration(start_time=0.0, end_time=1.5, delta_time=0.01, reduction_factor=1.0,
                                        increase_factor=1.0)
     convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
                                                             displacement_absolute_tolerance=1.0e-9)
-    strategy_type = LinearNewtonRaphsonStrategy()
-    scheme_type = NewmarkScheme()
-    linear_solver_settings = Amgcl()
-    stress_initialisation_type = StressInitialisationType.NONE
-    solver_settings = SolverSettings(analysis_type=analysis_type, solution_type=solution_type,
-                                     stress_initialisation_type=stress_initialisation_type,
+
+    solver_settings = SolverSettings(analysis_type=AnalysisType.MECHANICAL,
+                                     solution_type=SolutionType.DYNAMIC,
+                                     stress_initialisation_type=StressInitialisationType.NONE,
                                      time_integration=time_integration,
-                                     is_stiffness_matrix_constant=True, are_mass_and_damping_constant=True,
+                                     is_stiffness_matrix_constant=True,
+                                     are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
-                                     strategy_type=strategy_type, scheme=scheme_type,
-                                     linear_solver_settings=linear_solver_settings,
+                                     strategy_type=LinearNewtonRaphsonStrategy(),
+                                     linear_solver_settings=Cg(),
                                      rayleigh_k=7.86e-5,
                                      rayleigh_m=0.248)
 
@@ -327,7 +326,7 @@ results will be written every time step.
     nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY]
     gauss_point_results = []
 
-     model.add_output_settings(
+    model.add_output_settings(
         part_name="porous_computational_model_part",
         output_name="vtk_output",
         output_dir="output",
@@ -368,14 +367,15 @@ This figure shows the time history of the vertical displacements at the point on
 (these results have been obtained for a time step of 0.005 s, time duration of 1.75 s and with an element size of 0.5m).
 
 .. image:: _static/moving_load.png
-   :align: center
-   :alt: Vertical displacements at the surface of the model at different time steps.
+    :align: center
+    :alt: Vertical displacements at the surface of the model at different time steps.
 
 
 This animation shows the vertical displacement of the soil due to the moving load.
 
 .. image:: _static/moving.gif
-   :alt: Vertical displacement
+    :align: center
+    :alt: Vertical displacement of the soil due to the moving load.
 
 
 .. seealso::

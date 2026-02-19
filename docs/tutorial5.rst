@@ -36,7 +36,7 @@ First we import the necessary packages.
 ..    # END CODE BLOCK
 
 Geometry, track and materials
-----------------------------
+-----------------------------
 For setting up the model, Model class is imported from stem.model. And for setting up the soil material, OnePhaseSoil,
 LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw classes are imported.
 In this tutorial, a train model load (modelled using the UVEC) is used on top of a track.

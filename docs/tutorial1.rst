@@ -146,7 +146,8 @@ Solver settings
 ---------------
 Now that the model is defined, the solver settings should be set.
 
-The analysis type is set to `Mechanical` and the the time step and analyses time are set to 0.01 and 0.08, repectivelly.
+The analysis type is set to `MECHANICAL` and the solution type to `DYNAMIC`.
+The start time is set to 0.0 s and the end time is set to 0.08 s. The time step for the analysis is set to 0.01 s.
 The system of equations is solved with the assumption of constant stiffness matrix, mass matrix, and damping matrix.
 The Linear-Newton-Raphson (Newmark explicit solver) is used as strategy and Cg as solver for the linear system of equations.
 
@@ -155,7 +156,6 @@ correspond to a damping ratio of 2% for 1 and 80 Hz.
 
 The convergence criterion for the numerical solver are set to a relative tolerance of :math:`10^{-4}` and an absolute
 tolerance of :math:`10^{-9}` for the displacements.
-
 
 .. code-block:: python
 
@@ -248,14 +248,15 @@ This figure shows the time history of the vertical displacements at the two poin
 The results are compared with the analytical solution of the Lamb problem.
 
 .. image:: _static/lamb_displacements.png
-   :align: center
-   :alt: Vertical displacements at the surface of the model at different time steps.
+    :align: center
+    :alt: Vertical displacements at the surface of the model at different time steps.
 
 
 This animation shows the vertical velocity of the soil when subjected to the pulse load.
 
 .. image:: _static/lamb.gif
-   :alt: Vertical velocity
+    :align: center
+    :alt: Vertical velocity of the soil when subjected to the pulse load.
 
 
 .. seealso::
