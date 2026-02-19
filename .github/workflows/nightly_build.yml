@@ -88,4 +88,4 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: pdf-latest
-          files: benchmark_report.pdf
+          files: nightly_build/benchmark_report.pdf
