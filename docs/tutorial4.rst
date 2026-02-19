@@ -348,7 +348,7 @@ In this tutorial, the model in defined in two stages:
 The first stage is used to statically initialise the train load on the track.
 This means that the train is placed on the track and the static response of the system is calculated.
 This is done by setting the `static_initialisation` parameter to "True" in the `uvec_parameters` dictionary (see above),
-and the solution type is set to `QUASISTATIC`.
+and the solution type is set to `QUASI_STATIC`.
 
 
 The start time is set to 0.0 s and the end time is set to 0.5 s with a time step size of 0.1 s.

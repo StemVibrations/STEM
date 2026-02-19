@@ -281,7 +281,7 @@ The element size for the mesh can be defined as a single value, which will appli
 
 .. code-block:: python
 
-    model.set_mesh_size(element_size=2.0)
+    model.set_mesh_size(element_size=3.0)
 
 ..    # END CODE BLOCK
 
@@ -292,7 +292,7 @@ which is defined as the default element size for the model.
 
 .. code-block:: python2
 
-    model.set_mesh_size(element_size=2.0)
+    model.set_mesh_size(element_size=3.0)
 
     model.set_element_size_of_group(element_size=0.5, group_name="bridge_group_2")
     model.set_element_size_of_group(element_size=0.5, group_name="bridge_group_3")
