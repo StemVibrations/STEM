@@ -22,14 +22,13 @@ Background & prerequisites
 ==========================
 STEM is a numerical model based on the finite element method.
 For more information on the formulation and theory behind the model, see :doc:`formulation`.
-It is recommended to have a basic understanding of the finite element theory before using STEM.
+It is recommended to have a basic understanding of the Finite Element theory before using STEM.
 For a more detailed introduction to the finite element method, we recommend the following resources:
 
 * `The Finite Element Method: Its Basis and Fundamentals <https://search.worldcat.org/title/857713191>`_
 * `Finite Element Procedures <https://search.worldcat.org/title/191703381>`_
 
-
-STEM is build in Python. It is recommended to have a basic understanding of Python before using STEM.
+STEM is built in Python. It is recommended to have a basic understanding of Python before using STEM.
 For new users of Python, the following resources are recommended:
 
 * `Python beginners guide <https://wiki.python.org/moin/BeginnersGuide>`_
@@ -52,55 +51,6 @@ understanding of ParaView before using STEM. The following resources are recomme
 
 * `ParaView tutorials <https://www.paraview.org/tutorials/>`_
 
-
-STEM Installation
-=================
-STEM consists of a Python package. In order to use it, you need to install the following components:
-
-* :ref:`python_stem`. This is the main component of STEM, which contains the code to build and run the STEM model.
-* :ref:`parav`. This is the software used to visualise the results of the STEM model.
-* :ref:`gitvs`. This is the software used to manage the source code.
-* :ref:`gmshmesh`. This is the software used to generate the mesh. You can  visualise the mesh and inspect the geometry of the model. This component is optional, but it is recommended to have it installed.
-
-
-.. Tutorials
-.. =========
-.. Work through the tutorials in order to get hands-on experience:
-
-.. * :ref:`tutorial1`
-.. * :ref:`tutorial2`
-.. * :ref:`tutorial3`
-.. * :ref:`tutorial4`
-.. * :ref:`tutorial5`
-
-
-.. STEM interface definitions
-.. ==========================
-.. STEM exposes several extension points so you can plug in custom train and material
-.. models. The interface definitions are documented in :doc:`API_definition`, including:
-
-.. * :ref:`uvec` - user-defined vector evolution components.
-.. * :ref:`umat` - user-defined material models for soil or structure behavior.
-
-.. For a full per-module reference, see :doc:`api` which aggregates every public
-.. function discovered by ``sphinx-apidoc``.
-
-
-.. How to contribute
-.. =================
-.. If you want contribute to STEM please follow the steps defined in :doc:`contributions`.
-
-
-STEM team
-=========
-STEM is a research programme that results from a collaboration between the following partners:
-
-* `ProRail <https://www.prorail.nl>`_
-* `Deltares <https://www.deltares.nl>`_
-* `TNO <https://www.tno.nl>`_
-* `TU Delft <https://www.tudelft.nl>`_
-
-See :doc:`authors` for the full list of maintainers and contributors.
 
 .. Contents
 .. ========
@@ -143,14 +93,10 @@ See :doc:`authors` for the full list of maintainers and contributors.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Tutorials
+   :caption: Examples and benchmarks
    :hidden:
 
-   tutorial1
-   tutorial2
-   tutorial3
-   tutorial4
-   tutorial5
+   tutorials
 
 .. toctree::
    :maxdepth: 1

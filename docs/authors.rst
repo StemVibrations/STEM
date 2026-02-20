@@ -1,5 +1,14 @@
 .. _authors:
 
+STEM
+====
+STEM is a research programme that results from a collaboration between the following partners:
+
+* `ProRail <https://www.prorail.nl>`_
+* `Deltares <https://www.deltares.nl>`_
+* `TNO <https://www.tno.nl>`_
+* `TU Delft <https://www.tudelft.nl>`_
+
 STEM team
 =========
 
