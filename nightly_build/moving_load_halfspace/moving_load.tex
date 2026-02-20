@@ -21,7 +21,7 @@ halfspace, enabling a direct time-history comparison against the numerical model
 % ..............................................................................................
 The soil domain is modelled as a three-dimensional block representing the halfspace, with the following dimensions:
 height \qty{10}{\meter}, width \qty{10}{\meter} and length \qty{20}{\meter}.
-The soil is discretised with second-order tetrahedral elements, using an average element size of \qty{0.10}{\meter}.
+The soil is discretised with second-order tetrahedral elements, using an average element size of \qty{0.50}{\meter}.
 An overview of the geometry and mesh adopted for the analysis is shown in
 Figure~\ref{fig:one_dim_wave_mesh}.
 
@@ -36,10 +36,9 @@ At the bottom the soil is assumed to be fixed.
 
 \begin{figure}
 	\centering
-	\includegraphics[width=0.75\textwidth]{moving_load/mesh.pdf}
-	\caption{Geometry, mesh and boundary conditions adopted for the one-dimensional
-	wave propagation benchmark.}
-	\label{fig:one_dim_wave_mesh}
+	\includegraphics[width=0.75\textwidth]{moving_load_halfspace/mesh.pdf}
+	\caption{Geometry and mesh adopted for the moving load on an elastic halfspace benchmark.}
+	\label{fig:moving_load_halfspace_mesh}
 \end{figure}
 
 % ..............................................................................................
@@ -55,11 +54,11 @@ following parameters:
 	\item Porosity: 0.3.
 \end{itemize}
 
-
+% The material damping is set to zero, in order to allow a direct comparison against the analytical solution.
 Material damping is included via Rayleigh damping, with parameters that provide a damping ratio of
-\qty{0.5}{\percent} at \qty{1}{\hertz} and \qty{80}{\hertz}.
+\qty{1}{\percent} at \qty{1}{\hertz} and \qty{80}{\hertz}.
 
-The dynamic analysis is performed over a \qty{1}{\second} time window, with a time step of \qty{0.001}{\second}.
+The dynamic analysis is performed over a \qty{1.5}{\second} time window, with a time step of \qty{0.01}{\second}.
 The system of equations is solved using the Newmark time integration~\cite{Newmark_1959} scheme with
 parameters $\beta = 0.25$ and $\gamma = 0.5$.
 
@@ -67,22 +66,19 @@ parameters $\beta = 0.25$ and $\gamma = 0.5$.
 % ----------------------------------------------------------------------------------------------
 \section{Results}
 % ----------------------------------------------------------------------------------------------
-Figure~\ref{fig:one_dim_wave_results} presents the time histories of the
-vertical velocity at three points located at: \qty{2.5}{\meter}, \qty{5}{\meter} and \qty{7.5}{\meter}
-along the height of the column.
-The figure compares the numerical STEM results against the analytical solution of the one-dimensional wave equation.
-
-The arrival times of the incident and reflected waves at the observation point match closely between the numerical
-and analytical solutions.
-The amplitudes of the displacement and velocity pulses also show very good agreement, with small differences
-attributable to the introduced material and numerical damping.
+Figure~\ref{fig:moving_load_halfspace_results} presents the time history of the
+vertical displacement for a point located in the middle of the model at a depth of \qty{-1}{\meter}
+(coordinates (5, 5, -1)).
+The figure compares the numerical STEM results against the analytical solution.
+If follows that there is an agreement between both solutions, demonstrating the accuracy of the STEM
+for this type of dynamic loading condition.
 
 \begin{figure}[h]
 	\centering
-	\includegraphics[width=0.8\textwidth]{one_dim_wave_prop/time_history.pdf}
-	\caption{Comparison of the vertical velocity time histories at three points located at:
-    (a) \qty{2.5}{\meter}, (b) \qty{5}{\meter} and (c) \qty{7.5}{\meter}
-	along the column height.}
-	\label{fig:one_dim_wave_results}
+	\includegraphics[width=0.8\textwidth]{moving_load_halfspace/time_history.pdf}
+	\caption{Comparison of the vertical displacement time history at a point located in the middle of the model at
+	 a depth of \qty{-1}{\meter} (coordinates (5, 5, -1)).}
+	 the halfspace, at a depth of \qty{-1}{\meter}.}
+	\label{fig:moving_load_halfspace_results}
 \end{figure}
 

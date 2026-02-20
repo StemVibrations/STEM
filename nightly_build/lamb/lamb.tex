@@ -60,7 +60,7 @@ following parameters:
 \end{itemize}
 
 Material damping is included via Rayleigh damping, with parameters that provide a damping ratio of
-\qty{0.01}{\percent} at \qty{1}{\hertz} and \qty{80}{\hertz}.
+\qty{2}{\percent} at \qty{1}{\hertz} and \qty{80}{\hertz}.
 
 The dynamic analysis is performed over a \qty{0.08}{\second} time window, with a time step of \qty{0.001}{\second}.
 The system of equations is solved using the Newmark time integration~\cite{Newmark_1959} scheme with
@@ -73,9 +73,11 @@ Figure~\ref{fig:pekeris_results} presents the time histories of the vertical dis
 nodes, located at 1, 2 and~\qty{3}{\meter} from the load, located along the surface.
 The figure compares the STEM results against the analytical solution.
 If follows that there is an agreement between both solutions, demonstrating the accuracy of the STEM
-for this type of dynamic loading condition. This is a notable difficult problem to solve numerically,
-due to the steep gradients in stress and displacement that occur close to the point of application of the
-load.
+for this type of dynamic loading condition.
+The Lamb problem is a notably difficult problem to solve numerically, due to the singular surface source
+and broadband wave excitation.
+Finite element discretization, domain truncation, and the use of Rayleigh damping introduce numerical
+dispersion and artificial attenuation, which affects surface wave propagation.
 
 \begin{figure}[h]
     \centering

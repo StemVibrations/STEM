@@ -42,8 +42,6 @@ the $y$-direction and is applied as a step function in time:
 	\end{cases}
 \end{equation}
 
-The four vertical faces are restrained only in the horizontal directions, thereby allowing vertical motion
-similar to a one-dimensional situation.
 In the two-dimensional case, the side lines are restrained in the horizontal direction.
 In the three-dimensional case, the four vertical faces are restrained only in the horizontal directions,
 thereby allowing vertical motion similar to a one-dimensional situation.
@@ -68,7 +66,7 @@ following parameters:
 \end{itemize}
 
 Material damping is included via Rayleigh damping, with parameters that provide a damping ratio of
-\qty{0.5}{\percent} at \qty{1}{\hertz} and \qty{80}{\hertz}.
+\qty{1}{\percent} at \qty{1}{\hertz} and \qty{80}{\hertz}.
 
 The dynamic analysis is performed over a \qty{0.20}{\second} time window, with a time step of \qty{0.001}{\second}.
 The system of equations is solved using the Newmark time integration~\cite{Newmark_1959} scheme with

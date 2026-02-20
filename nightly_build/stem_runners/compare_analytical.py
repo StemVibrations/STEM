@@ -1,4 +1,5 @@
 import json
+from typing import List
 from pathlib import Path
 
 import numpy as np
@@ -15,18 +16,19 @@ from benchmark_tests.analytical_solutions.moving_load_on_beam import BeamMovingL
 from benchmark_tests.analytical_solutions.point_load_moving import MovingLoadElasticHalfSpace
 
 
-def compare_wave_propagation(path_model, output_file):
+def compare_wave_propagation(path_model: Path, output_file: Path):
+    """
+    Compare the analytical solution of wave propagation in a 1D column with the results from STEM.
+    The STEM results are performed for 2D and 3D.
 
-    # Based on: benchmark_tests/test_1d_wave_prop_drained_soil_3D/test_1d_wave_prop_drained_soil_3d.py
-    # with:
-    # - model.set_mesh_size(element_size=0.15)
-    # - model.mesh_settings.element_order = 2
-    # - rayleigh_k=3.929751681281367e-05
-    # - rayleigh_m=0.12411230236404121
+    Args:
+        - path_model (Path): Path to the folder containing the JSON files with the results from STEM.
+        - output_file (Path): Path to save the comparison plot.
+    """
 
     # load data from STEM
-    path_2d_results = Path(path_model) / "calculated_output_2.json"
-    path_3d_results = Path(path_model) / "calculated_output_3.json"
+    path_2d_results = path_model / "calculated_output_2.json"
+    path_3d_results = path_model / "calculated_output_3.json"
 
     with open(path_2d_results, "r") as f:
         data_kratos_2d = json.load(f)
@@ -111,7 +113,14 @@ def compare_wave_propagation(path_model, output_file):
     plt.close()
 
 
-def compare_pekeris(path_model, output_file):
+def compare_pekeris(path_model: Path, output_file: Path):
+    """
+    Compare the analytical solution of the Pekeris problem with the results from STEM.
+
+    Args:
+        - path_model (Path): Path to the JSON file containing the results from STEM.
+        - output_file (Path): Path to save the comparison plot.
+    """
     # load Pekeris data from STEM
     with open(path_model, "r") as f:
         pekeris_data_kratos = json.load(f)
@@ -157,16 +166,18 @@ def compare_pekeris(path_model, output_file):
     plt.close()
 
 
-def compare_strip_load(path_model, output_file):
+def compare_strip_load(path_model: List[Path], output_file: Path):
+    """
+    Compare the analytical solution of the strip load problem with the results from STEM.
 
-    # based on: benchmark_tests/test_strip_load_2D/test_strip_load_2D.py
-    # with:
-    # - model.set_mesh_size(element_size=0.15)
-    # - element_order=2
+    Args:
+        - path_model (List[Path]): List of paths to the JSON files containing the results from STEM.
+        - output_file (Path): Path to save the comparison plot.
+    """
 
     # load data from STEM
-    path_2d_results = Path(path_model[0]) / "json_output.json"
-    path_3d_results = Path(path_model[1]) / "json_output.json"
+    path_2d_results = path_model[0] / "json_output.json"
+    path_3d_results = path_model[1] / "json_output.json"
 
     with open(path_2d_results, "r") as f:
         data_kratos_2d = json.load(f)
@@ -343,8 +354,14 @@ def compare_strip_load_3D(path_model, output_file):
     plt.close()
 
 
-def compare_sdof(path_model, output_file):
+def compare_sdof(path_model: Path, output_file: Path):
+    """
+    Compare the analytical solution of a SDOF system with the results from STEM.
 
+    Args:
+        - path_model (Path): Path to the JSON file containing the results from STEM.
+        - output_file (Path): Path to save the comparison plot.
+    """
     # load data from STEM
     with open(path_model, "r") as f:
         data_kratos = json.load(f)
@@ -378,11 +395,19 @@ def compare_sdof(path_model, output_file):
     plt.close()
 
 
-def compare_moving_load(path_model, output_file):
+def compare_moving_load(path_model: Path, output_file: Path):
+    """
+    Compare the analytical solution of a moving load on an elastic half-space with the results from STEM.
+
+    Args:
+        - path_model (Path): Path to the JSON file containing the results from STEM.
+        - output_file (Path): Path to save the comparison plot.
+    """
 
     # load data from STEM
     with open(path_model, "r") as f:
         data_kratos = json.load(f)
+
     plt.plot(np.array(data_kratos["TIME"]) - data_kratos["TIME"][0],
              np.array(data_kratos['NODE_16']['DISPLACEMENT_Y']) * 1000,
              color="r",
@@ -398,11 +423,12 @@ def compare_moving_load(path_model, output_file):
     speed = 10  # m/s
 
     x, y, z = 0.0, 0.0, 1
-    time = np.linspace(-1, 1, num=200)
+    time = np.linspace(-1, 1, num=100)
 
     model = MovingLoadElasticHalfSpace(E, nu, rho, force, speed)
     uz = []
     for t in time:
+        print(f"Calculating vertical displacement at time {t:.3f} s of {time[-1]:.3f} s", end="\r")
         model.compute_vertical_displacement(x, y, z, t, ky_max=200.0, n_ky=2000)
         uz.append(np.real(model.vertical_displacement))
 
@@ -414,12 +440,19 @@ def compare_moving_load(path_model, output_file):
     plt.ylabel("Vertical displacement [mm]")
     plt.legend()
     plt.grid()
-    plt.xlim(0, 1.5)
+    plt.xlim(0, 1.4)
     plt.savefig(output_file)
     plt.close()
 
 
-def compare_boussinesq(path_model, output_file):
+def compare_boussinesq(path_model: Path, output_file: Path):
+    """
+    Compare the analytical solution of the Boussinesq problem with the results from STEM.
+
+    Args:
+        - path_model (Path): Path to the folder containing the JSON files with the results from STEM.
+        - output_file (Path): Path to save the comparison plot.
+    """
 
     young_modulus = 20e6  # Pa
     poisson_ratio = 0.3
@@ -516,8 +549,14 @@ def compare_boussinesq(path_model, output_file):
     plt.close()
 
 
-def compare_vibrating_dam(path_model, output_file):
+def compare_vibrating_dam(path_model: List[Path], output_file: Path):
+    """
+    Compare the results of the vibrating dam simulation between 2D and 3D models.
 
+    Args:
+        path_model (List[Path]): List of paths to the JSON files with the results from STEM.
+        output_file (Path): Path to save the comparison plot.
+    """
     # load data from STEM
     with open(path_model[0], "r") as f:
         data_kratos_2D = json.load(f)
@@ -570,7 +609,14 @@ def compare_vibrating_dam(path_model, output_file):
     plt.close()
 
 
-def compare_abs_boundary(path_model, output_file):
+def compare_abs_boundary(path_model: Path, output_file: Path):
+    """
+    Compare the results of the absorbing boundary simulation between 2D and 3D models.
+
+    Args:
+        path_model (Path): Path to the directory containing the JSON files with the results from STEM.
+        output_file (Path): Path to save the comparison plot.
+    """
 
     # load data from STEM
     path_2d_results = Path(path_model) / "calculated_output_2D.json"
@@ -657,7 +703,15 @@ def compare_abs_boundary(path_model, output_file):
     plt.close()
 
 
-def compare_simply_supported_beam(path_model, output_file):
+def compare_simply_supported_beam(path_model: Path, output_file: Path):
+    """
+    Compare the results of the simply supported beam simulation between 2D and 3D models.
+
+    Args:
+        - path_model (Path): Path to the directory containing the JSON files with the results from STEM
+        - output_file (Path): Path to save the comparison plot.
+    """
+
     path_model = Path(path_model)
 
     # Specify beam material model
@@ -712,7 +766,14 @@ def compare_simply_supported_beam(path_model, output_file):
     plt.close()
 
 
-def compare_moving_load_on_beam(path_model, output_file):
+def compare_moving_load_on_beam(path_model: Path, output_file: Path):
+    """
+    Compare the results of the moving load on beam simulation between 2D and 3D models.
+
+    Args:
+        - path_model (List[Path]): List of paths to the directories containing the JSON files with the results from STEM
+        - output_file (Path): Path to save the comparison plot.
+    """
 
     length = 25
     velocity = 10  # m/s

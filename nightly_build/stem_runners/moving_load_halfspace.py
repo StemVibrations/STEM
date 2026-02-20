@@ -53,7 +53,6 @@ def run_moving_load(input_folder):
     # Define boundary conditions
     no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
     roller_displacement_parameters_x = DisplacementConstraint(is_fixed=[True, False, False], value=[0, 0, 0])
-    roller_displacement_parameters_z = DisplacementConstraint(is_fixed=[False, False, True], value=[0, 0, 0])
 
     abs_boundary_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=10)
 
@@ -130,8 +129,8 @@ def run_moving_load(input_folder):
     stage2 = stem.create_new_stage(t_step, 1.5)
     stage2.project_parameters.settings.solution_type = SolutionType.DYNAMIC
     stage2.project_parameters.settings.strategy_type = LinearNewtonRaphsonStrategy()
-    stage2.project_parameters.settings.rayleigh_k = 0  #1.9648758406406834e-05
-    stage2.project_parameters.settings.rayleigh_m = 0  #.062056151182020604
+    stage2.project_parameters.settings.rayleigh_k = 3.92975e-5
+    stage2.project_parameters.settings.rayleigh_m = 0.124
     stem.add_calculation_stage(stage2)
     stem.write_all_input_files()
     stem.run_calculation()
