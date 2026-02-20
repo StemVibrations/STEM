@@ -1,15 +1,45 @@
-Outputs
-=======
+Visualization and outputs
+=========================
+This page describes the visualisation and output capabilities of STEM, and provides practical tips for using
+them effectively.
 
+
+Visualization
+-------------
+During the model building stage is it convenient to visualize the model and check that it is built as expected.
+For this purpose, the user can use the ``model.show_geometry()` method:
+
+.. code-block:: python
+
+    model.show_geometry()
+
+This method accepts the following optional parameters:
+
+- `show_volume_ids`: whether to show the volume ids of the model.
+- `show_surface_ids`: whether to show the surface ids of the model.
+- `show_line_ids`: whether to show the line ids of the model.
+- `show_point_ids`: whether to show the point ids of the model.
+- `file_name`: the name of the file to save the visualization to.
+- `auto_open`: whether to automatically open the visualization after saving it.
+
+The following image shows an example of the visualization of a model with the geometry ids shown:
+
+.. image:: _static/geometry_ids.png
+    :align: center
+    :alt: Geometry and IDs of the model.
+
+
+Outputs
+-------
 STEM can write results in the VTK file format and JSON files.
 The VTK file format is compatible with ParaView, and it is convenient to inspect the full field of results (e.g.
 displacements, velocities) at different moments in time.
-With ParaView, it is also possible to create time series of results and
+With ParaView, it is also possible to create time series of results and animations.
 The JSON file format is meant to store time history results at specific nodes in the model.
 
 
 VTK output
-----------
+..........
 The VTK output can be generated as follows:
 
 .. code-block:: python
@@ -43,7 +73,7 @@ Once the `VtkOutputParameters` is defined, it can be added to the model using th
 
 
 JSON output
------------
+...........
 The JSON output can be generated as follows:
 
 .. code-block:: python
@@ -78,7 +108,7 @@ Once the `JsonOutputParameters` is defined, it can be added to the model using t
 
 
 Practical tips
---------------
+..............
 - For VTK output, consider the trade-off between output frequency and file size/performance. For large calculations,
   it may be better to write output every few steps or at specific time intervals rather than every step.
 - For JSON output, minimize the number of coordinates to writes.

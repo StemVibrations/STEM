@@ -22,7 +22,7 @@ def run_abs_boundary(input_folder, ndim):
     # Linear elastic drained soil with a Density of 2700, a Young's modulus of 50e6,
     # a Poisson ratio of 0.3 & a Porosity of 0.3 is specified.
     DENSITY_SOLID = 2000
-    POROSITY = 0.3
+    POROSITY = 0.
     YOUNG_MODULUS = 50e6
     POISSON_RATIO = 0
     soil_formulation1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)

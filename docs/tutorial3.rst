@@ -412,8 +412,6 @@ This animation shows the vertical displacement of the embankment and soil due to
     :alt: Vertical displacement of the system due to the moving load.
 
 
-
-
 .. seealso::
 
     - Previous: :ref:`tutorial2`
