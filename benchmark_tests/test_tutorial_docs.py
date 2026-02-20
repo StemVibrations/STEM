@@ -31,7 +31,7 @@ def read_tutorial(rst_file: str, name: str) -> List[str]:
         - List[str]: list of strings with the code
     """
 
-    with open(rst_file, "r") as fi:
+    with open(rst_file, "r", encoding="utf-8") as fi:
         lines = fi.read().splitlines()
 
     # find start line of tutorial and end of tutorial
