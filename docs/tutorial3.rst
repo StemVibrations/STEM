@@ -406,6 +406,7 @@ Results
 Once the calculation is finished, the results can be visualised using Paraview.
 
 This animation shows the vertical displacement of the embankment and soil due to the moving load.
+(these results have been obtained with an element size of 0.5 m).
 
 .. image:: _static/bridge.gif
     :align: center

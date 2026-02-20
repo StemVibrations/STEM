@@ -506,4 +506,3 @@ This animation shows the vertical displacement of the track and soil due to the 
 .. seealso::
 
     - Previous: :ref:`tutorial3`
-    - Next: :ref:`tutorial5`

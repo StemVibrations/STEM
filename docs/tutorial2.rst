@@ -367,7 +367,7 @@ Once the calculation is finished, the results can be visualised using Paraview,
 or by loading the JSON output file.
 
 This figure shows the time history of the vertical displacements at the point on the embankment surface
-(these results have been obtained for a time step of 0.005 s, time duration of 1.75 s and with an element size of 0.5m).
+(these results have been obtained for a time step of 0.005 s, time duration of 1.75 s and with an element size of 0.5 m).
 
 .. image:: _static/moving_load.png
     :align: center

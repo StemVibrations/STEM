@@ -244,7 +244,7 @@ Once the calculation is finished, the results can be visualised using Paraview,
 or by loading the JSON output file.
 
 This figure shows the time history of the vertical displacements at the two points along the surface
-(these results have been obtained for a time step of 0.001 s, time duration of 0.15 s and with an element size of 0.25m).
+(these results have been obtained for a time step of 0.001 s, time duration of 0.15 s and with an element size of 0.25 m).
 The results are compared with the analytical solution of the Lamb problem.
 
 .. image:: _static/lamb_displacements.png
