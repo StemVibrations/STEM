@@ -359,25 +359,12 @@ Before starting the calculation, it is required to specify the desired output. I
 and velocity are requested on the nodes and written into VTK files.
 Gauss point results (stresses) are left empty.
 
-The JSON output file is requested at two points located in the surface of the embankment, along the path of the
-moving load. One point is located before the bridge (0.75, 2.5, 10.0), and another point in the middle of the bridge
-(0.75, 2.5, 25).
-
 The output process is added to the model using the ``Model.add_output_settings`` method.
 The results are written to the output directory in VTK format.
 In this case, the output interval is set to 1 and the output control type is set to `step`, meaning that the
 results will be written every time step.
 
 .. code-block:: python
-
-    json_output_parameters = JsonOutputParameters(0.01, [NodalOutput.DISPLACEMENT], [])
-
-    model.add_output_settings_by_coordinates([
-        (0.75, 2.5, 10.0),
-        (0.75, 2.5, 25.0)
-        ],
-        json_output_parameters,
-        "json_output")
 
     nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY]
     gauss_point_results = []
@@ -416,8 +403,16 @@ The calculation is run by calling ``stem.run_calculation()``.
 
 Results
 -------
-Once the calculation is finished, the results can be visualised using Paraview,
-or by loading the JSON output file.
+Once the calculation is finished, the results can be visualised using Paraview.
+
+This animation shows the vertical displacement of the embankment and soil due to the moving load.
+
+.. image:: _static/bridge.gif
+    :align: center
+    :alt: Vertical displacement of the system due to the moving load.
+
+
+
 
 .. seealso::
 

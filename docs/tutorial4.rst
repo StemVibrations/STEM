@@ -225,9 +225,11 @@ below. More information about the train and train-track interaction model can be
 
 In order to use the UVEC model, it is necessary to import the UVEC package (see the import section above):
 
-.. code-block:: python
+.. code-block:: python2
 
     import UVEC.uvec_ten_dof_vehicle_2D as uvec
+
+..    # END CODE BLOCK
 
 The UVEC model requires the definition of the train parameters, such as the wheel configuration, velocity,
 and irregularity parameters.
@@ -293,6 +295,7 @@ during the static initialisation stage.
     # add the load on the tracks
     model.add_load_on_line_model_part("rail_track_1", uvec_load, "train_load")
 
+..    # END CODE BLOCK
 
 Boundary conditions
 -------------------
@@ -349,7 +352,6 @@ The first stage is used to statically initialise the train load on the track.
 This means that the train is placed on the track and the static response of the system is calculated.
 This is done by setting the `static_initialisation` parameter to "True" in the `uvec_parameters` dictionary (see above),
 and the solution type is set to `QUASI_STATIC`.
-
 
 The start time is set to 0.0 s and the end time is set to 0.5 s with a time step size of 0.1 s.
 This means that the static initialisation is done in 5 steps.
@@ -439,6 +441,8 @@ While initialising the Stem class, the mesh will be generated.
 
     stem = Stem(model, input_files_dir)
 
+..    # END CODE BLOCK
+
 To create a new stage for the dynamic analysis, the ``create_new_stage`` method is called with the time step size
 and the duration of the stage as argument.
 
@@ -447,6 +451,8 @@ and the duration of the stage as argument.
     delta_time_stage_2 = 1e-3
     duration_stage_2 = 0.5
     stage2 = stem.create_new_stage(delta_time_stage_2, duration_stage_2)
+
+..    # END CODE BLOCK
 
 In the second stage the goal is to compute the dynamic response of the moving train.
 Therefore, the solution type needs to be set to `DYNAMIC`` and the Rayleigh damping coefficients adjusted
@@ -467,6 +473,7 @@ This adjustment needs to be done on the `train_load` parameters and on the UVEC 
     stage2.get_model_part_by_name("train_load").parameters.uvec_parameters["velocity"] = velocity
     stage2.get_model_part_by_name("train_load").parameters.uvec_parameters["static_initialisation"] = False
 
+..    # END CODE BLOCK
 
 Run
 ---
@@ -494,7 +501,6 @@ This animation shows the vertical displacement of the track and soil due to the 
 .. image:: _static/uvec_disp.gif
     :align: center
     :alt: Vertical displacement of the track and soil due to the moving train.
-
 
 
 .. seealso::

@@ -21,7 +21,7 @@ First the necessary packages are imported and the input folder is defined.
     from stem.load import MovingLoad
     from stem.boundary import DisplacementConstraint
     from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
-         LinearNewtonRaphsonStrategy, NewmarkScheme, Cg, StressInitialisationType, SolverSettings, Problem
+            LinearNewtonRaphsonStrategy, NewmarkScheme, Cg, StressInitialisationType, SolverSettings, Problem
     from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters
     from stem.stem import Stem
 
@@ -189,6 +189,8 @@ The boundary conditions are applied on plane surfaces defined by a list of coord
     model.add_boundary_condition_on_plane([(0, 0, 50), (5, 0, 50), (5, 1, 50)],
                                           roller_displacement_parameters, "sides_roler_z=50")
 
+..    # END CODE BLOCK
+
 Alternatively, the boundary conditions can also be added by geometry IDs.
 
 The roller boundary condition is active in the y-direction, meaning that the boundary conditions are added to
@@ -196,13 +198,13 @@ the model on the edge surfaces, i.e. the boundary conditions are applied to a li
 (which can be visualised using: "model.show_geometry(show_surface_ids=True)")  with the corresponding
 dimension, "2".
 
-.. code-block:: python
+.. code-block:: python2
 
     no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
     roller_displacement_parameters = DisplacementConstraint(is_fixed=[True, False, True], value=[0, 0, 0])
 
     model.add_boundary_condition_by_geometry_ids(2, [1], no_displacement_parameters, "base_fixed")
-    model.add_boundary_condition_by_geometry_ids(2, [2, 4, 5, 6, 7, 10, 11, 12, 15, 16, 17],
+    model.add_boundary_condition_by_geometry_ids(2, [2, 4, 5, 6, 7, 10, 11, 12, 16, 17, 18],
                                                  roller_displacement_parameters, "sides_roller")
 
 ..    # END CODE BLOCK
@@ -249,6 +251,7 @@ Alternatively, the element size can also be defined for each soil layer separate
     model.set_element_size_of_group(1.5, "soil_layer_2")
     model.set_element_size_of_group(1, "embankment_layer")
 
+..    # END CODE BLOCK
 
 Solver settings
 ---------------

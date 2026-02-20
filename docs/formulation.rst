@@ -12,7 +12,7 @@ STEM solves the dynamic equilibrium equation, following a Total Lagrangian formu
 The governing finite element equation to be solved is:
 
   .. math::
-          \mathbf{M}\mathbf{a} + \mathbf{C}\mathbf{v} + \mathbf{K}\mathbf{u} = \mathbf{F_{ext}}\left( \text{t} \right)
+          \mathbf{M}\mathbf{a} + \mathbf{C}\mathbf{v} + \mathbf{K}\mathbf{u} = \mathbf{F_{ext}}\left( t \right)
 
 where :math:`\mathbf{M}` is the mass matrix, :math:`\mathbf{C}` is the damping matrix, and :math:`\mathbf{K}` is the
 stiffness matrix of the entire system, :math:`\mathbf{F_{ext}}` denotes the vector of the external forces and
@@ -56,12 +56,45 @@ A range of solution strategies are supported, including:
 * Implicit and explicit time integration schemes.
 * Nonlinear solution strategies (Newton-Raphson, line search, arc length).
 
-For linear systems, it is recommended to use a custom explicit integration scheme based on the Newmark method, `LinearNewtonRaphsonStrategy`.
+For linear systems, it is recommended to use a custom explicit integration scheme based on the
+Newmark method, `LinearNewtonRaphsonStrategy`.
 This integration scheme takes advantage of the linear nature of the problem, and it is formulated explicitly.
-The main advantage of using an explicit integration scheme is that it does not require the assembly and
-factorisation of the system matrices, which becomes computationally expensive for large problems.
+Following the Newmark method, the acceleration and velocity at time step :math:`n+1` are calculated as:
 
-In STEM there is the option to perform dynamic or quasi-static analyses.
+.. math::
+
+    \begin{split}
+        \mathbf{v}_{t+\Delta t} & = \mathbf{v}_{t} + \left(1 - \gamma \right)  \Delta t \mathbf{a}_{t} + \gamma \Delta t \mathbf{a}_{t+\Delta t} \\
+        \mathbf{u}_{t+\Delta t} &= \mathbf{u}_{t} + \mathbf{v}_{t} \Delta t + \left(\frac{1}{2} - \beta \right)  \Delta t^{2} \mathbf{a}_{t} + \beta \Delta t^{2} \mathbf{a}_{t+\Delta t} \\
+    \end{split}
+
+where :math:`\Delta t` is the time step for the numerical integration, the subscript
+:math:`\sqcup_{t + \Delta t}` denotes kinematic variables at time :math:`t + \Delta t`, and
+:math:`\gamma` and :math:`\beta` are the parameters that control the integration accuracy and stability
+(the default values are :math:`\gamma = 0.5` and :math:`\beta=0.25`).
+
+Substituting the Newmark equations into the governing equation, and taking advantage of the linearity of the problem,
+the system of equations yields:
+
+.. math::
+
+  \mathbf{\widetilde{K}}  \Delta \mathbf{u}_{t+\Delta t} = \mathbf{F_{ext}}\left( t + \Delta t \right) - \mathbf{M}\mathbf{\widetilde{a}} - \mathbf{C}\mathbf{\widetilde{v}}
+
+where :math:`\mathbf{\widetilde{K}}`, :math:`\mathbf{\widetilde{a}}` and :math:`\mathbf{\widetilde{v}}` are
+the effective stiffness, acceleration and velocity, respectively, defined as:
+
+.. math::
+
+  \begin{split}
+    \mathbf{\widetilde{K}} & = \mathbf{K} + \frac{\gamma}{\beta \Delta t} \mathbf{C} + \frac{1}{\beta \Delta t^2} \mathbf{M} \\
+    \mathbf{\widetilde{a}} & = \frac{1}{\beta \Delta t^2} u_{t} + \frac{1}{\beta \Delta t} \mathbf{v}_{t}  + \left( \frac{1}{2\beta} - 1 \right) \mathbf{a}_{t}\\
+    \mathbf{\widetilde{v}} & =  \frac{\gamma}{\beta \Delta t} u_{t} - \left(1 - \frac{\gamma}{\beta} \right) \mathbf{v}_{t} - \left(1 - \frac{\gamma}{2\beta} \right) \Delta t \mathbf{a}_{t}
+  \end{split}
+
+The main advantage of using the custom Newmark explicit integration scheme is that it only requires once
+the assembly and factorisation of the entire system of matrices, making it computationally efficient for linear problems.
+
+In STEM it is also possible to perform quasi-static analyses.
 In the quasi-static case, the governing equation is reduced to:
 
   .. math::
