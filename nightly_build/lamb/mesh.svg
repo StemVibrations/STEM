@@ -4,9 +4,9 @@
 <svg
    version="1.1"
    id="svg1"
-   width="71.000015"
-   height="300"
-   viewBox="0 0 71.000016 300"
+   width="1368.985"
+   height="960.74469"
+   viewBox="0 0 1368.985 960.74469"
    sodipodi:docname="mesh.svg"
    inkscape:version="1.4 (86a8ad7, 2024-10-11)"
    inkscape:export-filename="mesh.pdf"
@@ -152,22 +152,22 @@
      inkscape:deskcolor="#d1d1d1"
      showgrid="false"
      inkscape:zoom="0.46457778"
-     inkscape:cx="-561.80044"
-     inkscape:cy="407.89725"
+     inkscape:cx="413.27848"
+     inkscape:cy="446.64211"
      inkscape:window-width="1920"
      inkscape:window-height="1009"
-     inkscape:window-x="1912"
-     inkscape:window-y="-8"
+     inkscape:window-x="-8"
+     inkscape:window-y="3"
      inkscape:window-maximized="1"
      inkscape:current-layer="g1"
      showguides="false">
     <inkscape:page
-       x="0"
-       y="0"
+       x="3.1153354e-07"
+       y="2.2239476e-08"
        inkscape:label="1"
        id="page1"
-       width="71.000015"
-       height="300"
+       width="1368.985"
+       height="960.74469"
        margin="0"
        bleed="0" />
   </sodipodi:namedview>
@@ -175,7 +175,7 @@
      id="g1"
      inkscape:groupmode="layer"
      inkscape:label="1"
-     transform="translate(-2051.1008,-1526.1681)">
+     transform="translate(-855.78831,-1161.5141)">
     <image
        width="1968"
        height="1048"
