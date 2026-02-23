@@ -66,26 +66,42 @@ reproducibility, methodological development, and direct integration into researc
 STEM performs time-domain analyses of railway-induced vibrations using the Finite Element Method (FEM).
 
 STEM follows a layered, modular architecture. STEM consists of the following main components:
+
 - [STEM](https://github.com/StemVibrations/STEM/): The core module responsible for model definition, input generation, and results processing.
+
 - [gmsh utils](https://github.com/StemVibrations/gmsh_utils/): A utility module for mesh generation using Gmsh, including geometry definition and meshing strategies.
+
 - [vehicle models](https://github.com/StemVibrations/vehicle_models/): A module containing predefined vehicle models, such as the 2D mass-spring-damper system for train modeling, and interfaces for user-defined vehicle formulations.
+
 - [random fields](https://github.com/StemVibrations/RandomFields/): A package for generating subsurface parameter fields with spatial variability, supporting various correlation structures and statistical properties.
 
 STEM main features are summarized as follows:
-- 2D and 3D quasi-static and dynamic analysis
-  - Multi layering and complex geometry generation
-  - Meshing
-  - I/O and visualization
-- Coupled train–track model
-  - User-defined vehicle models (UVEC): 2 and 10 degrees of freedom (DOF) mass-spring-damper systems
-  - Nonlinear wheel–rail contact based on Hertzian contact theory
-  - Track irregularity and discontinuity generation
-- Railway track
-  - Rail, railpad, and sleeper
-- UMAT interface for user-defined material models
-- Comprehensive documentation, tutorials, and API reference
-- Open-source distribution via pip and GitHub
 
+- 2D and 3D quasi-static and dynamic analysis
+
+  - Multi layering and complex geometry generation
+
+  - Meshing
+
+  - I/O and visualization
+
+- Coupled train–track model
+
+  - User-defined vehicle models (UVEC): 2 and 10 degrees of freedom (DOF) mass-spring-damper systems
+
+  - Nonlinear wheel–rail contact based on Hertzian contact theory
+
+  - Track irregularity and discontinuity generation
+
+- Railway track
+
+  - Rail, railpad, and sleeper
+
+- UMAT interface for user-defined material models
+
+- Comprehensive documentation, tutorials, and API reference
+
+- Open-source distribution via pip and GitHub
 
 STEM solves the dynamic equilibrium equation, following a Total Lagrangian formulation with small strains:
 
@@ -94,13 +110,6 @@ $$\mathbf{M}\mathbf{a} + \mathbf{C}\mathbf{v} + \mathbf{K}\mathbf{u} = \mathbf{F
 where $\mathbf{M}$ is the mass matrix, $\mathbf{C}$ is the damping matrix, and $\mathbf{K}$ is the stiffness matrix of the entire system, $\mathbf{F_{ext}}$ denotes the vector of the external forces and $\mathbf{a}$, $\mathbf{v}$, $\mathbf{u}$ are, respectively, the acceleration, the velocity and the displacement in the nodes.
 
 The train-track interaction is modelled using a loosely coupled formulation, where the train is represented as a multi-degree-of-freedom mass–spring–damper system and the rail is discretized using Euler–Bernoulli beam elements. The wheel–rail contact forces are computed based on nonlinear Hertzian contact theory, which accounts for the local deformation at the contact interface. Track irregularities are incorporated through stochastic and deterministic models, allowing for the simulation of realistic track conditions, including rail joints and surface roughness.
-
-
-STEM solves the dynamic equilibrium equation, following a Total Lagrangian formulation with small strains:
-
-$$\mathbf{M}\mathbf{a} + \mathbf{C}\mathbf{v} + \mathbf{K}\mathbf{u} = \mathbf{F_{ext}}\left( t \right)$$
-
-where $\mathbf{M}$ is the mass matrix, $\mathbf{C}$ is the damping matrix, and $\mathbf{K}$ is the stiffness matrix of the entire system, $\mathbf{F_{ext}}$ denotes the vector of the external forces and $\mathbf{a}$, $\mathbf{v}$, $\mathbf{u}$ are, respectively, the acceleration, the velocity and the displacement in the nodes.
 
 
 # Getting STEM
