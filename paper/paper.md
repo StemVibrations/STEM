@@ -7,20 +7,20 @@ tags:
   - Finite element method
   - Train-track interaction
 authors:
-- name: A. Noordam
+  - name: A. Noordam
     orcid: 0000-0002-2559-9465
     affiliation: 1
-- name: B. Zuada Coelho
+  - name: B. Zuada Coelho
     orcid: 0000-0002-9896-3248
     corresponding: true
     affiliation: 1
-- name: J. Nuttall
+  - name: J. Nuttall
     orcid:
     affiliation: 2
-- name: M. Fathian
+  - name: M. Fathian
     orcid:
     affiliation: 2
-- name: D. Moretti
+  - name: D. Moretti
     orcid: 0009-0005-4042-7062
     affiliation: 3
 affiliations:
