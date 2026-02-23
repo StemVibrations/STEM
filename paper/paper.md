@@ -134,23 +134,24 @@ $$\mathbf{M}\mathbf{a} + \mathbf{C}\mathbf{v} + \mathbf{K}\mathbf{u} = \mathbf{F
 where $\mathbf{M}$, $\mathbf{C}$, and $\mathbf{K}$ is the global mass, damping and stiffness matrices of the entire system, respectively.
 $\mathbf{F_{ext}}$ denotes the vector of the external forces, while $\mathbf{a}$, $\mathbf{v}$, $\mathbf{u}$ represent nodal accelerations, velocities, and displacements.
 
-The train is modelled as a multi-degree-of-freedom mass–spring–damper system, while the rail is discretised using
-Euler–Bernoulli beam elements.
-Train–track interaction is treated using a loosely coupled formulation,
-with wheel–rail contact forces computed from nonlinear Hertzian contact theory.
-Track irregularities are introduced through stochastic or deterministic profiles, enabling the simulation of realistic operating conditions such as surface roughness and rail joints.
+The train is modelled as a multi-degree-of-freedom mass–spring–damper system.
 
-The train-track interaction is modelled using a loosely coupled formulation, where the train is represented as a multi-degree-of-freedom mass–spring–damper system and the rail is discretized using Euler–Bernoulli beam elements. The wheel–rail contact forces are computed based on nonlinear Hertzian contact theory, which accounts for the local deformation at the contact interface. Track irregularities are incorporated through stochastic and deterministic models, allowing for the simulation of realistic track conditions, including rail joints and surface roughness.
+The rail is discretised using Euler–Bernoulli beam elements, the railpads are modelled as spring-damp systems and the
+sleepers can either be modelled as concentrated masses or volume elements.
+Train–track interaction follows the nonlinear Hertz theory, where the contact force is a nonlinear function
+of the relative displacement between the wheel and the rail.
+Track irregularities are introduced through stochastic or deterministic profiles, enabling the simulation of
+realistic operating conditions such as surface roughness and rail joints.
 
 
 # Getting STEM
 
 STEM is distributed as an open-source Python package and supports Python versions 3.10–3.12.
-STEM can be downloaded from the Python Package Index (PyPI) and installed using pip:
+The stable release can be installed from the Python Package Index (PyPI):
 
-.. code-block:: bash
-
-    pip install STEM-Vibrations
+```bash
+pip install STEM-Vibrations
+```
 
 or cloned from the GitHub repository for access to the latest development version.
 
