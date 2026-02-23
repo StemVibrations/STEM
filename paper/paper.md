@@ -42,8 +42,9 @@ It provides a finite element–based framework to model the coupled train–trac
 STEM accounts for train dynamics, wheel–rail interaction, track irregularities, soil stratigraphy,
 and spatially variability of the subsurface parameters.
 STEM is developed for the evaluation of mitigation measures in railway engineering applications.
-STEM is implemented in Python and is built on top of Kratos Multiphysics, providing a flexible and extensible
-platform for advanced dynamic analyses relevant to railway engineering and environmental vibration assessment.
+STEM is implemented in Python and is built on top of Kratos Multiphysics (@Dadvand_2010),
+providing a flexible and extensible platform for advanced dynamic analyses relevant to railway engineering
+and environmental vibration assessment.
 
 
 # Statement of need
