@@ -628,7 +628,7 @@ def compare_abs_boundary(path_model: Path, output_file: Path):
         data_kratos_3d = json.load(f)
 
     young_modulus = 50e6  # Pa
-    poisson_ratio = 0.
+    poisson_ratio = 0.3
     density_solid = 2000  # kg/m3
     porosity = 0
     load_value = -1e3  # Pa

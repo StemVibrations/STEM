@@ -11,6 +11,10 @@ class MovingLoadElasticHalfSpace:
     Implementation of the steady-state response of an elastic half-space
     to a moving point load (Vertical Displacement uz).
     Based on Liao et al. (2005).
+    
+    Note:
+    Equation 29 is incorrect in the paper. See moving_load.wxmx for Maxima derivation.
+    
     """
 
     def __init__(self, E: float, nu: float, rho: float, force: float, speed: float):
