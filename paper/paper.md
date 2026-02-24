@@ -40,19 +40,9 @@ bibliography: references.bib
 
 # Summary
 
-STEM is an open-source software package for the numerical simulation of railway-induced ground vibrations.
-It is based on the Finite Element Method and provides a framework to model the coupled train–track–soil system.
-STEM accounts for train dynamics, wheel–rail interaction, track irregularities, soil stratigraphy,
-and spatially variability of the subsurface parameters.
-STEM is developed for the evaluation of mitigation measures in railway engineering applications.
-STEM is implemented in Python and is built on top of Kratos Multiphysics [@Dadvand_2010],
-providing a flexible and extensible platform for advanced dynamic analyses relevant to railway engineering
-and environmental vibration assessment.
-
-
 STEM is an open-source Python software package for the numerical simulation of railway-induced ground vibrations.
 It provides a Finite Element framework for modelling the coupled dynamic interaction between trains, railway tracks,
-and the subsurface.
+and the subsurface, with particular emphasis on extensibility and reproducibility.
 STEM accounts for train dynamics, nonlinear wheel–rail contact, track irregularities, layered soil stratigraphy,
 and spatial variability of subsurface properties.
 STEM is developed to support the design and assessment of vibration mitigation techniques in railway engineering applications.
@@ -79,11 +69,16 @@ and enables direct integration into both academic research and engineering consu
 # Software description
 
 STEM performs time-domain analyses of railway-induced vibrations using the Finite Element Method (FEM).
-The software adopts a modular and layered architecture, separating model definition, meshing, vehicle dynamics,
-and stochastic subsurface modelling.
+The software adopts a modular and layered architecture, in which model definition, meshing, vehicle dynamics,
+and stochastic subsurface modelling are clearly separated.
+At its core, STEM orchestrates the full simulation workflow, including input generation, solver configuration,
+time integration, and post-processing.
+
 The main components of the STEM ecosystem are:
 
-- [STEM](https://github.com/StemVibrations/STEM/): The core package responsible for model setup, input generation, solver configuration, and post-processing.
+
+- [STEM](https://github.com/StemVibrations/STEM/): The core package responsible for model setup, input generation,
+solver configuration, and post-processing.
 
 - [gmsh utils](https://github.com/StemVibrations/gmsh_utils/): The package for mesh generation using gmsh [@Geuzaine_Remacle_2009],
 supporting complex geometries and layered soil profiles.
@@ -96,6 +91,7 @@ This package defines a clear interface for user-defined vehicle formulations and
 parameter fields with user-defined statistical properties and spatial correlation structures.
 
 ## Key features
+
 STEM provides the following capabilities:
 
 - 2D and 3D quasi-static and dynamic analysis
@@ -110,7 +106,7 @@ STEM provides the following capabilities:
 
   - Nonlinear wheel–rail contact based on Hertzian contact theory [@Timoshenko_1970]
 
-  - Track irregularity and discontinuity generation
+  - Track irregularity [@Zhang_2001] and discontinuity generation [@Kabo_2006]
 
 - Railway track components
 
@@ -119,9 +115,9 @@ STEM provides the following capabilities:
 - Material modelling
   - UMAT interface for user-defined constitutive models
 
-- Usability
+- User experience
 
-  - Comprehensive documentation, tutorials, and API references
+  - Comprehensive documentation, tutorials, benchmark cases, and API references
 
   - Open-source distribution via pip and GitHub
 
@@ -131,7 +127,7 @@ STEM solves the dynamic equilibrium equation in the time domain using a total La
 
 $$\mathbf{M}\mathbf{a} + \mathbf{C}\mathbf{v} + \mathbf{K}\mathbf{u} = \mathbf{F_{ext}}\left( t \right)$$
 
-where $\mathbf{M}$, $\mathbf{C}$, and $\mathbf{K}$ is the global mass, damping and stiffness matrices of the entire system, respectively.
+where $\mathbf{M}$, $\mathbf{C}$, and $\mathbf{K}$ are the global mass, damping and stiffness matrices of the entire system, respectively.
 $\mathbf{F_{ext}}$ denotes the vector of the external forces, while $\mathbf{a}$, $\mathbf{v}$, $\mathbf{u}$ represent nodal accelerations, velocities, and displacements.
 
 The train is modelled as a multi-degree-of-freedom mass–spring–damper system.
@@ -155,9 +151,16 @@ pip install STEM-Vibrations
 
 or cloned from the GitHub repository for access to the latest development version.
 
-STEM has a detailed documentation [website](https://stemvibrations.readthedocs.io/), which includes installation instructions, background on the formulation and theory behind STEM, STEM definitions, and API references. The documentation also provides tutorials and example cases to help users get started with the software.
+STEM has a detailed documentation [website](https://stemvibrations.readthedocs.io/),
+which includes installation instructions, background on the formulation and theory behind STEM,
+STEM definitions, and API references.
+The documentation also provides tutorials and example cases to help users get started with the software.
+STEM includes automated tests and continuous integration workflows to ensure numerical correctness and long-term maintainability.
 
-STEM also includes a [benchmark report](https://github.com/StemVibrations/STEM/releases/download/pdf-latest/benchmark_report.pdf), which presents a comprehensive set of benchmark cases comparing STEM results with analytical solutions. This report serves as a validation resource for users and developers, demonstrating the accuracy and reliability of STEM in various scenarios relevant to railway-induced vibrations.
+STEM also includes a [benchmark report](https://github.com/StemVibrations/STEM/releases/download/pdf-latest/benchmark_report.pdf),
+which presents a comprehensive set of benchmark cases comparing STEM results with analytical solutions.
+This report serves as a validation resource for users and developers,
+demonstrating the accuracy and reliability of STEM in various scenarios relevant to railway-induced vibrations.
 
 
 # Research impact statement
@@ -165,17 +168,31 @@ STEM also includes a [benchmark report](https://github.com/StemVibrations/STEM/r
 STEM enables reproducible and extensible research on railway-induced vibrations and the effect of mitigation techniques.
 
 STEM's open-source nature supports method development, benchmarking, and comparison with analytical and experimental results.
-The software has been designed to accommodate future extensions, such as advanced constitutive soil models or alternative vehicle formulations, making it suitable for both academic research and consulting engineering studies.
-By integrating detailed train–track interaction with full-field soil response, STEM provides a unified framework that is often fragmented across multiple tools in existing workflows.
+The software has been designed to accommodate future extensions, such as advanced constitutive soil models or
+alternative vehicle formulations, making it suitable for both academic research and consulting engineering studies.
+By integrating detailed train–track interaction with full-field soil response,
+STEM provides a unified framework that is often fragmented across multiple tools in existing workflows.
+
+STEM is currently being used in several research and consultancy projects, that focus on the assessment of
+vibration mitigation techniques, such as the effect of Meta-barriers, Bio Inspired Soil Improvement [@prorail2025].
 
 
 # AI usage disclosure
 
 AI-based tools were used in STEM.
 
-Copilot has been used in STEM to accelerate the coding process, particularly for routine coding tasks and boilerplate code generation. The authors have reviewed and edited all AI-generated content to ensure technical accuracy and consistency with the software's design principles. No AI-generated content was used without human review, and all final decisions regarding the software's implementation were made by the authors.
+Copilot has been used in STEM to accelerate the coding process, particularly for routine coding tasks and boilerplate
+code generation.
+The authors have reviewed and edited all AI-generated content to ensure technical accuracy and consistency with the
+software's design principles.
+No AI-generated content was used without human review, and all final decisions regarding the software's implementation
+were made by the authors.
 
-Chat-GPT was used to assist in drafting and editing the manuscript. In particular to improve clarity, grammar, and overall readability, while ensuring that all technical content, software descriptions, and methodological details were accurately represented. The authors have carefully reviewed and edited all AI-generated text to ensure that it accurately reflects the software's capabilities and the research context.
+Chat-GPT was used to assist in drafting and editing the manuscript. In particular to improve clarity, grammar, and
+overall readability of the text.
+The authors have carefully reviewed and edited all AI-generated text to ensure that it accurately reflects the
+software's capabilities and the research context.
+
 
 # Acknowledgements
 
