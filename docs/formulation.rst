@@ -19,7 +19,7 @@ stiffness matrix of the entire system, :math:`\mathbf{F_{ext}}` denotes the vect
 :math:`\mathbf{a}`, :math:`\mathbf{v}`, :math:`\mathbf{u}` are, respectively, the acceleration, the velocity and
 the displacement in the nodes.
 
-In STEM is also possible to perform quasi-static analyses, in which inertial and damping effects are neglected.
+In STEM it is also possible to perform quasi-static analyses, in which inertial and damping effects are neglected.
 In this case, the governing equation is reduced to:
 
   .. math::
@@ -125,7 +125,7 @@ Boundary conditions
 -------------------
 STEM support different types of boundary conditions, including:
 
-- Dirichlet boundary conditions (prescribed displacement or velocity)
+- Dirichlet boundary conditions (prescribed displacement or rotation)
 - Neumann boundary conditions (force or traction boundary conditions)
 - Absorbing boundaries :cite:`Lysmer_Kuhlemeyer_1969`
 
@@ -133,13 +133,12 @@ Loads
 -----
 STEM supports different types of loads, including:
 
-- Point, line and surface loads
+- Point, line, surface and moving loads
 
 All the loads can be defined as time-dependent, and they can be applied to structural elements or soil.
-All the loads can be defined as moving loads.
 
-For STEM is of importance to be able to model the train-track interaction, which is the main source of the
-dynamic loading in the problem of railway-induced ground vibrations.
+For STEM it is important to be able to model the train-track interaction, which is the main source of the
+dynamic loading in the problem of railway-induced vibrations.
 To model the train-track interaction force STEM uses point moving loads, in combination with the UVEC
 (see :ref:`uvec_formulation`).
 
@@ -154,7 +153,7 @@ UMAT interface (see :doc:`API_definition`).
 
 Linear elastic material
 -----------------------
-The default material model for STEM analysis is the linear elastic material model.
+STEM supports linear elastic material models.
 In STEM a material is defined by specifying the material formulation and the linear elastic material parameters.
 
 Currently STEM supports the `OnePhaseSoil` material formulation. This formulation is used to model the soil
@@ -169,11 +168,12 @@ The linear elastic material requires the following parameters for the `OnePhaseS
 - Young's modulus :math:`E`
 - Poisson's ratio :math:`\nu`
 
-In STEM is always assumed that the soil is `OnePhaseSoil` and that the solutions 'is drained'.
+In STEM the soil should be defined as `OnePhaseSoil` and the solution should be 'drained'.
 This means that the soil is modelled as a single phase material and that the pore water
-pressure is not considered in the analysis. This is an assumption that is commonly used in the
-analysis of dynamic problems, such as railway-induced ground vibrations, and it is justified by the fact that
-the time scale of the problem is much shorter than the time scale of the pore water pressure dissipation.
+pressure is not considered in the analysis.
+This is an assumption that is commonly used in the analysis of dynamic problems, such as railway-induced vibrations,
+and it is justified by the fact that the time scale of the problem is much shorter than the time scale of the pore
+water pressure dissipation.
 
 Typically, the density of the bulk material is available from site investigations.
 The bulk density consists of the density of the solid phase and the density of the fluid phase,
@@ -233,16 +233,16 @@ the wheels and the rails. These forces are determined using the non-linear Hertz
 for metals :cite:`Timoshenko_1951`:
 
 .. math::
-    F_{j}=k_\text{c} \ \delta_j^{1.5},
+    F_{j}=k_\text{c} \ \delta_j^{3/2},
 
 where :math:`k_\text{c}` is the Hertzian stiffness coefficient and :math:`\delta_j` is the indentation for wheel
 :math:`j`. The indentation :math:`\delta_j` is calculated as:
 
 .. math::
-    \delta_j = u_{\text{w},j}-u_{\text{r},j},
+    \delta_j = u_{\text{w},j}-u_{\text{r},j} - z_j
 
-where :math:`u_{\text{w},j}` is the displacement of wheel :math:`j` and :math:`u_{\text{r},j}` is the displacement
-of the rail at the position of wheel :math:`j`.
+where :math:`u_{\text{w},j}` is the displacement of wheel :math:`j`, :math:`u_{\text{r},j}` is the displacement
+of the rail at the position of wheel :math:`j` and :math:`z_j` is the irregularity of the rail at the position of wheel :math:`j`.
 
 .. _irr_formulation:
 
@@ -296,7 +296,7 @@ The parameter :math:`A_v` can be estimated based on the track quality :cite:`Lei
 
 Rail joint model
 ----------------
-The rail join is modelled as a hinge along a beam element, with a rotational stiffness defined based on the properties
+The rail joint is modelled as a hinge along a beam element, with a rotational stiffness defined based on the properties
 of the rail and the joint.
 The rail joint might have a local geometric irregularity, commonly referred to as a
 dipped joint, following the approach proposed by :cite:`Kabo_2006`.

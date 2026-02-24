@@ -7,7 +7,8 @@ Types of boundary conditions
 ----------------------------
 STEM supports the following types of boundary conditions:
 
-- Displacement constraints (fixed, roller, etc.)
+- Displacement constraints
+- Rotation constraints
 - Absorbing boundaries (Lysmer-type :cite:`Lysmer_Kuhlemeyer_1969`)
 
 In STEM the displacement boundary conditions are defined as:
@@ -40,14 +41,14 @@ The ``absorbing_factors`` are the Lysmer scaling factors for the normal and tang
 A value of 1.0 corresponds to impedance-matched (optimal) absorption for normally incident waves,
 while a value of 0.0 disables absorption.
 
-The ``virtual_thickness`` defines a virtual boundary layer used to compute elastic stiffness terms that stabilize
-the model against rigid body motion.
+The ``virtual_thickness`` defines the thickness of a virtual boundary layer used to compute elastic stiffness terms
+that stabilize the model against rigid body motion. The greater the virtual thickness, the lower the stiffness at the boundary.
 
 Application of boundary conditions
 ----------------------------------
 In STEM boundary conditions are applied to geometric entities (points, lines, surfaces) defined in the geometry and mesh.
 Boundary conditions can be added to the model by specifying a plane dimension (only valid for 3D models),
-or by specifying a list of geometry IDs (valid for 2D and 3D).
+a polygon (only valid for 3D models), or by specifying a list of geometry IDs (valid for 2D and 3D).
 
 To assign boundary conditions on a plane, specify three points that define the plane, assign the
 boundary condition (as shown above), and give it a name:
@@ -57,9 +58,17 @@ boundary condition (as shown above), and give it a name:
    # Define the plane by three points
    model.add_boundary_condition_on_plane([(0, 0, 0), (x_max, 0, 0), (x_max, 0, z_max)], fixed, "base_fixed")
 
+To assign boundary conditions on a polygon, specify the points that define the polygon, assign the
+boundary condition (as shown above), and give it a name:
 
-To assign boundary conditions by geometry IDs, specify the dimension of the boundary condition (1 for lines in 2D,
-2 for surfaces in 3D), a list of geometry IDs, the boundary condition (as shown above), and a name:
+.. code-block:: python
+
+   # Define the polygon by points
+   model.add_boundary_condition_on_polygon([(0, 0, 0), (x_max, 0, 0), (x_max, 0, z_max)], fixed, "base_fixed")
+
+
+To assign boundary conditions by geometry IDs, specify the dimension of the boundary condition (0 for points,
+1 for lines, 2 for surfaces), a list of geometry IDs, the boundary condition (as shown above), and a name:
 
 .. code-block:: python
 
@@ -87,8 +96,8 @@ where the boundary conditions should be applied.
 
 Practical tips
 --------------
-- Boundary condition dimensions: 2 for surfaces in 3D, 1 for lines in 2D.
+- Boundary condition dimensions: 0 for points, 1 for lines, 2 for surfaces.
 - Keep boundary condition names unique.
 - When assigning boundary conditions, by geometry IDs, visualise the geometry to avoid mis-assignments.
 - Place absorbing boundaries sufficiently far from sources to avoid spurious reflections.
-- Use Lysmer absorbing boundaries conditions to mitigate spurious reflections.
+- Use absorbing absorbing boundaries conditions to mitigate spurious reflections.

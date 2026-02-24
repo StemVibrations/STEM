@@ -115,7 +115,7 @@ def compare_wave_propagation(path_model: Path, output_file: Path):
 
 def compare_pekeris(path_model: Path, output_file: Path):
     """
-    Compare the analytical solution of the Pekeris problem with the results from STEM.
+    Compare the analytical solution of the Lamb problem (Pekeris solution) with the results from STEM.
 
     Args:
         - path_model (Path): Path to the JSON file containing the results from STEM.
@@ -280,80 +280,6 @@ def compare_strip_load(path_model: List[Path], output_file: Path):
     plt.close()
 
 
-def compare_strip_load_3D(path_model, output_file):
-
-    # based on: benchmark_tests/test_strip_load_3D/test_strip_load_3D.py
-    # with:
-    # - model.set_mesh_size(element_size=0.15)
-    # - element_order=2
-
-    coordinate_x_coords = np.linspace(0, 20, 41)
-    coordinate_y_coords = np.ones(len(coordinate_x_coords)) * 9
-    coordinate_z_coords = np.zeros(len(coordinate_x_coords))
-    coordinate_points = np.array([coordinate_x_coords, coordinate_y_coords, coordinate_z_coords]).T.tolist()
-
-    read_VTK.read(path_model, coordinate_points, "CAUCHY_STRESS_VECTOR", "results.json")
-
-    with open("results.json", "r") as f:
-        data = json.load(f)
-
-    time_step = 0.001
-
-    x = [coord[0] for coord in data["COORDINATES"]]
-    time = np.array(data['STEP']) * time_step
-    stress_zz_kratos = []
-    for i in range(len(data["DATA"])):
-        aux = [data_point[1] for data_point in data["DATA"][i]]
-        stress_zz_kratos.append(aux)
-
-    young_modulus = 30e6  # Pa
-    poisson_ratio = 0.2
-    density_solid = 2000  # kg/m3
-    porosity = 0
-    load_value = 1e6  # Pa
-    line_load_length = 1  # m
-
-    strip_load = StripLoad(young_modulus, poisson_ratio, (1 - porosity) * density_solid, load_value)
-
-    # time to calculate the vertical stress at
-    end_time = time[-1]
-
-    # x coordinates
-    start_x = 0
-    end_x = 20
-    n_steps = 300
-    x_coordinates = [start_x + (end_x - start_x) * i / n_steps for i in range(n_steps)]
-
-    # depth coordinate
-    depth = 1 * line_load_length
-
-    # calculate vertical stress at different x coordinates at different times
-
-    t_calc = [0.05, 0.075, 0.1]
-    fig, ax = plt.subplots(nrows=len(t_calc), ncols=1, figsize=(6, 10), sharex=True, sharey=True)
-    for j, t in enumerate(t_calc):
-        all_sigma_zz = [
-            strip_load.calculate_vertical_stress(x, depth, t, line_load_length, load_value) for x in x_coordinates
-        ]
-
-        # plot vertical stress: Figure 12.14 in Verruijt
-        idx_k = np.where(t == np.array(data['TIME_INDEX']).astype(float) * time_step)[0][0]
-        ax[j].plot([i for i in x], [stress_zz_kratos[idx_k][i] / 1e3 for i in range(len(x))],
-                   color="r",
-                   marker="x",
-                   label="STEM")
-        ax[j].plot([i for i in x_coordinates], [i / 1e3 for i in all_sigma_zz], color="b", label="Analytical")
-        ax[j].set_ylabel(f'Vertical stress at t={t} s [kPa]')
-        ax[j].grid()
-        ax[j].legend()
-
-    ax[1].set_xlabel('Distance [m]')
-    ax[1].set_xlim(0, 20)
-    plt.tight_layout()
-    plt.savefig(output_file)
-    plt.close()
-
-
 def compare_sdof(path_model: Path, output_file: Path):
     """
     Compare the analytical solution of a SDOF system with the results from STEM.
@@ -419,7 +345,7 @@ def compare_moving_load(path_model: Path, output_file: Path):
     E = 30e6  # Pa
     nu = 0.2  # dimensionless
     rho = 2000  # kg/m³
-    force = -2e3  # N
+    force = -2e3  # N  (factor 2 due to symmetry BC in STEM)
     speed = 10  # m/s
 
     x, y, z = 0.0, 0.0, 1

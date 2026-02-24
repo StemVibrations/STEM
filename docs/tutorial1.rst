@@ -86,7 +86,7 @@ The layer coordinates are defined and the soil layer is added to the model.
 Load
 ----
 A point load is applied at the surface corner (x=0, y=y_max, z=0), acting in the negative y-direction.
-The load consists of a step function with amplitude of :math:`10^6` N.
+The load is suddenly applied with an amplitude of :math:`10^6` N.
 
 .. code-block:: python
 
@@ -244,7 +244,8 @@ Once the calculation is finished, the results can be visualised using Paraview,
 or by loading the JSON output file.
 
 This figure shows the time history of the vertical displacements at the two points along the surface
-(these results have been obtained for a time step of 0.001 s, time duration of 0.15 s and with an element size of 0.25 m).
+(these results have been obtained for a time step of 0.001 s, time duration of 0.15 s and with an element size of 0.25 m,
+and are different from the ones presented in the tutorial above).
 The results are compared with the analytical solution of the Lamb problem.
 
 .. image:: _static/lamb_displacements.png

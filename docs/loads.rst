@@ -78,7 +78,7 @@ To define a moving load:
 
    mload = MovingLoad(
        load=[0.0, -1.2e5, 0.0],
-       direction=[1, 0, 0],
+       direction_signs=[1, 0, 0],
        velocity=50.0,
        origin=[x_start, y_level, z_track],
        offset=0.0,
@@ -87,18 +87,19 @@ To define a moving load:
 
 
 The ``load`` parameter is a list of three values that specify the magnitude of the load in each direction.
-The ``direction`` parameter is a list of three values that specify the direction of the load
+The ``direction_signs`` parameter is a list of three values that specify the direction of the load
 (e.g., [1, 0, 0] for x-direction).
 The ``velocity`` parameter specifies the speed at which the load moves along the path (in m/s).
-The ``origin`` parameter specifies the starting point of the load,
-and the ``offset`` parameter can be used to specify an initial offset along the path.
+The ``origin`` parameter specifies the starting coordinate of the load, and it is required that the origin is located
+along the path.
+The ``offset`` parameter can be used to specify an initial offset along the path.
 
 
 UVEC load
 ---------
 In STEM it is possible to model an external load (UVEC) that is defined by a user-defined function.
-This is the most flexible way to define loads, as it allows you to implement any kind of load that can be expressed
-as a function of time and/or other parameters.
+This is the most flexible way to define loads, as it allows the implementation of point loads that can be expressed
+as a function of time and or displacement at its location.
 This is  the method that it is used to simulate the train and the train-track interaction in STEM.
 More details on how to define a UVEC load can be found in the :doc:`API_definition` page.
 
@@ -123,6 +124,8 @@ UVEC load are defined as:
 
 Similar to the moving load, the UVEC load also needs a path to move along;
 make sure the orientation matches the intended travel direction.
+The ``wheel_configuration`` parameter is used to specify the offsets of each wheel with respect to the ``origin``.
+
 The UVEC load can be added to coordinates, geometry IDs or model parts:
 
 .. code-block:: python
@@ -137,7 +140,7 @@ The UVEC load can be added to coordinates, geometry IDs or model parts:
 
 Default train
 .............
-The default train in STEM (2D with 10 degrees of freedom) is defined as a UVEC load.
+The default train in STEM (2D with 10 degrees-of-freedom per cart) is defined as a UVEC load.
 In order to use the default train, the user can simply import ``uvec``.
 This function defines contains the train definition and the train-track interaction model as described in
 :ref:`uvec_formulation`.
@@ -154,12 +157,12 @@ In this example a train with two carts is defined, where each cart has two bogie
    # define uvec parameters
    wheel_configuration=[0.0, 2.5, 19.9, 22.4, 23.5, 26.0, 43.4, 45.9] # wheel configuration [m]
    uvec_parameters = {"n_carts": 2, # number of carts [-]
-                      "cart_inertia": (1128.8e3) / 2, # inertia of the cart [kgm2]
+                      "cart_inertia": (1128.8e3) / 2, # mass moment of inertia of the cart [kgm2]
                       "cart_mass": (50e3) / 2, # mass of the cart [kg]
                       "cart_stiffness": 2708e3, # stiffness between the cart and bogies [N/m]
                       "cart_damping": 64e3, # damping coefficient between the cart and bogies [Ns/m]
                       "bogie_distances": [-9.95, 9.95], # distances of the bogies from the centre of the cart [m]
-                      "bogie_inertia": (0.31e3) / 2, # inertia of the bogie [kgm2]
+                      "bogie_inertia": (0.31e3) / 2, # mass moment of inertia of the bogie [kgm2]
                       "bogie_mass": (6e3) / 2, # mass of the bogie [kg]
                       "wheel_distances": [-1.25, 1.25], # distances of the wheels from the centre of the bogie [m]
                       "wheel_mass": 1.5e3, # mass of the wheel [kg]
@@ -167,7 +170,7 @@ In this example a train with two carts is defined, where each cart has two bogie
                       "wheel_damping": 0.25e3, # damping coefficient between the wheel and the bogie [Ns/m]
                       "gravity_axis": 1, # axis on which gravity works [x =0, y = 1, z = 2]
                       "contact_coefficient": 9.1e-7, # Hertzian contact coefficient between the wheel and the rail [N/m]
-                      "contact_power": 1.0, # Hertzian contact power between the wheel and the rail [-]
+                      "contact_power": 1.5, # Hertzian contact power between the wheel and the rail [-]
                       "static_initialisation": False, # True if the analysis of the UVEC is static
                       "wheel_configuration": wheel_configuration,
                       "velocity": 40,
@@ -190,7 +193,7 @@ Time-dependent loads with Table
 In STEM, it is possible to define time-dependent loads using the Tables.
 
 A Table is a class that allows you to define a function of time (or any other parameter)
-by specifying a list of x and y values.
+by specifying a list of times and values.
 
 .. code-block:: python
 
@@ -198,7 +201,7 @@ by specifying a list of x and y values.
    from stem.load import LineLoad
 
    # Define a ramp in time for the y-direction
-   ramp = Table(x_values=[0.0, 1.0, 2.0], y_values=[0.0, 1.0, 0.0])  # time [s], amplitude [-]
+   ramp = Table(times=[0.0, 1.0, 2.0], values=[0.0, 1.0, 0.0])
    line = LineLoad(active=[False, True, False], value=[0.0, ramp, 0.0])
 
 

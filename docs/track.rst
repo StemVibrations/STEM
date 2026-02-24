@@ -13,7 +13,7 @@ Rail
 ....
 
 The rail consists of a Euler-Bernoulli beam element. Since the rail properties are well-know,
-STEM provides a default material for the rail, which can be used as follows:
+STEM provides default materials for the rail, which can be used as follows:
 
 .. code-block:: python
 
@@ -37,7 +37,7 @@ Custom rail materials can be defined as a Euler-Bernoulli beam material:
    name = "custom_rail"
    beam_object = EulerBeam(ndim=3, DENSITY=7850, YOUNG_MODULUS=2.1e11, POISSON_RATIO=0.3,
                            CROSS_AREA=0.006977, I33=2.3372e-05, I22=2.787e-06, TORSIONAL_INERTIA=2.616E-05)
-   rail_parameters = StructuralMaterial(name=name, material_parameters=beam_object).value.material_parameters
+   rail_parameters = StructuralMaterial(name=name, material_parameters=beam_object.value.material_parameters
 
 Railpad
 .......
@@ -91,8 +91,8 @@ The sleeper geometry should also be specified.
    sleeper_height = 0.3
    sleeper_length = 2.8 / 2
    sleeper_width = 0.234
-   sleeper_dimensions = [sleeper_length, sleeper_width, sleeper_height]
-   offset_sleepers_rail_pads = 0.43
+   sleeper_dimensions = [sleeper_width, sleeper_height, sleeper_length]
+   distance_middle_sleeper_to_rail= 0.43
 
 
 Railway track generation
@@ -147,6 +147,42 @@ distance between the middle of the sleeper and the rail as defined above):
                                  distance_middle_sleeper_to_rail,
                                  name)
 
+To reduce the size of the soil domain, the railway track can be generated partially outside the model geometry
+by extending it beyond the domain boundaries.
+The extended part of the track is supported by a one-dimensional spring-damper system,
+which represents the soil behavior using 1D elements.
+
+An extended straight track can be generated as follows:
+
+.. code-block:: python
+
+   direction_vector = [0, 0, 1]
+   n_sleepers = 0.6
+   number_of_sleepers = 101
+   sleeper_spacing = 0.6
+   rail_pad_thickness = 0.025
+   length_soil_equivalent_element = 5
+   name = "extended_track"
+    rail_pad_thickness = 0.025
+
+    model.generate_extended_straight_track(n_sleepers,
+                                           number_of_sleepers,
+                                           rail_parameters,
+                                           sleeper_parameters,
+                                           rail_pad_parameters,
+                                           rail_pad_thickness,
+                                           origin_point,
+                                           soil_equivalent_parameters,
+                                           length_soil_equivalent_element,
+                                           direction_vector,
+                                           name)
+
+The figure below illustrates an example of a railway track generated with an extended track section.
+
+.. figure:: _static/extended_track.png
+   :align: center
+   :alt: Extended track
+   :width: 400
 
 .. _irregularities_track:
 

@@ -76,12 +76,3 @@ Git
 code and collaborate with other developers.
 It is required to install Git in order to install all the necessary dependencies for STEM and
 to contribute to the development of STEM.
-
-
-.. _gmshmesh:
-
-gmsh
-----
-`Gmsh <http://gmsh.info/>`_ is a finite element mesh generator, and it is used in STEM to generate the
-finite element mesh. If you want to visualise the mesh and inspect the geometry of the model,
-it is recommended to have gmsh installed.

@@ -256,6 +256,7 @@ The static initialisation of the train is done by setting the `static_initialisa
 `uvec_parameters` dictionary, and the train velocity is set to zero, so that the train does not move
 during the static initialisation stage.
 
+It should be noted that the `uvec_load` is added to a `line model part`, and not to a specific coordinate point.
 
 .. code-block:: python
 
@@ -276,7 +277,7 @@ during the static initialisation stage.
                        "wheel_damping": 0.25e3, # damping coefficient between the wheel and the bogie [Ns/m]
                        "gravity_axis": 1, # axis on which gravity works [x =0, y = 1, z = 2]
                        "contact_coefficient": 9.1e-7, # Hertzian contact coefficient between the wheel and the rail [N/m]
-                       "contact_power": 1.0, # Hertzian contact power between the wheel and the rail [-]
+                       "contact_power": 1.5, # Hertzian contact power between the wheel and the rail [-]
                        "static_initialisation": True, # True if the analysis of the UVEC is static
                        "wheel_configuration": wheel_configuration, # initial position of the wheels [m]
                        "velocity": velocity, # velocity of the UVEC [m/s]
@@ -329,11 +330,12 @@ information on how to add boundary conditions by geometry IDs.
 Mesh
 ----
 The mesh size and element order are defined.
-The element size for the mesh can be defined as a single value, which will applied to the whole model.
+The element size for the mesh can be defined as a single value, which will be applied to the whole model.
 
 .. code-block:: python
 
     model.set_mesh_size(element_size=1.0)
+    model.mesh_settings.element_order = 1
 
 ..    # END CODE BLOCK
 
@@ -356,7 +358,8 @@ and the solution type is set to `QUASI_STATIC`.
 The start time is set to 0.0 s and the end time is set to 0.5 s with a time step size of 0.1 s.
 This means that the static initialisation is done in 5 steps.
 The system of equations is solved with the assumption of constant stiffness matrix, mass matrix, and damping matrix.
-The Linear-Newton-Raphson (Newmark explicit solver) is used as strategy and Cg as solver for the linear system of equations.
+The Linear-Newton-Raphson (Newmark explicit solver) is used as strategy in the dynamic stage
+(the quasi-static stage is solved with the static scheme), and Cg as solver for the linear system of equations.
 
 The Rayleigh damping parameters are set `None`, since the analysis is static.
 
@@ -463,6 +466,10 @@ The train velocity also needs to be adjusted to 40 m/s, and the static initialis
 needs to be set to False, so that the train moves on the track and the dynamic response of the system is calculated.
 This adjustment needs to be done on the `train_load` parameters and on the UVEC parameters.
 
+The new stage is added to the calculation by calling the ``add_calculation_stage`` method.
+This is followed by writing all the input files required to run the calculation.
+The calculation is run by calling ``stem.run_calculation()``.
+
 .. code-block:: python
 
     velocity = 40
@@ -472,18 +479,6 @@ This adjustment needs to be done on the `train_load` parameters and on the UVEC 
     stage2.get_model_part_by_name("train_load").parameters.velocity = velocity
     stage2.get_model_part_by_name("train_load").parameters.uvec_parameters["velocity"] = velocity
     stage2.get_model_part_by_name("train_load").parameters.uvec_parameters["static_initialisation"] = False
-
-..    # END CODE BLOCK
-
-Run
----
-Now that the model is set up, the calculation is ready to run.
-
-The new stage is added to the calculation by calling the ``add_calculation_stage`` method.
-This is followed by writing all the input files required to run the calculation.
-The calculation is run by calling ``stem.run_calculation()``.
-
-.. code-block:: python
 
     stem.add_calculation_stage(stage2)
     stem.write_all_input_files()

@@ -31,7 +31,7 @@ def test_stem():
     retention_parameters1 = SaturatedBelowPhreaticLevelLaw()
     material1 = SoilMaterial("soil", soil_formulation1, constitutive_law1, retention_parameters1)
 
-    # Specify the coordinates for the 2D block: x:10m x y:10m z:10m
+    # Specify the coordinates for the 2D block: x:20m x y:10m
     layer1_coordinates = [(0.0, 0.0, 0.0), (20.0, 0.0, 0.0), (20.0, 10.0, 0.0), (0.0, 10.0, 0.0)]
 
     # Create the soil layer

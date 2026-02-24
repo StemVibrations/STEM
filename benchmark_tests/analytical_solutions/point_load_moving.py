@@ -10,11 +10,11 @@ class MovingLoadElasticHalfSpace:
     """
     Implementation of the steady-state response of an elastic half-space
     to a moving point load (Vertical Displacement uz).
-    Based on Liao et al. (2005).
-    
+    Based on :cite:`Liao_2005`.
+
     Note:
     Equation 29 is incorrect in the paper. See moving_load.wxmx for Maxima derivation.
-    
+
     """
 
     def __init__(self, E: float, nu: float, rho: float, force: float, speed: float):
@@ -34,9 +34,8 @@ class MovingLoadElasticHalfSpace:
         self.force = force
         self.speed = speed
 
-        # Lamé parameters
-        self.G = E / (2 * (1 + nu))  # Shear modulus (mu)
-        self.M = E * (1 - nu) / ((1 + nu) * (1 - 2 * nu))
+        self.G = E / (2 * (1 + nu))  # Shear modulus (G)
+        self.M = E * (1 - nu) / ((1 + nu) * (1 - 2 * nu))  # P-wave modulus (M)
 
         # Wave speeds [cite: 71]
         self.cp = sqrt(self.M / self.rho)

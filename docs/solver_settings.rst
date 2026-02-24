@@ -13,15 +13,11 @@ Quasi-static initialisation followed by dynamic analysis is a common approach fo
 response of systems that are initially at rest or in equilibrium.
 
 
-
-
-
-
 Element size
 ------------
 For dynamic analysis, the element size should be chosen to adequately resolve the wave propagation in the model.
-A common rule of thumb is to use at least 10 elements per wavelength for linear elements and
-5-10 elements per wavelength for quadratic elements.
+A common rule of thumb is to use at least 10 elements per wavelength for first-order elements and
+5-10 elements per wavelength for second-order elements.
 
 The wavelength, :math:`\lambda`, can be estimated from the shear wave speed, :math:`c_{s}`, and the maximum
 frequency of interest :math:`f_{max}` as:
@@ -43,7 +39,7 @@ the material properties, and the computational resources available.
 
 Time step selection
 -------------------
-STEM uses by default the Newmark time integration scheme (formulated explicitly).
+In STEM it is recommended to use the Newmark time integration scheme (formulated explicitly).
 Two common guidelines for selecting the time step are:
 
 - Frequency condition: the time step should be small enough to accurately resolve the highest
@@ -93,7 +89,8 @@ The mass-proportional damping introduces increasing attenuation at low frequenci
 The stiffness-proportional damping introduces increasing attenuation at high frequencies and may lead to
 excessive numerical dissipation.
 
-To determine the Rayleigh damping coefficients (:math:`\alpha` and :math:`\beta`), it is common to specify
+To determine the Rayleigh damping coefficients (:math:`\alpha` and :math:`\beta` - in STEM called
+``rayleigh_m`` and ``rayleigh_k``), it is common to specify
 target damping ratios (:math:`\zeta_1` and :math:`\zeta_2`) at two frequencies of interest
 (:math:`\omega_1` and :math:`\omega_2`), and then solve for the coefficients that achieve
 those damping ratios at those frequencies.
@@ -145,4 +142,20 @@ follows:
        d2 = 0.02  # 2% damping at f2
 
        alpha, beta = damping_Rayleigh(f1, d1, f2, d2)
-       print(f"Rayleigh damping coefficients:\n\talpha: {alpha}\n\tbeta: {beta}")
+       print(f"Rayleigh damping coefficients:\n\trayleigh_m: {alpha}\n\trayleigh_k: {beta}")
+
+
+Linear solver type
+------------------
+STEM provides several linear solvers:
+STEM has several linear solvers available, including:
+
+- LU decomposition (direct)
+- Conjugate Gradient (iterative)
+- Algebraic Multigrid (iterative)
+
+LU decomposition is best suited for small problems.
+For large problems, the iterative solvers are recommended, as they scale better and can use
+preconditioners to improve convergence.
+STEM uses the Jacobi preconditioner by default, a simple diagonal preconditioner suitable for symmetric
+positive definite systems.

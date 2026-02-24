@@ -234,11 +234,12 @@ The geometry IDs can be seen in the pictures below.
 Mesh
 ----
 The mesh size and element order are defined.
-The element size for the mesh can be defined as a single value, which will applied to the whole model.
+The element size for the mesh can be defined as a single value, which will be applied to the whole model.
 
 .. code-block:: python
 
     model.set_mesh_size(element_size=1.0)
+    model.mesh_settings.element_order = 1
 
 ..    # END CODE BLOCK
 

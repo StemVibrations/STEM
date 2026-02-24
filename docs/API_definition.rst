@@ -48,9 +48,7 @@ In this example, ``uvec_data`` follows the structure used in STEM. The structure
     * *uvec_data["parameters"]* - the parameters of the vehicle model (can be any JSON serialisable data structure). This can be used to pass information regarding the vehicle model, such as stiffness, mass and damping parameters
     * *uvec_data["loads"]* - the loads at the wheels
 
-An example of the usage of a UVEC file can be found in the following tutorials:
-- :ref:`tutorial4`
-- :ref:`tutorial6`.
+An example of the usage of a UVEC file can be found in tutorials :ref:`tutorial4`.
 
 For further information about the UVEC please refer to `Vehicle Models <https://github.com/StemVibrations/vehicle_models>`_.
 

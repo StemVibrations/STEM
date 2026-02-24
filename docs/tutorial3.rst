@@ -165,10 +165,11 @@ The geometry of the model is defined afterwards.
 Each layer is defined by a list of coordinates, defined in the x-y plane. The coordinates are defined in clockwise or
 anti-clockwise order, and the first and last coordinates are not the same, since the geometry will be closed.
 
-The model consists of two soil layers and an embankment on top for "group_1" and "group_3", and a bridge for "group_2".
-This means that the geometry of "group_1" and "group_3" is the same, but the geometry of "group_2" is different.
+The model consists of two soil layers and an embankment on top for "group_1" and "group_5", and a bridge for "group_2",
+"group_3" and "group_4".
+This means that the geometry of "group_1" and "group_5" is the same, but the geometry of other groups is different.
 When assigning the geometry into the model, it is necessary to assign the layers into groups.
-The soil layers are added to "group_1" and "group_3", and the bridge layer is added to "group_2".
+The soil layers are added to "group_1" and "group_5", and the bridge layer is added to "group_2", "group_3" and "group_4".
 
 .. code-block:: python
 
@@ -254,6 +255,7 @@ For the surface at the symmetry plane, roller boundary condition is applied with
 To prevent reflections from the sides of the model, absorbing boundaries are applied with virtual thickness of 10 m.
 The boundary conditions are added to the model on the edge surfaces.
 The boundary conditions are applied on plane surfaces defined by a list of coordinates.
+The inner surfaces of the bridge walls are free to move.
 
 .. code-block:: python
 
@@ -277,11 +279,12 @@ information on how to add boundary conditions by geometry IDs.
 Mesh
 ----
 The mesh size and element order are defined.
-The element size for the mesh can be defined as a single value, which will applied to the whole model.
+The element size for the mesh can be defined as a single value, which will be applied to the whole model.
 
 .. code-block:: python
 
     model.set_mesh_size(element_size=3.0)
+    model.mesh_settings.element_order = 1
 
 ..    # END CODE BLOCK
 
