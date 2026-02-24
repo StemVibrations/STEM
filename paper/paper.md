@@ -14,12 +14,12 @@ authors:
     orcid: 0000-0002-9896-3248
     corresponding: true
     affiliation: 1
-  - name: M. Fathian
-    orcid:
-    affiliation: 2
   - name: E. Smyrniou
     orcid: 0009-0003-3498-7069
     affiliation: 1
+  - name: M. Fathian
+    orcid:
+    affiliation: 2
   - name: J. Nuttall
     orcid:
     affiliation: 2
@@ -80,11 +80,14 @@ The main components of the STEM ecosystem are:
 - [STEM](https://github.com/StemVibrations/STEM/): The core package responsible for model setup, input generation,
 solver configuration, and post-processing.
 
+- [Kratos Stem Application](https://github.com/StemVibrations/Kratos/): The adaptation of Kratos Multiphysics that
+implements the finite element formulation for railway-induced vibration analysis.
+
 - [gmsh utils](https://github.com/StemVibrations/gmsh_utils/): The package for mesh generation using gmsh [@Geuzaine_Remacle_2009],
 supporting complex geometries and layered soil profiles.
 
 - [vehicle models](https://github.com/StemVibrations/vehicle_models/): A package containing predefined vehicle models
-(2 and 10 degree-of-freedom mass-spring-damper systems).
+(2 and 10 degree-of-freedom per cart mass-spring-damper systems).
 This package defines a clear interface for user-defined vehicle formulations and custom train–track interaction models.
 
 - [random fields](https://github.com/StemVibrations/RandomFields/): A package for generating stochastic subsurface
@@ -132,7 +135,7 @@ $\mathbf{F_{ext}}$ denotes the vector of the external forces, while $\mathbf{a}$
 
 The train is modelled as a multi-degree-of-freedom mass–spring–damper system.
 
-The rail is discretised using Euler–Bernoulli beam elements, the railpads are modelled as spring-damp systems and the
+The rail is discretised using Euler–Bernoulli beam elements, the railpads are modelled as spring-damper systems and the
 sleepers can either be modelled as concentrated masses or volume elements.
 Train–track interaction follows the nonlinear Hertz theory, where the contact force is a nonlinear function
 of the relative displacement between the wheel and the rail.
