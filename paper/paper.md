@@ -18,10 +18,10 @@ authors:
     orcid: 0009-0003-3498-7069
     affiliation: 1
   - name: M. Fathian
-    orcid:
+    orcid: 0009-0009-4905-0731
     affiliation: 2
-  - name: J. Nuttall
-    orcid:
+  - name: J.D. Nuttall
+    orcid: 0000-0003-1982-7668
     affiliation: 2
   - name: D. Moretti
     orcid: 0009-0005-4042-7062
