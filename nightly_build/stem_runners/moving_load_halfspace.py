@@ -112,15 +112,15 @@ def run_moving_load(input_folder):
                                              "calculated_output",
                                              output_dir="output")
 
-    model.add_output_settings(output_parameters=VtkOutputParameters(
-        file_format="binary",
-        output_interval=1,
-        nodal_results=[NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY],
-        gauss_point_results=[],
-        output_control_type="step"),
-                              part_name="porous_computational_model_part",
-                              output_dir="output",
-                              output_name="vtk_output")
+    # model.add_output_settings(output_parameters=VtkOutputParameters(
+    #     file_format="binary",
+    #     output_interval=1,
+    #     nodal_results=[NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY],
+    #     gauss_point_results=[],
+    #     output_control_type="step"),
+    #                           part_name="porous_computational_model_part",
+    #                           output_dir="output",
+    #                           output_name="vtk_output")
 
     # stage 2
     # --------------------------------

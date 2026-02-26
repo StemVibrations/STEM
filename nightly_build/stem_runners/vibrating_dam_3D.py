@@ -119,16 +119,16 @@ def run_vibrating_dam_3d(input_folder):
 
     model.add_output_settings_by_coordinates([top_coordinate], json_output_parameters, "json_output_top")
 
-    # uncomment to output at all nodes
-    model.add_output_settings(output_parameters=VtkOutputParameters(
-        file_format="ascii",
-        output_interval=100,
-        nodal_results=[NodalOutput.DISPLACEMENT],
-        gauss_point_results=[GaussPointOutput.CAUCHY_STRESS_VECTOR],
-        output_control_type="step"),
-                              part_name="porous_computational_model_part",
-                              output_dir="output",
-                              output_name="vtk_output")
+    # # uncomment to output at all nodes
+    # model.add_output_settings(output_parameters=VtkOutputParameters(
+    #     file_format="ascii",
+    #     output_interval=100,
+    #     nodal_results=[NodalOutput.DISPLACEMENT],
+    #     gauss_point_results=[GaussPointOutput.CAUCHY_STRESS_VECTOR],
+    #     output_control_type="step"),
+    #                           part_name="porous_computational_model_part",
+    #                           output_dir="output",
+    #                           output_name="vtk_output")
 
     # Write KRATOS input files
     # --------------------------------

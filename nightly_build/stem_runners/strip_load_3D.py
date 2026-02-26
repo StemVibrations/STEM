@@ -97,15 +97,15 @@ def run_strip_3D(input_folder):
     nodes = [(i * 0.3, 9, 0) for i in range(67)]
     model.add_output_settings_by_coordinates(nodes, json_output_parameters, "json_output")
 
-    model.add_output_settings(output_parameters=VtkOutputParameters(
-        file_format="ascii",
-        output_interval=50,
-        nodal_results=[NodalOutput.VELOCITY],
-        gauss_point_results=[GaussPointOutput.CAUCHY_STRESS_VECTOR],
-        output_control_type="step"),
-                              part_name="porous_computational_model_part",
-                              output_dir="output",
-                              output_name="vtk_output")
+    # model.add_output_settings(output_parameters=VtkOutputParameters(
+    #     file_format="ascii",
+    #     output_interval=50,
+    #     nodal_results=[NodalOutput.VELOCITY],
+    #     gauss_point_results=[GaussPointOutput.CAUCHY_STRESS_VECTOR],
+    #     output_control_type="step"),
+    #                           part_name="porous_computational_model_part",
+    #                           output_dir="output",
+    #                           output_name="vtk_output")
 
     # Write KRATOS input files
     # --------------------------------

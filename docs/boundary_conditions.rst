@@ -51,21 +51,25 @@ Boundary conditions can be added to the model by specifying a plane dimension (o
 a polygon (only valid for 3D models), or by specifying a list of geometry IDs (valid for 2D and 3D).
 
 To assign boundary conditions on a plane, specify three points that define the plane, assign the
-boundary condition (as shown above), and give it a name:
+boundary condition (as shown above), and give it a name.
+The coordinates of the points are defined in clockwise or anti-clockwise order, and the first and last coordinates
+should not be the same, since the geometry will be closed automatically.
 
 .. code-block:: python
 
    # Define the plane by three points
    model.add_boundary_condition_on_plane([(0, 0, 0), (x_max, 0, 0), (x_max, 0, z_max)], fixed, "base_fixed")
 
-To assign boundary conditions on a polygon, specify the points that define the polygon, assign the
-boundary condition (as shown above), and give it a name:
+To assign boundary conditions on a polygon, specify the points that define the polygon. The boundary condition
+will be applied to all surfaces that fall within the polygon.
+A surface is considered to be within the polygon if all its points are within the polygon.
+The coordinates of the points are defined in clockwise or anti-clockwise order, and the first and last coordinates
+should not be the same, since the geometry will be closed automatically.
 
 .. code-block:: python
 
    # Define the polygon by points
-   model.add_boundary_condition_on_polygon([(0, 0, 0), (x_max, 0, 0), (x_max, 0, z_max)], fixed, "base_fixed")
-
+   model.add_boundary_condition_on_polygon([(0, 0, 0), (x_max, 0, 0), (x_max, 0, z_max), (0, 0, z_max)], fixed, "base_fixed")
 
 To assign boundary conditions by geometry IDs, specify the dimension of the boundary condition (0 for points,
 1 for lines, 2 for surfaces), a list of geometry IDs, the boundary condition (as shown above), and a name:
@@ -100,4 +104,4 @@ Practical tips
 - Keep boundary condition names unique.
 - When assigning boundary conditions, by geometry IDs, visualise the geometry to avoid mis-assignments.
 - Place absorbing boundaries sufficiently far from sources to avoid spurious reflections.
-- Use absorbing absorbing boundaries conditions to mitigate spurious reflections.
+- Use absorbing boundaries conditions to mitigate spurious reflections.

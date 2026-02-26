@@ -163,19 +163,23 @@ An extended straight track can be generated as follows:
    rail_pad_thickness = 0.025
    length_soil_equivalent_element = 5
    name = "extended_track"
-    rail_pad_thickness = 0.025
 
-    model.generate_extended_straight_track(n_sleepers,
-                                           number_of_sleepers,
-                                           rail_parameters,
-                                           sleeper_parameters,
-                                           rail_pad_parameters,
-                                           rail_pad_thickness,
-                                           origin_point,
-                                           soil_equivalent_parameters,
-                                           length_soil_equivalent_element,
-                                           direction_vector,
-                                           name)
+   soil_equivalent_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[0, 71e6, 0],
+                                                    NODAL_ROTATIONAL_STIFFNESS=[0, 0, 0],
+                                                    NODAL_DAMPING_COEFFICIENT=[0, 71e3, 0],
+                                                    NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0])
+
+   model.generate_extended_straight_track(n_sleepers,
+                                          number_of_sleepers,
+                                          rail_parameters,
+                                          sleeper_parameters,
+                                          rail_pad_parameters,
+                                          rail_pad_thickness,
+                                          origin_point,
+                                          soil_equivalent_parameters,
+                                          length_soil_equivalent_element,
+                                          direction_vector,
+                                          name)
 
 The figure below illustrates an example of a railway track generated with an extended track section.
 

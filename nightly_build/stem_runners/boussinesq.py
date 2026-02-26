@@ -142,16 +142,16 @@ def run_boussinesq(input_folder):
 
     model.apply_additional_process(ExtrapolateIntegrationPointToNodesParameters(["CAUCHY_STRESS_VECTOR"]))
 
-    # uncomment to output at all nodes
-    model.add_output_settings(output_parameters=VtkOutputParameters(
-        file_format="ascii",
-        output_interval=1,
-        nodal_results=[NodalOutput.DISPLACEMENT],
-        gauss_point_results=[GaussPointOutput.CAUCHY_STRESS_VECTOR],
-        output_control_type="step"),
-                              part_name="porous_computational_model_part",
-                              output_dir="output",
-                              output_name="vtk_output")
+    # # uncomment to output at all nodes
+    # model.add_output_settings(output_parameters=VtkOutputParameters(
+    #     file_format="ascii",
+    #     output_interval=1,
+    #     nodal_results=[NodalOutput.DISPLACEMENT],
+    #     gauss_point_results=[GaussPointOutput.CAUCHY_STRESS_VECTOR],
+    #     output_control_type="step"),
+    #                           part_name="porous_computational_model_part",
+    #                           output_dir="output",
+    #                           output_name="vtk_output")
 
     # Write KRATOS input files
     # --------------------------------

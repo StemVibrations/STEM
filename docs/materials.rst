@@ -46,7 +46,7 @@ Practical tips
 - Units: SI (N, m, kg, s, Pa).
 - Names: keep material names unique—used for mapping to physical groups and IO.
 - Drainage assumptions: In STEM for railway induced vibrations all the layers should be one-phase drained.
-  This means that to simulate saturared layers the Poisson ratio should be set to 0.495. Please refer to
+  This means that to simulate saturated layers the Poisson ratio should be set to 0.495. Please refer to
   :ref:`formulation` for further details.
 
 
