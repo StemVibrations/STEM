@@ -8,7 +8,7 @@
 
 ```
 
-# STEM: Soil and Track System Modeling Tool
+# STEM: Soil and Track System Modelling Tool
 
 ![Tests](https://github.com/StemVibrations/STEM/actions/workflows/tests.yml/badge.svg)
 [![Documentation Status](https://readthedocs.org/projects/stemvibrations/badge/?version=latest)](https://stemvibrations.readthedocs.io/)
