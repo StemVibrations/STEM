@@ -74,6 +74,7 @@
 
 % Define the hash
 \newcommand{\commiturl}{\commithash}
+\newcommand{\commitfont}[1]{\textsf{#1}}
 
 
 % -------------------------------------------------------
@@ -95,7 +96,7 @@
     {\Large \textbf{STEM Development Team}}\\[1em]
     \today
     \vfill
-    \textit{Version \STEMversion: \commiturl}
+    \commitfont{Version} \commitfont{\STEMversion: \commiturl}
     \end{titlepage}
 }
 
