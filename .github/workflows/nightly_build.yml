@@ -1,13 +1,48 @@
 name: Nightly Benchmark Report
 
 on:
+  schedule:
+    - cron: "0 2 * * *"
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build-report:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # fetch-depth: 0 is required to access git history for the timestamp check
+
+      - name: Check if changes occurred in the last 24 hours
+        id: check_changes
+        run: |
+          LAST_RUN=$(date -d "24 hours ago" +%s)
+          CHANGES=$(git log --since="@${LAST_RUN}" --oneline origin/main)
+          if [ -z "$CHANGES" ]; then
+            echo "has-changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has-changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Stop if no changes
+        if: steps.check_changes.outputs.has-changes == 'false'
+        run: |
+          echo "No changes detected on main -- skipping report."
+          exit 0
+
+      # Install libGLU library on Ubuntu
+      - name: Install libGLU library on Ubuntu
+        run: |
+            if [ "$RUNNER_OS" == "Linux" ]; then
+                sudo apt-get install -y libglu1-mesa
+            fi
+        shell: bash
+
       # Set up Python
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
@@ -16,4 +51,37 @@ jobs:
 
       - name: Install Python dependencies
         run: |
-          pip install .
+            python -m pip install --upgrade pip
+            pip install .
+
+      #  Run benchmark generation
+      - name: Run benchmark runner
+        run: python nightly_build/stem_runners/runner.py
+
+      # Install LaTeX
+      - name: Install LaTeX
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            texlive-latex-extra \
+            texlive-fonts-recommended \
+            texlive-bibtex-extra \
+            texlive-science \
+            biber latexmk \
+            texlive-xetex \
+            latexmk
+
+      # Compile the report
+      - name: Build PDF
+        working-directory: nightly_build
+        run: |
+          latexmk -pdf -interaction=nonstopmode ./benchmark_report.tex
+
+      # Create release and upload PDF
+      - name: Create/Update release and upload PDF
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: pdf-latest
+          files: nightly_build/benchmark_report.pdf
+          generate_release_notes: false
+          body: ""
