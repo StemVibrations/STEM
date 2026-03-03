@@ -2,7 +2,7 @@ name: Nightly Benchmark Report
 
 on:
   schedule:
-    - cron: "0 2 * * *"
+    - cron: "0 10 * * *"
   workflow_dispatch:
 
 permissions:
