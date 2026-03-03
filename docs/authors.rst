@@ -1,5 +1,14 @@
 .. _authors:
 
+STEM
+====
+STEM is a research programme that results from a collaboration between the following partners:
+
+* `ProRail <https://www.prorail.nl>`_
+* `Deltares <https://www.deltares.nl>`_
+* `TNO <https://www.tno.nl>`_
+* `TU Delft <https://www.tudelft.nl>`_
+
 STEM team
 =========
 
@@ -10,9 +19,9 @@ Maintainers
 
 Developers
 ----------
-- Marjan Fathian <marjan.fathian@deltares.nl> `@indigocoral <https://github.com/indigocoral>`_
-- Jonathan Nuttall <jonathan.nuttall@deltares.nl> `@mcgicjn2 <https://github.com/mcgicjn2>`_
-- Davide Moretti <davide.moretti@tno.nl> `@morettid <https://github.com/morettid>`_
-- Jelme Pennings <jelme.pennings@tno.nl> `@jkpennings <https://github.com/jkpennings>`_
-- Bram van den Eijnden <bram.vandeneijnden@deltares.nl> `@bramvandeneijnden <https://github.com/bramvandeneijnden>`_
-- Eleni Smyrniou <eleni.smyrniou@deltares.nl> `@EleniSmyrniou <https://github.com/EleniSmyrniou>`_
+- Marjan Fathian `@indigocoral <https://github.com/indigocoral>`_
+- Jonathan Nuttall `@mcgicjn2 <https://github.com/mcgicjn2>`_
+- Davide Moretti `@morettid <https://github.com/morettid>`_
+- Jelme Pennings `@jkpennings <https://github.com/jkpennings>`_
+- Bram van den Eijnden `@bramvandeneijnden <https://github.com/bramvandeneijnden>`_
+- Eleni Smyrniou `@EleniSmyrniou <https://github.com/EleniSmyrniou>`_
