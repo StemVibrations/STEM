@@ -1,0 +1,142 @@
+\documentclass[11pt, a4paper, oneside]{scrreprt}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\usepackage{setspace}
+\onehalfspacing
+
+\usepackage[dvipsnames]{xcolor}
+\definecolor{accent}{HTML}{004F9F}
+
+\addtokomafont{chapter}{\color{accent}}
+\addtokomafont{section}{\color{accent}}
+\addtokomafont{subsection}{\color{accent}}
+
+\usepackage{graphicx}
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\sisetup{detect-all}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{xstring}
+\usepackage{catchfile}
+
+% -------------------------------------------------------
+%  hyperref customization
+% -------------------------------------------------------
+\usepackage[
+  pdfauthor={STEM Development Team},
+  pdftitle={STEM Benchmark Report},
+  colorlinks=true,
+  linkcolor=accent,
+  urlcolor=accent,
+  citecolor=accent
+]{hyperref}
+
+% -------------------------------------------------------
+%  header and footer
+% -------------------------------------------------------
+\usepackage{fancyhdr}
+\renewcommand{\chaptermark}[1]{\markboth{\thechapter}{}}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\small{STEM Benchmark Report}}
+\rhead{\small{Chapter~\thechapter}}
+\cfoot{\small{\thepage}}
+
+% -------------------------------------------------------
+%  STEM version from python package
+% -------------------------------------------------------
+\newcommand{\versionfile}{../stem/__version__.py}
+\CatchFileDef{\versionpyraw}{\versionfile}{}
+\StrBehind{\versionpyraw}{__version__ = "}[\versiontmp]
+\StrBefore{\versiontmp}{"}[\versionparsed]
+\newcommand{\STEMversion}{\versionparsed}
+
+
+% -------------------------------------------------------
+%  for git hash
+% -------------------------------------------------------
+% Based on this: https://gist.github.com/kbjarkefur/88820e5a5365b3f707b6b20aee57cf8a
+\newcommand{\gitfolder}{../.git}             % Relative path to .git folder from .tex file
+\CatchFileDef{\headfull}{\gitfolder/HEAD}{}              % Get path to head file for checked out branch
+\StrGobbleRight{\headfull}{1}[\head]                      % Remove end of line character
+\StrBehind[2]{\head}{/}[\branch]                          % Parse out the path only
+\CatchFileDef{\commit}{\gitfolder/refs/heads/\branch}{}  % Get the content of the branch head
+\StrGobbleRight{\commit}{1}[\commithash]                  % Remove end of line character
+
+% Define the hash
+\newcommand{\commiturl}{\commithash}
+\newcommand{\commitfont}[1]{\textsf{#1}}
+
+
+% -------------------------------------------------------
+%  paragraph style
+% -------------------------------------------------------
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.8em}
+
+% -------------------------------------------------------
+%  title page
+% -------------------------------------------------------
+\newcommand{\reporttitle}{
+    \begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\Huge\bfseries STEM Benchmark Test Report \\[1.5em]}
+    \rule{\textwidth}{0.5pt} \\[1.5em]
+    {\Large Numerical Accuracy and Validation Results}\\[4em]
+    {\Large \textbf{STEM Development Team}}\\[1em]
+    \today
+    \vfill
+    \commitfont{Version} \commitfont{\STEMversion: \commiturl}
+    \end{titlepage}
+}
+
+% % -------------------------------------------------------
+% %  draft watermark
+% % -------------------------------------------------------
+% \usepackage{draftwatermark}
+% \SetWatermarkText{DRAFT}
+% \SetWatermarkScale{1}
+% \SetWatermarkColor[HTML]{B0B0B0}
+
+
+% -------------------------------------------------------
+%  document
+% -------------------------------------------------------
+\begin{document}
+
+\reporttitle
+\tableofcontents
+\clearpage
+
+\chapter*{Summary}
+\addcontentsline{toc}{chapter}{Summary} % include in ToC
+\input{summary/summary.tex}
+\clearpage
+
+\input{introduction/introduction.tex}
+\input{sdof/sdof.tex}
+\input{one_dim_wave_prop/one_dim_wave_prop.tex}
+\input{one_d_abs_boundary/one_dim_abs_boundary.tex}
+\input{simply_supported_beam/simply_supported_beam.tex}
+\input{moving_load_on_beam/moving_load_on_beam.tex}
+\input{moving_load_halfspace/moving_load.tex}
+\input{lamb/lamb.tex}
+\input{strip_load/strip_load.tex}
+\input{boussinesq/boussinesq.tex}
+\input{vibrating_dam/vibrating_dam.tex}
+
+\clearpage
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\end{document}
