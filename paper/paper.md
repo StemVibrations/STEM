@@ -66,7 +66,18 @@ STEM transparent implementation supports reproducible research, facilitates meth
 and enables direct integration into both academic research and engineering consultancy workflows.
 
 
-# Software description
+# State of the field
+Railway-induced vibrations are commonly analysed using a combination of commercial finite element software (e.g. [Abaqus](https://www.3ds.com/products/simulia/abaqus), [PLAXIS](https://www.bentley.com/software/plaxis-3d/)) and specialised vehicle–track dynamics tools (e.g. [3DS](https://www.3ds.com/products/simulia) or [Vampire](https://vampire.clyx.net/)).
+While the first provide robust solvers for finite element analyses, they lack the possibility to model the train-track interaction, and model the subsoil as homogenous layers.
+The latter focus on detailed vehicle–track dynamics, while modelling the subsurface response in a
+simplified manner.
+
+STEM addresses these limitations by providing an open-source framework specifically designed for railway-induced vibration analysis.
+It enables fully coupled train–track–soil interaction in the time domain, supports both 2D and 3D modelling, and allows spatial variability in subsurface properties and railway track geometry (irregularities on the rail and rail joints).
+By integrating vehicle dynamics, nonlinear wheel–rail contact, and heterogeneous soil modelling within a single extensible framework, STEM offers capabilities that are difficult to achieve using existing tools.
+
+
+# Software design
 
 STEM performs time-domain analyses of railway-induced vibrations using the Finite Element Method (FEM).
 The software adopts a modular and layered architecture, in which model definition, meshing, vehicle dynamics,
