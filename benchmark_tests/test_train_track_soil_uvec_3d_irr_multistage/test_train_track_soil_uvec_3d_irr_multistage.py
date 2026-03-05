@@ -88,7 +88,7 @@ def test_train_track_soil_uvec_3d_irr_multistage():
     # Create track
     origin_point = [0.75, 3.0, 0.0]
     direction_vector = [0, 0, 1]
-    number_of_sleepers = 101
+    number_of_sleepers = 81
     sleeper_spacing = 0.5
     rail_pad_thickness = 0.025
 
