@@ -10,15 +10,15 @@ STEM is a research programme that results from a collaboration between the follo
 * `TU Delft <https://www.tudelft.nl>`_
 
 STEM team
-=========
+---------
 
 Maintainers
------------
+...........
 - Bruno Zuada Coelho <bruno.zuadacoelho@deltares.nl> `@brunozc <https://github.com/brunozc>`_
 - Aron Noordam <aron.noordam@deltares.nl> `@aronnoordam <https://github.com/aronnoordam>`_
 
 Developers
-----------
+..........
 - Marjan Fathian `@indigocoral <https://github.com/indigocoral>`_
 - Jonathan Nuttall `@mcgicjn2 <https://github.com/mcgicjn2>`_
 - Davide Moretti `@morettid <https://github.com/morettid>`_
