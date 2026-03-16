@@ -168,6 +168,49 @@ class ElasticSpringDamper(StructuralParametersABC):
 
 
 @dataclass
+class Anchor(StructuralParametersABC):
+    """
+    Class containing the material parameters for an anchor element
+
+    Inheritance:
+        - :class:`StructuralParametersABC`
+        """
+
+    CROSS_AREA: float
+    YOUNG_MODULUS: float
+
+    @staticmethod
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
+        """
+        Get the element name for the anchor element
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model (2 or 3)
+            - n_nodes_element (int): The number of nodes of the element (2)
+            - analysis_type (AnalysisType): The analysis type of the model
+
+        Raises:
+            - ValueError: If the analysis type is not implemented yet for anchor elements.
+
+        Returns:
+            - Optional[str]: The element name
+        """
+
+        available_node_dim_combinations = {
+            2: [2],
+            3: [2],
+        }
+        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations, "Anchor")
+
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+            element_name = f"AnchorElement{n_dim_model}D{n_nodes_element}N"
+        else:
+            raise ValueError(f"Analysis type {analysis_type} is not implemented for anchor elements.")
+
+        return element_name
+
+
+@dataclass
 class NodalConcentrated(StructuralParametersABC):
     """
     Class containing the material parameters for a nodal concentrated element
