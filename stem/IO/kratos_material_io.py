@@ -78,6 +78,7 @@ class KratosMaterialIO:
         """
 
         material_dict: Dict[str, Any] = deepcopy(material.__dict__)
+        material_dict.pop("_end_coordinates")
 
         # Change naming of coefficient to ratio as this is the (incorrect) naming in Kratos
         material_dict["NODAL_DAMPING_RATIO"] = material_dict.pop("NODAL_DAMPING_COEFFICIENT")
@@ -345,7 +346,8 @@ class KratosMaterialIO:
 
         # add constitutive law name to dictionary based on dimension
         if self.ndim == 2:
-            euler_beam_parameters_dict["constitutive_law"]["name"] = "LinearElastic2DBeamLaw"
+            # euler_beam_parameters_dict["constitutive_law"]["name"] = "LinearElastic2DBeamLaw"
+            euler_beam_parameters_dict["constitutive_law"]["name"] = "TimoshenkoBeamElasticConstitutiveLaw"
         elif self.ndim == 3:
             euler_beam_parameters_dict["constitutive_law"]["name"] = \
                 "KratosMultiphysics.StructuralMechanicsApplication.BeamConstitutiveLaw"

@@ -72,6 +72,7 @@ class EulerBeam(StructuralParametersABC):
             - ValueError: If the second moment of area around the y-axis (I22) or the torsional inertia\
                     (TORSIONAL_INERTIA) is not defined for 3D.
         """
+        self.AREA_EFFECTIVE_Y = self.CROSS_AREA
         if self.ndim == 3:
             if self.I22 is None:
                 raise ValueError("The second moment of area around the y-axis (I22) is not defined.")
@@ -105,7 +106,7 @@ class EulerBeam(StructuralParametersABC):
 
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
             if n_dim_model == 2:
-                element_name = f"CrLinearBeamElement2D{n_nodes_element}N"
+                element_name = f"LinearTimoshenkoBeamElement2D{n_nodes_element}N"
             else:
                 element_name = f"CrLinearBeamElement3D{n_nodes_element}N"
 
@@ -134,6 +135,9 @@ class ElasticSpringDamper(StructuralParametersABC):
     NODAL_ROTATIONAL_STIFFNESS: List[float]
     NODAL_DAMPING_COEFFICIENT: List[float]
     NODAL_ROTATIONAL_DAMPING_COEFFICIENT: List[float]
+
+    _end_coordinates: Optional[
+        List[float]] = None  # only used for post-processing, not a parameter to define the material
 
     @staticmethod
     def get_element_name(n_dim_model, n_nodes_element, analysis_type) -> Optional[str]:

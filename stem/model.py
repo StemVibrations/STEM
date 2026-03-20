@@ -5,6 +5,7 @@ from copy import deepcopy
 import numpy as np
 from pathlib import Path
 from numpy.typing import NDArray
+from scipy.spatial import cKDTree
 
 from typing import Sequence, Tuple, get_args, Set, Optional, List, Dict, Any, Union
 
@@ -1464,6 +1465,20 @@ class Model:
                 self.gmsh_io.mesh_data["elements"]["HEXAHEDRON_20N"][key] = np.array(
                     self.gmsh_io.mesh_data["elements"]["HEXAHEDRON_20N"][key])[gmsh_to_kratos_indices].tolist()
 
+        # make sure all 2D elements are anti-clockwise
+        if self.ndim == 2:
+            for element_type in self.gmsh_io.mesh_data["elements"].keys():
+                if ELEMENT_DATA[element_type]["ndim"] == 2:
+                    n_vertices = ELEMENT_DATA[element_type]["n_vertices"]
+                    reversed_order_indices = ELEMENT_DATA[element_type]["reversed_order"]
+                    for key, value in self.gmsh_io.mesh_data["elements"][element_type].items():
+                        coordinates = np.array(
+                            [self.gmsh_io.mesh_data["nodes"][node_id] for node_id in value[:n_vertices]])
+                        is_clockwise = Utils.are_2d_coordinates_clockwise(coordinates)
+                        if is_clockwise:
+                            self.gmsh_io.mesh_data["elements"][element_type][key] = (np.array(
+                                self.gmsh_io.mesh_data["elements"][element_type][key])[reversed_order_indices].tolist())
+
     def __set_mesh_constraints_for_structured_mesh(self):
         """
         Set the mesh constraints for the structured mesh. The constraints are defined in the mesh_settings
@@ -1819,24 +1834,57 @@ class Model:
                 if mp.mesh is None:
                     raise ValueError("Mesh not yet initialised. Please generate the mesh using Model.generate_mesh().")
 
-                # get the sequences of springs in the body model part
-                spring_node_ids = self.__get_line_string_end_nodes(model_part=mp)
-
                 new_mesh = Mesh(ndim=1)
 
-                # loop over each spring-damper sequence
-                for (start_node_id, end_node_id) in spring_node_ids:
-                    # add the existing nodes to the new mesh
-                    new_mesh.nodes[start_node_id] = mp.mesh.nodes[start_node_id]
-                    new_mesh.nodes[end_node_id] = mp.mesh.nodes[end_node_id]
+                if mp.material.material_parameters._end_coordinates is None:
+                    # get the sequences of springs in the body model part
+                    spring_node_ids = self.__get_line_string_end_nodes(model_part=mp)
 
-                    # create new 2n line element
-                    new_mesh.elements[new_element_id] = Element(id=new_element_id,
-                                                                element_type="LINE_2N",
-                                                                node_ids=[start_node_id, end_node_id])
+                    # loop over each spring-damper sequence
+                    for (start_node_id, end_node_id) in spring_node_ids:
+                        # add the existing nodes to the new mesh
+                        new_mesh.nodes[start_node_id] = mp.mesh.nodes[start_node_id]
+                        new_mesh.nodes[end_node_id] = mp.mesh.nodes[end_node_id]
 
-                    # increment the element id
-                    new_element_id += 1
+                        # create new 2n line element
+                        new_mesh.elements[new_element_id] = Element(id=new_element_id,
+                                                                    element_type="LINE_2N",
+                                                                    node_ids=[start_node_id, end_node_id])
+
+                        # increment the element id
+                        new_element_id += 1
+                else:
+                    # if the end coordinates of the spring damper are provided, we can directly create the new element without
+                    # looking for the line string end nodes. We just need to find the node ids corresponding to the end
+                    # coordinates and create the new element.
+
+                    end_coordinates = mp.material.material_parameters._end_coordinates
+
+                    node_ids = list(mp.mesh.nodes.keys())
+                    mesh_coordinates = np.stack([node.coordinates for node in mp.mesh.nodes.values()])
+
+                    # set up the tree for fast querying
+                    tree = cKDTree(mesh_coordinates)
+
+                    # find the ids of the nodes in the model that are close to the specified coordinates.
+                    _, close_indices = tree.query(end_coordinates, k=1, distance_upper_bound=1e-6)
+
+                    close_node_ids = np.array(node_ids, dtype=np.uint64)[close_indices]
+
+                    for i in range(len(close_node_ids) - 1):
+                        start_node_id = close_node_ids[i]
+                        end_node_id = close_node_ids[i + 1]
+                        # add the existing nodes to the new mesh
+                        new_mesh.nodes[start_node_id] = mp.mesh.nodes[start_node_id]
+                        new_mesh.nodes[end_node_id] = mp.mesh.nodes[end_node_id]
+
+                        # create new 2n line element
+                        new_mesh.elements[new_element_id] = Element(id=new_element_id,
+                                                                    element_type="LINE_2N",
+                                                                    node_ids=[start_node_id, end_node_id])
+
+                        # increment the element id
+                        new_element_id += 1
 
                 # add the new mesh to the mesh data
                 self.gmsh_io.mesh_data["physical_groups"][mp.name]["node_ids"] = sorted(list(new_mesh.nodes.keys()))
@@ -1898,6 +1946,12 @@ class Model:
         node_ids_at_geometry_points = set(
             int(node_id) for node_id in Utils.find_node_ids_close_to_geometry_nodes(
                 mesh=model_part.mesh, geometry=model_part.geometry, eps=1e-06))
+
+        # # if everything is collinear, skip the inbetween geometry points, only consider the end nodes.
+        #
+        # coordinates_at_geometry_points = np.array([model_part.mesh.nodes[node_id].coordinates for node_id in node_ids_at_geometry_points])
+        # # Utils.is_collinear()
+
         element_ids_search_space = set(model_part.mesh.elements.keys())
         node_ids_search_space = set(model_part.mesh.nodes.keys())
 
@@ -2219,6 +2273,25 @@ class Model:
         print(f"Model part `{part_name}` not found!")
         return None
 
+    def get_additional_process_part_by_name_and_type(
+            self, part_name: str, process_type: AdditionalProcessesParametersABC) -> Optional[AdditionalProcessPart]:
+        """
+        Find the additional process part matching the given part_name
+
+        Args:
+            - part_name (str): the name of the part to retrieve.
+
+        Returns:
+            - Optional[:class:`stem.additional_process_part.AdditionalProcessPart`]: matched additional process part or None if no match.
+        """
+
+        for additional_process_part in self.additional_process_parts:
+            if additional_process_part.model_part_name == part_name and isinstance(additional_process_part.parameters,
+                                                                                   process_type):
+                return additional_process_part
+        print(f"Additional process part `{part_name}` not found!")
+        return None
+
     def __add_gravity_load(self):
         """
         Add a gravity load to the complete model.
@@ -2233,25 +2306,15 @@ class Model:
         # get all body model part names
         body_model_part_names = [body_model_part.name for body_model_part in self.body_model_parts]
 
-        # get geometry ids and ndim for each body model part
-        model_parts_geometry_ids = np.array(
-            [self.gmsh_io.geo_data["physical_groups"][name]["geometry_ids"] for name in body_model_part_names])
+        for dim in [1, 2, 3]:
+            geometries = [
+                gids for name in body_model_part_names if self.gmsh_io.geo_data["physical_groups"][name]["ndim"] == dim
+                for gids in [self.gmsh_io.geo_data["physical_groups"][name]["geometry_ids"]]
+            ]
 
-        model_parts_ndim = np.array(
-            [self.gmsh_io.geo_data["physical_groups"][name]["ndim"] for name in body_model_part_names]).ravel()
-
-        # add gravity load as physical group per dimension
-        body_geometries_1d = model_parts_geometry_ids[model_parts_ndim == 1].ravel()
-        if len(body_geometries_1d) > 0:
-            self.__add_gravity_model_part(gravity_load, 1, body_geometries_1d)
-
-        body_geometries_2d = model_parts_geometry_ids[model_parts_ndim == 2].ravel()
-        if len(body_geometries_2d) > 0:
-            self.__add_gravity_model_part(gravity_load, 2, body_geometries_2d)
-
-        body_geometries_3d = model_parts_geometry_ids[model_parts_ndim == 3].ravel()
-        if len(body_geometries_3d) > 0:
-            self.__add_gravity_model_part(gravity_load, 3, body_geometries_3d)
+            if len(geometries) > 0:
+                geometries = np.concatenate(geometries)
+                self.__add_gravity_model_part(gravity_load, dim, geometries)
 
         self.synchronise_geometry()
         self.gmsh_io.finalize_gmsh()

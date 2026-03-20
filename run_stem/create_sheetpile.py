@@ -6,12 +6,13 @@ import numpy as np
 from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
 from stem.structural_material import ElasticSpringDamper, NodalConcentrated, EulerBeam, Anchor
+from stem.additional_processes import Excavation
 from stem.default_materials import DefaultMaterial
 from stem.load import LineLoad
 from stem.boundary import DisplacementConstraint, AbsorbingBoundary
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, \
     NewtonRaphsonStrategy, StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy, Cg, Amgcl, Lu
-from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters
+from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters, GaussPointOutput
 from stem.stem import Stem
 
 from stem.sheetpile_utils import SheetPileUtils
@@ -169,70 +170,55 @@ line_load = LineLoad(active=[False, False, False], value=[0, -15000, 0])
 model.add_load_by_coordinates([(sheetpile_x_coordinate, surface_level, 0.0),
                                (sheetpile_x_coordinate + 2, surface_level, 0.0)], line_load, "line_load")
 
-model.show_geometry()
-
-# add the load on the track
-model.add_load_on_line_model_part("rail_track_1", uvec_load, "uvec_load")
+# model.show_geometry(show_line_ids=True)
 
 # define the boundary conditions
-roller_displacement_parameters = DisplacementConstraint(active=[True, False, True],
-                                                        is_fixed=[True, False, True],
-                                                        value=[0, 0, 0])
-absorbing_boundaries_parameters_bottom = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=10.0)
-absorbing_boundaries_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=0.1)
+roller_displacement_parameters = DisplacementConstraint(is_fixed=[True, False, True], value=[0, 0, 0])
 
-no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                    is_fixed=[True, True, True],
-                                                    value=[0, 0, 0])
+no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
-# add the boundary conditions to the model
-# model.add_boundary_condition_on_plane([(0,bottom_coordinate,0), (0,bottom_coordinate,1), (1,bottom_coordinate,0)],
-#                                       absorbing_boundaries_parameters_bottom,"bottom_abs")
+model.add_boundary_condition_by_geometry_ids(1, [4, 5, 20, 23, 28, 15, 25, 30], roller_displacement_parameters,
+                                             "sides_roller")
+model.add_boundary_condition_by_geometry_ids(1, [26, 29], no_displacement_parameters, "bottom_no_disp")
 
-model.add_boundary_condition_on_plane([(0, bottom_coordinate, 0), (0, bottom_coordinate, 1), (1, bottom_coordinate, 0)],
-                                      no_displacement_parameters, "bottom_abs")
+excavation_building_pit_left_1 = Excavation(deactivate_body_model_part=False)
+excavation_building_pit_left_2 = Excavation(deactivate_body_model_part=False)
+excavation_building_pit_right = Excavation(deactivate_body_model_part=False)
+excavation_sheetpile = Excavation(deactivate_body_model_part=True)
+excavation_anchor = Excavation(deactivate_body_model_part=True)
+excavation_concrete_cover = Excavation(deactivate_body_model_part=False)
 
-model.add_boundary_condition_on_plane([(0, 0, 0), (0, 1, 0), (0, 0, 1)], roller_displacement_parameters, "sides_roller")
+model.apply_additional_process(excavation_building_pit_left_1, "top_soil_left_part_1")
+model.apply_additional_process(excavation_building_pit_left_2, "top_soil_left_part_2")
+model.apply_additional_process(excavation_building_pit_left_2, "clay_left_part1")
 
-model.add_boundary_condition_on_plane([(0, 0, 0), (1, 0, 0), (0, 1, 0)], absorbing_boundaries_parameters, "abs")
-model.add_boundary_condition_on_plane([(0, 0, model.extrusion_length), (1, 0, model.extrusion_length),
-                                       (0, 1, model.extrusion_length)], absorbing_boundaries_parameters, "abs")
-model.add_boundary_condition_on_plane([(max_x_coordinate, 0, 0), (max_x_coordinate, 1, 0), (max_x_coordinate, 0, 1)],
-                                      absorbing_boundaries_parameters, "abs")
+model.apply_additional_process(excavation_building_pit_right, "top_soil_right_part1")
+model.apply_additional_process(excavation_sheetpile, "sheetpile")
+model.apply_additional_process(excavation_sheetpile, "point_stiffness")
+model.apply_additional_process(excavation_anchor, "anchor")
+model.apply_additional_process(excavation_anchor, "grout")
+model.apply_additional_process(excavation_concrete_cover, "concrete_cover")
 
-# aux code to calculate the required element size and time step for proper integration
-# import numpy as np
-# E = 150e6
-# nu = 0.2
-#
-# M = E *(1 - nu)/(1 + nu)/(1 - 2*nu)
-# rho = 1850
-# vp = np.sqrt(M/rho)
-# f = 100
-#
-# lambda_ = vp/f
-#
-# required_el_size = lambda_ / 10
-# required_dt = required_el_size/vp
+# model.set_element_size_of_group(0.75 * 2, "top_soil_left_part_1")
+# model.set_element_size_of_group(0.75 * 2, "top_soil_left_part_2")
+# model.set_element_size_of_group(0.75 * 2, "top_soil_right_part1")
+# model.set_element_size_of_group(0.75 * 2, "top_soil_right_part2")
+# model.set_element_size_of_group(0.05, "concrete_cover")
+# model.set_element_size_of_group(0.75 * 2, "clay_left_part1")
+# model.set_element_size_of_group(0.75 * 2, "clay_left_part2")
+# model.set_element_size_of_group(0.75 * 2, "clay_right")
 
-model.set_element_size_of_group(0.3 * 2, "ballast")
-# model.set_element_size_of_group(0.5, "embankment")
-model.set_element_size_of_group(0.75 * 2, "foundation_top")
-model.set_element_size_of_group(0.75 * 2, "foundation_bot")
-
-model.set_element_size_of_group(0.75 * 2, "deep_wall")
-
-model.set_mesh_size(element_size=1.5 * 2)
+model.set_mesh_size(element_size=0.5)
 
 # define at which points the json output should be written
-delta_time = 0.001
-json_output_parameters = JsonOutputParameters(delta_time - 1e-10, [NodalOutput.VELOCITY], [])
-model.add_output_settings_by_coordinates([(x_coord_deep_wall + thickness_deep_wall, surface_level, 45.0),
-                                          (25, surface_level, 45.0), (max_x_coordinate, surface_level, 45)],
-                                         json_output_parameters, "json_output")
+delta_time = 0.5
+# json_output_parameters = JsonOutputParameters(delta_time - 1e-10, [NodalOutput.VELOCITY], [])
+# model.add_output_settings_by_coordinates([(x_coord_deep_wall + thickness_deep_wall, surface_level, 45.0),
+#                                           (25, surface_level, 45.0), (max_x_coordinate, surface_level, 45)],
+#                                          json_output_parameters, "json_output")
 
 # set time integration parameters
-end_time = 0.002
+end_time = 1
 time_integration = TimeIntegration(start_time=0.0,
                                    end_time=end_time,
                                    delta_time=delta_time,
@@ -245,11 +231,11 @@ convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_to
                                                         displacement_absolute_tolerance=1.0e-12)
 
 # linear_solver = Lu()
-linear_solver = Cg(scaling=True)
+linear_solver = Cg(scaling=False, preconditioner_type="diagonal")
 # set solver settings stage 1
 solver_settings = SolverSettings(analysis_type=AnalysisType.MECHANICAL,
                                  solution_type=SolutionType.QUASI_STATIC,
-                                 stress_initialisation_type=StressInitialisationType.NONE,
+                                 stress_initialisation_type=StressInitialisationType.GRAVITY_LOADING,
                                  time_integration=time_integration,
                                  is_stiffness_matrix_constant=False,
                                  are_mass_and_damping_constant=False,
@@ -258,7 +244,7 @@ solver_settings = SolverSettings(analysis_type=AnalysisType.MECHANICAL,
                                  linear_solver_settings=linear_solver)
 
 # Set up problem data
-problem = Problem(problem_name="holten", number_of_threads=8, settings=solver_settings)
+problem = Problem(problem_name="sheetpile", number_of_threads=8, settings=solver_settings)
 model.project_parameters = problem
 
 # define the output settings in vtk format
@@ -266,10 +252,10 @@ model.add_output_settings(part_name="porous_computational_model_part",
                           output_dir=results_dir,
                           output_name="vtk_output",
                           output_parameters=VtkOutputParameters(
-                              file_format="binary",
-                              output_interval=15,
-                              nodal_results=[NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY, NodalOutput.ACCELERATION],
-                              gauss_point_results=[],
+                              file_format="ascii",
+                              output_interval=1,
+                              nodal_results=[NodalOutput.TOTAL_DISPLACEMENT, NodalOutput.DISPLACEMENT],
+                              gauss_point_results=[GaussPointOutput.CAUCHY_STRESS_VECTOR],
                               output_control_type="step"))
 
 # show the geometry, to check if everything is correct
@@ -277,34 +263,67 @@ model.add_output_settings(part_name="porous_computational_model_part",
 
 # create the stem object
 stem = Stem(model, input_files_dir)
-
-# create a new stage, and set the differences compared to stage 1
-duration_stage_2 = 3.2
+#
+# # create a new stage, excavate top part
+duration_stage_2 = 1
 stage2 = stem.create_new_stage(delta_time, duration_stage_2)
-stage2.project_parameters.settings.solution_type = SolutionType.DYNAMIC
-# stage2.project_parameters.settings.linear_solver_settings = Cg(scaling=False)
-stage2.project_parameters.settings.linear_solver_settings = Cg(scaling=False)
-stage2.project_parameters.settings.is_stiffness_matrix_constant = True
-stage2.project_parameters.settings.are_mass_and_damping_constant = True
-stage2.project_parameters.settings.strategy_type = LinearNewtonRaphsonStrategy()
+stage2.project_parameters.settings.reset_displacements = True
+top_soil_exc_left_part_1 = stage2.get_additional_process_part_by_name_and_type("top_soil_left_part_1", Excavation)
+top_soil_exc_left_part_1.parameters.deactivate_body_model_part = True
 
-# add rayleigh damping parameters
-stage2.project_parameters.settings.rayleigh_k = 7.86e-5
-stage2.project_parameters.settings.rayleigh_m = 0.248
+top_soil_exc_right_part_1 = stage2.get_additional_process_part_by_name_and_type("top_soil_right_part1", Excavation)
+top_soil_exc_right_part_1.parameters.deactivate_body_model_part = True
 
-# change the uvec parameters for the second stage
-velocity = 38.9 - 1e-5  # 140 km/h minus a small value to prevent numerical issues (solved in upcoming version)
-stage2.get_model_part_by_name("uvec_load").parameters.velocity = velocity
-stage2.get_model_part_by_name("uvec_load").parameters.uvec_parameters["velocity"] = velocity
-stage2.get_model_part_by_name("uvec_load").parameters.uvec_parameters["static_initialisation"] = False
+top_soil_exc_right_part_1 = stage2.get_additional_process_part_by_name_and_type("concrete_cover", Excavation)
+top_soil_exc_right_part_1.parameters.deactivate_body_model_part = True
 
-# increase the virtual thickness of the side absorbing boundary conditions for proper damping
-stage2.get_model_part_by_name("abs").parameters.virtual_thickness = 50
-
-# add the new stage to the stem calculation
 stem.add_calculation_stage(stage2)
 
-stage2.project_parameters.settings._inititalize_acceleration = True
+# create a new stage, add sheetpile and anchor
+stage_3 = stem.create_new_stage(delta_time, 1)
+stage_3.project_parameters.settings.reset_displacements = False
+
+sheet_pile_exc = stage_3.get_additional_process_part_by_name_and_type("sheetpile", Excavation)
+sheet_pile_exc.parameters.deactivate_body_model_part = False
+
+anchor_exc = stage_3.get_additional_process_part_by_name_and_type("anchor", Excavation)
+anchor_exc.parameters.deactivate_body_model_part = False
+
+grout_exc = stage_3.get_additional_process_part_by_name_and_type("grout", Excavation)
+grout_exc.parameters.deactivate_body_model_part = False
+
+point_stiffness_exc = stage_3.get_additional_process_part_by_name_and_type("point_stiffness", Excavation)
+point_stiffness_exc.parameters.deactivate_body_model_part = False
+
+stem.add_calculation_stage(stage_3)
+
+# create a new stage, fill the excavation on the right side
+stage_4 = stem.create_new_stage(delta_time, 1)
+
+top_soil_exc_right_part_1 = stage_4.get_additional_process_part_by_name_and_type("top_soil_right_part1", Excavation)
+top_soil_exc_right_part_1.parameters.deactivate_body_model_part = False
+
+top_soil_exc_right_part_1 = stage_4.get_additional_process_part_by_name_and_type("concrete_cover", Excavation)
+top_soil_exc_right_part_1.parameters.deactivate_body_model_part = False
+
+stem.add_calculation_stage(stage_4)
+
+# create a new stage, further excavate the left side, which is now supported by the sheetpile and anchor
+stage_5 = stem.create_new_stage(delta_time, 1)
+
+top_soil_exc_left_part_2 = stage_5.get_additional_process_part_by_name_and_type("top_soil_left_part_2", Excavation)
+top_soil_exc_left_part_2.parameters.deactivate_body_model_part = True
+
+clay_exc_left_part_1 = stage_5.get_additional_process_part_by_name_and_type("clay_left_part1", Excavation)
+clay_exc_left_part_1.parameters.deactivate_body_model_part = True
+
+stem.add_calculation_stage(stage_5)
+
+# apply loading
+stage_6 = stem.create_new_stage(delta_time, 1)
+stage_6.get_model_part_by_name("line_load").parameters.active = [True, True, True]
+
+stem.add_calculation_stage(stage_6)
 
 # write the input files
 stem.write_all_input_files()

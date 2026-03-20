@@ -58,6 +58,7 @@ class SheetPileUtils:
 
         equivalent_spring_damper_parameters = ElasticSpringDamper([x_stiffness, y_stiffness, 0], [0, 0, 0], [0, 0, 0],
                                                                   [0, 0, 0])
+        equivalent_spring_damper_parameters._end_coordinates = coordinates
 
         # create body model part
         body_model_part = BodyModelPart(name)
