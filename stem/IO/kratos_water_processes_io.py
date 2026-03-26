@@ -1,7 +1,8 @@
 from typing import Any, Dict, Union
 
 from stem.water_processes import *
-from stem.globals import VERTICAL_AXIS, OUT_OF_PLANE_AXIS_2D, FluidProperties,GlobalSettings
+from stem.globals import VERTICAL_AXIS, OUT_OF_PLANE_AXIS_2D, FluidProperties, GlobalSettings
+
 
 class KratosWaterProcessesIO:
     """
@@ -51,7 +52,8 @@ class KratosWaterProcessesIO:
 
         return water_dict
 
-    def __create_phreatic_line_water_pressure_dict(self, part_name: str, parameters: PhreaticLineWaterPressure) -> Dict[str, Any]:
+    def __create_phreatic_line_water_pressure_dict(self, part_name: str,
+                                                   parameters: PhreaticLineWaterPressure) -> Dict[str, Any]:
         """
         Creates a dictionary containing the phreatic line water pressure parameters
 
@@ -72,7 +74,8 @@ class KratosWaterProcessesIO:
         y_coordinates = [coord[1] for coord in parameters.phreatic_line_coordinates]
         z_coordinates = [coord[2] for coord in parameters.phreatic_line_coordinates]
 
-        table = [0] * len(parameters.phreatic_line_coordinates)  # table is set to 0, as the value is provided in the coordinates
+        table = [0] * len(
+            parameters.phreatic_line_coordinates)  # table is set to 0, as the value is provided in the coordinates
 
         # initialize boundary dictionary
         water_dict: Dict[str, Any] = {

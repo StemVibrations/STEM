@@ -1136,9 +1136,9 @@ class Model:
             for name in model_part_names:
                 if self.get_model_part_by_name(name) is None:
                     raise ValueError(f"Model part with name `{name}` not found.")
-                water_process_part = WaterProcessPart(parameters =phreatic_line_parameters, model_part_name=f"phreatic_line_{name}")
+                water_process_part = WaterProcessPart(parameters=phreatic_line_parameters,
+                                                      model_part_name=f"phreatic_line_{name}")
                 self.water_process_parts.append(water_process_part)
-
 
     def add_boundary_condition_by_geometry_ids(self, ndim_boundary: int, geometry_ids: Sequence[int],
                                                boundary_parameters: BoundaryParametersABC, name: str):
@@ -1856,7 +1856,8 @@ class Model:
         for mp in self.body_model_parts:
 
             if (isinstance(mp.material, StructuralMaterial)
-                    and (isinstance(mp.material.material_parameters, ElasticSpringDamper) or isinstance(mp.material.material_parameters, Anchor))):
+                    and (isinstance(mp.material.material_parameters, ElasticSpringDamper)
+                         or isinstance(mp.material.material_parameters, Anchor))):
 
                 # assert mesh is initialised
                 if mp.mesh is None:

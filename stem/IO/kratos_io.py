@@ -1149,7 +1149,8 @@ class KratosIO:
 
         # merge dictionaries into one
         project_parameters_dict: Dict[str, Any] = reduce(
-            Utils.merge, (solver_dict, outputs_dict, process_model_part_dict, auxiliary_processes_dict, water_processes_dict))
+            Utils.merge,
+            (solver_dict, outputs_dict, process_model_part_dict, auxiliary_processes_dict, water_processes_dict))
         # write json file
         IOUtils.write_json_file(self.project_folder, project_file_name, project_parameters_dict)
 

@@ -110,7 +110,7 @@ class KratosLoadsIO:
             "gravity_direction": VERTICAL_AXIS,
             "reference_coordinate": parameters.reference_coordinate,
             "specific_weight": -GlobalSettings.gravity_value * FluidProperties.DENSITY_FLUID,
-            "table": [0,0],
+            "table": [0, 0],
             "is_fixed": False
         }
 

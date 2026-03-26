@@ -386,8 +386,7 @@ class WaterLineLoad(LoadParametersABC):
     """
 
     active: bool
-    reference_coordinate : float
-
+    reference_coordinate: float
 
     @staticmethod
     def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
@@ -411,7 +410,8 @@ class WaterLineLoad(LoadParametersABC):
             2: [2, 3],
             3: [2, 3],
         }
-        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations, "Water Line load")
+        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations,
+                                             "Water Line load")
 
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
             if n_dim_model == 2 and n_nodes_element > 2:
@@ -423,7 +423,7 @@ class WaterLineLoad(LoadParametersABC):
                 # element_name = f"LineLoadCondition{n_dim_model}D{n_nodes_element}N"
                 element_name = f"UPwNormalFaceLoadCondition{n_dim_model}D{n_nodes_element}N"
         else:
-            raise ValueError("Water line load can only be applied in mechanical or mechanical groundwater flow analysis")
+            raise ValueError(
+                "Water line load can only be applied in mechanical or mechanical groundwater flow analysis")
 
         return element_name
-

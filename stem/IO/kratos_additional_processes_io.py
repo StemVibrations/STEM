@@ -170,17 +170,16 @@ class KratosAdditionalProcessesIO:
             - Dict[str, Any]: dictionary containing the apply final stresses of previous stage to initial state process parameters
         """
 
-
         process_dicts = []
-
 
         names = [f"{self.domain}.{name}" for name in parameters.model_part_name_list]
 
         process_dict: Dict[str, Any] = {
-                    "python_module": "apply_final_stresses_of_previous_stage_to_initial_state",
-                    "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
-                    "process_name": "ApplyFinalStressesOfPreviousStageToInitialState",
-                    "Parameters": {}}
+            "python_module": "apply_final_stresses_of_previous_stage_to_initial_state",
+            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+            "process_name": "ApplyFinalStressesOfPreviousStageToInitialState",
+            "Parameters": {}
+        }
         process_dict["Parameters"]["model_part_name_list"] = names
         # process_dict["Parameters"]["model_part_name"] = part_name
 

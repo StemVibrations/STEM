@@ -26,6 +26,7 @@ class UniformWaterPressure(WaterProcessParametersABC):
     water_pressure: float
     is_fixed: bool = True
 
+
 @dataclass
 class PhreaticLineWaterPressure(WaterProcessParametersABC):
     """

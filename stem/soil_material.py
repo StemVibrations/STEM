@@ -7,7 +7,6 @@ from stem.solver import AnalysisType
 from stem.utils import Utils
 
 
-
 @dataclass
 class SoilFormulationParametersABC(ABC):
     """

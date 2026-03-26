@@ -132,6 +132,7 @@ class ExtrapolateIntegrationPointToNodesParameters(AdditionalProcessesParameters
 
     list_of_variables: List[str]
 
+
 @dataclass
 class ApplyFinalStressesOfPreviousStageToInitialState(AdditionalProcessesParametersABC):
     """
@@ -144,6 +145,7 @@ class ApplyFinalStressesOfPreviousStageToInitialState(AdditionalProcessesParamet
     """
 
     model_part_name_list: List[str]
+
 
 @dataclass
 class AdditionalProcessPart:

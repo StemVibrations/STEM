@@ -354,7 +354,6 @@ class KratosMaterialIO:
 
         return euler_beam_parameters_dict
 
-
     def __create_anchor_dict(self, material_parameters: StructuralParametersABC) -> Dict[str, Any]:
         """
         Creates a dictionary containing the anchor parameters
