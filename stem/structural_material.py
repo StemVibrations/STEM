@@ -107,6 +107,7 @@ class EulerBeam(StructuralParametersABC):
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
             if n_dim_model == 2:
                 element_name = f"LinearTimoshenkoBeamElement2D{n_nodes_element}N"
+                # element_name = f"CrLinearBeamElement2D{n_nodes_element}N"
             else:
                 element_name = f"CrLinearBeamElement3D{n_nodes_element}N"
 
@@ -182,6 +183,11 @@ class Anchor(StructuralParametersABC):
 
     CROSS_AREA: float
     YOUNG_MODULUS: float
+    DENSITY: float = 0.0
+    PRESTRESS: float = 0.0
+
+    _end_coordinates: Optional[
+        List[float]] = None  # only used for post-processing, not a parameter to define the material
 
     @staticmethod
     def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
@@ -207,7 +213,7 @@ class Anchor(StructuralParametersABC):
         Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations, "Anchor")
 
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
-            element_name = f"AnchorElement{n_dim_model}D{n_nodes_element}N"
+            element_name = f"LinearTrussElement{n_dim_model}D{n_nodes_element}N"
         else:
             raise ValueError(f"Analysis type {analysis_type} is not implemented for anchor elements.")
 

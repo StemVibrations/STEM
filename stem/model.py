@@ -26,7 +26,7 @@ from stem.soil_material import *
 from stem.solver import Problem, StressInitialisationType
 from stem.structural_material import *
 from stem.utils import Utils
-from stem.water_processes import WaterProcessParametersABC, UniformWaterPressure
+from stem.water_processes import WaterProcessParametersABC, UniformWaterPressure, WaterProcessPart
 
 
 class Model:
@@ -62,6 +62,7 @@ class Model:
         self.body_model_parts: List[BodyModelPart] = []
         self.process_model_parts: List[ModelPart] = []
         self.additional_process_parts: List[AdditionalProcessPart] = []
+        self.water_process_parts: List[WaterProcessPart] = []
         self.output_settings: List[Output] = []
         self.extrusion_length: Optional[float] = None
         self.groups: Dict[str, Any] = {}
@@ -997,7 +998,7 @@ class Model:
         if isinstance(load_parameters, PointLoad):
             ndim_load = 0
         # line and moving load can only be assigned to 1d geometry
-        elif isinstance(load_parameters, (LineLoad, MovingLoad, UvecLoad)):
+        elif isinstance(load_parameters, (LineLoad, MovingLoad, UvecLoad, WaterLineLoad)):
             ndim_load = 1
         # surface load can only be assigned to 2d geometry
         elif isinstance(load_parameters, SurfaceLoad):
@@ -1045,7 +1046,7 @@ class Model:
         # create input for gmsh
         if isinstance(load_parameters, PointLoad):
             gmsh_input = {name: {"coordinates": coordinates, "ndim": 0}}
-        elif isinstance(load_parameters, (LineLoad, MovingLoad, UvecLoad)):
+        elif isinstance(load_parameters, (WaterLineLoad, LineLoad, MovingLoad, UvecLoad)):
             gmsh_input = {name: {"coordinates": coordinates, "ndim": 1}}
         elif isinstance(load_parameters, SurfaceLoad):
             gmsh_input = {name: {"coordinates": coordinates, "ndim": 2}}
@@ -1085,7 +1086,7 @@ class Model:
         """
 
         # line and moving load can only be assigned to 1d geometry
-        if isinstance(load_parameters, (LineLoad, MovingLoad, UvecLoad)):
+        if isinstance(load_parameters, (WaterLineLoad, LineLoad, MovingLoad, UvecLoad)):
             ndim_load = 1
         else:
             raise ValueError(f"Load parameter provided is not supported: `{load_parameters.__class__.__name__}`.")
@@ -1111,6 +1112,33 @@ class Model:
         model_part.validate_input()
 
         self.process_model_parts.append(model_part)
+
+    def add_phreatic_line(self, phreatic_line_parameters, model_part_names=[]):
+        """
+        Adds a phreatic line to the model. The phreatic line is added as a process model part and it is not associated
+        to any geometry. The phreatic line is used to define the water table in the soil and it is used in the
+        calculation of the pore water pressures.
+
+        Args:
+            - phreatic_line_parameters (:class:`stem.phreatic_line.PhreaticLineParameters`): The parameters of the
+                phreatic line.
+            - model_parts (list): list of model part names to which the phreatic line should be applied. If empty, the
+                phreatic line is applied to all soil model parts.
+
+        """
+
+        # create model part
+
+        if len(model_part_names) == 0:
+            water_process_part = WaterProcessPart(parameters=phreatic_line_parameters)
+            self.water_process_parts.append(water_process_part)
+        else:
+            for name in model_part_names:
+                if self.get_model_part_by_name(name) is None:
+                    raise ValueError(f"Model part with name `{name}` not found.")
+                water_process_part = WaterProcessPart(parameters =phreatic_line_parameters, model_part_name=f"phreatic_line_{name}")
+                self.water_process_parts.append(water_process_part)
+
 
     def add_boundary_condition_by_geometry_ids(self, ndim_boundary: int, geometry_ids: Sequence[int],
                                                boundary_parameters: BoundaryParametersABC, name: str):
@@ -1734,7 +1762,7 @@ class Model:
                 # IMPORTANT: the ElasticSpringDamper is split here, but the material properties are not updated. This
                 # is wrong! However, later on in the calculation, all ElasticSpringDamper elements on a straight line
                 # in a model part are combined, such that the original materials properties are correct.
-                types_to_be_split = (ElasticSpringDamper, EulerBeam)
+                types_to_be_split = (ElasticSpringDamper, EulerBeam, Anchor)
                 if isinstance(model_part.material.material_parameters, types_to_be_split):
 
                     # check if the model part has a mesh
@@ -1828,7 +1856,7 @@ class Model:
         for mp in self.body_model_parts:
 
             if (isinstance(mp.material, StructuralMaterial)
-                    and isinstance(mp.material.material_parameters, ElasticSpringDamper)):
+                    and (isinstance(mp.material.material_parameters, ElasticSpringDamper) or isinstance(mp.material.material_parameters, Anchor))):
 
                 # assert mesh is initialised
                 if mp.mesh is None:
@@ -2314,7 +2342,7 @@ class Model:
 
             if len(geometries) > 0:
                 geometries = np.concatenate(geometries)
-                self.__add_gravity_model_part(gravity_load, dim, geometries)
+                self.__add_gravity_model_part(deepcopy(gravity_load), dim, geometries)
 
         self.synchronise_geometry()
         self.gmsh_io.finalize_gmsh()
@@ -2403,10 +2431,8 @@ class Model:
         Add a water condition if not provided by the user.
 
         """
-        for process_model_part in self.process_model_parts:
-            # if one of the model parts already contains water, do not add zero water pressure
-            if isinstance(process_model_part.parameters, WaterProcessParametersABC):
-                return
+        if len(self.water_process_parts) > 0:
+            return
 
         # if all model parts are structural, do not add water pressure
         materials = [body_model_part.material for body_model_part in self.body_model_parts]

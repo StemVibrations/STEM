@@ -56,13 +56,13 @@ class SheetPileUtils:
         x_stiffness = axial_stiffness * orrientation_vector[0]**2
         y_stiffness = axial_stiffness * orrientation_vector[1]**2
 
-        equivalent_spring_damper_parameters = ElasticSpringDamper([x_stiffness, y_stiffness, 0], [0, 0, 0], [0, 0, 0],
-                                                                  [0, 0, 0])
-        equivalent_spring_damper_parameters._end_coordinates = coordinates
+        # equivalent_spring_damper_parameters = ElasticSpringDamper([x_stiffness, y_stiffness, 0], [0, 0, 0], [0, 0, 0],
+        #                                                           [0, 0, 0])
+        material_parameters._end_coordinates = coordinates
 
         # create body model part
         body_model_part = BodyModelPart(name)
-        material = StructuralMaterial(name, equivalent_spring_damper_parameters)
+        material = StructuralMaterial(name, material_parameters)
         body_model_part.material = material
 
         # set the geometry of the body model part

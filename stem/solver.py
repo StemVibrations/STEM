@@ -230,7 +230,7 @@ class StaticScheme(SchemeABC):
         Returns:
             - str: The type of the static scheme
         """
-        return "static"
+        return "backward_euler"
 
 
 class SolutionType(Enum):

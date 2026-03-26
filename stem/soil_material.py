@@ -2,8 +2,10 @@ from typing import List, Any, Optional, Dict
 from dataclasses import dataclass, field
 from abc import ABC
 
+from stem.globals import FluidProperties
 from stem.solver import AnalysisType
 from stem.utils import Utils
+
 
 
 @dataclass
@@ -33,19 +35,19 @@ class RetentionLawABC(ABC):
     pass
 
 
-@dataclass
-class FluidProperties:
-    """
-    Class containing the parameters for a fluid. Default values are for water at 12 degrees Celsius.
-
-    Attributes:
-        - DENSITY_FLUID (float): The density of fluid [kg/m^3].
-        - DYNAMIC_VISCOSITY (float): The dynamic viscosity of fluid [Pa s].
-        - BULK_MODULUS_FLUID (float): The bulk modulus of fluid [Pa].
-    """
-    DENSITY_FLUID: float = 1000
-    DYNAMIC_VISCOSITY: float = 1.3e-3
-    BULK_MODULUS_FLUID: float = 2e9
+# @dataclass
+# class FluidProperties:
+#     """
+#     Class containing the parameters for a fluid. Default values are for water at 12 degrees Celsius.
+#
+#     Attributes:
+#         - DENSITY_FLUID (float): The density of fluid [kg/m^3].
+#         - DYNAMIC_VISCOSITY (float): The dynamic viscosity of fluid [Pa s].
+#         - BULK_MODULUS_FLUID (float): The bulk modulus of fluid [Pa].
+#     """
+#     DENSITY_FLUID: float = 1000
+#     DYNAMIC_VISCOSITY: float = 1.3e-3
+#     BULK_MODULUS_FLUID: float = 2e9
 
 
 @dataclass

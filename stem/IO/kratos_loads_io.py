@@ -3,6 +3,8 @@ from typing import Dict, Any, Union
 from stem.load import *
 from stem.IO.io_utils import IOUtils
 
+from stem.globals import VERTICAL_AXIS, OUT_OF_PLANE_AXIS_2D, FluidProperties, GlobalSettings
+
 
 class KratosLoadsIO:
     """
@@ -86,6 +88,42 @@ class KratosLoadsIO:
 
         return load_dict
 
+    def __create_water_line_load_dict(self, part_name: str, parameters: WaterLineLoad) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the water line load parameters
+
+        Args:
+            - part_name (str): name of the model part on which the load is applied
+            - parameters (:class:`stem.load.WaterLineLoad`): water line load parameters object
+
+        Returns:
+            - Dict[str, Any]: dictionary containing the water line load parameters
+
+        """
+
+        # initialize load parameters dictionary
+        parameters_dict = {
+            "model_part_name": f"{self.domain}.{part_name}",
+            "variable_name": "NORMAL_CONTACT_STRESS",
+            "active": [parameters.active, False],
+            "fluid_pressure_type": "Hydrostatic",
+            "gravity_direction": VERTICAL_AXIS,
+            "reference_coordinate": parameters.reference_coordinate,
+            "specific_weight": -GlobalSettings.gravity_value * FluidProperties.DENSITY_FLUID,
+            "table": [0,0],
+            "is_fixed": False
+        }
+
+        # initialize load dictionary
+        load_dict: Dict[str, Any] = {
+            "python_module": "apply_normal_load_table_process",
+            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+            "process_name": "apply_normal_load_table_process",
+            "Parameters": parameters_dict
+        }
+
+        return load_dict
+
     def create_load_dict(self, part_name: str, parameters: LoadParametersABC,
                          current_time) -> Union[Dict[str, Any], None]:
         """
@@ -119,5 +157,7 @@ class KratosLoadsIO:
         elif isinstance(parameters, GravityLoad):
             return IOUtils.create_vector_constraint_table_process_dict(self.domain, part_name, parameters,
                                                                        "VOLUME_ACCELERATION", current_time)
+        elif isinstance(parameters, WaterLineLoad):
+            return self.__create_water_line_load_dict(part_name, parameters)
         else:
             raise NotImplementedError(f"Load type {type(parameters)} not implemented")

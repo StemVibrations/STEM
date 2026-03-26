@@ -354,6 +354,41 @@ class KratosMaterialIO:
 
         return euler_beam_parameters_dict
 
+
+    def __create_anchor_dict(self, material_parameters: StructuralParametersABC) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the anchor parameters
+
+        Args:
+            - material (:class:`stem.structural_material.StructuralParametersABC`): Material object containing the \
+            material parameters
+
+        Returns:
+            - Dict[str, Any]: Dictionary containing the anchor parameters
+        """
+
+        material_parameters_dict = deepcopy(material_parameters.__dict__)
+
+        # Create a new dictionary without None values
+        material_parameters_dict = {k: v for k, v in material_parameters_dict.items() if v is not None}
+
+        material_parameters_dict.pop("_end_coordinates")
+        material_parameters_dict["TRUSS_PRESTRESS_PK2"] = material_parameters_dict.pop("PRESTRESS")
+
+        # remove ndim from dictionary
+        if "ndim" in material_parameters_dict.keys():
+            material_parameters_dict.pop("ndim")
+
+        # initialize material dictionary
+        anchor_parameters_dict: Dict[str, Any] = {
+            "constitutive_law": {
+                "name": "TrussConstitutiveLaw"
+            },
+            "Variables": material_parameters_dict
+        }
+
+        return anchor_parameters_dict
+
     def __create_structural_material_dict(self, material: StructuralMaterial) -> Dict[str, Any]:
         """
         Creates a dictionary containing the structural material parameters. The structural material parameters are based
@@ -376,6 +411,9 @@ class KratosMaterialIO:
                 material.material_parameters)
         elif isinstance(material.material_parameters, NodalConcentrated):
             structural_material_dict["Variables"] = self.__create_nodal_concentrated_dict(material.material_parameters)
+
+        elif isinstance(material.material_parameters, Anchor):
+            structural_material_dict.update(self.__create_anchor_dict(material.material_parameters))
 
         return structural_material_dict
 

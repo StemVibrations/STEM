@@ -14,7 +14,7 @@ from stem.IO.kratos_solver_io import KratosSolverIO
 from stem.IO.kratos_additional_processes_io import KratosAdditionalProcessesIO
 from stem.structural_material import *
 from stem.boundary import BoundaryParametersABC, AbsorbingBoundary, DisplacementConstraint, RotationConstraint
-from stem.load import LoadParametersABC, LineLoad, MovingLoad, SurfaceLoad, PointLoad, UvecLoad
+from stem.load import LoadParametersABC, LineLoad, MovingLoad, SurfaceLoad, PointLoad, UvecLoad, WaterLineLoad
 from stem.additional_processes import (ParameterFieldParameters, Excavation, AdditionalProcessesParametersABC,
                                        ExtrapolateIntegrationPointToNodesParameters)
 from stem.water_processes import WaterProcessParametersABC
@@ -114,7 +114,7 @@ class KratosIO:
             - bool: whether the process model part writes condition elements
         """
         return isinstance(process_model_part.parameters,
-                          (PointLoad, LineLoad, MovingLoad, UvecLoad, SurfaceLoad, AbsorbingBoundary))
+                          (PointLoad, LineLoad, MovingLoad, UvecLoad, SurfaceLoad, AbsorbingBoundary, WaterLineLoad))
 
     def __initialise_process_model_part_ids(self, model: Model):
         """
@@ -966,6 +966,29 @@ class KratosIO:
 
         return processes_dict
 
+    def __creat_water_processes_dictionary(self, model: Model) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the water processes.
+
+        Args:
+            - model (:class:`stem.model.Model`): The model object containing the process model parts.
+
+        Returns:
+            - Dict[str, Any]: dictionary containing the part of the project parameters dictionary related to water \
+                processes.
+
+        """
+        processes_dict: Dict[str, Any] = {"processes": {"constraints_process_list": []}}
+
+        # loop on the process model parts
+        for mp in model.water_process_parts:
+
+            if isinstance(mp.parameters, WaterProcessParametersABC):
+                parameters = self.water_boundaries_io.create_water_process_dict(mp.model_part_name, mp.parameters)
+                processes_dict["processes"]["constraints_process_list"].append(parameters)
+
+        return processes_dict
+
     def __adjust_parameter_field_parameters_and_write_json_file(self, process_model_part: ModelPart) -> None:
         """
         Adjusts the additional process parameters when the parameter field parameter is
@@ -1121,9 +1144,12 @@ class KratosIO:
         process_model_part_dict = self.__create_process_model_parts_dictionary(model=model)
         # get the auxiliary processes dictionary
         auxiliary_processes_dict = self.__create_auxiliary_process_list_dictionary(model=model)
+        # get water processes dictionary
+        water_processes_dict = self.__creat_water_processes_dictionary(model=model)
+
         # merge dictionaries into one
         project_parameters_dict: Dict[str, Any] = reduce(
-            Utils.merge, (solver_dict, outputs_dict, process_model_part_dict, auxiliary_processes_dict))
+            Utils.merge, (solver_dict, outputs_dict, process_model_part_dict, auxiliary_processes_dict, water_processes_dict))
         # write json file
         IOUtils.write_json_file(self.project_folder, project_file_name, project_parameters_dict)
 

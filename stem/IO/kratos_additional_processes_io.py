@@ -156,6 +156,36 @@ class KratosAdditionalProcessesIO:
 
         return process_dict
 
+    def __create_apply_final_stresses_of_previous_stage_to_initial_state_dict(
+            self, part_name: str, parameters: ApplyFinalStressesOfPreviousStageToInitialState) -> List[Dict[str, Any]]:
+        """
+        Creates a dictionary containing the parameters for the apply final stresses of previous stage to initial state process
+
+        Args:
+            - part_name (str): part name where the apply final stresses of previous stage to initial state is applied
+            - parameters (:class:`stem.additional_processes.ApplyFinalStressesOfPreviousStageToInitialState`): \
+                apply final stresses of previous stage to initial state parameters object
+
+        Returns:
+            - Dict[str, Any]: dictionary containing the apply final stresses of previous stage to initial state process parameters
+        """
+
+
+        process_dicts = []
+
+
+        names = [f"{self.domain}.{name}" for name in parameters.model_part_name_list]
+
+        process_dict: Dict[str, Any] = {
+                    "python_module": "apply_final_stresses_of_previous_stage_to_initial_state",
+                    "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+                    "process_name": "ApplyFinalStressesOfPreviousStageToInitialState",
+                    "Parameters": {}}
+        process_dict["Parameters"]["model_part_name_list"] = names
+        # process_dict["Parameters"]["model_part_name"] = part_name
+
+        return [process_dict]
+
     def create_additional_processes_dict(
             self, part_name: str, parameters: AdditionalProcessesParametersABC) -> Union[List[Dict[str, Any]], None]:
         """
@@ -185,5 +215,8 @@ class KratosAdditionalProcessesIO:
             return self.__create_hinge_dict(part_name, parameters)
         elif isinstance(parameters, ExtrapolateIntegrationPointToNodesParameters):
             return [self.__create_extrapolate_integration_point_to_nodes_dict(part_name, parameters)]
+        elif isinstance(parameters, ApplyFinalStressesOfPreviousStageToInitialState):
+            return self.__create_apply_final_stresses_of_previous_stage_to_initial_state_dict(part_name, parameters)
+
         else:
             raise NotImplementedError

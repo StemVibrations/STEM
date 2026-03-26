@@ -373,3 +373,57 @@ class GravityLoad(LoadParametersABC):
 
         # Gravity load does not have a name
         return None
+
+
+@dataclass
+class WaterLineLoad(LoadParametersABC):
+    """
+    Class containing the load parameters for a water load.
+
+    Inheritance:
+        - :class:`LoadParametersABC`
+
+    """
+
+    active: bool
+    reference_coordinate : float
+
+
+    @staticmethod
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
+        """
+        Static method to get the element name for a line load.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model (2 or 3)
+            - n_nodes_element (int): The number of nodes per condition-element (2, 3)
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type
+
+        Raises:
+            - ValueError: If the analysis type is not mechanical or mechanical groundwater flow
+
+        Returns:
+            - Optional[str]: The element name for a line load
+
+        """
+
+        available_node_dim_combinations = {
+            2: [2, 3],
+            3: [2, 3],
+        }
+        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations, "Water Line load")
+
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+            if n_dim_model == 2 and n_nodes_element > 2:
+                # 2d quadratic line load is set on outer nodes, but displacement is calculated on all nodes for
+                # stability reasons
+                element_name = f"LineNormalLoadDiffOrderCondition{n_dim_model}D{n_nodes_element}N"
+                # element_name = f"LineLoadCondition{n_dim_model}D{n_nodes_element}N"
+            else:
+                # element_name = f"LineLoadCondition{n_dim_model}D{n_nodes_element}N"
+                element_name = f"UPwNormalFaceLoadCondition{n_dim_model}D{n_nodes_element}N"
+        else:
+            raise ValueError("Water line load can only be applied in mechanical or mechanical groundwater flow analysis")
+
+        return element_name
+

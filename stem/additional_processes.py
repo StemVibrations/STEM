@@ -132,6 +132,18 @@ class ExtrapolateIntegrationPointToNodesParameters(AdditionalProcessesParameters
 
     list_of_variables: List[str]
 
+@dataclass
+class ApplyFinalStressesOfPreviousStageToInitialState(AdditionalProcessesParametersABC):
+    """
+    Class containing the parameters for applying the final stresses of the previous stage to the initial state
+
+    Inheritance:
+        - :class:`AdditionalProcessesParametersABC`
+    Attributes:
+        - model_part_name (str): the name of the model part to which the final stresses of the previous stage will be applied
+    """
+
+    model_part_name_list: List[str]
 
 @dataclass
 class AdditionalProcessPart:
