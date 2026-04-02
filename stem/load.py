@@ -386,7 +386,7 @@ class WaterLineLoad(LoadParametersABC):
     """
 
     active: bool
-    reference_coordinate: float
+    reference_coordinate: List[float]
 
     @staticmethod
     def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:

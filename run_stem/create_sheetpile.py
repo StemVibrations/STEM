@@ -4,7 +4,7 @@ results_dir = "output"
 import numpy as np
 
 from stem.model import Model
-from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
+from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw, SmallStrainUmatLaw
 from stem.structural_material import ElasticSpringDamper, NodalConcentrated, EulerBeam, Anchor
 from stem.additional_processes import Excavation, ApplyFinalStressesOfPreviousStageToInitialState
 from stem.default_materials import DefaultMaterial
@@ -12,7 +12,7 @@ from stem.load import LineLoad, WaterLineLoad
 from stem.water_processes import PhreaticLineWaterPressure
 from stem.boundary import DisplacementConstraint, AbsorbingBoundary
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, \
-    NewtonRaphsonStrategy, StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy, Cg, Amgcl, Lu
+    NewtonRaphsonStrategy, StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy, Cg, Amgcl, Lu, LineSearchStrategy
 from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters, GaussPointOutput, GiDOutputParameters
 from stem.stem import Stem
 
@@ -20,7 +20,7 @@ from stem.sheetpile_utils import SheetPileUtils
 
 ndim = 2
 model = Model(ndim)
-model.mesh_settings.element_order = 1
+model.mesh_settings.element_order = 2
 
 bottom_coordinate = -10.0
 
@@ -78,7 +78,20 @@ concrete_cover_coordinates = [
 
 # Define all parameters for all materials
 soil_formulation_1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=1850, POROSITY=0.0)
-constitutive_law_1 = LinearElasticSoil(YOUNG_MODULUS=150e6, POISSON_RATIO=0.2)
+# constitutive_law_1 = SmallStrainUmatLaw(UMAT_NAME=r"C:\software_development\STEM\const_models\MohrCoulombUMAT.dll", IS_FORTRAN_UMAT=True,
+#                                         UMAT_PARAMETERS= [450e6,0.2, 50000,45,0.0,1e10],
+#                                         STATE_VARIABLES= [0])
+
+constitutive_law_1 = SmallStrainUmatLaw(UMAT_NAME=r"C:\software_development\STEM\const_models\matsuoka_nakai.dll", IS_FORTRAN_UMAT=False,
+                                        UMAT_PARAMETERS= [450e6,0.2, 5000,40,0.0],
+                                        STATE_VARIABLES= [0])
+
+#
+# constitutive_law_1 = SmallStrainUmatLaw(UMAT_NAME=r"C:\software_development\STEM\const_models\linear_elastic.dll", IS_FORTRAN_UMAT=True,
+#                                         UMAT_PARAMETERS= [450e6,0.2],
+#                                         STATE_VARIABLES= [0])
+
+# constitutive_law_1 = LinearElasticSoil(YOUNG_MODULUS=150e6, POISSON_RATIO=0.2)
 material_soil_1 = SoilMaterial("soil_1", soil_formulation_1, constitutive_law_1, SaturatedBelowPhreaticLevelLaw())
 
 # soil_formulation_1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=1850, POROSITY=0.0)
@@ -91,7 +104,7 @@ model.add_soil_layer_by_coordinates(top_soil_coords_left_part_1, material_soil_1
 model.add_soil_layer_by_coordinates(top_soil_coords_left_part_2, material_soil_1, "top_soil_left_part_2")
 model.add_soil_layer_by_coordinates(top_soil_coords_right_part1, material_soil_1, "top_soil_right_part1")
 model.add_soil_layer_by_coordinates(top_soil_coords_right_part2, material_soil_1, "top_soil_right_part2")
-model.add_soil_layer_by_coordinates(concrete_cover_coordinates, material_concrete, "concrete_cover")
+model.add_soil_layer_by_coordinates(concrete_cover_coordinates, material_soil_1, "concrete_cover")
 
 clay_coordinates_left_part1 = [(min_x_coordinate, surface_level - top_soil_depth, 0.0),
                                (sheetpile_x_coordinate, surface_level - top_soil_depth, 0.0),
@@ -215,7 +228,8 @@ model.apply_additional_process(excavation_anchor, "grout")
 model.apply_additional_process(excavation_concrete_cover, "concrete_cover")
 
 move_stress = ApplyFinalStressesOfPreviousStageToInitialState(model_part_name_list=["sheetpile", "anchor", "grout"])
-model.apply_additional_process(move_stress)
+# move_stress = ApplyFinalStressesOfPreviousStageToInitialState(model_part_name_list=[ "grout"])
+# model.apply_additional_process(move_stress)
 
 # model.set_element_size_of_group(0.75 * 2, "top_soil_left_part_1")
 # model.set_element_size_of_group(0.75 * 2, "top_soil_left_part_2")
@@ -332,8 +346,14 @@ stage_4 = stem.create_new_stage(delta_time, 1)
 top_soil_exc_right_part_1 = stage_4.get_additional_process_part_by_name_and_type("top_soil_right_part1", Excavation)
 top_soil_exc_right_part_1.parameters.deactivate_body_model_part = False
 
+stage_4.get_model_part_by_name("concrete_cover").material = material_concrete
 top_soil_exc_right_part_1 = stage_4.get_additional_process_part_by_name_and_type("concrete_cover", Excavation)
 top_soil_exc_right_part_1.parameters.deactivate_body_model_part = False
+
+
+move_stress = ApplyFinalStressesOfPreviousStageToInitialState(model_part_name_list=["sheetpile", "anchor", "grout"])
+# move_stress = ApplyFinalStressesOfPreviousStageToInitialState(model_part_name_list=[ "grout"])
+stage_4.apply_additional_process(move_stress)
 
 stem.add_calculation_stage(stage_4)
 
@@ -352,8 +372,8 @@ top_soil_exc_left_part_2.parameters.deactivate_body_model_part = True
 clay_exc_left_part_1 = stage_6.get_additional_process_part_by_name_and_type("clay_left_part1", Excavation)
 clay_exc_left_part_1.parameters.deactivate_body_model_part = True
 
-stage_6.get_model_part_by_name("water_normal_load_soil").parameters.reference_coordinate = [-10, 80, 0]
-stage_6.get_model_part_by_name("water_normal_load_beam").parameters.reference_coordinate = [-10, 80, 0]
+stage_6.get_model_part_by_name("water_normal_load_soil").parameters.reference_coordinate = [-10, phreatic_level, 0]
+stage_6.get_model_part_by_name("water_normal_load_beam").parameters.reference_coordinate = [-10, phreatic_level, 0]
 
 stem.add_calculation_stage(stage_6)
 

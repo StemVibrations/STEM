@@ -329,7 +329,7 @@ class NewtonRaphsonStrategy(StrategyTypeABC):
     Inheritance:
         - :class:`StrategyTypeABC`
     """
-    max_iterations: int = 15
+    max_iterations: int = 100
     min_iterations: int = 6
     number_cycles: int = 100
 
@@ -371,8 +371,8 @@ class LineSearchStrategy(StrategyTypeABC):
     max_iterations: int = 15
     min_iterations: int = 6
     number_cycles: int = 100
-    max_line_search_iterations: int = 10
-    first_alpha_value: float = 1.0
+    max_line_search_iterations: int = 100
+    first_alpha_value: float = 1
     second_alpha_value: float = 0.5
     min_alpha: float = 1e-4
     max_alpha: float = 1e4
@@ -718,7 +718,7 @@ class SolverSettings:
             Warning("In quasi-static analysis, the time integration scheme is set to Backward Euler. And the strategy "
                     "type is set to Newton-Raphson")
             self.scheme = StaticScheme()
-            self.strategy_type = NewtonRaphsonStrategy()
+            # self.strategy_type = NewtonRaphsonStrategy()
 
             # todo remove this once updated in Kratos
             # mass and damping matrices are set to not constant, as they are not used in quasi static analysis. This

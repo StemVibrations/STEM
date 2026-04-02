@@ -6,6 +6,7 @@ import warnings
 
 import KratosMultiphysics
 from KratosMultiphysics.RailwayApplication.geomechanics_analysis import StemGeoMechanicsAnalysis
+# from KratosMultiphysics.GeoMechanicsApplication.geomechanics_analysis import GeoMechanicsAnalysis as StemGeoMechanicsAnalysis
 
 from stem.boundary import DisplacementConstraint
 from stem.model import Model

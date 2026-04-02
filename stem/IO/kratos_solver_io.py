@@ -158,7 +158,8 @@ class KratosSolverIO:
             if solver_settings.stress_initialisation_type == StressInitialisationType.K0_PROCEDURE:
                 return "k0_procedure"
             else:
-                return "QUASI_STATIC"
+                # return "QUASI_STATIC"
+                return "static"
         elif solver_settings.solution_type == SolutionType.DYNAMIC:
             return "dynamic"
 
@@ -266,6 +267,7 @@ class KratosSolverIO:
             "compute_reactions": False,
             "move_mesh_flag": False,
             "reform_dofs_at_each_step": False,
+            "use_old_stiffness_in_first_iteration": False,
             #"nodal_smoothing": solver_settings.calculate_stresses_on_nodes,
             "block_builder": True,
             "rebuild_level": (0 if solver_settings.is_stiffness_matrix_constant else 2),
