@@ -82,9 +82,10 @@ soil_formulation_1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=1850, POR
 #                                         UMAT_PARAMETERS= [450e6,0.2, 50000,45,0.0,1e10],
 #                                         STATE_VARIABLES= [0])
 
-constitutive_law_1 = SmallStrainUmatLaw(UMAT_NAME=r"C:\software_development\STEM\const_models\matsuoka_nakai.dll", IS_FORTRAN_UMAT=False,
-                                        UMAT_PARAMETERS= [450e6,0.2, 5000,40,0.0],
-                                        STATE_VARIABLES= [0])
+constitutive_law_1 = SmallStrainUmatLaw(UMAT_NAME=r"C:\software_development\STEM\const_models\matsuoka_nakai.dll",
+                                        IS_FORTRAN_UMAT=False,
+                                        UMAT_PARAMETERS=[450e6, 0.2, 5000, 40, 0.0],
+                                        STATE_VARIABLES=[0])
 
 #
 # constitutive_law_1 = SmallStrainUmatLaw(UMAT_NAME=r"C:\software_development\STEM\const_models\linear_elastic.dll", IS_FORTRAN_UMAT=True,
@@ -349,7 +350,6 @@ top_soil_exc_right_part_1.parameters.deactivate_body_model_part = False
 stage_4.get_model_part_by_name("concrete_cover").material = material_concrete
 top_soil_exc_right_part_1 = stage_4.get_additional_process_part_by_name_and_type("concrete_cover", Excavation)
 top_soil_exc_right_part_1.parameters.deactivate_body_model_part = False
-
 
 move_stress = ApplyFinalStressesOfPreviousStageToInitialState(model_part_name_list=["sheetpile", "anchor", "grout"])
 # move_stress = ApplyFinalStressesOfPreviousStageToInitialState(model_part_name_list=[ "grout"])
