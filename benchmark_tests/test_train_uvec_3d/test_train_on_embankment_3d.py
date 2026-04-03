@@ -108,11 +108,11 @@ def test_stem():
                                        reduction_factor=1.0,
                                        increase_factor=1.0,
                                        max_delta_time_factor=1000)
-    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-3,
-                                                            displacement_absolute_tolerance=1.0e-9)
+    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-6,
+                                                            displacement_absolute_tolerance=1.0e-12)
     stress_initialisation_type = StressInitialisationType.NONE
 
-    linear_solver = Amgcl(krylov_type="gmres", tolerance=1e-6)
+    linear_solver = Amgcl(krylov_type="gmres", tolerance=1e-12)
     solver_settings = SolverSettings(analysis_type=analysis_type,
                                      solution_type=solution_type,
                                      stress_initialisation_type=stress_initialisation_type,
