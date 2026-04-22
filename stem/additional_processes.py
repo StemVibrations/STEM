@@ -28,6 +28,7 @@ class Excavation(AdditionalProcessesParametersABC):
     """
 
     deactivate_body_model_part: bool
+    changed_phase = False
 
 
 @dataclass

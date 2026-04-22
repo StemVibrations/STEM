@@ -151,6 +151,20 @@ class LinearElasticSoil(SoilConstitutiveLawABC):
     YOUNG_MODULUS: float
     POISSON_RATIO: float
 
+@dataclass
+class MohrCoulombLaw(SoilConstitutiveLawABC):
+    """
+    Class containing the material parameters for a 2D Mohr-Coulomb material
+
+    Inheritance:
+        - :class:`SoilConstitutiveLawABC`
+        """
+    YOUNG_MODULUS: float
+    POISSON_RATIO: float
+    GEO_COHESION: float
+    GEO_FRICTION_ANGLE: float
+    GEO_TENSILE_STRENGTH: float
+    GEO_DILATANCY_ANGLE: float
 
 @dataclass
 class SmallStrainUmatLaw(SoilConstitutiveLawABC):

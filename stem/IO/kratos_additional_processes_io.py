@@ -46,6 +46,7 @@ class KratosAdditionalProcessesIO:
         process_dict["Parameters"]["model_part_name"] = part_name
         process_dict["Parameters"]["variable_name"] = "EXCAVATION"
         process_dict["Parameters"]["deactivate_soil_part"] = parameters.deactivate_body_model_part
+        process_dict["Parameters"]["changed_phase"] = parameters.changed_phase
 
         return process_dict
 

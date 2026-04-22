@@ -129,6 +129,30 @@ class KratosMaterialIO:
 
         return material_dict
 
+    def __create_mohr_coulomb_soil_dict(self, material: SoilConstitutiveLawABC) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the material parameters for a Mohr-Coulomb soil material. The constitutive law is set to
+        the correct law for the dimension of the problem.
+
+        Args:
+            - material (:class:`stem.soil_material.SoilConstitutiveLawABC`): soil constitutive law object containing the material parameters for a Mohr-Coulomb soil material
+
+        Returns:
+            - Dict[str, Any]: dictionary containing the material parameters
+        """
+
+        # initialize material dictionary
+        material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""}, "Variables": deepcopy(material.__dict__)}
+        if self.ndim == 2:
+            material_dict["constitutive_law"]["name"] = "GeoMohrCoulombWithTensionCutOff2D"
+
+        elif self.ndim == 3:
+            material_dict["constitutive_law"]["name"] = "GeoMohrCoulombWithTensionCutOff3D"
+        else:
+            raise ValueError("Dimension not supported")
+
+        return material_dict
+
     def __create_umat_soil_dict(self, material: SoilConstitutiveLawABC) -> Dict[str, Any]:
         """
         Creates a dictionary containing the material parameters for a UMAT soil material. The constitutive law is set to
@@ -289,6 +313,8 @@ class KratosMaterialIO:
         # add material parameters to dictionary based on material type.
         if isinstance(material.constitutive_law, LinearElasticSoil):
             soil_material_dict.update(self.__create_linear_elastic_soil_dict(material.constitutive_law))
+        elif isinstance(material.constitutive_law, MohrCoulombLaw):
+            soil_material_dict.update(self.__create_mohr_coulomb_soil_dict(material.constitutive_law))
         elif isinstance(material.constitutive_law, SmallStrainUmatLaw):
             soil_material_dict.update(self.__create_umat_soil_dict(material.constitutive_law))
         elif isinstance(material.constitutive_law, SmallStrainUdsmLaw):
