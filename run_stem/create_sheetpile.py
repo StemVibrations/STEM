@@ -82,9 +82,13 @@ soil_formulation_1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=1850, POR
 # constitutive_law_1 = SmallStrainUmatLaw(UMAT_NAME=r"C:\software_development\STEM\const_models\MohrCoulombUMAT.dll", IS_FORTRAN_UMAT=True,
 #                                         UMAT_PARAMETERS= [6.25e7,0.2, 5000,45,45,1e10],
 #                                         STATE_VARIABLES= [0])
-
 "GeoMohrCoulombWithTensionCutOff2D"
-constitutive_law_1 = MohrCoulombLaw(YOUNG_MODULUS=150e6, POISSON_RATIO=0.2, GEO_FRICTION_ANGLE=45, GEO_DILATANCY_ANGLE=45, GEO_COHESION=5000, GEO_TENSILE_STRENGTH=5000)
+constitutive_law_1 = MohrCoulombLaw(YOUNG_MODULUS=150e6,
+                                    POISSON_RATIO=0.2,
+                                    GEO_FRICTION_ANGLE=45,
+                                    GEO_DILATANCY_ANGLE=45,
+                                    GEO_COHESION=5000,
+                                    GEO_TENSILE_STRENGTH=5000)
 
 # constitutive_law_1 = SmallStrainUmatLaw(UMAT_NAME=r"C:\software_development\STEM\const_models\matsuoka_nakai.dll",
 #                                         IS_FORTRAN_UMAT=False,
@@ -187,7 +191,7 @@ point_stiffness_coordinates = [(sheetpile_x_coordinate, sheetpile_begin_level - 
 SheetPileUtils.add_point_element_by_coordinates(point_stiffness_coordinates, point_stiffness_parameters,
                                                 "point_stiffness", model.gmsh_io, model.body_model_parts)
 
-table = Table(values=[0,0,-15000, -15000],times=[0,6,7,8])
+table = Table(values=[0, 0, -15000, -15000], times=[0, 6, 7, 8])
 
 line_load = LineLoad(active=[False, False, False], value=[0, table, 0])
 # line_load = LineLoad(active=[False, False, False], value=[0, -0, 0])
@@ -357,7 +361,6 @@ top_soil_exc_right_part_1.parameters.changed_phase = False
 top_soil_exc_right_part_1 = stage_3.get_additional_process_part_by_name_and_type("concrete_cover", Excavation)
 top_soil_exc_right_part_1.parameters.changed_phase = False
 
-
 stem.add_calculation_stage(stage_3)
 
 # create a new stage, fill the excavation on the right side
@@ -365,7 +368,7 @@ stage_4 = stem.create_new_stage(0.25, 1)
 
 top_soil_exc_right_part_1 = stage_4.get_additional_process_part_by_name_and_type("top_soil_right_part1", Excavation)
 top_soil_exc_right_part_1.parameters.deactivate_body_model_part = False
-top_soil_exc_right_part_1.parameters.changed_phase =False
+top_soil_exc_right_part_1.parameters.changed_phase = False
 
 stage_4.get_model_part_by_name("concrete_cover").material = material_concrete
 top_soil_exc_right_part_1 = stage_4.get_additional_process_part_by_name_and_type("concrete_cover", Excavation)

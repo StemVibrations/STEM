@@ -151,6 +151,7 @@ class LinearElasticSoil(SoilConstitutiveLawABC):
     YOUNG_MODULUS: float
     POISSON_RATIO: float
 
+
 @dataclass
 class MohrCoulombLaw(SoilConstitutiveLawABC):
     """
@@ -165,6 +166,7 @@ class MohrCoulombLaw(SoilConstitutiveLawABC):
     GEO_FRICTION_ANGLE: float
     GEO_TENSILE_STRENGTH: float
     GEO_DILATANCY_ANGLE: float
+
 
 @dataclass
 class SmallStrainUmatLaw(SoilConstitutiveLawABC):
