@@ -142,7 +142,7 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
-    with open(r"benchmark_tests\test_moving_load_on_beam\inputs_kratos\json_output.json", 'r') as json_file:
+    with open(r"benchmark_tests/test_moving_load_on_beam/inputs_kratos/json_output.json", 'r') as json_file:
         json_output1 = json.load(json_file)
         time = json_output1["TIME"]
         displacement_y = json_output1["NODE_3"]["DISPLACEMENT_Y"]
