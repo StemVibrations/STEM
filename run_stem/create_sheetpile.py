@@ -1,5 +1,5 @@
-input_files_dir = "sheetpile_with_anchor"
-results_dir = "output"
+input_files_dir = "sheetpile_with_anchor2"
+results_dir = "output2"
 
 import numpy as np
 
@@ -7,12 +7,12 @@ from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw, SmallStrainUmatLaw, MohrCoulombLaw
 from stem.structural_material import ElasticSpringDamper, NodalConcentrated, EulerBeam, Anchor
 from stem.additional_processes import Excavation, ApplyFinalStressesOfPreviousStageToInitialState
-from stem.default_materials import DefaultMaterial
+# from stem.default_materials import DefaultMaterial
 from stem.load import LineLoad, WaterLineLoad
 from stem.water_processes import PhreaticLineWaterPressure
 from stem.boundary import DisplacementConstraint, AbsorbingBoundary
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, \
-    NewtonRaphsonStrategy, StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy, Cg, Amgcl, Lu, LineSearchStrategy
+    NewtonRaphsonStrategy, StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy, Cg, Amgcl, Lu, LineSearchStrategy, ResidualConvergenceCriteria
 from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters, GaussPointOutput, GiDOutputParameters
 from stem.table import Table
 from stem.stem import Stem
@@ -83,17 +83,19 @@ soil_formulation_1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=1850, POR
 #                                         UMAT_PARAMETERS= [6.25e7,0.2, 5000,45,45,1e10],
 #                                         STATE_VARIABLES= [0])
 "GeoMohrCoulombWithTensionCutOff2D"
-constitutive_law_1 = MohrCoulombLaw(YOUNG_MODULUS=150e6,
-                                    POISSON_RATIO=0.2,
-                                    GEO_FRICTION_ANGLE=45,
-                                    GEO_DILATANCY_ANGLE=45,
-                                    GEO_COHESION=5000,
-                                    GEO_TENSILE_STRENGTH=5000)
+# constitutive_law_1 = MohrCoulombLaw(YOUNG_MODULUS=150e6,
+#                                     POISSON_RATIO=0.2,
+#                                     GEO_FRICTION_ANGLE=45,
+#                                     GEO_DILATANCY_ANGLE=45,
+#                                     GEO_COHESION=5000,
+#                                     GEO_TENSILE_STRENGTH=5000)
 
-# constitutive_law_1 = SmallStrainUmatLaw(UMAT_NAME=r"C:\software_development\STEM\const_models\matsuoka_nakai.dll",
-#                                         IS_FORTRAN_UMAT=False,
-#                                         UMAT_PARAMETERS=[450e6, 0.2, 5000, 40, 0.0],
-#                                         STATE_VARIABLES=[0])
+umat_name = r"C:\software_development\ConstitutiveModels2\build_C\lib\matsuoka_nakai.dll"
+# umat_name = r"C:\software_development\STEM\const_models\matsuoka_nakai.dll"
+constitutive_law_1 = SmallStrainUmatLaw(UMAT_NAME=umat_name,
+                                        IS_FORTRAN_UMAT=False,
+                                        UMAT_PARAMETERS=[150e6, 0.2, 5000, 45, 45],
+                                        STATE_VARIABLES=[0])
 
 #
 # constitutive_law_1 = SmallStrainUmatLaw(UMAT_NAME=r"C:\software_development\STEM\const_models\linear_elastic.dll", IS_FORTRAN_UMAT=True,
@@ -156,6 +158,8 @@ model.add_soil_layer_by_coordinates(deep_sand_coordinates_left, material_deep_sa
 model.add_soil_layer_by_coordinates(deep_sand_coordinates_right, material_deep_sand, "deep_sand_right")
 
 sheetpile_material = EulerBeam(2, YOUNG_MODULUS=25e9, POISSON_RATIO=0.2, CROSS_AREA=0.02, I33=1e-4, DENSITY=2350)
+# sheetpile_material = EulerBeam(2, YOUNG_MODULUS=2.05e8, POISSON_RATIO=0.2, CROSS_AREA=0.2449, I33=0.001225, DENSITY=2350)
+# sheetpile_material = EulerBeam(2, YOUNG_MODULUS=25e9, POISSON_RATIO=0.2, DENSITY=2350, THICKNESS=0.2449, THICKNESS_EFFECTIVE_Y=1)
 
 sheetpile_coordinates = [(sheetpile_x_coordinate, sheetpile_begin_level - sheetpile_length, 0.0),
                          (sheetpile_x_coordinate, sheetpile_begin_level, 0.0)]
@@ -181,6 +185,7 @@ anchor_grout_coordinates = [
 ]
 
 grout_material = EulerBeam(2, YOUNG_MODULUS=25e9, POISSON_RATIO=0.2, CROSS_AREA=0.01, I33=1e-4, DENSITY=2350)
+# grout_material = EulerBeam(2, YOUNG_MODULUS=25e9, POISSON_RATIO=0.2, DENSITY=2350, THICKNESS=0.3464, THICKNESS_EFFECTIVE_Y=1)
 SheetPileUtils.add_grout_by_coordinates(anchor_grout_coordinates, grout_material, None, "grout", model.gmsh_io,
                                         model.body_model_parts)
 
@@ -242,16 +247,17 @@ move_stress = ApplyFinalStressesOfPreviousStageToInitialState(model_part_name_li
 # move_stress = ApplyFinalStressesOfPreviousStageToInitialState(model_part_name_list=[ "grout"])
 # model.apply_additional_process(move_stress)
 
-model.set_element_size_of_group(0.25, "top_soil_left_part_1")
+model.set_element_size_of_group(0.5, "top_soil_left_part_1")
 # model.set_element_size_of_group(0.75 * 2, "top_soil_left_part_2")
-model.set_element_size_of_group(0.25, "top_soil_right_part1")
-# model.set_element_size_of_group(0.75 * 2, "top_soil_right_part2")
-model.set_element_size_of_group(0.1, "concrete_cover")
+model.set_element_size_of_group(0.4, "top_soil_right_part1")
+model.set_element_size_of_group(0.4 , "top_soil_right_part2")
+model.set_element_size_of_group(0.4, "concrete_cover")
+model.set_element_size_of_group(0.4, "sheetpile")
 # model.set_element_size_of_group(0.75 * 2, "clay_left_part1")
 # model.set_element_size_of_group(0.75 * 2, "clay_left_part2")
 # model.set_element_size_of_group(0.75 * 2, "clay_right")
 
-model.set_mesh_size(element_size=0.5)
+model.set_mesh_size(element_size=1.0)
 
 # define at which points the json output should be written
 delta_time = 0.5
@@ -265,16 +271,17 @@ end_time = 1
 time_integration = TimeIntegration(start_time=0.0,
                                    end_time=end_time,
                                    delta_time=delta_time,
-                                   reduction_factor=1,
-                                   increase_factor=1,
+                                   reduction_factor=0.5,
+                                   increase_factor=1.5,
                                    max_delta_time_factor=1000)
 
 # set convergence criteria
-convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-2,
-                                                        displacement_absolute_tolerance=1.0e-9)
+convergence_criterion = ResidualConvergenceCriteria(residual_relative_tolerance=1.0e-2,
+                                                        residual_absolute_tolerance=1.0e-2)
 
 linear_solver = Lu()
-# linear_solver = Cg(scaling=False, preconditioner_type="diagonal")
+# linear_solver = Cg(scaling=False, preconditioner_type="none")
+# linear_solver = Amgcl(smoother_type="damped_jacobi", krylov_type="cg", tolerance=1e-12, max_iteration=1000)
 # set solver settings stage 1
 solver_settings = SolverSettings(analysis_type=AnalysisType.MECHANICAL,
                                  solution_type=SolutionType.QUASI_STATIC,
@@ -287,7 +294,7 @@ solver_settings = SolverSettings(analysis_type=AnalysisType.MECHANICAL,
                                  linear_solver_settings=linear_solver)
 
 # Set up problem data
-problem = Problem(problem_name="sheetpile", number_of_threads=1, settings=solver_settings)
+problem = Problem(problem_name="sheetpile", number_of_threads=16, settings=solver_settings)
 model.project_parameters = problem
 
 # define the output settings in vtk format
@@ -320,7 +327,7 @@ stem = Stem(model, input_files_dir)
 #
 # # create a new stage, excavate top part
 duration_stage_2 = 1
-stage2 = stem.create_new_stage(0.25, duration_stage_2)
+stage2 = stem.create_new_stage(0.2, duration_stage_2)
 # stage2.project_parameters.settings.reset_displacements = True
 top_soil_exc_left_part_1 = stage2.get_additional_process_part_by_name_and_type("top_soil_left_part_1", Excavation)
 top_soil_exc_left_part_1.parameters.deactivate_body_model_part = True
@@ -334,10 +341,12 @@ top_soil_exc_right_part_1 = stage2.get_additional_process_part_by_name_and_type(
 top_soil_exc_right_part_1.parameters.deactivate_body_model_part = True
 top_soil_exc_right_part_1.parameters.changed_phase = True
 
+stage2.project_parameters.settings._read_force = True
+
 stem.add_calculation_stage(stage2)
 
 # create a new stage, add sheetpile and anchor
-stage_3 = stem.create_new_stage(delta_time, 1)
+stage_3 = stem.create_new_stage(0.01, 1)
 stage_3.project_parameters.settings.reset_displacements = False
 
 sheet_pile_exc = stage_3.get_additional_process_part_by_name_and_type("sheetpile", Excavation)
@@ -348,23 +357,25 @@ anchor_exc.parameters.deactivate_body_model_part = False
 
 grout_exc = stage_3.get_additional_process_part_by_name_and_type("grout", Excavation)
 grout_exc.parameters.deactivate_body_model_part = False
+#
+# point_stiffness_exc = stage_3.get_additional_process_part_by_name_and_type("point_stiffness", Excavation)
+# point_stiffness_exc.parameters.deactivate_body_model_part = False
 
-point_stiffness_exc = stage_3.get_additional_process_part_by_name_and_type("point_stiffness", Excavation)
-point_stiffness_exc.parameters.deactivate_body_model_part = False
+# top_soil_exc_left_part_1 = stage_3.get_additional_process_part_by_name_and_type("top_soil_left_part_1", Excavation)
+# top_soil_exc_left_part_1.parameters.changed_phase = False
+#
+# top_soil_exc_right_part_1 = stage_3.get_additional_process_part_by_name_and_type("top_soil_right_part1", Excavation)
+# top_soil_exc_right_part_1.parameters.changed_phase = False
+#
+# top_soil_exc_right_part_1 = stage_3.get_additional_process_part_by_name_and_type("concrete_cover", Excavation)
+# top_soil_exc_right_part_1.parameters.changed_phase = False
 
-top_soil_exc_left_part_1 = stage_3.get_additional_process_part_by_name_and_type("top_soil_left_part_1", Excavation)
-top_soil_exc_left_part_1.parameters.changed_phase = False
 
-top_soil_exc_right_part_1 = stage_3.get_additional_process_part_by_name_and_type("top_soil_right_part1", Excavation)
-top_soil_exc_right_part_1.parameters.changed_phase = False
-
-top_soil_exc_right_part_1 = stage_3.get_additional_process_part_by_name_and_type("concrete_cover", Excavation)
-top_soil_exc_right_part_1.parameters.changed_phase = False
 
 stem.add_calculation_stage(stage_3)
 
 # create a new stage, fill the excavation on the right side
-stage_4 = stem.create_new_stage(0.25, 1)
+stage_4 = stem.create_new_stage(0.01, 1)
 
 top_soil_exc_right_part_1 = stage_4.get_additional_process_part_by_name_and_type("top_soil_right_part1", Excavation)
 top_soil_exc_right_part_1.parameters.deactivate_body_model_part = False
@@ -382,33 +393,66 @@ stage_4.apply_additional_process(move_stress)
 stem.add_calculation_stage(stage_4)
 
 # create a new stage, fill the excavation on the right side
-stage_5 = stem.create_new_stage(delta_time, 1)
+stage_5 = stem.create_new_stage(0.01, 1)
 anchor_model_part = stage_5.get_model_part_by_name("anchor")
-anchor_model_part.material.material_parameters.PRESTRESS = 100e3
+anchor_model_part.material.material_parameters.PRESTRESS = 100e3 / anchor_model_part.material.material_parameters.CROSS_AREA
 stem.add_calculation_stage(stage_5)
 
-# create a new stage, further excavate the left side, which is now supported by the sheetpile and anchor
-stage_6 = stem.create_new_stage(delta_time, 1)
+# # create a new stage, further excavate the left side, which is now supported by the sheetpile and anchor
+# stage_6 = stem.create_new_stage(0.5, 1)
+#
+#
+# soil_formulation_clay = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=1850/50, POROSITY=0.0)
+# constitutive_law_clay = LinearElasticSoil(YOUNG_MODULUS=50e6/50, POISSON_RATIO=0.49)
+# material_clay_new = SoilMaterial("clay_new", soil_formulation_clay, constitutive_law_clay, SaturatedBelowPhreaticLevelLaw())
+#
+# soil_formulation_1_new = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=1850/50, POROSITY=0.0)
+# constitutive_law_new = LinearElasticSoil(YOUNG_MODULUS=150e6/50, POISSON_RATIO=0.49)
+#
+# material_soil_1_new = SoilMaterial("soil_1_new", soil_formulation_1_new, constitutive_law_new, SaturatedBelowPhreaticLevelLaw())
+#
+# stage_6.get_model_part_by_name("top_soil_left_part_2").material = material_soil_1
+# stage_6.get_model_part_by_name("clay_left_part1").material = material_clay_new
+#
+# anchor_model_part = stage_6.get_model_part_by_name("anchor")
+# anchor_model_part.material.material_parameters.PRESTRESS = 0.0
+#
+# stem.add_calculation_stage(stage_6)
 
-top_soil_exc_left_part_2 = stage_6.get_additional_process_part_by_name_and_type("top_soil_left_part_2", Excavation)
+stage_7 = stem.create_new_stage(2.5e-5, 1)
+
+top_soil_exc_left_part_2 = stage_7.get_additional_process_part_by_name_and_type("top_soil_left_part_2", Excavation)
 top_soil_exc_left_part_2.parameters.deactivate_body_model_part = True
 
-clay_exc_left_part_1 = stage_6.get_additional_process_part_by_name_and_type("clay_left_part1", Excavation)
+clay_exc_left_part_1 = stage_7.get_additional_process_part_by_name_and_type("clay_left_part1", Excavation)
 clay_exc_left_part_1.parameters.deactivate_body_model_part = True
 
-stage_6.get_model_part_by_name("water_normal_load_soil").parameters.reference_coordinate = [-10, phreatic_level, 0]
-stage_6.get_model_part_by_name("water_normal_load_beam").parameters.reference_coordinate = [-10, phreatic_level, 0]
+anchor_model_part = stage_7.get_model_part_by_name("anchor")
+anchor_model_part.material.material_parameters.PRESTRESS = 0.0
 
-stem.add_calculation_stage(stage_6)
+new_phreatic_level = -2.0
+stage_7.get_model_part_by_name("water_normal_load_soil").parameters.reference_coordinate = [-10, new_phreatic_level, 0]
+stage_7.get_model_part_by_name("water_normal_load_beam").parameters.reference_coordinate = [-10, new_phreatic_level, 0]
+water_process_part = stage_7.water_process_parts[0]
+phreatic_line = PhreaticLineWaterPressure([(-10, new_phreatic_level, 0), (0, new_phreatic_level, 0),(0.0, phreatic_level, 0), (10, phreatic_level, 0)],
+                                          is_fixed=True)
+water_process_part.parameters = phreatic_line
+
+stem.add_calculation_stage(stage_7)
 
 # apply loading
-stage_7 = stem.create_new_stage(0.005, 1)
-# line_load_mp  = stage_7.get_model_part_by_name("line_load")
-# line_load_mp.parameters.active = [True, True, True]
-stem.add_calculation_stage(stage_7)
+stage_8 = stem.create_new_stage(0.1, 1)
+line_load_mp  = stage_8.get_model_part_by_name("line_load")
+line_load_mp.parameters.active = [True, True, True]
+
+stem.add_calculation_stage(stage_8)
 
 # write the input files
 stem.write_all_input_files()
 
+import time
+
+t0 = time.time()
 # run the calculation
 stem.run_calculation()
+print(f"Total calculation time: {time.time() - t0} seconds")

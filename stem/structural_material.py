@@ -53,7 +53,9 @@ class EulerBeam(StructuralParametersABC):
     ndim: int
     YOUNG_MODULUS: float
     POISSON_RATIO: float
+    # THICKNESS: float
     DENSITY: float
+    # THICKNESS_EFFECTIVE_Y: float
     CROSS_AREA: float
     I33: float
 
@@ -107,6 +109,7 @@ class EulerBeam(StructuralParametersABC):
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
             if n_dim_model == 2:
                 element_name = f"LinearTimoshenkoBeamElement2D{n_nodes_element}N"
+                # element_name = f"LinearTimoshenkoBeamElement2D{n_nodes_element}N"
                 # element_name = f"CrLinearBeamElement2D{n_nodes_element}N"
             else:
                 element_name = f"CrLinearBeamElement3D{n_nodes_element}N"

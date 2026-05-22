@@ -268,9 +268,17 @@ class KratosSolverIO:
             "move_mesh_flag": False,
             "reform_dofs_at_each_step": False,
             "use_old_stiffness_in_first_iteration": False,
+            "read_force": solver_settings._read_force,
             #"nodal_smoothing": solver_settings.calculate_stresses_on_nodes,
             "block_builder": True,
-            "rebuild_level": (0 if solver_settings.is_stiffness_matrix_constant else 2),
+            # "rebuild_level": (0 if solver_settings.is_stiffness_matrix_constant else 2),
+            "rebuild_level": 0,
+            "iteration_method": "broyden",
+            "broyden_settings": {
+                "absolute_global_error": 1e-12,
+                "relative_global_error": 0.001,
+                "relative_local_error": 0.1
+            },
             "prebuild_dynamics": solver_settings.are_mass_and_damping_constant,
             # "initialize_acceleration": solver_settings._inititalize_acceleration,
             "solution_type": self.__set_solution_type(solver_settings),

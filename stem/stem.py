@@ -5,8 +5,8 @@ from typing import List, Dict
 import warnings
 
 import KratosMultiphysics
-from KratosMultiphysics.RailwayApplication.geomechanics_analysis import StemGeoMechanicsAnalysis
-# from KratosMultiphysics.GeoMechanicsApplication.geomechanics_analysis import GeoMechanicsAnalysis as StemGeoMechanicsAnalysis
+# from KratosMultiphysics.RailwayApplication.geomechanics_analysis import StemGeoMechanicsAnalysis
+from KratosMultiphysics.GeoMechanicsApplication.geomechanics_analysis import GeoMechanicsAnalysis as StemGeoMechanicsAnalysis
 
 from stem.boundary import DisplacementConstraint
 from stem.model import Model
@@ -214,8 +214,8 @@ class Stem:
             stage.finalise(input_folder=self.input_files_dir)
 
         # if more than 1 stage is run, transfer all vtk results to a shared output directory
-        if len(self.stages) > 1:
-            self.__transfer_vtk_files_to_main_output_directories()
+        # if len(self.stages) > 1:
+        #     self.__transfer_vtk_files_to_main_output_directories()
 
     def run_calculation(self):
         """

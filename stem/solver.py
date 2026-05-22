@@ -329,8 +329,8 @@ class NewtonRaphsonStrategy(StrategyTypeABC):
     Inheritance:
         - :class:`StrategyTypeABC`
     """
-    max_iterations: int = 100
-    min_iterations: int = 6
+    max_iterations: int = 60
+    min_iterations: int = 3
     number_cycles: int = 100
 
     @property
@@ -696,7 +696,8 @@ class SolverSettings:
     rayleigh_m: Optional[float] = None
     rayleigh_k: Optional[float] = None
     echo_level: int = 1
-    _inititalize_acceleration: bool = False
+    _inititalize_acceleration: bool = False,
+    _read_force = False
 
     def __validate_setting_combinations(self):
         """
