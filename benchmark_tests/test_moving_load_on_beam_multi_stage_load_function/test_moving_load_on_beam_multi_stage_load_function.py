@@ -13,6 +13,7 @@ from stem.solver import (AnalysisType, SolutionType, TimeIntegration, Displaceme
                          StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy)
 from stem.output import NodalOutput, GaussPointOutput, VtkOutputParameters, Output, JsonOutputParameters
 from stem.stem import Stem
+
 from shutil import rmtree
 
 SHOW_RESULTS = False
@@ -54,11 +55,8 @@ def test_stem():
     # model.show_geometry(show_point_ids=True, show_line_ids=True)
 
     # Define moving load
-    moving_load = MovingLoad(load=["0.0", "-10000*t", "0.0"],
-                             direction_signs=[1, 1, 1],
-                             velocity=1.0,
-                             origin=[0.0, 0.0, 0.0],
-                             offset=0.0)
+    load = ["0.0", "-10000*t", "0.0"]
+    moving_load = MovingLoad(load=load, direction_signs=[1, 1, 1], velocity=1.0, origin=[0.0, 0.0, 0.0], offset=0.0)
 
     model.add_load_by_geometry_ids([1], moving_load, "moving_load")
 
@@ -77,7 +75,6 @@ def test_stem():
 
     json_output = JsonOutputParameters(0.01, [NodalOutput.DISPLACEMENT_Y])
     model.add_output_settings_by_coordinates([[0.5, 0.0, 0.0]], json_output, "json_output")
-
     # Set mesh size
     # --------------------------------
     model.set_mesh_size(element_size=0.05)
@@ -90,7 +87,7 @@ def test_stem():
     solution_type = SolutionType.DYNAMIC
     # Set up start and end time of calculation, time step and etc
     time_integration = TimeIntegration(start_time=0.0,
-                                       end_time=1.0,
+                                       end_time=0.5,
                                        delta_time=0.01,
                                        reduction_factor=1.0,
                                        increase_factor=1.0,
@@ -116,7 +113,7 @@ def test_stem():
 
     # Define the results to be written to the output file
 
-    # uncomment the following lines to write VTK output
+    # uncomment the following lines to write VTK output files
     # # Nodal results
     # nodal_results = [NodalOutput.DISPLACEMENT]
     # # Gauss point results
@@ -124,44 +121,58 @@ def test_stem():
     #
     # # Define the output process
     # model.add_output_settings(output_parameters=VtkOutputParameters(file_format="ascii",
-    #                                                                 output_interval=10,
+    #                                                                 output_interval=1,
     #                                                                 nodal_results=nodal_results,
     #                                                                 gauss_point_results=gauss_point_results,
     #                                                                 output_control_type="step"),
     #                           output_dir="output",
     #                           output_name="vtk_output")
 
-    input_folder = "benchmark_tests/test_moving_load_on_beam/inputs_kratos"
+    input_folder = "benchmark_tests/test_moving_load_on_beam_multi_stage_load_function/inputs_kratos"
 
     # Write KRATOS input files
     # --------------------------------
     stem = Stem(model, input_folder)
+    stage2 = stem.create_new_stage(0.01, 0.5)
+    stem.add_calculation_stage(stage2)
+
     stem.write_all_input_files()
 
     # Run Kratos calculation
     # --------------------------------
     stem.run_calculation()
 
-    with open(r"benchmark_tests/test_moving_load_on_beam/inputs_kratos/json_output.json", 'r') as json_file:
+    with open(r"benchmark_tests/test_moving_load_on_beam_multi_stage_load_function/inputs_kratos/json_output.json",
+              'r') as json_file:
         json_output1 = json.load(json_file)
         time = json_output1["TIME"]
         displacement_y = json_output1["NODE_3"]["DISPLACEMENT_Y"]
 
-    with open(r"benchmark_tests/test_moving_load_on_beam/output_/expected_output.json", 'r') as json_file:
+    with open(
+            r"benchmark_tests/test_moving_load_on_beam_multi_stage_load_function/inputs_kratos/json_output_stage_2.json",
+            'r') as json_file:
+        json_output2 = json.load(json_file)
+
+        time = time + json_output2["TIME"]
+        displacement_y = displacement_y + json_output2["NODE_3"]["DISPLACEMENT_Y"]
+
+    with open(r"benchmark_tests/test_moving_load_on_beam_multi_stage_load_function/output_/expected_output.json",
+              'r') as json_file:
         expected_output = json.load(json_file)
-        time_expected = expected_output["TIME"]
-        displacement_y_expected = expected_output["NODE_3"]["DISPLACEMENT_Y"]
+        expected_time = expected_output["TIME"]
+        expected_displacement_y = expected_output["NODE_3"]["DISPLACEMENT_Y"]
+
+    assert_array_almost_equal(time, expected_time)
+    assert_array_almost_equal(displacement_y, expected_displacement_y)
 
     if SHOW_RESULTS:
 
         import matplotlib.pyplot as plt
         plt.plot(time, displacement_y)
-        plt.plot(time_expected, displacement_y_expected, "--")
+        plt.plot(expected_time, expected_displacement_y, "--")
         plt.xlabel("Time [s]")
         plt.ylabel("Displacement Y [m]")
-        plt.legend(["STEM output", "Expected output"])
+        plt.legend(["Calculated", "Expected"])
         plt.show()
-
-    assert_array_almost_equal(displacement_y, displacement_y_expected)
 
     rmtree(input_folder)

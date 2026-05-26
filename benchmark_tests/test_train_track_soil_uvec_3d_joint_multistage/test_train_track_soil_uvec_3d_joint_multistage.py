@@ -181,7 +181,7 @@ def test_train_track_soil_uvec_3d_joint_multistage(test_type, input_folder_suffi
                                        increase_factor=1,
                                        max_delta_time_factor=1000)
 
-    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
+    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-6,
                                                             displacement_absolute_tolerance=1.0e-12)
 
     strategy_type = LinearNewtonRaphsonStrategy()
