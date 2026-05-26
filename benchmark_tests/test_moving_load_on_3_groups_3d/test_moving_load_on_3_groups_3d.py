@@ -66,19 +66,15 @@ def test_stem():
     # Define moving load
     load_coordinates = [(0.5, 1.0, 0.0), (0.5, 1.0, 5.0)]
     moving_load = MovingLoad(load=[0.0, -10.0, 0.0],
-                             direction=[1, 1, 1],
+                             direction_signs=[1, 1, 1],
                              velocity=2.5,
                              origin=[0.5, 1.0, 0.0],
                              offset=0.0)
     model.add_load_by_coordinates(load_coordinates, moving_load, "moving_load")
 
     # Define boundary conditions
-    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
-    roller_displacement_parameters = DisplacementConstraint(active=[True, False, True],
-                                                            is_fixed=[True, False, True],
-                                                            value=[0, 0, 0])
+    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
+    roller_displacement_parameters = DisplacementConstraint(is_fixed=[True, False, True], value=[0, 0, 0])
 
     model.synchronise_geometry()
     # model.show_geometry(show_surface_ids=True)

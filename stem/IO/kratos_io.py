@@ -15,7 +15,8 @@ from stem.IO.kratos_additional_processes_io import KratosAdditionalProcessesIO
 from stem.structural_material import *
 from stem.boundary import BoundaryParametersABC, AbsorbingBoundary, DisplacementConstraint, RotationConstraint
 from stem.load import LoadParametersABC, LineLoad, MovingLoad, SurfaceLoad, PointLoad, UvecLoad
-from stem.additional_processes import ParameterFieldParameters, Excavation, AdditionalProcessesParametersABC
+from stem.additional_processes import (ParameterFieldParameters, Excavation, AdditionalProcessesParametersABC,
+                                       ExtrapolateIntegrationPointToNodesParameters)
 from stem.water_processes import WaterProcessParametersABC
 from stem.mesh import Element, Node
 from stem.model import Model
@@ -38,7 +39,7 @@ FORMAT_FLOAT_LONG: str = " {:.10f}"
 FORMAT_FLOAT_SHORT: str = " {:.4f}"
 
 # type aliases
-ElementAdditionalProcessParameters = Excavation, ParameterFieldParameters
+ElementAdditionalProcessParameters = Excavation, ParameterFieldParameters, ExtrapolateIntegrationPointToNodesParameters
 """
 Type alias for additional process parameter classes which can be applied to elements.
 
@@ -1082,6 +1083,12 @@ class KratosIO:
                                                                             (ElasticSpringDamper, NodalConcentrated))):
                 parameters = self.__create_set_nodal_parameters_process_dictionary(bmp)
                 processes_dict["processes"]["auxiliary_process_list"].append(parameters)
+
+        for additional_process_part in model.additional_process_parts:
+            # add auxiliary processes from process model parts
+            processes_dict["processes"]["auxiliary_process_list"].extend(
+                self.additional_process_io.create_additional_processes_dict(additional_process_part.model_part_name,
+                                                                            additional_process_part.parameters))
 
         return processes_dict
 

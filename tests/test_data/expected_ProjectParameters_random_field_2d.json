@@ -30,10 +30,10 @@
         "compute_reactions": false,
         "move_mesh_flag": false,
         "reform_dofs_at_each_step": false,
-        "nodal_smoothing": true,
         "block_builder": true,
         "rebuild_level": 0,
         "prebuild_dynamics": true,
+        "initialize_acceleration": false,
         "solution_type": "dynamic",
         "rayleigh_m": 0.001,
         "rayleigh_k": 0.001,
@@ -55,7 +55,11 @@
             "solver_type": "amgcl",
             "scaling": false,
             "tolerance": 1e-08,
-            "max_iteration": 500
+            "max_iteration": 500,
+            "krylov_type": "cg",
+            "smoother_type": "ilu0",
+            "preconditioner_type": "amg",
+            "coarsening_type": "aggregation"
         },
         "problem_domain_sub_model_part_list": [
             "soil1"
@@ -140,6 +144,7 @@
                     ]
                 }
             }
-        ]
+        ],
+        "auxiliary_process_list": []
     }
 }

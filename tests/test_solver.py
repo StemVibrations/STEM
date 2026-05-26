@@ -1,3 +1,5 @@
+import re
+
 import pytest
 
 from stem.solver import *
@@ -106,6 +108,15 @@ class TestSolverSettings:
         # check if error is raised correctly
         with pytest.raises(ValueError,
                            match="Kratos Multiphysics does not support the K0-procedure for dynamic analysis"):
+            solver_settings.validate_settings()
+
+        # check cg linear solver with invalid preconditioner
+        cg_linear_solver = Cg(preconditioner_type="invalid_preconditioner")
+        solver_settings.stress_initialisation_type = StressInitialisationType.NONE
+        solver_settings.linear_solver_settings = cg_linear_solver
+        with pytest.raises(ValueError,
+                           match=re.escape("Invalid preconditioner type: invalid_preconditioner. "
+                                           "Valid options are: ['diagonal', 'ilu0', 'none']")):
             solver_settings.validate_settings()
 
     def test_solver_type(self):

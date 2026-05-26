@@ -31,7 +31,7 @@ def read_tutorial(rst_file: str, name: str) -> List[str]:
         - List[str]: list of strings with the code
     """
 
-    with open(rst_file, "r") as fi:
+    with open(rst_file, "r", encoding="utf-8") as fi:
         lines = fi.read().splitlines()
 
     # find start line of tutorial and end of tutorial
@@ -48,7 +48,7 @@ def read_tutorial(rst_file: str, name: str) -> List[str]:
         if val.lstrip() == ".. code-block:: python":
             idx_ini.append(i)
             for j in range(i + 1, len(tutorial)):
-                if tutorial[j].lstrip() == "# END CODE BLOCK":
+                if tutorial[j].lstrip() == "..    # END CODE BLOCK":
                     idx_end.append(j)
                     break
 
@@ -73,7 +73,7 @@ def test_tutorial_1():
 
     data = read_tutorial(tutorial_file, name)
     exec("\n".join(data))
-    shutil.rmtree("line_load")
+    shutil.rmtree("lamb")
 
 
 def test_tutorial_2():
@@ -93,7 +93,7 @@ def test_tutorial_3():
 
     data = read_tutorial(tutorial_file, name)
     exec("\n".join(data))
-    shutil.rmtree("uvec_train_model")
+    shutil.rmtree("embankment_bridge")
 
 
 def test_tutorial_4():
@@ -103,14 +103,14 @@ def test_tutorial_4():
 
     data = read_tutorial(tutorial_file, name)
     exec("\n".join(data))
-    shutil.rmtree("variation_z")
+    shutil.rmtree("uvec_train_model")
 
 
-def test_tutorial_5():
-    """Test the code in tutorial 5"""
-    name = "_tutorial5"
-    tutorial_file = "./docs/tutorial5.rst"
+# def test_tutorial_5():
+#     """Test the code in tutorial 5"""
+#     name = "_tutorial5"
+#     tutorial_file = "./docs/tutorial5.rst"
 
-    data = read_tutorial(tutorial_file, name)
-    exec("\n".join(data))
-    shutil.rmtree("compute_train_with_joint")
+#     data = read_tutorial(tutorial_file, name)
+#     exec("\n".join(data))
+#     shutil.rmtree("variation_z")

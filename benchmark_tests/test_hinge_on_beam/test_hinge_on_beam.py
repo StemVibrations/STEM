@@ -70,18 +70,12 @@ def test_stem():
                             HingeParameters(hinge_stiffness_y, hinge_stiffness_z), "hinge")
 
     # Define rotation boundary condition
-    rotation_boundaries_parameters = RotationConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
+    rotation_boundaries_parameters = RotationConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
-    rotation_boundaries_parameters2 = RotationConstraint(active=[True, True, True],
-                                                         is_fixed=[True, True, True],
-                                                         value=[0, 0, 0])
+    rotation_boundaries_parameters2 = RotationConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
     # Define displacement conditions
-    displacementXYZ_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
+    displacementXYZ_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
     # model.show_geometry(show_point_ids=True, show_line_ids=True)
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)

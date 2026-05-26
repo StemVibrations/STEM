@@ -88,7 +88,7 @@ def test_train_track_soil_uvec_3d_irr_multistage():
     # Create track
     origin_point = [0.75, 3.0, 0.0]
     direction_vector = [0, 0, 1]
-    number_of_sleepers = 101
+    number_of_sleepers = 81
     sleeper_spacing = 0.5
     rail_pad_thickness = 0.025
 
@@ -124,7 +124,7 @@ def test_train_track_soil_uvec_3d_irr_multistage():
     }
 
     # define the UVEC load
-    uvec_load = UvecLoad(direction=[1, 1, 1],
+    uvec_load = UvecLoad(direction_signs=[1, 1, 1],
                          velocity=velocity,
                          origin=[0.75, 3 + rail_pad_thickness, 0],
                          wheel_configuration=wheel_configuration,
@@ -135,12 +135,8 @@ def test_train_track_soil_uvec_3d_irr_multistage():
     model.add_load_on_line_model_part("rail_track", uvec_load, "train_load")
 
     # define BC
-    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
-    roller_displacement_parameters = DisplacementConstraint(active=[True, False, True],
-                                                            is_fixed=[True, False, True],
-                                                            value=[0, 0, 0])
+    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
+    roller_displacement_parameters = DisplacementConstraint(is_fixed=[True, False, True], value=[0, 0, 0])
     absorbing_boundaries_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=40.0)
 
     # add the boundary conditions to the model
@@ -169,7 +165,7 @@ def test_train_track_soil_uvec_3d_irr_multistage():
                                        increase_factor=1,
                                        max_delta_time_factor=1000)
 
-    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
+    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-6,
                                                             displacement_absolute_tolerance=1.0e-12)
 
     strategy_type = LinearNewtonRaphsonStrategy()

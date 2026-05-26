@@ -66,7 +66,7 @@ def test_moving_load_on_track_on_soil():
                                   origin_point, direction_vector, "rail_track_1")
 
     moving_load = MovingLoad(load=[0.0, -10000.0, 0.0],
-                             direction=[1, 1, 1],
+                             direction_signs=[1, 1, 1],
                              velocity=10,
                              origin=[1.0, 3 + rail_pad_thickness, 0.0],
                              offset=0.0)
@@ -76,12 +76,8 @@ def test_moving_load_on_track_on_soil():
     # model.show_geometry(show_surface_ids=True, show_point_ids=True)
 
     # Define boundary conditions
-    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
-    roller_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                            is_fixed=[True, False, True],
-                                                            value=[0, 0, 0])
+    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
+    roller_displacement_parameters = DisplacementConstraint(is_fixed=[True, False, True], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(2, [2], no_displacement_parameters, "base_fixed")

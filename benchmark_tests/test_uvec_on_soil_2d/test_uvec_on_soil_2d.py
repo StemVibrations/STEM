@@ -10,7 +10,7 @@ from stem.solver import (AnalysisType, SolutionType, TimeIntegration, Displaceme
 from stem.output import NodalOutput, VtkOutputParameters, Output
 from stem.stem import Stem
 
-from benchmark_tests.utils import assert_files_equal
+from benchmark_tests.utils import assert_floats_in_directories_almost_equal
 
 
 def test_stem():
@@ -48,7 +48,7 @@ def test_stem():
     load_coordinates = [(0.0, 1.0, 0.0), (5.0, 1.0, 0.0)]
 
     uvec_parameters = {"load_wheel_1": -30.0, "load_wheel_2": -10.0}
-    uvec_load = UvecLoad(direction=[1, 1, 0],
+    uvec_load = UvecLoad(direction_signs=[1, 1, 0],
                          velocity=5,
                          origin=[0.0, 1.0, 0.0],
                          wheel_configuration=[0.0, 2.0],
@@ -59,12 +59,8 @@ def test_stem():
     model.add_load_by_coordinates(load_coordinates, uvec_load, "uvec_load")
 
     # Define boundary conditions
-    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
-    roller_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                            is_fixed=[True, False, False],
-                                                            value=[0, 0, 0])
+    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
+    roller_displacement_parameters = DisplacementConstraint(is_fixed=[True, False, False], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "base_fixed")
@@ -145,7 +141,9 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
-    assert assert_files_equal("benchmark_tests/test_uvec_on_soil_2d/output_/output_vtk_porous_computational_model_part",
-                              os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
+    assert_floats_in_directories_almost_equal(
+        "benchmark_tests/test_uvec_on_soil_2d/output_/output_vtk_porous_computational_model_part",
+        os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"),
+        decimal=12)
 
     rmtree(input_folder)

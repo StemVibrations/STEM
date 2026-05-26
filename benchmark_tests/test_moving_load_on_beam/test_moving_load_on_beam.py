@@ -1,4 +1,8 @@
 import os
+import json
+
+from numpy.testing import assert_array_almost_equal
+
 from stem.model import Model
 from stem.model_part import BodyModelPart
 from stem.structural_material import *
@@ -6,11 +10,12 @@ from stem.load import MovingLoad
 from stem.boundary import RotationConstraint
 from stem.boundary import DisplacementConstraint
 from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
-                         StressInitialisationType, SolverSettings, Problem)
-from stem.output import NodalOutput, GaussPointOutput, VtkOutputParameters, Output
+                         StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy)
+from stem.output import NodalOutput, GaussPointOutput, VtkOutputParameters, Output, JsonOutputParameters
 from stem.stem import Stem
-from benchmark_tests.utils import assert_files_equal
 from shutil import rmtree
+
+SHOW_RESULTS = False
 
 
 def test_stem():
@@ -50,7 +55,7 @@ def test_stem():
 
     # Define moving load
     moving_load = MovingLoad(load=["0.0", "-10000*t", "0.0"],
-                             direction=[1, 1, 1],
+                             direction_signs=[1, 1, 1],
                              velocity=1.0,
                              origin=[0.0, 0.0, 0.0],
                              offset=0.0)
@@ -58,14 +63,10 @@ def test_stem():
     model.add_load_by_geometry_ids([1], moving_load, "moving_load")
 
     # Define rotation boundary condition
-    rotation_boundaries_parameters = RotationConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
+    rotation_boundaries_parameters = RotationConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
     # Define displacement conditions
-    displacementXYZ_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
+    displacementXYZ_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(0, [2], rotation_boundaries_parameters, "rotation")
@@ -73,6 +74,9 @@ def test_stem():
 
     # Synchronize geometry
     model.synchronise_geometry()
+
+    json_output = JsonOutputParameters(0.01, [NodalOutput.DISPLACEMENT_Y])
+    model.add_output_settings_by_coordinates([[0.5, 0.0, 0.0]], json_output, "json_output")
 
     # Set mesh size
     # --------------------------------
@@ -102,6 +106,7 @@ def test_stem():
                                      is_stiffness_matrix_constant=False,
                                      are_mass_and_damping_constant=False,
                                      convergence_criteria=convergence_criterion,
+                                     strategy_type=LinearNewtonRaphsonStrategy(),
                                      rayleigh_k=0.001,
                                      rayleigh_m=0.1)
 
@@ -111,19 +116,20 @@ def test_stem():
 
     # Define the results to be written to the output file
 
-    # Nodal results
-    nodal_results = [NodalOutput.DISPLACEMENT]
-    # Gauss point results
-    gauss_point_results = [GaussPointOutput.FORCE]
-
-    # Define the output process
-    model.add_output_settings(output_parameters=VtkOutputParameters(file_format="ascii",
-                                                                    output_interval=10,
-                                                                    nodal_results=nodal_results,
-                                                                    gauss_point_results=gauss_point_results,
-                                                                    output_control_type="step"),
-                              output_dir="output",
-                              output_name="vtk_output")
+    # uncomment the following lines to write VTK output
+    # # Nodal results
+    # nodal_results = [NodalOutput.DISPLACEMENT]
+    # # Gauss point results
+    # gauss_point_results = [GaussPointOutput.FORCE]
+    #
+    # # Define the output process
+    # model.add_output_settings(output_parameters=VtkOutputParameters(file_format="ascii",
+    #                                                                 output_interval=10,
+    #                                                                 nodal_results=nodal_results,
+    #                                                                 gauss_point_results=gauss_point_results,
+    #                                                                 output_control_type="step"),
+    #                           output_dir="output",
+    #                           output_name="vtk_output")
 
     input_folder = "benchmark_tests/test_moving_load_on_beam/inputs_kratos"
 
@@ -136,7 +142,26 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
-    assert assert_files_equal("benchmark_tests/test_moving_load_on_beam/output_/output_vtk_full_model",
-                              os.path.join(input_folder, "output/output_vtk_full_model"))
+    with open(r"benchmark_tests/test_moving_load_on_beam/inputs_kratos/json_output.json", 'r') as json_file:
+        json_output1 = json.load(json_file)
+        time = json_output1["TIME"]
+        displacement_y = json_output1["NODE_3"]["DISPLACEMENT_Y"]
+
+    with open(r"benchmark_tests/test_moving_load_on_beam/output_/expected_output.json", 'r') as json_file:
+        expected_output = json.load(json_file)
+        time_expected = expected_output["TIME"]
+        displacement_y_expected = expected_output["NODE_3"]["DISPLACEMENT_Y"]
+
+    if SHOW_RESULTS:
+
+        import matplotlib.pyplot as plt
+        plt.plot(time, displacement_y)
+        plt.plot(time_expected, displacement_y_expected, "--")
+        plt.xlabel("Time [s]")
+        plt.ylabel("Displacement Y [m]")
+        plt.legend(["STEM output", "Expected output"])
+        plt.show()
+
+    assert_array_almost_equal(displacement_y, displacement_y_expected)
 
     rmtree(input_folder)

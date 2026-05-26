@@ -52,11 +52,9 @@ def test_stem():
     model.add_load_by_coordinates(load_coordinates, line_load, "load")
 
     # Define boundary conditions
-    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
+    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
-    sym_parameters = DisplacementConstraint(active=[True, False, True], is_fixed=[True, False, False], value=[0, 0, 0])
+    sym_parameters = DisplacementConstraint(is_fixed=[True, False, False], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "base_fixed")
@@ -83,8 +81,8 @@ def test_stem():
                                        reduction_factor=1.0,
                                        increase_factor=1.0,
                                        max_delta_time_factor=1000)
-    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0E-12,
-                                                            displacement_absolute_tolerance=1.0E-6)
+    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0E-6,
+                                                            displacement_absolute_tolerance=1.0E-12)
     stress_initialisation_type = StressInitialisationType.NONE
     solver_settings = SolverSettings(analysis_type=analysis_type,
                                      solution_type=solution_type,
@@ -94,7 +92,7 @@ def test_stem():
                                      are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
                                      strategy_type=LinearNewtonRaphsonStrategy(),
-                                     linear_solver_settings=Amgcl(tolerance=1e-6),
+                                     linear_solver_settings=Amgcl(tolerance=1e-12),
                                      rayleigh_k=6e-6,
                                      rayleigh_m=0.02)
 
@@ -146,10 +144,19 @@ def test_stem():
         with open(os.path.join(input_folder, "output/calculated_output_stage_2.json")) as f:
             calculated_data_stage2 = json.load(f)
 
+        with open(r"benchmark_tests/test_1d_wave_prop_drained_soil/output_/expected_output.json") as f:
+            calculated_data_single_stage = json.load(f)
+
         import matplotlib.pyplot as plt
 
         plt.plot(calculated_data_stage1["TIME"], calculated_data_stage1["NODE_5"]["VELOCITY_Y"])
         plt.plot(calculated_data_stage2["TIME"], calculated_data_stage2["NODE_5"]["VELOCITY_Y"])
+
+        plt.plot(calculated_data_single_stage["TIME"],
+                 calculated_data_single_stage["NODE_5"]["VELOCITY_Y"],
+                 ":",
+                 color="black")
+        plt.legend(["stage 1", "stage 2", "single stage"])
         plt.show()
 
     # results should be the same as the single stage calculation

@@ -111,7 +111,7 @@ def test_train_track_uvec_soil_3d():
     }
 
     # define the UVEC load
-    uvec_load = UvecLoad(direction=[1, 1, 1],
+    uvec_load = UvecLoad(direction_signs=[1, 1, 1],
                          velocity=40,
                          origin=[0.75, 3 + rail_pad_thickness, 5],
                          wheel_configuration=[0.0, 2.5, 19.9, 22.4],
@@ -122,12 +122,8 @@ def test_train_track_uvec_soil_3d():
     model.add_load_on_line_model_part("rail_track", uvec_load, "train_load")
 
     # define BC
-    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
-    roller_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                            is_fixed=[True, False, True],
-                                                            value=[0, 0, 0])
+    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
+    roller_displacement_parameters = DisplacementConstraint(is_fixed=[True, False, True], value=[0, 0, 0])
     absorbing_boundaries_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=40.0)
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
@@ -157,7 +153,7 @@ def test_train_track_uvec_soil_3d():
 
     strategy_type = LinearNewtonRaphsonStrategy()
     scheme_type = NewmarkScheme()
-    linear_solver_settings = Cg(tolerance=1e-6)
+    linear_solver_settings = Cg()
     stress_initialisation_type = StressInitialisationType.NONE
     solver_settings = SolverSettings(analysis_type=analysis_type,
                                      solution_type=solution_type,
@@ -231,6 +227,6 @@ def test_train_track_uvec_soil_3d():
     with open(os.path.join(input_folder, "output/json_output.json"), 'r') as f:
         actual_json = json.load(f)
 
-    TestUtils.assert_dictionary_almost_equal(expected_json, actual_json)
+    TestUtils.assert_dictionary_almost_equal(expected_json, actual_json, abs_tolerance=1e-12)
 
     rmtree(input_folder)

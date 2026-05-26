@@ -50,12 +50,8 @@ def test_stem():
 
     model.synchronise_geometry()
 
-    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
-    roller_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                            is_fixed=[True, False, True],
-                                                            value=[0, 0, 0])
+    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
+    roller_displacement_parameters = DisplacementConstraint(is_fixed=[True, False, True], value=[0, 0, 0])
 
     model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "base_fixed")
     model.add_boundary_condition_by_geometry_ids(1, [2, 4], roller_displacement_parameters, "sides_roller")

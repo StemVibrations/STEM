@@ -74,18 +74,17 @@ def test_stem(element_order):
     # Define moving load
     load_coordinates = [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0)]
 
-    moving_load = MovingLoad(load=["0.0", "-10000*t", "0.0"], direction=[1, 0, 0], velocity=1.0, origin=[0.0, 0.0, 0.0])
+    moving_load = MovingLoad(load=["0.0", "-10000*t", "0.0"],
+                             direction_signs=[1, 0, 0],
+                             velocity=1.0,
+                             origin=[0.0, 0.0, 0.0])
     model.add_load_by_coordinates(load_coordinates, moving_load, "moving_load")
 
     # Define rotation boundary condition
-    rotation_boundaries_parameters = RotationConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
+    rotation_boundaries_parameters = RotationConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
     # Define displacement conditions
-    displacementXYZ_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
+    displacementXYZ_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(0, [4], rotation_boundaries_parameters, "rotation")

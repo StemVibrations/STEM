@@ -53,11 +53,9 @@ def test_stem():
     model.add_load_by_coordinates(load_coordinates, line_load, "load")
 
     # Define boundary conditions
-    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
+    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
-    sym_parameters = DisplacementConstraint(active=[True, False, True], is_fixed=[True, False, True], value=[0, 0, 0])
+    sym_parameters = DisplacementConstraint(is_fixed=[True, False, True], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "base_fixed")
@@ -84,8 +82,8 @@ def test_stem():
                                        reduction_factor=1.0,
                                        increase_factor=1.0,
                                        max_delta_time_factor=1000)
-    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0E-12,
-                                                            displacement_absolute_tolerance=1.0E-6)
+    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0E-6,
+                                                            displacement_absolute_tolerance=1.0E-12)
     stress_initialisation_type = StressInitialisationType.NONE
     solver_settings = SolverSettings(analysis_type=analysis_type,
                                      solution_type=solution_type,
@@ -95,7 +93,7 @@ def test_stem():
                                      are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
                                      strategy_type=NewtonRaphsonStrategy(),
-                                     linear_solver_settings=Amgcl(tolerance=1e-6),
+                                     linear_solver_settings=Amgcl(tolerance=1e-12),
                                      rayleigh_k=6e-6,
                                      rayleigh_m=0.02)
 
@@ -136,7 +134,7 @@ def test_stem():
     stage2.get_model_part_by_name("load").parameters.value = [0.0, 0.0, 0.0]
     stage2.project_parameters.settings.solution_type = SolutionType.DYNAMIC
     stage2.output_settings[1].output_parameters.output_interval = delta_time / 100
-    stage2.project_parameters.settings.strategy_type = LinearNewtonRaphsonStrategy()
+    stage2.project_parameters.settings.strategy_type = LinearNewtonRaphsonStrategy(initialize_acceleration=True)
 
     stem.add_calculation_stage(stage2)
 

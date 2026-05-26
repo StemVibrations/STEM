@@ -51,6 +51,29 @@ class KratosBoundariesIO:
 
         return boundary_dict
 
+    def __create_constraint_table_process_dict(self, part_name: str, parameters: Union[DisplacementConstraint,
+                                                                                       RotationConstraint],
+                                               variable_name: str, current_time: float) -> Dict[str, Any]:
+        """
+            Creates a dictionary containing the constraint table process parameters
+
+            Args:
+                - part_name (str): part name where the boundary condition is applied
+                - parameters (Union[:class:`stem.boundary.DisplacementConstraint`,
+                                    :class:`stem.boundary.RotationConstraint`]): boundary parameters object
+                - variable_name (str): name of the variable to which the constraint is applied
+                - current_time (float): current time of the analysis
+
+            Returns:
+                - Dict[str, Any]: dictionary containing the boundary parameters
+            """
+
+        # add active flag to parameters based on is_fixed flag.
+        parameters.active = deepcopy(parameters.is_fixed)  # type: ignore[union-attr]
+
+        return IOUtils.create_vector_constraint_table_process_dict(self.domain, part_name, parameters, variable_name,
+                                                                   current_time)
+
     def create_boundary_condition_dict(self, part_name: str, parameters: BoundaryParametersABC, current_time: float,
                                        use_linear_elastic_strategy: bool) -> Union[Dict[str, Any], None]:
         """
@@ -69,11 +92,9 @@ class KratosBoundariesIO:
         # add boundary parameters to dictionary based on boundary type.
 
         if isinstance(parameters, DisplacementConstraint):
-            return IOUtils.create_vector_constraint_table_process_dict(self.domain, part_name, parameters,
-                                                                       "DISPLACEMENT", current_time)
+            return self.__create_constraint_table_process_dict(part_name, parameters, "DISPLACEMENT", current_time)
         elif isinstance(parameters, RotationConstraint):
-            return IOUtils.create_vector_constraint_table_process_dict(self.domain, part_name, parameters, "ROTATION",
-                                                                       current_time)
+            return self.__create_constraint_table_process_dict(part_name, parameters, "ROTATION", current_time)
         elif isinstance(parameters, AbsorbingBoundary):
             return self.__create_absorbing_boundary_dict(part_name, parameters, use_linear_elastic_strategy)
         else:

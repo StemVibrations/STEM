@@ -13,18 +13,21 @@ This avoids issues with packages dependencies.
 The virtual environment should be installed and activated before the installation of STEM.
 To create a virtual environment with pip follow this `link <https://docs.python.org/3/library/venv.html>`_.
 To create a virtual environment with conda follow this `link <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands>`_.
+To create a virtual environment with uv follow this `link <https://docs.astral.sh/uv/pip/environments/>`_.
 
-Currently, STEM supports Python 3.9, 3.10 and 3.11, therefore, you need to create the virtual environment with one of these Python versions.
+Currently, STEM supports Python 3.10, 3.11 and 3.12, therefore, you need to create the virtual environment with one
+of these Python versions.
 
 Installing STEM as a user
 .........................
-To install STEM stable release, run the following code in your environment:
+To install STEM latest stable release, run the following code inside your virtual environment:
 
 .. code-block::
 
-   pip install STEM-Vibrations
+         pip install STEM-Vibrations
 
-If you want to install the latest development version of STEM (no guarantee of stability), run the following code in your environment:
+If you want to install the development version of STEM (no guarantee of stability), run the following code inside your
+virtual environment:
 
 .. code-block::
 
@@ -43,10 +46,11 @@ To install the package in editable mode with the following command:
 
 .. code-block::
 
-   pip install -e ."[testing]"
+   pip install -e '.[testing]'
 
-This will install the package in editable mode, so that any changes you make to the code will be reflected in the installed package.
-The [testing] flag will also install the dependencies needed for running the tests.
+This will install the package in editable mode, so that any changes you make to the code will be reflected in the
+installed package.
+The ``[testing]`` extra will also install the dependencies needed for running the tests.
 
 Alternatively, you can install the requirements manually with the following command:
 
@@ -60,5 +64,15 @@ Alternatively, you can install the requirements manually with the following comm
 ParaView
 --------
 To visualise the results, STEM makes use of `ParaView <https://www.paraview.org/>`_.
-ParaView is an open-source multiple-platform application for interactive, scientific visualisation. It is recommended to
-download ParaView to visualise the results of the tutorials.
+ParaView is an open-source multiple-platform application for interactive, scientific visualisation.
+It is recommended to download ParaView to visualise the results of the tutorials and analyses.
+
+
+.. _gitvs:
+
+Git
+---
+`Git <https://git-scm.com/>`_ is a distributed version control system that allows you to track changes in your
+code and collaborate with other developers.
+It is required to install Git in order to install all the necessary dependencies for STEM and
+to contribute to the development of STEM.

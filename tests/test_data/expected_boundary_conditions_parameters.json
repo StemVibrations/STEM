@@ -36,9 +36,11 @@
                 "Parameters": {
                     "model_part_name": "PorousDomain.test_absorbing_boundaries",
                     "absorbing_factors": [1.0, 1.0],
-                    "virtual_thickness": 1000.0
+                    "virtual_thickness": 1000.0,
+                    "skip_internal_forces": false
                 }
             }
-        ]
+        ],
+        "auxiliary_process_list": []
     }
 }

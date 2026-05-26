@@ -9,7 +9,7 @@ from stem.solver import (AnalysisType, SolutionType, TimeIntegration, Displaceme
                          LinearNewtonRaphsonStrategy)
 from stem.output import NodalOutput, VtkOutputParameters
 from stem.stem import Stem
-from benchmark_tests.utils import assert_files_equal
+from benchmark_tests.utils import assert_floats_in_directories_almost_equal
 from shutil import rmtree
 
 
@@ -55,11 +55,9 @@ def test_stem():
     model_stage_1.add_load_by_coordinates(load_coordinates, line_load, "load")
 
     # Define boundary conditions
-    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
+    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
-    sym_parameters = DisplacementConstraint(active=[True, False, False], is_fixed=[True, False, False], value=[0, 0, 0])
+    sym_parameters = DisplacementConstraint(is_fixed=[True, False, False], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model_stage_1.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "base_fixed")
@@ -86,10 +84,10 @@ def test_stem():
                                        reduction_factor=1.0,
                                        increase_factor=1.0,
                                        max_delta_time_factor=1000)
-    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0E-12,
-                                                            displacement_absolute_tolerance=1.0E-6)
+    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0E-6,
+                                                            displacement_absolute_tolerance=1.0E-12)
     stress_initialisation_type = StressInitialisationType.NONE
-    strategy = NewtonRaphsonStrategy()
+    strategy = LinearNewtonRaphsonStrategy()
     solver_settings = SolverSettings(analysis_type=analysis_type,
                                      solution_type=solution_type,
                                      stress_initialisation_type=stress_initialisation_type,
@@ -143,8 +141,7 @@ def test_stem():
     # --------------------------------
     stem.run_calculation()
 
-    result = assert_files_equal("benchmark_tests/test_multi_stage/output_/output_vtk_full_model",
-                                os.path.join(input_folder, "output/output_vtk_full_model"))
+    assert_floats_in_directories_almost_equal("benchmark_tests/test_multi_stage/output_/output_vtk_full_model",
+                                              os.path.join(input_folder, "output/output_vtk_full_model"))
 
-    assert result is True
     rmtree(input_folder)

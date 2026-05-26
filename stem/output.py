@@ -31,6 +31,10 @@ class NodalOutput(Enum):
     VOLUME_ACCELERATION_Y = auto()
     VOLUME_ACCELERATION_Z = auto()
 
+    # linearly extrapolated values
+    # todo check which other variables can be extrapolated
+    CAUCHY_STRESS_VECTOR = auto()
+
 
 class GaussPointOutput(Enum):
     """

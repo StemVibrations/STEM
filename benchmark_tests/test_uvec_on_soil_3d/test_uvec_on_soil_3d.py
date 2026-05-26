@@ -49,7 +49,7 @@ def test_stem():
     load_coordinates = [(0.0, 1.0, 0.0), (0.0, 1.0, 10)]
 
     uvec_parameters = {"load_wheel_1": -30.0, "load_wheel_2": -10.0}
-    uvec_load = UvecLoad(direction=[1, 1, 1],
+    uvec_load = UvecLoad(direction_signs=[1, 1, 1],
                          velocity=5,
                          origin=[0.0, 1.0, 0.0],
                          wheel_configuration=[1.0, 2.0],
@@ -62,12 +62,8 @@ def test_stem():
     model.synchronise_geometry()
 
     # Define boundary conditions
-    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
-    roller_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                            is_fixed=[True, False, False],
-                                                            value=[0, 0, 0])
+    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
+    roller_displacement_parameters = DisplacementConstraint(is_fixed=[True, False, False], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(2, [2], no_displacement_parameters, "base_fixed")

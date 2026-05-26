@@ -117,3 +117,32 @@ class HingeParameters(AdditionalProcessesParametersABC):
 
     ROTATIONAL_STIFFNESS_AXIS_2: float
     ROTATIONAL_STIFFNESS_AXIS_3: float
+
+
+@dataclass
+class ExtrapolateIntegrationPointToNodesParameters(AdditionalProcessesParametersABC):
+    """
+    Class containing the parameters for extrapolating integration point values to nodes
+
+    Inheritance:
+        - :class:`AdditionalProcessesParametersABC`
+    Attributes:
+        - list_of_variables (List[str]): list of variable names to be extrapolated from integration points to nodes
+    """
+
+    list_of_variables: List[str]
+
+
+@dataclass
+class AdditionalProcessPart:
+    """
+    Class containing the parameters for an additional process to be applied to an existing model part.
+    If the model_part_name is left empty, the additional process will be applied to the whole model.
+
+    Attributes:
+        - parameters (:class:`AdditionalProcessesParametersABC`): The parameters of the additional process
+        - model_part_name (str): The name of the model part to which the additional process will be applied. Default is
+            an empty string, meaning the whole model.
+    """
+    parameters: AdditionalProcessesParametersABC
+    model_part_name: str = ""

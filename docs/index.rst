@@ -1,15 +1,15 @@
 STEM
 ====
-STEM is an open-source calculation model that is developed to compute the impact of
-mitigation techniques on railway induced vibrations.
+STEM is an open-source calculation model developed to compute the impact of
+mitigation techniques on railway-induced vibrations.
 
 In STEM the train-track interaction and the propagation of the vibrations through the subsurface
-are simulated. The model is able to compute the vibration levels at the ground surface taking into account
+are simulated. The model can compute the vibration levels at the ground surface taking into account
 the presence of irregularities in the track geometry, the type of train and train speed, and the spatial variability
 of the track and soil properties.
 
 .. figure:: _static/STEM_overview.png
-   :alt: Example image
+   :alt: STEM overview
    :width: 400
 
    Scope of the STEM model
@@ -17,15 +17,18 @@ of the track and soil properties.
 The STEM model is based on the finite element method and it is powered by
 `Kratos Multiphysics <https://github.com/KratosMultiphysics/Kratos>`_.
 
-User guide
-==========
 
-Background information
-......................
+Background & prerequisites
+==========================
 STEM is a numerical model based on the finite element method.
-It is recommended to have a basic understanding of the finite element theory before using STEM.
+For more information on the formulation and theory behind the model, see :doc:`formulation`.
+It is recommended to have a basic understanding of the Finite Element theory before using STEM.
+For a more detailed introduction to the finite element method, we recommend the following resources:
 
-STEM is build in Python. It is recommended to have a basic understanding of Python before using STEM.
+* `The Finite Element Method: Its Basis and Fundamentals <https://search.worldcat.org/title/857713191>`_
+* `Finite Element Procedures <https://search.worldcat.org/title/191703381>`_
+
+STEM is built in Python. It is recommended to have a basic understanding of Python before using STEM.
 For new users of Python, the following resources are recommended:
 
 * `Python beginners guide <https://wiki.python.org/moin/BeginnersGuide>`_
@@ -49,61 +52,66 @@ understanding of ParaView before using STEM. The following resources are recomme
 * `ParaView tutorials <https://www.paraview.org/tutorials/>`_
 
 
-STEM Installation
-.................
-To install STEM you need to install the following items:
+.. Contents
+.. ========
+.. This creates the TOC for the side pane
 
-* :ref:`python_stem`
+.. toctree::
+   :maxdepth: 2
+   :caption: Getting started
+   :hidden:
 
-* :ref:`parav`
+   installation
+   known_issues
 
-Optionally, you can install `gmsh <https://gmsh.info/>`_ to visualise the mesh.
+.. toctree::
+   :maxdepth: 3
+   :caption: Formulation and theory
+   :hidden:
 
+   formulation
 
-Tutorials
-.........
+.. toctree::
+   :maxdepth: 2
+   :caption: STEM definitions
+   :hidden:
 
-* :ref:`tutorial1`
+   materials
+   boundary_conditions
+   loads
+   track
+   outputs
+   solver_settings
 
-* :ref:`tutorial2`
+.. toctree::
+   :maxdepth: 2
+   :caption: Interface definitions
+   :hidden:
 
-* :ref:`tutorial3`
-
-* :ref:`tutorial4`
-
-* :ref:`tutorial5`
-
-
-STEM interface definitions
-==========================
-STEM has interface definitions to interact with the model, and allow the extension of the model and the use
-of different train and material models:
-
-   * :ref:`uvec`
-
-   * :ref:`umat`
-
-
-How to contribute
-=================
-If you want contribute to STEM please follow the steps defined in :doc:`contributions`.
+   API_definition
 
 
-STEM team
-=========
-STEM is a research programme that results from a collaboration between the following partners:
+.. toctree::
+   :maxdepth: 2
+   :caption: Examples and benchmarks
+   :hidden:
 
-* `ProRail <https://www.prorail.nl>`_
-* `Deltares <https://www.deltares.nl>`_
-* `TNO <https://www.tno.nl>`_
-* `TU Delft <https://www.tudelft.nl>`_
+   tutorials
 
-The :doc:`authors`.
+.. toctree::
+   :maxdepth: 1
+   :caption: Developer reference
+   :hidden:
 
-Package documentation
-=====================
+   api
 
-The :doc:`stem` documentation.
+.. toctree::
+   :maxdepth: 1
+   :caption: Project
+   :hidden:
+
+   contributions
+   authors
 
 .. References
 .. ==========

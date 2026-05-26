@@ -14,7 +14,7 @@ from gmsh_utils import gmsh_IO
 
 from stem.IO.io_utils import IOUtils
 from stem.IO.kratos_io import KratosIO
-from stem.additional_processes import ParameterFieldParameters
+from stem.additional_processes import ParameterFieldParameters, AdditionalProcessPart, ExtrapolateIntegrationPointToNodesParameters
 from stem.boundary import DisplacementConstraint
 from stem.field_generator import RandomFieldGenerator
 from stem.load import LineLoad, SurfaceLoad, MovingLoad
@@ -93,9 +93,7 @@ class TestKratosModelIO:
         model.add_load_by_coordinates(load_coordinates_right, line_load2, "load_right")
 
         # add pin parameters
-        no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                            is_fixed=[True, True, True],
-                                                            value=[0, 0, 0])
+        no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
         # add boundary conditions in 0d, 1d and 2d
         model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "no_displacement")
@@ -143,9 +141,7 @@ class TestKratosModelIO:
         model.add_load_by_coordinates(load_coordinates_top, line_load1, "load_top")
 
         # add pin parameters
-        no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                            is_fixed=[True, True, True],
-                                                            value=[0, 0, 0])
+        no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
         # add boundary conditions in 0d, 1d and 2d
         model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "no_displacement")
@@ -198,9 +194,7 @@ class TestKratosModelIO:
         model.add_load_by_coordinates(load_coordinates_top, line_load1, "load_top")
 
         # add pin parameters
-        no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                            is_fixed=[True, True, True],
-                                                            value=[0, 0, 0])
+        no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
         # add boundary conditions in 0d, 1d and 2d
         model.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "no_displacement")
@@ -265,9 +259,7 @@ class TestKratosModelIO:
         model.add_load_by_coordinates(load_coordinates_bottom, surface_load_bottom, "load_bottom")
 
         # add pin parameters
-        no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                            is_fixed=[True, True, True],
-                                                            value=[0, table2, 0])
+        no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, table2, 0])
 
         # add boundary conditions in 0d, 1d and 2d
         model.add_boundary_condition_by_geometry_ids(2, [6], no_displacement_parameters, "no_displacement")
@@ -729,7 +721,7 @@ class TestKratosModelIO:
                                             load=[0.0, -10.0, 0.0],
                                             velocity=5.0,
                                             offset=3.0,
-                                            direction=[1, 1, 1])
+                                            direction_signs=[1, 1, 1])
         msg = "Attribute `value` does not exist in class: MovingLoad."
         with pytest.raises(ValueError, match=msg):
 
@@ -1103,6 +1095,42 @@ class TestKratosModelIO:
         # create auxiliary process list dictionary
         with pytest.raises(ValueError, match=f"Body model part empty_body_model_part has no id initialised."):
             kratos_io._KratosIO__create_auxiliary_process_list_dictionary(model=model)
+
+    def test_create_auxiliary_process_list_dictionary(self, create_default_2d_model: Model):
+        """
+        Test the creation of the auxiliary process list dictionary.
+
+        Args:
+            - create_default_2d_model (:class:`stem.model.Model`): the default 2D model of a square \
+                soil layer and a line load.
+
+        """
+
+        model = create_default_2d_model
+        model.body_model_parts[0].id = 1  # assign id to body model part
+        kratos_io = KratosIO(ndim=model.ndim)
+
+        ExtrapolateIntegrationPointToNodesParameters(["CAUCHY_STRESS_VECTOR"])
+
+        model.additional_process_parts = [
+            AdditionalProcessPart(ExtrapolateIntegrationPointToNodesParameters(["CAUCHY_STRESS_VECTOR"]), "")
+        ]
+        auxiliary_process_list_dict = kratos_io._KratosIO__create_auxiliary_process_list_dictionary(model=model)
+        expected_dict = {
+            "processes": {
+                "auxiliary_process_list": [{
+                    "python_module": "geo_extrapolate_integration_point_values_to_nodes_process",
+                    "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+                    "process_name": "GeoExtrapolateIntegrationPointValuesToNodesProcess",
+                    "Parameters": {
+                        "model_part_name": "PorousDomain",
+                        "list_of_variables": ["CAUCHY_STRESS_VECTOR"]
+                    }
+                }]
+            }
+        }
+
+        TestUtils.assert_dictionary_almost_equal(expected_dict, auxiliary_process_list_dict)
 
     def test_create_folder_for_json_output(self):
         """

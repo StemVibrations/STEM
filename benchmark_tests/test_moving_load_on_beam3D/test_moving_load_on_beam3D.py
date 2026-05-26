@@ -53,7 +53,7 @@ def test_stem():
 
     # Define moving load
     moving_load = MovingLoad(load=["0.0", "-10000*t", "0.0"],
-                             direction=[1, 1, 1],
+                             direction_signs=[1, 1, 1],
                              velocity=1.0,
                              origin=[0.0, 0.0, 0.0],
                              offset=0.0)
@@ -61,18 +61,12 @@ def test_stem():
     model.add_load_by_geometry_ids([1], moving_load, "moving_load")
 
     # Define rotation boundary condition
-    rotation_boundaries_parameters_right = RotationConstraint(active=[True, True, True],
-                                                              is_fixed=[True, True, True],
-                                                              value=[0, 0, 0])
+    rotation_boundaries_parameters_right = RotationConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
-    rotation_boundaries_parameters_left = RotationConstraint(active=[True, True, True],
-                                                             is_fixed=[True, True, False],
-                                                             value=[0, 0, 0])
+    rotation_boundaries_parameters_left = RotationConstraint(is_fixed=[True, True, False], value=[0, 0, 0])
 
     # Define displacement conditions
-    displacementXYZ_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
+    displacementXYZ_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(0, [2], rotation_boundaries_parameters_right, "rotation_right")

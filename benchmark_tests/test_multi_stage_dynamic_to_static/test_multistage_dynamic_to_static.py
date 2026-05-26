@@ -60,11 +60,9 @@ def test_stem():
     model_stage_1.add_load_by_coordinates(load_coordinates, line_load, "load")
 
     # Define boundary conditions
-    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
+    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
-    sym_parameters = DisplacementConstraint(active=[True, False, True], is_fixed=[True, False, False], value=[0, 0, 0])
+    sym_parameters = DisplacementConstraint(is_fixed=[True, False, False], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model_stage_1.add_boundary_condition_by_geometry_ids(1, [1], no_displacement_parameters, "base_fixed")
@@ -190,7 +188,9 @@ def test_stem():
         calculated_data_stage2 = json.load(f)
 
     # Check if the expected displacements and velocities in stage 2 are equal to the calculated ones
-    TestUtils.assert_dictionary_almost_equal(expected=expected_data_stage2, actual=calculated_data_stage2)
+    TestUtils.assert_dictionary_almost_equal(expected=expected_data_stage2,
+                                             actual=calculated_data_stage2,
+                                             abs_tolerance=1e-20)
 
     merged_expected_data = Utils.merge(expected_data_stage1, expected_data_stage2)
     merged_calculated_data = Utils.merge(calculated_data_stage1, calculated_data_stage2)

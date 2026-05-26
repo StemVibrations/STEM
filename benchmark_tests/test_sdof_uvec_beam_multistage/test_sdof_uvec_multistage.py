@@ -72,7 +72,7 @@ def test_stem():
         "file_name": r"calculated_results.txt"
     }
 
-    uvec_load = UvecLoad(direction=[1, 1, 0],
+    uvec_load = UvecLoad(direction_signs=[1, 1, 0],
                          velocity=0,
                          origin=[12.5, 0, 0],
                          wheel_configuration=[0.0],
@@ -82,9 +82,7 @@ def test_stem():
     model.add_load_by_geometry_ids([1], uvec_load, "uvec_load")
 
     # Define displacement conditions
-    displacementXYZ_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
+    displacementXYZ_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
     model.add_boundary_condition_by_geometry_ids(0, [1, 2], displacementXYZ_parameters, "displacementXYZ")
 
@@ -130,7 +128,7 @@ def test_stem():
                                      is_stiffness_matrix_constant=False,
                                      are_mass_and_damping_constant=False,
                                      convergence_criteria=convergence_criterion,
-                                     strategy_type=NewtonRaphsonStrategy(),
+                                     strategy_type=LinearNewtonRaphsonStrategy(),
                                      rayleigh_k=0.000,
                                      rayleigh_m=0.00)
 

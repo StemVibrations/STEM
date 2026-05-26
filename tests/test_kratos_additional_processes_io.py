@@ -5,7 +5,8 @@ import re
 import pytest
 
 from stem.IO.kratos_additional_processes_io import KratosAdditionalProcessesIO
-from stem.additional_processes import Excavation, RandomFieldGenerator, ParameterFieldParameters, HingeParameters
+from stem.additional_processes import (Excavation, RandomFieldGenerator, ParameterFieldParameters, HingeParameters,
+                                       ExtrapolateIntegrationPointToNodesParameters)
 from stem.load import PointLoad
 from tests.utils import TestUtils
 
@@ -149,3 +150,33 @@ class TestKratosAdditionalProcessesIO:
         assert len(generated_dicts) == len(expected_dicts) == 2
         for generated_dict, expected_dict in zip(generated_dicts, expected_dicts):
             TestUtils.assert_dictionary_almost_equal(generated_dict, expected_dict)
+
+    def test_create_extrapolate_integration_point_to_nodes_dict(self):
+        """
+        Test the creation of the extrapolate integration point to nodes dictionary for the ProjectParameters.json file
+
+        """
+
+        # Define the extrapolate integration point to nodes parameters
+        extrapolate_parameters = ExtrapolateIntegrationPointToNodesParameters(
+            list_of_variables=["CAUCHY_STRESS_VECTOR"])
+
+        # write dictionary for the boundary(/ies)
+        additional_processes_io = KratosAdditionalProcessesIO(domain="PorousDomain")
+
+        # create the extrapolate integration point to nodes dictionary
+        generated_dicts = additional_processes_io.create_additional_processes_dict(
+            part_name="extrapolate_integration_point_to_nodes", parameters=extrapolate_parameters)
+
+        expected_dict = {
+            "python_module": "geo_extrapolate_integration_point_values_to_nodes_process",
+            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+            "process_name": "GeoExtrapolateIntegrationPointValuesToNodesProcess",
+            "Parameters": {
+                "model_part_name": "PorousDomain.extrapolate_integration_point_to_nodes",
+                "list_of_variables": ["CAUCHY_STRESS_VECTOR"]
+            }
+        }
+
+        # assert the objects to be equal
+        TestUtils.assert_dictionary_almost_equal(generated_dicts[0], expected_dict)
