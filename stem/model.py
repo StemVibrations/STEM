@@ -1841,19 +1841,18 @@ class Model:
                 updating_body_model_part.mesh.elements, new_node_id_to_connected_elements, old_to_new_node_id_map)
 
             # Update the body model part
-
             self.body_model_parts[index_updating_body_model_part] = updating_body_model_part
             self.__update_process_model_parts_for_interfaces(old_to_new_node_id_map, updating_body_model_part,
                                                              connected_process_definition)
             # Update the gmsh_io mesh data
-
-            # nodes new ones with the coordinates
-            new_mesh = copy.deepcopy(self.gmsh_io.mesh_data["nodes"])
+            # add new nodes with the coordinates
+            new_mesh = self.gmsh_io.mesh_data["nodes"].copy()
             for node_id, node_coordinates in self.gmsh_io.mesh_data["nodes"].items():
                 if node_id in old_to_new_node_id_map:
                     # add a new node to the dictionary
                     new_mesh[old_to_new_node_id_map[node_id]] = node_coordinates
             self.gmsh_io.mesh_data["nodes"] = new_mesh
+
             # change the node ids in the elements of the gmsh_io mesh data
             # get the element types to update
             for _, element_ids_to_update in new_node_id_to_connected_elements.items():
@@ -1863,6 +1862,7 @@ class Model:
                     element = self.gmsh_io.mesh_data["elements"][etype][element_id]
                     updated_node_ids = [old_to_new_node_id_map.get(nid, nid) for nid in element]
                     self.gmsh_io.mesh_data["elements"][etype][element_id] = updated_node_ids
+
             # Finally, update the nodes in the physical group in the gmsh_io mesh data
             self.gmsh_io.mesh_data["physical_groups"][updating_body_model_part.name]["node_ids"] = \
                 list(updating_body_model_part.mesh.nodes.keys())
@@ -2030,17 +2030,22 @@ class Model:
 
         # Create interface elements
         interface_elements = self.__create_interface_elements(new_mesh.nodes, nodes_stable_parts, map_new_node_ids)
+        if len(interface_elements) == 0:
+            raise ValueError("No interface elements were created. Please check the interface definition and the mesh.")
 
         new_mesh.elements = interface_elements
         interface_body_model_part.mesh = new_mesh
 
         # Add elements to the gmsh_io mesh data as a new element type
         elements_gmsh_io_format = {element_id: element.node_ids for element_id, element in interface_elements.items()}
-        element_type_gmsh = f"INTERFACE_{self.ndim}D"
+
+        element_type_gmsh = f"UNSUPPORTED_{next(iter(interface_elements.values())).element_type}"
+
         if element_type_gmsh not in self.gmsh_io.mesh_data["elements"]:
             self.gmsh_io.mesh_data["elements"][element_type_gmsh] = elements_gmsh_io_format
         else:
             self.gmsh_io.mesh_data["elements"][element_type_gmsh].update(elements_gmsh_io_format)
+
         # Add physical group for the interface body model part
         nodes_id_list = sorted(list(new_mesh.nodes.keys()))
         element_ids_list = sorted(list(interface_elements.keys()))
@@ -2091,7 +2096,7 @@ class Model:
 
         # build interface elements
         interface_elements: Dict[int, Element] = {}
-        next_id_base = self.__get_maximum_element_id()
+        next_id_base = self.__get_maximum_element_id() + 1
         for i, part_two_element in enumerate(body_part_elements_with_overlap):
             # pick out the shared nodes in part-2
             shared_node_ids_part_2 = [
@@ -2112,7 +2117,7 @@ class Model:
             n_nodes_connection = len(shared_node_ids_part_1)
             interface_name = f"{interface_name}_{n_nodes_connection}_PLUS_{n_nodes_connection}"
             # assign a new element ID
-            new_elem_id = next_id_base + i + 1
+            new_elem_id = next_id_base + i
             interface_elements[new_elem_id] = Element(id=new_elem_id, element_type=interface_name, node_ids=ordered_ids)
 
         return interface_elements
