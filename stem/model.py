@@ -26,7 +26,6 @@ from stem.soil_material import *
 from stem.solver import Problem, StressInitialisationType
 from stem.structural_material import *
 from stem.utils import Utils
-from stem.utils_interface import UtilsInterface
 from stem.water_processes import WaterProcessParametersABC, UniformWaterPressure
 
 
@@ -1779,8 +1778,6 @@ class Model:
         Adjust interface elements between stable and changing parts of the model.
         Creates interface elements and updates node IDs accordingly.
         """
-        # Check if interfaces are defined
-        n_interface_nodes, element_type_gmsh = self.__get_interface_config()
         # Process each defined interface
         for name, interface_data in self.interfaces.items():
             # Extract interface components
@@ -1797,40 +1794,22 @@ class Model:
             max_node_id = self.__get_maximum_node_id()
             old_to_new_node_id_map = {node_id: max_node_id + idx + 1 for idx, node_id in enumerate(common_node_ids)}
             # Update changing parts with new node IDs
-            indexes_changing_parts = [self.body_model_parts.index(part) for part in interface_part_2]
-            self.__update_changing_parts(interface_part_2, indexes_changing_parts, common_node_ids,
-                                         old_to_new_node_id_map, connected_process_definition)
+            self.__update_changing_parts(interface_part_2, common_node_ids, old_to_new_node_id_map,
+                                         connected_process_definition)
             # Create and add interface body model part
             interface_body_model_part = self.__create_interface_body_model_part(name, material_interface,
-                                                                                common_node_ids, old_to_new_node_id_map,
-                                                                                element_type_gmsh, node_ids_part_1)
+                                                                                old_to_new_node_id_map, node_ids_part_1)
             self.body_model_parts.append(interface_body_model_part)
 
-    def __get_interface_config(self) -> Tuple[int, str]:
-        """
-        Get the interface configuration based on the model dimensions.
-
-        Returns:
-            - Tuple[int, str]: Number of interface nodes and the GMSH element type
-        """
-        if self.ndim == 2:
-            return 4, "QUADRANGLE_4N"
-        elif self.ndim == 3:
-            # TODO for now only 6 nodes are supported for 3D models
-            return 6, "PRISM_6N"
-        else:
-            raise ValueError(f"Unsupported number of dimensions: {self.ndim}")
-
-    def __update_changing_parts(self, interface_parts_2: List[BodyModelPart], indexes_inferface_parts_2: List[int],
-                                common_node_ids: Set[int], old_to_new_node_id_map: Dict[int, int],
-                                connected_process_definition: Dict[str, List[bool]]):
+    def __update_changing_parts(self, interface_parts_2: List[BodyModelPart], common_node_ids: Set[int],
+                                old_to_new_node_id_map: Dict[int, int], connected_process_definition: Dict[str,
+                                                                                                           List[bool]]):
         """
         Updates the changing parts with new node IDs both mesh and elements are updated.
 
         Args:
             - interface_parts_2 (List[ :class:`stem.model_part.BodyModelPart`]): List of names
             parts which nodes should be updated
-            - indexes_inferface_parts_2 (List[int]): List of indexes of changing parts
             - common_node_ids (Set[int]): Common node ids between stable and changing parts
             - old_to_new_node_id_map (Dict[int, int]): A dictionary of ids, mapping from old node IDs to new node IDs
             - connected_process_definition (Dict[str, List[bool]]): A dictionary containing the process definitions
@@ -1839,8 +1818,11 @@ class Model:
         Raises:
             - ValueError: If a part in interface_parts_2 has no mesh. Please generate the mesh first.
         """
-        for index_updating_body_model_part, updating_body_model_part in zip(indexes_inferface_parts_2,
-                                                                            interface_parts_2):
+
+        for updating_body_model_part in interface_parts_2:
+
+            index_updating_body_model_part = self.body_model_parts.index(updating_body_model_part)
+
             # check that the part has a mesh
             if updating_body_model_part.mesh is None:
                 raise ValueError(f"Part `{updating_body_model_part.name}` has no mesh. Please generate the mesh first.")
@@ -1859,6 +1841,7 @@ class Model:
                 updating_body_model_part.mesh.elements, new_node_id_to_connected_elements, old_to_new_node_id_map)
 
             # Update the body model part
+
             self.body_model_parts[index_updating_body_model_part] = updating_body_model_part
             self.__update_process_model_parts_for_interfaces(old_to_new_node_id_map, updating_body_model_part,
                                                              connected_process_definition)
@@ -2018,8 +2001,8 @@ class Model:
                 ]
         return elements
 
-    def __create_interface_body_model_part(self, name: str, material: InterfaceMaterial, common_nodes: Set[int],
-                                           map_new_node_ids: Dict[int, int], element_type_gmsh: str,
+    def __create_interface_body_model_part(self, name: str, material: InterfaceMaterial, map_new_node_ids: Dict[int,
+                                                                                                                int],
                                            nodes_stable_parts: Set[int]) -> BodyModelPart:
         """
         Create an interface body model part with interface elements.
@@ -2027,9 +2010,7 @@ class Model:
         Args:
             - name (str): Name of the interface body model part
             - material (:class:`stem.soil_material.InterfaceMaterial`): Material for the interface body model part
-            - common_nodes (Set[int]): Set of common nodes between stable and changing parts
             - map_new_node_ids (Dict[int, int]): Mapping from old node IDs to new node IDs
-            - element_type_gmsh (str): Type of GMSH element (e.g., "QUADRANGLE_4N")
             - nodes_stable_parts (Set[int]): List of nodes from stable parts
 
         Returns:
@@ -2048,14 +2029,14 @@ class Model:
         }
 
         # Create interface elements
-        interface_elements = self.__create_interface_elements(new_mesh.nodes, element_type_gmsh, nodes_stable_parts,
-                                                              map_new_node_ids)
+        interface_elements = self.__create_interface_elements(new_mesh.nodes, nodes_stable_parts, map_new_node_ids)
 
         new_mesh.elements = interface_elements
         interface_body_model_part.mesh = new_mesh
 
         # Add elements to the gmsh_io mesh data as a new element type
         elements_gmsh_io_format = {element_id: element.node_ids for element_id, element in interface_elements.items()}
+        element_type_gmsh = f"INTERFACE_{self.ndim}D"
         if element_type_gmsh not in self.gmsh_io.mesh_data["elements"]:
             self.gmsh_io.mesh_data["elements"][element_type_gmsh] = elements_gmsh_io_format
         else:
@@ -2071,8 +2052,7 @@ class Model:
         }
         return interface_body_model_part
 
-    def __create_interface_elements(self, interface_nodes_all_parts: Dict[int, Node], element_type_gmsh: str,
-                                    node_ids_part_1: Set[int],
+    def __create_interface_elements(self, interface_nodes_all_parts: Dict[int, Node], node_ids_part_1: Set[int],
                                     map_old_to_new_node_ids: Dict[int, int]) -> Dict[int, Element]:
         """
         Create interface elements from the provided nodes.
@@ -2087,51 +2067,53 @@ class Model:
         Returns:
             - Dict[int, :class:`stem.mesh.Element`]: Dictionary of created interface elements with their IDs
         """
-        # 1) choose threshold & ordering function
-        if element_type_gmsh == "QUADRANGLE_4N":
-            min_shared = 2
-            order_fn = UtilsInterface.get_quad4_node_order
-        elif element_type_gmsh == "PRISM_6N":
-            min_shared = 3
-            order_fn = UtilsInterface.get_prism6_node_order
-        else:
-            raise ValueError(f"Element type {element_type_gmsh} is not supported, for interface elements.")
 
-        # 2) split interface nodes into part-2
+        # split interface nodes into part-2
         node_ids_part_2 = interface_nodes_all_parts.keys() - node_ids_part_1
 
-        # 3) collect all body-part elements with enough overlap in part-2
+        # collect all body-part elements which overlap in part 2
         body_part_elements_with_overlap: List[Element] = []
         for model_body_part in self.body_model_parts:
             if model_body_part.mesh is None:
                 raise ValueError("Mesh not yet initialised. Please generate the mesh using Model.generate_mesh().")
-            for elem in model_body_part.mesh.elements.values():
-                if len(set(elem.node_ids) & node_ids_part_2) >= min_shared:
-                    body_part_elements_with_overlap.append(elem)
 
-        # 4) invert old→new map for part-1 lookup
+            if len(model_body_part.mesh.elements) > 0:
+                element_type = next(iter(model_body_part.mesh.elements.values())).element_type
+                n_shared_nodes = ELEMENT_DATA[element_type]["n_nodes_facets"]
+
+                # overlapping when n shared nodes is as expected for the element type
+                for elem in model_body_part.mesh.elements.values():
+                    if len(set(elem.node_ids) & node_ids_part_2) == n_shared_nodes:
+                        body_part_elements_with_overlap.append(elem)
+
+        # invert lookup table to map new node IDs back to old node IDs
         map_new_to_old = {new: old for old, new in map_old_to_new_node_ids.items()}
 
-        # 5) build interface elements
+        # build interface elements
         interface_elements: Dict[int, Element] = {}
         next_id_base = self.__get_maximum_element_id()
         for i, part_two_element in enumerate(body_part_elements_with_overlap):
-            # a) pick out the shared nodes in part-2
-            shared_node_ids_part_2 = [nid for nid in part_two_element.node_ids if nid in interface_nodes_all_parts]
-            # b) map them back to part-1 node IDs
-            part_1_shared_node_ids = [map_new_to_old[nid] for nid in shared_node_ids_part_2]
-            # c) grab actual Node objects in the correct sequence
-            interface_node_sequence = [
-                interface_nodes_all_parts[nid] for nid in part_1_shared_node_ids + shared_node_ids_part_2
+            # pick out the shared nodes in part-2
+            shared_node_ids_part_2 = [
+                node_id for node_id in part_two_element.node_ids if node_id in interface_nodes_all_parts
             ]
-            # d) ask the utility to give us the properly ordered node IDs
-            ordered_ids = order_fn(node_ids_part_1, interface_node_sequence)
+            # map them back to part-1 node IDs
+            shared_node_ids_part_1 = [map_new_to_old[nid] for nid in shared_node_ids_part_2]
 
-            # e) assign a fresh element ID
+            ordered_ids = shared_node_ids_part_1 + shared_node_ids_part_2
+            # d) ask the utility to give us the properly ordered node IDs
+            if self.ndim == 2:
+                interface_name = "LINE_INTERFACE"
+            elif self.ndim == 3:
+                interface_name = "SURFACE_INTERFACE"
+            else:
+                raise ValueError(f"Unsupported dimension `{self.ndim}` for interface element creation.")
+
+            n_nodes_connection = len(shared_node_ids_part_1)
+            interface_name = f"{interface_name}_{n_nodes_connection}_PLUS_{n_nodes_connection}"
+            # assign a new element ID
             new_elem_id = next_id_base + i + 1
-            interface_elements[new_elem_id] = Element(id=new_elem_id,
-                                                      element_type=element_type_gmsh,
-                                                      node_ids=ordered_ids)
+            interface_elements[new_elem_id] = Element(id=new_elem_id, element_type=interface_name, node_ids=ordered_ids)
 
         return interface_elements
 
@@ -2951,9 +2933,12 @@ class Model:
                 with open(json_file_path, "w") as outfile:
                     json.dump(new_json, outfile, indent=2)
 
-    def set_interface_between_model_parts(self, interface_part_1_name: Sequence[str],
-                                          interface_part_2_name: Sequence[str], material: Material,
-                                          connected_process_definition: Dict[str, List[bool]]):
+    def set_interface_between_model_parts(self,
+                                          interface_part_1_names: Sequence[str],
+                                          interface_part_2_names: Sequence[str],
+                                          material: Material,
+                                          interface_name: str,
+                                          connected_process_definition: Dict[str, List[bool]] = {}):
         """
         Set the interface between two model parts.
 
@@ -2967,24 +2952,21 @@ class Model:
             - material (:class:`stem.model_part.Material`): The material to be used for the interface.
             - connected_process_definition (Dict[str, List[bool]]): A dictionary defining the connected
             processes to the interface part 1 and/or part 2. The keys are the process names and the values are lists of
-            booleans indicating whether the process is connected to part 1 or part 2.
+            booleans indicating whether the process is connected to part 1 or part 2. If a connected process is not
+            added to the dictionary, it is assumed that it is connected to both parts.
 
         Raises:
             - ValueError: If the model part names are not found.
 
         """
         # check if the model parts exist
-        interface_part_1 = [self.get_model_part_by_name(name) for name in interface_part_1_name]
-        interface_part_2 = [self.get_model_part_by_name(name) for name in interface_part_2_name]
+        interface_part_1 = [self.get_model_part_by_name(name) for name in interface_part_1_names]
+        interface_part_2 = [self.get_model_part_by_name(name) for name in interface_part_2_names]
 
         if np.any([part is None for part in interface_part_1 + interface_part_2]):
             raise ValueError("One or more model parts for the interface are not found. "
                              "Please check the model part names.")
 
-        # name should be flat and unique
-        interface_part_1_name = ("_".join(interface_part_1_name).replace(" ", "_").replace("-", "_"))
-        interface_part_2_name = ("_".join(interface_part_2_name).replace(" ", "_").replace("-", "_"))
-        interface_name = f"interface_{interface_part_1_name}_{interface_part_2_name}"
         # save the values so that the interface can be set at the post mesh step
         self.interfaces[interface_name] = {
             "interface_part_1": interface_part_1,

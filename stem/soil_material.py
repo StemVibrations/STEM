@@ -420,15 +420,20 @@ class InterfaceMaterial:
         """
 
         available_node_dim_combinations = {
-            2: [4],
-            3: [6, 8],
+            2: [4, 6],
+            3: [6, 8, 12, 16],
         }
         Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations, "Soil")
         if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
             # for higher order elements, pore pressure is calculated on a lower order than displacements
-            element_name = f"UPwSmallStrainInterfaceElement{n_dim_model}D{n_nodes_element}N"
+            n_nodes_name = n_nodes_element // 2
+            if (n_dim_model == 2):
+                element_name = f"Geo_ULineInterfacePlaneStrainElement{n_nodes_name}Plus{n_nodes_name}N"
+            else:
+                element_name = f"Geo_USurfaceInterfaceElement{n_nodes_name}Plus{n_nodes_name}N"
         else:
             raise ValueError(f"Analysis type {analysis_type} is not implemented yet for interface material.")
+
         return element_name
 
     def get_property_in_material(self, property_name: str) -> Any:

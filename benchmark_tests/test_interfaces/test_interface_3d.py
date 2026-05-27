@@ -145,11 +145,9 @@ def test_interface_3d(test_name, roller, stiffness, interface_test_results_3d):
     # model.show_geometry(show_surface_ids=True)
 
     # Define boundary conditions
-    no_displacement_parameters = DisplacementConstraint(active=[True, True, True],
-                                                        is_fixed=[True, True, True],
-                                                        value=[0, 0, 0])
+    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
 
-    sym_parameters = DisplacementConstraint(active=[True, False, True], is_fixed=[True, False, True], value=[0, 0, 0])
+    sym_parameters = DisplacementConstraint(is_fixed=[True, False, True], value=[0, 0, 0])
 
     # Add boundary conditions to the model (geometry ids are shown in the show_geometry)
     model.add_boundary_condition_by_geometry_ids(2, [1], no_displacement_parameters, "base_fixed")
@@ -209,14 +207,14 @@ def test_interface_3d(test_name, roller, stiffness, interface_test_results_3d):
     )
     model.output_settings.append(vtk_output_process)
 
-    # model.add_output_settings_by_coordinates(coordinates=[(2.0, 1.0, 0), (1.0, 0.75, 0)],
-    #                                          output_parameters=JsonOutputParameters(
-    #                                              output_interval=0.5,
-    #                                              nodal_results=nodal_results,
-    #                                              gauss_point_results=gauss_point_results,
-    #                                          ),
-    #                                          part_name="calculated_output",
-    #                                          output_dir=output_dir)
+    model.add_output_settings_by_coordinates(coordinates=[(2.0, 1.0, 0), (1.0, 0.75, 0)],
+                                             output_parameters=JsonOutputParameters(
+                                                 output_interval=0.5,
+                                                 nodal_results=nodal_results,
+                                                 gauss_point_results=gauss_point_results,
+                                             ),
+                                             part_name="calculated_output",
+                                             output_dir=output_dir)
     # Set mesh size
     # --------------------------------
     model.set_mesh_size(element_size=4)
