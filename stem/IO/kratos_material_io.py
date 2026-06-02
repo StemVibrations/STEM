@@ -128,6 +128,26 @@ class KratosMaterialIO:
 
         return material_dict
 
+    def __create_interface_linear_elastic_soil_dict(self, constitutive_law: LinearElasticSoil) -> Dict[str, Any]:
+
+        interface_material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""}, "Variables": {}}
+
+        E = constitutive_law.YOUNG_MODULUS
+        nu = constitutive_law.POISSON_RATIO
+        shear_modulus = E / (2 * (1 + nu))
+        bulk_modulus = E / (3 * (1 - 2 * nu))
+
+        if self.ndim == 2:
+            interface_material_dict["constitutive_law"] = {"name": "GeoIncrementalLinearElasticInterfaceLaw"}
+        elif self.ndim == 3:
+            interface_material_dict["constitutive_law"] = {"name": "GeoIncrementalLinearElasticInterface3DSurfaceLaw"}
+        interface_material_dict["Variables"] = {
+            "INTERFACE_SHEAR_STIFFNESS": shear_modulus,
+            "INTERFACE_NORMAL_STIFFNESS": bulk_modulus
+        }
+
+        return interface_material_dict
+
     def __create_umat_soil_dict(self, material: SoilConstitutiveLawABC) -> Dict[str, Any]:
         """
         Creates a dictionary containing the material parameters for a UMAT soil material. The constitutive law is set to
@@ -327,8 +347,9 @@ class KratosMaterialIO:
 
         # add material parameters to dictionary based on material type.
         if isinstance(material.constitutive_law, LinearElasticSoil):
-            interface_material_dict.update(self.__create_linear_elastic_soil_dict(material.constitutive_law))
-            interface_material_dict["constitutive_law"]["name"] = f"LinearElastic{self.ndim}DInterfaceLaw"
+
+            interface_material_dict.update(self.__create_interface_linear_elastic_soil_dict(material.constitutive_law))
+
         elif isinstance(material.constitutive_law, SmallStrainUmatLaw):
             interface_material_dict.update(self.__create_umat_soil_dict(material.constitutive_law))
             interface_material_dict["constitutive_law"]["name"] = f"SmallStrainUMAT{self.ndim}DInterfaceLaw"

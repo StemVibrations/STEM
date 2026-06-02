@@ -119,7 +119,7 @@ def test_point_load_on_track_static():
                                   name="rail_track_1",
                                   distance_middle_sleeper_to_rail=distance_middle_sleeper_to_rail)
 
-    load = PointLoad(active=[False, True, False], value=[0.0, -10000.0, 0.0])
+    load = PointLoad(active=[False, True, False], value=[0.0, 10000.0, 0.0])
     model.add_load_by_coordinates(
         coordinates=[[0.75, 2.5 + sleeper_height + rail_pad_thickness, 10.0]],
         load_parameters=load,
@@ -147,7 +147,7 @@ def test_point_load_on_track_static():
 
     DENSITY_SOLID = 2650
     POROSITY = 0.3
-    YOUNG_MODULUS = 13e8
+    YOUNG_MODULUS = 13e6
     POISSON_RATIO = 0.3
     interface_formulation = OnePhaseSoilInterface(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
     interface_const_law = LinearElasticSoil(YOUNG_MODULUS=YOUNG_MODULUS, POISSON_RATIO=POISSON_RATIO)
@@ -236,9 +236,9 @@ def test_point_load_on_track_static():
     else:
         raise Exception("Unknown platform")
 
-    # assert_floats_in_directories_almost_equal(
-    #     expected_output_dir,
-    #     os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"),
-    # )
-    #
-    # rmtree(input_folder)
+    assert_floats_in_directories_almost_equal(
+        expected_output_dir,
+        os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"),
+    )
+
+    rmtree(input_folder)

@@ -2102,10 +2102,16 @@ class Model:
             shared_node_ids_part_2 = [
                 node_id for node_id in part_two_element.node_ids if node_id in interface_nodes_all_parts
             ]
-            # map them back to part-1 node IDs
-            shared_node_ids_part_1 = [map_new_to_old[nid] for nid in shared_node_ids_part_2]
+            ordered_shared_node_ids_part_2 = shared_node_ids_part_2
+            for face in ELEMENT_DATA[part_two_element.element_type]["facets"]:
+                face_ids = np.array(part_two_element.node_ids)[face]
+                if set(face_ids) == set(shared_node_ids_part_2):
+                    ordered_shared_node_ids_part_2 = face_ids.tolist()
+                    break
 
-            ordered_ids = shared_node_ids_part_1 + shared_node_ids_part_2
+            # map them back to part-1 node IDs
+            shared_node_ids_part_1 = [map_new_to_old[nid] for nid in ordered_shared_node_ids_part_2]
+            ordered_ids = shared_node_ids_part_1 + ordered_shared_node_ids_part_2
             # d) ask the utility to give us the properly ordered node IDs
             if self.ndim == 2:
                 interface_name = "LINE_INTERFACE"
