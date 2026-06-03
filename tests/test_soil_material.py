@@ -118,43 +118,22 @@ class TestSoilMaterial:
             },
         }
 
-    def test_get_element_name_2d_4N(self):
+    @pytest.mark.parametrize("ndim, n_nodes, expected_element_name", [
+        (2, 4, "Geo_ULineInterfacePlaneStrainElement2Plus2N"),
+        (3, 8, "Geo_USurfaceInterfaceElement4Plus4N"),
+        (3, 6, "Geo_USurfaceInterfaceElement3Plus3N"),
+    ])
+    def test_get_interface_element_name(self, ndim, n_nodes, expected_element_name):
         """
         Test the get_element_name method of the Interface class for 2D 4N elements.
         """
-        ndim = 2
-        n_nodes_element = 4
         analysis_type = AnalysisType.MECHANICAL
 
         # Valid case
-        element_name = InterfaceMaterial.get_element_name(ndim, n_nodes_element, analysis_type)
-        assert element_name == "UPwSmallStrainInterfaceElement2D4N"
+        element_name = InterfaceMaterial.get_element_name(ndim, n_nodes, analysis_type)
+        assert element_name == expected_element_name
 
-    def test_get_element_name_3d_8N(self):
-        """
-        Test the get_element_name method of the Interface class for 3D 8N elements.
-
-        """
-        analysis_type = AnalysisType.MECHANICAL
-        # Higher order element
-        ndim = 3
-        n_nodes_element = 8
-        element_name = InterfaceMaterial.get_element_name(ndim, n_nodes_element, analysis_type)
-        assert element_name == "UPwSmallStrainInterfaceElement3D8N"
-
-    def test_get_element_name_3d_6N(self):
-        """
-        Test the get_element_name method of the Interface class for 3D 6N elements.
-
-        """
-        analysis_type = AnalysisType.MECHANICAL
-        # Lower order element
-        ndim = 3
-        n_nodes_element = 6
-        element_name = InterfaceMaterial.get_element_name(ndim, n_nodes_element, analysis_type)
-        assert element_name == "UPwSmallStrainInterfaceElement3D6N"
-
-    def test_get_element_name_unaivailable_analysis_type_for_soil_material(self):
+    def test_get_interface_element_name_unavailable_analysis_type_for_soil_material(self):
         """
         Test the get_element_name method of the Interface class for unavailable analysis types.
         """
@@ -182,22 +161,17 @@ class TestSoilMaterial:
                 match=f"Analysis type {invalid_analysis_type} is not implemented yet for interface material."):
             InterfaceMaterial.get_element_name(ndim, n_nodes_element, invalid_analysis_type)
 
-    def test_get_property_in_material(self):
+    def test_get_property_in_interface_material(self):
         """
-        Test the get_property_in_material method of the SoilMaterial class.
+        Test the get_property_in_material method of the InterfaceMaterial class.
         """
-        ndim = 2  # Linear elastic drained soil with a Density of 2700, a Young's modulus of 50e6,
-        # a Poisson ratio of 0.3 & a Porosity of 0.3 is specified.
+        ndim = 2
         DENSITY_SOLID = 2700
         POROSITY = 0.3
         YOUNG_MODULUS = 50e6
         POISSON_RATIO = 0.3
         constitutive_law = LinearElasticSoil(YOUNG_MODULUS=YOUNG_MODULUS, POISSON_RATIO=POISSON_RATIO)
-        soil_formulation_one_phase = OnePhaseSoilInterface(ndim,
-                                                           IS_DRAINED=True,
-                                                           DENSITY_SOLID=DENSITY_SOLID,
-                                                           POROSITY=POROSITY,
-                                                           MINIMUM_JOINT_WIDTH=0.001)
+        soil_formulation_one_phase = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
         retention_parameters = SaturatedBelowPhreaticLevelLaw()
         # Define interface material parameters
         interface_material_parameters = InterfaceMaterial(name="test_interface_material_one_phase_linear_elastic",
@@ -209,21 +183,16 @@ class TestSoilMaterial:
         assert (interface_material_parameters.get_property_in_material("POISSON_RATIO") == POISSON_RATIO)
         assert (interface_material_parameters.get_property_in_material("DENSITY_SOLID") == DENSITY_SOLID)
         assert (interface_material_parameters.get_property_in_material("POROSITY") == POROSITY)
-        assert (interface_material_parameters.get_property_in_material("MINIMUM_JOINT_WIDTH") == 0.001)
 
-    def test_get_property_in_material_property_not_in_material(self):
+    def test_get_property_in_interface_material_property_not_in_material(self):
         """
-        Test the get_property_in_material method of the SoilMaterial class when the property is not in the material.
+        Test the get_property_in_material method of the InterfaceMaterial class when the property is not in the material.
         """
         ndim = 2
         DENSITY_SOLID = 2700
         POROSITY = 0.3
         constitutive_law = LinearElasticSoil(YOUNG_MODULUS=50e6, POISSON_RATIO=0.3)
-        soil_formulation_one_phase = OnePhaseSoilInterface(ndim,
-                                                           IS_DRAINED=True,
-                                                           DENSITY_SOLID=DENSITY_SOLID,
-                                                           POROSITY=POROSITY,
-                                                           MINIMUM_JOINT_WIDTH=0.001)
+        soil_formulation_one_phase = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
         retention_parameters = SaturatedBelowPhreaticLevelLaw()
         # Define interface material parameters
         interface_material_parameters = InterfaceMaterial(name="test_interface_material_one_phase_linear_elastic",

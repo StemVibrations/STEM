@@ -19,7 +19,7 @@ from stem.solver import (
 )
 from stem.output import NodalOutput, Output, VtkOutputParameters
 from stem.soil_material import (SoilMaterial, OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw,
-                                InterfaceMaterial, OnePhaseSoilInterface)
+                                InterfaceMaterial)
 from stem.stem import Stem
 
 from benchmark_tests.utils import assert_floats_in_directories_almost_equal
@@ -149,7 +149,7 @@ def test_point_load_on_track_static():
     POROSITY = 0.3
     YOUNG_MODULUS = 13e6
     POISSON_RATIO = 0.3
-    interface_formulation = OnePhaseSoilInterface(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
+    interface_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
     interface_const_law = LinearElasticSoil(YOUNG_MODULUS=YOUNG_MODULUS, POISSON_RATIO=POISSON_RATIO)
 
     interface_material = InterfaceMaterial(name="interface_concrete_soil",

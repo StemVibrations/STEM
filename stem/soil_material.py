@@ -136,36 +136,6 @@ class TwoPhaseSoil(SoilFormulationParametersABC):
 
 
 @dataclass
-class TwoPhaseSoilInterface(TwoPhaseSoil):
-    """
-    Class containing the material parameters for a two phase soil material with interface
-
-    Inheritance:
-        - :class:`TwoPhaseSoil`
-
-    Attributes:
-        - TRANSVERSAL_PERMEABILITY (float): The transversal permeability [m^2].
-        - MINIMUM_JOINT_WIDTH (float): The minimum joint width [m].
-    """
-    TRANSVERSAL_PERMEABILITY: float = 1.0e-13
-    MINIMUM_JOINT_WIDTH: float = 0.001
-
-
-@dataclass
-class OnePhaseSoilInterface(OnePhaseSoil):
-    """
-    Class containing the material parameters for a two phase soil material with interface
-
-    Inheritance:
-        - :class:`OnePhaseSoil`
-
-    Attributes:
-        - MINIMUM_JOINT_WIDTH (float): The minimum joint width [m].
-    """
-    MINIMUM_JOINT_WIDTH: float = 0.001
-
-
-@dataclass
 class LinearElasticSoil(SoilConstitutiveLawABC):
     """
     Class containing the material parameters for a 2D linear elastic material

@@ -129,6 +129,16 @@ class KratosMaterialIO:
         return material_dict
 
     def __create_interface_linear_elastic_soil_dict(self, constitutive_law: LinearElasticSoil) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the material parameters for a linear elastic interface material.
+
+        Args:
+            - constitutive_law (:class:`stem.soil_material.LinearElasticSoil`): soil constitutive law object
+            containing the material parameters for a linear elastic soil material
+
+        Returns:
+            - Dict[str, Any]: dictionary containing the material parameters
+        """
 
         interface_material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""}, "Variables": {}}
 

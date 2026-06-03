@@ -5,12 +5,11 @@
             "properties_id": 1,
             "Material": {
                 "Variables": {
-                    "YOUNG_MODULUS": 50000000.0,
-                    "POISSON_RATIO": 0.3,
+                    "INTERFACE_SHEAR_STIFFNESS": 19230769.230769232,
+                    "INTERFACE_NORMAL_STIFFNESS": 41666666.666666664,
                     "DENSITY_SOLID": 2700,
                     "POROSITY": 0.3,
                     "BULK_MODULUS_SOLID": 50000000000.0,
-                    "MINIMUM_JOINT_WIDTH": 0.001,
                     "IGNORE_UNDRAINED": true,
                     "PERMEABILITY_XX": 1e-30,
                     "PERMEABILITY_YY": 1e-30,
@@ -27,7 +26,7 @@
                     "DENSITY_WATER": 1000
                 },
                 "constitutive_law": {
-                    "name": "LinearElastic2DInterfaceLaw"
+                    "name": "GeoIncrementalLinearElasticInterfaceLaw"
                 }
             },
             "Tables": {}
@@ -48,7 +47,6 @@
                     "DENSITY_SOLID": 2700,
                     "POROSITY": 0.3,
                     "BULK_MODULUS_SOLID": 50000000000.0,
-                    "MINIMUM_JOINT_WIDTH": 0.001,
                     "IGNORE_UNDRAINED": true,
                     "PERMEABILITY_XX": 1e-30,
                     "PERMEABILITY_YY": 1e-30,
@@ -85,13 +83,15 @@
                     ],
                     "DENSITY_SOLID": 2700,
                     "POROSITY": 0.3,
-                    "PERMEABILITY_XX": 1e-15,
-                    "PERMEABILITY_YY": 1e-15,
-                    "PERMEABILITY_XY": 2,
                     "BULK_MODULUS_SOLID": 50000000000.0,
-                    "TRANSVERSAL_PERMEABILITY": 1e-13,
-                    "MINIMUM_JOINT_WIDTH": 0.001,
-                    "IGNORE_UNDRAINED": false,
+                    "IGNORE_UNDRAINED": true,
+                    "PERMEABILITY_XX": 1e-30,
+                    "PERMEABILITY_YY": 1e-30,
+                    "PERMEABILITY_ZZ": 1e-30,
+                    "PERMEABILITY_XY": 0,
+                    "PERMEABILITY_YZ": 0,
+                    "PERMEABILITY_ZX": 0,
+                    "MINIMUM_RELATIVE_PERMEABILITY": 0.0,
                     "RETENTION_LAW": "SaturatedBelowPhreaticLevelLaw",
                     "SATURATED_SATURATION": 1.0,
                     "RESIDUAL_SATURATION": 1e-10,

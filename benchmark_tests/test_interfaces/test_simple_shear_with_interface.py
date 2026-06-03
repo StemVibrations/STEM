@@ -12,7 +12,7 @@ from stem.solver import (AnalysisType, SolutionType, TimeIntegration, Displaceme
                          NewtonRaphsonStrategy, StressInitialisationType, SolverSettings, Problem, Lu)
 from stem.output import NodalOutput, Output, VtkOutputParameters, JsonOutputParameters
 from stem.soil_material import (SoilMaterial, OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw,
-                                InterfaceMaterial, OnePhaseSoilInterface)
+                                InterfaceMaterial)
 from stem.stem import Stem
 
 
@@ -70,7 +70,7 @@ def test_simple_shear_with_interface_elements(element_order, interface_type, ndi
 
     constitutive_law2 = LinearElasticSoil(YOUNG_MODULUS=interface_young_modulus, POISSON_RATIO=POISSON_RATIO)
 
-    soil_formulation = OnePhaseSoilInterface(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
+    soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=DENSITY_SOLID, POROSITY=POROSITY)
 
     interface_material = InterfaceMaterial(name="interface",
                                            constitutive_law=constitutive_law2,
