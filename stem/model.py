@@ -7,7 +7,6 @@ from pathlib import Path
 from numpy.typing import NDArray
 
 from typing import Sequence, Tuple, get_args, Set, Optional, List, Dict, Any, Union
-import copy
 
 from gmsh_utils import gmsh_IO
 
@@ -1897,7 +1896,7 @@ class Model:
                 node_to_elements = process_model_part.mesh.find_elements_connected_to_nodes()
                 new_nodes = self.__update_node_ids(process_model_part.mesh.nodes, old_to_new_node_id_map)
                 # copy the elements
-                copy_elements = copy.deepcopy(process_model_part.mesh.elements)
+                copy_elements = deepcopy(process_model_part.mesh.elements)
                 new_elements = self.__update_elements_with_new_node_ids(copy_elements, node_to_elements,
                                                                         old_to_new_node_id_map)
                 # update based on the part that is connected
@@ -1907,9 +1906,9 @@ class Model:
                     # collect coordinates of updated part
                     coordinates_updated_body_model_part = np.array(
                         [node.coordinates for node in updating_body_model_part.mesh.nodes.values()])
+
                     # If all nodes are part of elements of part 1, then the node ids should not be updated
                     for element_id, element in new_elements.items():
-
                         node_ids = element.node_ids
 
                         coordinates_for_process_element = np.array(
@@ -1972,11 +1971,8 @@ class Model:
         new_nodes = {}
         # Copy all nodes, updating IDs where needed
         for node_id, node in nodes.items():
-            # deep copy the node
-            new_node = copy.deepcopy(node)
             new_id = map_new_node_ids.get(node_id, node_id)
-            new_node.id = new_id
-            new_nodes[new_id] = new_node
+            new_nodes[new_id] = Node(id=new_id, coordinates=node.coordinates)
         return new_nodes
 
     @staticmethod
