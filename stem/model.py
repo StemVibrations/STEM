@@ -1,6 +1,7 @@
 import json
 import os
 from copy import deepcopy
+from decimal import Decimal
 
 import numpy as np
 from pathlib import Path
@@ -1880,6 +1881,10 @@ class Model:
             - ValueError: If the process model part has no mesh. Please generate the mesh first.
             - ValueError: If the updating body model part has no mesh. Please generate the mesh first.
         """
+
+        precision_exponent = Decimal(str(GlobalSettings.geometry_precision)).as_tuple().exponent
+        n_decimals_precision: int = abs(int(precision_exponent))
+
         # Update the process model parts nodes and elements
         for process_model_part in self.process_model_parts:
             # get the connected_process_definition
@@ -1894,36 +1899,46 @@ class Model:
                                  "Please generate the mesh first.")
             if is_part_2_connected:
                 node_to_elements = process_model_part.mesh.find_elements_connected_to_nodes()
+
                 new_nodes = self.__update_node_ids(process_model_part.mesh.nodes, old_to_new_node_id_map)
-                # copy the elements
-                copy_elements = deepcopy(process_model_part.mesh.elements)
-                new_elements = self.__update_elements_with_new_node_ids(copy_elements, node_to_elements,
-                                                                        old_to_new_node_id_map)
-                # update based on the part that is connected
+
+                copy_elements = process_model_part.mesh.copy_elements()
+
+                new_process_elements = self.__update_elements_with_new_node_ids(copy_elements, node_to_elements,
+                                                                                old_to_new_node_id_map)
+
                 if is_part_1_connected:
-                    # add the nodes that where possibly added by the mapping of the old node IDs to new node IDs
+
+                    # include original nodes that may have been preserved
                     new_nodes.update(process_model_part.mesh.nodes)
-                    # collect coordinates of updated part
-                    coordinates_updated_body_model_part = np.array(
-                        [node.coordinates for node in updating_body_model_part.mesh.nodes.values()])
 
-                    # If all nodes are part of elements of part 1, then the node ids should not be updated
-                    for element_id, element in new_elements.items():
-                        node_ids = element.node_ids
+                    # Build lookup set once
+                    # rounding preserves tolerance behavior similar to allclose
+                    updated_coord_set = {
+                        tuple(np.round(node.coordinates, decimals=n_decimals_precision))
+                        for node in updating_body_model_part.mesh.nodes.values()
+                    }
 
-                        coordinates_for_process_element = np.array(
-                            [new_nodes[node_id].coordinates for node_id in node_ids if node_id in new_nodes])
+                    original_elements = process_model_part.mesh.elements
+                    for element_id, element in new_process_elements.items():
+                        all_nodes_in_updated_part = True
 
-                        # check if all nodes of the process element are in the coordinates of the updated part
-                        for process_coord in coordinates_for_process_element:
-                            if not any(
-                                    np.allclose(process_coord, coord) for coord in coordinates_updated_body_model_part):
-                                # if any of the process element nodes is not in the updated part,
-                                # update the element with the initial nodes
-                                new_elements[element_id] = process_model_part.mesh.elements[element_id]
+                        for node_id in element.node_ids:
+                            node = new_nodes.get(node_id)
+
+                            if node is None:
+                                continue
+
+                            coord_key = tuple(np.round(node.coordinates, decimals=n_decimals_precision))
+                            if coord_key not in updated_coord_set:
+                                all_nodes_in_updated_part = False
                                 break
 
-                process_model_part.mesh.elements = new_elements
+                        # revert element if not fully contained
+                        if not all_nodes_in_updated_part:
+                            new_process_elements[element_id] = original_elements[element_id]
+
+                process_model_part.mesh.elements = new_process_elements
 
                 # filter out loose nodes that are not part of any element,
                 # but only if there are elements in the process model part.
