@@ -116,7 +116,7 @@ _TRAIN_PARAMETER_PRESETS: Dict[TrainType, Dict[str, Any]] = {
         "train_length": 18,
         "gravity_axis": 1,
         "contact_coefficient": 5.13e-08,
-        "contact_power": 1.3,
+        "contact_power": 1.5,
         "wheel_configuration": [0, 1.8, 14, 15.8],
     },
 }
