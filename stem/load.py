@@ -41,7 +41,7 @@ _TRAIN_PARAMETER_PRESETS: Dict[TrainType, Dict[str, Any]] = {
         "wheel_damping": 3.3e4,  # damping coefficient between the wheel and the bogie [Ns/m] / secondary suspension
         "bogie_distances": [-10.4, 10.4],  # distances of the bogies from the centre of the cart [m]
         "wheel_distances": [-1.3, 1.3],  # distances of the wheels from the centre of the bogie [m]
-        "train_length": 25,  # length of the train [m]
+        "train_length": 26.8,  # length of the train [m]
         "gravity_axis": 1,  # axis on which gravity works [x =0, y = 1, z = 2]
         "contact_coefficient": 5.13e-08,  # Hertzian contact coefficient between the wheel and the rail [N/m]
         "contact_power": 1.5,  # Hertzian contact power between the wheel and the rail [-]
@@ -59,7 +59,7 @@ _TRAIN_PARAMETER_PRESETS: Dict[TrainType, Dict[str, Any]] = {
         "wheel_damping": 2.5e3,
         "bogie_distances": [-10, 10],
         "wheel_distances": [-1.25, 1.25],
-        "train_length": 24,
+        "train_length": 27,
         "gravity_axis": 1,
         "contact_coefficient": 5.13e-08,
         "contact_power": 1.5,
@@ -77,7 +77,7 @@ _TRAIN_PARAMETER_PRESETS: Dict[TrainType, Dict[str, Any]] = {
         "wheel_damping": 6.4e3,
         "bogie_distances": [-9.5, 9.5],
         "wheel_distances": [-1.28, 1.28],
-        "train_length": 22,
+        "train_length": 25,
         "gravity_axis": 1,
         "contact_coefficient": 5.13e-08,
         "contact_power": 1.5,
@@ -95,7 +95,7 @@ _TRAIN_PARAMETER_PRESETS: Dict[TrainType, Dict[str, Any]] = {
         "wheel_damping": 5.7e3,
         "bogie_distances": [-7, 7],
         "wheel_distances": [-0.9, 0.9],
-        "train_length": 18,
+        "train_length": 13,
         "gravity_axis": 1,
         "contact_coefficient": 5.13e-08,
         "contact_power": 1.5,
@@ -116,7 +116,7 @@ _TRAIN_PARAMETER_PRESETS: Dict[TrainType, Dict[str, Any]] = {
         "train_length": 18,
         "gravity_axis": 1,
         "contact_coefficient": 5.13e-08,
-        "contact_power": 1.5,
+        "contact_power": 1.3,
         "wheel_configuration": [0, 1.8, 14, 15.8],
     },
 }
