@@ -3,7 +3,7 @@ from shutil import rmtree, copyfile
 
 from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
-from stem.load import UvecLoad
+from stem.load import UvecLoad, TrainType
 from stem.boundary import DisplacementConstraint
 from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
                          StressInitialisationType, SolverSettings, Problem, Amgcl, NewtonRaphsonStrategy)

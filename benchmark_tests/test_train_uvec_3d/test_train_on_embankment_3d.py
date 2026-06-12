@@ -4,7 +4,7 @@ from shutil import rmtree, copytree
 
 from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedLaw
-from stem.load import UvecLoad
+from stem.load import UvecLoad, TrainType
 from stem.boundary import DisplacementConstraint
 from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
                          StressInitialisationType, SolverSettings, Problem, Amgcl)
@@ -50,7 +50,6 @@ def test_stem():
     load_coordinates = [(0.75, 3.0, 0.0), (0.75, 3.0, 50.0)]
 
     uvec_parameters = {
-        "n_carts": 1,
         "cart_inertia": (1128.8e3) / 2,
         "cart_mass": (50e3) / 2,
         "cart_stiffness": 2708e3,
@@ -62,19 +61,26 @@ def test_stem():
         "wheel_mass": 1.5e3,
         "wheel_stiffness": 4800e3,
         "wheel_damping": 0.25e3,
+        "train_length": 1,
+        "wheel_configuration": [0.0, 2.5, 19.9, 22.4],
         "gravity_axis": 1,
         "contact_coefficient": 9.1e-5,
         "contact_power": 1.5,
-        "static_initialisation": False,
     }
 
+    # define the UVEC load
     uvec_load = UvecLoad(
         direction_signs=[1, 1, 1],
-        velocity=1000,
         origin=[0.75, 3, 5],
-        wheel_configuration=[0.0, 2.5, 19.9, 22.4],
-        uvec_parameters=uvec_parameters,
         uvec_model=uvec,
+        nb_carts=1,
+        velocity=1000,
+        offset=0,
+        train_type=TrainType.CUSTOM,
+        uvec_parameters=uvec_parameters,
+        static_initialisation=False,
+        irregularities=None,
+        rail_joint=None,
     )
 
     model.add_load_by_coordinates(load_coordinates, uvec_load, "train_load")

@@ -13,6 +13,209 @@ from stem.table import Table
 from stem.utils import Utils
 
 
+class TrainType(Enum):
+    """
+    Enum class containing the supported train types.
+
+    Inheritance:
+        - :class:`Enum`
+    """
+    CUSTOM = "custom"
+    LOCOMOTIVE = "locomotive"
+    PASSENGERS_HEAVY = "passengers_heavy"
+    PASSENGERS_LIGHT = "passengers_light"
+    FREIGHT_LOADED = "freight_loaded"
+    FREIGHT_UNLOADED = "freight_unloaded"
+
+
+_TRAIN_PARAMETER_PRESETS: Dict[TrainType, Dict[str, Any]] = {
+    TrainType.LOCOMOTIVE: {
+        "cart_mass": 5.5e4 / 2,  # mass of the cart [kg]
+        "bogie_mass": 6e3 / 2,  # mass of the bogie [kg] / primary suspension mass [kg]
+        "wheel_mass": 4.5e3 / 2,  # mass of the wheel [kg] / secondary suspension mass [kg]
+        "cart_inertia": 9.7e5 / 2,  # inertia of the cart [kgm2]
+        "bogie_inertia": 7.8e3 / 2,  # inertia of the bogie [kgm2] / primary suspension inertia [kgm2]
+        "cart_stiffness": 8e5,  # stiffness between the cart and bogies [N/m] / primary suspension
+        "cart_damping": 4.5e4,  # damping coefficient between the cart and bogies [Ns/m] / primary suspension
+        "wheel_stiffness": 2e6,  # stiffness between the wheel and the bogie [N/m] / secondary suspension
+        "wheel_damping": 3.3e4,  # damping coefficient between the wheel and the bogie [Ns/m] / secondary suspension
+        "bogie_distances": [-10.4, 10.4],  # distances of the bogies from the centre of the cart [m]
+        "wheel_distances": [-1.3, 1.3],  # distances of the wheels from the centre of the bogie [m]
+        "train_length": 25,  # length of the train [m]
+        "gravity_axis": 1,  # axis on which gravity works [x =0, y = 1, z = 2]
+        "contact_coefficient": 5.13e-08,  # Hertzian contact coefficient between the wheel and the rail [N/m]
+        "contact_power": 1.5,  # Hertzian contact power between the wheel and the rail [-]
+        "wheel_configuration": [0, 2.6, 20.8, 23.4],
+    },
+    TrainType.PASSENGERS_HEAVY: {
+        "cart_mass": 3.8e4 / 2,
+        "bogie_mass": 3.1e3 / 2,
+        "wheel_mass": 1.9e3 / 2,
+        "cart_inertia": 2.3e6 / 2,
+        "bogie_inertia": 2.4e3 / 2,
+        "cart_stiffness": 3.5e5,
+        "cart_damping": 3.2e4,
+        "wheel_stiffness": 1.2e6,
+        "wheel_damping": 2.5e3,
+        "bogie_distances": [-10, 10],
+        "wheel_distances": [-1.25, 1.25],
+        "train_length": 24,
+        "gravity_axis": 1,
+        "contact_coefficient": 5.13e-08,
+        "contact_power": 1.5,
+        "wheel_configuration": [0, 2.5, 20, 22.5],
+    },
+    TrainType.PASSENGERS_LIGHT: {
+        "cart_mass": 2.9e4 / 2,
+        "bogie_mass": 2.6e3 / 2,
+        "wheel_mass": 1.7e3 / 2,
+        "cart_inertia": 1.8e6 / 2,
+        "bogie_inertia": 2.3e3 / 2,
+        "cart_stiffness": 4e5,
+        "cart_damping": 2.2e4,
+        "wheel_stiffness": 7.4e5,
+        "wheel_damping": 6.4e3,
+        "bogie_distances": [-9.5, 9.5],
+        "wheel_distances": [-1.28, 1.28],
+        "train_length": 22,
+        "gravity_axis": 1,
+        "contact_coefficient": 5.13e-08,
+        "contact_power": 1.5,
+        "wheel_configuration": [0, 2.56, 19, 21.56],
+    },
+    TrainType.FREIGHT_LOADED: {
+        "cart_mass": 1.3e4 / 2,
+        "bogie_mass": 1.8e3 / 2,
+        "wheel_mass": 1.4e3 / 2,
+        "cart_inertia": 2.3e5 / 2,
+        "bogie_inertia": 1.7e3 / 2,
+        "cart_stiffness": 6e6,
+        "cart_damping": 6.5e4,
+        "wheel_stiffness": 5e5,
+        "wheel_damping": 5.7e3,
+        "bogie_distances": [-7, 7],
+        "wheel_distances": [-0.9, 0.9],
+        "train_length": 18,
+        "gravity_axis": 1,
+        "contact_coefficient": 5.13e-08,
+        "contact_power": 1.5,
+        "wheel_configuration": [0, 1.8, 14, 15.8],
+    },
+    TrainType.FREIGHT_UNLOADED: {
+        "cart_mass": 8.1e4 / 2,
+        "bogie_mass": 1.8e3 / 2,
+        "wheel_mass": 1.4e3 / 2,
+        "cart_inertia": 7.3e5 / 2,
+        "bogie_inertia": 1.7e3 / 2,
+        "cart_stiffness": 6e6,
+        "cart_damping": 6.5e4,
+        "wheel_stiffness": 2.6e6,
+        "wheel_damping": 1.5e4,
+        "bogie_distances": [-7, 7],
+        "wheel_distances": [-0.9, 0.9],
+        "train_length": 18,
+        "gravity_axis": 1,
+        "contact_coefficient": 5.13e-08,
+        "contact_power": 1.5,
+        "wheel_configuration": [0, 1.8, 14, 15.8],
+    },
+}
+
+_REQUIRED_TRAIN_PARAMETER_KEYS = {
+    "cart_mass",
+    "bogie_mass",
+    "wheel_mass",
+    "cart_inertia",
+    "bogie_inertia",
+    "cart_stiffness",
+    "cart_damping",
+    "wheel_stiffness",
+    "wheel_damping",
+    "bogie_distances",
+    "wheel_distances",
+    "train_length",
+    "gravity_axis",
+    "contact_coefficient",
+    "contact_power",
+    "wheel_configuration",
+}
+
+
+def _validate_train_parameters(parameters: Dict[str, Any]) -> None:
+    """
+    Validate that all required train parameters for the CUSTOM train type are present.
+
+    Args:
+        parameters (Dict[str, Any]): The train parameters to validate.
+
+    Raises:
+        ValueError: If any required train parameters are missing.
+    """
+    missing_keys = _REQUIRED_TRAIN_PARAMETER_KEYS.difference(parameters)
+    if missing_keys:
+        raise ValueError(f"Missing train parameters: {sorted(missing_keys)}")
+
+
+def build_train_parameters(train_type: TrainType,
+                           nb_carts: int,
+                           offset: float,
+                           velocity: Union[float, str],
+                           static_initialisation: bool = False,
+                           initialisation_steps: Optional[int] = None,
+                           parameters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """
+    Initialise the parameters of the train based on the train type.
+    If the train type is custom, the parameters must be provided by the user.
+    The train parameters are for 2D half train model, and are available on :cite:`Ricardo_2025`.
+
+    Args:
+    - train_type (TrainType): The type of the train. If CUSTOM, the parameters must be provided by the user.
+    - nb_carts (int): The number of carts in the train. Must be >= 1.
+    - offset (float): The offset of the train from the origin [m].
+    - velocity (Union[float, str]): The velocity of the train [m/s]. Can be defined as a string \
+      (when function of time) or as a float.
+    - static_initialisation (bool): Whether to perform a static initialisation of the train.
+    - initialisation_steps (Optional[int]): The number of steps to perform for the static initialisation. \
+      If None, no static initialisation is done.
+    - parameters (Optional[Dict[str, Any]]): The train parameters to use if the train type is CUSTOM.
+
+    Returns:
+    - Dict[str, Any]: The parameters of the train to be used in the UVEC function.
+
+    Raises:
+    - ValueError: If nb_carts is less than 1.
+    - ValueError: If train_type is CUSTOM and parameters are not provided.
+    - ValueError: If train_type is not CUSTOM and parameters are provided.
+    """
+
+    if nb_carts < 1:
+        raise ValueError("nb_carts must be >= 1")
+
+    if train_type == TrainType.CUSTOM:
+        if parameters is None:
+            raise ValueError("For custom train type, parameters must be provided")
+        _validate_train_parameters(parameters)
+        uvec_parameters = parameters
+    else:
+        if parameters is not None:
+            raise ValueError("For non-custom train type, parameters should not be provided")
+        uvec_parameters = _TRAIN_PARAMETER_PRESETS[train_type]
+
+    uvec_parameters["n_carts"] = nb_carts
+    uvec_parameters["velocity"] = velocity
+    uvec_parameters["static_initialisation"] = static_initialisation
+    uvec_parameters["initialisation_steps"] = initialisation_steps if initialisation_steps is not None else None
+
+    # compute the wheel configuration based on the number of carts and the wheel configuration of each cart
+    total_wheel_configuration = [u + offset for u in uvec_parameters["wheel_configuration"]]
+    for n in range(1, nb_carts):
+        total_wheel_configuration.extend(
+            [u + n * uvec_parameters["train_length"] for u in uvec_parameters["wheel_configuration"]])
+    uvec_parameters["wheel_configuration"] = total_wheel_configuration
+
+    return uvec_parameters
+
+
 @dataclass
 class LoadParametersABC(ABC):
     """
@@ -276,28 +479,46 @@ class UvecLoad(LoadParametersABC):
                The actual direction is defined by the existing load path geometry.
         - velocity (Union[float, str]): Velocity of the moving load [m/s].
         - origin (List[float]): Starting coordinates of the first wheel [m].
-        - wheel_configuration (List[float]): Wheel configuration, i.e. distances from the origin of each wheel [m].
         - uvec_parameters (Dict[str, Any]): Parameters of the UVEC function.
         - uvec_state_variables (Dict[str, Any]): State variables of the UVEC function.
         - uvec_model (ModuleType): UVEC model.
         - uvec_file (str): Path to the UVEC file.
         - uvec_function_name (str): Name of the UVEC function.
+        - nb_carts (int): Number of carts in the UVEC model.
+        - offset (float): Offset of the first wheel of the load, in relation to the origin [m].
+        - train_type (TrainType): Type of the train. If CUSTOM, the uvec_parameters must be provided by the user. \
+          If not CUSTOM, the uvec_parameters are defined based on the train type.
+        - irregularities (Optional[Dict[str, Any]]): Parameters of the track irregularities to be included in the \
+          UVEC model.
+        - rail_joint (Optional[Dict[str, Any]]): Parameters of the rail joint to be included in the UVEC model.
+        - static_initialisation (bool): Whether to perform a static initialisation of the train.
     """
 
     direction_signs: List[int]
     velocity: Union[float, str]
     origin: List[float]
-    wheel_configuration: List[float]
-    uvec_parameters: Dict[str, Any] = field(default_factory=dict)
+    uvec_parameters: Optional[Dict[str, Any]] = field(default_factory=dict)
     uvec_state_variables: Dict[str, Any] = field(default_factory=dict)
     uvec_model: Union[ModuleType, Any] = None
     uvec_file: str = ""
     uvec_function_name: str = ""
+    nb_carts: int = 1
+    offset: float = 0.0
+    train_type: TrainType = TrainType.CUSTOM
+    irregularities: Optional[Dict[str, Any]] = None
+    rail_joint: Optional[Dict[str, Any]] = None
+    static_initialisation: bool = False
 
     def __post_init__(self):
         """
-        Check if the UVEC model is supported in STEM.
+        Initialise the uvec model and its definitions.
+
+        Raises:
+        - ValueError: If the specified UVEC model is not supported.
+        - ValueError: If the train type is CUSTOM and uvec_parameters are not provided.
+        - ValueError: If the train type is not CUSTOM and uvec_parameters are provided.
         """
+
         if self.uvec_model is not None:
             if self.uvec_model.__name__ not in (model.value for model in UvecSupportedModels):
                 raise ValueError(
@@ -306,6 +527,23 @@ class UvecLoad(LoadParametersABC):
             self.uvec_file = os.path.join(self.uvec_model.get_path_file(self.uvec_model.UVEC_NAME), "uvec.py")
             self.uvec_function_name = "uvec"
             self.uvec_model = None  # necessary to allow for a deep copy for a stage in Kratos
+
+            if self.train_type == TrainType.CUSTOM and self.uvec_parameters is None:
+                raise ValueError("For custom train type, uvec_parameters must be provided")
+
+            if self.train_type != TrainType.CUSTOM and self.uvec_parameters is not None:
+                raise ValueError("For non-custom train type, uvec_parameters should not be provided")
+
+            self.uvec_parameters = build_train_parameters(self.train_type,
+                                                          self.nb_carts,
+                                                          self.offset,
+                                                          self.velocity,
+                                                          self.static_initialisation,
+                                                          parameters=self.uvec_parameters)
+            self.wheel_configuration = self.uvec_parameters["wheel_configuration"]
+
+            self.uvec_parameters["irr_parameters"] = self.irregularities
+            self.uvec_parameters["joint_parameters"] = self.rail_joint
 
     @staticmethod
     def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
