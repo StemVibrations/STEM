@@ -135,12 +135,11 @@ class TestKratosSolverIO:
         uvec_model_part = ModelPart("UvecModelPart")
 
         # set up uvec load
-        uvec_parameters = {"load_wheel_1": -10.0, "load_wheel_2": -20.0}
+        uvec_parameters = {"load_wheel_1": -10.0, "load_wheel_2": -20.0, "wheel_configuration": [0.0, 2.0]}
         uvec_state_variables = {"state_1": [0.0, 1.0], "state_2": [9, 8]}
         uvec_load = UvecLoad(direction_signs=[1, 1, 0],
                              velocity=5,
                              origin=[0.0, 1.0, 0.0],
-                             wheel_configuration=[0.0, 2.0],
                              uvec_file=r"sample_uvec.py",
                              uvec_function_name="uvec_test",
                              uvec_parameters=uvec_parameters,
@@ -195,12 +194,11 @@ class TestKratosSolverIO:
         uvec_model_part = ModelPart("UvecModelPart")
 
         # set up uvec load
-        uvec_parameters = {"load_wheel_1": -10.0, "load_wheel_2": -20.0}
-        uvec_state_variables = {"state_1": [0.0, 1.0], "state_2": [9, 8]}
+        uvec_parameters = {"load_wheel_1": -10.0, "load_wheel_2": -20.0, "wheel_configuration": [0.0, 2.0]}
+        uvec_state_variables = {"state_1": [0.0, 1.0], "state_2": [9, 8], "wheel_configuration": [0.0, 2.0]}
         uvec_load = UvecLoad(direction_signs=[1, 1, 0],
                              velocity=5,
                              origin=[0.0, 1.0, 0.0],
-                             wheel_configuration=[0.0, 2.0],
                              uvec_model=uvec,
                              uvec_parameters=uvec_parameters,
                              uvec_state_variables=uvec_state_variables)

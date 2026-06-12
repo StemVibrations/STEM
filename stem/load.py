@@ -517,6 +517,7 @@ class UvecLoad(LoadParametersABC):
         - ValueError: If the specified UVEC model is not supported.
         - ValueError: If the train type is CUSTOM and uvec_parameters are not provided.
         - ValueError: If the train type is not CUSTOM and uvec_parameters are provided.
+        - ValueError: If uvec_parameters are not provided after initialization.
         """
 
         if self.uvec_model is not None:
@@ -540,10 +541,13 @@ class UvecLoad(LoadParametersABC):
                                                           self.velocity,
                                                           self.static_initialisation,
                                                           parameters=self.uvec_parameters)
-            self.wheel_configuration = self.uvec_parameters["wheel_configuration"]
 
-            self.uvec_parameters["irr_parameters"] = self.irregularities
-            self.uvec_parameters["joint_parameters"] = self.rail_joint
+        if self.uvec_parameters is None:
+            raise ValueError("uvec_parameters must be provided ")
+
+        self.wheel_configuration: List[float] = self.uvec_parameters["wheel_configuration"]
+        self.uvec_parameters["irr_parameters"] = self.irregularities
+        self.uvec_parameters["joint_parameters"] = self.rail_joint
 
     @staticmethod
     def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
