@@ -182,3 +182,32 @@ class TestUvecLoad:
         }
         with pytest.raises(ValueError, match=r"Missing train parameters: \['wheel_configuration'\]"):
             _validate_train_parameters(parameters)
+
+    def test_number_of_cars(self):
+        """
+        Test the validator for the custom train parameters.
+        It should raise a ValueError if any required parameter is missing.
+        """
+
+        direction_signs = [1, 1, 0]
+        velocity = 10
+        origin = [0.0, 1.0, 0.0]
+
+        with pytest.raises(ValueError, match="nb_carts must be >= 1"):
+            UvecLoad(
+                direction_signs,
+                velocity,
+                origin,
+                nb_carts=0,
+                uvec_model=uvec,
+                train_type=TrainType.LOCOMOTIVE,
+            )
+        with pytest.raises(TypeError, match="nb_carts must be an integer"):
+            UvecLoad(
+                direction_signs,
+                velocity,
+                origin,
+                nb_carts=1.3,
+                uvec_model=uvec,
+                train_type=TrainType.LOCOMOTIVE,
+            )

@@ -178,8 +178,12 @@ def _build_train_parameters(train_type: TrainType, nb_carts: int, offset: float,
     - Dict[str, Any]: The parameters of the train to be used in the UVEC function.
 
     Raises:
+    - TypeError: If nb_carts is not an integer.
     - ValueError: If nb_carts is less than 1.
     """
+
+    if not isinstance(nb_carts, int):
+        raise TypeError("nb_carts must be an integer")
 
     if nb_carts < 1:
         raise ValueError("nb_carts must be >= 1")
