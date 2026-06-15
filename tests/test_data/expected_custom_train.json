@@ -16,7 +16,7 @@
   "wheel_mass": 1500.0,
   "wheel_stiffness": 4800000.0,
   "wheel_damping": 250.0,
-  "train_length": 22.4,
+  "cart_length": 22.4,
   "gravity_axis": 1,
   "contact_coefficient": 9.1e-07,
   "contact_power": 1.0,

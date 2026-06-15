@@ -61,9 +61,9 @@ def test_stem():
         "wheel_mass": 1.5e3,
         "wheel_stiffness": 4800e3,
         "wheel_damping": 0.25e3,
-        "train_length": 1,
+        "cart_length": 24,
         "wheel_configuration": [0.0, 2.5, 19.9, 22.4],
-        "gravity_axis": 1,
+        "gravity_axis": 24,
         "contact_coefficient": 9.1e-5,
         "contact_power": 1.5,
     }

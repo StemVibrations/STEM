@@ -194,10 +194,16 @@ Irregularities
 --------------
 The track irregularities can be applied in STEM in combination with the UVEC.
 To apply irregularities to the UVEC model, the user can  define the argument `irregularities` in the UVEC
-model as a dictionary with the parameters `Av` and `seed`.
+model as a dictionary with the following parameters:
 
-The `Av` parameter is the amplitude of the irregularities and the `seed` parameter is used for reproducibility of the
-random process. The irregularities are modelled following :cite:`Zhang_2001`, and the parameter `Av` can be estimated
+   - ``Av``: vertical track irregularity amplitude parameter
+   - ``omega_c``: critical wave number (Optional, default value 0.8242 rad/m)
+   - ``f_min``: minimum spatial frequency for the PSD of the unevenness (Optional, default 2 1/m)
+   - ``f_max``: maximum spatial frequency for the PSD of the unevenness (Optional, default 500 1/m)
+   - ``N``: number of frequency increments (Optional, default 2000)
+   - ``seed``: seed for random generator (Optional, default 14)
+
+The irregularities are modelled following :cite:`Zhang_2001`, and the parameter `Av` can be estimated
 based on the track quality :cite:`Lei_Noda_2002`.
 In case that irregularities are not required, the `irregularities` argument must be set to `None`.
 
@@ -227,10 +233,10 @@ To model the rail joints, hinges can be added to the beam elements of the rail a
 The stiffness of the hinges can be defined based on the properties of the rail and the joint.
 
 The irregularities of the rail joint can be modelled (see :ref:`rail_joint_formulation`) by setting the
-argument `rail_joint` in the UVEC model as a dictionary with the parameters `location_joint`,
-`depth_joint` and `width_joint`, which represent the location of the joint, the depth of the joint and the
+argument ``rail_joint`` in the UVEC model as a dictionary with the parameters ``location_joint``,
+``depth_joint`` and ``width_joint``, which represent the location of the joint in the global , the depth of the joint and the
 width of the joint, respectively.
-In case that rail joints are not required, the `rail_joint` argument must be set to `None`.
+In case that rail joints are not required, the  ``rail_joint`` argument must be set to ``None``.
 
 .. code-block:: python
 

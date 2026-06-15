@@ -41,7 +41,7 @@ _TRAIN_PARAMETER_PRESETS: Dict[TrainType, Dict[str, Any]] = {
         "wheel_damping": 3.3e4,  # damping coefficient between the wheel and the bogie [Ns/m] / secondary suspension
         "bogie_distances": [-10.4, 10.4],  # distances of the bogies from the centre of the cart [m]
         "wheel_distances": [-1.3, 1.3],  # distances of the wheels from the centre of the bogie [m]
-        "train_length": 26.8,  # length of the train [m]
+        "cart_length": 26.8,  # length of the train [m]
         "gravity_axis": 1,  # axis on which gravity works [x =0, y = 1, z = 2]
         "contact_coefficient": 5.13e-08,  # Hertzian contact coefficient between the wheel and the rail [N/m]
         "contact_power": 1.5,  # Hertzian contact power between the wheel and the rail [-]
@@ -59,7 +59,7 @@ _TRAIN_PARAMETER_PRESETS: Dict[TrainType, Dict[str, Any]] = {
         "wheel_damping": 2.5e3,
         "bogie_distances": [-10, 10],
         "wheel_distances": [-1.25, 1.25],
-        "train_length": 27,
+        "cart_length": 27,
         "gravity_axis": 1,
         "contact_coefficient": 5.13e-08,
         "contact_power": 1.5,
@@ -77,13 +77,13 @@ _TRAIN_PARAMETER_PRESETS: Dict[TrainType, Dict[str, Any]] = {
         "wheel_damping": 6.4e3,
         "bogie_distances": [-9.5, 9.5],
         "wheel_distances": [-1.28, 1.28],
-        "train_length": 25,
+        "cart_length": 25,
         "gravity_axis": 1,
         "contact_coefficient": 5.13e-08,
         "contact_power": 1.5,
         "wheel_configuration": [0, 2.56, 19, 21.56],
     },
-    TrainType.FREIGHT_LOADED: {
+    TrainType.FREIGHT_UNLOADED: {
         "cart_mass": 1.3e4 / 2,
         "bogie_mass": 1.8e3 / 2,
         "wheel_mass": 1.4e3 / 2,
@@ -95,13 +95,13 @@ _TRAIN_PARAMETER_PRESETS: Dict[TrainType, Dict[str, Any]] = {
         "wheel_damping": 5.7e3,
         "bogie_distances": [-7, 7],
         "wheel_distances": [-0.9, 0.9],
-        "train_length": 13,
+        "cart_length": 13,
         "gravity_axis": 1,
         "contact_coefficient": 5.13e-08,
         "contact_power": 1.5,
         "wheel_configuration": [0, 1.8, 14, 15.8],
     },
-    TrainType.FREIGHT_UNLOADED: {
+    TrainType.FREIGHT_LOADED: {
         "cart_mass": 8.1e4 / 2,
         "bogie_mass": 1.8e3 / 2,
         "wheel_mass": 1.4e3 / 2,
@@ -113,7 +113,7 @@ _TRAIN_PARAMETER_PRESETS: Dict[TrainType, Dict[str, Any]] = {
         "wheel_damping": 1.5e4,
         "bogie_distances": [-7, 7],
         "wheel_distances": [-0.9, 0.9],
-        "train_length": 18,
+        "cart_length": 18,
         "gravity_axis": 1,
         "contact_coefficient": 5.13e-08,
         "contact_power": 1.5,
@@ -133,7 +133,7 @@ _REQUIRED_TRAIN_PARAMETER_KEYS = {
     "wheel_damping",
     "bogie_distances",
     "wheel_distances",
-    "train_length",
+    "cart_length",
     "gravity_axis",
     "contact_coefficient",
     "contact_power",
@@ -174,12 +174,12 @@ def _build_train_parameters(train_type: TrainType, nb_carts: int, offset: float,
     - initialisation_steps (Optional[int]): The number of steps to perform for the static initialisation.
     - parameters (Dict[str, Any]): The train parameters to use if the train type is CUSTOM.
 
-    Returns:
-    - Dict[str, Any]: The parameters of the train to be used in the UVEC function.
-
     Raises:
     - TypeError: If nb_carts is not an integer.
     - ValueError: If nb_carts is less than 1.
+
+    Returns:
+    - Dict[str, Any]: The parameters of the train to be used in the UVEC function.
     """
 
     if not isinstance(nb_carts, int):
@@ -203,7 +203,7 @@ def _build_train_parameters(train_type: TrainType, nb_carts: int, offset: float,
     total_wheel_configuration = [u + offset for u in uvec_parameters["wheel_configuration"]]
     for n in range(1, nb_carts):
         total_wheel_configuration.extend(
-            [u + n * uvec_parameters["train_length"] for u in uvec_parameters["wheel_configuration"]])
+            [u + n * uvec_parameters["cart_length"] for u in uvec_parameters["wheel_configuration"]])
     uvec_parameters["wheel_configuration"] = total_wheel_configuration
 
     return uvec_parameters

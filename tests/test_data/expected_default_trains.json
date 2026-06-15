@@ -17,7 +17,7 @@
             -1.3,
             1.3
         ],
-        "train_length": 26.8,
+        "cart_length": 26.8,
         "gravity_axis": 1,
         "contact_coefficient": 5.13e-08,
         "contact_power": 1.5,
@@ -56,7 +56,7 @@
             -1.25,
             1.25
         ],
-        "train_length": 27,
+        "cart_length": 27,
         "gravity_axis": 1,
         "contact_coefficient": 5.13e-08,
         "contact_power": 1.5,
@@ -99,7 +99,7 @@
             -1.28,
             1.28
         ],
-        "train_length": 25,
+        "cart_length": 25,
         "gravity_axis": 1,
         "contact_coefficient": 5.13e-08,
         "contact_power": 1.5,
@@ -137,7 +137,7 @@
             -0.9,
             0.9
         ],
-        "train_length": 13,
+        "cart_length": 13,
         "gravity_axis": 1,
         "contact_coefficient": 5.13e-08,
         "contact_power": 1.5,
@@ -178,7 +178,7 @@
             -0.9,
             0.9
         ],
-        "train_length": 18,
+        "cart_length": 18,
         "gravity_axis": 1,
         "contact_coefficient": 5.13e-08,
         "contact_power": 1.5,

@@ -42,7 +42,7 @@ class TestUvecLoad:
             "wheel_mass": 1.5e3,
             "wheel_stiffness": 4800e3,
             "wheel_damping": 0.25e3,
-            "train_length": 22.4,
+            "cart_length": 22.4,
             "gravity_axis": 1,
             "contact_coefficient": 9.1e-7,
             "contact_power": 1.0,
@@ -155,7 +155,7 @@ class TestUvecLoad:
             "wheel_damping": 9,
             "bogie_distances": 10,
             "wheel_distances": 11,
-            "train_length": 12,
+            "cart_length": 12,
             "gravity_axis": 13,
             "contact_coefficient": 14,
             "contact_power": 15,
@@ -175,7 +175,7 @@ class TestUvecLoad:
             "wheel_damping": 9,
             "bogie_distances": 10,
             "wheel_distances": 11,
-            "train_length": 12,
+            "cart_length": 12,
             "gravity_axis": 13,
             "contact_coefficient": 14,
             "contact_power": 15,
@@ -183,7 +183,7 @@ class TestUvecLoad:
         with pytest.raises(ValueError, match=r"Missing train parameters: \['wheel_configuration'\]"):
             _validate_train_parameters(parameters)
 
-    def test_number_of_cars(self):
+    def test_number_of_carts(self):
         """
         Test the validator for the custom train parameters.
         It should raise a ValueError if any required parameter is missing.

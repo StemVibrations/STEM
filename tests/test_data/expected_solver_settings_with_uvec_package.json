@@ -89,7 +89,7 @@
                     "contact_coefficient": 1.5,
                     "contact_power": 1.25,
                     "gravity_axis": 1,
-                    "train_length": 20,
+                    "cart_length": 20,
                     "wheel_damping": 0.5,
                     "wheel_distances": [1.5],
                     "wheel_mass": 1.2,

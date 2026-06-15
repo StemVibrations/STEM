@@ -103,7 +103,7 @@ def test_train_track_uvec_soil_3d():
         "wheel_mass": 1.5e3,  # mass of the wheel [kg]
         "wheel_stiffness": 4800e3,  # stiffness between the wheel and the bogie [N/m]
         "wheel_damping": 0.25e3,  # damping coefficient between the wheel and the bogie [Ns/m]
-        "train_length": 25,  # length of the train [m]
+        "cart_length": 25,  # length of the train [m]
         "gravity_axis": 1,  # axis on which gravity works [x =0, y = 1, z = 2]
         "contact_coefficient": 9.1e-7,  # Hertzian contact coefficient between the wheel and the rail [N/m]
         "contact_power": 1.0,  # Hertzian contact power between the wheel and the rail [-]
