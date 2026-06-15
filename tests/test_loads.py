@@ -88,13 +88,13 @@ class TestUvecLoad:
                                     train_type=TrainType.PASSENGERS_HEAVY,
                                     nb_carts=3,
                                     offset=1,
-                                    static_initialisation=True)
+                                    static_vehicle_calculation=True)
         passengers_light = UvecLoad(direction_signs,
                                     velocity,
                                     origin,
                                     uvec_model=uvec,
                                     train_type=TrainType.PASSENGERS_LIGHT,
-                                    static_initialisation=True,
+                                    static_vehicle_calculation=True,
                                     irregularities={
                                         "Av": 1,
                                         "seed": 14

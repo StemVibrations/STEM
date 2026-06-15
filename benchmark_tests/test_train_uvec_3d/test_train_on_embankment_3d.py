@@ -78,7 +78,7 @@ def test_stem():
         offset=0,
         train_type=TrainType.CUSTOM,
         uvec_parameters=uvec_parameters,
-        static_initialisation=False,
+        static_vehicle_calculation=False,
         irregularities=None,
         rail_joint=None,
     )

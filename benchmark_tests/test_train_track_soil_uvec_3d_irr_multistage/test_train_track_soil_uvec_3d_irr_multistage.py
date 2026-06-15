@@ -129,7 +129,7 @@ def test_train_track_soil_uvec_3d_irr_multistage():
         offset=0,
         train_type=TrainType.CUSTOM,
         uvec_parameters=uvec_parameters,
-        static_initialisation=True,
+        static_vehicle_calculation=True,
         irregularities=irr_parameters,
         rail_joint=None,
     )

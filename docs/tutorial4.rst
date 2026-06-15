@@ -252,7 +252,7 @@ is used for reproducibility of the random process.
 In case that irregularities are not required, the `irr_parameters` key must be omitted.
 More information about the irregularity parameters can be found in :ref:`irregularities_track`.
 
-The static initialisation of the train is done by setting the `static_initialisation` parameter to True in the
+The static initialisation of the train is done by setting the `static_vehicle_calculation` parameter to True in the
 `uvec_parameters` dictionary, and the train velocity is set to zero, so that the train does not move
 during the static initialisation stage.
 
@@ -293,7 +293,7 @@ It should be noted that the `uvec_load` is added to a `line model part`, and not
         offset=0,
         train_type=TrainType.CUSTOM,
         uvec_parameters=uvec_parameters,
-        static_initialisation=True,
+        static_vehicle_calculation=True,
         irregularities=irr_parameters,
         rail_joint=None,
     )
@@ -357,7 +357,7 @@ In this tutorial, the model in defined in two stages:
 
 The first stage is used to statically initialise the train load on the track.
 This means that the train is placed on the track and the static response of the system is calculated.
-This is done by setting the `static_initialisation` parameter to "True" in the `uvec_parameters` dictionary (see above),
+This is done by setting the `static_vehicle_calculation` parameter to "True" in the `uvec_parameters` dictionary (see above),
 and the solution type is set to `QUASI_STATIC`.
 
 The start time is set to 0.0 s and the end time is set to 0.5 s with a time step size of 0.1 s.
@@ -483,7 +483,7 @@ The calculation is run by calling ``stem.run_calculation()``.
     stage2.project_parameters.settings.rayleigh_m = 0.248
     stage2.get_model_part_by_name("train_load").parameters.velocity = velocity
     stage2.get_model_part_by_name("train_load").parameters.uvec_parameters["velocity"] = velocity
-    stage2.get_model_part_by_name("train_load").parameters.uvec_parameters["static_initialisation"] = False
+    stage2.get_model_part_by_name("train_load").parameters.uvec_parameters["static_vehicle_calculation"] = False
 
     stem.add_calculation_stage(stage2)
     stem.write_all_input_files()

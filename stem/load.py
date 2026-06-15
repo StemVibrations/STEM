@@ -484,7 +484,7 @@ class UvecLoad(LoadParametersABC):
         - irregularities (Optional[Dict[str, Any]]): Parameters of the track irregularities to be included in the \
           UVEC model.
         - rail_joint (Optional[Dict[str, Any]]): Parameters of the rail joint to be included in the UVEC model.
-        - static_initialisation (bool): Whether to perform a static initialisation of the train.
+        - static_vehicle_calculation (bool): Whether to perform static or dynamic vehicle calculation.
     """
 
     direction_signs: List[int]
@@ -500,7 +500,7 @@ class UvecLoad(LoadParametersABC):
     train_type: TrainType = TrainType.CUSTOM
     irregularities: Optional[Dict[str, Any]] = None
     rail_joint: Optional[Dict[str, Any]] = None
-    static_initialisation: bool = False
+    static_vehicle_calculation: bool = False
     initialisation_steps: Optional[int] = None
 
     def __post_init__(self):
@@ -530,7 +530,7 @@ class UvecLoad(LoadParametersABC):
                 raise ValueError("For non-custom train type, uvec_parameters should not be provided")
 
             self.uvec_parameters = _build_train_parameters(self.train_type, self.nb_carts, self.offset, self.velocity,
-                                                           self.static_initialisation, self.initialisation_steps,
+                                                           self.static_vehicle_calculation, self.initialisation_steps,
                                                            self.uvec_parameters)
 
         if self.uvec_parameters == {}:

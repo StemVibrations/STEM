@@ -234,8 +234,8 @@ The stiffness of the hinges can be defined based on the properties of the rail a
 
 The irregularities of the rail joint can be modelled (see :ref:`rail_joint_formulation`) by setting the
 argument ``rail_joint`` in the UVEC model as a dictionary with the parameters ``location_joint``,
-``depth_joint`` and ``width_joint``, which represent the location of the joint in the global , the depth of the joint and the
-width of the joint, respectively.
+``depth_joint`` and ``width_joint``. The ``location_joint`` represents the Euclidian distance in relation to the load
+origin of the UVEC model.
 In case that rail joints are not required, the  ``rail_joint`` argument must be set to ``None``.
 
 .. code-block:: python

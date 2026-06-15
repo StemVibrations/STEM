@@ -120,7 +120,7 @@ def test_train_track_uvec_soil_3d():
         offset=0,
         train_type=TrainType.CUSTOM,
         uvec_parameters=uvec_parameters,
-        static_initialisation=False,
+        static_vehicle_calculation=False,
         irregularities=None,
         rail_joint=None,
     )
