@@ -156,13 +156,9 @@ def _validate_train_parameters(parameters: Dict[str, Any]) -> None:
         raise ValueError(f"Missing train parameters: {sorted(missing_keys)}")
 
 
-def build_train_parameters(train_type: TrainType,
-                           nb_carts: int,
-                           offset: float,
-                           velocity: Union[float, str],
-                           static_initialisation: bool = False,
-                           initialisation_steps: Optional[int] = None,
-                           parameters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def _build_train_parameters(train_type: TrainType, nb_carts: int, offset: float, velocity: Union[float, str],
+                            static_initialisation: bool, initialisation_steps: Optional[int],
+                            parameters: Dict[str, Any]) -> Dict[str, Any]:
     """
     Initialise the parameters of the train based on the train type.
     If the train type is custom, the parameters must be provided by the user.
@@ -175,36 +171,29 @@ def build_train_parameters(train_type: TrainType,
     - velocity (Union[float, str]): The velocity of the train [m/s]. Can be defined as a string \
       (when function of time) or as a float.
     - static_initialisation (bool): Whether to perform a static initialisation of the train.
-    - initialisation_steps (Optional[int]): The number of steps to perform for the static initialisation. \
-      If None, no static initialisation is done.
-    - parameters (Optional[Dict[str, Any]]): The train parameters to use if the train type is CUSTOM.
+    - initialisation_steps (Optional[int]): The number of steps to perform for the static initialisation.
+    - parameters (Dict[str, Any]): The train parameters to use if the train type is CUSTOM.
 
     Returns:
     - Dict[str, Any]: The parameters of the train to be used in the UVEC function.
 
     Raises:
     - ValueError: If nb_carts is less than 1.
-    - ValueError: If train_type is CUSTOM and parameters are not provided.
-    - ValueError: If train_type is not CUSTOM and parameters are provided.
     """
 
     if nb_carts < 1:
         raise ValueError("nb_carts must be >= 1")
 
     if train_type == TrainType.CUSTOM:
-        if parameters is None:
-            raise ValueError("For custom train type, parameters must be provided")
         _validate_train_parameters(parameters)
         uvec_parameters = parameters
     else:
-        if parameters is not None:
-            raise ValueError("For non-custom train type, parameters should not be provided")
         uvec_parameters = _TRAIN_PARAMETER_PRESETS[train_type]
 
     uvec_parameters["n_carts"] = nb_carts
     uvec_parameters["velocity"] = velocity
     uvec_parameters["static_initialisation"] = static_initialisation
-    uvec_parameters["initialisation_steps"] = initialisation_steps if initialisation_steps is not None else None
+    uvec_parameters["initialisation_steps"] = initialisation_steps
 
     # compute the wheel configuration based on the number of carts and the wheel configuration of each cart
     total_wheel_configuration = [u + offset for u in uvec_parameters["wheel_configuration"]]
@@ -497,7 +486,7 @@ class UvecLoad(LoadParametersABC):
     direction_signs: List[int]
     velocity: Union[float, str]
     origin: List[float]
-    uvec_parameters: Optional[Dict[str, Any]] = field(default_factory=dict)
+    uvec_parameters: Dict[str, Any] = field(default_factory=dict)
     uvec_state_variables: Dict[str, Any] = field(default_factory=dict)
     uvec_model: Union[ModuleType, Any] = None
     uvec_file: str = ""
@@ -508,6 +497,7 @@ class UvecLoad(LoadParametersABC):
     irregularities: Optional[Dict[str, Any]] = None
     rail_joint: Optional[Dict[str, Any]] = None
     static_initialisation: bool = False
+    initialisation_steps: Optional[int] = None
 
     def __post_init__(self):
         """
@@ -529,20 +519,17 @@ class UvecLoad(LoadParametersABC):
             self.uvec_function_name = "uvec"
             self.uvec_model = None  # necessary to allow for a deep copy for a stage in Kratos
 
-            if self.train_type == TrainType.CUSTOM and self.uvec_parameters is None:
+            if self.train_type == TrainType.CUSTOM and self.uvec_parameters == {}:
                 raise ValueError("For custom train type, uvec_parameters must be provided")
 
-            if self.train_type != TrainType.CUSTOM and self.uvec_parameters is not None:
+            if self.train_type != TrainType.CUSTOM and self.uvec_parameters != {}:
                 raise ValueError("For non-custom train type, uvec_parameters should not be provided")
 
-            self.uvec_parameters = build_train_parameters(self.train_type,
-                                                          self.nb_carts,
-                                                          self.offset,
-                                                          self.velocity,
-                                                          self.static_initialisation,
-                                                          parameters=self.uvec_parameters)
+            self.uvec_parameters = _build_train_parameters(self.train_type, self.nb_carts, self.offset, self.velocity,
+                                                           self.static_initialisation, self.initialisation_steps,
+                                                           self.uvec_parameters)
 
-        if self.uvec_parameters is None:
+        if self.uvec_parameters == {}:
             raise ValueError("uvec_parameters must be provided ")
 
         self.wheel_configuration: List[float] = self.uvec_parameters["wheel_configuration"]
