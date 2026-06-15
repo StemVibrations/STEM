@@ -108,7 +108,7 @@ def test_train_track_soil_uvec_3d_joint_multistage(test_type, input_folder_suffi
         model.add_hinge_on_beam("rail_track", [(0.75, 3 + rail_pad_thickness, distance_joint)],
                                 HingeParameters(hinge_stiffness_y, hinge_stiffness_z), "hinge")
 
-    # # define uvec parameters
+    # define uvec parameters
     wheel_configuration = [0.0, 2.5, 19.9, 22.4]  # wheel configuration [m]
     velocity = 0  # velocity of the UVEC [m/s]
     uvec_parameters = {
