@@ -194,8 +194,25 @@ class TestKratosSolverIO:
         uvec_model_part = ModelPart("UvecModelPart")
 
         # set up uvec load
-        uvec_parameters = {"load_wheel_1": -10.0, "load_wheel_2": -20.0, "wheel_configuration": [0.0, 2.0]}
-        uvec_state_variables = {"state_1": [0.0, 1.0], "state_2": [9, 8], "wheel_configuration": [0.0, 2.0]}
+        uvec_state_variables = {"state_1": [0.0, 1.0], "state_2": [9, 8]}
+        uvec_parameters = {
+            'bogie_distances': [5],
+            'bogie_inertia': 1e3,
+            'bogie_mass': 1,
+            'cart_damping': 1,
+            'cart_inertia': 0.5,
+            'cart_mass': 0.75,
+            'cart_stiffness': 100,
+            'contact_coefficient': 1.5,
+            'contact_power': 1.25,
+            'gravity_axis': 1,
+            'train_length': 20,
+            'wheel_damping': 0.5,
+            'wheel_distances': [1.5],
+            'wheel_mass': 1.2,
+            'wheel_stiffness': 1.1,
+            "wheel_configuration": [2],
+        }
         uvec_load = UvecLoad(direction_signs=[1, 1, 0],
                              velocity=5,
                              origin=[0.0, 1.0, 0.0],
