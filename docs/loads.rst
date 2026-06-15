@@ -219,11 +219,12 @@ To use the default train, simply specify the train type as follows:
 
 
 Table :ref:`default_train_parameters` shows the default parameters for the different train types that are
-available in STEM. The values of the parameters are based on :cite:`Zhang_2001`
+available in STEM. The values of the parameters are based on :cite:`Ricardo_2025`
 and can be used as a reference for defining custom trains. These values concern a half model train, where the
-values for the cart correspond to half the mass and inertia of the cart, and the values for the bogie correspond to
-half the mass and inertia of one bogie (or primary suspension mass and inertia), and the values for
-the wheel correspond to the mass and inertia of one wheel (or secondary suspension mass and inertia).
+values for the cart correspond to half the mass and inertia of the cart, the values of the secondary suspension
+correspond to one spring-damper system, the values for the bogie correspond to half the mass and inertia of one bogie,
+the values for the primary suspension correspond to one spring-damper system, and the values for
+the wheel correspond to the mass and inertia of one wheel.
 
 The values presented in the table are for reference only and can be adjusted by the user as needed to define custom
 trains.
