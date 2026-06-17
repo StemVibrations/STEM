@@ -23,7 +23,7 @@ IS_LINUX = sys.platform == "linux"
 class TestModel:
 
     @pytest.fixture
-    def setup_3d_model_with_interface(self) -> Model:
+    def model_3d_with_interface(self) -> Model:
         """
         Sets up a 3d model with an interface part. The body part contains a single tetrahedral element
         and the interface part contains a single surface interface element.
@@ -37,8 +37,8 @@ class TestModel:
         body_nodes = {
             1: Node(1, [0.0, 1.0, 0.0]),
             2: Node(2, [1.0, 1.0, 0.0]),
-            5: Node(3, [1.0, 1.0, 1.0]),
-            3: Node(5, [1.0, 0.0, 0.0]),
+            3: Node(3, [1.0, 0.0, 0.0]),
+            5: Node(5, [1.0, 1.0, 1.0])
         }
         body_elements = {1: Element(1, "TETRAHEDRON_4N", [1, 2, 3, 5])}
         body_mesh = Mesh(3)
@@ -96,7 +96,7 @@ class TestModel:
         return model
 
     @pytest.fixture
-    def model_setup_large_2d(self) -> Model:
+    def model_2d_with_interface(self) -> Model:
         """
         Set up test data for large 2D model tests
         This fixture creates a model with two body model parts and an interface part.
@@ -133,19 +133,19 @@ class TestModel:
             5: Element(5, "TRIANGLE_3N", [8, 10, 7]),
             6: Element(6, "TRIANGLE_3N", [10, 9, 6])
         }
-        # QUADRANGLE_4N
+        # line interface 2 plus 2
         interface_elements = {
-            7: Element(7, "QUADRANGLE_4N", [2, 3, 10, 8]),
-            8: Element(8, "QUADRANGLE_4N", [3, 5, 9, 10])
+            7: Element(7, "LINE_INTERFACE_2_PLUS_2", [2, 3, 8, 10]),
+            8: Element(8, "LINE_INTERFACE_2_PLUS_2", [3, 5, 10, 9])
         }
 
-        # Create stable part elements 1 2 3
+        # Create primary part elements 1 2 3
         part_1 = BodyModelPart("part_1")
         part_1.mesh = Mesh(2)
         part_1.mesh.nodes = {1: nodes[1], 2: nodes[2], 3: nodes[3], 4: nodes[4], 5: nodes[5]}
         part_1.mesh.elements = {1: elements[1], 2: elements[2], 3: elements[3]}
 
-        # Create changing part elements 4 5 6
+        # Create secondary part elements 4 5 6
         part_2 = BodyModelPart("part_2")
         part_2.mesh = Mesh(2)
         part_2.mesh.nodes = {6: nodes[6], 7: nodes[7], 8: nodes[8], 9: nodes[9], 10: nodes[10]}
@@ -181,7 +181,7 @@ class TestModel:
             "node_ids": list(interface_part.mesh.nodes.keys()),
             "element_ids": list(interface_part.mesh.elements.keys()),
             "ndim": 2,
-            "element_type": "QUADRANGLE_4N"
+            "element_type": "UNSUPPORTED_LINE_INTERFACE_2_PLUS_2"
         }
         # Return all needed objects for tests
         return model
@@ -264,7 +264,7 @@ class TestModel:
         return {"model": model, "changing_part": changing_part, "interface_material": interface_material}
 
     @pytest.fixture
-    def model_setup_3d_for_interface(self) -> Dict[str, Any]:
+    def model_3d_for_interface(self) -> Dict[str, Any]:
         """
         Creates a comprehensive 3D test model setup with predefined nodes, elements, and model parts.
         The setup is specifically designed for testing interface element generation,
@@ -5796,18 +5796,18 @@ class TestModel:
         with pytest.raises(ValueError, match="The target part, `nonexistent_part`, does not exist."):
             model.apply_additional_process(process_parameters, "nonexistent_part")
 
-    def test_update_node_ids_3d(self, model_setup_3d_for_interface: Dict[str, Any]):
+    def test_update_node_ids_3d(self, model_3d_for_interface: Dict[str, Any]):
         """
         Test updating node IDs with a mapping in a 3D model
 
         Args:
-            - model_setup_3d_for_interface (Dict[str, Any]): Dictionary containing the 3D model and other test data.
+            - model_3d_for_interface (Dict[str, Any]): Dictionary containing the 3D model and other test data.
         """
         # Create a mapping for node IDs 1, 2 and 3 (common nodes)
         map_new_node_ids = {1: 100, 2: 101, 3: 102}
 
         # Test the static method directly
-        original_nodes = {k: v for k, v in model_setup_3d_for_interface["changing_part"].mesh.nodes.items()}
+        original_nodes = {k: v for k, v in model_3d_for_interface["changing_part"].mesh.nodes.items()}
         updated_nodes = Model._Model__update_node_ids(original_nodes, map_new_node_ids)
 
         # Verify that nodes 1, 2 and 3 have been updated in the result
@@ -5820,12 +5820,12 @@ class TestModel:
 
         assert updated_nodes == expected_nodes
 
-    def test_update_elements_with_new_node_ids_3d(self, model_setup_3d_for_interface: Dict[str, Any]):
+    def test_update_elements_with_new_node_ids_3d(self, model_3d_for_interface: Dict[str, Any]):
         """
         Test updating elements with new node IDs in a 3D model
 
         Args:
-            - model_setup_3d_for_interface (Dict[str, Any]): Dictionary containing the 3D model and other test data.
+            - model_3d_for_interface (Dict[str, Any]): Dictionary containing the 3D model and other test data.
         """
         # Create a mapping for node IDs 1 and 2 (common nodes)
         map_new_node_ids = {1: 100, 2: 101, 3: 102}
@@ -5838,24 +5838,24 @@ class TestModel:
         }
 
         # Original elements
-        original_elements = {k: v for k, v in model_setup_3d_for_interface["changing_part"].mesh.elements.items()}
+        original_elements = {k: v for k, v in model_3d_for_interface["changing_part"].mesh.elements.items()}
 
         # Test the static method
-        updated_elements = Model._Model__update_elements_with_new_node_ids(original_elements, node_to_elements,
-                                                                           map_new_node_ids)
+        updated_elements = Model._Model__update_node_ids_in_elements(original_elements, node_to_elements,
+                                                                     map_new_node_ids)
 
         # Verify element 2 now references the new node IDs
         assert updated_elements[2].node_ids == [100, 101, 102, 5]
 
-    def test_update_changing_parts_3d(self, model_setup_3d_for_interface: Dict[str, Any]):
+    def test_update_changing_parts_3d(self, model_3d_for_interface: Dict[str, Any]):
         """
         Test updating changing parts with new node IDs in a 3D model
 
         Args:
-            - model_setup_3d_for_interface (Dict[str, Any]): Dictionary containing the 3D model and other test data.
+            - model_3d_for_interface (Dict[str, Any]): Dictionary containing the 3D model and other test data.
         """
-        model = model_setup_3d_for_interface["model"]
-        changing_part = model_setup_3d_for_interface["changing_part"]
+        model = model_3d_for_interface["model"]
+        changing_part = model_3d_for_interface["changing_part"]
 
         # Create common nodes set (nodes 1 and 2)
         common_nodes = {1, 2, 3}
@@ -5864,7 +5864,7 @@ class TestModel:
         map_new_node_ids = {1: 100, 2: 101, 3: 102}
 
         # Update changing parts
-        model._Model__update_changing_parts([changing_part], common_nodes, map_new_node_ids, {})
+        model._Model__update_secondary_parts([changing_part], common_nodes, map_new_node_ids, {})
         # Verify nodes in changing part have been updated
         updated_nodes = model.body_model_parts[1].mesh.nodes
 
@@ -5924,14 +5924,14 @@ class TestModel:
         node_ids = created_element.node_ids
         assert node_ids == [3, 2, 5, 6]
 
-    def test_create_interface_elements_3d(self, model_setup_3d_for_interface: Dict[str, Any]):
+    def test_create_interface_elements_3d(self, model_3d_for_interface: Dict[str, Any]):
         """
         Test creating interface elements from nodes for 3D model.
 
         Args:
-            - model_setup_3d_for_interface (Dict[str, Any]): Dictionary containing the 3d Model with interface
+            - model_3d_for_interface (Dict[str, Any]): Dictionary containing the 3d Model with interface
         """
-        model = model_setup_3d_for_interface["model"]
+        model = model_3d_for_interface["model"]
 
         # Set up test data
         test_nodes = {
@@ -6056,15 +6056,15 @@ class TestModel:
         assert list(interface_part.mesh.elements.keys()) == [1000]
         assert interface_part.mesh.elements[1000] == Element(1000, "LINE_INTERFACE_2_PLUS_2", [3, 2, 5, 6])
 
-    def test_create_interface_body_model_part_3d(self, model_setup_3d_for_interface: Dict[str, Any]):
+    def test_create_interface_body_model_part_3d(self, model_3d_for_interface: Dict[str, Any]):
         """
         Test creating an interface body model part
 
         Args:
-            - model_setup_3d_for_interface (Dict[str, Any]): Dictionary containing the model and other test data for 3D.
+            - model_3d_for_interface (Dict[str, Any]): Dictionary containing the model and other test data for 3D.
         """
 
-        model = model_setup_3d_for_interface["model"]
+        model = model_3d_for_interface["model"]
 
         # Nodes from stable parts
         nodes_stable_parts = [1, 2, 3, 4]
@@ -6081,12 +6081,13 @@ class TestModel:
         model.body_model_parts[1].mesh.elements[2] = Element(2, "TETRAHEDRON_4N", [6, 7, 8, 5])
 
         # Create interface body model part
-        interface_part = model._Model__create_interface_body_model_part(
-            "test_interface", model_setup_3d_for_interface["interface_material"], map_new_node_ids, nodes_stable_parts)
+        interface_part = model._Model__create_interface_body_model_part("test_interface",
+                                                                        model_3d_for_interface["interface_material"],
+                                                                        map_new_node_ids, nodes_stable_parts)
 
         # Verify basic properties
         assert interface_part.name == "test_interface"
-        assert interface_part.material == model_setup_3d_for_interface["interface_material"]
+        assert interface_part.material == model_3d_for_interface["interface_material"]
 
         # Verify nodes in the mesh
         mesh_nodes = interface_part.mesh.nodes
@@ -6107,18 +6108,18 @@ class TestModel:
         assert list(interface_part.mesh.elements.keys()) == [3]
         assert interface_part.mesh.elements[3] == Element(3, "SURFACE_INTERFACE_3_PLUS_3", [1, 3, 2, 6, 8, 7])
 
-    def test_create_interface_elements_post_meshing_3d(self, model_setup_3d_for_interface: Dict[str, Any]):
+    def test_create_interface_elements_post_meshing_3d(self, model_3d_for_interface: Dict[str, Any]):
         """
         Test the full interface element adjustment process for 3D models
 
         Args:
-            - model_setup_3d_for_interface (Dict[str, Any]): Dictionary containing the model and other test data.
+            - model_3d_for_interface (Dict[str, Any]): Dictionary containing the model and other test data.
         """
-        model = model_setup_3d_for_interface["model"]
+        model = model_3d_for_interface["model"]
         model.interfaces["interface_part_1_part_2"] = {
             "interface_part_1": [model.body_model_parts[0]],
             "interface_part_2": [model.body_model_parts[1]],
-            "material": model_setup_3d_for_interface["interface_material"],
+            "material": model_3d_for_interface["interface_material"],
             "connected_process_definition": {}
         }
         # Run the adjustment method
@@ -6130,7 +6131,7 @@ class TestModel:
         assert interface_part.name == "interface_part_1_part_2"
         assert interface_part.material.name == "interface"
         # Verify node mapping in changing part
-        changing_part = model_setup_3d_for_interface["changing_part"]
+        changing_part = model_3d_for_interface["changing_part"]
 
         expected_nodes = {
             6: Node(id=6, coordinates=[0.0, 0.0, 0.0]),
@@ -6241,7 +6242,7 @@ class TestModel:
 
         # check that error is raised
         with pytest.raises(ValueError, match="Part `changing_part` has no mesh. Please generate the mesh first."):
-            model._Model__update_changing_parts([changing_part], common_nodes, map_new_node_ids, {})
+            model._Model__update_secondary_parts([changing_part], common_nodes, map_new_node_ids, {})
 
     def test_set_interface_success(self, model_2d_for_interface: Dict[str, Any]):
         """
@@ -6312,16 +6313,16 @@ class TestModel:
         ):
             model.set_interface_between_model_parts(part_1_name, part_2_name, material, "interface_name", {})
 
-    def test_update_process_model_parts_applied_both_parts(self, model_setup_large_2d: Model):
+    def test_update_process_model_parts_applied_both_parts(self, model_2d_with_interface: Model):
         """
         Test updating process model parts with new node IDs. This test checks that the
         method correctly updates the process model parts. The process model part is applied to both parts,
         so both parts should be updated with the new node IDs.
 
         Args:
-            - model_setup_large_2d (:class:`stem.model.Model`): Model instance set up for testing.
+            - model_2d_with_interface (:class:`stem.model.Model`): Model instance set up for testing.
         """
-        model = model_setup_large_2d
+        model = model_2d_with_interface
 
         # let's add a line load in the process model part
         line_load = LineLoad(value=[1, 0], active=[True, True])
@@ -6366,16 +6367,15 @@ class TestModel:
         assert updated_mp.mesh.elements[1].node_ids == [2, 1]
         assert updated_mp.mesh.elements[2].node_ids == [8, 7]
 
-    def test_update_process_model_parts_applied_both_parts_3d(self, setup_3d_model_with_interface: Model):
+    def test_update_process_model_parts_applied_both_parts_3d(self, model_3d_with_interface: Model):
         """
         Test updating process model parts with new node IDs. This test checks that the
         method correctly updates the process model parts. The process model part is applied to both parts,
         so both parts should be updated with the new node IDs.
 
         Args:
-            - model_setup_large_3d_custom (:class:`stem.model.Model`): Model instance set up for testing.
+            - model_3d_with_interface (:class:`stem.model.Model`): Model instance set up for testing.
         """
-        # model = model_setup_large_3d_custom
 
         # let's add a surface load in the process model part
         # surface_load = SurfaceLoad(value=[1, 0], active=[True, True, True])
@@ -6383,7 +6383,7 @@ class TestModel:
 
         # Add the load to the model
 
-        model = setup_3d_model_with_interface
+        model = model_3d_with_interface
 
         process_model_part = ModelPart("process_part")
         process_nodes = {
@@ -6440,10 +6440,18 @@ class TestModel:
             "point_process": [True, False]
         }, [5]),
     ])
-    def test_update_process_model_3d_with_point_process(self, connections, results, setup_3d_model_with_interface):
+    def test_update_process_model_3d_with_point_process(self, connections: Dict[str, List[bool]], results: List[int],
+                                                        model_3d_with_interface: Model):
         """
+        Tests if the process model parts are updated correctly when a point process is connected to the interface.
+
+        Args:
+            - connections (Dict[str, List[bool]]): Dictionary specifying which to which part of the interface the \
+                process is connected
+            - results (List[int]): Expected node IDs after the update
+            - model_3d_with_interface (:class:`stem.model.Model`): Model instance set up for testing.
         """
-        model = setup_3d_model_with_interface
+        model = model_3d_with_interface
 
         point_process = ModelPart("point_process")
 
@@ -6485,6 +6493,10 @@ class TestModel:
         """
         # Create a model instance
         model = Model(ndim=2)
+
+        body_mp = BodyModelPart("body_part")
+        body_mp.mesh = Mesh(ndim=2)
+
         # Create a process model part that does not have a mesh (mesh is None)
         mp = ModelPart("no_mesh")
         mp.mesh = None
@@ -6494,7 +6506,7 @@ class TestModel:
         map_new_node_ids = {1: 100}
         with pytest.raises(ValueError,
                            match="Process model part `no_mesh` has no mesh. Please generate the mesh first."):
-            model._Model__update_process_model_parts_for_interfaces(map_new_node_ids, None, {})
+            model._Model__update_process_model_parts_for_interfaces(map_new_node_ids, body_mp, {})
 
     def test_update_process_model_parts_raises_error_if_no_mesh_body_model_part(self,
                                                                                 model_2d_for_interface: Dict[str, Any]):
@@ -6523,5 +6535,5 @@ class TestModel:
 
         with pytest.raises(
                 ValueError,
-                match="Updating body model part `changing_part` has no mesh. Please generate the mesh first."):
+                match="Secondary body model part `changing_part` has no mesh. Please generate the mesh first."):
             model._Model__update_process_model_parts_for_interfaces(map_new_node_ids, updating_body_model_part, {})

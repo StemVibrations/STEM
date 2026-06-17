@@ -133,8 +133,8 @@ class KratosMaterialIO:
         Creates a dictionary containing the material parameters for a linear elastic interface material.
 
         Args:
-            - constitutive_law (:class:`stem.soil_material.LinearElasticSoil`): soil constitutive law object
-            containing the material parameters for a linear elastic soil material
+            - constitutive_law (:class:`stem.soil_material.LinearElasticSoil`): soil constitutive law object \
+                containing the material parameters for a linear elastic soil material
 
         Returns:
             - Dict[str, Any]: dictionary containing the material parameters
@@ -357,9 +357,7 @@ class KratosMaterialIO:
 
         # add material parameters to dictionary based on material type.
         if isinstance(material.constitutive_law, LinearElasticSoil):
-
             interface_material_dict.update(self.__create_interface_linear_elastic_soil_dict(material.constitutive_law))
-
         elif isinstance(material.constitutive_law, SmallStrainUmatLaw):
             interface_material_dict.update(self.__create_umat_soil_dict(material.constitutive_law))
             interface_material_dict["constitutive_law"]["name"] = f"SmallStrainUMAT{self.ndim}DInterfaceLaw"

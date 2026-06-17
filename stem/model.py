@@ -37,6 +37,8 @@ class Model:
         - ndim (int): Number of dimensions of the model
         - project_parameters (:class:`stem.solver.Problem): Object containing the problem data and solver settings.
         - geometry (Optional[:class:`stem.geometry.Geometry`]) The geometry of the whole model.
+        - mesh_settings (:class:`stem.mesh.MeshSettings`): The mesh settings for the model.
+        - gmsh_io (:class:`gmsh_utils.gmsh_IO.GmshIO`): The Gmsh IO object for handling geometry and mesh generation.
         - body_model_parts (List[:class:`stem.model_part.BodyModelPart`]): A list containing the body model parts.
         - process_model_parts (List[:class:`stem.model_part.ModelPart`]): A list containing the process model parts.
         - additional_process_parts (List[:class:`stem.additional_processes.AdditionalProcessPart`]): A list containing
@@ -44,6 +46,7 @@ class Model:
         - output_settings (List[:class:`stem.output.Output`]): A list containing the output settings.
         - extrusion_length (Optional[float]): The extrusion length in the out of plane direction.
         - groups (Dict[str, Any]): A dictionary containing shared information among sets of model parts.
+        - interfaces (Dict[str, Any]): A dictionary containing interface regarding where interfaces are located
 
     """
 
@@ -1775,9 +1778,10 @@ class Model:
 
     def __create_interface_elements_post_meshing(self):
         """
-        Creates interface elements between stable and changing parts of the model.
-        Creates interface elements and updates node IDs accordingly.
+        Creates interface elements between primary and secondary parts of the model. Primary concerns the
+        original nodes that exist, and secondary the newly created nodes due to the contact interface.
         """
+
         # Process each defined interface
         for name, interface_data in self.interfaces.items():
             # Extract interface components
@@ -1791,29 +1795,29 @@ class Model:
 
             common_node_ids = node_ids_part_1 & node_ids_part_2
             # Mapping of old node IDs to new node IDs via a dictionary
-            max_node_id = self.__get_maximum_node_id()
+            max_node_id: int = max(self.gmsh_io.mesh_data["nodes"].keys())
             old_to_new_node_id_map = {node_id: max_node_id + idx + 1 for idx, node_id in enumerate(common_node_ids)}
             # Update changing parts with new node IDs
-            self.__update_changing_parts(interface_part_2, common_node_ids, old_to_new_node_id_map,
-                                         connected_process_definition)
+            self.__update_secondary_parts(interface_part_2, common_node_ids, old_to_new_node_id_map,
+                                          connected_process_definition)
             # Create and add interface body model part
             interface_body_model_part = self.__create_interface_body_model_part(name, material_interface,
                                                                                 old_to_new_node_id_map, node_ids_part_1)
             self.body_model_parts.append(interface_body_model_part)
 
-    def __update_changing_parts(self, interface_parts_2: List[BodyModelPart], common_node_ids: Set[int],
-                                old_to_new_node_id_map: Dict[int, int], connected_process_definition: Dict[str,
-                                                                                                           List[bool]]):
+    def __update_secondary_parts(self, interface_parts_2: List[BodyModelPart], common_node_ids: Set[int],
+                                 old_to_new_node_id_map: Dict[int, int],
+                                 connected_process_definition: Dict[str, List[bool]]):
         """
-        Updates the changing parts with new node IDs both mesh and elements are updated.
+        Updates the secondary interface parts with new node IDs both mesh and elements are updated.
 
         Args:
-            - interface_parts_2 (List[ :class:`stem.model_part.BodyModelPart`]): List of body model parts connected
-                to the interface from the changing side.
-            - common_node_ids (Set[int]): Common node ids between stable and changing parts
+            - interface_parts_2 (List[ :class:`stem.model_part.BodyModelPart`]): List of body model parts connected \
+                to the interface from the secondary side.
+            - common_node_ids (Set[int]): Common node ids between primary and secondary interface parts
             - old_to_new_node_id_map (Dict[int, int]): A dictionary of ids, mapping from old node IDs to new node IDs
-            - connected_process_definition (Dict[str, List[bool]]): A dictionary containing the process definitions
-                connected to the interface parts. The keys are the process names and the values are lists of
+            - connected_process_definition (Dict[str, List[bool]]): A dictionary containing the process definitions \
+                connected to the interface parts. The keys are the process names and the values are lists of \
                 booleans indicating whether the process is applied to the corresponding part.
         Raises:
             - ValueError: If a part in interface_parts_2 has no mesh. Please generate the mesh first.
@@ -1835,7 +1839,7 @@ class Model:
                                                                          old_to_new_node_id_map)
 
             # Update elements with new node IDs
-            updating_body_model_part.mesh.elements = self.__update_elements_with_new_node_ids(
+            updating_body_model_part.mesh.elements = self.__update_node_ids_in_elements(
                 updating_body_model_part.mesh.elements, new_node_id_to_connected_elements, old_to_new_node_id_map)
 
             # Update the body model part
@@ -1865,14 +1869,17 @@ class Model:
                 list(updating_body_model_part.mesh.nodes.keys())
 
     def __update_process_model_parts_for_interfaces(self, old_to_new_node_id_map: Dict[int, int],
-                                                    updating_body_model_part: BodyModelPart,
+                                                    secondary_body_model_part: BodyModelPart,
                                                     connected_process_definition: Dict[str, List[bool]]):
         """
-        Update the process model parts with new node IDs after interface creation.
+        Update the process model parts with new node IDs after interface creation. Initially processes are added to
+        the primary part. This function first checks if it should be connected to the secondary part. If so, another
+        check is done if the process should actually be connected to the primary part. Updates of the node ids are
+        performed accordingly.
 
         Args:
             - old_to_new_node_id_map (Dict[int, int]): Mapping from old node IDs to new node IDs
-            - updating_body_model_part ( :class:`stem.model_part.BodyModelPart`): The body model part that is updated
+            - secondary_body_model_part ( :class:`stem.model_part.BodyModelPart`): The body model part that is updated
             - connected_process_definition (Dict[str, List[bool]]): A dictionary containing the process definitions
                 connected to the interface parts. The keys are the process names and the values are lists of
                 booleans indicating whether the process is applied to the corresponding part. By default processes are
@@ -1882,98 +1889,121 @@ class Model:
             - ValueError: If the updating body model part has no mesh. Please generate the mesh first.
         """
 
-        precision_exponent = Decimal(str(GlobalSettings.geometry_precision)).as_tuple().exponent
-        n_decimals_precision: int = abs(int(precision_exponent))
+        if secondary_body_model_part.mesh is None:
+            raise ValueError(f"Secondary body model part `{secondary_body_model_part.name}` has no mesh. "
+                             "Please generate the mesh first.")
 
-        # Update the process model parts nodes and elements
+        n_decimals_precision = abs(int(Decimal(str(GlobalSettings.geometry_precision)).as_tuple().exponent))
+
+        # Pre-compute the coordinate lookup of the secondary body part once;
+        # used to decide whether an element belongs to the secondary part.
+        secondary_part_coord_set = {
+            tuple(np.round(node.coordinates, decimals=n_decimals_precision))
+            for node in secondary_body_model_part.mesh.nodes.values()
+        }
+
         for process_model_part in self.process_model_parts:
-            # get the connected_process_definition
-            is_part_1_connected, is_part_2_connected = connected_process_definition.get(
-                process_model_part.name, [True, True])
-
             if process_model_part.mesh is None:
                 raise ValueError(f"Process model part `{process_model_part.name}` has no mesh. "
                                  "Please generate the mesh first.")
-            if updating_body_model_part.mesh is None:
-                raise ValueError(f"Updating body model part `{updating_body_model_part.name}` has no mesh. "
-                                 "Please generate the mesh first.")
-            if is_part_2_connected:
-                node_to_elements = process_model_part.mesh.find_elements_connected_to_nodes()
 
-                new_nodes = self.__update_node_ids(process_model_part.mesh.nodes, old_to_new_node_id_map)
+            # By default, processes are applied to both interface sides.
+            # The flags below describe whether the process is connected to side 1 (primary)
+            # and/or side 2 (secondary, the one being remapped).
+            is_part_1_connected, is_part_2_connected = connected_process_definition.get(
+                process_model_part.name, [True, True])
 
-                copy_elements = process_model_part.mesh.copy_elements()
+            # If the process is not connected to the secondary side, no remapping is needed.
+            if not is_part_2_connected:
+                continue
 
-                new_process_elements = self.__update_elements_with_new_node_ids(copy_elements, node_to_elements,
-                                                                                old_to_new_node_id_map)
+            # --- Build remapped nodes and elements for this process model part ---
+            node_to_elements = process_model_part.mesh.find_elements_connected_to_nodes()
+            new_nodes = self.__update_node_ids(process_model_part.mesh.nodes, old_to_new_node_id_map)
+            new_process_elements = self.__update_node_ids_in_elements(process_model_part.mesh.copy_elements(),
+                                                                      node_to_elements, old_to_new_node_id_map)
 
-                if is_part_1_connected:
+            # --- If the process is also connected to the primary side, only the elements that
+            # actually live on the secondary side should be remapped. Elements whose nodes are
+            # not all in the secondary body part are reverted to their original (primary) form.
+            if is_part_1_connected:
+                # Original (un-remapped) nodes may still be needed by reverted elements.
+                new_nodes.update(process_model_part.mesh.nodes)
+                self.__revert_elements_not_in_secondary_part(new_process_elements, process_model_part.mesh.elements,
+                                                             new_nodes, secondary_part_coord_set, n_decimals_precision)
 
-                    # include original nodes that may have been preserved
-                    new_nodes.update(process_model_part.mesh.nodes)
+            # --- Commit changes to the process model part mesh ---
+            process_model_part.mesh.elements = new_process_elements
+            process_model_part.mesh.nodes = new_nodes
 
-                    # Build lookup set once
-                    # rounding preserves tolerance behavior similar to allclose
-                    updated_coord_set = {
-                        tuple(np.round(node.coordinates, decimals=n_decimals_precision))
-                        for node in updating_body_model_part.mesh.nodes.values()
-                    }
+            # --- Mirror the changes in the gmsh_io mesh data ---
+            self.__sync_gmsh_io_after_remap(process_model_part, node_to_elements, old_to_new_node_id_map)
 
-                    original_elements = process_model_part.mesh.elements
-                    for element_id, element in new_process_elements.items():
-                        all_nodes_in_updated_part = True
+    @staticmethod
+    def __revert_elements_not_in_secondary_part(new_elements: Dict[int, Element], original_elements: Dict[int, Element],
+                                                new_nodes: Dict[int, Node], secondary_part_coord_set: Set[Tuple[float,
+                                                                                                                ...]],
+                                                n_decimals_precision: int):
+        """
+        For every remapped element, check whether all of its nodes lie inside the secondary
+        body part (by coordinate lookup). If any node is outside, the element is reverted
+        to its original (un-remapped) version, because it actually belongs to the primary side.
 
-                        for node_id in element.node_ids:
-                            node = new_nodes.get(node_id)
+        Args:
+            - new_elements (Dict[int, :class:`stem.mesh.Element`]): Remapped elements (modified in place).
+            - original_elements (Dict[int, :class:`stem.mesh.Element`]): Original elements before remapping.
+            - new_nodes (Dict[int, :class:`stem.mesh.Node`]): Lookup of all candidate nodes (new and preserved).
+            - secondary_part_coord_set (Set[Tuple[float, ...]]): Rounded coordinates of secondary-part nodes.
+            - n_decimals_precision (int): Number of decimals used to round coordinates for matching.
+        """
+        for element_id, element in new_elements.items():
+            element_in_secondary_part = True
+            for node_id in element.node_ids:
+                node = new_nodes.get(node_id)
+                if node is None:
+                    continue
+                coord_key = tuple(np.round(node.coordinates, decimals=n_decimals_precision))
+                if coord_key not in secondary_part_coord_set:
+                    element_in_secondary_part = False
+                    break
 
-                            if node is None:
-                                continue
+            if not element_in_secondary_part:
+                new_elements[element_id] = original_elements[element_id]
 
-                            coord_key = tuple(np.round(node.coordinates, decimals=n_decimals_precision))
-                            if coord_key not in updated_coord_set:
-                                all_nodes_in_updated_part = False
-                                break
+    def __sync_gmsh_io_after_remap(self, process_model_part: ModelPart, node_to_elements: Dict[int, List[int]],
+                                   old_to_new_node_id_map: Dict[int, int]):
+        """
+        Propagate the node-id remap of a process model part to the underlying ``gmsh_io`` mesh data:
+        update the physical group's node ids and the element connectivities for every affected element.
 
-                        # revert element if not fully contained
-                        if not all_nodes_in_updated_part:
-                            new_process_elements[element_id] = original_elements[element_id]
+        Args:
+            - process_model_part (:class:`stem.model_part.ModelPart`): The process model part that has been remapped.
+            - node_to_elements (Dict[int, List[int]]): Mapping of (old) node ids to the element ids that reference them.
+            - old_to_new_node_id_map (Dict[int, int]): Mapping from old node ids to new node ids.
+        """
+        physical_groups = self.gmsh_io.mesh_data["physical_groups"]
+        elements_by_type = self.gmsh_io.mesh_data["elements"]
 
-                process_model_part.mesh.elements = new_process_elements
+        if process_model_part.mesh is None:
+            raise ValueError(f"Process model part `{process_model_part.name}` has no mesh. "
+                             "Please generate the mesh first.")
 
-                # filter out loose nodes that are not part of any element,
-                # but only if there are elements in the process model part.
-                if len(process_model_part.mesh.elements) != 0:
-                    nodes_used_in_process_part = {
-                        node_id
-                        for element in process_model_part.mesh.elements.values()
-                        for node_id in element.node_ids
-                    }
-                    new_nodes = {
-                        node_id: node
-                        for node_id, node in new_nodes.items() if node_id in nodes_used_in_process_part
-                    }
-                process_model_part.mesh.nodes = new_nodes
+        # Update the physical group node ids.
+        physical_groups[process_model_part.name]["node_ids"] = list(process_model_part.mesh.nodes.keys())
 
-                # get the process model part from the gmsh_io mesh data
-                # update the nodes in the gmsh_io mesh data
-                self.gmsh_io.mesh_data["physical_groups"][process_model_part.name]["node_ids"] = list(
-                    process_model_part.mesh.nodes.keys())
-                # also update the elements in the gmsh_io mesh data
-                for element_ids_to_update in node_to_elements.values():
-                    for element_id in element_ids_to_update:
-                        element_type = process_model_part.mesh.elements[element_id].element_type
-                        node_connectivities = self.gmsh_io.mesh_data["elements"][element_type][element_id]
-                        # remap node IDs
-                        updated = [old_to_new_node_id_map.get(nid, nid) for nid in node_connectivities]
-                        self.gmsh_io.mesh_data["elements"][element_type][element_id] = updated
-                # Finally, update the nodes in the physical group in the gmsh_io mesh data
-                self.gmsh_io.mesh_data["physical_groups"][process_model_part.name]["node_ids"] = list(
-                    process_model_part.mesh.nodes.keys())
+        # Update element connectivities for elements that reference any remapped node.
+        for element_ids in node_to_elements.values():
+            for element_id in element_ids:
+                element_type = process_model_part.mesh.elements[element_id].element_type
+                connectivity = elements_by_type[element_type][element_id]
+                elements_by_type[element_type][element_id] = [
+                    old_to_new_node_id_map.get(nid, nid) for nid in connectivity
+                ]
 
     @staticmethod
     def __update_node_ids(nodes: Dict[int, Node], map_new_node_ids: Dict[int, int]) -> Dict[int, Node]:
         """
-        Update node IDs based on the provided mapping.
+        Update node IDs in a nodes dictionary based on the provided mapping.
 
         Args:
             - nodes (Dict[int, :class:`stem.mesh.Node`]): Dictionary of nodes to be updated
@@ -1991,11 +2021,11 @@ class Model:
         return new_nodes
 
     @staticmethod
-    def __update_elements_with_new_node_ids(elements: Dict[int, Element], node_id_to_element_ids_map: Dict[int,
-                                                                                                           List[int]],
-                                            map_new_node_ids: Dict[int, int]) -> Dict[int, Element]:
+    def __update_node_ids_in_elements(elements: Dict[int, Element], node_id_to_element_ids_map: Dict[int, List[int]],
+                                      map_new_node_ids: Dict[int, int]) -> Dict[int, Element]:
         """
-        Update elements with new node IDs.
+        Update node IDs in an element dictionary based on the provided mapping and the connectivity of nodes to
+        elements.
 
         Args:
             - elements (Dict[int, :class:`stem.mesh.Element`]): Dictionary of elements to be checked and updated
@@ -2015,7 +2045,7 @@ class Model:
 
     def __create_interface_body_model_part(self, name: str, material: InterfaceMaterial, map_new_node_ids: Dict[int,
                                                                                                                 int],
-                                           nodes_stable_parts: Set[int]) -> BodyModelPart:
+                                           nodes_primary_parts: Set[int]) -> BodyModelPart:
         """
         Create an interface body model part with interface elements.
 
@@ -2023,7 +2053,7 @@ class Model:
             - name (str): Name of the interface body model part
             - material (:class:`stem.soil_material.InterfaceMaterial`): Material for the interface body model part
             - map_new_node_ids (Dict[int, int]): Mapping from old node IDs to new node IDs
-            - nodes_stable_parts (Set[int]): Set of nodes from stable parts
+            - nodes_primary_parts (Set[int]): Set of nodes from primary interface parts
 
         Raises:
             - ValueError: If no interface elements were created.
@@ -2044,7 +2074,7 @@ class Model:
         }
 
         # Create interface elements
-        interface_elements = self.__create_interface_elements(new_mesh.nodes, nodes_stable_parts, map_new_node_ids)
+        interface_elements = self.__create_interface_elements(new_mesh.nodes, nodes_primary_parts, map_new_node_ids)
         if len(interface_elements) == 0:
             raise ValueError("No interface elements were created. Please check the interface definition and the mesh.")
 
@@ -2073,7 +2103,7 @@ class Model:
         return interface_body_model_part
 
     def __order_interface_element_node_ids(self, part_two_element: Element, interface_nodes_all_parts: Dict[int, Node],
-                                           mapping_part_two_to_one: Dict[int, int]) -> List[int]:
+                                           map_old_to_new_node_ids: Dict[int, int]) -> List[int]:
         """
         Order the node IDs of the interface element such that the first half corresponds to part-1 and the second half
         corresponds to part-2. The ordering is determined based on the facet definitions of the connecting element type.
@@ -2082,11 +2112,13 @@ class Model:
             - part_two_element (:class:`stem.mesh.Element`): The element from part-2 that is connected to the interface.
             - interface_nodes_all_parts (Dict[int, :class:`stem.mesh.Node`]): Dictionary of all interface nodes
                 from stable and changing parts.
-            - mapping_part_two_to_one (Dict[int, int]): Mapping from part-2 node IDs to part-1 node IDs.
+            - map_old_to_new_node_ids (Dict[int, int]): Mapping from part-1 node IDs to part-2 node IDs.
 
         Returns:
             - List[int]: Ordered list of node IDs for the interface element
         """
+        # invert lookup table to map new node IDs back to old node IDs
+        mapping_part_two_to_one = {new: old for old, new in map_old_to_new_node_ids.items()}
 
         # pick out the shared nodes in part-2
         shared_node_ids_part_2 = [
@@ -2094,9 +2126,10 @@ class Model:
         ]
 
         ordered_shared_node_ids_part_2 = []
+        target_nodes = set(shared_node_ids_part_2)
         for face in ELEMENT_DATA[part_two_element.element_type]["facets"]:
             face_ids = np.array(part_two_element.node_ids)[face]
-            if set(face_ids) == set(shared_node_ids_part_2):
+            if set(face_ids) == target_nodes:
                 ordered_shared_node_ids_part_2 = face_ids.tolist()
                 break
 
@@ -2137,16 +2170,13 @@ class Model:
                     if len(set(elem.node_ids) & node_ids_part_2) == n_shared_nodes:
                         body_part_elements_with_overlap.append(elem)
 
-        # invert lookup table to map new node IDs back to old node IDs
-        map_new_to_old = {new: old for old, new in map_old_to_new_node_ids.items()}
-
         # build interface elements
         interface_elements: Dict[int, Element] = {}
         next_id_base = self.__get_maximum_element_id() + 1
         for i, part_two_element in enumerate(body_part_elements_with_overlap):
 
             ordered_ids = self.__order_interface_element_node_ids(part_two_element, interface_nodes_all_parts,
-                                                                  map_new_to_old)
+                                                                  map_old_to_new_node_ids)
 
             if self.ndim == 2:
                 interface_name = "LINE_INTERFACE"
@@ -2259,18 +2289,6 @@ class Model:
             max_element_id = max(max_element_id, max(mesh_element_info.keys()))
 
         return int(max_element_id)
-
-    def __get_maximum_node_id(self) -> int:
-        """
-        Returns the maximum node id within the mesh from the mesh data
-
-        Returns:
-            - int: the maximum node id
-
-        """
-
-        node_ids: Sequence[int] = self.gmsh_io.mesh_data["nodes"].keys()
-        return max(node_ids)
 
     def __get_line_string_end_nodes(self, model_part: ModelPart) -> List[List[int]]:
         """
@@ -2989,17 +3007,14 @@ class Model:
         Set the interface between two model parts.
 
         Args:
-            - interface_part_1_name (Sequence[str]): The name of the first model part, the nodes of this
-            part will not be changed
-            when the interface is set.
-            - interface_part_2_name (Sequence[str]): The name of the second model part, the nodes of
-            this part will
-            be changed when the interface is set.
+            - interface_part_1_names (Sequence[str]): The model part names connected to the first part of the interface
+            - interface_part_2_names (Sequence[str]): the model part names connected to the second part of the interface
             - material (:class:`stem.model_part.Material`): The material to be used for the interface.
-            - connected_process_definition (Dict[str, List[bool]]): A dictionary defining the connected
-            processes to the interface part 1 and/or part 2. The keys are the process names and the values are lists of
-            booleans indicating whether the process is connected to part 1 or part 2. If a connected process is not
-            added to the dictionary, it is assumed that it is connected to both parts.
+            - interface_name (str): The name of the interface
+            - connected_process_definition (Dict[str, List[bool]]): A dictionary defining the connected \
+                processes to the interface part 1 and/or part 2. The keys are the process names and the values are \
+                lists of booleans indicating whether the process is connected to part 1 or part 2. If a connected \
+                process is not added to the dictionary, it is assumed that it is connected to both parts.
 
         Raises:
             - ValueError: If the model part names are not found.
