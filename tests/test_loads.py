@@ -80,7 +80,6 @@ class TestUvecLoad:
                               train_type=TrainType.LOCOMOTIVE,
                               nb_carts=2,
                               offset=1)
-
         passengers_heavy = UvecLoad(direction_signs,
                                     velocity,
                                     origin,

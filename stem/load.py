@@ -200,10 +200,10 @@ def _build_train_parameters(train_type: TrainType, nb_carts: int, offset: float,
     uvec_parameters["initialisation_steps"] = initialisation_steps
 
     # compute the wheel configuration based on the number of carts and the wheel configuration of each cart
-    total_wheel_configuration = [u + offset for u in uvec_parameters["wheel_configuration"]]
-    for n in range(1, nb_carts):
+    total_wheel_configuration = []
+    for n in range(nb_carts):
         total_wheel_configuration.extend(
-            [u + n * uvec_parameters["cart_length"] for u in uvec_parameters["wheel_configuration"]])
+            [u + offset + n * uvec_parameters["cart_length"] for u in uvec_parameters["wheel_configuration"]])
     uvec_parameters["wheel_configuration"] = total_wheel_configuration
 
     return uvec_parameters

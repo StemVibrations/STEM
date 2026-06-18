@@ -183,7 +183,7 @@ In this example a train with two carts is defined, where each cart has two bogie
                          offset=0,
                          train_type=TrainType.CUSTOM,
                          uvec_parameters=uvec_parameters,
-                         static_initialisation=False,
+                         static_vehicle_calculation=False,
                          irregularities=None,
                          rail_joint=None,
                         )
@@ -214,7 +214,7 @@ To use the default train, simply specify the train type as follows:
                         train_type=TrainType.PASSENGER_HEAVY,
                         irregularities=None,
                         rail_joint=None,
-                        static_initialisation=False,
+                        static_vehicle_calculation=False,
                         )
 
 
