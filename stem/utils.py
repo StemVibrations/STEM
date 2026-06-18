@@ -290,7 +290,7 @@ class Utils:
         element_connectivies = np.array([element.node_ids for element in elements])
 
         # flip the elements connectivities
-        element_connectivies = element_connectivies[:, ELEMENT_DATA[element_type]["reversed_order"]]
+        element_connectivies = element_connectivies[:, ELEMENT_DATA[element_type]["reversed_connectivity_order"]]
 
         # update the elements connectivities
         for i, (id, element_connectivity) in enumerate(zip(ids, element_connectivies)):
