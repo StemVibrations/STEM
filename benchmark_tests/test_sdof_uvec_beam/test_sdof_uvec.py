@@ -89,13 +89,13 @@ def test_stem(ndim: int, axis_index: int):
         "contact_coefficient": 9.1e-8,
         "contact_power": 1,
         "gravity_axis": 1,
+        "wheel_configuration": [0.0],
         "file_name": r"test.csv"
     }
 
     uvec_load = UvecLoad(direction_signs=[1, 1, 1],
                          velocity=velocity,
                          origin=[0.0, 0, 0],
-                         wheel_configuration=[0.0],
                          uvec_file=r"uvec_ten_dof_vehicle_2D/uvec.py",
                          uvec_function_name="uvec",
                          uvec_parameters=uvec_parameters)

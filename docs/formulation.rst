@@ -225,6 +225,11 @@ The railpad is modelled as a spring-damper element, which provides the stiffness
 The sleeper can either be modelled as a concentrated mass, or a volume element, depending on the level of
 detail required by the user.
 
+The parameters of the train and the train-track interaction model can be selected by the user from
+a range of predefined train types, or they can be defined by the user through the UVEC interface.
+Please refer to :ref:`UVEC_load` for more details on how to define the train and the train-track interaction model in STEM.
+
+
 Interaction model
 -----------------
 

@@ -138,8 +138,8 @@ The UVEC load can be added to coordinates, geometry IDs or model parts:
    model.add_load_on_line_model_part("rail_track_1", uvec_load, "uvec_load")
 
 
-Default train
-.............
+Default trains
+..............
 The default train in STEM (2D with 10 degrees-of-freedom per cart) is defined as a UVEC load.
 In order to use the default train, the user can simply import ``uvec``.
 This function defines contains the train definition and the train-track interaction model as described in
@@ -151,42 +151,117 @@ In this example a train with two carts is defined, where each cart has two bogie
 
 .. code-block:: python
 
-   from stem.load import UvecLoad
+   from stem.load import UvecLoad, TrainType
    import UVEC.uvec_ten_dof_vehicle_2D as uvec
 
    # define uvec parameters
    wheel_configuration=[0.0, 2.5, 19.9, 22.4, 23.5, 26.0, 43.4, 45.9] # wheel configuration [m]
-   uvec_parameters = {"n_carts": 2, # number of carts [-]
-                      "cart_inertia": (1128.8e3) / 2, # mass moment of inertia of the cart [kgm2]
-                      "cart_mass": (50e3) / 2, # mass of the cart [kg]
-                      "cart_stiffness": 2708e3, # stiffness between the cart and bogies [N/m]
-                      "cart_damping": 64e3, # damping coefficient between the cart and bogies [Ns/m]
+   uvec_parameters = {
+                      "cart_mass": (50e3) / 2, # mass of half the cart [kg]
+                      "bogie_mass": (6e3) / 2, # mass of half one bogie / primary suspension mass [kg]
+                      "wheel_mass": 1.5e3, # mass of one wheel / secondary suspension mass [kg]
+                      "cart_inertia": (1128.8e3) / 2, # mass moment of inertia of half the cart [kgm2]
+                      "bogie_inertia": (0.31e3) / 2, # mass moment of inertia of half one bogie / primary suspension inertia [kgm2]
+                      "cart_stiffness": 2708e3, # stiffness between the cart and bogies for 1 spring / primary suspension stiffness [N/m]
+                      "wheel_stiffness": 4800e3, # stiffness between the wheel and the bogie for 1 spring / secondary suspension stiffness [N/m]
+                      "cart_damping": 64e3, # damping coefficient between the cart and bogies for 1 damper / primary suspension damping [Ns/m]
+                      "wheel_damping": 0.25e3, # damping coefficient between the wheel and the bogie for 1 damper / secondary suspension damping [Ns/m]
                       "bogie_distances": [-9.95, 9.95], # distances of the bogies from the centre of the cart [m]
-                      "bogie_inertia": (0.31e3) / 2, # mass moment of inertia of the bogie [kgm2]
-                      "bogie_mass": (6e3) / 2, # mass of the bogie [kg]
                       "wheel_distances": [-1.25, 1.25], # distances of the wheels from the centre of the bogie [m]
-                      "wheel_mass": 1.5e3, # mass of the wheel [kg]
-                      "wheel_stiffness": 4800e3, # stiffness between the wheel and the bogie [N/m]
-                      "wheel_damping": 0.25e3, # damping coefficient between the wheel and the bogie [Ns/m]
+                      "cart_length": 22.4,  # length of the cart [m]
                       "gravity_axis": 1, # axis on which gravity works [x =0, y = 1, z = 2]
                       "contact_coefficient": 9.1e-7, # Hertzian contact coefficient between the wheel and the rail [N/m]
                       "contact_power": 1.5, # Hertzian contact power between the wheel and the rail [-]
-                      "static_initialisation": False, # True if the analysis of the UVEC is static
                       "wheel_configuration": wheel_configuration,
-                      "velocity": 40,
                       }
 
     uvec_load = UvecLoad(direction_signs=[1, 1, 1],
-                        velocity=40,
-                        origin=wheel_configuration,
-                        wheel_configuration=wheel_configuration,
-                        uvec_parameters=uvec_parameters,
-                        uvec_model=uvec,
+                         velocity=40,
+                         origin=wheel_configuration,
+                         uvec_model=uvec,
+                         nb_carts=2,
+                         offset=0,
+                         train_type=TrainType.CUSTOM,
+                         uvec_parameters=uvec_parameters,
+                         static_vehicle_calculation=False,
+                         irregularities=None,
+                         rail_joint=None,
                         )
 
 In this case, the ``uvec_model`` parameter is used to specify the UVEC function that defines the train and the
 train-track interaction model.
+The ``train_type`` parameter is set to ``TrainType.CUSTOM`` to indicate that the train is defined by the user and not
+by the default parameters. When using custom train types, it is required to define the ``uvec_parameters``
+to specify the parameters of the train and the train-track interaction model.
+The use of irregularities and rail joints is optional and can be defined by the user as needed
+(see :ref:`irregularities_track` and :ref:`rail_joints` for more details on how to define irregularities
+and rail joints).
 
+Alternatively, the user can also use the default train without specifying the ``uvec_parameters``.
+In this case, the default parameters for the train and the train-track interaction model will be used.
+To use the default train, simply specify the train type as follows:
+
+.. code-block:: python
+
+   from stem.load import UvecLoad, TrainType
+   import UVEC.uvec_ten_dof_vehicle_2D as uvec
+
+    uvec_load = UvecLoad(direction_signs=[1, 1, 1],
+                        velocity=40,
+                        origin=wheel_configuration,
+                        uvec_parameters=uvec_parameters,
+                        uvec_model=uvec,
+                        train_type=TrainType.PASSENGER_HEAVY,
+                        irregularities=None,
+                        rail_joint=None,
+                        static_vehicle_calculation=False,
+                        )
+
+
+Table :ref:`default_train_parameters` shows the default parameters for the different train types that are
+available in STEM. The values of the parameters are based on :cite:`Ricardo_2025`
+and can be used as a reference for defining custom trains. These values concern a half model train, where the
+values for the cart correspond to half the mass and inertia of the cart, the values of the secondary suspension
+correspond to one spring-damper system, the values for the bogie correspond to half the mass and inertia of one bogie,
+the values for the primary suspension correspond to one spring-damper system, and the values for
+the wheel correspond to the mass and inertia of one wheel.
+
+The values presented in the table are for reference only and can be adjusted by the user as needed to define custom
+trains.
+
+.. _default_train_parameters:
+
+.. table:: Default train parameters
+
+   +----------------------------------------+------------+---------------------------+---------------------------+--------------------------+--------------------------+
+   | Parameter                              | Locomotive | Passenger train (heavy)   | Passenger train (light)   | Freight train (loaded)   | Freight train (unloaded) |
+   +========================================+============+===========================+===========================+==========================+==========================+
+   | cart mass [kg]                         | 27500      | 19000                     | 14500                     | 40500                    |     6500                 |
+   +----------------------------------------+------------+---------------------------+---------------------------+--------------------------+--------------------------+
+   | bogie mass [kg]                        | 3000       | 1550                      | 1300                      | 900                      |     900                  |
+   +----------------------------------------+------------+---------------------------+---------------------------+--------------------------+--------------------------+
+   | wheel mass [kg]                        | 2250       | 950                       | 850                       | 700                      |     700                  |
+   +----------------------------------------+------------+---------------------------+---------------------------+--------------------------+--------------------------+
+   | cart inertia [kgm²]                    | 485000     | 1150000                   | 900000                    | 365000                   |     115000               |
+   +----------------------------------------+------------+---------------------------+---------------------------+--------------------------+--------------------------+
+   | bogie inertia [kgm²]                   | 3900       | 1200                      | 1150                      | 850                      |     850                  |
+   +----------------------------------------+------------+---------------------------+---------------------------+--------------------------+--------------------------+
+   | cart stiffness [N/m]                   | 8.0e5      | 3.5e5                     | 4.0e5                     | 6.0e6                    |     6.0e6                |
+   +----------------------------------------+------------+---------------------------+---------------------------+--------------------------+--------------------------+
+   | cart damping [Ns/m]                    | 4.5e4      | 3.2e4                     | 2.2e4                     | 6.5e4                    |     6.5e4                |
+   +----------------------------------------+------------+---------------------------+---------------------------+--------------------------+--------------------------+
+   | wheel stiffness [N/m]                  | 2.0e6      | 1.2e6                     | 7.4e5                     | 2.6e6                    |     5.0e5                |
+   +----------------------------------------+------------+---------------------------+---------------------------+--------------------------+--------------------------+
+   | wheel damping [Ns/m]                   | 3.3e4      | 2.5e3                     | 6.4e3                     | 1.5e4                    |     5.7e3                |
+   +----------------------------------------+------------+---------------------------+---------------------------+--------------------------+--------------------------+
+   | bogie distance to center               | 10.4       | 10.0                      | 9.5                       | 7.0                      |     7.0                  |
+   | of cart [m]                            |            |                           |                           |                          |                          |
+   +----------------------------------------+------------+---------------------------+---------------------------+--------------------------+--------------------------+
+   | wheel distance to center               | 1.3        | 1.25                      | 1.28                      | 0.9                      |     0.9                  |
+   | of bogie [m]                           |            |                           |                           |                          |                          |
+   +----------------------------------------+------------+---------------------------+---------------------------+--------------------------+--------------------------+
+   | cart length [m]                        | 26.8       | 27.0                      | 25.0                      | 17.0                     |     17.0                 |
+   +----------------------------------------+------------+---------------------------+---------------------------+--------------------------+--------------------------+
 
 Time-dependent loads with Table
 -------------------------------
