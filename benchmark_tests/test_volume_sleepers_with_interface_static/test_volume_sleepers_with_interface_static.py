@@ -220,7 +220,7 @@ def test_point_load_on_track_static():
     # Set mesh size
     # --------------------------------
     model.set_mesh_size(element_size=1)
-    input_folder = "benchmark_tests/test_volume_sleepers_with_interface/inputs"
+    input_folder = "benchmark_tests/test_volume_sleepers_with_interface_static/inputs"
     # Write KRATOS input files
     # --------------------------------
     stem = Stem(model, input_folder)
@@ -230,9 +230,9 @@ def test_point_load_on_track_static():
     stem.run_calculation()
 
     if sys.platform == "win32":
-        expected_output_dir = "benchmark_tests/test_volume_sleepers_with_interface/output_windows/output_vtk_porous_computational_model_part"
+        expected_output_dir = "benchmark_tests/test_volume_sleepers_with_interface_static/output_windows/output_vtk_porous_computational_model_part"
     elif sys.platform == "linux":
-        expected_output_dir = "benchmark_tests/test_volume_sleepers_with_interface/output_linux/output_vtk_porous_computational_model_part"
+        expected_output_dir = "benchmark_tests/test_volume_sleepers_with_interface_static/output_linux/output_vtk_porous_computational_model_part"
     else:
         raise Exception("Unknown platform")
 
