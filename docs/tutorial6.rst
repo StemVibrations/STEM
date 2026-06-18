@@ -1,0 +1,443 @@
+.. _tutorial6:
+
+Track over bridge with volume sleepers and interface materials
+======================
+
+Overview
+--------
+This tutorial shows how to set up a 3D geometry with a track which crosses from soil layer over a bridge and back to
+another soil layer,  the geometry changes along the z-direction and the track is modelled with volume sleepers.
+In this tutorial it is assumed that the sleepers lay loosely on the soil and are stuck to the bridge.
+A moving load is applied on the track and moves in the z-direction over the bridge at constant velocity.
+
+
+Imports and setup
+-----------------
+First the necessary packages are imported and the input folder is defined.
+
+.. code-block:: python
+
+    input_files_dir = "embankment_bridge"
+
+    from stem.model import Model
+    from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw \
+        InterfaceMaterial
+    from stem.load import MovingLoad
+    from stem.boundary import DisplacementConstraint, AbsorbingBoundary
+    from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria, \
+        LinearNewtonRaphsonStrategy, StressInitialisationType, SolverSettings, NewmarkScheme, Cg, Problem
+    from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters
+    from stem.stem import Stem
+
+..    # END CODE BLOCK
+
+
+For setting up the model, ``Model`` is imported from ``stem.model``.
+For the soil and interface material, ``OnePhaseSoil``, ``LinearElasticSoil``, ``SoilMaterial``, ``InterfaceMaterial``,
+and ``SaturatedBelowPhreaticLevelLaw`` are imported from ``stem.soil_material``.
+In this case, a moving load is applied, therefore ``MovingLoad`` is imported from ``stem.load``.
+Boundary conditions are set using ``DisplacementConstraint``.
+Solver settings are defined with classes imported from ``stem.solver``.
+For output, ``NodalOutput`` and ``VtkOutputParameters`` are imported.
+Finally, ``Stem`` is imported from ``stem.stem`` to write input files and run the calculation.
+
+
+Geometry and materials
+----------------------
+In this step, the geometry, and material parameters for the simulation are defined.
+First the dimension of the model is indicated which in this case is 3.
+After which the model can be initialised.
+
+.. code-block:: python
+
+    ndim = 3
+    model = Model(ndim)
+
+..    # END CODE BLOCK
+
+
+In order to change the geometry along the z-direction, it is required to divide the model into groups, that will have
+different extrusion lengths and reference depths.
+All groups need to have an unique name, which is used to assign soil layers to the groups later on.
+In this example 3 groups are created, "towards_bridge_group", "bridge_group" and "away_bridge_group".
+The first group defines the soil geometry between the z-coordinates of 0 and 20 meter,
+the second group defines the bridge geometry between the z-coordinates of 20 and 30 meter,
+and the third group defines the soil geometry between the z-coordinates of 30 and 50 meter.
+The total extrusion length of the model is 50 meter.
+To create the groups, the ``add_group_for_extrusion`` method of the model is used,
+where the unique `name` of the group, the `reference_depth` and the `extrusion_length` are given as input:
+
+.. code-block:: python
+
+    model.add_group_for_extrusion("towards_bridge_group", reference_depth=0.0, extrusion_length=20.0)
+    model.add_group_for_extrusion("bridge_group", reference_depth=20.0, extrusion_length=5)
+    model.add_group_for_extrusion("away_bridge_group", reference_depth=25, extrusion_length=20.0)
+
+..    # END CODE BLOCK
+
+The soil profile consists of one layer on one side of the bridge and another on the other side of the bridge.
+The material for the bridge also needs to be defined.
+
+The first soil layer is defined as a material with the name “soil_1”.
+It is a Linear elastic material model with the solid density of 2650 kg/m3,
+the Young's modulus is 30e6 Pa and the Poisson's ratio is of 0.2.
+A porosity of  of 0.3 is specified.
+The soil is a one-phase soil, meaning that the flow of water through the soil is not computed.
+
+
+.. code-block:: python
+
+    solid_density_1 = 2650
+    porosity_1 = 0.3
+    young_modulus_1 = 30e6
+    poisson_ratio_1 = 0.2
+    soil_formulation_1 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_1, POROSITY=porosity_1)
+    constitutive_law_1 = LinearElasticSoil(YOUNG_MODULUS=young_modulus_1, POISSON_RATIO=poisson_ratio_1)
+    retention_parameters_1 = SaturatedBelowPhreaticLevelLaw()
+    material_soil_1 = SoilMaterial("soil_1", soil_formulation_1, constitutive_law_1, retention_parameters_1)
+
+..    # END CODE BLOCK
+
+The second soil layer is defined as a material with the name "soil_2".
+It's a Linear elastic material model with the solid density of 2550 kg/m3,
+the Young's modulus is 60e6 Pa and the Poisson's ratio is 0.2.
+A porosity of 0.3 is specified.
+The soil is a one-phase soil, meaning that the flow of water through the soil is not computed.
+
+.. code-block:: python
+
+    solid_density_2 = 2550
+    porosity_2 = 0.3
+    young_modulus_2 = 60e6
+    poisson_ratio_2 = 0.2
+    soil_formulation_2 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_2, POROSITY=porosity_2)
+    constitutive_law_2 = LinearElasticSoil(YOUNG_MODULUS=young_modulus_2, POISSON_RATIO=poisson_ratio_2)
+    retention_parameters_2 = SaturatedBelowPhreaticLevelLaw()
+    material_soil_2 = SoilMaterial("soil_2", soil_formulation_2, constitutive_law_2, retention_parameters_2)
+
+..    # END CODE BLOCK
+
+The bridge layer is defined as a material with the name "bridge".
+It is a Linear elastic material model with the solid density of 2400 kg/m3,
+the Young's modulus is 30e9 Pa and the Poisson's ratio is 0.2.
+A porosity of 0.3 is specified.
+The soil is a one-phase soil, meaning that the flow of water through the soil is not computed.
+
+.. code-block:: python
+
+    solid_density_4 = 2400
+    porosity_4 = 0.3
+    young_modulus_4 = 30e9
+    poisson_ratio_4 = 0.2
+    soil_formulation_4 = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=solid_density_4, POROSITY=porosity_4)
+    constitutive_law_4 = LinearElasticSoil(YOUNG_MODULUS=young_modulus_4, POISSON_RATIO=poisson_ratio_4)
+    retention_parameters_4 = SaturatedBelowPhreaticLevelLaw()
+    material_bridge = SoilMaterial("bridge", soil_formulation_4, constitutive_law_4, retention_parameters_4)
+
+..    # END CODE BLOCK
+
+
+The geometry of the model is defined afterwards.
+Each layer is defined by a list of coordinates, defined in the x-y plane. The coordinates are defined in clockwise or
+anti-clockwise order, and the first and last coordinates are not the same, since the geometry will be closed.
+
+The model consists of one soil layers for "towards_bridge_group" , a bridge for "bridge_group", and another
+soil layer for "away_bridge_group".
+
+When assigning the geometry into the model, it is necessary to assign the layers into groups.
+
+.. code-block:: python
+
+    # definition of the geometry layers for soil 1
+    soil1_coordinates = [(0.0, 0.0, 0.0), (10.0, 0.0, 0.0), (10.0, 3.0, 0.0), (0.0, 3.0, 0.0)]
+
+    # definition of the geometry for the bridge
+    bridge_coordinates = [(0.0, 2.75, 20), (4.0, 2.75, 20), (4.0, 2.0, 20), (0., 2.0, 20)]
+
+    # definition of the geometry for soil 2
+    soil2_coordinates = [(0.0, 0.0, 25.0), (10.0, 0.0, 25.0), (10.0, 3.0, 25.0), (0.0, 3.0, 25.0)]
+
+    # assign materials to the geometry and add them to the correct group
+    model.add_soil_layer_by_coordinates(soil1_coordinates, material_soil_1, "soil_layer_towards", "towards_bridge_group")
+    model.add_soil_layer_by_coordinates(soil2_coordinates, material_soil_2, "soil_layer_away", "away_bridge_group")
+
+    # assign materials to geometry and add to model for group 3
+    model.add_soil_layer_by_coordinates(bridge_coordinates, material_bridge, "bridge_layer", "bridge_group")
+
+..    # END CODE BLOCK
+
+Generating the train track
+--------------------------
+
+
+
+For the rails, default properties of a  54E1 rail profile are used.
+Other rail profiles for which default material properties are provided are: the 46E3 and 60E1 rail profiles.
+The rail pads are modelled by means of elastic spring dampers while the sleepers are modelled using SoilMaterial with
+concrete properties.
+
+.. code-block:: python
+
+    rail_parameters = DefaultMaterial.Rail_54E1_3D.value.material_parameters
+    rail_pad_parameters = ElasticSpringDamper(NODAL_DISPLACEMENT_STIFFNESS=[0, 750e6, 0],
+                                              NODAL_ROTATIONAL_STIFFNESS=[0, 0, 0],
+                                              NODAL_DAMPING_COEFFICIENT=[0, 750e3, 0], # damping coefficient [Ns/m]
+                                              NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0])
+
+    sleeper_parameters = SoilMaterial("sleeper_material",
+                                      OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2400, POROSITY=0.3),
+                                      LinearElasticSoil(YOUNG_MODULUS=30e9, POISSON_RATIO=0.2),
+                                      SaturatedBelowPhreaticLevelLaw())
+
+..    # END CODE BLOCK
+
+
+STEM provides two options to generate a straight track (see :doc:`Tutorial 3 </tutorial3>`).
+In this tutorial the track is generated on top of the model layer.
+
+The track is added by specifying the origin point of the track and the direction for the extrusion that creates
+the rail as well as rail pads and sleepers. Important is that the origin point and the end of the track lie on
+geometry edges.
+
+In this tutorial, a straight track is generated parallel to the z-axis at 0.75 m distance from the x-axis,
+on top of the model. To do this, the origin point of the track is set with coordinates [0.75, 3.0, 0.0] and the
+extrusion is done parallel to the positive z-axis, i.e. with a direction vector of [0, 0, 1].
+The length of the track is defined by the number of sleepers and their spacing.
+In this tutorial, 101 sleepers are placed which are connected by to the rail by 0.025m thick railpads. The sleepers
+are modelled as volumes and have a centre to centre distance of 0.5m which results in a 50m straight track,
+with part name "rail_track".
+
+.. code-block:: python
+
+    origin_point = [0.75, 3.0, 0.0]
+    direction_vector = [0, 0, 1]
+    number_of_sleepers = 101
+    sleeper_spacing = 0.5
+    rail_pad_thickness = 0.025
+
+    sleeper_height = 0.3
+    sleeper_length = 2.8 / 2
+    sleeper_width = 0.234
+    sleeper_dimensions = [sleeper_width, sleeper_height, sleeper_length]
+    distance_middle_sleeper_to_rail= 0.75
+
+    model.generate_straight_track(sleeper_distance,
+                                  n_sleepers,
+                                  rail_parameters,
+                                  sleeper_parameters,
+                                  rail_pad_parameters,
+                                  rail_pad_thickness,
+                                  origin_point,
+                                  direction_vector,
+                                  sleeper_dimensions,
+                                  distance_middle_sleeper_to_rail,
+                                  "rail_track")
+
+..    # END CODE BLOCK
+
+# todo continue here
+
+
+The geometry of the model is shown in this figure.
+
+.. image:: _static/bridge.png
+    :align: center
+    :alt: Geometry of bridge model.
+
+Load
+----
+The moving load is modelled using the ``MovingLoad`` class.
+The load is defined following a list of coordinates.
+In this case, a moving load is applied along a line located at 0.75 m distance from the x-axis on top of the embankment.
+The velocity of the moving load is 50 m/s and the load is -10000 N in the y-direction.
+The load moves in positive z-direction and the load starts at coordinates: [0.75, 2.5, 0.0].
+
+It is possible to use different types of loads. Please refer to :doc:`loads` for more information on the different
+load types and how to define them.
+
+.. code-block:: python
+
+    load_coordinates = [(0.75, 2.5, 0.0), (0.75, 2.5, 51.0)]
+    moving_load = MovingLoad(load=[0.0, -10000.0, 0.0], direction_signs=[1, 1, 1], velocity=50, origin=[0.75, 2.5, 0.0],
+                                offset=0.0)
+    model.add_load_by_coordinates(load_coordinates, moving_load, "moving_load")
+
+
+..    # END CODE BLOCK
+
+
+Boundary conditions
+-------------------
+Below the boundary conditions are defined. In this model the boundary conditions consist of a fixed base,
+allong the symmetry plane, and absorbing boundaries on the sides of the model to prevent reflections.
+
+The base of the model is fixed in all directions with the name "base_fixed".
+For the surface at the symmetry plane, roller boundary condition is applied with the name "sides_roller".
+To prevent reflections from the sides of the model, absorbing boundaries are applied with virtual thickness of 10 m.
+The boundary conditions are added to the model on the edge surfaces.
+The boundary conditions are applied on plane surfaces defined by a list of coordinates.
+The inner surfaces of the bridge walls are free to move.
+
+.. code-block:: python
+
+    no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
+    roller_displacement_parameters = DisplacementConstraint(is_fixed=[True, False, True], value=[0, 0, 0])
+    absorbing_boundaries_parameters = AbsorbingBoundary(absorbing_factors=[1.0, 1.0], virtual_thickness=10.0)
+
+    model.add_boundary_condition_on_plane([(0, 0, 0), (0, 0, 51), (5, 0, 0)], no_displacement_parameters,"base_fixed")
+    model.add_boundary_condition_on_plane([(0, 0, 0), (0, 0, 51), (0, 3, 0)], roller_displacement_parameters, "sides_roller")
+
+    model.add_boundary_condition_on_plane([(0, 0, 0), (5, 0, 0), (5, 3, 0)],absorbing_boundaries_parameters, "abs_z=0")
+    model.add_boundary_condition_on_plane([(0, 0, 51), (5, 0, 51), (5, 3, 51)],absorbing_boundaries_parameters, "abs_z=51")
+    model.add_boundary_condition_on_plane([(5, 0, 0), (5, 3, 0), (5, 0, 51)], absorbing_boundaries_parameters, "abs_x=5")
+
+..    # END CODE BLOCK
+
+Alternatively, the boundary conditions can also be added by geometry IDs. Please see :ref:`tutorial2` for more
+information on how to add boundary conditions by geometry IDs.
+
+
+Mesh
+----
+The mesh size and element order are defined.
+The element size for the mesh can be defined as a single value, which will be applied to the whole model.
+
+.. code-block:: python
+
+    model.set_mesh_size(element_size=3.0)
+    model.mesh_settings.element_order = 1
+
+..    # END CODE BLOCK
+
+Alternatively, the element size can also be defined for each soil layer separately.
+In this case "bridge_group_2", "bridge_group_3" and "bridge_group_4" have an element size of 0.5,
+while "embankment_group_2" has an element size of 0.5. All the remaining groups have an element size of 2.0,
+which is defined as the default element size for the model.
+
+.. code-block:: python2
+
+    model.set_mesh_size(element_size=3.0)
+
+    model.set_element_size_of_group(element_size=0.5, group_name="bridge_group_2")
+    model.set_element_size_of_group(element_size=0.5, group_name="bridge_group_3")
+    model.set_element_size_of_group(element_size=0.5, group_name="bridge_group_4")
+    model.set_element_size_of_group(element_size=0.5, group_name="embankment_group_2")
+
+..    # END CODE BLOCK
+
+
+Solver settings
+---------------
+Now that the model is defined, the solver settings should be set.
+
+The analysis type is set to `MECHANICAL` and the solution type to `DYNAMIC`.
+The start time is set to 0.0 s and the end time is set to 1.0 s. The time step for the analysis is set to 0.01 s.
+The system of equations is solved with the assumption of constant stiffness matrix, mass matrix, and damping matrix.
+The Linear-Newton-Raphson (Newmark explicit solver) is used as strategy and Cg as solver for the linear system of equations.
+
+The Rayleigh damping parameters are set to :math:`\alpha = 0.248` and :math:`\beta = 7.86 \cdot 10^{-5}`, which
+correspond to a damping ratio of 2% for 1 and 80 Hz.
+
+The convergence criterion for the numerical solver are set to a relative tolerance of :math:`10^{-4}` and an absolute
+tolerance of :math:`10^{-9}` for the displacements.
+
+.. code-block:: python
+
+    # Set up start and end time of calculation, time step
+    time_integration = TimeIntegration(start_time=0.0, end_time=1.0, delta_time=0.01, reduction_factor=1.0,
+                                       increase_factor=1.0)
+    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-4,
+                                                            displacement_absolute_tolerance=1.0e-9)
+
+    solver_settings = SolverSettings(analysis_type=AnalysisType.MECHANICAL,
+                                     solution_type=SolutionType.DYNAMIC,
+                                     stress_initialisation_type=StressInitialisationType.NONE,
+                                     time_integration=time_integration,
+                                     is_stiffness_matrix_constant=True,
+                                     are_mass_and_damping_constant=True,
+                                     convergence_criteria=convergence_criterion,
+                                     strategy_type=LinearNewtonRaphsonStrategy(),
+                                     linear_solver_settings=Cg(),
+                                     rayleigh_k=7.86e-5,
+                                     rayleigh_m=0.248)
+
+..    # END CODE BLOCK
+
+
+Problem and output
+------------------
+The problem definition is added to the model.
+The problem name is set to "bridge",
+the number of threads is set to 8 and the solver settings are applied.
+
+.. code-block:: python
+
+    problem = Problem(problem_name="bridge", number_of_threads=8,
+                      settings=solver_settings)
+    model.project_parameters = problem
+
+..    # END CODE BLOCK
+
+
+Before starting the calculation, it is required to specify the desired output. In this case, displacement,
+and velocity are requested on the nodes and written into VTK files.
+Gauss point results (stresses) are left empty.
+
+The output process is added to the model using the ``Model.add_output_settings`` method.
+The results are written to the output directory in VTK format.
+In this case, the output interval is set to 1 and the output control type is set to `step`, meaning that the
+results will be written every time step.
+
+.. code-block:: python
+
+    nodal_results = [NodalOutput.DISPLACEMENT, NodalOutput.VELOCITY]
+    gauss_point_results = []
+
+    model.add_output_settings(
+        part_name="porous_computational_model_part",
+        output_name="vtk_output",
+        output_dir="output",
+        output_parameters=VtkOutputParameters(
+            output_interval=1,
+            nodal_results=nodal_results,
+            gauss_point_results=gauss_point_results,
+            output_control_type="step"
+        )
+    )
+
+..    # END CODE BLOCK
+
+Run
+---
+Now that the model is set up, the calculation is ready to run.
+
+Firstly the Stem class is initialised, with the model and the directory where the input files will be written to.
+While initialising the Stem class, the mesh will be generated.
+This is followed by writing all the input files required to run the calculation.
+The calculation is run by calling ``stem.run_calculation()``.
+
+.. code-block:: python
+
+    stem = Stem(model, input_files_dir)
+    stem.write_all_input_files()
+    stem.run_calculation()
+
+..    # END CODE BLOCK
+
+
+Results
+-------
+Once the calculation is finished, the results can be visualised using Paraview.
+
+This animation shows the vertical displacement of the embankment and soil due to the moving load.
+(these results have been obtained with an element size of 0.5 m).
+
+.. image:: _static/bridge.gif
+    :align: center
+    :alt: Vertical displacement of the system due to the moving load.
+
+
+.. seealso::
+
+    - Previous: :ref:`tutorial5`
+    - Next: :ref:`tutorial7`

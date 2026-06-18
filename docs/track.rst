@@ -77,12 +77,12 @@ To model the sleeper as a volume element the sleeper material is defined as the 
 
     from stem.soil_material import SoilMaterial, OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
 
-   soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2400, POROSITY=0.0)
-   constitutive_law = LinearElasticSoil(YOUNG_MODULUS=30e9, POISSON_RATIO=0.2)
-   sleeper_parameters_soil = SoilMaterial(name="sleeper",
-                                          soil_formulation=soil_formulation,
-                                          constitutive_law=constitutive_law,
-                                          retention_parameters=SaturatedBelowPhreaticLevelLaw())
+    soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2400, POROSITY=0.0)
+    constitutive_law = LinearElasticSoil(YOUNG_MODULUS=30e9, POISSON_RATIO=0.2)
+    sleeper_parameters_soil = SoilMaterial(name="sleeper",
+                                           soil_formulation=soil_formulation,
+                                           constitutive_law=constitutive_law,
+                                           retention_parameters=SaturatedBelowPhreaticLevelLaw())
 
 The sleeper geometry should also be specified.
 
@@ -92,7 +92,7 @@ The sleeper geometry should also be specified.
    sleeper_length = 2.8 / 2
    sleeper_width = 0.234
    sleeper_dimensions = [sleeper_width, sleeper_height, sleeper_length]
-   distance_middle_sleeper_to_rail= 0.43
+   distance_middle_sleeper_to_rail= 0.75
 
 
 Railway track generation
@@ -106,7 +106,7 @@ the case of modelling the sleeper as a concentrated mass:
 
    origin_point = [0.75, 3.0, 0.0]
    direction_vector = [0, 0, 1]
-   n_sleepers = 0.6
+   n_sleepers = 60
    number_of_sleepers = 101
    sleeper_spacing = 0.6
    rail_pad_thickness = 0.025
@@ -257,5 +257,9 @@ The irregularities of the rail joint can be modelled (see :ref:`rail_joint_formu
                                            },
                      }
 
-.. Interface
-.. ---------
+Interfaces
+----------
+To model the contact between the sleepers and the soil or ballast, an interface material can be defined and added. This
+process is described in :ref:`interface_material`. The formulation of the interface material is described in
+:ref:`interface_formulation`.
+

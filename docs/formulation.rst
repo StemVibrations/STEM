@@ -196,6 +196,7 @@ the Poisson ratio of the soil layer should be set to 0.495. This means that the 
 i.e. cannot experience volumetric deformation and this accurately mimics the saturated behaviour of soil, subjected
 to dynamic loading, in the short term (before pore water pressure dissipation occurs).
 
+.. _interface_formulation:
 
 Interfaces
 ==========
@@ -204,6 +205,8 @@ An interface is represented as a zero-thickness layer whose mechanical response 
 constitutive law. The constitutive behaviour can be either linear elastic or non-linear.
 User-defined non-linear interface models can be implemented through the UMAT interface (see :doc:`API_definition`).
 For all interface constitutive laws, only the normal and tangential stiffness components are considered.
+
+Interfaces can only be defined between lines, surfaces or volumes. Thus it cannot be defined between points.
 
 .. _uvec_formulation:
 
