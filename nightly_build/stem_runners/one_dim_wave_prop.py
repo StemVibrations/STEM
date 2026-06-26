@@ -3,7 +3,7 @@ from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, Sa
 from stem.load import SurfaceLoad, LineLoad
 from stem.boundary import DisplacementConstraint
 from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
-                         StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy, Cg)
+                         StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy, Lu)
 from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters
 from stem.stem import Stem
 
@@ -71,7 +71,7 @@ def run_column(input_folder, ndim):
 
     # Set mesh size
     # --------------------------------
-    model.set_mesh_size(element_size=0.10)
+    model.set_mesh_size(element_size=0.05)
     model.mesh_settings.element_order = 2
 
     # Define project parameters
@@ -81,15 +81,15 @@ def run_column(input_folder, ndim):
     analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
     solution_type = SolutionType.DYNAMIC
     # Set up start and end time of calculation, time step and etc
-    delta_time = 0.0025
+    delta_time = 0.0005
     time_integration = TimeIntegration(start_time=0.0,
                                        end_time=0.5,
                                        delta_time=delta_time,
                                        reduction_factor=1.0,
                                        increase_factor=1.0,
                                        max_delta_time_factor=1000)
-    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0E-12,
-                                                            displacement_absolute_tolerance=1.0E-6)
+    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0E-6,
+                                                            displacement_absolute_tolerance=1.0E-12)
     stress_initialisation_type = StressInitialisationType.NONE
     solver_settings = SolverSettings(analysis_type=analysis_type,
                                      solution_type=solution_type,
@@ -97,7 +97,7 @@ def run_column(input_folder, ndim):
                                      time_integration=time_integration,
                                      is_stiffness_matrix_constant=True,
                                      are_mass_and_damping_constant=True,
-                                     linear_solver_settings=Cg(),
+                                     linear_solver_settings=Lu(),
                                      convergence_criteria=convergence_criterion,
                                      strategy_type=LinearNewtonRaphsonStrategy(),
                                      rayleigh_k=3.929751681281367e-05,

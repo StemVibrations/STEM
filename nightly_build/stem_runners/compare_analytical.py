@@ -46,7 +46,7 @@ def compare_wave_propagation(path_model: Path, output_file: Path):
 
     p_modulus = (young_modulus * (1 - poisson_ratio)) / ((1 + poisson_ratio) * (1 - 2 * poisson_ratio))
 
-    p = OneDimWavePropagation(nb_terms=100)
+    p = OneDimWavePropagation(nb_terms=250)
     p.properties(density_solid * (1 - porosity), p_modulus, load_value, lenght, nb_elements)
     p.solution()
     p.write_results()
@@ -562,7 +562,7 @@ def compare_abs_boundary(path_model: Path, output_file: Path):
     p_modulus = (young_modulus * (1 - poisson_ratio)) / ((1 + poisson_ratio) * (1 - 2 * poisson_ratio))
     bulk_density = density_solid * (1 - porosity)
     analytical_sol = InfinitePileWaveSolution(p_modulus, bulk_density, load_value)
-    t = np.linspace(0, 0.5, 100)
+    t = np.linspace(0, 0.5, 250)
     _, analytical_v_0 = analytical_sol.calculate(7.5, t)
     _, analytical_v_1 = analytical_sol.calculate(5, t)
     _, analytical_v_2 = analytical_sol.calculate(2.5, t)
@@ -620,7 +620,7 @@ def compare_abs_boundary(path_model: Path, output_file: Path):
     ax[0].grid()
     ax[1].grid()
     ax[2].grid()
-    ax[0].set_xlim(0, 0.5)
+    ax[0].set_xlim(0, 0.15)
     ax[0].set_ylim(-4, 4)
     ax[0].legend(loc='upper right')
     ax[1].legend(loc='upper right')
@@ -729,7 +729,8 @@ def compare_moving_load_on_beam(path_model: Path, output_file: Path):
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Mid-span vertical displacement (m)")
     ax.legend(loc='upper right')
-
+    ax.set_xlim(0, 2.5)
+    ax.set_ylim(-0.005, 0.02)
     ax.grid()
 
     plt.tight_layout()
