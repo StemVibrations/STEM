@@ -138,14 +138,15 @@ distance between the middle of the sleeper and the rail as defined above):
    model.generate_straight_track(sleeper_distance,
                                  n_sleepers,
                                  rail_parameters,
-                                 sleeper_parameters,
+                                 sleeper_parameters_soil,
                                  rail_pad_parameters,
                                  rail_pad_thickness,
                                  origin_point,
                                  direction_vector,
+                                 name,
                                  sleeper_dimensions,
                                  distance_middle_sleeper_to_rail,
-                                 name)
+                                 )
 
 To reduce the size of the soil domain, the railway track can be generated partially outside the model geometry
 by extending it beyond the domain boundaries.
@@ -213,10 +214,10 @@ In case that irregularities are not required, the `irregularities` argument must
 
     uvec_load = UvecLoad(direction_signs=[1, 1, 1],
                         velocity=40,
-                        origin=wheel_configuration,
+                        origin=[0.75, 10, 0],
                         uvec_parameters=uvec_parameters,
                         uvec_model=uvec,
-                        train_type=TrainType.PASSENGER_HEAVY,
+                        train_type=TrainType.PASSENGERS_HEAVY,
                         irregularities=None,
                         rail_joint=joint_parameters,
                         )
@@ -254,10 +255,10 @@ In case that rail joints are not required, the  ``rail_joint`` argument must be 
 
     uvec_load = UvecLoad(direction_signs=[1, 1, 1],
                         velocity=40,
-                        origin=wheel_configuration,
+                        origin=[0.75, 10, 0],
                         uvec_parameters=uvec_parameters,
                         uvec_model=uvec,
-                        train_type=TrainType.PASSENGER_HEAVY,
+                        train_type=TrainType.PASSENGERS_HEAVY,
                         irregularities=None,
                         rail_joint=joint_parameters,
                         )
