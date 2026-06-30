@@ -177,7 +177,7 @@ In this example a train with two carts is defined, where each cart has two bogie
 
     uvec_load = UvecLoad(direction_signs=[1, 1, 1],
                          velocity=40,
-                         origin=wheel_configuration,
+                         origin=[0.75, 10, 0],
                          uvec_model=uvec,
                          nb_carts=2,
                          offset=0,
@@ -208,10 +208,9 @@ To use the default train, simply specify the train type as follows:
 
     uvec_load = UvecLoad(direction_signs=[1, 1, 1],
                         velocity=40,
-                        origin=wheel_configuration,
-                        uvec_parameters=uvec_parameters,
+                        origin=[0, 10, 0],
                         uvec_model=uvec,
-                        train_type=TrainType.PASSENGER_HEAVY,
+                        train_type=TrainType.PASSENGERS_HEAVY,
                         irregularities=None,
                         rail_joint=None,
                         static_vehicle_calculation=False,
