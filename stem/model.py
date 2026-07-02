@@ -195,15 +195,17 @@ class Model:
 
         """
 
+
+
         normal_unit_vectors = np.zeros((len(sleeper_global_coords), 3))
         normal_unit_vectors[:, VERTICAL_AXIS] = 1.0
 
-        # in 3D sleepers are connected with a line such that they are not in the middle of a volume geometry, as gmsh
-        # cannot always handle this case well
-        if self.ndim == 3:
-            connection_geo_settings = {"": {"coordinates": sleeper_global_coords, "ndim": 1}}
-            self.gmsh_io.generate_geometry(connection_geo_settings, "")
         if isinstance(sleeper_parameters, NodalConcentrated):
+            # in 3D sleepers are connected with a line such that they are not in the middle of a volume geometry, as gmsh
+            # cannot always handle this case well
+            if self.ndim == 3:
+                connection_geo_settings = {"": {"coordinates": sleeper_global_coords, "ndim": 1}}
+                self.gmsh_io.generate_geometry(connection_geo_settings, "")
 
             # For nodal sleepers, create a connection line and a point geometry for the sleeper.
             sleeper_geo_settings = {base_sleeper_name: {"coordinates": sleeper_global_coords, "ndim": 0}}
