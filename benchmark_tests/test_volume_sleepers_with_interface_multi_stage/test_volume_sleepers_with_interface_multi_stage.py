@@ -247,4 +247,4 @@ def test_point_load_on_track_multi_stage():
                                                            "output/output_vtk_porous_computational_model_part"),
                                               decimal=10)
 
-    # rmtree(input_folder)
+    rmtree(input_folder)
