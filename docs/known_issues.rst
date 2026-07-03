@@ -31,7 +31,7 @@ Problem generating a geometry with volume sleepers
 --------------------------------------------------
 When generating a track with volume sleepers, it can happen that the geometry generation fails when the
 underlying geometry contains a point which is exactly on the same coordinate as the origin point of the track generation.
-Below code is shown which illustrates the problem. In this code, the origin point of the track is included in the
+The code below illustrates this issue. In this code, the origin point of the track is included in the
 coordinate list of the ballast layer, which leads to a failure of the geometry generation as shown in the figure below.
 
 .. code-block:: python
