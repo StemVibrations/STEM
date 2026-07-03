@@ -107,9 +107,10 @@ class TestModelPart:
             moving_load_part.get_element_name(3, 4, AnalysisType.MECHANICAL)
 
         # check uvec load names
-        uvec_parameters = {"load_wheel_1": -10.0, "load_wheel_2": -20.0}
-        uvec_load = UvecLoad([10, 10, 10],
-                             5, [0, 0, 0], [0, 2],
+        uvec_parameters = {"load_wheel_1": -10.0, "load_wheel_2": -20.0, "wheel_configuration": [0.0, 2.0]}
+        uvec_load = UvecLoad(direction_signs=[10, 10, 10],
+                             velocity=5,
+                             origin=[0, 0, 0],
                              uvec_file="sample_uvec.py",
                              uvec_function_name="uvec_test",
                              uvec_parameters=uvec_parameters)

@@ -77,7 +77,10 @@
                 "loads": {},
                 "parameters": {
                     "load_wheel_1": -10.0,
-                    "load_wheel_2": -20.0
+                    "load_wheel_2": -20.0,
+                    "wheel_configuration": [0.0, 2.0],
+                    "irr_parameters": null,
+                    "joint_parameters": null
                 },
                 "state": {
                     "state_1": [

@@ -106,8 +106,7 @@ the case of modelling the sleeper as a concentrated mass:
 
    origin_point = [0.75, 3.0, 0.0]
    direction_vector = [0, 0, 1]
-   n_sleepers = 60
-   number_of_sleepers = 101
+   n_sleepers = 101
    sleeper_spacing = 0.6
    rail_pad_thickness = 0.025
    name = "track"
@@ -129,8 +128,7 @@ distance between the middle of the sleeper and the rail as defined above):
 
    origin_point = [0.75, 3.0, 0.0]
    direction_vector = [0, 0, 1]
-   n_sleepers = 0.6
-   number_of_sleepers = 101
+   n_sleepers = 101
    sleeper_spacing = 0.6
    rail_pad_thickness = 0.025
    name = "track"
@@ -138,14 +136,15 @@ distance between the middle of the sleeper and the rail as defined above):
    model.generate_straight_track(sleeper_distance,
                                  n_sleepers,
                                  rail_parameters,
-                                 sleeper_parameters,
+                                 sleeper_parameters_soil,
                                  rail_pad_parameters,
                                  rail_pad_thickness,
                                  origin_point,
                                  direction_vector,
+                                 name,
                                  sleeper_dimensions,
                                  distance_middle_sleeper_to_rail,
-                                 name)
+                                 )
 
 To reduce the size of the soil domain, the railway track can be generated partially outside the model geometry
 by extending it beyond the domain boundaries.
@@ -157,8 +156,7 @@ An extended straight track can be generated as follows:
 .. code-block:: python
 
    direction_vector = [0, 0, 1]
-   n_sleepers = 0.6
-   number_of_sleepers = 101
+   n_sleepers = 101
    sleeper_spacing = 0.6
    rail_pad_thickness = 0.025
    length_soil_equivalent_element = 5
@@ -193,52 +191,50 @@ The figure below illustrates an example of a railway track generated with an ext
 Irregularities
 --------------
 The track irregularities can be applied in STEM in combination with the UVEC.
-To apply irregularities to the UVEC model, the user can define the `irr_parameters` key with parameters `Av` and `seed`
-in the UVEC model.
-The `Av` parameter is the amplitude of the irregularities and the `seed` parameter is used for reproducibility of the
-random process. The irregularities are modelled following :cite:`Zhang_2001`, and the parameter `Av` can be estimated
+To apply irregularities to the UVEC model, the user can  define the argument `irregularities` in the UVEC
+model as a dictionary with the following parameters:
+
+   - ``Av``: vertical track irregularity amplitude parameter
+   - ``omega_c``: critical wave number (Optional, default value 0.8242 rad/m)
+   - ``f_min``: minimum spatial frequency for the PSD of the unevenness (Optional, default 2 1/m)
+   - ``f_max``: maximum spatial frequency for the PSD of the unevenness (Optional, default 500 1/m)
+   - ``N``: number of frequency increments (Optional, default 2000)
+   - ``seed``: seed for random generator (Optional, default 14)
+
+The irregularities are modelled following :cite:`Zhang_2001`, and the parameter `Av` can be estimated
 based on the track quality :cite:`Lei_Noda_2002`.
-In case that irregularities are not required, the `irr_parameters` key must be omitted.
+In case that irregularities are not required, the `irregularities` argument must be set to `None`.
 
 .. code-block:: python
 
-   wheel_configuration = [0.0, 2.5, 19.9, 22.4]
-   # define uvec parameters
-   uvec_parameters = {"n_carts": 1,
-                     "cart_inertia": 564.4e3,
-                     "cart_mass": 25e3,
-                     "cart_stiffness": 2708e3,
-                     "cart_damping": 64e3,
-                     "bogie_distances": [-9.95, 9.95],
-                     "bogie_inertia": 0.16e3,
-                     "bogie_mass": 3e3,
-                     "wheel_distances": [-1.25, 1.25],
-                     "wheel_mass": 1.5e3,
-                     "wheel_stiffness": 4800e3,
-                     "wheel_damping": 0.25e3,
-                     "gravity_axis": 1,
-                     "contact_coefficient": 9.1e-7,
-                     "contact_power": 1.0,
-                     "static_initialisation": False,
-                     "wheel_configuration": wheel_configuration,
-                     "velocity": velocity,
-                     "irr_parameters": {
-                              "Av": 2.095e-05,
-                              "seed": 14
-                              },
-                     }
+   irr_parameters = {"Av": 2.095e-05, "seed": 14}
+
+    uvec_load = UvecLoad(direction_signs=[1, 1, 1],
+                        velocity=40,
+                        origin=[0.75, 10, 0],
+                        uvec_parameters=uvec_parameters,
+                        uvec_model=uvec,
+                        train_type=TrainType.PASSENGERS_HEAVY,
+                        irregularities=None,
+                        rail_joint=joint_parameters,
+                        )
 
 For additional details about the UVEC model, see :ref:`uvec`, and for additional details about
 the track irregularities, see :ref:`irr_formulation`.
 
+
+.. _rail_joints:
 
 Rail joints
 -----------
 To model the rail joints, hinges can be added to the beam elements of the rail at the location of the joints.
 The stiffness of the hinges can be defined based on the properties of the rail and the joint.
 
-The irregularities of the rail joint can be modelled (see :ref:`rail_joint_formulation`) by defining the
-`joint_parameters` key in the UVEC model, with parameters `location_joint`, `depth_joint` and `width_joint`.
+The irregularities of the rail joint can be modelled (see :ref:`rail_joint_formulation`) by setting the
+argument ``rail_joint`` in the UVEC model as a dictionary with the parameters ``location_joint``,
+``depth_joint`` and ``width_joint``. The ``location_joint`` represents the Euclidian distance in relation to the load
+origin of the UVEC model.
+In case that rail joints are not required, the  ``rail_joint`` argument must be set to ``None``.
 
 .. code-block:: python
 
@@ -249,13 +245,20 @@ The irregularities of the rail joint can be modelled (see :ref:`rail_joint_formu
    model.add_hinge_on_beam("rail_track", [(0.75, 3 + rail_pad_thickness, distance_joint)],
                            HingeParameters(hinge_stiffness_y, hinge_stiffness_z), "hinge")
 
-
-   uvec_parameters = {...
-                      "joint_parameters": {"location_joint": distance_joint,  # joint location [m]
-                                           "depth_joint": 0.01,  # depth of the joint [m]
-                                           "width_joint": 0.25,  # width of the joint [m]
-                                           },
+   joint_parameters = {"location_joint": distance_joint,  # joint location [m]
+                       "depth_joint": 0.01,  # depth of the joint [m]
+                       "width_joint": 0.25,  # width of the joint [m]
                      }
+
+    uvec_load = UvecLoad(direction_signs=[1, 1, 1],
+                        velocity=40,
+                        origin=[0.75, 10, 0],
+                        uvec_parameters=uvec_parameters,
+                        uvec_model=uvec,
+                        train_type=TrainType.PASSENGERS_HEAVY,
+                        irregularities=None,
+                        rail_joint=joint_parameters,
+                        )
 
 Interfaces
 ----------

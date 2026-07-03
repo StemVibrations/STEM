@@ -3,7 +3,7 @@ from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, Sa
 from stem.load import SurfaceLoad, LineLoad
 from stem.boundary import DisplacementConstraint, AbsorbingBoundary
 from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
-                         StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy, Cg, Lu)
+                         StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy, Lu)
 from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters
 from stem.stem import Stem
 
@@ -71,7 +71,7 @@ def run_abs_boundary(input_folder, ndim):
 
     # Set mesh size
     # --------------------------------
-    model.set_mesh_size(element_size=0.1)
+    model.set_mesh_size(element_size=0.05)
     model.mesh_settings.element_order = 2
 
     # Define project parameters
@@ -81,9 +81,9 @@ def run_abs_boundary(input_folder, ndim):
     analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
     solution_type = SolutionType.DYNAMIC
     # Set up start and end time of calculation, time step and etc
-    delta_time = 0.0025
+    delta_time = 0.0005
     time_integration = TimeIntegration(start_time=0.0,
-                                       end_time=0.5,
+                                       end_time=0.15,
                                        delta_time=delta_time,
                                        reduction_factor=1.0,
                                        increase_factor=1.0,

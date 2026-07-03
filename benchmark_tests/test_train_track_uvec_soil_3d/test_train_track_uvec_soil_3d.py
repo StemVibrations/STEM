@@ -8,7 +8,7 @@ from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
 from stem.structural_material import ElasticSpringDamper, NodalConcentrated
 from stem.default_materials import DefaultMaterial
-from stem.load import UvecLoad
+from stem.load import UvecLoad, TrainType
 from stem.boundary import DisplacementConstraint, AbsorbingBoundary
 from stem.solver import AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,\
      LinearNewtonRaphsonStrategy, NewmarkScheme, Cg, StressInitialisationType, SolverSettings, Problem
@@ -92,7 +92,6 @@ def test_train_track_uvec_soil_3d():
 
     # define uvec parameters
     uvec_parameters = {
-        "n_carts": 1,  # number of carts [-]
         "cart_inertia": (1128.8e3) / 2,  # inertia of the cart [kgm2]
         "cart_mass": (50e3) / 2,  # mass of the cart [kg]
         "cart_stiffness": 2708e3,  # stiffness between the cart and bogies [N/m]
@@ -104,19 +103,27 @@ def test_train_track_uvec_soil_3d():
         "wheel_mass": 1.5e3,  # mass of the wheel [kg]
         "wheel_stiffness": 4800e3,  # stiffness between the wheel and the bogie [N/m]
         "wheel_damping": 0.25e3,  # damping coefficient between the wheel and the bogie [Ns/m]
+        "cart_length": 25,  # length of the train [m]
         "gravity_axis": 1,  # axis on which gravity works [x =0, y = 1, z = 2]
         "contact_coefficient": 9.1e-7,  # Hertzian contact coefficient between the wheel and the rail [N/m]
         "contact_power": 1.0,  # Hertzian contact power between the wheel and the rail [-]
-        "static_initialisation": False,  # True if the analysis of the UVEC is static
+        "wheel_configuration": [0.0, 2.5, 19.9, 22.4]
     }
 
     # define the UVEC load
-    uvec_load = UvecLoad(direction_signs=[1, 1, 1],
-                         velocity=40,
-                         origin=[0.75, 3 + rail_pad_thickness, 5],
-                         wheel_configuration=[0.0, 2.5, 19.9, 22.4],
-                         uvec_model=uvec,
-                         uvec_parameters=uvec_parameters)
+    uvec_load = UvecLoad(
+        direction_signs=[1, 1, 1],
+        origin=[0.75, 3 + rail_pad_thickness, 5],
+        uvec_model=uvec,
+        nb_carts=1,
+        velocity=40,
+        offset=0,
+        train_type=TrainType.CUSTOM,
+        uvec_parameters=uvec_parameters,
+        static_vehicle_calculation=False,
+        irregularities=None,
+        rail_joint=None,
+    )
 
     # add the load on the tracks
     model.add_load_on_line_model_part("rail_track", uvec_load, "train_load")
