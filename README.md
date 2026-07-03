@@ -29,8 +29,8 @@ The tool provides a set of commands for creating the geometry of the model, defi
 - Linear elastic soil models, with non-linear models available through the UMAT interface
 - Point, line, surface, and moving loads
 - Dirichlet, Neumann, and absorbing (Lysmer) boundary conditions
-- Implicit and explicit time integration, quasi-static analyses, and multi-stage simulations
-- Post-processing and output to VTK for visualisation in ParaView
+- Implicit and explicit time integration, dynamic analysis, quasi-static analyses, and multi-stage simulations
+- Post-processing and output to JSON and VTK for visualisation in ParaView
 
 ## Requirements
 - Python 3.10, 3.11, or 3.12
@@ -53,6 +53,8 @@ For the theory and numerical methods behind the model, see the [formulation docu
 
 ## Benchmarks
 STEM is validated against analytical solutions. The automatically generated benchmark report is available as a PDF [here](https://github.com/StemVibrations/STEM/releases/download/pdf-latest/benchmark_report.pdf).
+In addition to these analytical benchmarks, STEM contains a set of benchmarks and unit tests that run automatically
+on every commit to the repository.
 
 ## Contributing
 Contributions are welcome. Please refer to the [contribution guidelines](https://stemvibrations.readthedocs.io/main/contributions.html).
