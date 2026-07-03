@@ -165,11 +165,14 @@ def test_point_load_on_track_multi_stage():
         increase_factor=1.0,
         max_delta_time_factor=1000,
     )
-    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-9,
+    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-12,
                                                             displacement_absolute_tolerance=1.0e-12)
     stress_initialisation_type = StressInitialisationType.NONE
     strategy = LinearNewtonRaphsonStrategy()
-    linear_solver = Cg()
+
+    # Note that the system is ill-conditioned, so we need to use a very tight tolerance and many iterations for the
+    # linear solver to get accurate results.
+    linear_solver = Cg(tolerance=1e-16, max_iteration=10000)
     solver_settings = SolverSettings(
         analysis_type=analysis_type,
         solution_type=solution_type,
@@ -185,7 +188,7 @@ def test_point_load_on_track_multi_stage():
     )
 
     # Set up problem data
-    problem = Problem(problem_name="test_extended_beam", number_of_threads=4, settings=solver_settings)
+    problem = Problem(problem_name="test_extended_beam", number_of_threads=16, settings=solver_settings)
     model.project_parameters = problem
 
     # Define the results to be written to the output file
@@ -198,7 +201,6 @@ def test_point_load_on_track_multi_stage():
     gauss_point_results = []
 
     # Define the output process
-
     vtk_output_process = Output(
         part_name="porous_computational_model_part",
         output_name="vtk_output",
@@ -240,9 +242,9 @@ def test_point_load_on_track_multi_stage():
     else:
         raise Exception("Unknown platform")
 
-    assert_floats_in_directories_almost_equal(
-        expected_output_dir,
-        os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"),
-    )
+    assert_floats_in_directories_almost_equal(expected_output_dir,
+                                              os.path.join(input_folder,
+                                                           "output/output_vtk_porous_computational_model_part"),
+                                              decimal=10)
 
     # rmtree(input_folder)
