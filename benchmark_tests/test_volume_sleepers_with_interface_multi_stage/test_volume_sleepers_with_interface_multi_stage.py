@@ -6,7 +6,7 @@ import numpy as np
 from stem.model import Model
 from stem.structural_material import EulerBeam, ElasticSpringDamper
 from stem.boundary import DisplacementConstraint
-from stem.load import PointLoad
+from stem.load import MovingLoad
 from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
                          StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy, Cg)
 from stem.output import NodalOutput, Output, VtkOutputParameters
@@ -17,7 +17,7 @@ from stem.stem import Stem
 from benchmark_tests.utils import assert_floats_in_directories_almost_equal
 
 
-def test_point_load_on_track_multi_stage():
+def test_moving_load_on_track_multi_stage():
     ndim = 3
     model = Model(ndim)
     model.extrusion_length = 20
@@ -111,12 +111,12 @@ def test_point_load_on_track_multi_stage():
                                   name="rail_track_1",
                                   distance_middle_sleeper_to_rail=distance_middle_sleeper_to_rail)
 
-    load = PointLoad(active=[False, True, False], value=[0.0, 10000.0, 0.0])
-    model.add_load_by_coordinates(
-        coordinates=[[0.75, 2.5 + sleeper_height + rail_pad_thickness, 10.0]],
-        load_parameters=load,
-        name="point_load",
-    )
+    moving_load = MovingLoad(load=[0, 10000, 0],
+                             direction_signs=[0, 0, 1],
+                             velocity=0,
+                             origin=[0.75, 2.5 + sleeper_height + rail_pad_thickness, 10.0])
+
+    model.add_load_on_line_model_part("rail_track_1", moving_load, "moving_load")
 
     # Define boundary conditions
     no_displacement_parameters = DisplacementConstraint(is_fixed=[True, True, True], value=[0, 0, 0])
@@ -224,10 +224,10 @@ def test_point_load_on_track_multi_stage():
 
     stage_2 = stem.create_new_stage(0.01, 0.5)
 
-    stage_2.get_model_part_by_name("point_load").parameters.value = [0.0, 0.0, 0.0]
     stage_2.project_parameters.settings.solution_type = SolutionType.DYNAMIC
     stage_2.output_settings[0].output_parameters.output_interval = 10
-    stage_2.project_parameters.settings.strategy_type = LinearNewtonRaphsonStrategy(initialize_acceleration=True)
+    stage_2.get_model_part_by_name("moving_load").parameters.velocity = 10.0
+    stage_2.project_parameters.settings.strategy_type = LinearNewtonRaphsonStrategy()
     stem.add_calculation_stage(stage_2)
 
     stem.write_all_input_files()
