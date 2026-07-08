@@ -1,0 +1,80 @@
+{
+  "test": [
+    {
+      "python_module": "apply_scalar_constraint_table_process",
+      "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+      "process_name": "ApplyScalarConstraintTableProcess",
+      "Parameters": {
+        "model_part_name": "PorousDomain.water_soils_1",
+        "variable_name": "WATER_PRESSURE",
+        "is_fixed": true,
+        "value": 0.0,
+        "table": [
+          0,
+          0,
+          0
+        ],
+        "fluid_pressure_type": "Phreatic_Multi_Line",
+        "gravity_direction": 1,
+        "out_of_plane_direction": 2,
+        "x_coordinates": [
+          -40.0,
+          -11.4,
+          0.0,
+          9.0,
+          21.5,
+          95.0
+        ],
+        "y_coordinates": [
+          0.44,
+          0.44,
+          3.0,
+          3.0,
+          -0.5,
+          -0.5
+        ],
+        "z_coordinates": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "specific_weight": 9.81
+      }
+    },
+    {
+      "python_module": "apply_scalar_constraint_table_process",
+      "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+      "process_name": "ApplyScalarConstraintTableProcess",
+      "Parameters": {
+        "model_part_name": "PorousDomain.water_soils_2",
+        "variable_name": "WATER_PRESSURE",
+        "is_fixed": true,
+        "table": 0,
+        "fluid_pressure_type": "Interpolate_Line",
+        "gravity_direction": 1,
+        "out_of_plane_direction": 2
+      }
+    },
+    {
+        "python_module": "apply_scalar_constraint_table_process",
+        "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+        "process_name":  "ApplyScalarConstraintTableProcess",
+        "Parameters":    {
+            "model_part_name":      "PorousDomain.water_soils_3",
+            "variable_name":        "WATER_PRESSURE",
+            "is_fixed":             true,
+            "value":                0.0,
+            "table":                [0, 0],
+            "fluid_pressure_type": "Phreatic_Line",
+            "gravity_direction":    1,
+            "out_of_plane_direction":    2,
+            "first_reference_coordinate" :    [0.0,1.0,0.0],
+            "second_reference_coordinate":    [1.0,0.5,0.0],
+            "specific_weight":      10000.0
+        }
+    }
+  ]
+}
