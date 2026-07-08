@@ -360,7 +360,10 @@ class KratosMaterialIO:
             interface_material_dict.update(self.__create_interface_linear_elastic_soil_dict(material.constitutive_law))
         elif isinstance(material.constitutive_law, SmallStrainUmatLaw):
             interface_material_dict.update(self.__create_umat_soil_dict(material.constitutive_law))
-            interface_material_dict["constitutive_law"]["name"] = f"SmallStrainUMAT{self.ndim}DInterfaceLaw"
+            if self.ndim == 2:
+                interface_material_dict["constitutive_law"]["name"] = "SmallStrainUMAT2DLineInterfaceLaw"
+            elif self.ndim == 3:
+                interface_material_dict["constitutive_law"]["name"] = f"SmallStrainUMAT{self.ndim}DInterfaceLaw"
         elif isinstance(material.constitutive_law, SmallStrainUdsmLaw):
             interface_material_dict.update(self.__create_udsm_soil_dict(material.constitutive_law))
             interface_material_dict["constitutive_law"]["name"] = f"SmallStrainUDSM{self.ndim}DInterfaceLaw"

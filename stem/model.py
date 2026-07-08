@@ -1455,6 +1455,19 @@ class Model:
 
         """
 
+        if self.ndim == 2:
+            triangle_element = ("TRIANGLE_3N", "TRIANGLE_6N")
+            if any(elem in self.gmsh_io.mesh_data["elements"] for elem in triangle_element):
+                # check clockwise order of triangle elements and reorder if necessary
+                for elem_type in triangle_element:
+                    if elem_type in self.gmsh_io.mesh_data["elements"]:
+                        for key, value in self.gmsh_io.mesh_data["elements"][elem_type].items():
+                            coordinates = [self.gmsh_io.mesh_data["nodes"][node_id] for node_id in value[:3]]
+
+                            if Utils.are_2d_coordinates_clockwise(coordinates):
+                                self.gmsh_io.mesh_data["elements"][elem_type][key] = np.array(value)[
+                                    ELEMENT_DATA[elem_type]["reversed_connectivity_order"]].tolist()
+
         # reorder TETRAHEDRON_10N
         if "TETRAHEDRON_10N" in self.gmsh_io.mesh_data["elements"]:
             gmsh_to_kratos_indices = ELEMENT_DATA["TETRAHEDRON_10N"]["gmsh_to_kratos_order"]
@@ -2656,25 +2669,32 @@ class Model:
         # get all body model part names
         body_model_part_names = [body_model_part.name for body_model_part in self.body_model_parts]
 
-        # get geometry ids and ndim for each body model part
-        model_parts_geometry_ids = np.array(
-            [self.gmsh_io.geo_data["physical_groups"][name]["geometry_ids"] for name in body_model_part_names])
+        # collect geometry ids per dimension across all body model parts
+        body_geometries_1d = []
+        body_geometries_2d = []
+        body_geometries_3d = []
 
-        model_parts_ndim = np.array(
-            [self.gmsh_io.geo_data["physical_groups"][name]["ndim"] for name in body_model_part_names]).ravel()
+        for name in body_model_part_names:
+            physical_group = self.gmsh_io.geo_data["physical_groups"][name]
+            geometry_ids = physical_group["geometry_ids"]
+            ndim = physical_group["ndim"]
+
+            if ndim == 1:
+                body_geometries_1d.extend(geometry_ids)
+            elif ndim == 2:
+                body_geometries_2d.extend(geometry_ids)
+            elif ndim == 3:
+                body_geometries_3d.extend(geometry_ids)
 
         # add gravity load as physical group per dimension
-        body_geometries_1d = model_parts_geometry_ids[model_parts_ndim == 1].ravel()
         if len(body_geometries_1d) > 0:
-            self.__add_gravity_model_part(gravity_load, 1, body_geometries_1d)
+            self.__add_gravity_model_part(gravity_load, 1, np.array(body_geometries_1d))
 
-        body_geometries_2d = model_parts_geometry_ids[model_parts_ndim == 2].ravel()
         if len(body_geometries_2d) > 0:
-            self.__add_gravity_model_part(gravity_load, 2, body_geometries_2d)
+            self.__add_gravity_model_part(gravity_load, 2, np.array(body_geometries_2d))
 
-        body_geometries_3d = model_parts_geometry_ids[model_parts_ndim == 3].ravel()
         if len(body_geometries_3d) > 0:
-            self.__add_gravity_model_part(gravity_load, 3, body_geometries_3d)
+            self.__add_gravity_model_part(gravity_load, 3, np.array(body_geometries_3d))
 
         self.synchronise_geometry()
         self.gmsh_io.finalize_gmsh()
