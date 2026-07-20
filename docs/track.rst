@@ -107,7 +107,7 @@ the case of modelling the sleeper as a concentrated mass:
    origin_point = [0.75, 3.0, 0.0]
    direction_vector = [0, 0, 1]
    n_sleepers = 101
-   sleeper_spacing = 0.6
+   sleeper_distance = 0.6
    rail_pad_thickness = 0.025
    name = "track"
 
@@ -129,7 +129,7 @@ distance between the middle of the sleeper and the rail as defined above):
    origin_point = [0.75, 3.0, 0.0]
    direction_vector = [0, 0, 1]
    n_sleepers = 101
-   sleeper_spacing = 0.6
+   sleeper_distance = 0.6
    rail_pad_thickness = 0.025
    name = "track"
 
@@ -157,7 +157,7 @@ An extended straight track can be generated as follows:
 
    direction_vector = [0, 0, 1]
    n_sleepers = 101
-   sleeper_spacing = 0.6
+   sleeper_distance = 0.6
    rail_pad_thickness = 0.025
    length_soil_equivalent_element = 5
    name = "extended_track"
@@ -167,8 +167,8 @@ An extended straight track can be generated as follows:
                                                     NODAL_DAMPING_COEFFICIENT=[0, 71e3, 0],
                                                     NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0])
 
-   model.generate_extended_straight_track(n_sleepers,
-                                          number_of_sleepers,
+   model.generate_extended_straight_track(sleeper_distance,
+                                          n_sleepers,
                                           rail_parameters,
                                           sleeper_parameters,
                                           rail_pad_parameters,
@@ -209,14 +209,14 @@ In case that irregularities are not required, the `irregularities` argument must
 
    irr_parameters = {"Av": 2.095e-05, "seed": 14}
 
-    uvec_load = UvecLoad(direction_signs=[1, 1, 1],
+   uvec_load = UvecLoad(direction_signs=[1, 1, 1],
                         velocity=40,
                         origin=[0.75, 10, 0],
                         uvec_parameters=uvec_parameters,
                         uvec_model=uvec,
                         train_type=TrainType.PASSENGERS_HEAVY,
-                        irregularities=None,
-                        rail_joint=joint_parameters,
+                        irregularities=irr_parameters,
+                        rail_joint=None,
                         )
 
 For additional details about the UVEC model, see :ref:`uvec`, and for additional details about
@@ -248,9 +248,9 @@ In case that rail joints are not required, the  ``rail_joint`` argument must be 
    joint_parameters = {"location_joint": distance_joint,  # joint location [m]
                        "depth_joint": 0.01,  # depth of the joint [m]
                        "width_joint": 0.25,  # width of the joint [m]
-                     }
+                      }
 
-    uvec_load = UvecLoad(direction_signs=[1, 1, 1],
+   uvec_load = UvecLoad(direction_signs=[1, 1, 1],
                         velocity=40,
                         origin=[0.75, 10, 0],
                         uvec_parameters=uvec_parameters,
