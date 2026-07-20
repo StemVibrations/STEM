@@ -363,7 +363,7 @@ class KratosMaterialIO:
             if self.ndim == 2:
                 interface_material_dict["constitutive_law"]["name"] = "SmallStrainUMAT2DLineInterfaceLaw"
             elif self.ndim == 3:
-                interface_material_dict["constitutive_law"]["name"] = f"SmallStrainUMAT{self.ndim}DInterfaceLaw"
+                interface_material_dict["constitutive_law"]["name"] = "SmallStrainUMAT3DSurfaceInterfaceLaw"
         elif isinstance(material.constitutive_law, SmallStrainUdsmLaw):
             interface_material_dict.update(self.__create_udsm_soil_dict(material.constitutive_law))
             interface_material_dict["constitutive_law"]["name"] = f"SmallStrainUDSM{self.ndim}DInterfaceLaw"

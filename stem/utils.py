@@ -127,6 +127,11 @@ class Utils:
         vec_1 = np.asarray(point) - np.asarray(start_point)
         vec_2 = np.asarray(end_point) - np.asarray(start_point)
 
+        # for 2D points, a third dimension is added to the vectors to calculate the cross product
+        if len(vec_1) == len(vec_2) == 2:
+            vec_1 = np.append(vec_1, 0)
+            vec_2 = np.append(vec_2, 0)
+
         # cross product of the two vector
         cross_product = np.cross(vec_1, vec_2)
 

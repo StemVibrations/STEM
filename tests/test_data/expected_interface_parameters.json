@@ -63,7 +63,7 @@
                     "DENSITY_WATER": 1000
                 },
                 "constitutive_law": {
-                    "name": "SmallStrainUMAT2DInterfaceLaw"
+                    "name": "SmallStrainUMAT2DLineInterfaceLaw"
                 }
             },
             "Tables": {}
