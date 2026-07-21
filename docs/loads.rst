@@ -95,13 +95,14 @@ along the path.
 The ``offset`` parameter can be used to specify an initial offset along the path.
 
 
+.. _UVEC_load:
 UVEC load
 ---------
 In STEM it is possible to model an external load (UVEC) that is defined by a user-defined function.
 This is the most flexible way to define loads, as it allows the implementation of point loads that can be expressed
 as a function of time and or displacement at its location.
 This is  the method that it is used to simulate the train and the train-track interaction in STEM.
-More details on how to define a UVEC load can be found in the :doc:`API_definition` page.
+More details on how to define a UVEC load can be found in the :ref:`uvec` page.
 
 UVEC load are defined as:
 

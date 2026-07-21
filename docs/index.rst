@@ -85,7 +85,7 @@ understanding of ParaView before using STEM. The following resources are recomme
 
 .. toctree::
    :maxdepth: 2
-   :caption: Interface definitions
+   :caption: API Interface definitions
    :hidden:
 
    API_definition
@@ -111,6 +111,7 @@ understanding of ParaView before using STEM. The following resources are recomme
    :hidden:
 
    contributions
+   publications
    authors
 
 .. References
