@@ -480,3 +480,40 @@ class TestMeshSettings:
 
         with pytest.raises(ValueError):
             mesh_settings.element_order = 3
+
+    def test_copy_elements_returns_equal_elements(self):
+        """
+        Test that the copy_elements method returns a dictionary of elements that is equal to the original
+        elements in terms of content, but is a different object (i.e., a deep copy).
+        """
+
+        mesh = Mesh(2)
+        mesh.nodes = {1: Node(1, [0, 0, 0]), 2: Node(2, [1, 0, 0]), 3: Node(3, [0, 1, 0])}
+        mesh.elements = {1: Element(1, "TRIANGLE_3N", [1, 2, 3])}
+
+        copied_elements = mesh.copy_elements()
+
+        assert copied_elements == mesh.elements
+        for copied_element, original_element in zip(copied_elements.values(), mesh.elements.values()):
+            assert id(copied_element) != id(original_element)
+
+    def test_copy_elements_return_independent_copy(self):
+        """
+        Test that the copy_elements method returns a dictionary of elements that is independent of the original
+            elements, meaning that modifying the copied elements does not affect the original elements.
+        """
+        mesh = Mesh(2)
+        mesh.elements = {
+            1: Element(1, "TRIANGLE_3N", [1, 2, 3]),
+            2: Element(2, "TRIANGLE_3N", [4, 5, 6]),
+        }
+
+        copied_elements = mesh.copy_elements()
+        copied_elements[1].node_ids[0] = 99
+
+        copied_elements[3] = Element(3, "TRIANGLE_3N", [7, 8, 9])
+
+        assert mesh.elements[1].node_ids[0] == 1
+        assert mesh.elements[2].node_ids == [4, 5, 6]
+
+        assert 3 not in mesh.elements

@@ -7,7 +7,7 @@ practical tips for choosing parameters.
 Soil materials
 --------------
 Soil materials are defined by combining a soil formulation, a soil law, and a saturation law.
-Hereby an example of how to define two soil material layers.
+Hereby an example of how to define two soil material layers and how to add them to the model.
 Further details about the soil formulation can be found in :ref:`linear_elastic_material`.
 
 .. code-block:: python
@@ -31,6 +31,10 @@ Further details about the soil formulation can be found in :ref:`linear_elastic_
        LinearElasticSoil(YOUNG_MODULUS=30e6, POISSON_RATIO=0.2),
        SaturatedBelowPhreaticLevelLaw(),
    )
+
+   model.add_soil_layer_by_coordinates([(x1, y1, z1), (x2, y2, z2),(x3, y3, z3), (x4, y4, z4)], material_1, "soil_layer_1")
+   model.add_soil_layer_by_coordinates([(x5, y5, z5), (x6, y6, z6),(x7, y7, z7), (x8, y8, z8), (x9, y9, z9)], material_2, "soil_layer_2")
+
 
 
 .. Random Fields
