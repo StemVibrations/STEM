@@ -77,12 +77,12 @@ To model the sleeper as a volume element the sleeper material is defined as the 
 
     from stem.soil_material import SoilMaterial, OnePhaseSoil, LinearElasticSoil, SaturatedBelowPhreaticLevelLaw
 
-   soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2400, POROSITY=0.0)
-   constitutive_law = LinearElasticSoil(YOUNG_MODULUS=30e9, POISSON_RATIO=0.2)
-   sleeper_parameters_soil = SoilMaterial(name="sleeper",
-                                          soil_formulation=soil_formulation,
-                                          constitutive_law=constitutive_law,
-                                          retention_parameters=SaturatedBelowPhreaticLevelLaw())
+    soil_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2400, POROSITY=0.0)
+    constitutive_law = LinearElasticSoil(YOUNG_MODULUS=30e9, POISSON_RATIO=0.2)
+    sleeper_parameters_soil = SoilMaterial(name="sleeper",
+                                           soil_formulation=soil_formulation,
+                                           constitutive_law=constitutive_law,
+                                           retention_parameters=SaturatedBelowPhreaticLevelLaw())
 
 The sleeper geometry should also be specified.
 
@@ -92,7 +92,7 @@ The sleeper geometry should also be specified.
    sleeper_length = 2.8 / 2
    sleeper_width = 0.234
    sleeper_dimensions = [sleeper_width, sleeper_height, sleeper_length]
-   distance_middle_sleeper_to_rail= 0.43
+   distance_middle_sleeper_to_rail= 0.75
 
 
 Railway track generation
@@ -106,9 +106,8 @@ the case of modelling the sleeper as a concentrated mass:
 
    origin_point = [0.75, 3.0, 0.0]
    direction_vector = [0, 0, 1]
-   n_sleepers = 0.6
-   number_of_sleepers = 101
-   sleeper_spacing = 0.6
+   n_sleepers = 101
+   sleeper_distance = 0.6
    rail_pad_thickness = 0.025
    name = "track"
 
@@ -129,9 +128,8 @@ distance between the middle of the sleeper and the rail as defined above):
 
    origin_point = [0.75, 3.0, 0.0]
    direction_vector = [0, 0, 1]
-   n_sleepers = 0.6
-   number_of_sleepers = 101
-   sleeper_spacing = 0.6
+   n_sleepers = 101
+   sleeper_distance = 0.6
    rail_pad_thickness = 0.025
    name = "track"
 
@@ -158,9 +156,8 @@ An extended straight track can be generated as follows:
 .. code-block:: python
 
    direction_vector = [0, 0, 1]
-   n_sleepers = 0.6
-   number_of_sleepers = 101
-   sleeper_spacing = 0.6
+   n_sleepers = 101
+   sleeper_distance = 0.6
    rail_pad_thickness = 0.025
    length_soil_equivalent_element = 5
    name = "extended_track"
@@ -170,8 +167,8 @@ An extended straight track can be generated as follows:
                                                     NODAL_DAMPING_COEFFICIENT=[0, 71e3, 0],
                                                     NODAL_ROTATIONAL_DAMPING_COEFFICIENT=[0, 0, 0])
 
-   model.generate_extended_straight_track(n_sleepers,
-                                          number_of_sleepers,
+   model.generate_extended_straight_track(sleeper_distance,
+                                          n_sleepers,
                                           rail_parameters,
                                           sleeper_parameters,
                                           rail_pad_parameters,
@@ -212,14 +209,14 @@ In case that irregularities are not required, the `irregularities` argument must
 
    irr_parameters = {"Av": 2.095e-05, "seed": 14}
 
-    uvec_load = UvecLoad(direction_signs=[1, 1, 1],
+   uvec_load = UvecLoad(direction_signs=[1, 1, 1],
                         velocity=40,
                         origin=[0.75, 10, 0],
                         uvec_parameters=uvec_parameters,
                         uvec_model=uvec,
                         train_type=TrainType.PASSENGERS_HEAVY,
-                        irregularities=None,
-                        rail_joint=joint_parameters,
+                        irregularities=irr_parameters,
+                        rail_joint=None,
                         )
 
 For additional details about the UVEC model, see :ref:`uvec`, and for additional details about
@@ -251,9 +248,9 @@ In case that rail joints are not required, the  ``rail_joint`` argument must be 
    joint_parameters = {"location_joint": distance_joint,  # joint location [m]
                        "depth_joint": 0.01,  # depth of the joint [m]
                        "width_joint": 0.25,  # width of the joint [m]
-                     }
+                      }
 
-    uvec_load = UvecLoad(direction_signs=[1, 1, 1],
+   uvec_load = UvecLoad(direction_signs=[1, 1, 1],
                         velocity=40,
                         origin=[0.75, 10, 0],
                         uvec_parameters=uvec_parameters,
@@ -263,5 +260,37 @@ In case that rail joints are not required, the  ``rail_joint`` argument must be 
                         rail_joint=joint_parameters,
                         )
 
-.. Interface
-.. ---------
+Interfaces
+----------
+To model the contact between the sleepers and the soil or ballast, an interface element can be defined and added. The formulation of the interface 
+is described in :ref:`interface_formulation`.
+
+Interface elements are zero-thickness soil elements that contain interface materials. These materials are defined by combining a soil formulation, a constitutive
+law, and a saturation law. Hereby an example of how to define and apply an interface element between two soil layers. 
+
+.. code-block:: python
+
+   from stem.soil_material import OnePhaseSoil, LinearElasticSoil, InterfaceMaterial, SaturatedBelowPhreaticLevelLaw
+
+    interface_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
+    interface_const_law = LinearElasticSoil(YOUNG_MODULUS=15e5, POISSON_RATIO=0.2)
+    retention_law = SaturatedBelowPhreaticLevelLaw()
+
+    interface_material = InterfaceMaterial(name="interface_concrete_soil",
+                                           constitutive_law=interface_const_law,
+                                           soil_formulation=interface_formulation,
+                                           retention_parameters=retention_law)
+
+    model.set_interface_between_model_parts(["soil_layer_1"], ["soil_layer_2"],
+                                        interface_material, "interface_between_two_soils")
+
+Interfaces can be applied between more than two layers and material types. Below an example of how to apply an interface
+between two soil layers and sleepers. The interface material is defined in the same way as above. Furthermore, it is
+assumed a track is generated with volume sleepers.
+
+.. code-block:: python
+
+    model.set_interface_between_model_parts(["sleeper_track"], ["soil_layer_1", "soil_layer_2"],
+                                            interface_material, "interface_sleeper_soil")
+
+
