@@ -203,7 +203,7 @@ Interfaces
 STEM supports the definition of interfaces between different soil or structural materials.
 An interface is represented as a zero-thickness layer whose mechanical response is governed by a
 constitutive law. The constitutive behaviour can be either linear elastic or non-linear.
-User-defined non-linear interface models can be implemented through the UMAT API definition (see :doc:`API_definition`).
+User-defined non-linear interface models can be implemented through the UMAT API definition (see :ref:`umat`).
 For all interface constitutive laws, only the normal and tangential stiffness components are considered.
 This means that the interface element uses the :math:`\sigma_{zz}`, :math:`\sigma_{yz}` and :math:`\sigma_{xz}` from the stress tensor.
 
