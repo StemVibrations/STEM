@@ -262,7 +262,35 @@ In case that rail joints are not required, the  ``rail_joint`` argument must be 
 
 Interfaces
 ----------
-To model the contact between the sleepers and the soil or ballast, an interface material can be defined and added. This
-process is described in :ref:`interface_material`. The formulation of the interface material is described in
-:ref:`interface_formulation`.
+To model the contact between the sleepers and the soil or ballast, an interface element can be defined and added. The formulation of the interface 
+is described in :ref:`interface_formulation`.
+
+Interface elements are zero-thickness soil elements that contain interface materials. These materials are defined by combining a soil formulation, a constitutive
+law, and a saturation law. Hereby an example of how to define and apply an interface element between two soil layers. 
+
+.. code-block:: python
+
+   from stem.soil_material import OnePhaseSoil, LinearElasticSoil, InterfaceMaterial, SaturatedBelowPhreaticLevelLaw
+
+    interface_formulation = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=2650, POROSITY=0.3)
+    interface_const_law = LinearElasticSoil(YOUNG_MODULUS=15e5, POISSON_RATIO=0.2)
+    retention_law = SaturatedBelowPhreaticLevelLaw()
+
+    interface_material = InterfaceMaterial(name="interface_concrete_soil",
+                                           constitutive_law=interface_const_law,
+                                           soil_formulation=interface_formulation,
+                                           retention_parameters=retention_law)
+
+    model.set_interface_between_model_parts(["soil_layer_1"], ["soil_layer_2"],
+                                        interface_material, "interface_between_two_soils")
+
+Interfaces can be applied between more than two layers and material types. Below an example of how to apply an interface
+between two soil layers and sleepers. The interface material is defined in the same way as above. Furthermore, it is
+assumed a track is generated with volume sleepers.
+
+.. code-block:: python
+
+    model.set_interface_between_model_parts(["sleeper_track"], ["soil_layer_1", "soil_layer_2"],
+                                            interface_material, "interface_sleeper_soil")
+
 
