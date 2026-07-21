@@ -1,6 +1,52 @@
 Known issues
 ===========
 
+Installation fails due to long paths
+------------------------------------
+On Windows, when installing STEM as a developer (directly from GitHub),
+the installation may fail due to long paths.
+This is a known issue with Python and Windows, and it can be resolved by enabling long path support in Windows.
+The error message will look like this:
+
+
+.. code-block::
+
+    ...
+
+    error: unable to create file applications/GeoMechanicsApplication/tests/test_thermal_element/test_thermal_heat_flux_line_element/test_thermal_point_flux_2D5N/test_thermal_point_flux_2D5N.mdpa: Filename too long
+    error: unable to create file applications/GeoMechanicsApplication/tests/test_thermal_element/test_thermal_heat_flux_line_element/test_thermal_point_flux_3D2N/test_thermal_point_flux_3D2N.mdpa: Filename too long
+    error: unable to create file applications/GeoMechanicsApplication/tests/test_thermal_element/test_thermal_heat_flux_line_element/test_thermal_point_flux_3D3N/test_thermal_point_flux_3D3N.mdpa: Filename too long
+    fatal: cannot create directory at 'applications/GeoMechanicsApplication/tests/test_thermal_element/test_transient_thermal_fixed_temperature/test_transient_thermal_fixed_temperature_2D10N': Filename too long
+    warning: Clone succeeded, but checkout failed.
+    You can inspect what was checked out with 'git status'
+    and retry with 'git restore --source=HEAD :/'
+
+    error: subprocess-exited-with-error
+
+    × git clone --filter=blob:none --quiet https://github.com/StemVibrations/Kratos 'C:\Users\AppData\Local\Temp\pip-install-lem8mdif\stemkratos_84611cbc1687425a80e37d069d67d4b9' did not run successfully.
+    │ exit code: 128
+    ╰─> See above for output.
+
+    note: This error originates from a subprocess, and is likely not a problem with pip.
+    error: subprocess-exited-with-error
+
+    × git clone --filter=blob:none --quiet https://github.com/StemVibrations/Kratos 'C:\Users\AppData\Local\Temp\pip-install-lem8mdif\stemkratos_84611cbc1687425a80e37d069d67d4b9' did not run successfully.
+    │ exit code: 128
+    ╰─> See above for output.
+
+    note: This error originates from a subprocess, and is likely not a problem with pip.
+
+    [notice] A new release of pip is available: 23.2.1 -> 26.1.2
+    [notice] To update, run: python.exe -m pip install --upgrade pip
+
+
+To solve this issue, run this command in a Command Prompt or PowerShell terminal with administrator privileges:
+
+.. code-block::
+
+         git config --system core.longpaths true
+
+
 Linux: glibc requirement
 ------------------------
 On Linux, the runtime requires GNU C Library (glibc) version 2.39 or newer.

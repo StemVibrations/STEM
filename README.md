@@ -26,7 +26,7 @@ The tool provides a set of commands for creating the geometry of the model, defi
 - Parametric geometry, meshing, and model generation for 2D (plane strain) and 3D soil–track systems
 - Beam, triangular, and tetrahedral element support (linear and quadratic order)
 - Train–track interaction via a user-defined vehicle model (UVEC), including rail irregularities and dipped rail joints
-- Linear elastic soil models, with non-linear models available through the UMAT interface
+- Linear elastic soil models, with non-linear models available through the UMAT API definition
 - Point, line, surface, and moving loads
 - Dirichlet, Neumann, and absorbing (Lysmer) boundary conditions
 - Implicit and explicit time integration, dynamic analysis, quasi-static analyses, and multi-stage simulations
