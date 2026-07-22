@@ -1,5 +1,5 @@
-Interface definitions
-=====================
+API definitions
+===============
 
 .. _uvec:
 

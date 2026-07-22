@@ -1,11 +1,10 @@
 from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
 from stem.load import SurfaceLoad, LineLoad
-from stem.table import Table
 from stem.boundary import DisplacementConstraint, AbsorbingBoundary
 from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
-                         StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy, Cg, Lu)
-from stem.output import NodalOutput, VtkOutputParameters, Output, JsonOutputParameters
+                         StressInitialisationType, SolverSettings, Problem, LinearNewtonRaphsonStrategy, Lu)
+from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters
 from stem.stem import Stem
 
 
@@ -36,12 +35,6 @@ def run_abs_boundary(input_folder, ndim):
     # Create the soil layer
     model.add_soil_layer_by_coordinates(layer1_coordinates, material1, "soil_column")
 
-    # Boundary conditions and Loads
-    # Add table for the load in the mdpa file
-    t = (0.0, 0.0025, 1)
-    values = (0.0, -1000.0, -1000.0)
-    LOAD_Y = Table(times=t, values=values)
-
     # Define boundary conditions
     abs_boundary_parameters = AbsorbingBoundary([1, 1], 100000)
     sym_parameters = DisplacementConstraint(is_fixed=[True, False, True], value=[0, 0, 0])
@@ -51,7 +44,7 @@ def run_abs_boundary(input_folder, ndim):
         load_coordinates = [(0.0, column_height, 0), (column_width, column_height, 0)]
 
         # Add line load
-        surface_load = LineLoad(active=[False, True, False], value=[0, LOAD_Y, 0])
+        surface_load = LineLoad(active=[False, True, False], value=[0, -1000, 0])
 
         geometry_ids_base = [1]
         geometry_ids_sides = [2, 4]
@@ -59,7 +52,7 @@ def run_abs_boundary(input_folder, ndim):
         load_coordinates = [(0.0, column_height, 0), (column_width, column_height, 0),
                             (column_width, column_height, column_width), (0.0, column_height, column_width)]
         # Add surface load
-        surface_load = SurfaceLoad(active=[False, True, False], value=[0, LOAD_Y, 0])
+        surface_load = SurfaceLoad(active=[False, True, False], value=[0, -1000, 0])
 
         geometry_ids_base = [2]
         geometry_ids_sides = [1, 3, 6, 5]
@@ -78,7 +71,7 @@ def run_abs_boundary(input_folder, ndim):
 
     # Set mesh size
     # --------------------------------
-    model.set_mesh_size(element_size=0.1)
+    model.set_mesh_size(element_size=0.05)
     model.mesh_settings.element_order = 2
 
     # Define project parameters
@@ -88,9 +81,9 @@ def run_abs_boundary(input_folder, ndim):
     analysis_type = AnalysisType.MECHANICAL_GROUNDWATER_FLOW
     solution_type = SolutionType.DYNAMIC
     # Set up start and end time of calculation, time step and etc
-    delta_time = 0.0025
+    delta_time = 0.0005
     time_integration = TimeIntegration(start_time=0.0,
-                                       end_time=0.5,
+                                       end_time=0.15,
                                        delta_time=delta_time,
                                        reduction_factor=1.0,
                                        increase_factor=1.0,

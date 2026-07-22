@@ -131,7 +131,7 @@ def test_stem(element_type):
     if element_type.startswith("HEXAHEDRON"):
         model.mesh_settings.set_structured_mesh_constraint_volume(1, [2, 11, 2])
 
-    model.mesh_settings.element_order = ELEMENT_DATA[element_type]["order"]
+    model.mesh_settings.element_order = ELEMENT_DATA[element_type]["element_order"]
     stem = Stem(model, input_folder)
     stem.write_all_input_files()
 

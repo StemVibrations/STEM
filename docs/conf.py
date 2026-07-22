@@ -17,7 +17,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 import stem
 
 project = 'STEM'
-copyright = '2023-2025, STEM team'
+copyright = '2023-2026, STEM team'
 author = 'STEM team'
 version = stem.__version__
 

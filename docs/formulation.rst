@@ -147,7 +147,7 @@ Constitutive models
 ===================
 STEM supports linear elastic material models.
 Non-linear material models can be implemented by the user and integrated into STEM through the
-UMAT interface (see :doc:`API_definition`).
+UMAT API definition (see :ref:`umat`).
 
 .. _linear_elastic_material:
 
@@ -196,12 +196,35 @@ the Poisson ratio of the soil layer should be set to 0.495. This means that the 
 i.e. cannot experience volumetric deformation and this accurately mimics the saturated behaviour of soil, subjected
 to dynamic loading, in the short term (before pore water pressure dissipation occurs).
 
+.. _interface_formulation:
+
+Interfaces
+==========
+STEM supports the definition of interfaces between different soil or structural materials.
+An interface is represented as a zero-thickness layer whose mechanical response is governed by a
+constitutive law. The constitutive behaviour can be either linear elastic or non-linear.
+User-defined non-linear interface models can be implemented through the UMAT API definition (see :ref:`umat`).
+For all interface constitutive laws, only the normal and tangential stiffness components are considered.
+This means that the interface element uses the :math:`\sigma_{zz}`, :math:`\sigma_{yz}` and :math:`\sigma_{xz}` from the stress tensor.
+
+Interfaces can only be defined between lines, surfaces or volumes. Thus it cannot be defined between points.
+
+The geometry is defined by two lines or planes, one on each side of the interface. The two sides of the interface
+connect to other model parts. Most calculations are performed on the 'mid-geometry', which is defined by the midpoints
+of the two lines/planes. The midpoints are calculated for each node pair by taking the average position. The mid-geometries
+are depicted as the grey lines in the figures below. This means, that if a certain property is queried at a certain position on the interface,
+the call is forwarded to the underlying mid-geometry.
+
+.. figure:: _static/LinearInterfaceGeometries.png
+  :alt: Interface geometries
+
+
 .. _uvec_formulation:
 
 Train-track model
 =================
 The train and the train-track interaction model can be modelled by a user-defined vehicle model (UVEC)
-as described in :doc:`API_definition`.
+as described in :ref:`uvec`.
 STEM provides a default train and train-track interaction model.
 
 
@@ -224,6 +247,11 @@ The rail is modelled as an Euler-Bernoulli beam element.
 The railpad is modelled as a spring-damper element, which provides the stiffness and damping of the railpad.
 The sleeper can either be modelled as a concentrated mass, or a volume element, depending on the level of
 detail required by the user.
+
+The parameters of the train and the train-track interaction model can be selected by the user from
+a range of predefined train types, or they can be defined by the user through the UVEC API definition.
+Please refer to :ref:`UVEC_load` for more details on how to define the train and the train-track interaction model in STEM.
+
 
 Interaction model
 -----------------

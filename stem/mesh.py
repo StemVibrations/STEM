@@ -366,3 +366,15 @@ class Mesh:
                 node_to_elements[node_id].append(element_id)
 
         return node_to_elements
+
+    def copy_elements(self) -> Dict[int, Element]:
+        """
+        Creates a copy of the elements in the mesh. This is more efficient than using python deepcopy
+
+        Returns:
+            - Dict[int, Element]: dictionary containing the copied elements.
+        """
+        return {
+            element_id: Element(element.id, element.element_type, element.node_ids.copy())
+            for element_id, element in self.elements.items()
+        }

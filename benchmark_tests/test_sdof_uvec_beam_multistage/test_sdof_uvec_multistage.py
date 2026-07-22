@@ -69,13 +69,13 @@ def test_stem():
         "contact_coefficient": 9.1e-7,
         "contact_power": 1,
         "gravity_axis": 1,
+        "wheel_configuration": [0.0],
         "file_name": r"calculated_results.txt"
     }
 
     uvec_load = UvecLoad(direction_signs=[1, 1, 0],
                          velocity=0,
                          origin=[12.5, 0, 0],
-                         wheel_configuration=[0.0],
                          uvec_file=r"uvec_ten_dof_vehicle_2D/uvec.py",
                          uvec_function_name="uvec_static",
                          uvec_parameters=uvec_parameters)
@@ -128,7 +128,7 @@ def test_stem():
                                      is_stiffness_matrix_constant=False,
                                      are_mass_and_damping_constant=False,
                                      convergence_criteria=convergence_criterion,
-                                     strategy_type=NewtonRaphsonStrategy(),
+                                     strategy_type=LinearNewtonRaphsonStrategy(),
                                      rayleigh_k=0.000,
                                      rayleigh_m=0.00)
 

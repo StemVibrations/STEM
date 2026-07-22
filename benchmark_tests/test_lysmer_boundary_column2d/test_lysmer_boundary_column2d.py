@@ -128,7 +128,7 @@ def test_stem(element_type):
     if element_type.startswith("QUADRANGLE"):
         model.mesh_settings.set_structured_mesh_constraint_surface(1, [2, 11, 1])
 
-    model.mesh_settings.element_order = ELEMENT_DATA[element_type]["order"]
+    model.mesh_settings.element_order = ELEMENT_DATA[element_type]["element_order"]
     stem = Stem(model, input_folder)
     stem.write_all_input_files()
 

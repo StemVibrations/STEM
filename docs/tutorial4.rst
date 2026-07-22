@@ -24,7 +24,7 @@ First the necessary packages are imported and the input folder is defined.
     from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw
     from stem.structural_material import ElasticSpringDamper, NodalConcentrated
     from stem.default_materials import DefaultMaterial
-    from stem.load import MovingLoad, UvecLoad
+    from stem.load import MovingLoad, UvecLoad, TrainType
     from stem.boundary import DisplacementConstraint, AbsorbingBoundary
     from stem.additional_processes import ParameterFieldParameters
     from stem.field_generator import RandomFieldGenerator
@@ -252,7 +252,7 @@ is used for reproducibility of the random process.
 In case that irregularities are not required, the `irr_parameters` key must be omitted.
 More information about the irregularity parameters can be found in :ref:`irregularities_track`.
 
-The static initialisation of the train is done by setting the `static_initialisation` parameter to True in the
+The static initialisation of the train is done by setting the `static_vehicle_calculation` parameter to True in the
 `uvec_parameters` dictionary, and the train velocity is set to zero, so that the train does not move
 during the static initialisation stage.
 
@@ -263,7 +263,7 @@ It should be noted that the `uvec_load` is added to a `line model part`, and not
     wheel_configuration = [0.0, 2.5, 19.9, 22.4] # distances of the wheels from the origin point [m]
     velocity = 0  # velocity of the UVEC [m/s]
     # define uvec parameters
-    uvec_parameters = {"n_carts": 1, # number of carts [-]
+    uvec_parameters = {
                        "cart_inertia": 564.4e3, # inertia of the cart [kgm2]
                        "cart_mass": 25e3, # mass of the cart [kg]
                        "cart_stiffness": 2708e3, # stiffness between the cart and bogies [N/m]
@@ -275,23 +275,28 @@ It should be noted that the `uvec_load` is added to a `line model part`, and not
                        "wheel_mass": 1.5e3, # mass of the wheel [kg]
                        "wheel_stiffness": 4800e3, # stiffness between the wheel and the bogie [N/m]
                        "wheel_damping": 0.25e3, # damping coefficient between the wheel and the bogie [Ns/m]
+                       "cart_length": 22.4, # length of the cart [m]
                        "gravity_axis": 1, # axis on which gravity works [x =0, y = 1, z = 2]
                        "contact_coefficient": 9.1e-7, # Hertzian contact coefficient between the wheel and the rail [N/m]
                        "contact_power": 1.5, # Hertzian contact power between the wheel and the rail [-]
-                       "static_initialisation": True, # True if the analysis of the UVEC is static
                        "wheel_configuration": wheel_configuration, # initial position of the wheels [m]
-                       "velocity": velocity, # velocity of the UVEC [m/s]
-                       "irr_parameters": {
-                                "Av": 2.095e-05,
-                                "seed": 14
-                                },
                        }
 
+    irr_parameters = {"Av": 2.095e-05, "seed": 14}
     # define the UVEC load
-    uvec_load = UvecLoad(direction_signs=[1, 1, 1], velocity=velocity, origin=[0.75, 3+rail_pad_thickness, 5],
-                         wheel_configuration=wheel_configuration,
-                         uvec_model=uvec,
-                         uvec_parameters=uvec_parameters)
+    uvec_load = UvecLoad(
+        direction_signs=[1, 1, 1],
+        origin=[0.75, 3 + rail_pad_thickness, 0],
+        velocity=velocity,
+        uvec_model=uvec,
+        nb_carts=1,
+        offset=0,
+        train_type=TrainType.CUSTOM,
+        uvec_parameters=uvec_parameters,
+        static_vehicle_calculation=True,
+        irregularities=irr_parameters,
+        rail_joint=None,
+    )
 
     # add the load on the tracks
     model.add_load_on_line_model_part("rail_track_1", uvec_load, "train_load")
@@ -352,7 +357,7 @@ In this tutorial, the model in defined in two stages:
 
 The first stage is used to statically initialise the train load on the track.
 This means that the train is placed on the track and the static response of the system is calculated.
-This is done by setting the `static_initialisation` parameter to "True" in the `uvec_parameters` dictionary (see above),
+This is done by setting the `static_vehicle_calculation` parameter to "True" in the `uvec_parameters` dictionary (see above),
 and the solution type is set to `QUASI_STATIC`.
 
 The start time is set to 0.0 s and the end time is set to 0.5 s with a time step size of 0.1 s.
@@ -478,7 +483,7 @@ The calculation is run by calling ``stem.run_calculation()``.
     stage2.project_parameters.settings.rayleigh_m = 0.248
     stage2.get_model_part_by_name("train_load").parameters.velocity = velocity
     stage2.get_model_part_by_name("train_load").parameters.uvec_parameters["velocity"] = velocity
-    stage2.get_model_part_by_name("train_load").parameters.uvec_parameters["static_initialisation"] = False
+    stage2.get_model_part_by_name("train_load").parameters.uvec_parameters["static_vehicle_calculation"] = False
 
     stem.add_calculation_stage(stage2)
     stem.write_all_input_files()

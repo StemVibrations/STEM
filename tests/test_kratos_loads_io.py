@@ -41,12 +41,11 @@ class TestKratosLoadsIO:
             offset=3.0,
         )
 
-        uvec_parameters = {"load_wheel_1": -10.0, "load_wheel_2": -20.0}
+        uvec_parameters = {"load_wheel_1": -10.0, "load_wheel_2": -20.0, "wheel_configuration": [0.0, 2.0]}
 
         uvec_load = UvecLoad(direction_signs=[1, 1, 0],
                              velocity=5,
                              origin=[0.0, 1.0, 0.0],
-                             wheel_configuration=[0.0, 2.0],
                              uvec_file=r"sample_uvec.py",
                              uvec_function_name="uvec_test",
                              uvec_parameters=uvec_parameters)

@@ -4,7 +4,7 @@ from shutil import rmtree, copytree
 
 from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedLaw
-from stem.load import UvecLoad
+from stem.load import UvecLoad, TrainType
 from stem.boundary import DisplacementConstraint
 from stem.solver import (AnalysisType, SolutionType, TimeIntegration, DisplacementConvergenceCriteria,
                          StressInitialisationType, SolverSettings, Problem, Amgcl)
@@ -12,7 +12,7 @@ from stem.output import NodalOutput, VtkOutputParameters, Output
 from stem.stem import Stem
 import UVEC.uvec_ten_dof_vehicle_2D as uvec
 
-from benchmark_tests.utils import assert_files_equal
+from benchmark_tests.utils import assert_floats_in_directories_almost_equal
 
 
 def test_stem():
@@ -50,7 +50,6 @@ def test_stem():
     load_coordinates = [(0.75, 3.0, 0.0), (0.75, 3.0, 50.0)]
 
     uvec_parameters = {
-        "n_carts": 1,
         "cart_inertia": (1128.8e3) / 2,
         "cart_mass": (50e3) / 2,
         "cart_stiffness": 2708e3,
@@ -62,19 +61,26 @@ def test_stem():
         "wheel_mass": 1.5e3,
         "wheel_stiffness": 4800e3,
         "wheel_damping": 0.25e3,
+        "cart_length": 24,
+        "wheel_configuration": [0.0, 2.5, 19.9, 22.4],
         "gravity_axis": 1,
         "contact_coefficient": 9.1e-5,
         "contact_power": 1.5,
-        "static_initialisation": False,
     }
 
+    # define the UVEC load
     uvec_load = UvecLoad(
         direction_signs=[1, 1, 1],
-        velocity=1000,
         origin=[0.75, 3, 5],
-        wheel_configuration=[0.0, 2.5, 19.9, 22.4],
-        uvec_parameters=uvec_parameters,
         uvec_model=uvec,
+        nb_carts=1,
+        velocity=1000,
+        offset=0,
+        train_type=TrainType.CUSTOM,
+        uvec_parameters=uvec_parameters,
+        static_vehicle_calculation=False,
+        irregularities=None,
+        rail_joint=None,
     )
 
     model.add_load_by_coordinates(load_coordinates, uvec_load, "train_load")
@@ -103,16 +109,16 @@ def test_stem():
     solution_type = SolutionType.DYNAMIC
     # Set up start and end time of calculation, time step and etc
     time_integration = TimeIntegration(start_time=0.0,
-                                       end_time=0.00999,
+                                       end_time=0.01,
                                        delta_time=0.00005,
                                        reduction_factor=1.0,
                                        increase_factor=1.0,
                                        max_delta_time_factor=1000)
-    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-3,
-                                                            displacement_absolute_tolerance=1.0e-9)
+    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-6,
+                                                            displacement_absolute_tolerance=1.0e-12)
     stress_initialisation_type = StressInitialisationType.NONE
 
-    linear_solver = Amgcl(krylov_type="gmres", tolerance=1e-6)
+    linear_solver = Amgcl(krylov_type="gmres", tolerance=1e-12)
     solver_settings = SolverSettings(analysis_type=analysis_type,
                                      solution_type=solution_type,
                                      stress_initialisation_type=stress_initialisation_type,
@@ -165,7 +171,7 @@ def test_stem():
         raise Exception("Unknown platform")
 
     # test output
-    assert assert_files_equal(expected_output_dir,
-                              os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
+    assert_floats_in_directories_almost_equal(
+        expected_output_dir, os.path.join(input_folder, "output/output_vtk_porous_computational_model_part"))
 
     rmtree(input_folder)

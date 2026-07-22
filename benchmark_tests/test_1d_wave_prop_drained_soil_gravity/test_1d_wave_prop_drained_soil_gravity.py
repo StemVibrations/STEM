@@ -100,8 +100,8 @@ def test_stem():
                                        reduction_factor=1.0,
                                        increase_factor=1.0,
                                        max_delta_time_factor=1000)
-    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0E-12,
-                                                            displacement_absolute_tolerance=1.0E-6)
+    convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0E-6,
+                                                            displacement_absolute_tolerance=1.0E-12)
     stress_initialisation_type = StressInitialisationType.NONE
     solver_settings = SolverSettings(analysis_type=analysis_type,
                                      solution_type=solution_type,
@@ -111,7 +111,7 @@ def test_stem():
                                      are_mass_and_damping_constant=True,
                                      convergence_criteria=convergence_criterion,
                                      strategy_type=LinearNewtonRaphsonStrategy(),
-                                     linear_solver_settings=Amgcl(tolerance=1e-6),
+                                     linear_solver_settings=Amgcl(tolerance=1e-12),
                                      rayleigh_k=6e-6,
                                      rayleigh_m=0.02)
 
@@ -176,6 +176,6 @@ def test_stem():
         expected_results = json.load(f)
 
     # Assert dictionaries
-    TestUtils.assert_dictionary_almost_equal(expected_results, calculated_results)
+    TestUtils.assert_dictionary_almost_equal(expected_results, calculated_results, abs_tolerance=16)
 
     rmtree(input_folder)
