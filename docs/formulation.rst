@@ -273,8 +273,7 @@ The indentation :math:`\delta_j` accounts for the relative wheel-rail displaceme
 
 where :math:`u_{\text{w},j}` is the displacement of wheel :math:`j`, :math:`u_{\text{r},j}` is the rail displacement
 at the contact location and :math:`r_j` is the rail irregularity at the contact point.
-The rail irregularity consists on the superposition of the stochastic irregularity profile :math:`r_w`
-and the dipped joint irregularity :math:`r_d`.
+The total rail irregularity is represented as the sum of two components: the stochastic irregularity profile, :math:`r_w`, and the dipped joint irregularity, :math:`r_d`.
 
 .. _irr_formulation:
 
