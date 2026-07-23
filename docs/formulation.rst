@@ -127,7 +127,7 @@ STEM support different types of boundary conditions, including:
 
 - Dirichlet boundary conditions (prescribed displacement or rotation)
 - Neumann boundary conditions (force or traction boundary conditions)
-- Absorbing boundaries :cite:`Lysmer_Kuhlemeyer_1969`
+- Absorbing boundary conditions :cite:`Lysmer_Kuhlemeyer_1969`
 
 Loads
 -----
@@ -263,20 +263,23 @@ for metals :cite:`Timoshenko_1951`:
 .. math::
     F_{j}=k_\text{c} \ \delta_j^{3/2},
 
-where :math:`k_\text{c}` is the Hertzian stiffness coefficient and :math:`\delta_j` is the indentation for wheel
-:math:`j`. The indentation :math:`\delta_j` is calculated as:
+where :math:`k_\text{c}` is the Hertzian stiffness coefficient and :math:`\delta_j` is the vertical indentation between
+wheel :math:`j` and the rail.
+If the indentation :math:`\delta_j` is negative, the wheel is not in contact with the rail and the contact force is set to zero.
+The indentation :math:`\delta_j` accounts for the relative wheel-rail displacement and the rail profile irregularity at the contact point:
 
 .. math::
-    \delta_j = u_{\text{w},j}-u_{\text{r},j} - z_j
+    \delta_j = u_{\text{w},j}-u_{\text{r},j} - r_j
 
-where :math:`u_{\text{w},j}` is the displacement of wheel :math:`j`, :math:`u_{\text{r},j}` is the displacement
-of the rail at the position of wheel :math:`j` and :math:`z_j` is the irregularity of the rail at the position of wheel :math:`j`.
+where :math:`u_{\text{w},j}` is the displacement of wheel :math:`j`, :math:`u_{\text{r},j}` is the rail displacement
+at the contact location and :math:`r_j` is the rail irregularity at the contact point.
+The total rail irregularity is represented as the sum of two components: the stochastic irregularity profile, :math:`r_w`, and the dipped joint irregularity, :math:`r_d`.
 
 .. _irr_formulation:
 
 Irregularities model
 --------------------
-The vertical irregularities presented in the rail are expressed following the methodology presented
+The vertical rail irregularities (:math:`r_w`) presented in the rail are expressed following the methodology presented
 in :cite:`Zhang_2001`. The power spectral density (PSD) of the rail irregularities :math:`S(\Omega)`
 is used to produce the samples of the irregularities.
 
@@ -290,13 +293,12 @@ is the critical wavenumber. These two parameters define the quality of the railw
 The sample of rail irregularities can be produced by inverse Fourier transform shown as follows:
 
 .. math::
-    r(x) = \sum^{N}_{n=1} \sqrt{4 S(\omega_n) \Delta \omega} \cos(\omega_n x - \theta_n)
+    r_w(x) = \sum^{N}_{n=1} \sqrt{4 S(\Omega_n) \Delta \Omega} \cos(\Omega_n x - \theta_n)
 
 
-where :math:`\omega_n`, is a circular frequency within the interval in which the PSD function is defined,
-:math:`\theta_n`, a random phase angle uniformly distributed from 0 to :math:`2\pi`, and
-:math:`\Delta \omega` is defined as the total number of frequency increments :math:`N` in the range of the
-circular frequency.
+where :math:`\Omega_n`, is the discrete wavenumber,
+:math:`\theta_n`, is a random phase angle uniformly distributed from 0 to :math:`2\pi`, and
+:math:`\Delta \Omega` is the wavenumber increment.
 
 The parameter :math:`A_v` can be estimated based on the track quality :cite:`Lei_Noda_2002`.
 
@@ -333,10 +335,10 @@ wheel-rail impact loads at insulated joints.
 
 The dip is introduced as a prescribed vertical rail surface irregularity with a smooth cosine shape,
 defined by its maximum depth :math:`d` and total length :math:`l`.
-The vertical irregularity profile :math:`r(x)` along the rail longitudinal coordinate :math:`x` is given by:
+The vertical irregularity profile :math:`r_d(x)` along the rail longitudinal coordinate :math:`x` is given by:
 
 .. math::
-  r(x) =
+  r_d(x) =
     \begin{cases}
     d \left(1 - \cos\left(\dfrac{\pi x}{l}\right)\right), & 0 < x \le \dfrac{l}{2}, \\
     d \left(1 + \cos\left(\dfrac{\pi x}{l}\right)\right), & \dfrac{l}{2} < x < l,
