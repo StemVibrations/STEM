@@ -1,6 +1,18 @@
 # Change Log
 All notable changes to STEM are documented in this file.
 
+##  [Version 1.4] - 2026-07-23
+
+### New Features
+- Interface elements can be added in 2D and 3D.
+- Rail joint can be added to the track.
+- Default train parameters can be chosen.
+
+### Improvements
+- Improved benchmark report.
+- Improved documentation.
+
+
 ##  [Version 1.3] - 2026-03-05
 
 ### New Features
@@ -65,5 +77,3 @@ All notable changes to STEM are documented in this file.
 - UVEC (10 dof and 2 dof)
 - Random Fields to model spatial variability
 - Train track interaction model
-
-
