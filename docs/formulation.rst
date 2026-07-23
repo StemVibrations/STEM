@@ -127,7 +127,7 @@ STEM support different types of boundary conditions, including:
 
 - Dirichlet boundary conditions (prescribed displacement or rotation)
 - Neumann boundary conditions (force or traction boundary conditions)
-- Absorbing boundaries :cite:`Lysmer_Kuhlemeyer_1969`
+- Absorbing boundaries conditions :cite:`Lysmer_Kuhlemeyer_1969`
 
 Loads
 -----
