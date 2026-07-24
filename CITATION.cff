@@ -1,0 +1,54 @@
+cff-version: 1.2.0
+message: "If you use STEM, please cite it as below."
+authors:
+  - family-names: "Noordam"
+    given-names: "A."
+    orcid: "https://orcid.org/0000-0002-2559-9465"
+  - family-names: "Zuada Coelho"
+    given-names: "B."
+    orcid: "https://orcid.org/0000-0002-9896-3248"
+  - family-names: "Smyrniou"
+    given-names: "E."
+    orcid: "https://orcid.org/0009-0003-3498-7069"
+  - family-names: "Fathian"
+    given-names: "M."
+    orcid: "https://orcid.org/0009-0009-4905-0731"
+  - family-names: "Nuttall"
+    given-names: "J. D."
+    orcid: "https://orcid.org/0000-0003-1982-7668"
+  - family-names: "Moretti"
+    given-names: "D."
+    orcid: "https://orcid.org/0009-0005-4042-7062"
+title: "STEM"
+version: 1.4.0
+date-released: 2026-07-23
+url: "https://github.com/StemVibrations/STEM"
+
+preferred-citation:
+  type: article
+  title: "STEM: A finite element framework for railway induced vibrations"
+  authors:
+    - family-names: "Noordam"
+      given-names: "A."
+      orcid: "https://orcid.org/0000-0002-2559-9465"
+    - family-names: "Zuada Coelho"
+      given-names: "B."
+      orcid: "https://orcid.org/0000-0002-9896-3248"
+    - family-names: "Smyrniou"
+      given-names: "E."
+      orcid: "https://orcid.org/0009-0003-3498-7069"
+    - family-names: "Fathian"
+      given-names: "M."
+      orcid: "https://orcid.org/0009-0009-4905-0731"
+    - family-names: "Nuttall"
+      given-names: "J. D."
+      orcid: "https://orcid.org/0000-0003-1982-7668"
+    - family-names: "Moretti"
+      given-names: "D."
+      orcid: "https://orcid.org/0009-0005-4042-7062"
+  doi: "10.1016/j.softx.2026.102892"
+  journal: "SoftwareX"
+  year: 2026
+  volume: 35
+  start: 102892
+  url: "https://doi.org/10.1016/j.softx.2026.102892"
