@@ -15,6 +15,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/STEM-Vibrations.svg)](https://pypi.org/project/STEM-Vibrations/)
 [![Python versions](https://img.shields.io/pypi/pyversions/STEM-Vibrations.svg)](https://pypi.org/project/STEM-Vibrations/)
 [![License](https://img.shields.io/pypi/l/STEM-Vibrations.svg)](https://pypi.org/project/STEM-Vibrations/)
+[![DOI](https://img.shields.io/badge/DOI-10.1016%2Fj.softx.2026.102892-blue)](https://doi.org/10.1016/j.softx.2026.102892)
 
 STEM is an open-source finite element model for computing railway-induced vibrations and evaluating the effectiveness of mitigation measures.
 It simulates the train–track interaction and the propagation of vibrations through the subsurface, taking into account track irregularities, the type of train and train speed, and the spatial variability of the track and soil properties.
