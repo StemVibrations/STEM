@@ -111,7 +111,7 @@ class KratosLoadsIO:
             "reference_coordinate": parameters.reference_coordinate,
             "specific_weight": -GlobalSettings.gravity_value * FluidProperties.DENSITY_FLUID,
             "table": [0, 0],
-            "is_fixed": False
+            "is_fixed": True
         }
 
         # initialize load dictionary
@@ -143,6 +143,9 @@ class KratosLoadsIO:
         # add load parameters to dictionary based on load type.
         if isinstance(parameters, PointLoad):
             return IOUtils.create_vector_constraint_table_process_dict(self.domain, part_name, parameters, "POINT_LOAD",
+                                                                       current_time)
+        elif isinstance(parameters, PointMoment):
+            return IOUtils.create_vector_constraint_table_process_dict(self.domain, part_name, parameters, "POINT_MOMENT",
                                                                        current_time)
         elif isinstance(parameters, MovingLoad):
             return self.__create_moving_load_dict(part_name, parameters)

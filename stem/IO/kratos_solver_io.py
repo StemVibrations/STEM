@@ -276,8 +276,10 @@ class KratosSolverIO:
             "iteration_method": "broyden",
             "broyden_settings": {
                 "absolute_global_error": 1e-12,
-                "relative_global_error": 0.001,
-                "relative_local_error": 0.1
+                "relative_global_error": 0.01,
+                "relative_local_error": 0.1,
+                "max_rank": 5,
+                "max_reset_interval": 50
             },
             "prebuild_dynamics": solver_settings.are_mass_and_damping_constant,
             # "initialize_acceleration": solver_settings._inititalize_acceleration,

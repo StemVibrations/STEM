@@ -286,6 +286,29 @@ class PointLoad(LoadParametersABC):
         # Point load does not have a name
         return element_name
 
+@dataclass
+class PointMoment(LoadParametersABC):
+    """
+    Class containing the load parameters for a point moment
+
+    Inheritance:
+        - :class:`LoadParametersABC`
+    """
+    active: List[bool]
+    value: List[Union[float, Table]]
+
+    @staticmethod
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
+        """
+        Static method to get the element name for a point moment. Point moment does not have a name.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model (2 or 3)
+            """
+
+        return "PointMomentCondition3D1N"
+
+
 
 @dataclass
 class LineLoad(LoadParametersABC):
@@ -650,7 +673,8 @@ class WaterLineLoad(LoadParametersABC):
             if n_dim_model == 2 and n_nodes_element > 2:
                 # 2d quadratic line load is set on outer nodes, but displacement is calculated on all nodes for
                 # stability reasons
-                element_name = f"LineNormalLoadDiffOrderCondition{n_dim_model}D{n_nodes_element}N"
+                # element_name = f"LineNormalLoadDiffOrderCondition{n_dim_model}D{n_nodes_element}N"
+                element_name = f"UPwNormalFaceLoadCondition{n_dim_model}D{n_nodes_element}N"
                 # element_name = f"LineLoadCondition{n_dim_model}D{n_nodes_element}N"
             else:
                 # element_name = f"LineLoadCondition{n_dim_model}D{n_nodes_element}N"
