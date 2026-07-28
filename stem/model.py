@@ -1840,7 +1840,7 @@ class Model:
             # Mapping of old node IDs to new node IDs via a dictionary
             # Reuse existing remapped node IDs when available; otherwise assign new IDs incrementally.
             max_node_id: int = max(self.gmsh_io.mesh_data["nodes"].keys())
-            next_value = max(all_new_map.values(), default=max_node_id + 1)
+            next_value = max(all_new_map.values(), default=max_node_id)
 
             old_to_new_node_id_map = {}
             for node_id in common_node_ids:
