@@ -1794,7 +1794,7 @@ class Model:
         Creates interface elements between primary and secondary parts of the model. Primary concerns the
         original nodes that exist, and secondary the newly created nodes due to the contact interface.
         """
-
+        all_new_map: Dict[int, int] = {}
         # Process each defined interface
         for name, interface_data in self.interfaces.items():
             # Extract interface components
@@ -1807,9 +1807,25 @@ class Model:
             node_ids_part_2 = {node_id for part in interface_part_2 for node_id in part.mesh.nodes.keys()}
 
             common_node_ids = node_ids_part_1 & node_ids_part_2
+
             # Mapping of old node IDs to new node IDs via a dictionary
+            # Reuse existing remapped node IDs when available; otherwise assign new IDs incrementally.
             max_node_id: int = max(self.gmsh_io.mesh_data["nodes"].keys())
-            old_to_new_node_id_map = {node_id: max_node_id + idx + 1 for idx, node_id in enumerate(common_node_ids)}
+            next_value = max(all_new_map.values(), default=max_node_id)
+
+            old_to_new_node_id_map = {}
+            for node_id in common_node_ids:
+                if node_id in all_new_map:
+                    old_to_new_node_id_map[node_id] = all_new_map[node_id]
+                else:
+                    next_value += 1
+                    old_to_new_node_id_map[node_id] = next_value
+
+            all_new_map.update(old_to_new_node_id_map)
+
+            old_to_new_node_id_map = {k: all_new_map.get(k, v) for k, v in old_to_new_node_id_map.items()}
+            all_new_map.update(old_to_new_node_id_map)
+
             # Update changing parts with new node IDs
             self.__update_secondary_parts(interface_part_2, common_node_ids, old_to_new_node_id_map,
                                           connected_process_definition)
@@ -2176,6 +2192,10 @@ class Model:
 
             if len(model_body_part.mesh.elements) > 0:
                 element_type = next(iter(model_body_part.mesh.elements.values())).element_type
+                n_shared_nodes = ELEMENT_DATA[element_type]["n_nodes_facets"]
+
+                if "INTERFACE" in element_type:
+                    continue  # skip body model parts with interface elements,
                 n_shared_nodes = ELEMENT_DATA[element_type]["n_nodes_facets"]
 
                 # overlapping when n shared nodes is as expected for the element type
