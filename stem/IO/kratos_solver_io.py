@@ -273,14 +273,9 @@ class KratosSolverIO:
             "block_builder": True,
             # "rebuild_level": (0 if solver_settings.is_stiffness_matrix_constant else 2),
             "rebuild_level": 0,
-            "iteration_method": "broyden",
-            "broyden_settings": {
-                "absolute_global_error": 1e-12,
-                "relative_global_error": 0.01,
-                "relative_local_error": 0.1,
-                "max_rank": 5,
-                "max_reset_interval": 50
-            },
+            "quasi_newton_type": solver_settings.quasi_newton_type,
+            "quasi_newton_restart_interval": solver_settings.quasi_newton_restart_interval,
+            "quasi_newton_max_rank": solver_settings.quasi_newton_max_rank,
             "prebuild_dynamics": solver_settings.are_mass_and_damping_constant,
             # "initialize_acceleration": solver_settings._inititalize_acceleration,
             "solution_type": self.__set_solution_type(solver_settings),

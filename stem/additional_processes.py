@@ -142,10 +142,40 @@ class ApplyFinalStressesOfPreviousStageToInitialState(AdditionalProcessesParamet
     Inheritance:
         - :class:`AdditionalProcessesParametersABC`
     Attributes:
-        - model_part_name (str): the name of the model part to which the final stresses of the previous stage will be applied
+        - model_part_name_list (str): the name of the model part to which the final stresses of the previous stage will be applied
     """
 
     model_part_name_list: List[str]
+
+@dataclass
+class FindNeighboursOfInterfacesProcess(AdditionalProcessesParametersABC):
+    """
+    Class containing the parameters for finding the neighbours of interfaces process
+
+    Inheritance:
+        - :class:`AdditionalProcessesParametersABC`
+
+    Attributes:
+        - model_part_name_list (str): the name of the model part to which the process will be applied
+    """
+
+    model_part_name_list: List[str]
+
+
+@dataclass
+class MasterSlaveConstraint(AdditionalProcessesParametersABC):
+    """
+    Class containing the boundary parameters for master slave constraint
+
+    Inheritance:
+        - :class:`BoundaryParametersABC`
+        """
+
+    master_model_part_name: str
+    slave_model_part_name: str
+    search_radius: float = 1.0e-03
+    reform_constraints_at_each_step: bool = True
+
 
 
 @dataclass

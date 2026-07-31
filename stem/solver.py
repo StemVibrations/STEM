@@ -329,7 +329,7 @@ class NewtonRaphsonStrategy(StrategyTypeABC):
     Inheritance:
         - :class:`StrategyTypeABC`
     """
-    max_iterations: int = 60
+    max_iterations: int = 200
     min_iterations: int = 3
     number_cycles: int = 100
 
@@ -695,6 +695,9 @@ class SolverSettings:
     linear_solver_settings: LinearSolverSettingsABC = field(default_factory=Amgcl)
     rayleigh_m: Optional[float] = None
     rayleigh_k: Optional[float] = None
+    quasi_newton_restart_interval:int = 50
+    quasi_newton_max_rank:int = 10
+    quasi_newton_type: str = "lbfgs"
     echo_level: int = 1
     _inititalize_acceleration: bool = False,
     _read_force = False

@@ -13,7 +13,7 @@ from typing import Sequence, Tuple, get_args, Set, Optional, List, Dict, Any, Un
 from gmsh_utils import gmsh_IO
 
 from stem.additional_processes import (ParameterFieldParameters, HingeParameters, AdditionalProcessPart,
-                                       AdditionalProcessesParametersABC, ExtrapolateIntegrationPointToNodesParameters)
+                                       AdditionalProcessesParametersABC, ExtrapolateIntegrationPointToNodesParameters , MasterSlaveConstraint)
 from stem.field_generator import RandomFieldGenerator
 from stem.globals import GlobalSettings, ELEMENT_DATA, OUT_OF_PLANE_AXIS_2D, VERTICAL_AXIS
 from stem.load import *
@@ -1640,7 +1640,8 @@ class Model:
 
         # Get the geometry from the geo_data for each model part
         for model_part in self.all_model_parts:
-            model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, model_part.name)
+            if  model_part.geometry is not None:
+                model_part.get_geometry_from_geo_data(self.gmsh_io.geo_data, model_part.name)
 
         # get the complete geometry
         self.geometry = Geometry.create_geometry_from_geo_data(self.gmsh_io.geo_data)
@@ -1688,7 +1689,8 @@ class Model:
 
         # add the mesh to each model part
         for model_part in self.all_model_parts:
-            model_part.mesh = Mesh.create_mesh_from_gmsh_group(self.gmsh_io.mesh_data, model_part.name)
+            if model_part.geometry is not None:
+                model_part.mesh = Mesh.create_mesh_from_gmsh_group(self.gmsh_io.mesh_data, model_part.name)
 
         # per process model part, check if the condition elements are applied to a body model part and set the
         # node ordering of the condition elements to match the body elements
@@ -1859,9 +1861,70 @@ class Model:
             self.__update_secondary_parts(interface_part_2, common_node_ids, old_to_new_node_id_map,
                                           connected_process_definition)
             # Create and add interface body model part
-            interface_body_model_part = self.__create_interface_body_model_part(name, material_interface,
+            self.__create_interface_body_model_part(name, material_interface,
                                                                                 old_to_new_node_id_map, node_ids_part_1)
-            self.body_model_parts.append(interface_body_model_part)
+
+
+
+        master_node_ids = list(all_new_map.keys())
+
+        master_model_part = ModelPart("_master")
+        master_model_part.mesh = Mesh(ndim=self.ndim)
+        all_nodes = self.get_all_nodes()
+        master_model_part.mesh.nodes = {
+            node_id: all_nodes[node_id]
+            for node_id in master_node_ids
+        }
+        master_model_part.add_to_global_domain = True
+        self.process_model_parts.append(master_model_part)
+
+        self.gmsh_io.mesh_data["physical_groups"]["_master"] = {
+            "node_ids": master_node_ids,
+            "element_ids": [],
+            "ndim": self.ndim,
+            "element_type": "dummy",
+        }
+
+
+        slave_node_ids = list(all_new_map.values())
+        slave_model_part = ModelPart("_slave")
+        slave_model_part.mesh = Mesh(ndim=self.ndim)
+        slave_model_part.mesh.nodes = {
+            node_id: all_nodes[node_id]
+            for node_id in slave_node_ids
+        }
+        slave_model_part.add_to_global_domain = True
+        self.process_model_parts.append(slave_model_part)
+
+        self.gmsh_io.mesh_data["physical_groups"]["_slave"] = {
+            "node_ids": slave_node_ids,
+            "element_ids": [],
+            "ndim": self.ndim,
+            "element_type": "dummy"
+        }
+
+        master_slave_constraint = AdditionalProcessPart(MasterSlaveConstraint(master_model_part.name, slave_model_part.name))
+        self.additional_process_parts.append(master_slave_constraint)
+
+
+    def remove_model_part_by_name_and_type(self, part_name: str, process_type: AdditionalProcessesParametersABC):
+            """
+            Find the additional process part matching the given part_name
+
+            Args:
+                - part_name (str): the name of the part to retrieve.
+
+
+            """
+
+            for additional_process_part in self.additional_process_parts:
+                if additional_process_part.model_part_name == part_name and isinstance(
+                        additional_process_part.parameters,
+                        process_type):
+                    self.additional_process_parts.remove(additional_process_part)
+
+
+
 
     def __update_secondary_parts(self, interface_parts_2: List[BodyModelPart], common_node_ids: Set[int],
                                  old_to_new_node_id_map: Dict[int, int],
@@ -2120,7 +2183,7 @@ class Model:
             - :class:`stem.model_part.BodyModelPart`: Created interface body model part
         """
         # Create body model part
-        interface_body_model_part = BodyModelPart(name)
+        interface_body_model_part = self.get_model_part_by_name(name)
         interface_body_model_part.material = material
 
         # Create mesh with all relevant nodes
@@ -2217,6 +2280,7 @@ class Model:
         body_part_elements_with_overlap: List[Element] = []
         for model_body_part in self.body_model_parts:
             if model_body_part.mesh is None:
+                continue
                 raise ValueError("Mesh not yet initialised. Please generate the mesh using Model.generate_mesh().")
 
             if len(model_body_part.mesh.elements) > 0:
@@ -2591,6 +2655,7 @@ class Model:
 
             # validation step for body model part
             if body_model_part.mesh is None:
+                continue
                 raise ValueError(f"Mesh of body model part: {body_model_part.name} is not yet initialised.")
 
             # find which nodes within the body model part are connected to which elements
@@ -2783,17 +2848,21 @@ class Model:
         body_geometries_2d = []
         body_geometries_3d = []
 
-        for name in body_model_part_names:
-            physical_group = self.gmsh_io.geo_data["physical_groups"][name]
-            geometry_ids = physical_group["geometry_ids"]
-            ndim = physical_group["ndim"]
+        for body_model_part in self.body_model_parts:
+            if body_model_part.geometry is not None:
+                name = body_model_part.name
 
-            if ndim == 1:
-                body_geometries_1d.extend(geometry_ids)
-            elif ndim == 2:
-                body_geometries_2d.extend(geometry_ids)
-            elif ndim == 3:
-                body_geometries_3d.extend(geometry_ids)
+
+                physical_group = self.gmsh_io.geo_data["physical_groups"][name]
+                geometry_ids = physical_group["geometry_ids"]
+                ndim = physical_group["ndim"]
+
+                if ndim == 1:
+                    body_geometries_1d.extend(geometry_ids)
+                elif ndim == 2:
+                    body_geometries_2d.extend(geometry_ids)
+                elif ndim == 3:
+                    body_geometries_3d.extend(geometry_ids)
 
         # add gravity load as physical group per dimension
         if len(body_geometries_1d) > 0:
@@ -2823,6 +2892,7 @@ class Model:
         node_dict: Dict[int, Node] = {}
         for mp in self.all_model_parts:
             if mp.mesh is None:
+                continue
                 raise ValueError("Geometry has not been meshed yet! Please first run the Model.generate_mesh method.")
             node_dict.update(mp.mesh.nodes)
 
@@ -3160,8 +3230,17 @@ class Model:
             "interface_part_1": interface_part_1,
             "interface_part_2": interface_part_2,
             "material": material,
-            "connected_process_definition": connected_process_definition
+            "connected_process_definition": connected_process_definition,
+            "master_node_ids": [],
+            "slave_node_ids": []
         }
+
+        self.gmsh_io.add_physical_group(interface_name, self.ndim, [])  # add empty physical group for the interface
+
+        self.gmsh_io.geo_data["physical_groups"][interface_name] = {
+        }
+
+        self.body_model_parts.append(BodyModelPart(name=interface_name))
 
     def finalise(self, input_folder: str):
         """

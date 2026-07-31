@@ -186,6 +186,68 @@ class KratosAdditionalProcessesIO:
 
         return [process_dict]
 
+    def __create_find_neighbours_of_interfaces_process_dict(
+            self, part_name: str, parameters: FindNeighboursOfInterfacesProcess) -> List[Dict[str, Any]]:
+        """
+        Creates a dictionary containing the parameters for the find neighbours of interfaces process
+
+        Args:
+            - part_name (str): part name where the find neighbours of interfaces process is applied
+            - parameters (:class:`stem.additional_processes.FindNeighboursOfInterfacesProcessParameters`): \
+                find neighbours of interfaces process parameters object
+
+        Returns:
+            - Dict[str, Any]: dictionary containing the find neighbours of interfaces process parameters
+        """
+
+        names = [f"{self.domain}.{name}" for name in parameters.model_part_name_list]
+
+        process_dict: Dict[str, Any] = {
+            "python_module": "find_neighbours_of_interfaces_process",
+            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+            "process_name": "FindNeighboursOfInterfacesProcess",
+            "Parameters": {},
+        }
+
+        process_dict["Parameters"]["model_part_name_list"] = names
+        process_dict["Parameters"]["model_part_name_for_neighbouring_elements"] = f"{self.domain}.porous_computational_model_part"
+
+        return [process_dict]
+
+
+    def __create_master_slave_constraint_process_dict(self,part_name, parameters):
+        """
+        Creates a dictionary containing the master-slave constraint process parameters
+
+        Args:
+            - part_name (str): part name where the boundary condition is applied
+            - parameters (:class:`stem.boundary.MasterSlaveConstraint`): boundary parameters object
+
+        Returns:
+            - Dict[str, Any]: dictionary containing the boundary parameters
+        """
+
+        # initialize boundary dictionary
+        process_dict: Dict[str, Any] = {
+            "python_module": "assign_master_slave_constraints_to_neighbours_process",
+            "kratos_module": "KratosMultiphysics",
+            "process_name": "AssignMasterSlaveConstraintsToNeighboursUtility",
+            "Parameters": deepcopy(parameters.__dict__),
+        }
+
+        process_dict["Parameters"]["model_part_name"] = f"{self.domain}.porous_computational_model_part"
+        process_dict["Parameters"]["variable_names"] = ["DISPLACEMENT", "WATER_PRESSURE"]
+        # process_dict["Parameters"]["master_model_part_name"] = f"{self.domain}.{process_dict["Parameters"]["master_model_part_name"]}"
+        # process_dict["Parameters"]["slave_model_part_name"] = f"{self.domain}.{process_dict["Parameters"]["slave_model_part_name"]}"
+
+        master_name = f"{self.domain}.{process_dict["Parameters"]["master_model_part_name"]}"
+        slave_name = f"{self.domain}.{process_dict["Parameters"]["slave_model_part_name"]}"
+        process_dict["Parameters"]["master_model_part_name"] = master_name
+        process_dict["Parameters"]["slave_model_part_name"] = slave_name
+        process_dict["Parameters"]["minimum_number_of_neighbouring_nodes"] = 2
+
+        return [process_dict]
+
     def create_additional_processes_dict(
             self, part_name: str, parameters: AdditionalProcessesParametersABC) -> Union[List[Dict[str, Any]], None]:
         """
@@ -217,6 +279,10 @@ class KratosAdditionalProcessesIO:
             return [self.__create_extrapolate_integration_point_to_nodes_dict(part_name, parameters)]
         elif isinstance(parameters, ApplyFinalStressesOfPreviousStageToInitialState):
             return self.__create_apply_final_stresses_of_previous_stage_to_initial_state_dict(part_name, parameters)
+        elif isinstance(parameters, FindNeighboursOfInterfacesProcess):
+            return self.__create_find_neighbours_of_interfaces_process_dict(part_name, parameters)
+        elif isinstance(parameters,MasterSlaveConstraint):
+            return self.__create_master_slave_constraint_process_dict(part_name, parameters)
 
         else:
             raise NotImplementedError

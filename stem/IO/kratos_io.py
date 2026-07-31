@@ -14,7 +14,7 @@ from stem.IO.kratos_solver_io import KratosSolverIO
 from stem.IO.kratos_additional_processes_io import KratosAdditionalProcessesIO
 from stem.structural_material import *
 from stem.boundary import BoundaryParametersABC, AbsorbingBoundary, DisplacementConstraint, RotationConstraint
-from stem.load import LoadParametersABC, LineLoad, MovingLoad, SurfaceLoad, PointLoad, UvecLoad, WaterLineLoad
+from stem.load import LoadParametersABC, LineLoad, MovingLoad, SurfaceLoad, PointLoad, UvecLoad, WaterLineLoad, PointMoment
 from stem.additional_processes import (ParameterFieldParameters, Excavation, AdditionalProcessesParametersABC,
                                        ExtrapolateIntegrationPointToNodesParameters)
 from stem.water_processes import WaterProcessParametersABC
@@ -114,7 +114,7 @@ class KratosIO:
             - bool: whether the process model part writes condition elements
         """
         return isinstance(process_model_part.parameters,
-                          (PointLoad, LineLoad, MovingLoad, UvecLoad, SurfaceLoad, AbsorbingBoundary, WaterLineLoad))
+                          (PointLoad, PointMoment, LineLoad, MovingLoad, UvecLoad, SurfaceLoad, AbsorbingBoundary, WaterLineLoad))
 
     def __initialise_process_model_part_ids(self, model: Model):
         """
@@ -172,7 +172,7 @@ class KratosIO:
 
         tables: List[Table] = []
         if isinstance(process_model_part.parameters,
-                      (PointLoad, LineLoad, SurfaceLoad, DisplacementConstraint, RotationConstraint)):
+                      (PointLoad,PointMoment, LineLoad, SurfaceLoad, DisplacementConstraint, RotationConstraint)):
             for vv in process_model_part.parameters.value:
                 if isinstance(vv, Table):
                     tables.append(vv)
