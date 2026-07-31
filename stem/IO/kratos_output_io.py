@@ -30,7 +30,7 @@ class KratosOutputsIO:
         """
         self.domain = domain
 
-    def __create_gid_output_dict(self, part_name: str, output_dir: Path, output_name: str,
+    def __create_gid_output_dict(self, part_name: str, output_dir: Path, output_name: str, _full_output_dir: Path, _full_output_name: str,
                                  output_parameters: GiDOutputParameters) -> Dict[str, Any]:
         """
         Creates a dictionary containing the output parameters to produce outputs in GiD
@@ -47,10 +47,10 @@ class KratosOutputsIO:
             - Dict[str, Any]: dictionary containing the output parameters in Kratos format
         """
 
-        if output_name is None or output_name == "":
-            output_name = f"{part_name}"
+        if _full_output_name is None or _full_output_name == "":
+            _full_output_name = f"{part_name}"
 
-        output_path = output_dir.joinpath(output_name)
+        output_path = _full_output_dir.joinpath(_full_output_name)
         output_path_gid = Path(output_path).as_posix()
 
         if output_parameters.file_format == "binary":
@@ -108,7 +108,7 @@ class KratosOutputsIO:
 
         return output_dict
 
-    def __create_vtk_output_dict(self, part_name: str, output_dir: Path, output_name: str,
+    def __create_vtk_output_dict(self, part_name: str, output_dir: Path, output_name: str, _full_output_dir: Path, _full_output_name: str,
                                  output_parameters: VtkOutputParameters) -> Dict[str, Any]:
         """
         Creates a dictionary containing the output parameters to produce outputs in vtk
@@ -125,7 +125,7 @@ class KratosOutputsIO:
             - Dict[str, Any]: dictionary containing the output parameters in Kratos format
         """
 
-        output_path_vtk = Path(output_dir).as_posix()
+        output_path_vtk = Path(_full_output_dir).as_posix()
         model_part_name = f"{self.domain}"
         if part_name is not None:
             model_part_name += f".{part_name}"
@@ -160,7 +160,7 @@ class KratosOutputsIO:
 
         return output_dict
 
-    def __create_json_output_dict(self, part_name, output_dir: Path, output_name: str,
+    def __create_json_output_dict(self, part_name, output_dir: Path, output_name: str,_full_output_dir: Path, _full_output_name: str,
                                   output_parameters: JsonOutputParameters) -> Dict[str, Any]:
         """
         Creates a dictionary containing the output parameters to produce outputs in
@@ -178,10 +178,10 @@ class KratosOutputsIO:
             - Dict[str, Any]: dictionary containing the output parameters in Kratos format
         """
 
-        if output_name is None or output_name == "":
-            output_name = f"{part_name}" + ".json"
+        if _full_output_name is None or _full_output_name == "":
+            _full_output_name = f"{part_name}" + ".json"
 
-        output_path = output_dir.joinpath(output_name)
+        output_path = _full_output_dir.joinpath(_full_output_name)
         if output_path.suffix == "":
             output_path = output_path.with_suffix(".json")
 
@@ -237,11 +237,11 @@ class KratosOutputsIO:
         """
         # add output keys and parameters to dictionary based on output process type.
         if isinstance(output.output_parameters, GiDOutputParameters):
-            return "gid_output", self.__create_gid_output_dict(**output.__dict__)
+            return "gid_output", self.__create_gid_output_dict(output.part_name, output.output_dir, output.output_name, output._full_output_dir, output._full_output_name, output.output_parameters)
         elif isinstance(output.output_parameters, VtkOutputParameters):
-            return "vtk_output", self.__create_vtk_output_dict(**output.__dict__)
+            return "vtk_output", self.__create_vtk_output_dict(output.part_name, output.output_dir, output.output_name, output._full_output_dir, output._full_output_name, output.output_parameters)
         elif isinstance(output.output_parameters, JsonOutputParameters):
-            return "json_output", self.__create_json_output_dict(**output.__dict__)
+            return "json_output", self.__create_json_output_dict(output.part_name, output.output_dir, output.output_name, output._full_output_dir, output._full_output_name, output.output_parameters)
         else:
             raise NotImplementedError
 

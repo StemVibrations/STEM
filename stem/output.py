@@ -34,6 +34,9 @@ class NodalOutput(Enum):
     # linearly extrapolated values
     # todo check which other variables can be extrapolated
     CAUCHY_STRESS_VECTOR = auto()
+    BENDING_MOMENT = auto()
+    SHEAR_FORCE = auto()
+    AXIAL_FORCE = auto()
 
 
 class GaussPointOutput(Enum):
@@ -387,5 +390,51 @@ class Output:
 
         self.output_parameters = output_parameters
         self.part_name = part_name
-        self.output_dir = new_output_dir
-        self.output_name = output_name
+        self.__output_dir = new_output_dir
+        self.__output_name = output_name
+        self._full_output_dir = self.__output_dir
+        self._full_output_name = self.__output_name
+
+    @property
+    def output_dir(self) -> Path:
+        """
+        Returns the output directory as a Path object.
+
+        Returns:
+            """
+        return self.__output_dir
+
+    @output_dir.setter
+    def output_dir(self, new_output_dir: Union[str, Path]):
+        """
+        Sets the output directory to a new value.
+
+        Args:
+            - new_output_dir (Union[str, Path]): The new output directory as a string or Path object.
+        """
+        self.__output_dir = Path(new_output_dir)
+        self._full_output_dir = self.__output_dir
+
+    @property
+    def output_name(self) -> Optional[str]:
+        """
+        Returns the output name.
+
+        Returns:
+            - Optional[str]: The output name.
+        """
+        return self.__output_name
+
+    @output_name.setter
+    def output_name(self, new_output_name: Optional[str]):
+        """
+        Sets the output name to a new value.
+
+        Args:
+            - new_output_name (Optional[str]): The new output name.
+        """
+        self.__output_name = new_output_name
+        self._full_output_name = self.__output_name
+
+
+

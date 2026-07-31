@@ -152,7 +152,12 @@ class KratosAdditionalProcessesIO:
             "Parameters": {},
         }
 
-        process_dict["Parameters"]["model_part_name"] = part_name
+
+        if parameters.model_part_name_list is not None:
+            names = [f"{self.domain}.{name}" for name in parameters.model_part_name_list]
+            process_dict["Parameters"]["model_part_name_list"] = names
+        else:
+            process_dict["Parameters"]["model_part_name"] = part_name
         process_dict["Parameters"]["list_of_variables"] = parameters.list_of_variables
 
         return process_dict

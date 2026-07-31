@@ -132,6 +132,7 @@ class ExtrapolateIntegrationPointToNodesParameters(AdditionalProcessesParameters
     """
 
     list_of_variables: List[str]
+    model_part_name_list: Optional[List[str]] = None
 
 
 @dataclass

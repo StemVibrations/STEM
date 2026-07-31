@@ -348,11 +348,11 @@ class Stem:
 
             # set output directory for vtk output
             if isinstance(output_settings.output_parameters, VtkOutputParameters):
-                output_settings.output_dir = Path(str(output_settings.output_dir) + f"_stage_{stage_nr}")
+                output_settings._full_output_dir = Path(str(output_settings.output_dir) + f"_stage_{stage_nr}")
 
             # set output name for gid output
             elif isinstance(output_settings.output_parameters, GiDOutputParameters):
-                output_settings.output_name = f"{output_settings.output_name}_stage_{stage_nr}"
+                output_settings._full_output_name = f"{output_settings.output_name}_stage_{stage_nr}"
 
             # set output name for json output
             elif isinstance(output_settings.output_parameters, JsonOutputParameters):
@@ -361,7 +361,7 @@ class Stem:
                     suffix = Path(output_settings.output_name).suffix
 
                     base_path = Path(output_settings.output_name).parent / Path(output_settings.output_name).stem
-                    output_settings.output_name = str(base_path) + stage_identifier + suffix
+                    output_settings._full_output_name = str(base_path) + stage_identifier + suffix
 
     def __check_if_acceleration_should_be_initialised(self, current_stage: Model):
         """

@@ -7,7 +7,7 @@ from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw, SmallStrainUmatLaw, MohrCoulombLaw, SmallStrainUdsmLaw, InterfaceMaterial
 from stem.structural_material import ElasticSpringDamper, NodalConcentrated, EulerBeam, Anchor
 from stem.additional_processes import Excavation, ApplyFinalStressesOfPreviousStageToInitialState, \
-    FindNeighboursOfInterfacesProcess, MasterSlaveConstraint
+    FindNeighboursOfInterfacesProcess, MasterSlaveConstraint, ExtrapolateIntegrationPointToNodesParameters
 # from stem.default_materials import DefaultMaterial
 from stem.load import LineLoad, WaterLineLoad, PointLoad, PointMoment
 from stem.water_processes import PhreaticLineWaterPressure
@@ -17,8 +17,58 @@ from stem.solver import AnalysisType, SolutionType, TimeIntegration, Displacemen
 from stem.output import NodalOutput, VtkOutputParameters, JsonOutputParameters, GaussPointOutput, GiDOutputParameters
 from stem.table import Table
 from stem.stem import Stem
+from stem.utils import Utils
 
 from stem.sheetpile_utils import SheetPileUtils
+
+
+prop_parameters = {"clay_clean": {"sat_unit_weight": {"mean": 19.4e3, "std": 0.5e3, "distribution": "normal"},
+                                  "unsat_unit_weight": {"mean": 19.4e3, "std": 0.5e3, "distribution": "normal"},
+                                  "young_modulus": {"mean": 14e6, "std": 1e6, "distribution": "normal"},
+                                  "friction_angle": {"mean": 25.2, "std": 1.0, "distribution": "normal"},
+                                  "cohesion": {"mean": 28.2e3, "std": 1e3, "distribution": "normal"},
+                                  "r_inter": {"mean": 0.77, "std": 0.05, "distribution": "normal"}},
+                   "clay_sandy": {"sat_unit_weight": {"mean": 15.0e3, "std": 0.5e3, "distribution": "normal"},
+                                  "unsat_unit_weight": {"mean": 15.0e3, "std": 0.5e3, "distribution": "normal"},
+                                    "young_modulus": {"mean": 9e6, "std": 1e6, "distribution": "normal"},
+                                    "friction_angle": {"mean": 22.5, "std": 1.0, "distribution": "normal"},
+                                    "cohesion": {"mean": 5.0e3, "std": 1e3, "distribution": "normal"},
+                                  "r_inter": {"mean": 0.88, "std": 0.05, "distribution": "normal"}},
+                   "sand_clayey": {"sat_unit_weight": {"mean": 19.4e3, "std": 0.5e3, "distribution": "normal"},
+                                    "unsat_unit_weight": {"mean": 17.4e3, "std": 0.5e3, "distribution": "normal"},
+                                    "young_modulus": {"mean": 135e6, "std": 1e6, "distribution": "normal"},
+                                    "friction_angle": {"mean": 37.7, "std": 1.0, "distribution": "normal"},
+                                    "cohesion": {"mean": 0.0, "std": 1e3, "distribution": "none"},
+                                   "r_inter": {"mean": 0.47, "std": 0.05, "distribution": "normal"}},
+                   "sand_clean_loose": {"sat_unit_weight": {"mean": 19.0e3, "std": 0.5e3, "distribution": "normal"},
+                                    "unsat_unit_weight": {"mean": 17.0e3, "std": 0.5e3, "distribution": "normal"},
+                                    "young_modulus": {"mean": 61.5e6, "std": 1e6, "distribution": "normal"},
+                                    "friction_angle": {"mean": 32.6, "std": 1.0, "distribution": "normal"},
+                                    "cohesion": {"mean": 0.0, "std": 1e3, "distribution": "none"},
+                                        "r_inter": {"mean": 0.57, "std": 0.05, "distribution": "normal"}},
+                   "sand_clean_mid": {"sat_unit_weight": {"mean": 20.0e3, "std": 0.5e3, "distribution": "normal"},
+                                    "unsat_unit_weight": {"mean": 18.0e3, "std": 0.5e3, "distribution": "normal"},
+                                    "young_modulus": {"mean": 123.3e6, "std": 1e6, "distribution": "normal"},
+                                    "friction_angle": {"mean": 38.3, "std": 1.0, "distribution": "normal"},
+                                    "cohesion": {"mean": 0.0, "std": 1e3, "distribution": "none"},
+                                      "r_inter": {"mean": 0.46, "std": 0.05, "distribution": "normal"}},
+                   "sand_clean_dense": {"sat_unit_weight": {"mean": 21.0e3, "std": 0.5e3, "distribution": "normal"},
+                                    "unsat_unit_weight": {"mean": 19.0e3, "std": 0.5e3, "distribution": "normal"},
+                                    "young_modulus": {"mean": 226.5e6, "std": 1e6, "distribution": "normal"},
+                                    "friction_angle": {"mean": 37.8, "std": 1.0, "distribution": "normal"},
+                                    "cohesion": {"mean": 0.0, "std": 1e3, "distribution": "none"},
+                                    "r_inter": {"mean": 0.47, "std": 0.05, "distribution": "normal"}},
+                   "sheetpile_E15": {"EI": {"mean": 640e6, "std": 1e6, "distribution": "normal"},
+                                    "EA": {"mean": 12e9, "std": 1e6, "distribution": "normal"},
+                                    "w": {"mean": 12e3, "std": 1e3, "distribution": "normal"}},
+                   "sheetpile_E357": {"EI": {"mean": 1.523e9, "std": 1e6, "distribution": "normal"},
+                                    "EA": {"mean": 28.56e9, "std": 1e6, "distribution": "normal"},
+                                    "w": {"mean": 12e3, "std": 1e3, "distribution": "normal"}},
+                   "anchor":        {"EA": {"mean": 441e6, "std": 1e6, "distribution": "normal"},
+                                    "prestress": {"mean": 1000e3, "std": 1e3, "distribution": "normal"}},
+
+
+}
 
 ndim = 2
 model = Model(ndim)
@@ -66,7 +116,7 @@ formulation_sand_clayey = OnePhaseSoil(ndim, IS_DRAINED=True, DENSITY_SOLID=gamm
 constitutive_law_sand_clayey = MohrCoulombLaw(YOUNG_MODULUS=135e6,
                                              POISSON_RATIO=0.2,
                                              GEO_FRICTION_ANGLE=37.7,
-                                             GEO_DILATANCY_ANGLE=15.0,
+                                             GEO_DILATANCY_ANGLE=15.0 ,
                                              GEO_COHESION=0e0, # change
                                              GEO_TENSILE_STRENGTH=10e10)
 # constitutive_law_sand_clayey = SmallStrainUmatLaw(UMAT_NAME=umat_name,
@@ -398,6 +448,17 @@ model.add_output_settings(
         gauss_point_results=[GaussPointOutput.CAUCHY_STRESS_VECTOR],
         output_control_type="step"))
 
+model.add_output_settings(part_name="sheetpile_part_1",
+                          output_dir=results_dir,
+                          output_name="json_output_sheetpile_part_1",
+                            output_parameters=JsonOutputParameters(
+                                output_interval=1,
+                                nodal_results=[NodalOutput.DISPLACEMENT, NodalOutput.BENDING_MOMENT, NodalOutput.SHEAR_FORCE,NodalOutput.AXIAL_FORCE]))
+
+
+extrapolate_process = ExtrapolateIntegrationPointToNodesParameters(model_part_name_list=["sheetpile_part_1", "sheetpile_part_2", "sheetpile_part_3"],
+                                                                   list_of_variables=[NodalOutput.BENDING_MOMENT.name, NodalOutput.SHEAR_FORCE.name, NodalOutput.AXIAL_FORCE.name])
+model.apply_additional_process(extrapolate_process)
 
 
 end_time = 1

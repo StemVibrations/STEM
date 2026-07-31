@@ -3147,7 +3147,7 @@ class Model:
                 if output_settings.part_name is None:
                     raise ValueError("The output model part has no part name specified.")
 
-                if output_settings.output_name is None:
+                if output_settings._full_output_name is None:
                     raise ValueError("No name is specified for the json file.")
 
                 part_name = output_settings.part_name
@@ -3161,13 +3161,13 @@ class Model:
                     raise ValueError("process model part has not been meshed yet!")
 
                 # get absolute or relative directory of the json file
-                if os.path.isabs(output_settings.output_dir):
-                    json_file_dir = Path(output_settings.output_dir)
+                if os.path.isabs(output_settings._full_output_dir):
+                    json_file_dir = Path(output_settings._full_output_dir)
                 else:
-                    json_file_dir = Path(input_folder) / output_settings.output_dir
+                    json_file_dir = Path(input_folder) / output_settings._full_output_dir
 
                 # retrieve the filepath of the json file
-                json_file_path = json_file_dir / output_settings.output_name
+                json_file_path = json_file_dir / output_settings._full_output_name
                 json_file_path = json_file_path.with_suffix(".json")
 
                 if not os.path.exists(json_file_path):
