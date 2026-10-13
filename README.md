@@ -34,7 +34,7 @@ The tool provides a set of commands for creating the geometry of the model, defi
 - Post-processing and output to JSON and VTK for visualisation in ParaView
 
 ## Requirements
-- Python 3.10, 3.11, or 3.12
+- Python 3.10, 3.11, 3.12, 3.13 or 3.14
 - [ParaView](https://www.paraview.org/) (to visualise results)
 - [Git](https://git-scm.com/)
 
