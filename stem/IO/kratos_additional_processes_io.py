@@ -46,6 +46,7 @@ class KratosAdditionalProcessesIO:
         process_dict["Parameters"]["model_part_name"] = part_name
         process_dict["Parameters"]["variable_name"] = "EXCAVATION"
         process_dict["Parameters"]["deactivate_soil_part"] = parameters.deactivate_body_model_part
+        process_dict["Parameters"]["changed_phase"] = parameters.changed_phase
 
         return process_dict
 
@@ -151,10 +152,157 @@ class KratosAdditionalProcessesIO:
             "Parameters": {},
         }
 
-        process_dict["Parameters"]["model_part_name"] = part_name
+
+        if parameters.model_part_name_list is not None:
+            names = [f"{self.domain}.{name}" for name in parameters.model_part_name_list]
+            process_dict["Parameters"]["model_part_name_list"] = names
+        else:
+            process_dict["Parameters"]["model_part_name"] = part_name
         process_dict["Parameters"]["list_of_variables"] = parameters.list_of_variables
 
         return process_dict
+
+    def __create_apply_final_stresses_of_previous_stage_to_initial_state_dict(
+            self, part_name: str, parameters: ApplyFinalStressesOfPreviousStageToInitialState) -> List[Dict[str, Any]]:
+        """
+        Creates a dictionary containing the parameters for the apply final stresses of previous stage to initial state process
+
+        Args:
+            - part_name (str): part name where the apply final stresses of previous stage to initial state is applied
+            - parameters (:class:`stem.additional_processes.ApplyFinalStressesOfPreviousStageToInitialState`): \
+                apply final stresses of previous stage to initial state parameters object
+
+        Returns:
+            - Dict[str, Any]: dictionary containing the apply final stresses of previous stage to initial state process parameters
+        """
+
+        process_dicts = []
+
+        names = [f"{self.domain}.{name}" for name in parameters.model_part_name_list]
+
+        process_dict: Dict[str, Any] = {
+            "python_module": "apply_final_stresses_of_previous_stage_to_initial_state",
+            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+            "process_name": "ApplyFinalStressesOfPreviousStageToInitialState",
+            "Parameters": {}
+        }
+        process_dict["Parameters"]["model_part_name_list"] = names
+        # process_dict["Parameters"]["model_part_name"] = part_name
+
+        return [process_dict]
+
+    def __create_find_neighbours_of_interfaces_process_dict(
+            self, part_name: str, parameters: FindNeighboursOfInterfacesProcess) -> List[Dict[str, Any]]:
+        """
+        Creates a dictionary containing the parameters for the find neighbours of interfaces process
+
+        Args:
+            - part_name (str): part name where the find neighbours of interfaces process is applied
+            - parameters (:class:`stem.additional_processes.FindNeighboursOfInterfacesProcessParameters`): \
+                find neighbours of interfaces process parameters object
+
+        Returns:
+            - Dict[str, Any]: dictionary containing the find neighbours of interfaces process parameters
+        """
+
+        names = [f"{self.domain}.{name}" for name in parameters.model_part_name_list]
+
+        process_dict: Dict[str, Any] = {
+            "python_module": "find_neighbours_of_interfaces_process",
+            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+            "process_name": "FindNeighboursOfInterfacesProcess",
+            "Parameters": {},
+        }
+
+        process_dict["Parameters"]["model_part_name_list"] = names
+        process_dict["Parameters"]["model_part_name_for_neighbouring_elements"] = f"{self.domain}.porous_computational_model_part"
+
+        return [process_dict]
+
+    def __create_k0_procedure_dict(self, parameters: K0Procedure) -> List[Dict[str, Any]]:
+        """
+        Creates a dictionary containing the parameters for the K0 procedure process
+
+        Args:
+            - parameters (:class:`stem.additional_processes.K0Procedure`): K0 procedure parameters object
+
+        Returns:
+            - List[Dict[str, Any]]: list of dictionaries containing the K0 procedure process parameters
+        """
+
+        process_dict: Dict[str, Any] = {
+            "python_module": "apply_k0_procedure_process",
+            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+            "process_name": "ApplyK0ProcedureProcess",
+            "Parameters": {
+                "model_part_name_list": [f"{self.domain}.{name}" for name in parameters.model_part_name_list],
+                "use_standard_procedure": parameters.use_standard_procedure
+            },
+        }
+
+        return [process_dict]
+
+    def __create_find_embedded_beam_host_elements_dict(
+            self, parameters: FindEmbeddedBeamHostElements) -> List[Dict[str, Any]]:
+        """
+        Creates a dictionary containing the parameters for the process which finds the host elements of embedded
+        beam (interface) elements
+
+        Args:
+            - parameters (:class:`stem.additional_processes.FindEmbeddedBeamHostElements`): find embedded beam host \
+                elements parameters object
+
+        Returns:
+            - List[Dict[str, Any]]: list of dictionaries containing the find embedded beam host elements process \
+                parameters
+        """
+
+        process_dict: Dict[str, Any] = {
+            "python_module": "find_embedded_beam_host_elements_process",
+            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+            "process_name": "FindEmbeddedBeamHostElementsProcess",
+            "Parameters": {
+                "model_part_name_list": [f"{self.domain}.{name}" for name in parameters.model_part_name_list],
+                "host_model_part_name_list":
+                    [f"{self.domain}.{name}" for name in parameters.host_model_part_name_list],
+                "search_tolerance": parameters.search_tolerance
+            },
+        }
+
+        return [process_dict]
+
+    def __create_master_slave_constraint_process_dict(self,part_name, parameters):
+        """
+        Creates a dictionary containing the master-slave constraint process parameters
+
+        Args:
+            - part_name (str): part name where the boundary condition is applied
+            - parameters (:class:`stem.boundary.MasterSlaveConstraint`): boundary parameters object
+
+        Returns:
+            - Dict[str, Any]: dictionary containing the boundary parameters
+        """
+
+        # initialize boundary dictionary
+        process_dict: Dict[str, Any] = {
+            "python_module": "assign_master_slave_constraints_to_neighbours_process",
+            "kratos_module": "KratosMultiphysics",
+            "process_name": "AssignMasterSlaveConstraintsToNeighboursUtility",
+            "Parameters": deepcopy(parameters.__dict__),
+        }
+
+        process_dict["Parameters"]["model_part_name"] = f"{self.domain}.porous_computational_model_part"
+        process_dict["Parameters"]["variable_names"] = ["DISPLACEMENT", "WATER_PRESSURE"]
+        # process_dict["Parameters"]["master_model_part_name"] = f"{self.domain}.{process_dict["Parameters"]["master_model_part_name"]}"
+        # process_dict["Parameters"]["slave_model_part_name"] = f"{self.domain}.{process_dict["Parameters"]["slave_model_part_name"]}"
+
+        master_name = f"{self.domain}.{process_dict["Parameters"]["master_model_part_name"]}"
+        slave_name = f"{self.domain}.{process_dict["Parameters"]["slave_model_part_name"]}"
+        process_dict["Parameters"]["master_model_part_name"] = master_name
+        process_dict["Parameters"]["slave_model_part_name"] = slave_name
+        process_dict["Parameters"]["minimum_number_of_neighbouring_nodes"] = 2
+
+        return [process_dict]
 
     def create_additional_processes_dict(
             self, part_name: str, parameters: AdditionalProcessesParametersABC) -> Union[List[Dict[str, Any]], None]:
@@ -185,5 +333,16 @@ class KratosAdditionalProcessesIO:
             return self.__create_hinge_dict(part_name, parameters)
         elif isinstance(parameters, ExtrapolateIntegrationPointToNodesParameters):
             return [self.__create_extrapolate_integration_point_to_nodes_dict(part_name, parameters)]
+        elif isinstance(parameters, ApplyFinalStressesOfPreviousStageToInitialState):
+            return self.__create_apply_final_stresses_of_previous_stage_to_initial_state_dict(part_name, parameters)
+        elif isinstance(parameters, FindNeighboursOfInterfacesProcess):
+            return self.__create_find_neighbours_of_interfaces_process_dict(part_name, parameters)
+        elif isinstance(parameters,MasterSlaveConstraint):
+            return self.__create_master_slave_constraint_process_dict(part_name, parameters)
+        elif isinstance(parameters, FindEmbeddedBeamHostElements):
+            return self.__create_find_embedded_beam_host_elements_dict(parameters)
+        elif isinstance(parameters, K0Procedure):
+            return self.__create_k0_procedure_dict(parameters)
+
         else:
             raise NotImplementedError

@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from stem.IO.kratos_material_io import KratosMaterialIO
 from stem.soil_material import *
 from stem.structural_material import *
@@ -269,3 +271,63 @@ class TestKratosMaterialIO:
 
         # compare json files using custom dictionary comparison
         TestUtils.assert_dictionary_almost_equal(expected_material_parameters_json, test_dict)
+
+    @pytest.mark.parametrize("ndim", [2, 3])
+    def test_write_embedded_beam_material_dict(self, ndim: int):
+        """
+        Test writing the materials of an embedded beam and an embedded beam interface to json.
+
+        Args:
+            - ndim (int): number of dimensions of the model
+
+        """
+        beam_parameters = EmbeddedBeam(ndim=ndim, YOUNG_MODULUS=1e5, POISSON_RATIO=0.2, DENSITY=1.0, CROSS_AREA=2.0,
+                                       I33=1.0, I22=0.5 if ndim == 3 else None, TORSIONAL_INERTIA=0.25,
+                                       RAYLEIGH_M=0.1)
+        interface_parameters = EmbeddedBeamInterface(INTERFACE_SHEAR_STIFFNESS=1e5, INTERFACE_NORMAL_STIFFNESS=2e5,
+                                                     GEO_COHESION=10.0)
+
+        material_io = KratosMaterialIO(ndim=ndim, domain="PorousDomain")
+        beam_dict = material_io.create_material_dict("pile", StructuralMaterial("pile", beam_parameters), 1)
+        interface_dict = material_io.create_material_dict(
+            "pile_interface", StructuralMaterial("pile_interface", interface_parameters), 2)
+
+        expected_beam_variables = {
+            "YOUNG_MODULUS": 1e5,
+            "POISSON_RATIO": 0.2,
+            "DENSITY": 1.0,
+            "CROSS_AREA": 2.0,
+            "I33": 1.0,
+            "AREA_EFFECTIVE_Y": 2.0,
+            "RAYLEIGH_ALPHA": 0.1
+        }
+        if ndim == 2:
+            expected_law = "KratosMultiphysics.StructuralMechanicsApplication.TimoshenkoBeamElasticConstitutiveLaw"
+        else:
+            expected_law = "KratosMultiphysics.StructuralMechanicsApplication.TimoshenkoBeamElasticConstitutiveLaw3D"
+            expected_beam_variables.update({"I22": 0.5, "IT": 0.25, "AREA_EFFECTIVE_Z": 2.0})
+
+        assert beam_dict == {
+            "model_part_name": "PorousDomain.pile",
+            "properties_id": 1,
+            "Material": {
+                "constitutive_law": {
+                    "name": expected_law
+                },
+                "Variables": expected_beam_variables
+            },
+            "Tables": {}
+        }
+
+        assert interface_dict == {
+            "model_part_name": "PorousDomain.pile_interface",
+            "properties_id": 2,
+            "Material": {
+                "Variables": {
+                    "INTERFACE_SHEAR_STIFFNESS": 1e5,
+                    "INTERFACE_NORMAL_STIFFNESS": 2e5,
+                    "GEO_COHESION": 10.0
+                }
+            },
+            "Tables": {}
+        }

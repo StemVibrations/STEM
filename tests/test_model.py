@@ -6537,3 +6537,162 @@ class TestModel:
                 ValueError,
                 match="Secondary body model part `changing_part` has no mesh. Please generate the mesh first."):
             model._Model__update_process_model_parts_for_interfaces(map_new_node_ids, updating_body_model_part, {})
+
+    def test_add_embedded_beam_by_coordinates_2d(self, create_default_2d_soil_material: SoilMaterial):
+        """
+        Test that an embedded beam is meshed independently of the soil: the beam has its own nodes and elements, with
+        ids following the soil mesh. Furthermore, the host search process and the processes on the beam nodes are set.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+
+        """
+        model = Model(2)
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (2, 0, 0), (2, 2, 0), (0, 2, 0)],
+                                            create_default_2d_soil_material, "soil")
+
+        beam_material = StructuralMaterial("pile", EmbeddedBeam(2, 1e9, 0.2, 2500, 0.1, 1e-3))
+        model.add_embedded_beam_by_coordinates([(0.5, 2.0, 0.0), (0.5, 1.0, 0.0), (1.5, 0.5, 0.0)], beam_material,
+                                               "pile", element_size=0.4)
+        model.add_process_on_embedded_beam_nodes("pile", [(0.5, 1.0, 0.0), (1.5, 0.5, 0.0)],
+                                                 RotationConstraint(is_fixed=[True, True, True], value=[0, 0, 0]),
+                                                 "pile_rotation")
+
+        model.set_mesh_size(1.0)
+        model.synchronise_geometry()
+        model.generate_mesh()
+
+        soil_mesh = model.get_model_part_by_name("soil").mesh
+        pile_model_part = model.get_model_part_by_name("pile")
+        pile_mesh = pile_model_part.mesh
+
+        # the first segment has length 1 and is divided in 3 elements, the second segment has length 1.118 and is
+        # divided in 3 elements
+        assert len(pile_mesh.elements) == 6
+        assert len(pile_mesh.nodes) == 7
+        assert pile_model_part.geometry is None
+
+        # the beam nodes and elements are not shared with the soil
+        assert min(pile_mesh.nodes.keys()) == max(soil_mesh.nodes.keys()) + 1
+        assert min(pile_mesh.elements.keys()) > max(soil_mesh.elements.keys())
+        assert set(pile_mesh.nodes.keys()).isdisjoint(soil_mesh.nodes.keys())
+
+        node_ids = sorted(pile_mesh.nodes.keys())
+        npt.assert_allclose(pile_mesh.nodes[node_ids[0]].coordinates, [0.5, 2.0, 0.0])
+        npt.assert_allclose(pile_mesh.nodes[node_ids[3]].coordinates, [0.5, 1.0, 0.0])
+        npt.assert_allclose(pile_mesh.nodes[node_ids[6]].coordinates, [1.5, 0.5, 0.0])
+        assert ([element.node_ids for element in pile_mesh.elements.values()
+                 ] == [[node_ids[i], node_ids[i + 1]] for i in range(6)])
+
+        # the host elements are searched in all soil model parts
+        host_processes = [
+            part.parameters for part in model.additional_process_parts
+            if isinstance(part.parameters, FindEmbeddedBeamHostElements)
+        ]
+        assert host_processes == [FindEmbeddedBeamHostElements(["pile"], ["soil"])]
+
+        # the rotation constraint is applied on the beam nodes
+        rotation_mesh = model.get_model_part_by_name("pile_rotation").mesh
+        assert list(rotation_mesh.nodes.keys()) == [node_ids[3], node_ids[6]]
+
+        # the beam is written as embedded beam element
+        assert pile_model_part.get_element_name(2, 2, AnalysisType.MECHANICAL) == "GeoEmbeddedBeamElement2D2N"
+
+    def test_add_embedded_beam_with_interface_2d(self, create_default_2d_soil_material: SoilMaterial):
+        """
+        Test that the interface elements of an embedded beam share the nodes with the beam elements, and that the host
+        elements are searched for the interface elements.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+
+        """
+        model = Model(2)
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (2, 0, 0), (2, 2, 0), (0, 2, 0)],
+                                            create_default_2d_soil_material, "soil")
+
+        beam_material = StructuralMaterial("pile", EulerBeam(2, 1e9, 0.2, 2500, 0.1, 1e-3))
+        interface_material = StructuralMaterial("pile_interface", EmbeddedBeamInterface(1e5, 1e5, GEO_COHESION=1))
+        model.add_embedded_beam_by_coordinates([(0.5, 2.0, 0.0), (0.5, 0.5, 0.0)], beam_material, "pile",
+                                               interface_material=interface_material,
+                                               host_model_part_names=["soil"])
+        model.add_process_on_embedded_beam_nodes("pile", [(0.5, 2.0, 0.0)],
+                                                 PointLoad(active=[False, True, False], value=[0, 1, 0]), "pile_load")
+
+        model.set_mesh_size(0.5)
+        model.synchronise_geometry()
+        model.generate_mesh()
+
+        pile_mesh = model.get_model_part_by_name("pile").mesh
+        interface_mesh = model.get_model_part_by_name("pile_interface").mesh
+
+        assert len(pile_mesh.elements) == 3
+        assert pile_mesh.nodes.keys() == interface_mesh.nodes.keys()
+        assert ([element.node_ids for element in pile_mesh.elements.values()
+                 ] == [element.node_ids for element in interface_mesh.elements.values()])
+        assert set(pile_mesh.elements.keys()).isdisjoint(interface_mesh.elements.keys())
+
+        host_processes = [
+            part.parameters for part in model.additional_process_parts
+            if isinstance(part.parameters, FindEmbeddedBeamHostElements)
+        ]
+        assert host_processes == [FindEmbeddedBeamHostElements(["pile_interface"], ["soil"])]
+
+        # the point load is applied with a condition element on the head of the beam
+        load_mesh = model.get_model_part_by_name("pile_load").mesh
+        head_node_id = min(pile_mesh.nodes.keys())
+        assert [element.node_ids for element in load_mesh.elements.values()] == [[head_node_id]]
+
+    def test_add_embedded_beam_raises_errors(self, create_default_2d_soil_material: SoilMaterial):
+        """
+        Test the validation of the input of embedded beams.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): default soil material
+
+        """
+        model = Model(2)
+        embedded_beam_material = StructuralMaterial("pile", EmbeddedBeam(2, 1e9, 0.2, 2500, 0.1, 1e-3))
+        euler_beam_material = StructuralMaterial("pile", EulerBeam(2, 1e9, 0.2, 2500, 0.1, 1e-3))
+        interface_material = StructuralMaterial("pile_interface", EmbeddedBeamInterface(1e5, 1e5))
+        coordinates = [(0.5, 2.0, 0.0), (0.5, 0.5, 0.0)]
+
+        with pytest.raises(ValueError, match="At least 2 coordinates are required to define embedded beam `pile`."):
+            model.add_embedded_beam_by_coordinates(coordinates[:1], embedded_beam_material, "pile")
+        with pytest.raises(ValueError, match="The element size of embedded beam `pile` must be positive."):
+            model.add_embedded_beam_by_coordinates(coordinates, embedded_beam_material, "pile", element_size=0)
+        with pytest.raises(ValueError, match="The material of embedded beam `pile` must be an EmbeddedBeam, if no "
+                           "interface material is given."):
+            model.add_embedded_beam_by_coordinates(coordinates, euler_beam_material, "pile")
+        with pytest.raises(ValueError, match="The material of embedded beam `pile` must be an EulerBeam, if an "
+                           "interface material is given."):
+            model.add_embedded_beam_by_coordinates(coordinates, embedded_beam_material, "pile",
+                                                   interface_material=interface_material)
+        with pytest.raises(ValueError, match="The interface material of embedded beam `pile` must be an "
+                           "EmbeddedBeamInterface."):
+            model.add_embedded_beam_by_coordinates(coordinates, euler_beam_material, "pile",
+                                                   interface_material=embedded_beam_material)
+
+        model.add_embedded_beam_by_coordinates(coordinates, embedded_beam_material, "pile")
+        with pytest.raises(ValueError, match="A model part with name `pile` already exists."):
+            model.add_embedded_beam_by_coordinates(coordinates, embedded_beam_material, "pile")
+
+        with pytest.raises(ValueError, match="Embedded beam `beam` does not exist."):
+            model.add_process_on_embedded_beam_nodes("beam", coordinates[:1], PointMoment([True] * 3, [0] * 3), "m")
+        with pytest.raises(ValueError, match=r"The translations of the nodes of embedded beam `pile` are interpolated "
+                           r"from the soil. PointLoad should be applied on the soil instead."):
+            model.add_process_on_embedded_beam_nodes("pile", coordinates[:1], PointLoad([True] * 3, [0] * 3), "load")
+
+        # the element size and the soil are required when meshing
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (2, 0, 0), (2, 2, 0), (0, 2, 0)],
+                                            create_default_2d_soil_material, "soil")
+        model.synchronise_geometry()
+        with pytest.raises(ValueError, match="The element size of embedded beam `pile` is not defined."):
+            model.generate_mesh()
+
+        model.add_process_on_embedded_beam_nodes("pile", [(0.5, 1.9, 0.0)], PointMoment([True] * 3, [0] * 3),
+                                                 "moment")
+        model.set_mesh_size(0.5)
+        with pytest.raises(ValueError, match="The coordinates of model part `moment` do not coincide with the nodes "
+                           "of embedded beam `pile`."):
+            model.generate_mesh()

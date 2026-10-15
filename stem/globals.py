@@ -27,6 +27,21 @@ class GlobalSettings:
     geometry_precision: float = 1e-08  # m
 
 
+@dataclass
+class FluidProperties:
+    """
+    Class containing the parameters for a fluid. Default values are for water at 12 degrees Celsius.
+
+    Attributes:
+        - DENSITY_FLUID (float): The density of fluid [kg/m^3].
+        - DYNAMIC_VISCOSITY (float): The dynamic viscosity of fluid [Pa s].
+        - BULK_MODULUS_FLUID (float): The bulk modulus of fluid [Pa].
+    """
+    DENSITY_FLUID: float = 1000
+    DYNAMIC_VISCOSITY: float = 1.3e-3
+    BULK_MODULUS_FLUID: float = 2e9
+
+
 # yapf: disable
 #: Element data for supported element types in STEM. The data contains the following information: \
 #: - ndim (int): number of dimensions
@@ -70,8 +85,8 @@ ELEMENT_DATA: Dict[str, Any] = {"POINT_1N": {"ndim": 0,
                                                 "n_vertices": 3,
                                                 "reversed_connectivity_order": [2, 1, 0, 4, 3, 5],
                                                 "n_nodes_facets": 3,
-                                                "edges": [[1, 2, 3], [1, 2, 4], [2, 0, 5]],
-                                                "facets": [[1, 2, 3], [1, 2, 4], [2, 0, 5]]},
+                                                "edges": [[1, 2, 4], [2, 0, 5], [0, 1, 3]],
+                                                "facets": [[1, 2, 4], [2, 0, 5], [0, 1, 3]]},
                                 "QUADRANGLE_4N": {"ndim": 2,
                                                   "element_order": 1,
                                                   "n_vertices": 4,

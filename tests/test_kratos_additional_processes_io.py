@@ -6,7 +6,7 @@ import pytest
 
 from stem.IO.kratos_additional_processes_io import KratosAdditionalProcessesIO
 from stem.additional_processes import (Excavation, RandomFieldGenerator, ParameterFieldParameters, HingeParameters,
-                                       ExtrapolateIntegrationPointToNodesParameters)
+                                       ExtrapolateIntegrationPointToNodesParameters, FindEmbeddedBeamHostElements)
 from stem.load import PointLoad
 from tests.utils import TestUtils
 
@@ -180,3 +180,26 @@ class TestKratosAdditionalProcessesIO:
 
         # assert the objects to be equal
         TestUtils.assert_dictionary_almost_equal(generated_dicts[0], expected_dict)
+
+    def test_create_find_embedded_beam_host_elements_dict(self):
+        """
+        Test the creation of the dictionary of the process which finds the host elements of embedded beams
+
+        """
+        parameters = FindEmbeddedBeamHostElements(model_part_name_list=["pile"],
+                                                  host_model_part_name_list=["soil_1", "soil_2"],
+                                                  search_tolerance=1e-4)
+
+        process_dicts = KratosAdditionalProcessesIO(domain="PorousDomain").create_additional_processes_dict(
+            "", parameters)
+
+        assert process_dicts == [{
+            "python_module": "find_embedded_beam_host_elements_process",
+            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+            "process_name": "FindEmbeddedBeamHostElementsProcess",
+            "Parameters": {
+                "model_part_name_list": ["PorousDomain.pile"],
+                "host_model_part_name_list": ["PorousDomain.soil_1", "PorousDomain.soil_2"],
+                "search_tolerance": 1e-4
+            }
+        }]

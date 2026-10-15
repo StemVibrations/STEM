@@ -5,7 +5,8 @@ from typing import List, Dict
 import warnings
 
 import KratosMultiphysics
-from KratosMultiphysics.RailwayApplication.geomechanics_analysis import StemGeoMechanicsAnalysis
+# from KratosMultiphysics.RailwayApplication.geomechanics_analysis import StemGeoMechanicsAnalysis
+from KratosMultiphysics.GeoMechanicsApplication.geomechanics_analysis import GeoMechanicsAnalysis as StemGeoMechanicsAnalysis
 
 from stem.boundary import DisplacementConstraint
 from stem.model import Model
@@ -213,8 +214,8 @@ class Stem:
             stage.finalise(input_folder=self.input_files_dir)
 
         # if more than 1 stage is run, transfer all vtk results to a shared output directory
-        if len(self.stages) > 1:
-            self.__transfer_vtk_files_to_main_output_directories()
+        # if len(self.stages) > 1:
+        #     self.__transfer_vtk_files_to_main_output_directories()
 
     def run_calculation(self):
         """
@@ -347,11 +348,11 @@ class Stem:
 
             # set output directory for vtk output
             if isinstance(output_settings.output_parameters, VtkOutputParameters):
-                output_settings.output_dir = Path(str(output_settings.output_dir) + f"_stage_{stage_nr}")
+                output_settings._full_output_dir = Path(str(output_settings.output_dir) + f"_stage_{stage_nr}")
 
             # set output name for gid output
             elif isinstance(output_settings.output_parameters, GiDOutputParameters):
-                output_settings.output_name = f"{output_settings.output_name}_stage_{stage_nr}"
+                output_settings._full_output_name = f"{output_settings.output_name}_stage_{stage_nr}"
 
             # set output name for json output
             elif isinstance(output_settings.output_parameters, JsonOutputParameters):
@@ -360,7 +361,7 @@ class Stem:
                     suffix = Path(output_settings.output_name).suffix
 
                     base_path = Path(output_settings.output_name).parent / Path(output_settings.output_name).stem
-                    output_settings.output_name = str(base_path) + stage_identifier + suffix
+                    output_settings._full_output_name = str(base_path) + stage_identifier + suffix
 
     def __check_if_acceleration_should_be_initialised(self, current_stage: Model):
         """

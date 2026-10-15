@@ -294,11 +294,12 @@ class PlotUtils:
         fig = go.Figure()
 
         if ndim == 2:
-            PlotUtils.__add_2d_lines_to_plot(geometry, show_line_ids, show_point_ids, fig)
 
             # loop over all surfaces
             for surface in geometry.surfaces.values():
                 PlotUtils.__add_2d_surface_to_plot(geometry, surface, show_surface_ids, fig)
+
+            PlotUtils.__add_2d_lines_to_plot(geometry, show_line_ids, show_point_ids, fig)
 
             # reorder data such that all text labels are shown
             PlotUtils.__move_labels_to_front(fig)
