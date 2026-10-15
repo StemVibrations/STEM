@@ -118,7 +118,9 @@ class KratosMaterialIO:
         """
 
         # initialize material dictionary
-        material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""}, "Variables": deepcopy(material.__dict__)}
+        # optional parameters (e.g. the K0 procedure parameters) are only added when they are set
+        variables = {key: value for key, value in deepcopy(material.__dict__).items() if value is not None}
+        material_dict: Dict[str, Any] = {"constitutive_law": {"name": ""}, "Variables": variables}
         if self.ndim == 2:
             material_dict["constitutive_law"]["name"] = "GeoLinearElasticPlaneStrain2DLaw"
 
@@ -245,6 +247,24 @@ class KratosMaterialIO:
             raise ValueError("Dimension not supported")
 
         return material_dict
+
+    def __create_c_umat_model_soil_dict(self, material: Union[HardeningSoilLaw, SoftSoilCreepLaw]) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the material parameters for a predefined C UMAT model (Hardening Soil or
+        Soft Soil Creep). The named parameters are converted to a UMAT parameter list and state variable list.
+
+        Args:
+            - material (Union[:class:`stem.soil_material.HardeningSoilLaw`, \
+                :class:`stem.soil_material.SoftSoilCreepLaw`]): soil constitutive law object
+
+        Returns:
+            - Dict[str, Any]: dictionary containing the material parameters
+        """
+        umat_law = SmallStrainUmatLaw(UMAT_NAME=material.UMAT_NAME,
+                                      IS_FORTRAN_UMAT=False,
+                                      UMAT_PARAMETERS=material.get_umat_parameters(),
+                                      STATE_VARIABLES=material.get_state_variables())
+        return self.__create_umat_soil_dict(umat_law)
 
     def __create_udsm_soil_dict(self, material: SoilConstitutiveLawABC) -> Dict[str, Any]:
         """
@@ -381,8 +401,13 @@ class KratosMaterialIO:
             soil_material_dict.update(self.__create_mohr_coulomb_soil_dict(material.constitutive_law))
         elif isinstance(material.constitutive_law, SmallStrainUmatLaw):
             soil_material_dict.update(self.__create_umat_soil_dict(material.constitutive_law))
+        elif isinstance(material.constitutive_law, (HardeningSoilLaw, SoftSoilCreepLaw)):
+            soil_material_dict.update(self.__create_c_umat_model_soil_dict(material.constitutive_law))
         elif isinstance(material.constitutive_law, SmallStrainUdsmLaw):
             soil_material_dict.update(self.__create_udsm_soil_dict(material.constitutive_law))
+        else:
+            raise ValueError(f"Constitutive law {type(material.constitutive_law).__name__} is not supported "
+                             f"for soil materials.")
 
         self.__add_soil_formulation_parameters_to_material_dict(soil_material_dict["Variables"], material)
 
@@ -420,6 +445,8 @@ class KratosMaterialIO:
             interface_material_dict.update(self.__create_interface_linear_elastic_soil_dict(material.constitutive_law))
         elif isinstance(material.constitutive_law, MohrCoulombLaw):
             interface_material_dict.update(self.__create_interface_mohr_coulomb_soil_dict(material.constitutive_law))
+            if material.consider_gap_closure:
+                interface_material_dict["Variables"]["CONSIDER_GAP_CLOSURE"] = True
         elif isinstance(material.constitutive_law, SmallStrainUmatLaw):
             interface_material_dict.update(self.__create_umat_soil_dict(material.constitutive_law))
             if self.ndim == 2:
@@ -429,6 +456,9 @@ class KratosMaterialIO:
         elif isinstance(material.constitutive_law, SmallStrainUdsmLaw):
             interface_material_dict.update(self.__create_udsm_soil_dict(material.constitutive_law))
             interface_material_dict["constitutive_law"]["name"] = f"SmallStrainUDSM{self.ndim}DInterfaceLaw"
+        else:
+            raise ValueError(f"Constitutive law {type(material.constitutive_law).__name__} is not supported "
+                             f"for interface materials.")
 
         self.__add_soil_formulation_parameters_to_material_dict(interface_material_dict["Variables"], material)
 
@@ -490,6 +520,63 @@ class KratosMaterialIO:
 
         return euler_beam_parameters_dict
 
+    def __create_embedded_beam_dict(self, material_parameters: EmbeddedBeam) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the embedded beam parameters. The embedded beam is a linear Timoshenko beam,
+        hence the Timoshenko beam constitutive law is used.
+
+        Args:
+            - material_parameters (:class:`stem.structural_material.EmbeddedBeam`): Material object containing the \
+                material parameters
+
+        Returns:
+            - Dict[str, Any]: Dictionary containing the embedded beam parameters
+        """
+
+        material_parameters_dict = deepcopy(material_parameters.__dict__)
+        material_parameters_dict.pop("ndim")
+
+        material_parameters_dict["RAYLEIGH_ALPHA"] = material_parameters_dict.pop("RAYLEIGH_M")
+        material_parameters_dict["RAYLEIGH_BETA"] = material_parameters_dict.pop("RAYLEIGH_K")
+        material_parameters_dict["IT"] = material_parameters_dict.pop("TORSIONAL_INERTIA")
+
+        # parameters which are only used in 3D
+        if self.ndim == 2:
+            for parameter_name in ["I22", "IT", "AREA_EFFECTIVE_Z"]:
+                material_parameters_dict.pop(parameter_name)
+
+        # Create a new dictionary without None values
+        material_parameters_dict = {k: v for k, v in material_parameters_dict.items() if v is not None}
+
+        if self.ndim == 2:
+            constitutive_law_name = "TimoshenkoBeamElasticConstitutiveLaw"
+        else:
+            constitutive_law_name = "TimoshenkoBeamElasticConstitutiveLaw3D"
+
+        return {
+            "constitutive_law": {
+                "name": f"KratosMultiphysics.StructuralMechanicsApplication.{constitutive_law_name}"
+            },
+            "Variables": material_parameters_dict
+        }
+
+    @staticmethod
+    def __create_embedded_beam_interface_dict(material_parameters: EmbeddedBeamInterface) -> Dict[str, Any]:
+        """
+        Creates a dictionary containing the embedded beam interface parameters. The embedded beam interface does not
+        require a constitutive law.
+
+        Args:
+            - material_parameters (:class:`stem.structural_material.EmbeddedBeamInterface`): Material object \
+                containing the material parameters
+
+        Returns:
+            - Dict[str, Any]: Dictionary containing the embedded beam interface parameters
+        """
+
+        # Create a new dictionary without None values
+        return {k: v for k, v in deepcopy(material_parameters.__dict__).items() if v is not None}
+
     def __create_anchor_dict(self, material_parameters: StructuralParametersABC) -> Dict[str, Any]:
         """
         Creates a dictionary containing the anchor parameters
@@ -549,6 +636,12 @@ class KratosMaterialIO:
 
         elif isinstance(material.material_parameters, Anchor):
             structural_material_dict.update(self.__create_anchor_dict(material.material_parameters))
+
+        elif isinstance(material.material_parameters, EmbeddedBeam):
+            structural_material_dict.update(self.__create_embedded_beam_dict(material.material_parameters))
+        elif isinstance(material.material_parameters, EmbeddedBeamInterface):
+            structural_material_dict["Variables"] = self.__create_embedded_beam_interface_dict(
+                material.material_parameters)
 
         return structural_material_dict
 

@@ -219,6 +219,57 @@ class KratosAdditionalProcessesIO:
 
         return [process_dict]
 
+    def __create_k0_procedure_dict(self, parameters: K0Procedure) -> List[Dict[str, Any]]:
+        """
+        Creates a dictionary containing the parameters for the K0 procedure process
+
+        Args:
+            - parameters (:class:`stem.additional_processes.K0Procedure`): K0 procedure parameters object
+
+        Returns:
+            - List[Dict[str, Any]]: list of dictionaries containing the K0 procedure process parameters
+        """
+
+        process_dict: Dict[str, Any] = {
+            "python_module": "apply_k0_procedure_process",
+            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+            "process_name": "ApplyK0ProcedureProcess",
+            "Parameters": {
+                "model_part_name_list": [f"{self.domain}.{name}" for name in parameters.model_part_name_list],
+                "use_standard_procedure": parameters.use_standard_procedure
+            },
+        }
+
+        return [process_dict]
+
+    def __create_find_embedded_beam_host_elements_dict(
+            self, parameters: FindEmbeddedBeamHostElements) -> List[Dict[str, Any]]:
+        """
+        Creates a dictionary containing the parameters for the process which finds the host elements of embedded
+        beam (interface) elements
+
+        Args:
+            - parameters (:class:`stem.additional_processes.FindEmbeddedBeamHostElements`): find embedded beam host \
+                elements parameters object
+
+        Returns:
+            - List[Dict[str, Any]]: list of dictionaries containing the find embedded beam host elements process \
+                parameters
+        """
+
+        process_dict: Dict[str, Any] = {
+            "python_module": "find_embedded_beam_host_elements_process",
+            "kratos_module": "KratosMultiphysics.GeoMechanicsApplication",
+            "process_name": "FindEmbeddedBeamHostElementsProcess",
+            "Parameters": {
+                "model_part_name_list": [f"{self.domain}.{name}" for name in parameters.model_part_name_list],
+                "host_model_part_name_list":
+                    [f"{self.domain}.{name}" for name in parameters.host_model_part_name_list],
+                "search_tolerance": parameters.search_tolerance
+            },
+        }
+
+        return [process_dict]
 
     def __create_master_slave_constraint_process_dict(self,part_name, parameters):
         """
@@ -288,6 +339,10 @@ class KratosAdditionalProcessesIO:
             return self.__create_find_neighbours_of_interfaces_process_dict(part_name, parameters)
         elif isinstance(parameters,MasterSlaveConstraint):
             return self.__create_master_slave_constraint_process_dict(part_name, parameters)
+        elif isinstance(parameters, FindEmbeddedBeamHostElements):
+            return self.__create_find_embedded_beam_host_elements_dict(parameters)
+        elif isinstance(parameters, K0Procedure):
+            return self.__create_k0_procedure_dict(parameters)
 
         else:
             raise NotImplementedError

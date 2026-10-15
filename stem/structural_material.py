@@ -100,7 +100,7 @@ class EulerBeam(StructuralParametersABC):
         """
 
         available_node_dim_combinations = {
-            2: [2],
+            2: [2, 3],
             3: [2],
         }
         Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations,
@@ -116,6 +116,191 @@ class EulerBeam(StructuralParametersABC):
 
         else:
             raise ValueError(f"Analysis type {analysis_type} is not implemented for euler beams.")
+
+        return element_name
+
+
+@dataclass
+class EmbeddedBeam(StructuralParametersABC):
+    """
+    Class containing the material parameters for an embedded beam, according to Sadek & Shahrour (2004), "A three
+    dimensional embedded beam element for reinforced geomaterials". The embedded beam is a linear Timoshenko beam which
+    is perfectly bonded to the soil in which it is located. The nodes of the beam do not need to coincide with the
+    nodes of the soil mesh: the translations of a beam node are interpolated from the displacements of the soil element
+    in which the node is located, whereas the rotations remain independent degrees of freedom of the beam nodes.
+
+    Inheritance:
+        - :class:`StructuralParametersABC`
+
+    Attributes:
+        - ndim (int): The number of dimensions of the beam formulation (2 or 3)
+        - YOUNG_MODULUS (float): The Young's modulus [Pa].
+        - POISSON_RATIO (float): The Poisson's ratio [-].
+        - DENSITY (float): The density [kg/m3].
+        - CROSS_AREA (float): The cross-sectional area [m2].
+        - I33 (float): The second moment of area around the local z-axis [m4].
+        - I22 (Optional[float]): The second moment of area around the local y-axis [m4]. Required in 3D.
+        - TORSIONAL_INERTIA (Optional[float]): The torsional inertia [m4], only used in 3D. If None, I22 + I33 is \
+            used.
+        - AREA_EFFECTIVE_Y (Optional[float]): The effective shear area in local y-direction [m2]. If None, the \
+            cross-sectional area is used.
+        - AREA_EFFECTIVE_Z (Optional[float]): The effective shear area in local z-direction [m2], only used in 3D. \
+            If None, the cross-sectional area is used.
+        - RAYLEIGH_M (Optional[float]): Mass proportional rayleigh damping parameter [-].
+        - RAYLEIGH_K (Optional[float]): Stiffness proportional rayleigh damping parameter [-].
+    """
+    ndim: int
+    YOUNG_MODULUS: float
+    POISSON_RATIO: float
+    DENSITY: float
+    CROSS_AREA: float
+    I33: float
+
+    I22: Optional[float] = None
+    TORSIONAL_INERTIA: Optional[float] = None
+    AREA_EFFECTIVE_Y: Optional[float] = None
+    AREA_EFFECTIVE_Z: Optional[float] = None
+
+    RAYLEIGH_M: Optional[float] = None
+    RAYLEIGH_K: Optional[float] = None
+
+    def __post_init__(self):
+        """
+        Sets the default effective shear areas and checks if the second moment of area about the y-axis is defined
+        for 3D.
+
+        Raises:
+            - ValueError: If the second moment of area around the y-axis (I22) is not defined for 3D.
+        """
+        if self.AREA_EFFECTIVE_Y is None:
+            self.AREA_EFFECTIVE_Y = self.CROSS_AREA
+
+        if self.ndim == 3:
+            if self.I22 is None:
+                raise ValueError("The second moment of area around the y-axis (I22) is not defined.")
+            if self.AREA_EFFECTIVE_Z is None:
+                self.AREA_EFFECTIVE_Z = self.CROSS_AREA
+
+    @staticmethod
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
+        """
+        Static method to get the element name for an embedded beam element.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model
+            - n_nodes_element (int): The number of nodes per element
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type.
+
+        Raises:
+            - ValueError: If the analysis type is not implemented yet for embedded beam elements.
+
+        Returns:
+            - Optional[str]: The element name
+        """
+
+        available_node_dim_combinations = {
+            2: [2],
+            3: [2],
+        }
+        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations,
+                                             "Embedded beam")
+
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+            element_name = f"GeoEmbeddedBeamElement{n_dim_model}D{n_nodes_element}N"
+        else:
+            raise ValueError(f"Analysis type {analysis_type} is not implemented for embedded beams.")
+
+        return element_name
+
+
+@dataclass
+class EmbeddedBeamInterface(StructuralParametersABC):
+    """
+    Class containing the material parameters for the interface between a beam and the soil in which it is embedded,
+    according to Sadek & Shahrour (2004), "A three dimensional embedded beam element for reinforced geomaterials". The
+    interface connects the translations of the beam nodes to the displacement of the soil at the location of these
+    nodes. The beam nodes do not need to coincide with the nodes of the soil mesh.
+
+    The bonding force per unit length of the beam is linear elastic, with a Mohr-Coulomb limit on the tangential
+    component: \
+        |t_t| <= P (c + max(0, -sigma'_n) tan(phi)) \
+    where P is the perimeter of the beam (pi * DIAMETER in 3D, two faces per unit width in 2D). If neither the cohesion
+    nor the friction angle is defined, the interface is linear elastic.
+
+    Inheritance:
+        - :class:`StructuralParametersABC`
+
+    Attributes:
+        - INTERFACE_SHEAR_STIFFNESS (float): The tangential stiffness per unit length of the beam [N/m2].
+        - INTERFACE_NORMAL_STIFFNESS (float): The normal stiffness per unit length of the beam [N/m2].
+        - GEO_COHESION (Optional[float]): The cohesion of the interface [Pa].
+        - GEO_FRICTION_ANGLE (Optional[float]): The friction angle of the interface [degrees].
+        - DIAMETER (Optional[float]): The diameter of the beam [m], required in 3D when the cohesion or friction \
+            angle is defined.
+    """
+    INTERFACE_SHEAR_STIFFNESS: float
+    INTERFACE_NORMAL_STIFFNESS: float
+    GEO_COHESION: Optional[float] = None
+    GEO_FRICTION_ANGLE: Optional[float] = None
+    DIAMETER: Optional[float] = None
+
+    def __post_init__(self):
+        """
+        Validates the interface parameters.
+
+        Raises:
+            - ValueError: If the interface stiffnesses are not positive.
+            - ValueError: If the cohesion is negative.
+            - ValueError: If the friction angle is not in the range [0, 90) degrees.
+            - ValueError: If the diameter is not positive.
+        """
+        if self.INTERFACE_SHEAR_STIFFNESS <= 0 or self.INTERFACE_NORMAL_STIFFNESS <= 0:
+            raise ValueError("The interface shear and normal stiffness of an embedded beam interface must be positive.")
+        if self.GEO_COHESION is not None and self.GEO_COHESION < 0:
+            raise ValueError("The cohesion of an embedded beam interface must not be negative.")
+        if self.GEO_FRICTION_ANGLE is not None and not 0 <= self.GEO_FRICTION_ANGLE < 90:
+            raise ValueError("The friction angle of an embedded beam interface must be in the range [0, 90) degrees.")
+        if self.DIAMETER is not None and self.DIAMETER <= 0:
+            raise ValueError("The diameter of an embedded beam interface must be positive.")
+
+    @property
+    def has_shear_strength(self) -> bool:
+        """
+        Whether the tangential bonding force is limited by a Mohr-Coulomb criterion.
+
+        Returns:
+            - bool: True if the cohesion or the friction angle is defined
+        """
+        return self.GEO_COHESION is not None or self.GEO_FRICTION_ANGLE is not None
+
+    @staticmethod
+    def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> Optional[str]:
+        """
+        Static method to get the element name for an embedded beam interface element.
+
+        Args:
+            - n_dim_model (int): The number of dimensions of the model
+            - n_nodes_element (int): The number of nodes per element
+            - analysis_type (:class:`stem.solver.AnalysisType`): The analysis type.
+
+        Raises:
+            - ValueError: If the analysis type is not implemented yet for embedded beam interface elements.
+
+        Returns:
+            - Optional[str]: The element name
+        """
+
+        available_node_dim_combinations = {
+            2: [2],
+            3: [2],
+        }
+        Utils.check_ndim_nnodes_combinations(n_dim_model, n_nodes_element, available_node_dim_combinations,
+                                             "Embedded beam interface")
+
+        if analysis_type == AnalysisType.MECHANICAL_GROUNDWATER_FLOW or analysis_type == AnalysisType.MECHANICAL:
+            element_name = f"GeoEmbeddedBeamInterfaceElement{n_dim_model}D{n_nodes_element}N"
+        else:
+            raise ValueError(f"Analysis type {analysis_type} is not implemented for embedded beam interfaces.")
 
         return element_name
 

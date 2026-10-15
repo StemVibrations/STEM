@@ -164,6 +164,51 @@ class FindNeighboursOfInterfacesProcess(AdditionalProcessesParametersABC):
 
 
 @dataclass
+class K0Procedure(AdditionalProcessesParametersABC):
+    """
+    Class containing the parameters for the K0 procedure (as in PLAXIS). At the end of each solution step, the
+    horizontal effective stresses are set to K0 times the vertical effective stress and the shear stresses are erased.
+    With the standard procedure, the linear elastic soil only uses the diagonal of its stiffness matrix (no Poisson
+    coupling and no shear stiffness), such that the vertical stress equals the weight of the soil column above. The K0
+    parameters (K0_MAIN_DIRECTION and K0_NC) are read from the material, see
+    :class:`stem.soil_material.LinearElasticSoil`.
+
+    Inheritance:
+        - :class:`AdditionalProcessesParametersABC`
+
+    Attributes:
+        - model_part_name_list (List[str]): the names of the soil model parts to which the K0 procedure is applied
+        - use_standard_procedure (bool): only use the diagonal of the linear elastic stiffness matrix during the \
+            procedure. Default is True.
+    """
+
+    model_part_name_list: List[str]
+    use_standard_procedure: bool = True
+
+
+@dataclass
+class FindEmbeddedBeamHostElements(AdditionalProcessesParametersABC):
+    """
+    Class containing the parameters for the process which finds, for every node of the embedded beam (interface)
+    elements, the (solid) host element in which it is located. This process is required by embedded beam and embedded
+    beam interface elements.
+
+    Inheritance:
+        - :class:`AdditionalProcessesParametersABC`
+
+    Attributes:
+        - model_part_name_list (List[str]): the names of the model parts with the embedded (interface) elements
+        - host_model_part_name_list (List[str]): the names of the model parts with the candidate host elements
+        - search_tolerance (float): tolerance on the local coordinates to decide whether a point is inside a host \
+            element. Default value is 1e-6.
+    """
+
+    model_part_name_list: List[str]
+    host_model_part_name_list: List[str]
+    search_tolerance: float = 1.0e-6
+
+
+@dataclass
 class MasterSlaveConstraint(AdditionalProcessesParametersABC):
     """
     Class containing the boundary parameters for master slave constraint

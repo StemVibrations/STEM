@@ -97,7 +97,13 @@ class KratosSolverIO:
         convergence_criterion_dict: Dict[str, Any] = {
             "convergence_criterion": convergence_criterion.convergence_criterion
         }
-        convergence_criterion_dict.update(deepcopy(convergence_criterion.__dict__))
+
+        # the global force error criterion reads its parameters from a separate settings block
+        if isinstance(convergence_criterion, GlobalForceErrorConvergenceCriteria):
+            convergence_criterion_dict["global_force_error_criterion_settings"] = deepcopy(
+                convergence_criterion.__dict__)
+        else:
+            convergence_criterion_dict.update(deepcopy(convergence_criterion.__dict__))
         return convergence_criterion_dict
 
     @staticmethod
@@ -155,11 +161,9 @@ class KratosSolverIO:
             - str: The solution type name
         """
         if solver_settings.solution_type == SolutionType.QUASI_STATIC:
-            if solver_settings.stress_initialisation_type == StressInitialisationType.K0_PROCEDURE:
-                return "k0_procedure"
-            else:
-                # return "QUASI_STATIC"
-                return "static"
+            # the K0 procedure is a static calculation, the K0 stresses are set by the K0 procedure process
+            # (:class:`stem.additional_processes.K0Procedure`)
+            return "static"
         elif solver_settings.solution_type == SolutionType.DYNAMIC:
             return "dynamic"
 
@@ -275,6 +279,8 @@ class KratosSolverIO:
             "rebuild_level": 0,
             "quasi_newton_type": solver_settings.quasi_newton_type,
             "quasi_newton_restart_interval": solver_settings.quasi_newton_restart_interval,
+            "use_local_error_criteria": solver_settings.local_error_criteria is not None,
+            "deactivate_unsupported_interfaces": True,
             "quasi_newton_max_rank": solver_settings.quasi_newton_max_rank,
             "prebuild_dynamics": solver_settings.are_mass_and_damping_constant,
             # "initialize_acceleration": solver_settings._inititalize_acceleration,
@@ -291,6 +297,11 @@ class KratosSolverIO:
         solver_settings_dict.update(self.__create_strategy_dict(solver_settings.strategy_type))
         solver_settings_dict.update(self.__create_convergence_criterion_dict(solver_settings.convergence_criteria))
         solver_settings_dict.update(self.__create_linear_solver_dict(solver_settings.linear_solver_settings))
+
+        # Add the local error criteria settings if present
+        if solver_settings.local_error_criteria is not None:
+            solver_settings_dict["local_error_criteria_settings"] = deepcopy(
+                solver_settings.local_error_criteria.__dict__)
 
         # Add the model part names
         solver_settings_dict.update(self.__create_model_part_name_dict(model_parts))

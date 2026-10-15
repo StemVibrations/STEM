@@ -13,7 +13,8 @@ from typing import Sequence, Tuple, get_args, Set, Optional, List, Dict, Any, Un
 from gmsh_utils import gmsh_IO
 
 from stem.additional_processes import (ParameterFieldParameters, HingeParameters, AdditionalProcessPart,
-                                       AdditionalProcessesParametersABC, ExtrapolateIntegrationPointToNodesParameters , MasterSlaveConstraint)
+                                       AdditionalProcessesParametersABC, ExtrapolateIntegrationPointToNodesParameters , MasterSlaveConstraint,
+                                       FindEmbeddedBeamHostElements)
 from stem.field_generator import RandomFieldGenerator
 from stem.globals import GlobalSettings, ELEMENT_DATA, OUT_OF_PLANE_AXIS_2D, VERTICAL_AXIS
 from stem.load import *
@@ -48,6 +49,8 @@ class Model:
         - extrusion_length (Optional[float]): The extrusion length in the out of plane direction.
         - groups (Dict[str, Any]): A dictionary containing shared information among sets of model parts.
         - interfaces (Dict[str, Any]): A dictionary containing interface regarding where interfaces are located
+        - embedded_beams (Dict[str, Any]): A dictionary containing the definition of the embedded beams, which are \
+            meshed independently of the soil, after the soil is meshed
 
     """
 
@@ -71,6 +74,7 @@ class Model:
         self.extrusion_length: Optional[float] = None
         self.groups: Dict[str, Any] = {}
         self.interfaces: Dict[str, Any] = {}
+        self.embedded_beams: Dict[str, Any] = {}
 
         # set default gmsh verbosity to 1 (only errors)
         self.gmsh_io.set_verbosity_level(1)
@@ -1310,6 +1314,167 @@ class Model:
 
         self.process_model_parts.append(model_part)
 
+    def add_embedded_beam_by_coordinates(self,
+                                         coordinates: Sequence[Sequence[float]],
+                                         material: StructuralMaterial,
+                                         name: str,
+                                         element_size: Optional[float] = None,
+                                         interface_material: Optional[StructuralMaterial] = None,
+                                         host_model_part_names: Optional[Sequence[str]] = None,
+                                         search_tolerance: float = 1.0e-6):
+        """
+        Adds a beam which is embedded in the soil, according to Sadek & Shahrour (2004). The beam is meshed
+        independently of the soil, i.e. the nodes of the beam do not need to coincide with the nodes of the soil. The
+        beam is discretised after the soil is meshed, and the soil elements in which the beam nodes are located (the
+        host elements) are found by Kratos.
+
+        Two types of embedded beams are available:
+            - Without an interface material, the beam material must be an :class:`stem.structural_material.EmbeddedBeam`.
+              The beam is perfectly bonded to the soil: the translations of the beam nodes are interpolated from the
+              host elements, the rotations are independent degrees of freedom.
+            - With an interface material (:class:`stem.structural_material.EmbeddedBeamInterface`), the beam material
+              must be an :class:`stem.structural_material.EulerBeam`. The beam nodes have their own degrees of freedom,
+              and the beam is connected to the soil by interface elements, which are added in the body model part
+              `{name}_interface`.
+
+        Args:
+            - coordinates (Sequence[Sequence[float]]): The coordinates of the points along the beam axis. The beam \
+                follows the straight lines between consecutive points.
+            - material (:class:`stem.structural_material.StructuralMaterial`): The material of the beam.
+            - name (str): The name of the beam model part.
+            - element_size (Optional[float]): The element size of the beam [m]. If None, the element size of the mesh \
+                settings is used.
+            - interface_material (Optional[:class:`stem.structural_material.StructuralMaterial`]): The material of \
+                the interface between the beam and the soil. If None, the beam is perfectly bonded to the soil.
+            - host_model_part_names (Optional[Sequence[str]]): The names of the body model parts in which the beam is \
+                embedded. If None, all soil model parts are used.
+            - search_tolerance (float): Tolerance on the local coordinates to decide whether a beam node is located \
+                inside a host element. Default value is 1e-6.
+
+        Raises:
+            - ValueError: if less than 2 coordinates are given.
+            - ValueError: if the element size is not positive.
+            - ValueError: if the beam material is not an EmbeddedBeam while no interface material is given.
+            - ValueError: if the beam material is not an EulerBeam while an interface material is given.
+            - ValueError: if the interface material is not an EmbeddedBeamInterface.
+            - ValueError: if the interface material has a shear strength, but no diameter in a 3D model.
+            - ValueError: if a model part with the same name already exists.
+        """
+
+        if len(coordinates) < 2:
+            raise ValueError(f"At least 2 coordinates are required to define embedded beam `{name}`.")
+
+        if element_size is not None and element_size <= 0:
+            raise ValueError(f"The element size of embedded beam `{name}` must be positive.")
+
+        if interface_material is None:
+            if not isinstance(material.material_parameters, EmbeddedBeam):
+                raise ValueError(f"The material of embedded beam `{name}` must be an EmbeddedBeam, if no interface "
+                                 f"material is given.")
+        else:
+            if not isinstance(material.material_parameters, EulerBeam):
+                raise ValueError(f"The material of embedded beam `{name}` must be an EulerBeam, if an interface "
+                                 f"material is given.")
+            if not isinstance(interface_material.material_parameters, EmbeddedBeamInterface):
+                raise ValueError(f"The interface material of embedded beam `{name}` must be an "
+                                 f"EmbeddedBeamInterface.")
+            if (self.ndim == 3 and interface_material.material_parameters.has_shear_strength
+                    and interface_material.material_parameters.DIAMETER is None):
+                raise ValueError(f"The DIAMETER of the interface of embedded beam `{name}` is required in 3D to "
+                                 f"compute the perimeter of the beam.")
+
+        # the beam model part(s) are added directly, the mesh is generated after the soil is meshed
+        beam_model_part = BodyModelPart(name)
+        beam_model_part.material = material
+        new_body_model_parts = [beam_model_part]
+
+        interface_model_part = None
+        if interface_material is not None:
+            interface_model_part = BodyModelPart(f"{name}_interface")
+            interface_model_part.material = interface_material
+            new_body_model_parts.append(interface_model_part)
+
+        existing_names = {model_part.name for model_part in self.all_model_parts}
+        for model_part in new_body_model_parts:
+            if model_part.name in existing_names:
+                raise ValueError(f"A model part with name `{model_part.name}` already exists.")
+
+        self.body_model_parts.extend(new_body_model_parts)
+
+        # the host elements are found by Kratos, by searching in the host model parts. If no host model parts are
+        # given, all soil model parts are used, which are determined after meshing
+        embedded_part_name = name if interface_model_part is None else interface_model_part.name
+        host_names = [] if host_model_part_names is None else list(host_model_part_names)
+        host_search_process = FindEmbeddedBeamHostElements(model_part_name_list=[embedded_part_name],
+                                                           host_model_part_name_list=host_names,
+                                                           search_tolerance=search_tolerance)
+        self.additional_process_parts.append(AdditionalProcessPart(host_search_process))
+
+        self.embedded_beams[name] = {
+            "coordinates": [list(map(float, coordinate)) for coordinate in coordinates],
+            "element_size": element_size,
+            "beam_model_part": beam_model_part,
+            "interface_model_part": interface_model_part,
+            "host_search_process": host_search_process,
+            "process_model_parts": []
+        }
+
+    def add_process_on_embedded_beam_nodes(self, beam_name: str, coordinates: Sequence[Sequence[float]],
+                                           parameters: Union[DisplacementConstraint, RotationConstraint, PointLoad,
+                                                             PointMoment],
+                                           name: str):
+        """
+        Adds a boundary condition or a point load on the nodes of an embedded beam. Boundary conditions and loads which
+        are added by coordinates or by geometry ids are applied to the nodes of the soil, as an embedded beam does not
+        share nodes with the soil. The nodes of the embedded beam are found after meshing, at the given coordinates.
+
+        Note that the translations of the nodes of a perfectly bonded embedded beam are not degrees of freedom, as they
+        are interpolated from the soil. Therefore, only rotation constraints and point moments can be applied on such a
+        beam. Displacement constraints and point loads should be applied on the soil instead.
+
+        Args:
+            - beam_name (str): The name of the embedded beam.
+            - coordinates (Sequence[Sequence[float]]): The coordinates of the beam nodes at which the process is \
+                applied. The coordinates have to coincide with a node of the beam, e.g. one of the coordinates which \
+                define the beam.
+            - parameters (Union[:class:`stem.boundary.DisplacementConstraint`, \
+                :class:`stem.boundary.RotationConstraint`, :class:`stem.load.PointLoad`, \
+                :class:`stem.load.PointMoment`]): The parameters of the boundary condition or load.
+            - name (str): The name of the process model part.
+
+        Raises:
+            - ValueError: if the embedded beam does not exist.
+            - ValueError: if the process type is not supported on embedded beam nodes.
+            - ValueError: if the translations are constrained or loaded on a perfectly bonded embedded beam.
+            - ValueError: if a model part with the same name already exists.
+        """
+
+        if beam_name not in self.embedded_beams:
+            raise ValueError(f"Embedded beam `{beam_name}` does not exist.")
+
+        if not isinstance(parameters, (DisplacementConstraint, RotationConstraint, PointLoad, PointMoment)):
+            raise ValueError(f"Process type {parameters.__class__.__name__} is not supported on the nodes of an "
+                             f"embedded beam.")
+
+        embedded_beam = self.embedded_beams[beam_name]
+        if embedded_beam["interface_model_part"] is None and isinstance(parameters,
+                                                                        (DisplacementConstraint, PointLoad)):
+            raise ValueError(f"The translations of the nodes of embedded beam `{beam_name}` are interpolated from the "
+                             f"soil. {parameters.__class__.__name__} should be applied on the soil instead.")
+
+        if name in {model_part.name for model_part in self.all_model_parts}:
+            raise ValueError(f"A model part with name `{name}` already exists.")
+
+        # the mesh of the model part is generated after the embedded beam is meshed
+        model_part = ModelPart(name)
+        model_part.parameters = parameters
+        self.process_model_parts.append(model_part)
+
+        embedded_beam["process_model_parts"].append({
+            "model_part": model_part,
+            "coordinates": [list(map(float, coordinate)) for coordinate in coordinates]
+        })
+
     def add_output_settings(self,
                             output_parameters: OutputParametersABC,
                             part_name: Optional[str] = None,
@@ -1769,6 +1934,7 @@ class Model:
                 # is wrong! However, later on in the calculation, all ElasticSpringDamper elements on a straight line
                 # in a model part are combined, such that the original materials properties are correct.
                 types_to_be_split = (ElasticSpringDamper, EulerBeam, Anchor)
+                types_to_be_split = (ElasticSpringDamper, Anchor)
                 if isinstance(model_part.material.material_parameters, types_to_be_split):
 
                     # check if the model part has a mesh
@@ -1810,6 +1976,8 @@ class Model:
             - initialise field parameters (e.g., random fields).
             - exclude the nodes that are not output nodes.
             - adjust the elements for the spring damper parts.
+            - create the interface elements.
+            - generate the meshes of the embedded beams.
 
         """
 
@@ -1819,6 +1987,195 @@ class Model:
         self.__exclude_non_output_nodes()
         self.__adjust_mesh_spring_dampers()
         self.__create_interface_elements_post_meshing()
+        self.__generate_embedded_beam_meshes()
+
+    @staticmethod
+    def __discretise_polyline(coordinates: Sequence[Sequence[float]], element_size: float) -> List[List[float]]:
+        """
+        Discretises a polyline in points, such that the distance between consecutive points does not exceed the
+        element size. Each straight segment of the polyline is divided in equal parts. All vertices of the polyline are
+        included in the points.
+
+        Args:
+            - coordinates (Sequence[Sequence[float]]): The coordinates of the vertices of the polyline.
+            - element_size (float): The maximum distance between consecutive points.
+
+        Raises:
+            - ValueError: if two consecutive vertices coincide.
+
+        Returns:
+            - List[List[float]]: The coordinates of the points along the polyline.
+        """
+        vertices = np.array(coordinates, dtype=float)
+
+        points = [vertices[0]]
+        for start, end in zip(vertices[:-1], vertices[1:]):
+            length = float(np.linalg.norm(end - start))
+            if length < 1e-12:
+                raise ValueError(f"Consecutive coordinates of an embedded beam coincide: {start.tolist()}.")
+
+            # a small tolerance prevents an additional element due to round-off errors
+            n_elements = max(1, int(np.ceil(length / element_size - 1e-9)))
+            points.extend(start + (end - start) * i / n_elements for i in range(1, n_elements + 1))
+
+        return [point.tolist() for point in points]
+
+    def __add_line_mesh_to_model_part(self, model_part: ModelPart, nodes: Dict[int, Node],
+                                      connectivities: List[List[int]]):
+        """
+        Creates a mesh of 2-noded line elements for a model part, which is not generated by gmsh. The elements are
+        also added to the gmsh mesh data, such that new element ids remain unique.
+
+        Args:
+            - model_part (:class:`stem.model_part.ModelPart`): The model part to which the mesh is added.
+            - nodes (Dict[int, :class:`stem.mesh.Node`]): The nodes of the mesh.
+            - connectivities (List[List[int]]): The node ids of each element.
+
+        """
+        first_element_id = self.__get_maximum_element_id() + 1
+        line_elements = self.gmsh_io.mesh_data["elements"].setdefault("LINE_2N", {})
+
+        mesh = Mesh(ndim=1)
+        mesh.nodes = {node_id: Node(node_id, node.coordinates) for node_id, node in nodes.items()}
+        for element_id, node_ids in enumerate(connectivities, start=first_element_id):
+            line_elements[element_id] = list(node_ids)
+            mesh.elements[element_id] = Element(element_id, "LINE_2N", list(node_ids))
+
+        self.gmsh_io.mesh_data["physical_groups"][model_part.name] = {
+            "node_ids": list(mesh.nodes.keys()),
+            "element_ids": list(mesh.elements.keys()),
+            "ndim": 1,
+            "element_type": "LINE_2N"
+        }
+
+        model_part.mesh = mesh
+
+    def __generate_embedded_beam_meshes(self):
+        """
+        Generates the meshes of the embedded beams, independently of the mesh of the soil. New nodes and elements are
+        created along the beam axis, with ids following the maximum ids in the mesh. Furthermore:
+            - the host model parts of the embedded beams are set to all soil model parts, if not given.
+            - the meshes of the processes on the embedded beam nodes are generated.
+            - the embedded beam nodes are added to the gravity load, if present.
+
+        Raises:
+            - ValueError: if the element size of an embedded beam is not defined.
+            - ValueError: if no host model parts are found for an embedded beam.
+
+        """
+
+        for name, embedded_beam in self.embedded_beams.items():
+
+            element_size = embedded_beam["element_size"]
+            if element_size is None:
+                element_size = self.mesh_settings.element_size
+            if element_size <= 0:
+                raise ValueError(f"The element size of embedded beam `{name}` is not defined. Please provide the "
+                                 f"element size of the embedded beam or of the mesh.")
+
+            # create the nodes of the beam, the node ids follow the maximum node id in the mesh
+            node_coordinates = self.__discretise_polyline(embedded_beam["coordinates"], element_size)
+            first_node_id = max(max(self.gmsh_io.mesh_data["nodes"].keys(), default=0),
+                                max(self.get_all_nodes().keys(), default=0)) + 1
+
+            nodes: Dict[int, Node] = {}
+            for node_id, coordinates in enumerate(node_coordinates, start=first_node_id):
+                self.gmsh_io.mesh_data["nodes"][node_id] = coordinates
+                nodes[node_id] = Node(node_id, coordinates)
+
+            node_ids = list(nodes.keys())
+            connectivities = [[node_ids[i], node_ids[i + 1]] for i in range(len(node_ids) - 1)]
+
+            # the interface elements share the nodes with the beam elements
+            self.__add_line_mesh_to_model_part(embedded_beam["beam_model_part"], nodes, connectivities)
+            if embedded_beam["interface_model_part"] is not None:
+                self.__add_line_mesh_to_model_part(embedded_beam["interface_model_part"], nodes, connectivities)
+
+            # by default, the beam is embedded in all soil model parts
+            host_search_process: FindEmbeddedBeamHostElements = embedded_beam["host_search_process"]
+            if len(host_search_process.host_model_part_name_list) == 0:
+                host_search_process.host_model_part_name_list = [
+                    body_model_part.name for body_model_part in self.body_model_parts
+                    if isinstance(body_model_part.material, SoilMaterial)
+                ]
+            if len(host_search_process.host_model_part_name_list) == 0:
+                raise ValueError(f"No soil model parts are found in which embedded beam `{name}` can be embedded.")
+
+            self.__generate_embedded_beam_process_meshes(name, nodes)
+            self.__add_embedded_beam_nodes_to_gravity_load(nodes)
+
+    def __generate_embedded_beam_process_meshes(self, beam_name: str, beam_nodes: Dict[int, Node],
+                                                tolerance: float = 1e-6):
+        """
+        Generates the meshes of the processes (boundary conditions and point loads) on the nodes of an embedded beam.
+
+        Args:
+            - beam_name (str): The name of the embedded beam.
+            - beam_nodes (Dict[int, :class:`stem.mesh.Node`]): The nodes of the embedded beam.
+            - tolerance (float): The maximum distance between the coordinates of a process and a beam node.
+
+        Raises:
+            - ValueError: if the coordinates of a process do not coincide with a node of the embedded beam.
+
+        """
+
+        beam_node_ids = list(beam_nodes.keys())
+        tree = cKDTree([node.coordinates for node in beam_nodes.values()])
+
+        for process in self.embedded_beams[beam_name]["process_model_parts"]:
+            model_part: ModelPart = process["model_part"]
+
+            distances, indices = tree.query(process["coordinates"])
+            if np.any(distances > tolerance):
+                raise ValueError(f"The coordinates of model part `{model_part.name}` do not coincide with the nodes "
+                                 f"of embedded beam `{beam_name}`.")
+
+            # remove duplicate nodes, while keeping the order
+            node_ids = list(dict.fromkeys(beam_node_ids[index] for index in np.atleast_1d(indices)))
+
+            first_element_id = self.__get_maximum_element_id() + 1
+            point_elements = self.gmsh_io.mesh_data["elements"].setdefault("POINT_1N", {})
+
+            mesh = Mesh(ndim=0)
+            for element_id, node_id in enumerate(node_ids, start=first_element_id):
+                mesh.nodes[node_id] = Node(node_id, beam_nodes[node_id].coordinates)
+                mesh.elements[element_id] = Element(element_id, "POINT_1N", [node_id])
+                point_elements[element_id] = [node_id]
+
+            self.gmsh_io.mesh_data["physical_groups"][model_part.name] = {
+                "node_ids": list(mesh.nodes.keys()),
+                "element_ids": list(mesh.elements.keys()),
+                "ndim": 0,
+                "element_type": "POINT_1N"
+            }
+
+            model_part.mesh = mesh
+
+    def __add_embedded_beam_nodes_to_gravity_load(self, beam_nodes: Dict[int, Node]):
+        """
+        Adds the nodes of an embedded beam to the gravity load, such that the self weight of the beam is taken into
+        account. The gravity load is applied on the nodes, hence no elements are added.
+
+        Args:
+            - beam_nodes (Dict[int, :class:`stem.mesh.Node`]): The nodes of the embedded beam.
+
+        """
+
+        gravity_model_parts = [
+            model_part for model_part in self.process_model_parts
+            if isinstance(model_part.parameters, GravityLoad) and model_part.mesh is not None
+        ]
+        if len(gravity_model_parts) == 0:
+            return
+
+        # the gravity load only needs to be applied once per node
+        gravity_model_part = gravity_model_parts[0]
+        for node_id, node in beam_nodes.items():
+            gravity_model_part.mesh.nodes[node_id] = Node(node_id, node.coordinates)
+
+        physical_group = self.gmsh_io.mesh_data["physical_groups"].get(gravity_model_part.name)
+        if physical_group is not None:
+            physical_group["node_ids"] = list(gravity_model_part.mesh.nodes.keys())
 
     def __create_interface_elements_post_meshing(self):
         """
@@ -2023,7 +2380,17 @@ class Model:
             for node in secondary_body_model_part.mesh.nodes.values()
         }
 
+        # processes on embedded beam nodes are meshed after the interfaces are created, and are not connected to the
+        # interfaces, as the embedded beams do not share nodes with the soil
+        embedded_beam_process_model_parts = [
+            process["model_part"] for embedded_beam in self.embedded_beams.values()
+            for process in embedded_beam["process_model_parts"]
+        ]
+
         for process_model_part in self.process_model_parts:
+            if any(process_model_part is model_part for model_part in embedded_beam_process_model_parts):
+                continue
+
             if process_model_part.mesh is None:
                 raise ValueError(f"Process model part `{process_model_part.name}` has no mesh. "
                                  "Please generate the mesh first.")
@@ -2288,6 +2655,12 @@ class Model:
 
                 if "INTERFACE" in element_type:
                     continue  # skip body model parts with interface elements,
+
+                # skip lower dimensional (structural) elements, e.g. beams which are located on the interface. Only
+                # continuum elements define the interface, else interface elements are duplicated.
+                if ELEMENT_DATA[element_type]["ndim"] < self.ndim:
+                    continue
+
                 n_shared_nodes = ELEMENT_DATA[element_type]["n_nodes_facets"]
 
                 # overlapping when n shared nodes is as expected for the element type

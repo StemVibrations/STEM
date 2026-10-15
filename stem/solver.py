@@ -165,6 +165,53 @@ class DisplacementAndWaterPressureConvergenceCriteria(ConvergenceCriteriaABC):
 
 
 @dataclass
+class GlobalForceErrorConvergenceCriteria(ConvergenceCriteriaABC):
+    """
+    Class containing information about the global force error convergence criteria (section 9.1.1.1 of the PLAXIS
+    Scientific Manual). This criterion can only be used in combination with the Newton-Raphson strategy.
+
+    Inheritance:
+        - :class:`ConvergenceCriteriaABC`
+
+    Attributes:
+        - force_relative_tolerance  (float): The relative tolerated force error. Default value is 0.01.
+        - force_absolute_tolerance  (float): The absolute tolerance. Default value is 1e-9.
+
+    """
+
+    force_relative_tolerance : float = 0.01
+    force_absolute_tolerance : float = 1e-9
+
+    @property
+    def convergence_criterion(self):
+        """
+        Property for returning the type of the global force error convergence criterion
+
+        Returns:
+            - str: The type of the global force error convergence criterion
+        """
+        return "global_force_error_criterion"
+
+
+@dataclass
+class LocalErrorCriteria:
+    """
+    Class containing the settings of the local error criteria. The local error criteria are checked at the
+    integration points, in addition to the global convergence criteria.
+
+    Attributes:
+        - tolerated_error (float): The tolerated local error. Default value is 0.1.
+        - minimum_reference_stress (float): The minimum reference stress used to normalise the local stress error. \
+            Default value is 1000.0.
+        - reference_pressure (float): The reference pressure. Default value is 100000.0.
+    """
+
+    tolerated_error: float = 0.1
+    minimum_reference_stress: float = 1000.0
+    reference_pressure: float = 100000.0
+
+
+@dataclass
 class NewmarkScheme(SchemeABC):
     """
     Class containing information about the Newmark scheme
@@ -663,6 +710,8 @@ class SolverSettings:
             :class:`DisplacementConvergenceCriteria`, :class:`ResidualConvergenceCriteria`, \
             :class:`WaterPressureConvergenceCriteria` or :class:`DisplacementAndWaterPressureConvergenceCriteria`
         - reset_displacements (bool): if true, the displacements are reset at the beginning of the phase
+        - local_error_criteria (Optional[:class:`LocalErrorCriteria`]): settings of the local error criteria. If \
+            None, the local error criteria are not used. Default value is None.
         - calculate_stresses_on_nodes (bool): if true, the stresses are also calculated on the nodes and not only on \
             the gauss points. Default value is True.
         - strategy_type (:class:`StrategyTypeABC`): strategy type, :class:`NewtonRaphsonStrategy`, \
@@ -689,6 +738,7 @@ class SolverSettings:
 
     convergence_criteria: ConvergenceCriteriaABC
     reset_displacements: bool = False
+    local_error_criteria: Optional[LocalErrorCriteria] = None
     calculate_stresses_on_nodes: bool = True
     strategy_type: StrategyTypeABC = field(default_factory=NewtonRaphsonStrategy)
     scheme: SchemeABC = field(default_factory=NewmarkScheme)

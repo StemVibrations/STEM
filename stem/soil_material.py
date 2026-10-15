@@ -147,9 +147,15 @@ class LinearElasticSoil(SoilConstitutiveLawABC):
     Attributes:
         - YOUNG_MODULUS (float): The Young's modulus [Pa].
         - POISSON_RATIO (float): The Poisson's ratio [-].
+        - K0_MAIN_DIRECTION (Optional[int]): The direction of the vertical stress in the K0 procedure \
+            (0 = x, 1 = y, 2 = z) [-]. Only required for the K0 procedure.
+        - K0_NC (Optional[float]): The ratio of the horizontal to the vertical effective stress in the K0 procedure \
+            [-]. Only required for the K0 procedure.
     """
     YOUNG_MODULUS: float
     POISSON_RATIO: float
+    K0_MAIN_DIRECTION: Optional[int] = None
+    K0_NC: Optional[float] = None
 
 
 @dataclass
@@ -186,6 +192,198 @@ class SmallStrainUmatLaw(SoilConstitutiveLawABC):
     IS_FORTRAN_UMAT: bool
     UMAT_PARAMETERS: List[Any]
     STATE_VARIABLES: List[Any]
+
+
+@dataclass
+class HardeningSoilLaw(SoilConstitutiveLawABC):
+    """
+    Class containing the material parameters for the Hardening Soil model (C UMAT from PlatypusBytes
+    ConstitutiveModels). Stress parameters must be given in the same unit as the model (Pa).
+
+    Inheritance:
+        - :class:`SoilConstitutiveLawABC`
+
+    Attributes:
+        - UMAT_NAME (str): The name and location of the hardening soil umat .dll or .so file.
+        - E50_REF (float): Reference secant stiffness at 50% strength [Pa].
+        - EUR_REF (float): Reference unloading/reloading stiffness [Pa].
+        - POWER_M (float): Stress exponent for stiffness [-].
+        - COHESION (float): Cohesion [Pa].
+        - FRICTION_ANGLE (float): Friction angle [deg].
+        - DILATANCY_ANGLE (float): Dilatancy angle [deg].
+        - P_REF (float): Reference pressure for stiffness [Pa].
+        - FAILURE_RATIO (float): Failure ratio qf/qa, in (0, 1) [-].
+        - POISSON_RATIO (float): Unloading/reloading Poisson's ratio [-].
+        - M_CAP (float): Cap aspect ratio, 0 disables the cap [-].
+        - K_RATIO (float): Ks/Kc, swelling over elasto-plastic bulk modulus in isotropic compression (> 1) [-].
+        - INITIAL_VOID_RATIO (Optional[float]): Initial void ratio [-].
+        - CRITICAL_VOID_RATIO (Optional[float]): Critical void ratio of the dilatancy cut-off, 0 disables it [-].
+        - INITIAL_PLASTIC_SHEAR_STRAIN (float): Initial plastic shear strain state variable [-].
+        - INITIAL_PRECONSOLIDATION_STRESS (float): Initial pre-consolidation stress state variable; 0 lets the \
+            model initialise a normally consolidated state [Pa].
+    """
+    UMAT_NAME: str
+    E50_REF: float
+    EUR_REF: float
+    POWER_M: float
+    COHESION: float
+    FRICTION_ANGLE: float
+    DILATANCY_ANGLE: float
+    P_REF: float
+    FAILURE_RATIO: float
+    POISSON_RATIO: float
+    M_CAP: float
+    K_RATIO: float
+    INITIAL_VOID_RATIO: Optional[float] = None
+    CRITICAL_VOID_RATIO: Optional[float] = None
+    INITIAL_PLASTIC_SHEAR_STRAIN: float = 0.0
+    INITIAL_PRECONSOLIDATION_STRESS: float = 0.0
+
+    def __post_init__(self):
+        """
+        Checks the validity of the material parameters.
+
+        Raises:
+            - ValueError: If a parameter is outside its valid range.
+        """
+        if self.E50_REF <= 0 or self.EUR_REF <= 0:
+            raise ValueError("E50_REF and EUR_REF must be positive.")
+        if self.COHESION < 0:
+            raise ValueError("COHESION must be non-negative.")
+        if not 0 < self.FRICTION_ANGLE < 90:
+            raise ValueError("FRICTION_ANGLE must be in (0, 90) degrees.")
+        if self.DILATANCY_ANGLE > self.FRICTION_ANGLE:
+            raise ValueError("DILATANCY_ANGLE must not exceed FRICTION_ANGLE.")
+        if self.P_REF <= 0:
+            raise ValueError("P_REF must be positive.")
+        if not 0 < self.FAILURE_RATIO < 1:
+            raise ValueError("FAILURE_RATIO must be in (0, 1).")
+        if self.EUR_REF <= 2 * self.E50_REF / (2 - self.FAILURE_RATIO):
+            raise ValueError("EUR_REF must be larger than 2 * E50_REF / (2 - FAILURE_RATIO).")
+        if not 0 <= self.POISSON_RATIO < 0.5:
+            raise ValueError("POISSON_RATIO must be in [0, 0.5).")
+        if self.M_CAP < 0:
+            raise ValueError("M_CAP must be non-negative (0 disables the cap).")
+        if self.M_CAP > 0 and self.K_RATIO <= 1:
+            raise ValueError("K_RATIO must be larger than 1.")
+        if self.CRITICAL_VOID_RATIO is not None and self.CRITICAL_VOID_RATIO > 0 and \
+                (self.INITIAL_VOID_RATIO is None or self.INITIAL_VOID_RATIO <= 0):
+            raise ValueError("INITIAL_VOID_RATIO must be positive when the dilatancy cut-off is used.")
+
+    def get_umat_parameters(self) -> List[float]:
+        """
+        Returns the UMAT PROPS array in the order expected by the hardening soil UMAT.
+
+        Returns:
+            - List[float]: UMAT parameters.
+        """
+        parameters = [
+            self.E50_REF, self.EUR_REF, self.POWER_M, self.COHESION, self.FRICTION_ANGLE, self.DILATANCY_ANGLE,
+            self.P_REF, self.FAILURE_RATIO, self.POISSON_RATIO, self.M_CAP, self.K_RATIO
+        ]
+        if self.INITIAL_VOID_RATIO is not None or self.CRITICAL_VOID_RATIO is not None:
+            parameters.append(self.INITIAL_VOID_RATIO if self.INITIAL_VOID_RATIO is not None else 0.0)
+        if self.CRITICAL_VOID_RATIO is not None:
+            parameters.append(self.CRITICAL_VOID_RATIO)
+        return parameters
+
+    def get_state_variables(self) -> List[float]:
+        """
+        Returns the initial UMAT STATEV array: [plastic shear strain, pre-consolidation stress, at failure].
+
+        Returns:
+            - List[float]: initial state variables.
+        """
+        return [self.INITIAL_PLASTIC_SHEAR_STRAIN, self.INITIAL_PRECONSOLIDATION_STRESS, 0.0]
+
+
+@dataclass
+class SoftSoilCreepLaw(SoilConstitutiveLawABC):
+    """
+    Class containing the material parameters for the Soft Soil Creep model (C UMAT from PlatypusBytes
+    ConstitutiveModels).
+
+    Inheritance:
+        - :class:`SoilConstitutiveLawABC`
+
+    Attributes:
+        - UMAT_NAME (str): The name and location of the soft soil creep umat .dll or .so file.
+        - MODIFIED_SWELLING_INDEX (float): kappa* [-].
+        - MODIFIED_COMPRESSION_INDEX (float): lambda* [-] (must be larger than kappa*).
+        - MODIFIED_CREEP_INDEX (float): mu* [-].
+        - POISSON_RATIO (float): Poisson's ratio [-].
+        - REFERENCE_TIME (float): Reference time tau, in the time unit of the analysis [s].
+        - CRITICAL_STATE_LINE_SLOPE (float): Slope of the critical state line M [-].
+        - FRICTION_ANGLE (float): Mohr-Coulomb friction angle, 0 disables the failure surface [deg].
+        - OCR (float): Initial isotropic over-consolidation ratio [-].
+        - MINIMUM_PRESSURE (Optional[float]): Lower limit of the mean stress for the stiffness [Pa].
+        - INITIAL_CREEP_STRAIN (float): Initial volumetric creep strain state variable [-].
+        - INITIAL_PRECONSOLIDATION_PRESSURE (float): Initial isotropic pre-consolidation pressure; 0 lets the \
+            model initialise it as OCR * p_eq [Pa].
+    """
+    UMAT_NAME: str
+    MODIFIED_SWELLING_INDEX: float
+    MODIFIED_COMPRESSION_INDEX: float
+    MODIFIED_CREEP_INDEX: float
+    POISSON_RATIO: float
+    REFERENCE_TIME: float
+    CRITICAL_STATE_LINE_SLOPE: float
+    FRICTION_ANGLE: float
+    OCR: float = 1.0
+    MINIMUM_PRESSURE: Optional[float] = None
+    INITIAL_CREEP_STRAIN: float = 0.0
+    INITIAL_PRECONSOLIDATION_PRESSURE: float = 0.0
+
+    def __post_init__(self):
+        """
+        Checks the validity of the material parameters.
+
+        Raises:
+            - ValueError: If a parameter is outside its valid range.
+        """
+        if self.MODIFIED_SWELLING_INDEX <= 0:
+            raise ValueError("MODIFIED_SWELLING_INDEX must be positive.")
+        if self.MODIFIED_COMPRESSION_INDEX <= self.MODIFIED_SWELLING_INDEX:
+            raise ValueError("MODIFIED_COMPRESSION_INDEX must be larger than MODIFIED_SWELLING_INDEX.")
+        if self.MODIFIED_CREEP_INDEX <= 0:
+            raise ValueError("MODIFIED_CREEP_INDEX must be positive.")
+        if not 0 <= self.POISSON_RATIO < 0.5:
+            raise ValueError("POISSON_RATIO must be in [0, 0.5).")
+        if self.REFERENCE_TIME <= 0:
+            raise ValueError("REFERENCE_TIME must be positive.")
+        if self.CRITICAL_STATE_LINE_SLOPE <= 0:
+            raise ValueError("CRITICAL_STATE_LINE_SLOPE must be positive.")
+        if not 0 <= self.FRICTION_ANGLE < 90:
+            raise ValueError("FRICTION_ANGLE must be in [0, 90) degrees.")
+        if self.OCR <= 0:
+            raise ValueError("OCR must be positive.")
+        if self.MINIMUM_PRESSURE is not None and self.MINIMUM_PRESSURE <= 0:
+            raise ValueError("MINIMUM_PRESSURE must be positive.")
+
+    def get_umat_parameters(self) -> List[float]:
+        """
+        Returns the UMAT PROPS array in the order expected by the soft soil creep UMAT.
+
+        Returns:
+            - List[float]: UMAT parameters.
+        """
+        parameters = [
+            self.MODIFIED_SWELLING_INDEX, self.MODIFIED_COMPRESSION_INDEX - self.MODIFIED_SWELLING_INDEX,
+            self.MODIFIED_CREEP_INDEX, self.POISSON_RATIO, self.REFERENCE_TIME, self.CRITICAL_STATE_LINE_SLOPE,
+            self.FRICTION_ANGLE, self.OCR
+        ]
+        if self.MINIMUM_PRESSURE is not None:
+            parameters.append(self.MINIMUM_PRESSURE)
+        return parameters
+
+    def get_state_variables(self) -> List[float]:
+        """
+        Returns the initial UMAT STATEV array: [creep strain, pre-consolidation pressure, p_eq, OCR, at failure].
+
+        Returns:
+            - List[float]: initial state variables.
+        """
+        return [self.INITIAL_CREEP_STRAIN, self.INITIAL_PRECONSOLIDATION_PRESSURE, 0.0, 0.0, 0.0]
 
 
 @dataclass
@@ -382,12 +580,16 @@ class InterfaceMaterial:
         for the interface material.
         - retention_parameters (:class:`RetentionLawABC`): The retention parameters for the interface material.
         - fluid_properties (:class:`FluidProperties`): The fluid properties for the interface material.
+        - consider_gap_closure (bool): If True, a gap that opened when the tensile strength of the interface was
+        reached must close before compression can develop again (as the Plaxis option "Consider gap closure").
+        Only supported by the Mohr-Coulomb interface law.
     """
     name: str
     constitutive_law: SoilConstitutiveLawABC
     soil_formulation: SoilFormulationParametersABC
     retention_parameters: RetentionLawABC
     fluid_properties: FluidProperties = field(default_factory=FluidProperties)
+    consider_gap_closure: bool = False
 
     @staticmethod
     def get_element_name(n_dim_model: int, n_nodes_element: int, analysis_type: AnalysisType) -> str:
