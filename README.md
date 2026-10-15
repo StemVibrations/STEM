@@ -9,7 +9,7 @@
 ```
 
 # STEM: Soil and Track System Modelling Tool
-![Tests](https://github.com/StemVibrations/STEM/actions/workflows/tests.yml/badge.svg)
+[![Tests](https://github.com/StemVibrations/STEM/actions/workflows/tests.yml/badge.svg?branch=main&event=push)](https://github.com/StemVibrations/STEM/actions/workflows/tests.yml?query=branch%3Amain+event%3Apush)
 [![Documentation Status](https://readthedocs.org/projects/stemvibrations/badge/?version=latest)](https://stemvibrations.readthedocs.io/)
 [![codecov](https://codecov.io/gh/stemvibrations/stem/graph/badge.svg?token=0DMYCZF4BU)](https://codecov.io/gh/stemvibrations/stem)
 [![PyPI version](https://img.shields.io/pypi/v/STEM-Vibrations.svg)](https://pypi.org/project/STEM-Vibrations/)

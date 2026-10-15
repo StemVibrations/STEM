@@ -5,6 +5,10 @@ on:
   pull_request:
     branches: [ "**" ]
 
+  # Run on main after merges, so the README badge reflects the status of main
+  push:
+    branches: [ "main" ]
+
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
