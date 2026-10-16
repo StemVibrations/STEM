@@ -1,4 +1,4 @@
-numpy==2.3.4
+numpy==2.3.5
 scipy==1.16.2
 plotly==5.24.1
 gmsh_utils @ git+https://github.com/StemVibrations/gmsh_utils@update_python_version
