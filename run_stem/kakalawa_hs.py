@@ -7,6 +7,7 @@ import sys
 import json
 import orjson
 import numpy as np
+import KratosMultiphysics
 
 from stem.model import Model
 from stem.soil_material import OnePhaseSoil, LinearElasticSoil, SoilMaterial, SaturatedBelowPhreaticLevelLaw, SmallStrainUmatLaw, MohrCoulombLaw, SmallStrainUdsmLaw, InterfaceMaterial, \
@@ -42,50 +43,114 @@ HS_P_REF = 100e3
 HS_FAILURE_RATIO = 0.9
 
 
-def _p(mean, rel_std=0.05):
-    return {"mean": mean, "std": abs(mean) * rel_std, "distribution": "normal"}
-
-
-def _hs_soil(gamma_unsat, gamma_sat, e50_ref, eoed_ref, eur_ref, m, c, phi, psi, k0_nc, r_inter=0.85):
-    """ all input in PLAXIS units (kN/m3, kN/m2, degrees), converted to SI """
-    return {"sat_unit_weight": _p(gamma_sat * 1e3),
-            "unsat_unit_weight": _p(gamma_unsat * 1e3),
-            "e50_ref": _p(e50_ref * 1e3),
-            "eoed_ref": _p(eoed_ref * 1e3),
-            "eur_ref": _p(eur_ref * 1e3),
-            "power_m": _p(m),
-            # small cohesion for the sands, as in kakalawa.py (1 Pa)
-            "cohesion": _p(max(c * 1e3, 1.0)),
-            "friction_angle": _p(phi),
-            "dilatancy_angle": _p(psi),
-            "k0_nc": _p(k0_nc),
-            "r_inter": _p(r_inter)}
-
-
+# probabilistic parameters per material and per parameter (SI units: N/m3, Pa, degrees).
+# the sands have a small cohesion (1 Pa) for numerical stability.
 prob_parameters = {
-    #                            g_unsat g_sat  E50_ref  Eoed_ref Eur_ref   m     c    phi    psi   K0nc
-    "sand_clean_loose": _hs_soil(17.0, 19.0, 20.5e3, 20.5e3, 20.5e3*3, 0.55, 0.0, 32.6, 2.6, 0.4612, 0.57),  # 01
-    "clay_sandy":       _hs_soil(15.0, 15.0, 3000.0,  2000.0,  9000, 0.8, 5.0, 22.50, 0.00, 0.6173, 0.88),  # 06
-    "sand_clean_mid":   _hs_soil(18.0, 20.0, 41.1e3, 41.1e3, 41.1e3*3, 0.55, 0.0, 38.3, 8.3, 0.38, 0.46),  # 08
-    "sand_clayey":      _hs_soil(17.4, 19.4, 45e3, 33.8e3, 135e3, 0.50, 0.0, 37.7, 15, 0.4,0.47 ),  # 12
-    "clay_clean":       _hs_soil(17.0, 17.0, 4500,  3000.0,  14e3, 0.80, 28.2, 25.20, 0.00, 0.67, 0.8),  # 10
-    "sand_clean_dense": _hs_soil(19.0, 21.0, 75.5e3, 75.5e3, 226.5e3, 0.550, 0.0, 37.8, 7.8, 0.428, 0.47),  # 07
-                   "sheetpile_E15": {"EI": {"mean": 640e6, "std": 1e6, "distribution": "normal"},
-                                    "EA": {"mean": 12e9, "std": 1e6, "distribution": "normal"},
-                                    "w": {"mean": 12e3, "std": 1e3, "distribution": "normal"}},
-                   "sheetpile_E357": {"EI": {"mean": 1.523e9, "std": 1e6, "distribution": "normal"},
-                                    "EA": {"mean": 28.56e9, "std": 1e6, "distribution": "normal"},
-                                    "w": {"mean": 12e3, "std": 1e3, "distribution": "normal"}},
-                   "anchor":        {"EA": {"mean": 472.5e6, "std": 1e6, "distribution": "normal"},
-                                    "prestress": {"mean": 1000e3, "std": 1e3, "distribution": "normal"}},
-
-
+    "sand_clean_loose": {
+        "sat_unit_weight":   {"mean": 19e3, "std": 1900.0, "distribution": "normal"},
+        "unsat_unit_weight": {"mean": 17e3, "std": 1700.0, "distribution": "normal"},
+        "e50_ref":           {"mean": 20.5e6, "std": 4.1e6, "distribution": "normal"},
+        "eoed_ref":          {"mean": 20.5e6, "std": 4.1e6, "distribution": "normal"},
+        "eur_ref":           {"mean": 61.5e6, "std": 12.3e6, "distribution": "normal"},
+        "power_m":           {"mean": 0.55, "std": 0.055, "distribution": "normal"},
+        "cohesion":          {"mean": 1.0, "std": 0.2, "distribution": "normal"},
+        "friction_angle":    {"mean": 32.6, "std": 6.52, "distribution": "normal"},
+        "dilatancy_angle":   {"mean": 2.6, "std": 0.52, "distribution": "normal"},
+        "k0_nc":             {"mean": 0.4612, "std": 0.09224, "distribution": "normal"},
+        "r_inter":           {"mean": 0.57, "std": 0.0, "distribution": "none"},
+    },
+    "clay_sandy": {
+        "sat_unit_weight":   {"mean": 15e3, "std": 1500.0, "distribution": "normal"},
+        "unsat_unit_weight": {"mean": 15e3, "std": 1500.0, "distribution": "normal"},
+        "e50_ref":           {"mean": 3e6, "std": 600e3, "distribution": "normal"},
+        "eoed_ref":          {"mean": 2e6, "std": 400e3, "distribution": "normal"},
+        "eur_ref":           {"mean": 9e6, "std": 1.8e6, "distribution": "normal"},
+        "power_m":           {"mean": 0.8, "std": 0.08, "distribution": "normal"},
+        "cohesion":          {"mean": 5000.0, "std": 1000.0, "distribution": "normal"},
+        "friction_angle":    {"mean": 22.5, "std": 4.5, "distribution": "normal"},
+        "dilatancy_angle":   {"mean": 0.0, "std": 0.0, "distribution": "normal"},
+        "k0_nc":             {"mean": 0.6173, "std": 0.12346, "distribution": "normal"},
+        "r_inter":           {"mean": 0.88, "std": 0.0, "distribution": "none"},
+    },
+    "sand_clean_mid": {
+        "sat_unit_weight":   {"mean": 20e3, "std": 2000.0, "distribution": "normal"},
+        "unsat_unit_weight": {"mean": 18e3, "std": 1800.0, "distribution": "normal"},
+        "e50_ref":           {"mean": 41.1e6, "std": 8.22e6, "distribution": "normal"},
+        "eoed_ref":          {"mean": 41.1e6, "std": 8.22e6, "distribution": "normal"},
+        "eur_ref":           {"mean": 123.3e6, "std": 24.66e6, "distribution": "normal"},
+        "power_m":           {"mean": 0.55, "std": 0.055, "distribution": "normal"},
+        "cohesion":          {"mean": 1.0, "std": 0.2, "distribution": "normal"},
+        "friction_angle":    {"mean": 38.3, "std": 7.66, "distribution": "normal"},
+        "dilatancy_angle":   {"mean": 8.3, "std": 1.66, "distribution": "normal"},
+        "k0_nc":             {"mean": 0.38, "std": 0.076, "distribution": "normal"},
+        "r_inter":           {"mean": 0.46, "std": 0.0, "distribution": "none"},
+    },
+    "sand_clayey": {
+        "sat_unit_weight":   {"mean": 19.4e3, "std": 1940.0, "distribution": "normal"},
+        "unsat_unit_weight": {"mean": 17.4e3, "std": 1740.0, "distribution": "normal"},
+        "e50_ref":           {"mean": 45e6, "std": 9e6, "distribution": "normal"},
+        "eoed_ref":          {"mean": 33.8e6, "std": 6.76e6, "distribution": "normal"},
+        "eur_ref":           {"mean": 135e6, "std": 27e6, "distribution": "normal"},
+        "power_m":           {"mean": 0.5, "std": 0.05, "distribution": "normal"},
+        "cohesion":          {"mean": 1.0, "std": 0.2, "distribution": "normal"},
+        "friction_angle":    {"mean": 37.7, "std": 7.54, "distribution": "normal"},
+        "dilatancy_angle":   {"mean": 15.0, "std": 3.0, "distribution": "normal"},
+        "k0_nc":             {"mean": 0.4, "std": 0.08, "distribution": "normal"},
+        "r_inter":           {"mean": 0.47, "std": 0.0, "distribution": "none"},
+    },
+    "clay_clean": {
+        "sat_unit_weight":   {"mean": 17e3, "std": 1700.0, "distribution": "normal"},
+        "unsat_unit_weight": {"mean": 17e3, "std": 1700.0, "distribution": "normal"},
+        "e50_ref":           {"mean": 4.5e6, "std": 900e3, "distribution": "normal"},
+        "eoed_ref":          {"mean": 3e6, "std": 600e3, "distribution": "normal"},
+        "eur_ref":           {"mean": 14e6, "std": 2.8e6, "distribution": "normal"},
+        "power_m":           {"mean": 0.8, "std": 0.08, "distribution": "normal"},
+        "cohesion":          {"mean": 28.2e3, "std": 5640.0, "distribution": "normal"},
+        "friction_angle":    {"mean": 25.2, "std": 5.04, "distribution": "normal"},
+        "dilatancy_angle":   {"mean": 0.0, "std": 0.0, "distribution": "normal"},
+        "k0_nc":             {"mean": 0.67, "std": 0.134, "distribution": "normal"},
+        "r_inter":           {"mean": 0.8, "std": 0.0, "distribution": "none"},
+    },
+    "sand_clean_dense": {
+        "sat_unit_weight":   {"mean": 21e3, "std": 2100.0, "distribution": "normal"},
+        "unsat_unit_weight": {"mean": 19e3, "std": 1900.0, "distribution": "normal"},
+        "e50_ref":           {"mean": 75.5e6, "std": 15.1e6, "distribution": "normal"},
+        "eoed_ref":          {"mean": 75.5e6, "std": 15.1e6, "distribution": "normal"},
+        "eur_ref":           {"mean": 226.5e6, "std": 45.3e6, "distribution": "normal"},
+        "power_m":           {"mean": 0.55, "std": 0.055, "distribution": "normal"},
+        "cohesion":          {"mean": 1.0, "std": 0.2, "distribution": "normal"},
+        "friction_angle":    {"mean": 37.8, "std": 7.56, "distribution": "normal"},
+        "dilatancy_angle":   {"mean": 7.8, "std": 1.56, "distribution": "normal"},
+        "k0_nc":             {"mean": 0.428, "std": 0.0856, "distribution": "normal"},
+        "r_inter":           {"mean": 0.47, "std": 0.0, "distribution": "none"},
+    },
+    "sheetpile_E15": {
+        "EI":        {"mean": 640e6, "std": 12.8e6, "distribution": "normal"},
+        "EA":        {"mean": 12e9, "std": 240e6, "distribution": "normal"},
+        "w":         {"mean": 12e3, "std": 240.0, "distribution": "normal"},
+    },
+    "sheetpile_E357": {
+        "EI":        {"mean": 1.523e9, "std": 30.46e6, "distribution": "normal"},
+        "EA":        {"mean": 28.56e9, "std": 571.2e6, "distribution": "normal"},
+        "w":         {"mean": 12e3, "std": 240.0, "distribution": "normal"},
+    },
+    "anchor": {
+        "EA":        {"mean": 472.5e6, "std": 9.45e6, "distribution": "normal"},
+        "prestress": {"mean": 1000e3, "std": 20e3, "distribution": "normal"},
+    },
 }
 
-# set all disitrubutions to none
-for material_name, material_parameters in prob_parameters.items():
-    for parameter_name, parameter_info in material_parameters.items():
-        parameter_info["distribution"] = "none"
+# # set all disitrubutions to none
+# for material_name, material_parameters in prob_parameters.items():
+#     for parameter_name, parameter_info in material_parameters.items():
+#         parameter_info["distribution"] = "none"
+
+# groups of parameters that are fully correlated within each material: all parameters in a group share the same
+# standard normal variate z, the value gives the sign of the correlation (+1: sample = mean + z * std,
+# -1: sample = mean - z * std). K0nc decreases with increasing friction angle (Jaky: K0nc = 1 - sin(phi)).
+CORRELATED_PARAMETERS = [{"friction_angle": 1, "dilatancy_angle": 1, "k0_nc": -1},
+                         {"sat_unit_weight": 1, "unsat_unit_weight": 1},
+                         {"e50_ref": 1, "eoed_ref": 1, "eur_ref": 1}]
 
 
 def connect_anchor_to_embedded_beam(model, anchor_name, beam_name, connection_coordinates, tolerance=1e-6):
@@ -127,13 +192,128 @@ def collect_sampled_parameters(parameters_dict):
     return sampled_parameters
 
 
-def correlated_dilatancy_angle(parameters_dict, material_name, base_dilatancy_angle):
-    if base_dilatancy_angle == 0.0:
-        return 0.0
-    mean_friction_angle = parameters_dict[material_name]["friction_angle"]["mean"]
-    sampled_friction_angle = parameters_dict[material_name]["friction_angle"]["sample"]
-    percentual_difference_sample_mean = (sampled_friction_angle - mean_friction_angle) / mean_friction_angle
-    return base_dilatancy_angle + percentual_difference_sample_mean * base_dilatancy_angle
+SHEETPILE_PART_NAMES = ["sheetpile_part_1", "sheetpile_part_2", "sheetpile_part_3"]
+ANCHOR_PART_NAME = "anchor"
+
+
+def is_part_active(stage, part_name):
+    """ the sheetpile and anchor parts are (de)activated with an Excavation process """
+    return not stage.get_additional_process_part_by_name_and_type(part_name, Excavation).parameters.deactivate_body_model_part
+
+
+def read_end_of_stage_nodal_values(stage, output_dir, part_name, variable_name):
+    """
+    Reads the nodal values of a variable at the end of a stage from the json output of a model part.
+
+    Returns:
+        - Dict[int, float]: node id -> value, or None if no output is available
+    """
+    output_name = f"json_output_{part_name}"
+    output_settings = next(o for o in stage.output_settings if o.output_name == output_name)
+    file_name = output_settings._full_output_name
+    if not file_name.endswith(".json"):
+        file_name += ".json"
+    file_path = os.path.join(output_dir, file_name)
+    if not os.path.exists(file_path):
+        return None
+
+    with open(file_path, "rb") as f:
+        data = orjson.loads(f.read())
+    if len(data.get("TIME", [])) == 0:
+        return None
+
+    # NaN values are written as null by orjson and are skipped
+    return {int(key.split("_")[1]): float(node_data[variable_name][-1])
+            for key, node_data in data.items()
+            if key.startswith("NODE_") and isinstance(node_data, dict) and variable_name in node_data
+            and node_data[variable_name][-1] is not None}
+
+
+def get_anchor_normal_force(stem, stage_number):
+    """
+    Returns the maximum absolute normal force [N/m] (including prestress) in the anchor elements at the end of the last
+    calculated stage, or None if the anchor is not active in that stage.
+    """
+    if not is_part_active(stem.stages[stage_number - 1], ANCHOR_PART_NAME):
+        return None
+    model_part = stem.kratos_model.GetModelPart(f"PorousDomain.{ANCHOR_PART_NAME}")
+    axial_force = KratosMultiphysics.KratosGlobals.GetVariable("AXIAL_FORCE")
+    forces = [abs(value) for element in model_part.Elements if element.IsActive()
+              for value in element.CalculateOnIntegrationPoints(axial_force, model_part.ProcessInfo)]
+    return float(max(forces)) if forces else None
+
+
+def collect_stage_results(stem, output_dir, anchor_normal_forces):
+    """
+    Collects the results at the end of each calculated stage: the maximum absolute bending moment in the sheetpile
+    [Nm/m], the y coordinate where it occurs [m] and the maximum absolute normal force in the anchor [N/m]. Results of
+    parts which are not active in a stage are None.
+
+    Args:
+        - anchor_normal_forces (Dict[int, float]): stage number -> anchor normal force, of the calculated stages
+    """
+    initial_stage = stem.stages[0]
+    stage_results = []
+    for stage_number in sorted(anchor_normal_forces):
+        stage = stem.stages[stage_number - 1]
+        stage_result = {"stage": stage_number,
+                        "max_bending_moment": None,
+                        "y_max_bending_moment": None,
+                        "max_anchor_normal_force": anchor_normal_forces[stage_number]}
+
+        bending_moments = {}
+        for part_name in SHEETPILE_PART_NAMES:
+            if not is_part_active(stage, part_name):
+                continue
+            values = read_end_of_stage_nodal_values(stage, output_dir, part_name, "BENDING_MOMENT")
+            for node_id, value in (values or {}).items():
+                bending_moments[node_id] = (value, part_name)
+        if bending_moments:
+            node_id, (value, part_name) = max(bending_moments.items(), key=lambda item: abs(item[1][0]))
+            stage_result["max_bending_moment"] = abs(value)
+            stage_result["y_max_bending_moment"] = float(
+                initial_stage.get_model_part_by_name(part_name).mesh.nodes[node_id].coordinates[1])
+
+        stage_results.append(stage_result)
+    return stage_results
+
+
+def _sample_group(parameter_infos, signs, max_attempts=10000):
+    """
+    Samples a group of fully correlated parameters: all share the same standard normal variate z, such that
+    sample = mean + sign * z * std for every parameter (distribution "none" gives the mean). Samples with any negative
+    value are rejected and redrawn (truncated distribution).
+    """
+    for parameter_info in parameter_infos:
+        if parameter_info["distribution"] not in ("none", "normal"):
+            raise ValueError(f"Unsupported distribution: {parameter_info['distribution']}")
+
+    is_random = any(parameter_info["distribution"] == "normal" for parameter_info in parameter_infos)
+    for _ in range(max_attempts):
+        z = np.random.standard_normal() if is_random else 0.0
+        samples = [parameter_info["mean"] if parameter_info["distribution"] == "none"
+                   else parameter_info["mean"] + sign * z * parameter_info["std"]
+                   for parameter_info, sign in zip(parameter_infos, signs)]
+        if all(sample >= 0.0 for sample in samples):
+            for parameter_info, sample in zip(parameter_infos, samples):
+                parameter_info["sample"] = float(sample)
+            return
+    raise ValueError(f"Could not draw a non-negative sample in {max_attempts} attempts: {parameter_infos}")
+
+
+def sample_parameters(parameters_dict):
+    """
+    Samples all parameters. Parameters within a group of CORRELATED_PARAMETERS are fully correlated, all others are
+    independent. No sampled value is lower than 0.
+    """
+    for material_parameters in parameters_dict.values():
+        groups = [{name: sign for name, sign in group.items() if name in material_parameters}
+                  for group in CORRELATED_PARAMETERS]
+        groups = [group for group in groups if group]
+        correlated_names = {name for group in groups for name in group}
+        groups += [{name: 1} for name in material_parameters if name not in correlated_names]
+        for group in groups:
+            _sample_group([material_parameters[name] for name in group], list(group.values()))
 
 
 def append_sample_to_json(results_file, sample_record):
@@ -180,7 +360,7 @@ def apply_sampled_parameters(parameters_dict, sampled_parameters):
         parameters_dict[material_name][parameter_name]["sample"] = float(sample_value)
 
 
-n_samples = 1
+n_samples = 3
 results_dict = {"samples": []}
 
 cwd = os.getcwd()
@@ -202,7 +382,7 @@ if replay_sample_number is not None:
 for sample_number in range(n_samples):
 
     if replay_parameters is None:
-        ProbUtils.sample_all_parameters(prob_parameters)
+        sample_parameters(prob_parameters)
         active_sample_number = sample_number + 1
     else:
         apply_sampled_parameters(prob_parameters, replay_parameters)
@@ -250,7 +430,7 @@ for sample_number in range(n_samples):
                                    DENSITY_SOLID=gamma_unsat / ((1.0 - porosity) * gravity_constant),
                                    POROSITY=porosity)
 
-        dilatancy_angle = correlated_dilatancy_angle(prob_parameters, soil_name, prm["dilatancy_angle"]["mean"])
+        dilatancy_angle = prm["dilatancy_angle"]["sample"]
         m_cap, k_ratio = hs_cap_parameters(soil_name)
 
         law = HardeningSoilLaw(UMAT_NAME=HARDENING_SOIL_DLL,
@@ -671,12 +851,18 @@ for sample_number in range(n_samples):
             gauss_point_results=[GaussPointOutput.CAUCHY_STRESS_VECTOR],
             output_control_type="step"))
 
-    model.add_output_settings(part_name="sheetpile_part_1",
-                              output_dir=results_dir,
-                              output_name="json_output_sheetpile_part_1",
-                                output_parameters=JsonOutputParameters(
-                                    output_interval=1,
-                                    nodal_results=[NodalOutput.DISPLACEMENT, NodalOutput.BENDING_MOMENT, NodalOutput.SHEAR_FORCE,NodalOutput.AXIAL_FORCE]))
+    # json output of the sheetpile (bending moment). With an output interval of 1 (the duration of each stage), the
+    # json files contain the results at the end of each stage. The anchor normal force is not extrapolated to the nodes
+    # (this gives NaN at the node shared by the anchor and the sheetpile), it is read from the anchor elements after
+    # each stage, see get_anchor_normal_force
+    for sheetpile_part_name in SHEETPILE_PART_NAMES:
+        model.add_output_settings(part_name=sheetpile_part_name,
+                                  output_dir=results_dir,
+                                  output_name=f"json_output_{sheetpile_part_name}",
+                                  output_parameters=JsonOutputParameters(
+                                      output_interval=1,
+                                      nodal_results=[NodalOutput.DISPLACEMENT, NodalOutput.BENDING_MOMENT,
+                                                     NodalOutput.SHEAR_FORCE, NodalOutput.AXIAL_FORCE]))
 
 
     extrapolate_process = ExtrapolateIntegrationPointToNodesParameters(model_part_name_list=["sheetpile_part_1", "sheetpile_part_2", "sheetpile_part_3", "bottom_plate"],
@@ -745,6 +931,8 @@ for sample_number in range(n_samples):
     # are created, such that all stages share the connection.
     connect_anchor_to_embedded_beam(model, "anchor", "grout", grout_coordinates[0])
 
+    # stage number -> maximum normal force in the anchor at the end of the stage
+    anchor_normal_forces = {}
     try:
 
         # stage 2: nil step (as in PLAXIS). The soil is switched from the K0 procedure to hardening soil, without any
@@ -923,48 +1111,52 @@ for sample_number in range(n_samples):
         import time
 
         start_time_calc = time.time()
-        stem.run_calculation()
+        # the stages are run one by one (as in stem.run_calculation), such that the anchor normal force can be read
+        # from the Kratos model at the end of each stage
+        for stage_number in range(1, len(stem.stages) + 1):
+            stem.run_stage(stage_number)
+            anchor_normal_forces[stage_number] = get_anchor_normal_force(stem, stage_number)
+        stem.finalise()
         print(f"Total calculation time: {time.time() - start_time_calc} seconds")
 
-        with open(os.path.join(res_dir, "json_output_sheetpile_part_1_stage_7.json"), 'r') as f:
-            data = json.load(f)
-
-        bending_moments = []
-        for node_key in data.keys():
-            node_data = data[node_key]
-            if not isinstance(node_data, dict) or "BENDING_MOMENT" not in node_data:
-                continue
-            bending_moment = node_data["BENDING_MOMENT"]
-            bending_moments.append(bending_moment)
-            # shear_force = node_data["SHEAR_FORCE"]
-            # axial_force = node_data["AXIAL_FORCE"]
-
-        max_bending_moment = float(np.max(np.abs(bending_moments)))
+        stage_results = collect_stage_results(stem, res_dir, anchor_normal_forces)
+        max_bending_moment = stage_results[-1]["max_bending_moment"]
         sampled_parameters = collect_sampled_parameters(prob_parameters)
 
         sample_record = {
             "sample_number": active_sample_number,
             "parameters": sampled_parameters,
             "max_bending_moment": max_bending_moment,
+            "stage_results": stage_results,
+            "failure_stage": None,
         }
         if replay_parameters is not None:
             sample_record["replay_of_sample_number"] = replay_sample_number
         results_dict["samples"].append(sample_record)
         append_sample_to_json(results_file, sample_record)
 
-
-        print("max_bending_moment: ", max_bending_moment)
+        for stage_result in stage_results:
+            print(stage_result)
     except Exception as e:
         print(f"An error occurred during the simulation: {e}")
         # make sure to change back to the original working directory and finalize gmsh even if an error occurs
         os.chdir(cwd)
         model.gmsh_io.finalize_gmsh()
 
+        # results of the stages which are calculated before the failure
+        last_ran_stage_number = stem._Stem__last_ran_stage_number
+        try:
+            stage_results = collect_stage_results(stem, res_dir, anchor_normal_forces)
+        except Exception as post_processing_error:
+            print(f"An error occurred during post-processing: {post_processing_error}")
+            stage_results = []
+
         sample_record = {
             "sample_number": active_sample_number,
             "parameters": collect_sampled_parameters(prob_parameters),
             "max_bending_moment": None,
-            "failure_stage": stem._Stem__last_ran_stage_number + 1
+            "stage_results": stage_results,
+            "failure_stage": last_ran_stage_number + 1
         }
         if replay_parameters is not None:
             sample_record["replay_of_sample_number"] = replay_sample_number
