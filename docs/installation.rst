@@ -15,7 +15,7 @@ To create a virtual environment with pip follow this `link <https://docs.python.
 To create a virtual environment with conda follow this `link <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands>`_.
 To create a virtual environment with uv follow this `link <https://docs.astral.sh/uv/pip/environments/>`_.
 
-Currently, STEM supports Python 3.12, 3.13 and 3.14, therefore, you need to create the virtual environment with one
+Currently, STEM v1.4.1 supports Python 3.12, 3.13 and 3.14, therefore, you need to create the virtual environment with one
 of these Python versions.
 
 Installing STEM as a user
