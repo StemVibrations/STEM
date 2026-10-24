@@ -64,7 +64,7 @@ class TestGlobalsStem:
         assert ELEMENT_DATA["TRIANGLE_6N"]["element_order"] == 2
         assert ELEMENT_DATA["TRIANGLE_6N"]["n_vertices"] == 3
         assert ELEMENT_DATA["TRIANGLE_6N"]["reversed_connectivity_order"] == [2, 1, 0, 4, 3, 5]
-        assert ELEMENT_DATA["TRIANGLE_6N"]["edges"] == [[1, 2, 3], [1, 2, 4], [2, 0, 5]]
+        assert ELEMENT_DATA["TRIANGLE_6N"]["edges"] == [[1, 2, 4], [2, 0, 5], [0, 1, 3]]
 
     def test_quad4n(self):
         """
