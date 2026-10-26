@@ -5,6 +5,15 @@ import copy
 import os
 import sys
 import json
+import time
+import tempfile
+import multiprocessing
+
+# Idle OpenMP threads sleep instead of spinning. Much of a sample runs on a single thread (the sparse LU solver of
+# Kratos and the output), spinning threads would then take the CPU from the other samples that run in parallel.
+# Must be set before Kratos (OpenMP) is loaded.
+os.environ.setdefault("OMP_WAIT_POLICY", "PASSIVE")
+
 import orjson
 import numpy as np
 import KratosMultiphysics
@@ -140,10 +149,10 @@ prob_parameters = {
     },
 }
 
-# # set all disitrubutions to none
-# for material_name, material_parameters in prob_parameters.items():
-#     for parameter_name, parameter_info in material_parameters.items():
-#         parameter_info["distribution"] = "none"
+# set all disitrubutions to none
+for material_name, material_parameters in prob_parameters.items():
+    for parameter_name, parameter_info in material_parameters.items():
+        parameter_info["distribution"] = "none"
 
 # groups of parameters that are fully correlated within each material: all parameters in a group share the same
 # standard normal variate z, the value gives the sign of the correlation (+1: sample = mean + z * std,
@@ -360,11 +369,145 @@ def apply_sampled_parameters(parameters_dict, sampled_parameters):
         parameters_dict[material_name][parameter_name]["sample"] = float(sample_value)
 
 
-n_samples = 3
-results_dict = {"samples": []}
+def write_sample_progress(progress_file, sample_record, finished):
+    """
+    Writes the (partial) record of the running sample, such that the main process can still store the results of the
+    calculated stages if the sample is killed. The file is replaced atomically, such that it is never half written.
+    """
+    tmp_file = progress_file + ".tmp"
+    with open(tmp_file, "wb") as f:
+        f.write(orjson.dumps({"finished": finished, "record": sample_record}))
+    os.replace(tmp_file, progress_file)
+
+
+def read_sample_progress(progress_file):
+    """Returns the progress written by write_sample_progress, or None if no progress is written."""
+    if not os.path.exists(progress_file) or os.path.getsize(progress_file) == 0:
+        return None
+    with open(progress_file, "rb") as f:
+        return orjson.loads(f.read())
+
+
+def _run_single_sample_process(active_sample_number, sampled_parameters, progress_file, work_dir):
+    """
+    Target of the sample process. The interpreter teardown is skipped (os._exit), since Kratos can abort (and dump core)
+    while shutting down, which would delay the end of the process.
+    """
+    exit_code = 0
+    try:
+        run_single_sample(active_sample_number, sampled_parameters, progress_file, work_dir)
+    except BaseException:
+        import traceback
+        traceback.print_exc()
+        exit_code = 1
+    finally:
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os._exit(exit_code)
+
+
+def start_sample_process(active_sample_number, sampled_parameters, work_dir):
+    """
+    Starts a single sample in a separate process, which writes its input and output files in work_dir. A separate
+    process is required, since the calculation runs in Kratos (C++), which cannot be interrupted from Python.
+
+    Returns:
+        - dict: the running sample, to be passed to is_sample_process_done and finish_sample_process
+    """
+    fd, progress_file = tempfile.mkstemp(prefix=f"kakalawa_hs_sample_{active_sample_number}_", suffix=".json")
+    os.close(fd)
+
+    process = multiprocessing.get_context("spawn").Process(
+        target=_run_single_sample_process, args=(active_sample_number, sampled_parameters, progress_file, work_dir))
+    start_time = time.time()
+    process.start()
+    return {"sample_number": active_sample_number,
+            "parameters": sampled_parameters,
+            "process": process,
+            "progress_file": progress_file,
+            "start_time": start_time,
+            "work_dir": work_dir}
+
+
+def is_sample_process_done(running_sample, max_time):
+    """
+    Returns True if the sample is finished (final record written), the process has stopped, or the time limit is
+    reached.
+    """
+    if not running_sample["process"].is_alive() or time.time() - running_sample["start_time"] >= max_time:
+        return True
+    progress = read_sample_progress(running_sample["progress_file"])
+    return progress is not None and progress["finished"]
+
+
+def finish_sample_process(running_sample, max_time):
+    """
+    Finishes a sample for which is_sample_process_done is True. The process is killed if it is still running, if the
+    sample did not finish within max_time seconds it is considered as failed.
+
+    Returns:
+        - dict: the sample record
+    """
+    active_sample_number = running_sample["sample_number"]
+    sampled_parameters = running_sample["parameters"]
+    process = running_sample["process"]
+    progress_file = running_sample["progress_file"]
+    calculation_time = time.time() - running_sample["start_time"]
+
+    is_killed = process.is_alive()
+    if is_killed:
+        process.kill()
+    process.join()
+
+    progress = read_sample_progress(progress_file)
+    for file_name in (progress_file, progress_file + ".tmp"):
+        if os.path.exists(file_name):
+            os.remove(file_name)
+
+    if progress is not None and progress["finished"]:
+        sample_record = progress["record"]
+    else:
+        if is_killed:
+            failure_reason = "timeout"
+            print(f"Sample {active_sample_number} is killed, it took longer than {max_time} seconds")
+        else:
+            failure_reason = "crash"
+            print(f"Sample {active_sample_number} crashed with exit code {process.exitcode}")
+        if progress is not None:
+            # results of the stages which are calculated before the sample was killed
+            sample_record = progress["record"]
+        else:
+            sample_record = {"sample_number": active_sample_number,
+                             "parameters": sampled_parameters,
+                             "max_bending_moment": None,
+                             "stage_results": [],
+                             "failure_stage": 1}
+            if replay_parameters is not None:
+                sample_record["replay_of_sample_number"] = replay_sample_number
+        sample_record["max_bending_moment"] = None
+        sample_record["failure_reason"] = failure_reason
+
+    sample_record["calculation_time"] = calculation_time
+    return sample_record
+
+
+n_samples = 1000
+
+# Number of samples that are calculated at the same time, and the number of (OpenMP) threads of each sample. A single
+# sample does not scale beyond a few threads (the sparse LU solver of Kratos is single threaded), so the total
+# throughput is higher when multiple samples run in parallel. Each sample needs about 1 GB of memory.
+N_PARALLEL_SAMPLES = 4
+N_THREADS_PER_SAMPLE = 4
+
+# maximum wall time of a single sample [s], samples which take longer are killed and considered as failed. Samples which
+# run in parallel share the CPU and memory bandwidth, so a single sample takes longer than when it runs alone.
+MAX_SAMPLE_TIME = 10 * 60
+
+# The vtk output (of the full model, at every time step) is not needed for the Monte Carlo results and takes about 10%
+# of the calculation time. It is only written in replay mode.
+WRITE_VTK_OUTPUT = False
 
 cwd = os.getcwd()
-res_dir = os.path.join(cwd, input_files_dir, results_dir)
 results_file = os.path.join(cwd, input_files_dir, results_dir, "monte_carlo_results.json")
 
 # Optional replay mode:
@@ -377,16 +520,27 @@ replay_parameters = None
 if replay_sample_number is not None:
     replay_parameters = load_sample_parameters_from_results(replay_results_file, replay_sample_number)
     n_samples = 1
+    WRITE_VTK_OUTPUT = True
 
 
-for sample_number in range(n_samples):
+def get_work_dirs(n_parallel_samples):
+    """
+    Returns the directories in which the input and output files of the samples are written, one per sample that runs in
+    parallel. A single sample uses input_files_dir, as before.
+    """
+    if n_parallel_samples <= 1:
+        return [os.path.join(cwd, input_files_dir)]
+    return [os.path.join(cwd, input_files_dir, f"worker_{i + 1}") for i in range(n_parallel_samples)]
 
-    if replay_parameters is None:
-        sample_parameters(prob_parameters)
-        active_sample_number = sample_number + 1
-    else:
-        apply_sampled_parameters(prob_parameters, replay_parameters)
-        active_sample_number = replay_sample_number
+
+def run_single_sample(active_sample_number, sampled_parameters, progress_file, work_dir):
+    """
+    Builds and calculates the model of a single sample, with the given sampled parameters. Runs in a separate process,
+    the results are passed to the main process through the progress file. The input and output files are written in
+    work_dir.
+    """
+    res_dir = os.path.join(work_dir, results_dir)
+    apply_sampled_parameters(prob_parameters, sampled_parameters)
 
     ndim = 2
     model = Model(ndim)
@@ -825,8 +979,8 @@ for sample_number in range(n_samples):
     phreatic_line = PhreaticLineWaterPressure([(-100, phreatic_level, 0), (100, phreatic_level, 0)],
                                               is_fixed=True)
     model.add_phreatic_line(phreatic_line)
-    #
-    model.show_geometry(show_line_ids=True)
+    # the geometry plot writes an html file in the working directory and opens it, for every sample
+    # model.show_geometry(show_line_ids=True)
 
     water_load = WaterLineLoad(active=False, reference_coordinate=[-100, phreatic_level, 0])
     model.add_load_by_geometry_ids([48,49,40,29,30], water_load, "water_normal_load_soil")
@@ -840,16 +994,17 @@ for sample_number in range(n_samples):
     model.add_boundary_condition_by_geometry_ids(1, [58], DisplacementConstraint([True,True,True], [0,0,0]), "fixed_support")
 
     # define the output settings in vtk format
-    model.add_output_settings(
-        part_name="porous_computational_model_part",
-        output_dir=results_dir,
-        output_name="vtk_output",
-        output_parameters=VtkOutputParameters(
-            file_format="ascii",
-            output_interval=1,
-            nodal_results=[NodalOutput.TOTAL_DISPLACEMENT, NodalOutput.DISPLACEMENT, NodalOutput.WATER_PRESSURE],
-            gauss_point_results=[GaussPointOutput.CAUCHY_STRESS_VECTOR],
-            output_control_type="step"))
+    if WRITE_VTK_OUTPUT:
+        model.add_output_settings(
+            part_name="porous_computational_model_part",
+            output_dir=results_dir,
+            output_name="vtk_output",
+            output_parameters=VtkOutputParameters(
+                file_format="ascii",
+                output_interval=1,
+                nodal_results=[NodalOutput.TOTAL_DISPLACEMENT, NodalOutput.DISPLACEMENT, NodalOutput.WATER_PRESSURE],
+                gauss_point_results=[GaussPointOutput.CAUCHY_STRESS_VECTOR],
+                output_control_type="step"))
 
     # json output of the sheetpile (bending moment). With an output interval of 1 (the duration of each stage), the
     # json files contain the results at the end of each stage. The anchor normal force is not extrapolated to the nodes
@@ -900,11 +1055,12 @@ for sample_number in range(n_samples):
                                      are_mass_and_damping_constant=False,
                                      convergence_criteria=convergence_criterion,
                                      local_error_criteria= LocalErrorCriteria(),
-                                     strategy_type=NewtonRaphsonStrategy(),
-                                     linear_solver_settings=linear_solver)
+                                     strategy_type=NewtonRaphsonStrategy(number_cycles=1),
+                                     linear_solver_settings=linear_solver,
+                                     echo_level=0)
 
     # Set up problem data
-    problem = Problem(problem_name="sheetpile", number_of_threads=16, settings=solver_settings)
+    problem = Problem(problem_name="sheetpile", number_of_threads=N_THREADS_PER_SAMPLE, settings=solver_settings)
     model.project_parameters = problem
 
     model.mesh_settings.element_size=2
@@ -923,8 +1079,8 @@ for sample_number in range(n_samples):
     # , "interface_sand_clayey", "interface_sand_clean_mid_low", "interface_clay_clean_mid", "interface_sand_clean_dense"]))
 
     # model.project_parameters.settings.quasi_newton_type = "none"
-    model.project_parameters.settings.strategy_type.max_iterations = 1000
-    stem = Stem(model, input_files_dir)
+    model.project_parameters.settings.strategy_type.max_iterations = 200
+    stem = Stem(model, work_dir)
 
     # the embedded grout does not share nodes with the soil, connect the anchor to the head node of the grout, such
     # that the anchor force is transferred to the soil through the grout interface. This is done before the stages
@@ -976,9 +1132,6 @@ for sample_number in range(n_samples):
         stage3.get_additional_process_part_by_name_and_type("sheetpile_part_2", Excavation).parameters.deactivate_body_model_part = False
         stage3.get_additional_process_part_by_name_and_type("sheetpile_part_3", Excavation).parameters.deactivate_body_model_part = False
         stage3.get_additional_process_part_by_name_and_type("bottom_plate", Excavation).parameters.deactivate_body_model_part = False
-
-        import copy
-
 
 
         def set_interface_strength(interface_name, interface_law, soil_name):
@@ -1094,8 +1247,8 @@ for sample_number in range(n_samples):
         # stage 8.project_parameters.settings.convergence_criteria.displacement_relative_tolerance= 1e-3
         # stage 8.project_parameters.settings.quasi_newton_max_rank = 3
         stage7.project_parameters.settings.quasi_newton_restart_interval=1000
-        # stage 8.project_parameters.settings.quasi_newton_type = "none"
-        stage7.project_parameters.settings.strategy_type.min_iterations = 6
+        stage7.project_parameters.settings.quasi_newton_type = "none"
+        stage7.project_parameters.settings.strategy_type.min_iterations = 1
         stage7.project_parameters.settings.strategy_type.max_iterations = 200
 
         # convergence_criterion = ResidualConvergenceCriteria(residual_relative_tolerance=5.0e-2,
@@ -1108,14 +1261,29 @@ for sample_number in range(n_samples):
 
         stem.write_all_input_files()
 
-        import time
-
         start_time_calc = time.time()
         # the stages are run one by one (as in stem.run_calculation), such that the anchor normal force can be read
         # from the Kratos model at the end of each stage
         for stage_number in range(1, len(stem.stages) + 1):
             stem.run_stage(stage_number)
             anchor_normal_forces[stage_number] = get_anchor_normal_force(stem, stage_number)
+
+            # store the results of the calculated stages, such that they are kept if the sample is killed later on
+            try:
+                partial_stage_results = collect_stage_results(stem, res_dir, anchor_normal_forces)
+            except Exception as post_processing_error:
+                print(f"An error occurred during post-processing: {post_processing_error}")
+                partial_stage_results = []
+            partial_record = {
+                "sample_number": active_sample_number,
+                "parameters": collect_sampled_parameters(prob_parameters),
+                "max_bending_moment": None,
+                "stage_results": partial_stage_results,
+                "failure_stage": stage_number + 1,
+            }
+            if replay_parameters is not None:
+                partial_record["replay_of_sample_number"] = replay_sample_number
+            write_sample_progress(progress_file, partial_record, finished=False)
         stem.finalise()
         print(f"Total calculation time: {time.time() - start_time_calc} seconds")
 
@@ -1129,11 +1297,11 @@ for sample_number in range(n_samples):
             "max_bending_moment": max_bending_moment,
             "stage_results": stage_results,
             "failure_stage": None,
+            "failure_reason": None,
         }
         if replay_parameters is not None:
             sample_record["replay_of_sample_number"] = replay_sample_number
-        results_dict["samples"].append(sample_record)
-        append_sample_to_json(results_file, sample_record)
+        write_sample_progress(progress_file, sample_record, finished=True)
 
         for stage_result in stage_results:
             print(stage_result)
@@ -1156,10 +1324,74 @@ for sample_number in range(n_samples):
             "parameters": collect_sampled_parameters(prob_parameters),
             "max_bending_moment": None,
             "stage_results": stage_results,
-            "failure_stage": last_ran_stage_number + 1
+            "failure_stage": last_ran_stage_number + 1,
+            "failure_reason": "error",
         }
         if replay_parameters is not None:
             sample_record["replay_of_sample_number"] = replay_sample_number
-        results_dict["samples"].append(sample_record)
-        append_sample_to_json(results_file, sample_record)
+        write_sample_progress(progress_file, sample_record, finished=True)
 
+
+def print_summary(samples, max_time):
+    """Prints the status of all samples: successful, failed due to an error or failed due to the time limit."""
+    print("\n" + "=" * 80)
+    print(f"Monte Carlo summary (time limit per sample: {max_time} s)")
+    print("=" * 80)
+    print(f"{'sample':>8} {'status':>10} {'failure stage':>14} {'time [s]':>10} {'max bending moment [Nm/m]':>27}")
+    for sample in samples:
+        status = "success" if sample["failure_reason"] is None else sample["failure_reason"]
+        failure_stage = "-" if sample["failure_stage"] is None else str(sample["failure_stage"])
+        max_bending_moment = "-" if sample["max_bending_moment"] is None else f"{sample['max_bending_moment']:.4e}"
+        print(f"{sample['sample_number']:>8} {status:>10} {failure_stage:>14} {sample['calculation_time']:>10.1f} "
+              f"{max_bending_moment:>27}")
+
+    n_total = len(samples)
+    n_success = sum(sample["failure_reason"] is None for sample in samples)
+    n_timeout = sum(sample["failure_reason"] == "timeout" for sample in samples)
+    n_error = sum(sample["failure_reason"] in ("error", "crash") for sample in samples)
+    print("-" * 80)
+    print(f"Total samples: {n_total}")
+    print(f"Successful:    {n_success}")
+    print(f"Failed:        {n_total - n_success} (error: {n_error}, timeout > {max_time} s: {n_timeout})")
+    print(f"Results are written to: {results_file}")
+
+
+if __name__ == "__main__":
+    results_dict = {"samples": []}
+
+    def next_sample(sample_number):
+        """ Draws (or replays) the parameters of the next sample, returns its number and sampled parameters """
+        if replay_parameters is None:
+            sample_parameters(prob_parameters)
+            active_sample_number = sample_number + 1
+        else:
+            apply_sampled_parameters(prob_parameters, replay_parameters)
+            active_sample_number = replay_sample_number
+        return active_sample_number, collect_sampled_parameters(prob_parameters)
+
+    # the samples run in parallel, each in its own work directory. Only the main process writes the results file.
+    free_work_dirs = get_work_dirs(min(N_PARALLEL_SAMPLES, n_samples))
+    running_samples = []
+    n_started = 0
+    while n_started < n_samples or running_samples:
+        while free_work_dirs and n_started < n_samples:
+            running_samples.append(start_sample_process(*next_sample(n_started), free_work_dirs.pop(0)))
+            n_started += 1
+
+        time.sleep(1.0)
+        for running_sample in [s for s in running_samples if is_sample_process_done(s, MAX_SAMPLE_TIME)]:
+            running_samples.remove(running_sample)
+            sample_record = finish_sample_process(running_sample, MAX_SAMPLE_TIME)
+            free_work_dirs.append(running_sample["work_dir"])
+            results_dict["samples"].append(sample_record)
+            append_sample_to_json(results_file, sample_record)
+
+    results_dict["samples"].sort(key=lambda sample: sample["sample_number"])
+    print_summary(results_dict["samples"], MAX_SAMPLE_TIME)
+
+    # the stemkratos wheels load two copies of the Kratos core libraries in one process, which makes Kratos abort
+    # (and dump core) during interpreter shutdown ("Trying to remove inexistent component CouplingGeometry"), so the
+    # shutdown is skipped. All results are already written at this point.
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(0)
