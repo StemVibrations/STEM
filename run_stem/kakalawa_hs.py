@@ -8,6 +8,7 @@ import json
 import time
 import tempfile
 import multiprocessing
+import multiprocessing.connection
 
 # Idle OpenMP threads sleep instead of spinning. Much of a sample runs on a single thread (the sparse LU solver of
 # Kratos and the output), spinning threads would then take the CPU from the other samples that run in parallel.
@@ -1378,7 +1379,9 @@ if __name__ == "__main__":
             running_samples.append(start_sample_process(*next_sample(n_started), free_work_dirs.pop(0)))
             n_started += 1
 
-        time.sleep(1.0)
+        # wakes up as soon as a sample process stops, and at least every second to check the progress files and the
+        # time limit
+        multiprocessing.connection.wait([s["process"].sentinel for s in running_samples], timeout=1.0)
         for running_sample in [s for s in running_samples if is_sample_process_done(s, MAX_SAMPLE_TIME)]:
             running_samples.remove(running_sample)
             sample_record = finish_sample_process(running_sample, MAX_SAMPLE_TIME)
