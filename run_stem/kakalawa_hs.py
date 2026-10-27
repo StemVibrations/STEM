@@ -150,10 +150,10 @@ prob_parameters = {
     },
 }
 
-# set all disitrubutions to none
-for material_name, material_parameters in prob_parameters.items():
-    for parameter_name, parameter_info in material_parameters.items():
-        parameter_info["distribution"] = "none"
+# # set all disitrubutions to none
+# for material_name, material_parameters in prob_parameters.items():
+#     for parameter_name, parameter_info in material_parameters.items():
+#         parameter_info["distribution"] = "none"
 
 # groups of parameters that are fully correlated within each material: all parameters in a group share the same
 # standard normal variate z, the value gives the sign of the correlation (+1: sample = mean + z * std,
@@ -204,6 +204,8 @@ def collect_sampled_parameters(parameters_dict):
 
 SHEETPILE_PART_NAMES = ["sheetpile_part_1", "sheetpile_part_2", "sheetpile_part_3"]
 ANCHOR_PART_NAME = "anchor"
+# out of plane spacing of the anchors [m], the anchor and grout properties are smeared over this spacing
+ANCHOR_SPACING = 3.6
 
 
 def is_part_active(stage, part_name):
@@ -241,8 +243,9 @@ def read_end_of_stage_nodal_values(stage, output_dir, part_name, variable_name):
 
 def get_anchor_normal_force(stem, stage_number):
     """
-    Returns the maximum absolute normal force [N/m] (including prestress) in the anchor elements at the end of the last
-    calculated stage, or None if the anchor is not active in that stage.
+    Returns the maximum absolute normal force [N] per anchor (including prestress) in the anchor elements at the end of
+    the last calculated stage, or None if the anchor is not active in that stage. The model is per metre width, so the
+    axial force [N/m] is multiplied by the anchor spacing.
     """
     if not is_part_active(stem.stages[stage_number - 1], ANCHOR_PART_NAME):
         return None
@@ -250,13 +253,13 @@ def get_anchor_normal_force(stem, stage_number):
     axial_force = KratosMultiphysics.KratosGlobals.GetVariable("AXIAL_FORCE")
     forces = [abs(value) for element in model_part.Elements if element.IsActive()
               for value in element.CalculateOnIntegrationPoints(axial_force, model_part.ProcessInfo)]
-    return float(max(forces)) if forces else None
+    return float(max(forces)) * ANCHOR_SPACING if forces else None
 
 
 def collect_stage_results(stem, output_dir, anchor_normal_forces):
     """
     Collects the results at the end of each calculated stage: the maximum absolute bending moment in the sheetpile
-    [Nm/m], the y coordinate where it occurs [m] and the maximum absolute normal force in the anchor [N/m]. Results of
+    [Nm/m], the y coordinate where it occurs [m] and the maximum absolute normal force per anchor [N]. Results of
     parts which are not active in a stage are None.
 
     Args:
@@ -502,7 +505,7 @@ N_THREADS_PER_SAMPLE = 4
 
 # maximum wall time of a single sample [s], samples which take longer are killed and considered as failed. Samples which
 # run in parallel share the CPU and memory bandwidth, so a single sample takes longer than when it runs alone.
-MAX_SAMPLE_TIME = 10 * 60
+MAX_SAMPLE_TIME = 20 * 60
 
 # The vtk output (of the full model, at every time step) is not needed for the Monte Carlo results and takes about 10%
 # of the calculation time. It is only written in replay mode.
@@ -688,18 +691,19 @@ def run_single_sample(active_sample_number, sampled_parameters, progress_file, w
 
     EA = prob_parameters["anchor"]["EA"]["sample"]
     cross_area = cross_area
-    spacing = 3.6
-    E = EA / spacing / cross_area
-    anchor = Anchor(YOUNG_MODULUS=E, CROSS_AREA=cross_area, PRESTRESS=prob_parameters["anchor"]["prestress"]["sample"] / cross_area / spacing)
+    final_E_anchor = EA / ANCHOR_SPACING / cross_area
+    ini_E_anchor = 1
+
+    anchor = Anchor(YOUNG_MODULUS=ini_E_anchor, CROSS_AREA=cross_area, PRESTRESS=prob_parameters["anchor"]["prestress"]["sample"] / cross_area / ANCHOR_SPACING)
     # anchor = Anchor(YOUNG_MODULUS=E, CROSS_AREA=cross_area)
 
     # grout body as a Plaxis embedded beam row: solid circular beam, properties per anchor, smeared over the spacing
     gamma_grout = 26e3                                  # unit weight gamma = 26 kN/m3
-    spacing = 3.6                                       # L_spacing [m]
+    spacing = ANCHOR_SPACING                            # L_spacing [m]
     grout_diameter = 0.185                              # D [m]
     cross_area = math.pi * grout_diameter ** 2 / 4      # A = 0.02688 m2
     I33 = math.pi * grout_diameter ** 4 / 64            # I = 0.05750e-3 m4
-    E = 17.58e9 / spacing                               # E = 17.58e6 kN/m2
+    E = 16.41e9 / spacing                               # E = 17.58e6 kN/m2
 
     # weight per metre width is gamma * A / spacing, so the (smeared) density is gamma / (g * spacing)
     grout = EulerBeam(2, YOUNG_MODULUS=E, POISSON_RATIO=0.15, CROSS_AREA=cross_area, I33=I33,
@@ -974,17 +978,33 @@ def run_single_sample(active_sample_number, sampled_parameters, progress_file, w
     model.add_load_by_coordinates([(0.0,4.0,0.0)], vertical_point_load, "vertical_point_load")
     model.add_load_by_coordinates([(0.0,4.0,0.0)], point_moment, "point_moment")
 
+    # line loads on the same line share nodes and LINE_LOAD is a nodal variable, the load process applied last
+    # overwrites the value of the others, and every load applies it. Hence the terrain load (stage 10) is only defined
+    # beyond top_line_load_1, on the stretch of top_line_load_1 the terrain load is applied by top_line_load_1 itself.
+    # The terrain load is added first, such that top_line_load_1 is applied last at the shared node at x = 20
+    terrain_load = LineLoad(active=[True, True, True], value=[0, 0.0, 0])
+    model.add_load_by_coordinates([(20, top_coordinate, 0.0), (100, top_coordinate, 0.0)], terrain_load, "terrain_load")
+
     top_line_load_1 = LineLoad(active=[True, True, True], value=[0, 0.0, 0])
     model.add_load_by_coordinates([(0.4,5.5,0.0),(20,5.5,0.0)], top_line_load_1, "top_line_load_1")
+
+    # the start point must lie exactly on the sloped boundary from (-30, sand_clayey_bot) to (-7.5, -9), a rounded
+    # coordinate creates a sliver between the load line and the soil boundary, which distorts the mesh
+    erosion_start_x = -15
+    erosion_start_y = sand_clayey_bot + (erosion_start_x + 30) * (-9 - sand_clayey_bot) / (-7.5 + 30)
+    erosion_protection = LineLoad(active=[True, True, True], value=[0, 0.0, 0])
+    model.add_load_by_coordinates([(erosion_start_x, erosion_start_y, 0.0), (-7.5, -9, 0.0), (mid_left, -9, 0.0)],
+                                  erosion_protection, "erosion_protection")
 
     phreatic_line = PhreaticLineWaterPressure([(-100, phreatic_level, 0), (100, phreatic_level, 0)],
                                               is_fixed=True)
     model.add_phreatic_line(phreatic_line)
     # the geometry plot writes an html file in the working directory and opens it, for every sample
-    # model.show_geometry(show_line_ids=True)
+    model.show_geometry(show_line_ids=True)
 
     water_load = WaterLineLoad(active=False, reference_coordinate=[-100, phreatic_level, 0])
-    model.add_load_by_geometry_ids([48,49,40,29,30], water_load, "water_normal_load_soil")
+    model.add_load_by_geometry_ids([48,49,40,113,111,112], water_load, "water_normal_load_soil")
+    # model.add_load_by_geometry_ids([48,49,40,29,30], water_load, "water_normal_load_soil")
     model.add_load_by_geometry_ids([31, 22], water_load, "water_normal_load_beam")
 
     init_water_load = WaterLineLoad(active=True, reference_coordinate=[-100, phreatic_level, 0])
@@ -1041,7 +1061,7 @@ def run_single_sample(active_sample_number, sampled_parameters, progress_file, w
     #                                                         residual_absolute_tolerance=5.0e-1)
     # convergence_criterion = DisplacementConvergenceCriteria(displacement_relative_tolerance=1.0e-5,
     #                                                         displacement_absolute_tolerance=1.0e-12)
-    convergence_criterion = GlobalForceErrorConvergenceCriteria(force_relative_tolerance =0.01,
+    convergence_criterion = GlobalForceErrorConvergenceCriteria(force_relative_tolerance =0.001,
                                                                 force_absolute_tolerance =1.0e-9)
 
     linear_solver = Lu()
@@ -1073,6 +1093,9 @@ def run_single_sample(active_sample_number, sampled_parameters, progress_file, w
     model.set_element_size_of_group(0.5, "clay_clean_mid_mid")
     model.set_element_size_of_group(0.5, "sand_clean_dense_mid")
     model.set_element_size_of_group(0.5, "sand_clayey_part_2_left")
+    # model.set_element_size_of_group(0.5, "erosion_protection")
+
+
 
     # model.set_element_size_of_group(0.5, "water_normal_load_soil")
 
@@ -1208,13 +1231,14 @@ def run_single_sample(active_sample_number, sampled_parameters, progress_file, w
 
         # stage 6 add point load and moment
         stage6 = stem.create_new_stage(0.1,1)
-        move_stress_anchor = ApplyFinalStressesOfPreviousStageToInitialState(model_part_name_list=["anchor", "grout"])
+        move_stress_anchor = ApplyFinalStressesOfPreviousStageToInitialState(model_part_name_list=["grout"])
         stage6.apply_additional_process(move_stress_anchor)
         anchor_model_part = stage6.get_model_part_by_name("anchor")
+        anchor_model_part.material.material_parameters.YOUNG_MODULUS = final_E_anchor
 
         # prestress is set to half because here, because the stress initialisation is wrong. In this case, the prestress stays
         # as it should be
-        anchor_model_part.material.material_parameters.PRESTRESS = anchor_model_part.material.material_parameters.PRESTRESS/2
+        # anchor_model_part.material.material_parameters.PRESTRESS = anchor_model_part.material.material_parameters.PRESTRESS/2
 
 
         stage6.get_model_part_by_name("vertical_point_load").parameters.value = [0, -177.2e3, 0]
@@ -1225,6 +1249,10 @@ def run_single_sample(active_sample_number, sampled_parameters, progress_file, w
 
         # stage 7 excavation part 2
         stage7 = stem.create_new_stage(0.01,1)
+
+        move_stress_anchor = ApplyFinalStressesOfPreviousStageToInitialState(model_part_name_list=["anchor"])
+        stage7.apply_additional_process(move_stress_anchor)
+
         stage7.get_additional_process_part_by_name_and_type("sand_clean_mid_part_2_left", Excavation).parameters.deactivate_body_model_part = True
         stage7.get_additional_process_part_by_name_and_type("sand_clayey_part_1_left", Excavation).parameters.deactivate_body_model_part = True
         stage7.get_additional_process_part_by_name_and_type("sand_clean_mid_low_part_1", Excavation).parameters.deactivate_body_model_part = True
@@ -1248,7 +1276,7 @@ def run_single_sample(active_sample_number, sampled_parameters, progress_file, w
         # stage 8.project_parameters.settings.convergence_criteria.displacement_relative_tolerance= 1e-3
         # stage 8.project_parameters.settings.quasi_newton_max_rank = 3
         stage7.project_parameters.settings.quasi_newton_restart_interval=1000
-        stage7.project_parameters.settings.quasi_newton_type = "none"
+        # stage7.project_parameters.settings.quasi_newton_type = "none"
         stage7.project_parameters.settings.strategy_type.min_iterations = 1
         stage7.project_parameters.settings.strategy_type.max_iterations = 200
 
@@ -1258,6 +1286,43 @@ def run_single_sample(active_sample_number, sampled_parameters, progress_file, w
         stage7.project_parameters.settings.convergence_criteria = convergence_criterion
 
         stem.add_calculation_stage(stage7)
+
+
+        stage8 = stem.create_new_stage(0.1,1)
+
+        anchor_model_part = stage8.get_model_part_by_name("anchor")
+        # prestress is set to half because here, because the stress initialisation is wrong. In this case, the prestress stays
+        # as it should be
+        anchor_model_part.material.material_parameters.PRESTRESS = anchor_model_part.material.material_parameters.PRESTRESS/2
+        stage8.project_parameters.settings.quasi_newton_type = "lbfgs"
+        stage8.get_model_part_by_name("erosion_protection").parameters.value = [0, -7e3, 0]
+        stem.add_calculation_stage(stage8)
+
+        stage9 = stem.create_new_stage(0.1,1)
+        anchor_model_part = stage9.get_model_part_by_name("anchor")
+        # prestress is set to half because here, because the stress initialisation is wrong. In this case, the prestress stays
+        # as it should be
+        anchor_model_part.material.material_parameters.PRESTRESS = anchor_model_part.material.material_parameters.PRESTRESS/2
+
+
+        # stage9.get_model_part_by_name("terrain_load").parameters.value = [0, -20e3, 0]
+        stage9.get_model_part_by_name("top_line_load_1").parameters.value = [0, 0, 0]
+
+        stem.add_calculation_stage(stage9)
+
+
+        stage10 = stem.create_new_stage(0.1,1)
+        anchor_model_part = stage10.get_model_part_by_name("anchor")
+        # prestress is set to half because here, because the stress initialisation is wrong. In this case, the prestress stays
+        # as it should be
+        anchor_model_part.material.material_parameters.PRESTRESS = anchor_model_part.material.material_parameters.PRESTRESS/2
+
+
+        # terrain load from x = 0.4 to 100, top_line_load_1 covers the part up to x = 20
+        stage10.get_model_part_by_name("terrain_load").parameters.value = [0, -20e3, 0]
+        stage10.get_model_part_by_name("top_line_load_1").parameters.value = [0, -20e3, 0]
+
+        stem.add_calculation_stage(stage10)
 
 
         stem.write_all_input_files()
