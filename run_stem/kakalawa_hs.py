@@ -52,6 +52,9 @@ else:
 HS_P_REF = 100e3
 HS_FAILURE_RATIO = 0.9
 
+CHAR_TENSILE_STRENGTH_ANCHOR = 4.185e6 # N
+MAX_MOMENT_WALL =  2.133e6 #N.m/m
+
 
 # probabilistic parameters per material and per parameter (SI units: N/m3, Pa, degrees).
 # the sands have a small cohesion (1 Pa) for numerical stability.
@@ -150,10 +153,10 @@ prob_parameters = {
     },
 }
 
-# # set all disitrubutions to none
-# for material_name, material_parameters in prob_parameters.items():
-#     for parameter_name, parameter_info in material_parameters.items():
-#         parameter_info["distribution"] = "none"
+# set all disitrubutions to none
+for material_name, material_parameters in prob_parameters.items():
+    for parameter_name, parameter_info in material_parameters.items():
+        parameter_info["distribution"] = "none"
 
 # groups of parameters that are fully correlated within each material: all parameters in a group share the same
 # standard normal variate z, the value gives the sign of the correlation (+1: sample = mean + z * std,
@@ -256,14 +259,52 @@ def get_anchor_normal_force(stem, stage_number):
     return float(max(forces)) * ANCHOR_SPACING if forces else None
 
 
-def collect_stage_results(stem, output_dir, anchor_normal_forces):
+def get_stage_max_displacements(stem, stage_number, soil_material_names):
+    """
+    Returns the maximum end-of-stage total soil displacement magnitude and absolute horizontal (x) wall
+    displacement [m] of active nodes.
+    Soil excludes interfaces and parts replaced by concrete; the wall consists of SHEETPILE_PART_NAMES.
+    Empty or inactive regions return None. Stage 1 contains the non-physical K0 movement; stage 2 resets it.
+    """
+    stage = stem.stages[stage_number - 1]
+    soil_part_names = [part.name for part in stage.body_model_parts
+                       if isinstance(part.material, SoilMaterial) and part.material.name in soil_material_names]
+    wall_part_names = [name for name in SHEETPILE_PART_NAMES if is_part_active(stage, name)]
+    displacement = KratosMultiphysics.KratosGlobals.GetVariable("TOTAL_DISPLACEMENT")
+
+    def maximum_displacement(part_names, horizontal_only=False):
+        maximum = None
+        seen_nodes = set()
+        for part_name in part_names:
+            model_part = stem.kratos_model.GetModelPart(f"PorousDomain.{part_name}")
+            for element in model_part.Elements:
+                if not element.IsActive():
+                    continue
+                for node in element.GetGeometry():
+                    if node.Id in seen_nodes:
+                        continue
+                    seen_nodes.add(node.Id)
+                    values = node.GetSolutionStepValue(displacement)
+                    magnitude = abs(values[0]) if horizontal_only else math.hypot(*values)
+                    if not math.isfinite(magnitude):
+                        raise ValueError(f"Non-finite total displacement at node {node.Id} in stage {stage_number}")
+                    maximum = magnitude if maximum is None else max(maximum, magnitude)
+        return maximum
+
+    return {"max_soil_displacement": maximum_displacement(soil_part_names),
+            "max_wall_displacement": maximum_displacement(wall_part_names, horizontal_only=True)}
+
+
+def collect_stage_results(stem, output_dir, anchor_normal_forces, stage_displacements):
     """
     Collects the results at the end of each calculated stage: the maximum absolute bending moment in the sheetpile
-    [Nm/m], the y coordinate where it occurs [m] and the maximum absolute normal force per anchor [N]. Results of
-    parts which are not active in a stage are None.
+    [Nm/m], the y coordinate where it occurs [m], the maximum absolute normal force per anchor [N], and the maximum
+    total soil displacement magnitude and absolute horizontal wall displacement [m]. Results of parts which are
+    not active in a stage are None.
 
     Args:
         - anchor_normal_forces (Dict[int, float]): stage number -> anchor normal force, of the calculated stages
+        - stage_displacements (dict): stage number -> maximum soil magnitude and absolute horizontal wall movement [m]
     """
     initial_stage = stem.stages[0]
     stage_results = []
@@ -273,6 +314,7 @@ def collect_stage_results(stem, output_dir, anchor_normal_forces):
                         "max_bending_moment": None,
                         "y_max_bending_moment": None,
                         "max_anchor_normal_force": anchor_normal_forces[stage_number]}
+        stage_result.update(stage_displacements[stage_number])
 
         bending_moments = {}
         for part_name in SHEETPILE_PART_NAMES:
@@ -500,7 +542,7 @@ n_samples = 1000
 # Number of samples that are calculated at the same time, and the number of (OpenMP) threads of each sample. A single
 # sample does not scale beyond a few threads (the sparse LU solver of Kratos is single threaded), so the total
 # throughput is higher when multiple samples run in parallel. Each sample needs about 1 GB of memory.
-N_PARALLEL_SAMPLES = 4
+N_PARALLEL_SAMPLES = 1
 N_THREADS_PER_SAMPLE = 4
 
 # maximum wall time of a single sample [s], samples which take longer are killed and considered as failed. Samples which
@@ -1113,6 +1155,7 @@ def run_single_sample(active_sample_number, sampled_parameters, progress_file, w
 
     # stage number -> maximum normal force in the anchor at the end of the stage
     anchor_normal_forces = {}
+    stage_displacements = {}
     try:
 
         # stage 2: nil step (as in PLAXIS). The soil is switched from the K0 procedure to hardening soil, without any
@@ -1134,6 +1177,7 @@ def run_single_sample(active_sample_number, sampled_parameters, progress_file, w
 
         # stage 3 install sheetpile, with the original tolerance (stages are copied from the previous stage)
         stage3 = stem.create_new_stage(0.1,1)
+        stage3.project_parameters.settings.reset_displacements = False
         stage3.project_parameters.settings.convergence_criteria = convergence_criterion
         # stage 4.project_parameters.settings.convergence_criteria.displacement_relative_tolerance= 5e-4
         # stage 4.project_parameters.settings.quasi_newton_type = "none"
@@ -1328,15 +1372,15 @@ def run_single_sample(active_sample_number, sampled_parameters, progress_file, w
         stem.write_all_input_files()
 
         start_time_calc = time.time()
-        # the stages are run one by one (as in stem.run_calculation), such that the anchor normal force can be read
-        # from the Kratos model at the end of each stage
+        # Read anchor forces and total displacements before the next stage changes the Kratos model.
         for stage_number in range(1, len(stem.stages) + 1):
             stem.run_stage(stage_number)
+            stage_displacements[stage_number] = get_stage_max_displacements(stem, stage_number, hs_laws)
             anchor_normal_forces[stage_number] = get_anchor_normal_force(stem, stage_number)
 
             # store the results of the calculated stages, such that they are kept if the sample is killed later on
             try:
-                partial_stage_results = collect_stage_results(stem, res_dir, anchor_normal_forces)
+                partial_stage_results = collect_stage_results(stem, res_dir, anchor_normal_forces, stage_displacements)
             except Exception as post_processing_error:
                 print(f"An error occurred during post-processing: {post_processing_error}")
                 partial_stage_results = []
@@ -1353,7 +1397,7 @@ def run_single_sample(active_sample_number, sampled_parameters, progress_file, w
         stem.finalise()
         print(f"Total calculation time: {time.time() - start_time_calc} seconds")
 
-        stage_results = collect_stage_results(stem, res_dir, anchor_normal_forces)
+        stage_results = collect_stage_results(stem, res_dir, anchor_normal_forces, stage_displacements)
         max_bending_moment = stage_results[-1]["max_bending_moment"]
         sampled_parameters = collect_sampled_parameters(prob_parameters)
 
@@ -1380,7 +1424,7 @@ def run_single_sample(active_sample_number, sampled_parameters, progress_file, w
         # results of the stages which are calculated before the failure
         last_ran_stage_number = stem._Stem__last_ran_stage_number
         try:
-            stage_results = collect_stage_results(stem, res_dir, anchor_normal_forces)
+            stage_results = collect_stage_results(stem, res_dir, anchor_normal_forces, stage_displacements)
         except Exception as post_processing_error:
             print(f"An error occurred during post-processing: {post_processing_error}")
             stage_results = []
