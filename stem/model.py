@@ -2192,10 +2192,8 @@ class Model:
 
             if len(model_body_part.mesh.elements) > 0:
                 element_type = next(iter(model_body_part.mesh.elements.values())).element_type
-                n_shared_nodes = ELEMENT_DATA[element_type]["n_nodes_facets"]
-
                 if "INTERFACE" in element_type:
-                    continue  # skip body model parts with interface elements,
+                    continue  # skip the interface body model parts of the interfaces created before
                 n_shared_nodes = ELEMENT_DATA[element_type]["n_nodes_facets"]
 
                 # overlapping when n shared nodes is as expected for the element type

@@ -6220,6 +6220,65 @@ class TestModel:
         new_element_count = sum(len(part.mesh.elements) for part in model.body_model_parts)
         assert new_element_count == 3
 
+    def test_multiple_interfaces_meeting_at_a_node_2d_second_order(self, create_default_2d_soil_material):
+        """
+        Test two interfaces of a second order mesh that meet at a node: two layers, each split into a left part
+        (side 1) and a right part (side 2) with an interface between them. The right parts share one copy of the node
+        where the interfaces meet, and every edge of a right triangle on an interface (whichever of its three edges)
+        gives an interface element whose side-1 nodes lie at the positions of its side-2 nodes.
+
+        Args:
+            - create_default_2d_soil_material (:class:`stem.soil_material.SoilMaterial`): A default soil material.
+
+        """
+        model = Model(2)
+        model.mesh_settings.element_order = 2
+        model.set_mesh_size(0.25)
+        soil_material = create_default_2d_soil_material
+        model.add_soil_layer_by_coordinates([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], soil_material, "left_0")
+        model.add_soil_layer_by_coordinates([(1, 0, 0), (2, 0, 0), (2, 1, 0), (1, 1, 0)], soil_material, "right_0")
+        model.add_soil_layer_by_coordinates([(0, 1, 0), (1, 1, 0), (1, 2, 0), (0, 2, 0)], soil_material, "left_1")
+        model.add_soil_layer_by_coordinates([(1, 1, 0), (2, 1, 0), (2, 2, 0), (1, 2, 0)], soil_material, "right_1")
+        interface_material = InterfaceMaterial(name="interface",
+                                               constitutive_law=LinearElasticSoil(YOUNG_MODULUS=50e6,
+                                                                                  POISSON_RATIO=0.2),
+                                               soil_formulation=soil_material.soil_formulation,
+                                               retention_parameters=SaturatedBelowPhreaticLevelLaw())
+        model.set_interface_between_model_parts(["left_0"], ["right_0"], interface_material, "interface_0")
+        model.set_interface_between_model_parts(["left_1"], ["right_1"], interface_material, "interface_1")
+        model.synchronise_geometry()
+        model.generate_mesh()
+
+        parts = {part.name: part for part in model.body_model_parts}
+
+        def node_at(part_name: str, coordinates: Sequence[float]) -> int:
+            nodes = parts[part_name].mesh.nodes
+            return next(node_id for node_id, node in nodes.items()
+                        if np.allclose(node.coordinates[:2], coordinates[:2]))
+
+        # the node where the interfaces meet: one copy, shared by both right parts
+        assert node_at("left_0", (1, 1)) == node_at("left_1", (1, 1))
+        assert node_at("right_0", (1, 1)) == node_at("right_1", (1, 1))
+        assert node_at("right_0", (1, 1)) != node_at("left_0", (1, 1))
+
+        for layer in range(2):
+            interface = parts[f"interface_{layer}"]
+            right = parts[f"right_{layer}"]
+            left_node_ids = set(parts[f"left_{layer}"].mesh.nodes)
+            # four edges of 0.25 m along the interface
+            assert len(interface.mesh.elements) == 4
+            right_edges = [{element.node_ids[a]
+                            for a in edge} for element in right.mesh.elements.values()
+                           for edge in ELEMENT_DATA["TRIANGLE_6N"]["edges"]]
+            for element in interface.mesh.elements.values():
+                assert element.element_type == "LINE_INTERFACE_3_PLUS_3"
+                side_1, side_2 = element.node_ids[:3], element.node_ids[3:]
+                assert set(side_1) <= left_node_ids
+                assert set(side_2) in right_edges
+                for node_1, node_2 in zip(side_1, side_2):
+                    npt.assert_allclose(interface.mesh.nodes[node_1].coordinates,
+                                        interface.mesh.nodes[node_2].coordinates)
+
     def test_update_changing_parts_without_mesh(self, model_2d_for_interface: Dict[str, Any]):
         """
 
